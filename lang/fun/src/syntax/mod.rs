@@ -1,9 +1,18 @@
-pub type Var = String;
-pub type Covar = String;
-pub type Name = String;
+//! This module defines the syntax for the surface language Fun.
 
+pub mod arguments;
 pub mod context;
 pub mod declarations;
-pub mod substitution;
+pub mod names;
+pub mod program;
 pub mod terms;
 pub mod types;
+
+pub use arguments::Arguments;
+pub use context::{
+    Chirality, Chirality::Cns, Chirality::Prd, NameContext, TypeContext, TypingContext,
+};
+pub use declarations::*;
+pub use names::{Covar, Name, Var};
+pub use terms::*;
+pub use types::{OptTyped, Ty, TypeArgs};

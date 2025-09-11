@@ -1,23 +1,35 @@
-use std::collections::HashSet;
+//! This module defines top-level functions in Core.
 
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COLONEQ, DEF, SEMI},
-};
+use printer::tokens::DEF;
+use printer::*;
 
-use super::{FsStatement, Name, Statement, Var, context::TypingContext};
+use crate::syntax::*;
 use crate::traits::*;
 
+use std::collections::HashSet;
+
+/// This struct defines top-level function definitions. A top-level function consists of a name
+/// (unique in the program), a typing context defining the parameters, and the body statement. It
+/// is annotated with the list of all variable names used in the top-level function. The type
+/// parameter `S` determines whether this is the unfocused variant (if `S` is instantiated with
+/// [`Statement`], which is the default) or the focused variant (if `S` is instantiated with
+/// [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Def {
+pub struct Def<S = Statement> {
+    /// The name of the definition
     pub name: Name,
+    /// The parameter context
     pub context: TypingContext,
-    pub body: Statement,
+    /// The body statement
+    pub body: S,
+    /// Variable names used in the top-level function
     pub used_vars: HashSet<Var>,
 }
 
+pub type FsDef = Def<FsStatement>;
+
 impl Def {
+    /// This function applies the [`Focusing`] transformation to the body of the top-level function.
     pub fn focus(mut self) -> FsDef {
         FsDef {
             name: self.name,
@@ -28,64 +40,22 @@ impl Def {
     }
 }
 
-impl Print for Def {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
+impl<S: Print> Print for Def<S> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
-            .append(alloc.text(&self.name))
-            .append(params)
-            .append(alloc.space())
-            .append(COLONEQ);
-        let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .append(SEMI)
-            .nest(cfg.indent);
-        head.append(body).group()
-    }
-}
+            .append(self.name.print(cfg, alloc))
+            .append(self.context.print(cfg, alloc).parens())
+            .append(alloc.space());
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsDef {
-    pub name: Name,
-    pub context: TypingContext,
-    pub body: FsStatement,
-    pub used_vars: HashSet<Var>,
-}
-
-impl Print for FsDef {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let params = if self.context.bindings.is_empty() {
-            alloc.nil()
-        } else {
-            self.context.bindings.print(cfg, alloc).parens()
-        };
-        let head = alloc
-            .keyword(DEF)
-            .append(alloc.space())
-            .append(alloc.text(&self.name))
-            .append(params)
-            .append(alloc.space())
-            .append(COLONEQ);
         let body = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .append(SEMI)
-            .nest(cfg.indent);
-        head.append(body).group()
+            .hardline()
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.hardline())
+            .braces_anno();
+
+        head.group().append(body)
     }
 }

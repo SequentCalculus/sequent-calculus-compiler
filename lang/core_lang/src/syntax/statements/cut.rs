@@ -1,34 +1,34 @@
-use printer::{
-    DocAllocator, Print,
-    tokens::{LANGLE, PIPE, RANGLE},
-};
+//! This module defines cuts in Core.
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        terms::{Cns, FsOp, FsTerm, FsXtor, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use printer::tokens::{LANGLE, PIPE, RANGLE};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
-// Unfocused Cut
-//
-//
-
+/// This structs defines cuts between a producer and consumer term in Core. It consists of the
+/// producer and the consumer to be cut and of their type. The type parameters `P` and `C`
+/// determine whether this is the unfocused variant (if `P` and `C` are instantiated with
+/// [`Term<Prd>`] and [`Term<Cns>`], which is the default) or the focused variant (if `P` and `C`
+/// are instantiated with [`FsTerm<Prd>`] and [`FsTerm<Cns>`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cut {
-    pub producer: Rc<Term<Prd>>,
+pub struct Cut<P = Term<Prd>, C = Term<Cns>> {
+    /// The producer
+    pub producer: Rc<P>,
+    /// The type of the cut
     pub ty: Ty,
-    pub consumer: Rc<Term<Cns>>,
+    /// The consumer
+    pub consumer: Rc<C>,
 }
 
-impl Cut {
-    pub fn new<T: Into<Term<Prd>>, S: Into<Term<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
+pub type FsCut = Cut<FsTerm<Prd>, FsTerm<Cns>>;
+
+impl<P, C> Cut<P, C> {
+    /// This function constructs a cut from a producer and a consumer with a given type.
+    pub fn new<T: Into<P>, S: Into<C>>(prd: T, cns: S, ty: Ty) -> Self {
         Cut {
             producer: Rc::new(prd.into()),
             ty,
@@ -37,36 +37,41 @@ impl Cut {
     }
 }
 
-impl Typed for Cut {
+impl<P, C> Typed for Cut<P, C> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl Print for Cut {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+impl<P, C> Print for Cut<P, C>
+where
+    P: Print,
+    C: Print,
+{
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let Cut {
             producer, consumer, ..
         } = self;
-        alloc.text(LANGLE).append(
-            producer
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(alloc.text(PIPE))
-                .append(alloc.space())
-                .append(consumer.print(cfg, alloc))
-                .append(alloc.text(RANGLE)),
-        )
+        alloc
+            .text(LANGLE)
+            .append(producer.print(cfg, alloc))
+            .append(alloc.line())
+            .append(alloc.text(PIPE))
+            .append(alloc.space())
+            .append(consumer.print(cfg, alloc))
+            .append(alloc.text(RANGLE))
     }
 }
 
 impl From<Cut> for Statement {
     fn from(value: Cut) -> Self {
         Statement::Cut(value)
+    }
+}
+
+impl From<FsCut> for FsStatement {
+    fn from(value: FsCut) -> Self {
+        FsStatement::Cut(value)
     }
 }
 
@@ -83,7 +88,20 @@ impl Subst for Cut {
     }
 }
 
-impl TypedFreeVars for Cut {
+impl SubstVar for FsCut {
+    type Target = FsCut;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
+        self.producer = self.producer.subst_sim(subst);
+        self.consumer = self.consumer.subst_sim(subst);
+        self
+    }
+}
+
+impl<P, C> TypedFreeVars for Cut<P, C>
+where
+    P: TypedFreeVars,
+    C: TypedFreeVars,
+{
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.producer.typed_free_vars(vars);
         self.consumer.typed_free_vars(vars);
@@ -105,7 +123,7 @@ impl Focusing for Cut {
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
         ) {
-            // N(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | N(c)⟩]
+            // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
                 Box::new(|bindings, used_vars: &mut HashSet<Var>| {
@@ -123,7 +141,7 @@ impl Focusing for Cut {
                 }),
                 used_vars,
             ),
-            // N(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ N(p) | D(as)⟩]
+            // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
                 Box::new(|bindings, used_vars: &mut HashSet<Var>| {
@@ -141,7 +159,7 @@ impl Focusing for Cut {
                 }),
                 used_vars,
             ),
-            // N(⟨⊙ (p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | N(c)⟩]]
+            // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
                 Box::new(
                     |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
@@ -175,94 +193,23 @@ impl Focusing for Cut {
     }
 }
 
-// Focused Cut
-//
-//
-
-/// Focused Cut
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsCut {
-    pub producer: Rc<FsTerm<Prd>>,
-    pub ty: Ty,
-    pub consumer: Rc<FsTerm<Cns>>,
-}
-
-impl FsCut {
-    pub fn new<T: Into<FsTerm<Prd>>, S: Into<FsTerm<Cns>>>(prd: T, cns: S, ty: Ty) -> Self {
-        FsCut {
-            producer: Rc::new(prd.into()),
-            ty,
-            consumer: Rc::new(cns.into()),
-        }
-    }
-}
-
-impl Print for FsCut {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let FsCut {
-            producer, consumer, ..
-        } = self;
-        alloc.text(LANGLE).append(
-            producer
-                .print(cfg, alloc)
-                .append(alloc.space())
-                .append(alloc.text(PIPE))
-                .append(alloc.space())
-                .append(consumer.print(cfg, alloc))
-                .append(alloc.text(RANGLE)),
-        )
-    }
-}
-
-impl From<FsCut> for FsStatement {
-    fn from(value: FsCut) -> Self {
-        FsStatement::Cut(value)
-    }
-}
-
-impl SubstVar for FsCut {
-    type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
-        self.producer = self.producer.subst_sim(subst);
-        self.consumer = self.consumer.subst_sim(subst);
-        self
-    }
-}
-
-impl TypedFreeVars for FsCut {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.producer.typed_free_vars(vars);
-        self.consumer.typed_free_vars(vars);
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::Focusing;
-    use crate::syntax::{
-        TypingContext,
-        statements::{Cut, FsCut},
-        substitution::Substitution,
-        terms::{FsXtor, Literal, Mu, XVar, Xtor},
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
         let result = {
-            let mut subst = Substitution::default();
-            subst.add_prod(Literal::new(1));
-            subst.add_prod(Xtor::ctor(
+            let mut arguments = Arguments::default();
+            arguments.add_prod(Literal::new(1));
+            arguments.add_prod(Xtor::ctor(
                 "Nil",
-                Substitution::default(),
+                Arguments::default(),
                 Ty::Decl("ListInt".to_string()),
             ));
-            let cons = Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
+            let cons = Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()));
             Cut::new(
                 cons,
                 XVar::covar("a", Ty::Decl("ListInt".to_string())),
@@ -306,11 +253,11 @@ mod tests {
 
     #[test]
     fn transform_dtor() {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("y", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("y", Ty::I64));
+        arguments.add_cons(XVar::covar("a", Ty::I64));
         let result = {
-            let ap = Xtor::dtor("Apply", subst, Ty::Decl("Fun[i64, i64]".to_string()));
+            let ap = Xtor::dtor("apply", arguments, Ty::Decl("Fun[i64, i64]".to_string()));
             Cut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,
@@ -323,7 +270,7 @@ mod tests {
         args.add_var("y", Ty::I64);
         args.add_covar("a", Ty::I64);
         let expected = {
-            let ap = FsXtor::dtor("Apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
+            let ap = FsXtor::dtor("apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
             FsCut::new(
                 XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
                 ap,

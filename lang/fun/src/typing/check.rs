@@ -1,3 +1,5 @@
+//! This module defines a trait with a method for typechecking.
+
 use std::rc::Rc;
 
 use codespan::Span;
@@ -7,11 +9,11 @@ use printer::Print;
 use crate::{
     parser::util::ToMiette,
     syntax::{
+        arguments::Arguments,
         context::{
             Chirality::{Cns, Prd},
             TypingContext,
         },
-        substitution::Substitution,
         terms::Term,
         types::Ty,
     },
@@ -19,7 +21,15 @@ use crate::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
+/// This trait defines a method for typechecking against an expected type. The expected type will
+/// be annotated in the checked term.
 pub trait Check: Sized {
+    /// This method performs typechecking with a given symbol table and typing context against an
+    /// expected type. The expected type will be annotated in the checked term.
+    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `context` is the current typing context containing bindings for the (co)variables in
+    ///   scope.
+    /// - `expected` is the expected type.
     fn check(
         self,
         symbol_table: &mut SymbolTable,
@@ -40,23 +50,44 @@ impl<T: Check + Clone> Check for Rc<T> {
     }
 }
 
+impl<T: Check> Check for Option<T> {
+    fn check(
+        self,
+        symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        expected: &Ty,
+    ) -> Result<Self, Error> {
+        match self {
+            None => Ok(None),
+            Some(t) => Ok(Some(t.check(symbol_table, context, expected)?)),
+        }
+    }
+}
+
+/// This function typechecks arguments against a signature, i.e.,
+/// against the types in a list of bindings.
+/// - `span` is the source location of the arguments.
+/// - `symbol_table` is the symbol table during typechecking.
+/// - `context` is the current typing context.
+/// - `args` are the arguments to check.
+/// - `types` is the list of bindings against whose types the arguments are checked.
 pub fn check_args(
     span: &SourceSpan,
     symbol_table: &mut SymbolTable,
     context: &TypingContext,
-    args: Substitution,
+    args: Arguments,
     types: &TypingContext,
-) -> Result<Substitution, Error> {
-    if types.bindings.len() != args.len() {
+) -> Result<Arguments, Error> {
+    if types.bindings.len() != args.entries.len() {
         return Err(Error::WrongNumberOfArguments {
             span: *span,
             expected: types.bindings.len(),
-            got: args.len(),
+            got: args.entries.len(),
         });
     }
 
-    let mut new_subst = vec![];
-    for (arg, binding) in args.into_iter().zip(types.bindings.iter()) {
+    let mut new_args = vec![];
+    for (arg, binding) in args.entries.into_iter().zip(types.bindings.iter()) {
         if binding.chi == Cns {
             match arg {
                 Term::XVar(mut variable) => {
@@ -76,7 +107,7 @@ pub fn check_args(
 
                     variable.ty = Some(found_ty);
                     variable.chi = Some(Cns);
-                    new_subst.push(variable.into());
+                    new_args.push(variable.into());
                 }
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             }
@@ -84,13 +115,15 @@ pub fn check_args(
             binding.ty.check(&types.span, symbol_table)?;
 
             let arg_checked = arg.check(symbol_table, context, &binding.ty)?;
-            new_subst.push(arg_checked);
+            new_args.push(arg_checked);
         }
     }
 
-    Ok(new_subst)
+    Ok(new_args.into())
 }
 
+/// This function checks equality of two monomorphic types. It also checks the well-formedness of the two
+/// types, which creates instances if needed. The two types hence must not be type parameters.
 pub fn check_equality(
     span: &Span,
     symbol_table: &mut SymbolTable,
@@ -119,7 +152,7 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            declarations::{CheckedModule, Module},
+            program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
         },
@@ -133,7 +166,7 @@ mod check_tests {
 
     #[test]
     fn module_check() {
-        let result = Module {
+        let result = Program {
             declarations: vec![
                 data_list().into(),
                 codata_stream().into(),
@@ -143,7 +176,7 @@ mod check_tests {
         .check()
         .unwrap();
 
-        let expected = CheckedModule {
+        let expected = CheckedProgram {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],
@@ -207,17 +240,18 @@ mod check_tests {
             vec![
                 Lit {
                     span: Span::default(),
-                    val: 1,
+                    lit: 1,
                 }
                 .into(),
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -238,17 +272,18 @@ mod check_tests {
         let expected = vec![
             Lit {
                 span: Span::default(),
-                val: 1,
+                lit: 1,
             }
             .into(),
             Constructor {
                 span: Span::default(),
                 id: "Nil".to_owned(),
-                args: vec![],
+                args: vec![].into(),
                 ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             }
             .into(),
-        ];
+        ]
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -272,7 +307,7 @@ mod check_tests {
                     },
                 ],
             },
-            vec![XVar::mk("c").into(), XVar::mk("d").into()],
+            vec![XVar::mk("c").into(), XVar::mk("d").into()].into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![
@@ -308,7 +343,8 @@ mod check_tests {
                 chi: Some(Cns),
             }
             .into(),
-        ];
+        ]
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -324,10 +360,11 @@ mod check_tests {
             vec![
                 Lit {
                     span: Span::default(),
-                    val: 1,
+                    lit: 1,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             &TypingContext {
                 span: Span::default(),
                 bindings: vec![],

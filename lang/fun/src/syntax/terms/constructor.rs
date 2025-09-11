@@ -1,33 +1,33 @@
+//! This module defines constructor terms of data types.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{Print, theme::ThemeExt};
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Name, Var,
-        context::TypingContext,
-        substitution::Substitution,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_args, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::collections::HashSet;
 
+/// This struct defines a constructor term of a data type. It consists of a name for the
+/// constructor, the arguments of the constructor, and after typechecking also of the inferred
+/// type.
+///
+/// Example:
+/// `Cons(2, Nil)` is the constructor `Cons` with arguments `2` and constructor `Nil`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Constructor {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The constructor name
     pub id: Name,
-    pub args: Substitution,
+    /// The arguments of the constructor
+    pub args: Arguments,
+    /// The (inferred) type of the constructor
     pub ty: Option<Ty>,
 }
 
@@ -38,18 +38,14 @@ impl OptTyped for Constructor {
 }
 
 impl Print for Constructor {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        if self.args.is_empty() {
-            alloc.ctor(&self.id)
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let args = if self.args.entries.is_empty() {
+            alloc.nil()
         } else {
-            alloc
-                .ctor(&self.id)
-                .append(self.args.print(cfg, alloc).parens())
-        }
+            self.args.print(cfg, alloc).parens()
+        };
+
+        alloc.ctor(&self.id).append(args.group())
     }
 }
 
@@ -76,6 +72,8 @@ impl Check for Constructor {
             }
         };
 
+        // the name of the constructor in the symbol table for the instantiated data type, the
+        // instance must exists already
         let name = self.id.clone() + &type_args.print_to_string(None);
         match symbol_table.ctors.get(&name) {
             Some(types) => {
@@ -104,32 +102,26 @@ impl Check for Constructor {
 
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, TypingContext},
-        syntax::terms::Lit,
-        syntax::{
-            terms::{Constructor, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_nil() {
         let result = Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
         .check(
@@ -141,7 +133,7 @@ mod test {
         let expected = Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
@@ -159,11 +151,12 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: None,
         }
         .check(
@@ -186,11 +179,12 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
         assert_eq!(result, expected)
@@ -205,18 +199,19 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![],
+                    args: vec![].into(),
                     ty: None,
                 }
                 .into(),
-            ],
+            ]
+            .into(),
             ty: None,
         }
         .check(
@@ -234,7 +229,7 @@ mod test {
         Constructor {
             span: Span::default(),
             id: "Nil".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ty: None,
         }
     }
@@ -243,7 +238,7 @@ mod test {
         Constructor {
             span: Span::default(),
             id: "Tup".to_owned(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()],
+            args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()].into(),
             ty: None,
         }
     }

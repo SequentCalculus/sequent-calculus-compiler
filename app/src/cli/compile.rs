@@ -1,3 +1,5 @@
+//! This module contains the command for compiling a file to Core.
+
 use std::path::PathBuf;
 
 use driver::{Driver, PrintMode};

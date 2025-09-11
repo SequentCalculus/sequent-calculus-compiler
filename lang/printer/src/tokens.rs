@@ -23,9 +23,6 @@ pub const DOT: &str = ".";
 /// The symbol `=`
 pub const EQ: &str = "=";
 
-/// The symbol `:=`
-pub const COLONEQ: &str = ":=";
-
 /// The symbol `;`
 pub const SEMI: &str = ";";
 
@@ -53,11 +50,11 @@ pub const PLUS: &str = "+";
 /// The symbol `-`
 pub const MINUS: &str = "-";
 
-/// The symbol `<`
-pub const LANGLE: &str = "<";
+/// The symbol `⟨`
+pub const LANGLE: &str = "\u{27E8}";
 
-/// The symbol `>`
-pub const RANGLE: &str = ">";
+/// The symbol `⟩`
+pub const RANGLE: &str = "\u{27E9}";
 
 /// The symbol `|`
 pub const PIPE: &str = "|";
@@ -76,6 +73,12 @@ pub const LT: &str = "<";
 
 /// The symbol `<=`
 pub const LTE: &str = "<=";
+
+/// The symbol `>`
+pub const GT: &str = ">";
+
+/// The symbol `>=`
+pub const GTE: &str = ">=";
 
 // Keywords
 //

@@ -1,21 +1,21 @@
-use printer::{DocAllocator, Print};
+//! This module defines the call of a top-level function in Core.
 
-use crate::{
-    syntax::{
-        ContextBinding, Covar, FsStatement, Name, Statement, TypingContext, Var,
-        substitution::Substitution,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
+/// This struct defines the call of a top-level function in Core. It consists of the name of the
+/// top-level function to call, the arguments, and the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
+    /// The name of the top-level function being called
     pub name: Name,
-    pub args: Substitution,
+    /// The arguments
+    pub args: Arguments,
+    /// The type (which is the return type of the definition)
     pub ty: Ty,
 }
 
@@ -26,14 +26,10 @@ impl Typed for Call {
 }
 
 impl Print for Call {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .text(&self.name)
-            .append(self.args.print(cfg, alloc).parens())
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.name
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -70,7 +66,7 @@ impl Uniquify for Call {
 
 impl Focusing for Call {
     type Target = FsStatement;
-    ///N(f(t_i)) = bind(t_i)[λas.f(as)]
+    // focus(f(t_i)) = bind(t_i)[λas.f(as)]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         bind_many(
             self.args.into(),
@@ -86,20 +82,20 @@ impl Focusing for Call {
     }
 }
 
-/// Focused Call
+/// This struct defines the focused version of [`Call`]s of top-level functions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
+    /// The name of the top-level function being called
     pub name: Name,
+    /// The arguments (only (co)variables here)
     pub args: TypingContext,
 }
 
 impl Print for FsCall {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(&self.name).append(self.args.print(cfg, alloc))
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.name
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -125,20 +121,14 @@ impl TypedFreeVars for FsCall {
 
 #[cfg(test)]
 mod transform_tests {
-    use super::Focusing;
-    use crate::syntax::{
-        TypingContext,
-        statements::{Call, FsCall},
-        substitution::Substitution,
-        terms::XVar,
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     #[test]
     fn transform_call1() {
         let result = Call {
             name: "main".to_string(),
-            args: Substitution::default(),
+            args: Arguments::default(),
             ty: Ty::I64,
         }
         .focus(&mut Default::default());
@@ -152,9 +142,9 @@ mod transform_tests {
 
     #[test]
     fn transform_call2() {
-        let mut subst = Substitution::default();
-        subst.add_prod(XVar::var("x", Ty::I64));
-        subst.add_cons(XVar::covar("a", Ty::I64));
+        let mut arguments = Arguments::default();
+        arguments.add_prod(XVar::var("x", Ty::I64));
+        arguments.add_cons(XVar::covar("a", Ty::I64));
 
         let mut args = TypingContext::default();
         args.add_var("x", Ty::I64);
@@ -162,7 +152,7 @@ mod transform_tests {
 
         let result = Call {
             name: "fun".to_string(),
-            args: subst,
+            args: arguments,
             ty: Ty::I64,
         }
         .focus(&mut Default::default());

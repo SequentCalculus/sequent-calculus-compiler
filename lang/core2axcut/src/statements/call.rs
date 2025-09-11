@@ -1,3 +1,5 @@
+//! This module defines the translation for the call of a top-level function.
+
 use core_lang::syntax::statements::FsCall;
 
 use crate::shrinking::{Shrinking, ShrinkingState};
@@ -8,7 +10,7 @@ impl Shrinking for FsCall {
     fn shrink(self, _state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::Call(axcut::syntax::statements::Call {
             label: self.name,
-            args: self.args.vec_vars(),
+            args: self.args.vec_vars().into(),
         })
     }
 }

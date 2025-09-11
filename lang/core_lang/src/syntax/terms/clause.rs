@@ -1,63 +1,63 @@
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COMMA, FAT_ARROW},
-    util::BracesExt,
-};
+//! This module defines a clause in a pattern or copattern match in Core.
 
-use super::{Cns, Prd, PrdCns, Term, XVar};
-use crate::{
-    syntax::{
-        Covar, FsStatement, Name, Statement, TypingContext, Var,
-        context::{Chirality, ContextBinding},
-        fresh_name,
-    },
-    traits::*,
-};
+use printer::tokens::{COMMA, FAT_ARROW};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This struct defines a clause in a match or a comatch in Core. It consists of the information
+/// that determines whether it is in a match (if `C` is instantiated with [`Cns`]) or a comatch
+/// (if `C` is instantiated with [`Prd`]), of a name of the corresponding xtor, of the context it
+/// binds for the arguments, and of the body. The type parameter `S` determines whether the body
+/// statement is unfocused (if `S` is instantiated with [`Statement`], which is the default) or
+/// focused (if `S` is instantiated with [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Clause<T: PrdCns, S> {
-    pub prdcns: T,
+pub struct Clause<C: Chi, S = Statement> {
+    /// Whether we have a clause of a match or comatch
+    pub prdcns: C,
+    /// The name of the xtor
     pub xtor: Name,
+    /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
+    /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
     pub body: Rc<S>,
 }
 
-impl<T: PrdCns, S: Print> Print for Clause<T, S> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let prefix = if self.prdcns.is_prd() {
-            alloc
-                .dtor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+#[allow(type_alias_bounds)]
+pub type FsClause<C: Chi> = Clause<C, FsStatement>;
+
+impl<C: Chi, S: Print> Print for Clause<C, S> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let context = if self.context.bindings.is_empty() {
+            alloc.nil()
         } else {
-            alloc
-                .ctor(&self.xtor)
-                .append(self.context.print(cfg, alloc))
-                .append(alloc.space())
-                .append(FAT_ARROW)
+            self.context.print(cfg, alloc).parens()
         };
-        let tail = alloc
-            .line()
-            .append(self.body.print(cfg, alloc))
-            .nest(cfg.indent);
-        prefix.append(tail).group()
+
+        let xtor = if self.prdcns.is_prd() {
+            alloc.dtor(&self.xtor)
+        } else {
+            alloc.ctor(&self.xtor)
+        };
+        xtor.append(context.group())
+            .append(alloc.space())
+            .append(FAT_ARROW)
+            .align()
+            .append(alloc.line())
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
     }
 }
 
 pub fn print_clauses<'a, T: Print>(
     clauses: &'a [T],
-    cfg: &printer::PrintCfg,
-    alloc: &'a printer::Alloc<'a>,
-) -> printer::Builder<'a> {
+    cfg: &PrintCfg,
+    alloc: &'a Alloc<'a>,
+) -> Builder<'a> {
     match clauses.len() {
         0 => alloc.space().braces_anno(),
         1 => alloc
@@ -71,7 +71,14 @@ pub fn print_clauses<'a, T: Print>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clauses| clauses.print(cfg, alloc).group()),
+                        sep,
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()
@@ -79,13 +86,13 @@ pub fn print_clauses<'a, T: Print>(
     }
 }
 
-impl<T: PrdCns> Subst for Clause<T, Statement> {
-    type Target = Clause<T, Statement>;
+impl<C: Chi> Subst for Clause<C> {
+    type Target = Clause<C>;
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
         cons_subst: &[(Covar, Term<Cns>)],
-    ) -> Clause<T, Statement> {
+    ) -> Clause<C> {
         let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
 
@@ -107,7 +114,15 @@ impl<T: PrdCns> Subst for Clause<T, Statement> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for Clause<T, Statement> {
+impl<C: Chi> SubstVar for FsClause<C> {
+    type Target = FsClause<C>;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsClause<C> {
+        self.body = self.body.subst_sim(subst);
+        self
+    }
+}
+
+impl<C: Chi> TypedFreeVars for Clause<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let mut vars_body = BTreeSet::new();
         self.body.typed_free_vars(&mut vars_body);
@@ -120,12 +135,18 @@ impl<T: PrdCns> TypedFreeVars for Clause<T, Statement> {
     }
 }
 
-impl<T: PrdCns> Uniquify for Clause<T, Statement> {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Var>,
-        used_vars: &mut HashSet<Var>,
-    ) -> Clause<T, Statement> {
+impl<C: Chi> TypedFreeVars for FsClause<C> {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        // all binders in focused terms are unique, so we do not need a fresh set under binders
+        self.body.typed_free_vars(vars);
+        for binding in &self.context.bindings {
+            vars.remove(binding);
+        }
+    }
+}
+
+impl<C: Chi> Uniquify for Clause<C> {
+    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause<C> {
         let mut new_context = TypingContext::default();
         let mut var_subst: Vec<(Var, Term<Prd>)> = Vec::new();
         let mut covar_subst: Vec<(Covar, Term<Cns>)> = Vec::new();
@@ -181,33 +202,15 @@ impl<T: PrdCns> Uniquify for Clause<T, Statement> {
     }
 }
 
-impl<T: PrdCns> Focusing for Clause<T, Statement> {
-    type Target = Clause<T, FsStatement>;
-    ///N(K_i(x_{i,j}) => s_i ) = K_i(x_{i,j}) => N(s_i)
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Clause<T, FsStatement> {
+impl<C: Chi> Focusing for Clause<C> {
+    type Target = FsClause<C>;
+    // focus(X_i(x_{i,j}) => s_i ) = X_i(x_{i,j}) => focus(s_i)
+    fn focus(self, used_vars: &mut HashSet<Var>) -> FsClause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
             body: self.body.focus(used_vars),
-        }
-    }
-}
-
-impl<T: PrdCns> SubstVar for Clause<T, FsStatement> {
-    type Target = Clause<T, FsStatement>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause<T, FsStatement> {
-        self.body = self.body.subst_sim(subst);
-        self
-    }
-}
-
-impl<T: PrdCns> TypedFreeVars for Clause<T, FsStatement> {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        // all binders in focused terms are unique, so we do no need a fresh set under binders
-        self.body.typed_free_vars(vars);
-        for binding in &self.context.bindings {
-            vars.remove(binding);
         }
     }
 }

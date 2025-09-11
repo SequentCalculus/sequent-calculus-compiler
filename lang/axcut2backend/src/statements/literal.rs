@@ -1,3 +1,5 @@
+//! This module defines the code generation for integer literals.
+
 use printer::tokens::LIT;
 
 use super::CodeStatement;

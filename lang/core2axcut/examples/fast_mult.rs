@@ -37,7 +37,7 @@ fn main() {
         ],
     };
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::XVar::var("l", Ty::Decl("ListInt".to_string())));
     subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
     subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
@@ -73,7 +73,7 @@ fn main() {
         used_vars: HashSet::from(["l".to_string(), "a".to_string(), "a0".to_string()]),
     };
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::XVar::var("xs", Ty::Decl("ListInt".to_string())));
     subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
     subst.add_cons(terms::XVar::covar("a1", Ty::Decl("Int".to_string())));
@@ -131,9 +131,10 @@ fn main() {
                                 },
                             ],
                         },
-                        body: Rc::new(Statement::IfZ(statements::IfZ {
-                            sort: statements::IfZSort::Equal,
-                            ifc: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                        body: Rc::new(Statement::IfC(statements::IfC {
+                            sort: statements::IfSort::Equal,
+                            fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                            snd: None,
                             thenc: Rc::new(Statement::Cut(statements::Cut::new(
                                 Term::Literal(terms::Literal { lit: 0 }),
                                 Term::XVar(terms::XVar::covar("a", Ty::I64)),
@@ -173,33 +174,29 @@ fn main() {
         ]),
     };
 
-    let nil = terms::Xtor::ctor(
-        "Nil",
-        Substitution::default(),
-        Ty::Decl("ListInt".to_string()),
-    );
+    let nil = terms::Xtor::ctor("Nil", Arguments::default(), Ty::Decl("ListInt".to_string()));
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::Literal::new(3));
     subst.add_prod(nil);
     let cons1 = terms::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::Literal::new(3));
     subst.add_prod(cons1);
     let cons2 = terms::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::Literal::new(0));
     subst.add_prod(cons2);
     let cons3 = terms::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(terms::Literal::new(2));
     subst.add_prod(cons3);
     let cons4 = terms::Xtor::ctor("Cons", subst, Ty::Decl("ListInt".to_string()));
 
-    let mut subst = Substitution::default();
+    let mut subst = Arguments::default();
     subst.add_prod(cons4);
     subst.add_cons(terms::XVar::covar("a0", Ty::I64));
 

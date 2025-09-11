@@ -1,3 +1,5 @@
+//! This module defines some utilities for ignoring colors.
+
 use std::io;
 
 use printer::termcolor::WriteColor;

@@ -1,3 +1,5 @@
+//! This module contains the command for linearizing the definitions of a file.
+
 use driver::{Driver, PrintMode};
 use printer::{ColorChoice, Print, PrintCfg, StandardStream};
 use std::path::PathBuf;

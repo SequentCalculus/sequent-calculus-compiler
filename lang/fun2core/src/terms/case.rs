@@ -1,5 +1,7 @@
+//! This module defines the translation of a pattern match.
+
 use crate::{
-    compile::{CompileState, CompileWithCont, share},
+    compile::{Compile, CompileState, share},
     terms::clause::compile_clause,
     types::compile_ty,
 };
@@ -8,12 +10,18 @@ use fun::syntax::types::OptTyped;
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::Case {
+impl Compile for fun::syntax::terms::Case {
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} = 〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{μ~x.share(fv(c), x)}, ... }}
+    /// 〚case t of { K_1(x_11, ...) => t_1, ...} 〛_{c} =
+    ///   〚t〛_{case{ K_1(x_11, ...) => 〚t_1〛_{μ~x.share(fv(c), x)}, ... }}
     /// WITH
     /// def share(fv(c), x) { < x | c > }
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
@@ -46,7 +54,7 @@ impl CompileWithCont for fun::syntax::terms::Case {
                 .collect(),
             ty: compile_ty(
                 &self
-                    .destructee
+                    .scrutinee
                     .get_type()
                     .expect("Types should be annotated before translation"),
             ),
@@ -54,13 +62,13 @@ impl CompileWithCont for fun::syntax::terms::Case {
         .into();
 
         // 〚t〛_{new_cont}
-        Rc::unwrap_or_clone(self.destructee).compile_with_cont(new_cont, state)
+        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state)
     }
 }
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::{Cns, Prd};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
@@ -88,7 +96,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let mut context = core_lang::syntax::TypingContext::default();
         context.add_var("x", core_lang::syntax::types::Ty::I64);
@@ -96,11 +104,11 @@ mod compile_tests {
             "xs",
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         );
-        let mut subst = core_lang::syntax::substitution::Substitution::default();
-        subst.add_prod(core_lang::syntax::terms::Literal::new(1));
-        subst.add_prod(core_lang::syntax::terms::Xtor::ctor(
+        let mut arguments = core_lang::syntax::arguments::Arguments::default();
+        arguments.add_prod(core_lang::syntax::terms::Literal::new(1));
+        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
             "Nil",
-            core_lang::syntax::substitution::Substitution::default(),
+            core_lang::syntax::arguments::Arguments::default(),
             core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
         ));
         let expected = core_lang::syntax::terms::Mu::mu(
@@ -109,7 +117,7 @@ mod compile_tests {
                 core_lang::syntax::terms::Xtor {
                     prdcns: Prd,
                     id: "Cons".to_owned(),
-                    args: subst,
+                    args: arguments,
                     ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
                 },
                 core_lang::syntax::terms::XCase {

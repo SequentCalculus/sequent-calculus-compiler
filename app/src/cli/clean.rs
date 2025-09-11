@@ -1,3 +1,5 @@
+//! This module contains the command for deleting all intermediate files.
+
 use driver::Driver;
 
 #[derive(clap::Args)]

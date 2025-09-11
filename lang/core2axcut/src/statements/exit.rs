@@ -1,3 +1,5 @@
+//! This module defines the translation for the exit statement.
+
 use core_lang::syntax::statements::FsExit;
 
 use crate::shrinking::{Shrinking, ShrinkingState};

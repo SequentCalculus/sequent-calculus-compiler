@@ -1,3 +1,5 @@
+//! This module contains the command for generating assembly code for a file.
+
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 

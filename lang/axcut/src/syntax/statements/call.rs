@@ -1,17 +1,23 @@
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::JUMP};
+//! This module defines the call of a top-level function in AxCut.
+
+use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{Name, Statement, Var, names::freshen};
+use crate::syntax::{Arguments, Name, Statement, Var, names::freshen};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the call of a top-level function in AxCut. It consists of the name of the
+/// top-level function to call and the arguments. After linearization, the arguments are
+/// immaterial, because the context then has to exactly fit the signature of the top-level
+/// function anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
-    pub args: Vec<Var>,
+    pub args: Arguments,
 }
 
 impl Print for Call {
@@ -20,16 +26,9 @@ impl Print for Call {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.is_empty() {
-            alloc.nil()
-        } else {
-            self.args.print(cfg, alloc).parens()
-        };
-        alloc
-            .keyword(JUMP)
-            .append(alloc.space())
-            .append(&self.label)
-            .append(args)
+        self.label
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -41,14 +40,14 @@ impl From<Call> for Statement {
 
 impl FreeVars for Call {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.iter().cloned());
+        vars.extend(self.args.entries.iter().cloned());
         self
     }
 }
 
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
-        self.args = self.args.subst_sim(subst);
+        self.args.entries = self.args.entries.subst_sim(subst);
         self
     }
 }
@@ -56,11 +55,14 @@ impl Subst for Call {
 impl Linearizing for Call {
     type Target = Statement;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let args = std::mem::take(&mut self.args);
+        let args = std::mem::take(&mut self.args.entries);
 
+        // the context must consist of the arguments for the top-level function
         if context == args {
+            // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
+            // otherwise we pick fresh names for duplicated variables via an explicit substitution
             let freshened_context = freshen(&args, HashSet::new(), used_vars);
             let rearrange = freshened_context.into_iter().zip(args).collect();
             Substitute {

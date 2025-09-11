@@ -1,33 +1,33 @@
+//! This module defines variables and covariables in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Var,
-        context::{Chirality, TypingContext},
-        types::{OptTyped, Ty},
-    },
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::typing::*;
 
+/// This struct defines variables and covariables. It consists of the name of the (co)variable, and
+/// after typechecking also of the chirality which determines whether this is a variable or
+/// covariable and the inferred type.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct XVar {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The name of the (co)variable
     pub var: Var,
+    /// The (inferred) type
     pub ty: Option<Ty>,
+    /// The chirality, i.e, whether this is a variable or covariable
     pub chi: Option<Chirality>,
 }
 
 impl XVar {
+    /// This function returns a (co)variable from a given string, without chirality and type
+    /// information.
     pub fn mk(var: &str) -> Self {
         XVar {
             span: Span::default(),
@@ -45,11 +45,7 @@ impl OptTyped for XVar {
 }
 
 impl Print for XVar {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var.print(cfg, alloc)
     }
 }
@@ -68,7 +64,7 @@ impl Check for XVar {
         expected: &Ty,
     ) -> Result<Self, Error> {
         use Chirality::*;
-        // Free covariables must only occur in special positions (`goto` and `substitution`s)
+        // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
             return Err(Error::ExpectedTermGotCovariable {
@@ -91,16 +87,10 @@ impl Check for XVar {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::XVar,
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
+
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_var() {

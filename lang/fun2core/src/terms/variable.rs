@@ -1,4 +1,6 @@
-use crate::{compile::CompileWithCont, types::compile_ty};
+//! This module defines the translation for variables.
+
+use crate::{compile::Compile, types::compile_ty};
 use core_lang::syntax::{
     Ty,
     terms::{Cns, Prd},
@@ -6,11 +8,16 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl CompileWithCont for fun::syntax::terms::XVar {
+impl Compile for fun::syntax::terms::XVar {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚v 〛 = v
     /// ```
-    fn compile_opt(
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile(
         self,
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
@@ -27,9 +34,14 @@ impl CompileWithCont for fun::syntax::terms::XVar {
         .into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚v 〛_{c} = ⟨v | c⟩
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,

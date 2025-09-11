@@ -1,21 +1,21 @@
-use printer::{DocAllocator, Print};
+//! This module defines integer literals in Core.
 
-use super::{FsTerm, Mu, Prd, Term};
-use crate::{
-    syntax::{
-        Chirality, ContextBinding, FsStatement, Var, fresh_var, statements::FsCut, types::Ty,
-    },
-    traits::*,
-};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::HashSet;
 
+/// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
+    /// The integer value
     pub lit: i64,
 }
 
 impl Literal {
+    /// This function creates a literal term from a given integer.
     pub fn new(lit: i64) -> Self {
         Literal { lit }
     }
@@ -28,11 +28,7 @@ impl Typed for Literal {
 }
 
 impl Print for Literal {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.text(format!("{}", self.lit))
     }
 }
@@ -50,7 +46,7 @@ impl From<Literal> for FsTerm<Prd> {
 }
 
 impl Bind for Literal {
-    ///bind(⌜n⌝)[k] = ⟨⌜n⌝ | ~μx.k(x)⟩
+    // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {
@@ -69,14 +65,8 @@ impl Bind for Literal {
 
 #[cfg(test)]
 mod lit_tests {
-    use super::Bind;
-    use super::Literal;
-    use crate::syntax::{
-        FsStatement,
-        statements::{FsCut, FsExit},
-        terms::Mu,
-        types::Ty,
-    };
+    use crate::syntax::*;
+    use crate::traits::*;
 
     // Focusing tests
 

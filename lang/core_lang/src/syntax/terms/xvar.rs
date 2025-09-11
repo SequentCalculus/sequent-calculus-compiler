@@ -1,25 +1,27 @@
-use printer::Print;
+//! This module defines variables and covariables in Core.
 
-use super::{Cns, ContextBinding, FsTerm, Prd, PrdCns, Term};
-use crate::{
-    syntax::{Covar, FsStatement, Var, context::Chirality, types::Ty},
-    traits::*,
-};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 
-/// Either a variable or a covariable:
-/// - A variable if `T = Prd`
-/// - A covariable if `T = Cns`
+/// This struct defines variables and covariables. It consists of the information that determines
+/// whether it is a variable (if `C` is instantiated with [`Prd`]) or a covariable (if `C` is
+/// instantiated with [`Cns`]), a name for the (co)variable, and of the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XVar<T: PrdCns> {
-    pub prdcns: T,
+pub struct XVar<C: Chi> {
+    /// Whether we have a variable or covariable
+    pub prdcns: C,
+    /// The name of the (co)variable
     pub var: Var,
+    /// The type
     pub ty: Ty,
 }
 
 impl XVar<Prd> {
-    /// Create a new variable with the given name.
+    /// This function creates a variable with the given name and type.
     pub fn var(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
@@ -29,7 +31,7 @@ impl XVar<Prd> {
     }
 }
 impl XVar<Cns> {
-    /// Create a new covariable with the given name.
+    /// This function creates a covariable with the given name and type.
     pub fn covar(name: &str, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,
@@ -39,30 +41,26 @@ impl XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> Typed for XVar<T> {
+impl<C: Chi> Typed for XVar<C> {
     fn get_type(&self) -> Ty {
         self.ty.clone()
     }
 }
 
-impl<T: PrdCns> Print for XVar<T> {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+impl<C: Chi> Print for XVar<C> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.var.print(cfg, alloc)
     }
 }
 
-impl<T: PrdCns> From<XVar<T>> for Term<T> {
-    fn from(value: XVar<T>) -> Self {
+impl<C: Chi> From<XVar<C>> for Term<C> {
+    fn from(value: XVar<C>) -> Self {
         Term::XVar(value)
     }
 }
 
-impl<T: PrdCns> From<XVar<T>> for FsTerm<T> {
-    fn from(value: XVar<T>) -> Self {
+impl<C: Chi> From<XVar<C>> for FsTerm<C> {
+    fn from(value: XVar<C>) -> Self {
         FsTerm::XVar(value)
     }
 }
@@ -94,7 +92,7 @@ impl Subst for XVar<Cns> {
     }
 }
 
-impl<T: PrdCns> TypedFreeVars for XVar<T> {
+impl<C: Chi> TypedFreeVars for XVar<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
@@ -109,7 +107,7 @@ impl<T: PrdCns> TypedFreeVars for XVar<T> {
     }
 }
 
-impl<T: PrdCns> Bind for XVar<T> {
+impl<C: Chi> Bind for XVar<C> {
     fn bind(self, k: Continuation, used_var: &mut HashSet<Var>) -> FsStatement {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
@@ -126,9 +124,9 @@ impl<T: PrdCns> Bind for XVar<T> {
     }
 }
 
-impl<T: PrdCns> SubstVar for XVar<T> {
-    type Target = XVar<T>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<T> {
+impl<C: Chi> SubstVar for XVar<C> {
+    type Target = XVar<C>;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<C> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {
@@ -141,9 +139,9 @@ impl<T: PrdCns> SubstVar for XVar<T> {
 
 #[cfg(test)]
 mod var_tests {
-
-    use super::{Subst, XVar};
-    use crate::{syntax::types::Ty, test_common::example_subst};
+    use super::Subst;
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
 
     // Substitution tests
 

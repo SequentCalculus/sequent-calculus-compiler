@@ -1,29 +1,28 @@
+//! This module defines parenthesized terms.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::Print;
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines a term in parentheses.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Paren {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The inner term
     pub inner: Rc<Term>,
 }
 
 impl Paren {
+    /// This function creates a parenthesized term from a given term.
     pub fn mk<T: Into<Term>>(tm: T) -> Self {
         Paren {
             span: Span::default(),
@@ -39,12 +38,13 @@ impl OptTyped for Paren {
 }
 
 impl Print for Paren {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.inner.print(cfg, alloc).parens()
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc
+            .line_()
+            .append(self.inner.print(cfg, alloc).group())
+            .nest(cfg.indent)
+            .append(alloc.line_())
+            .parens()
     }
 }
 
@@ -74,15 +74,8 @@ impl UsedBinders for Paren {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::TypingContext,
-            terms::{Lit, Paren},
-            types::Ty,
-        },
-        typing::symbol_table::SymbolTable,
-    };
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_parens() {

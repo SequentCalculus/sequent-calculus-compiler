@@ -1,33 +1,40 @@
+//! This module defines a pattern match of a data type in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{CASE, DOT},
-};
+use printer::tokens::{CASE, DOT};
+use printer::*;
 
-use super::{Clause, Term, print_clauses};
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty, TypeArgs},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
+/// match, a list of type arguments instantiating the type parameters of the data type, a list of
+/// clauses, and after typechecking also of the inferred type.
+///
+/// Example:
+/// ```text
+/// l.case[i64] { Nil => 0, Cons(x, xs) => 1 + len(xs) }
+/// ```
+/// matches on list `l` with type argument `i64`, i.e., requires the list to be `List[i64]`. It
+/// has clauses for the patterns `Nil` and `Cons(x, xs)`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Case {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub destructee: Rc<Term>,
+    /// The term to be matched on
+    pub scrutinee: Rc<Term>,
+    /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
+    /// The list of clauses
     pub clauses: Vec<Clause>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -38,18 +45,27 @@ impl OptTyped for Case {
 }
 
 impl Print for Case {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.destructee
-            .print(cfg, alloc)
-            .append(DOT)
-            .append(alloc.keyword(CASE))
-            .append(self.type_args.print(cfg, alloc))
-            .append(alloc.space())
-            .append(print_clauses(&self.clauses, cfg, alloc))
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if matches!(*self.scrutinee, Term::Destructor(_)) {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(alloc.line_())
+                .append(DOT)
+                .append(alloc.keyword(CASE))
+                .append(self.type_args.print(cfg, alloc))
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
+                .nest(cfg.indent)
+                .align()
+        } else {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.keyword(CASE))
+                .append(self.type_args.print(cfg, alloc))
+                .append(alloc.space())
+                .append(print_clauses(&self.clauses, cfg, alloc))
+        }
     }
 }
 
@@ -66,14 +82,16 @@ impl Check for Case {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        // Find out the type on which we pattern match by inspecting the first clause.
-        // We throw an error for empty cases.
+        // Find out the type on which we pattern match by inspecting the first clause. We throw an
+        // error for empty cases.
         let (ty, expected_ctors) = match self.clauses.first() {
             Some(clause) => {
+                // the name of the constructor in the symbol table for the instantiated data type
                 let ctor_name = clause.xtor.clone() + &self.type_args.print_to_string(None);
                 match symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &ctor_name) {
                     Ok(ty) => ty,
                     Err(_) => {
+                        // if there is no instance yet, we create on from the template
                         symbol_table.lookup_ty_template_for_ctor(&clause.xtor, &self.type_args)?
                     }
                 }
@@ -85,11 +103,12 @@ impl Check for Case {
             }
         };
 
-        // We check the "e" in "case e of {...}" against this type.
-        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
+        // We check the scrutinee `e` in `e.case {...}` against this type.
+        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
 
         let mut new_clauses = vec![];
         for ctor in expected_ctors {
+            // the name of the constructor in the symbol table for the instantiated data type
             let ctor_name = ctor.clone() + &self.type_args.print_to_string(None);
             let mut clause = if let Some(position) =
                 self.clauses.iter().position(|clause| clause.xtor == ctor)
@@ -144,26 +163,21 @@ impl Check for Case {
 
 impl UsedBinders for Case {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.destructee.used_binders(used);
+        self.scrutinee.used_binders(used);
         self.clauses.used_binders(used);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::context::{Chirality::Prd, NameContext, TypingContext},
-        syntax::{
-            declarations::Polarity,
-            terms::{Case, Clause, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list_template,
-    };
     use codespan::Span;
-    use printer::Print;
+    use printer::*;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
@@ -197,7 +211,7 @@ mod test {
                     body: XVar::mk("x").into(),
                 },
             ],
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: None,
         }
@@ -229,7 +243,7 @@ mod test {
                     .into(),
                 },
             ],
-            destructee: Rc::new(
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -260,7 +274,7 @@ mod test {
                 context: TypingContext::default(),
                 body: XVar::mk("x").into(),
             }],
-            destructee: Rc::new(Lit::mk(1).into()),
+            scrutinee: Rc::new(Lit::mk(1).into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
@@ -271,7 +285,7 @@ mod test {
     fn example_empty() -> Case {
         Case {
             span: Span::default(),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::default(),
             clauses: vec![],
             ty: None,
@@ -284,7 +298,7 @@ mod test {
         ctx_names.bindings.push("y".to_string());
         Case {
             span: Span::default(),
-            destructee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             clauses: vec![Clause {
                 span: Span::default(),

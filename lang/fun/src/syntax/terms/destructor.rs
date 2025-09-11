@@ -1,35 +1,39 @@
+//! This module defines invoking destructors of codata types.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DOT};
+use printer::tokens::DOT;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Name, Var,
-        context::TypingContext,
-        substitution::Substitution,
-        types::{OptTyped, Ty, TypeArgs},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_args, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
+/// on which to invoke the destructor, the name of the destructor, a list of type arguments
+/// instantiating the type parameters of the codata type, the arguments of the destructor, and
+/// after typechecking also of the inferred type.
+///
+/// Example:
+/// `stream.Head[i64]` invokes the destructor `Head` on a `stream` with type argument `i64`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Destructor {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The term the destructor is invoked on
+    pub scrutinee: Rc<Term>,
+    /// The destructor name
     pub id: Name,
-    pub destructee: Rc<Term>,
+    /// The type arguments instantiating the type parameters of the type
     pub type_args: TypeArgs,
-    pub args: Substitution,
+    /// The arguments of the destructor
+    pub args: Arguments,
+    /// Type (inferred) of the term
     pub ty: Option<Ty>,
 }
 
@@ -40,22 +44,34 @@ impl OptTyped for Destructor {
 }
 
 impl Print for Destructor {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        let print_args = if self.args.is_empty() {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let args = if self.args.entries.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
         };
-        self.destructee
-            .print(cfg, alloc)
-            .append(DOT)
-            .append(alloc.dtor(&self.id))
-            .append(self.type_args.print(cfg, alloc))
-            .append(print_args)
+
+        if (matches!(*self.scrutinee, Term::XVar(_))
+            || matches!(*self.scrutinee, Term::Call(ref call) if call.args.entries.is_empty()))
+            && (self.scrutinee.print_to_string(Some(cfg)).len() <= cfg.indent as usize)
+        {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
+                .append(self.type_args.print(cfg, alloc))
+                .append(args.group())
+        } else {
+            self.scrutinee
+                .print(cfg, alloc)
+                .append(alloc.line_())
+                .append(DOT)
+                .append(alloc.dtor(&self.id))
+                .append(self.type_args.print(cfg, alloc))
+                .append(args.group())
+                .nest(cfg.indent)
+                .align()
+        }
     }
 }
 
@@ -72,13 +88,15 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        // the name of the constructor in the symbol table for the instantiated data type
         let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
         let ty = match symbol_table.lookup_ty_for_dtor(&self.span.to_miette(), &dtor_name) {
             Ok(ty) => ty,
+            // if there is no instance yet, we create an instance from the template
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
         };
 
-        self.destructee = self.destructee.check(symbol_table, context, &ty)?;
+        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
 
         match symbol_table.dtors.get(&dtor_name) {
             Some(signature) => {
@@ -107,29 +125,21 @@ impl Check for Destructor {
 
 impl UsedBinders for Destructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.destructee.used_binders(used);
-        self.args.used_binders(used);
+        self.scrutinee.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 
 #[cfg(test)]
 mod destructor_tests {
-    use super::Check;
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{
-                Chirality::{Cns, Prd},
-                TypingContext,
-            },
-            terms::{Destructor, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{symbol_table_fun_template, symbol_table_lpair},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
@@ -142,20 +152,20 @@ mod destructor_tests {
         let mut symbol_table = symbol_table_lpair();
         let result = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
+            id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            args: vec![],
-            destructee: Rc::new(XVar::mk("x").into()),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
-            args: vec![],
+            id: "fst".to_owned(),
+            args: vec![].into(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            destructee: Rc::new(
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -183,17 +193,17 @@ mod destructor_tests {
         let mut symbol_table = symbol_table_fun_template();
         let result = Destructor {
             span: Span::default(),
-            id: "Apply".to_owned(),
+            id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            args: vec![Lit::mk(1).into(), XVar::mk("a").into()],
-            destructee: Rc::new(XVar::mk("x").into()),
+            args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: Span::default(),
-            id: "Apply".to_owned(),
+            id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![
                 Lit::mk(1).into(),
@@ -204,8 +214,9 @@ mod destructor_tests {
                     chi: Some(Cns),
                 }
                 .into(),
-            ],
-            destructee: Rc::new(
+            ]
+            .into(),
+            scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
                     var: "x".to_owned(),
@@ -228,50 +239,53 @@ mod destructor_tests {
         ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            args: vec![],
-            destructee: Rc::new(XVar::mk("x").into()),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 
-    /// "x.hd"
+    /// "x.head"
     fn example_1() -> Destructor {
         Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            destructee: Rc::new(XVar::mk("x").into()),
-            args: vec![],
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            args: vec![].into(),
             ty: None,
         }
     }
 
-    /// "x.hd.hd"
+    /// "x.head.head"
     fn example_2() -> Destructor {
         Destructor {
             span: Span::default(),
-            id: "Hd".to_owned(),
+            id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            destructee: Rc::new(example_1().into()),
-            args: vec![],
+            scrutinee: Rc::new(example_1().into()),
+            args: vec![].into(),
             ty: None,
         }
     }
 
     #[test]
     fn display_1() {
-        assert_eq!(example_1().print_to_string(Default::default()), "x.Hd[i64]")
+        assert_eq!(
+            example_1().print_to_string(Default::default()),
+            "x.head[i64]"
+        )
     }
 
     #[test]
     fn display_2() {
         assert_eq!(
             example_2().print_to_string(Default::default()),
-            "x.Hd[i64].Hd[i64]"
+            "x.head[i64]\n    .head[i64]"
         )
     }
 
@@ -279,26 +293,29 @@ mod destructor_tests {
     fn display_3() {
         let dest = Destructor {
             span: Span::default(),
-            id: "Fst".to_owned(),
+            id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            destructee: Rc::new(XVar::mk("x").into()),
-            args: vec![XVar::mk("y").into(), XVar::mk("z").into()],
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            args: vec![XVar::mk("y").into(), XVar::mk("z").into()].into(),
             ty: None,
         };
         let result = dest.print_to_string(Default::default());
-        let expected = "x.Fst[i64, i64](y, z)".to_owned();
+        let expected = "x.fst[i64, i64](y, z)".to_owned();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn parse_1() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64]"), Ok(example_1().into()));
+        assert_eq!(parser.parse("x.head[i64]"), Ok(example_1().into()));
     }
 
     #[test]
     fn parse_2() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("x.Hd[i64].Hd[i64]"), Ok(example_2().into()));
+        assert_eq!(
+            parser.parse("x.head[i64].head[i64]"),
+            Ok(example_2().into())
+        );
     }
 }

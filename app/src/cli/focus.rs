@@ -1,3 +1,5 @@
+//! This module contains the command for focusing the definitions of a file.
+
 use std::path::PathBuf;
 
 use driver::{Driver, PrintMode};

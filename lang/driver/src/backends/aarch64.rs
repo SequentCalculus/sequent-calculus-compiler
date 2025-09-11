@@ -1,4 +1,5 @@
-//! Compiler logic for generating aarch64 assembly files, and subsequent compilation to object files and linking.
+//! This module contains the compiler logic for generating Aarch64 assembly files and subsequent
+//! compilation to object files and linking against the runtime.
 
 use std::{fs::File, io::Write, path::PathBuf, process::Command};
 
@@ -13,6 +14,10 @@ use crate::{
 };
 
 impl Driver {
+    /// This function compiles a source file to assembly code and prints it to a file either as
+    /// text or as LaTeX code.
+    /// - `path` is the path to the source file.
+    /// - `mode` determines whether the assembly code is printed in textual mode or as LaTeX code.
     pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<usize, DriverError> {
         let linearized = self.linearized(path)?;
         let code = compile::<axcut2aarch64::Backend, _, _, _>(linearized);
@@ -53,6 +58,10 @@ impl Driver {
         Ok(number_of_arguments)
     }
 
+    /// This function compiles a source file to an executable, including the generation of object
+    /// file and linkage against the runtime.
+    /// - `path` is the path to the source file.
+    /// - `heap_size` is the heap size the program needs.
     pub fn compile_aarch64(
         &mut self,
         path: &PathBuf,

@@ -1,26 +1,26 @@
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
+//! This module defines the exit statement in Core.
 
-use super::{ContextBinding, Covar, Statement, Var};
-use crate::{
-    syntax::{
-        FsStatement,
-        context::Chirality,
-        terms::{Cns, Prd, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use printer::tokens::EXIT;
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This struct defines the exit statement in Core. It consists of a term for the exit code and the
+/// type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exit {
+    /// The exit code
     pub arg: Rc<Term<Prd>>,
+    /// The type
     pub ty: Ty,
 }
 
 impl Exit {
+    /// This function constructs an exit statement from given argument and type.
     #[allow(clippy::self_named_constructors)]
     pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
         Exit {
@@ -30,12 +30,14 @@ impl Exit {
     }
 }
 
+impl Typed for Exit {
+    fn get_type(&self) -> Ty {
+        self.ty.clone()
+    }
+}
+
 impl Print for Exit {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
             .keyword(EXIT)
             .append(alloc.space())
@@ -46,12 +48,6 @@ impl Print for Exit {
 impl From<Exit> for Statement {
     fn from(value: Exit) -> Self {
         Statement::Exit(value)
-    }
-}
-
-impl Typed for Exit {
-    fn get_type(&self) -> Ty {
-        self.ty.clone()
     }
 }
 
@@ -84,7 +80,7 @@ impl Uniquify for Exit {
 
 impl Focusing for Exit {
     type Target = FsStatement;
-    ///N(exit p) = bind(p)[λa.exit a]
+    // focus(exit p) = bind(p)[λa.exit a]
     fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
         let cont = Box::new(Box::new(|binding: ContextBinding, _: &mut HashSet<Var>| {
             FsExit { var: binding.var }.into()
@@ -93,13 +89,15 @@ impl Focusing for Exit {
     }
 }
 
-/// Focused exit operator
+/// This struct defines the focused version of the [`Exit`] statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsExit {
+    /// The exit code (always a variable here)
     pub var: Var,
 }
 
 impl FsExit {
+    /// This fcuntion constructs an exit statement from a given variable.
     #[allow(clippy::self_named_constructors)]
     pub fn exit(var: &str) -> Self {
         FsExit {
@@ -109,11 +107,7 @@ impl FsExit {
 }
 
 impl Print for FsExit {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc.keyword(EXIT).append(alloc.space()).append(&self.var)
     }
 }

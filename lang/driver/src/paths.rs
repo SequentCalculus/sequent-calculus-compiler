@@ -1,4 +1,4 @@
-//! Various file paths used by the compiler
+//! This moduel defines various file paths used by the compiler.
 
 use std::{
     fs::create_dir_all,
@@ -8,17 +8,11 @@ use std::{
 /// Base path for benchmarks
 pub const BENCHMARKS_PATH: &str = "benchmarks/suite";
 
-/// Path for benchmarking results
-pub const BENCHMARKS_RESULTS: &str = "benchmarks/results";
-
-/// Path for benchmarking reports
-pub const BENCHMARKS_REPORTS: &str = "benchmarks/reports";
-
 /// Base path for examples
 pub const EXAMPLES_PATH: &str = "examples";
 
 /// Base path for all build artefacts
-pub const TARGET_PATH: &str = "target_grk";
+pub const TARGET_PATH: &str = "target_scc";
 
 /// Path for compiled files
 pub const COMPILED_PATH: &str = "compiled";
@@ -62,7 +56,7 @@ impl Paths {
     /// Return the directory for `tex` and `pdf` files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::pdf_dir().to_str().unwrap(), "target_grk/pdf")
+    /// assert_eq!(Paths::pdf_dir().to_str().unwrap(), "target_scc/pdf")
     /// ```
     pub fn pdf_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(PDF_PATH)
@@ -76,7 +70,7 @@ impl Paths {
     /// Return the directory for files after compilation to sequent calculus.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::compiled_dir().to_str().unwrap(), "target_grk/compiled")
+    /// assert_eq!(Paths::compiled_dir().to_str().unwrap(), "target_scc/compiled")
     /// ```
     pub fn compiled_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(COMPILED_PATH)
@@ -90,7 +84,7 @@ impl Paths {
     /// Return the directory for files after focusing.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::focused_dir().to_str().unwrap(), "target_grk/focused")
+    /// assert_eq!(Paths::focused_dir().to_str().unwrap(), "target_scc/focused")
     /// ```
     pub fn focused_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(FOCUSED_PATH)
@@ -104,7 +98,7 @@ impl Paths {
     /// Return the directory for files after shrinking.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::shrunk_dir().to_str().unwrap(), "target_grk/shrunk")
+    /// assert_eq!(Paths::shrunk_dir().to_str().unwrap(), "target_scc/shrunk")
     /// ```
     pub fn shrunk_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(SHRUNK_PATH)
@@ -118,7 +112,7 @@ impl Paths {
     /// Return the directory for files after linearization.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::linearized_dir().to_str().unwrap(), "target_grk/linearized")
+    /// assert_eq!(Paths::linearized_dir().to_str().unwrap(), "target_scc/linearized")
     /// ```
     pub fn linearized_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(LINEARIZED_PATH)
@@ -132,7 +126,7 @@ impl Paths {
     /// Return the directory for the infrastructure files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::infrastructure_dir().to_str().unwrap(), "target_grk/infrastructure")
+    /// assert_eq!(Paths::infrastructure_dir().to_str().unwrap(), "target_scc/infrastructure")
     /// ```
     pub fn infrastructure_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(INFRA_PATH)
@@ -143,14 +137,14 @@ impl Paths {
         create_dir_all(Paths::infrastructure_dir()).expect("Could not create path");
     }
 
-    // Risc-V
     //
+    // RISC-V
     //
 
     /// Return the directory for Risc-V assembly files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::risc_v_assembly_dir().to_str().unwrap(), "target_grk/assembly/rv_64")
+    /// assert_eq!(Paths::risc_v_assembly_dir().to_str().unwrap(), "target_scc/assembly/rv_64")
     /// ```
     pub fn risc_v_assembly_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(RV_64_PATH)
@@ -161,14 +155,14 @@ impl Paths {
         create_dir_all(Paths::risc_v_assembly_dir()).expect("Could not create path");
     }
 
-    // X86-64
     //
+    // x86-64
     //
 
     /// Return the directory for x86-64 assembly files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::x86_64_assembly_dir().to_str().unwrap(), "target_grk/assembly/x86_64")
+    /// assert_eq!(Paths::x86_64_assembly_dir().to_str().unwrap(), "target_scc/assembly/x86_64")
     /// ```
     pub fn x86_64_assembly_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(ASSEMBLY_PATH).join(X86_64_PATH)
@@ -182,7 +176,7 @@ impl Paths {
     /// Return the directory for x86-64 object files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::x86_64_object_dir().to_str().unwrap(), "target_grk/object/x86_64")
+    /// assert_eq!(Paths::x86_64_object_dir().to_str().unwrap(), "target_scc/object/x86_64")
     /// ```
     pub fn x86_64_object_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(OBJECT_PATH).join(X86_64_PATH)
@@ -196,7 +190,7 @@ impl Paths {
     /// Return the directory for x86-64 binaries.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::x86_64_binary_dir().to_str().unwrap(), "target_grk/bin/x86_64")
+    /// assert_eq!(Paths::x86_64_binary_dir().to_str().unwrap(), "target_scc/bin/x86_64")
     /// ```
     pub fn x86_64_binary_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(BIN_PATH).join(X86_64_PATH)
@@ -207,14 +201,14 @@ impl Paths {
         create_dir_all(Paths::x86_64_binary_dir()).expect("Could not create path");
     }
 
-    // aarch64
     //
+    // Aarch64
     //
 
     /// Return the directory for aarch64 assembly files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_grk/assembly/aarch_64")
+    /// assert_eq!(Paths::aarch64_assembly_dir().to_str().unwrap(), "target_scc/assembly/aarch_64")
     /// ```
     pub fn aarch64_assembly_dir() -> PathBuf {
         Path::new(TARGET_PATH)
@@ -230,7 +224,7 @@ impl Paths {
     /// Return the directory for aarch64 object files.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_object_dir().to_str().unwrap(), "target_grk/object/aarch_64")
+    /// assert_eq!(Paths::aarch64_object_dir().to_str().unwrap(), "target_scc/object/aarch_64")
     /// ```
     pub fn aarch64_object_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(OBJECT_PATH).join(AARCH64_PATH)
@@ -244,7 +238,7 @@ impl Paths {
     /// Return the directory for aarch64 binaries.
     /// ```rust
     /// use driver::paths::Paths;
-    /// assert_eq!(Paths::aarch64_binary_dir().to_str().unwrap(), "target_grk/bin/aarch_64")
+    /// assert_eq!(Paths::aarch64_binary_dir().to_str().unwrap(), "target_scc/bin/aarch_64")
     /// ```
     pub fn aarch64_binary_dir() -> PathBuf {
         Path::new(TARGET_PATH).join(BIN_PATH).join(AARCH64_PATH)

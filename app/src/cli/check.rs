@@ -1,3 +1,5 @@
+//! This module contains the command for typechecking a file.
+
 use std::path::PathBuf;
 
 use driver::Driver;

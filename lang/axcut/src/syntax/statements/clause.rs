@@ -1,6 +1,11 @@
-use printer::tokens::{COMMA, FAT_ARROW};
-use printer::util::BracesExt;
-use printer::{DocAllocator, Print};
+//! This module defines a clause in a match or a closure in AxCut.
+
+use printer::{
+    DocAllocator, Print,
+    theme::ThemeExt,
+    tokens::{COMMA, FAT_ARROW},
+    util::BracesExt,
+};
 
 use crate::syntax::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
@@ -9,6 +14,8 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This struct defines a clause in a match or a closure in AxCut. It consists of a name of the
+/// corresponding xtor, the context it binds, and the body.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
     pub xtor: Name,
@@ -39,13 +46,21 @@ impl Print for Clause {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
+        let context = if self.context.bindings.is_empty() {
+            alloc.nil()
+        } else {
+            self.context.print(cfg, alloc).parens()
+        };
+
         alloc
-            .text(&self.xtor)
-            .append(self.context.print(cfg, alloc))
+            .ctor(&self.xtor)
+            .append(context.group())
             .append(alloc.space())
             .append(FAT_ARROW)
-            .append(alloc.line().nest(cfg.indent))
-            .append(self.body.print(cfg, alloc).nest(cfg.indent))
+            .align()
+            .append(alloc.line())
+            .append(self.body.print(cfg, alloc).group())
+            .nest(cfg.indent)
     }
 }
 
@@ -67,7 +82,14 @@ pub fn print_clauses<'a>(
             let sep = alloc.text(COMMA).append(alloc.hardline());
             alloc
                 .hardline()
-                .append(alloc.intersperse(clauses.iter().map(|x| x.print(cfg, alloc)), sep.clone()))
+                .append(
+                    alloc.intersperse(
+                        clauses
+                            .iter()
+                            .map(|clause| clause.print(cfg, alloc).group()),
+                        sep,
+                    ),
+                )
                 .nest(cfg.indent)
                 .append(alloc.hardline())
                 .braces_anno()

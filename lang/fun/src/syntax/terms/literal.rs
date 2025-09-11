@@ -1,33 +1,29 @@
+//! This module defines integer literals in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::syntax::*;
+use crate::typing::*;
 
+/// This struct defines integer literals in Fun.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Lit {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
-    pub val: i64,
+    /// The integer value
+    pub lit: i64,
 }
 
 impl Lit {
-    pub fn mk(val: i64) -> Self {
+    /// This function creates a literal term from a given integer.
+    pub fn mk(lit: i64) -> Self {
         Lit {
             span: Span::default(),
-            val,
+            lit,
         }
     }
 }
@@ -39,12 +35,8 @@ impl OptTyped for Lit {
 }
 
 impl Print for Lit {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc.text(format!("{}", self.val))
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc.text(format!("{}", self.lit))
     }
 }
 
@@ -68,15 +60,8 @@ impl Check for Lit {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use crate::{
-        syntax::{
-            context::TypingContext,
-            terms::Lit,
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
+    use crate::syntax::*;
+    use crate::typing::*;
 
     #[test]
     fn check_lit() {

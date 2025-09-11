@@ -1,33 +1,32 @@
+//! This module defines the call of a top-level function in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print};
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Name, Var,
-        context::TypingContext,
-        substitution::Substitution,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_args, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::collections::HashSet;
 
+/// This struct defines the call of a top-level function in Fun. It consists of the name of the
+/// top-level function to call, the arguments, and after typechecking also the inferred type.
+///
+/// Example:
+/// `fac(10)`, calls the top-level function `fac` with argument `10`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Call {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The name of the top-level function being called
     pub name: Name,
-    pub args: Substitution,
+    /// The arguments
+    pub args: Arguments,
+    /// The (inferred) return type
     pub ret_ty: Option<Ty>,
 }
 
@@ -38,14 +37,10 @@ impl OptTyped for Call {
 }
 
 impl Print for Call {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        alloc
-            .text(self.name.clone())
-            .append(self.args.print(cfg, alloc).parens())
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.name
+            .print(cfg, alloc)
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -88,25 +83,19 @@ impl Check for Call {
 
 impl UsedBinders for Call {
     fn used_binders(&self, used: &mut HashSet<Var>) {
-        self.args.used_binders(used);
+        self.args.entries.used_binders(used);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Call, Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::TypingContext,
-            terms::{Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::{def_mult, def_mult_typed, symbol_table_list},
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
 
     #[test]
     fn check_mult() {
@@ -129,7 +118,7 @@ mod test {
         let result = Call {
             span: Span::default(),
             name: "main".to_owned(),
-            args: vec![],
+            args: vec![].into(),
             ret_ty: None,
         }
         .check(
@@ -147,7 +136,7 @@ mod test {
         Call {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![],
+            args: vec![].into(),
             ret_ty: None,
         }
     }
@@ -170,7 +159,7 @@ mod test {
         Call {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()],
+            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,
         }
     }

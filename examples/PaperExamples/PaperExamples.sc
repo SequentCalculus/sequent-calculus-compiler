@@ -14,19 +14,19 @@ data List[A] { Nil, Cons(x: A, xs: List[A]) }
 def sum(x:List[i64]) : i64 { x.case[i64] { Nil => 0,
                                            Cons(y, ys) => y + sum(ys) }}
 
-codata Stream[A] { Hd : A, Tl : Stream[A] }
-def repeat(x:i64) : Stream[i64] { new { Hd => x, Tl => repeat(x) } }
+codata Stream[A] { head : A, tail : Stream[A] }
+def repeat(x:i64) : Stream[i64] { new { head => x, tail => repeat(x) } }
 
 // section 2.4.1, example 2.4
 data Pair[A, B] { Tup(x:A, y:B) }
 def swap(x:Pair[i64, i64]) : Pair[i64, i64] { x.case[i64, i64] { Tup(y, z) => Tup(z, y) } }
 
 // section 2.4.2, example 2.5
-codata LazyPair[A, B] { Fst : A, Snd : B }
-def swaplazy(x:LazyPair[i64, i64]) : LazyPair[i64, i64] { new { Fst => x.Snd[i64, i64], Snd => x.Fst[i64, i64] } }
+codata LazyPair[A, B] { fst : A, snd : B }
+def swaplazy(x:LazyPair[i64, i64]) : LazyPair[i64, i64] { new { fst => x.snd[i64, i64], snd => x.fst[i64, i64] } }
 
 // example 2.6
-def ex26() : i64 { new { Apply(x) => x * x }.Apply[i64, i64](2) }
+def ex26() : i64 { new { apply(x) => x * x }.apply[i64, i64](2) }
 
 //example 2.7 def mult(l:List[i64]) : i64 { label a { mult2(l, a) }}
 def mult2(l:List[i64],a:cns i64) : i64 { l.case[i64] { Nil => 1,
@@ -45,12 +45,12 @@ def casecase() : List[i64] { Nil.case[i64] { Nil => Nil, Cons(x, xs) => xs}.case
                    Cons(y, ys) => ys }}
 
 //section 5.5
-def tltltl() : Stream[i64] { repeat(1).Tl[i64].Tl[i64].Tl[i64] }
+def tltltl() : Stream[i64] { repeat(1).tail[i64].tail[i64].tail[i64] }
 
 //section 5.6
-codata Fun[A, B] { Apply(x: A) : B }
-def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = new { Apply(y) => (goto b (new { Apply(z) => 1 })).Apply[i64, i64](y) }; new { Apply(z) => 3 }}
-def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto b (new { Apply(z) => 1 }); new { Apply(z) => 3 }}
+codata Fun[A, B] { apply(x: A) : B }
+def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = new { apply(y) => (goto b (new { apply(z) => 1 })).apply[i64, i64](y) }; new { apply(z) => 3 }}
+def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto b (new { apply(z) => 1 }); new { apply(z) => 3 }}
 
 //def main : i64 { println_i64(ex211());
 //                 0 }
@@ -64,7 +64,7 @@ def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = 
 //                 0 }
 //def main : Stream[i64] := { repeat(1) }
 //def main : Pair[i64, i64] := { swap(Tup(1, 2)) }
-//def main : i64 { println_i64(swaplazy(new { Fst => 1, Snd => 2 }).Snd[i64, i64]);
+//def main : i64 { println_i64(swaplazy(new { fst => 1, snd => 2 }).snd[i64, i64]);
 //                 0 }
 //def main : i64 { println_i64(ex26());
 //                 0 }

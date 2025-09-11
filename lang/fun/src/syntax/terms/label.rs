@@ -1,27 +1,35 @@
+//! This module defines the control operator for capturing current continuation/program context in
+//! Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::LABEL, util::BracesExt};
+use printer::tokens::LABEL;
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Covar, Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the control operator capturing the current continuation/program context. It
+/// consists of a covariable to which the continuation is bound, the body in which the continuation
+/// is available, and after typechecking also of the inferred type.
+///
+/// Example:
+/// `label a { goto a (5)}` captures the current continuation, binds it to covariable `a` and
+/// invokes it with argument `5`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Label {
+    // The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The covariable to which the continuation is bound
     pub label: Covar,
+    /// The body in which the continuation is in scope
     pub term: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -32,17 +40,21 @@ impl OptTyped for Label {
 }
 
 impl Print for Label {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
             .append(self.label.clone())
             .append(alloc.space())
-            .append(self.term.print(cfg, alloc).braces_anno())
+            .append(
+                alloc
+                    .line()
+                    .append(self.term.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line())
+                    .braces_anno()
+                    .group(),
+            )
     }
 }
 impl From<Label> for Term {
@@ -76,19 +88,13 @@ impl UsedBinders for Label {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::{
-        syntax::{
-            terms::{Label, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
@@ -144,6 +150,9 @@ mod test {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "label x {2}")
+        assert_eq!(
+            example().print_to_string(Default::default()),
+            "label x { 2 }"
+        )
     }
 }

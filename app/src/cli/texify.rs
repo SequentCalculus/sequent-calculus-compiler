@@ -1,3 +1,5 @@
+//! This module contains the command for printing program representations as LaTeX code.
+
 use std::fmt;
 
 use driver::{Driver, latex::Arch};
@@ -54,6 +56,7 @@ pub struct Args {
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let cfg = PrintCfg {
         width: cmd.width,
+        allow_linebreaks: true,
         latex: true,
         omit_decl_sep: true,
         indent: cmd.indent,

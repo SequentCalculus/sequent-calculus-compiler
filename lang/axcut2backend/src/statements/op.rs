@@ -1,3 +1,5 @@
+//! This module defines the code generation for arithmetic binary operations.
+
 use printer::Print;
 
 use super::CodeStatement;

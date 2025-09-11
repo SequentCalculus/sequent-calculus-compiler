@@ -1,4 +1,6 @@
-use crate::compile::{Compile, CompileState, CompileWithCont};
+//! This module defines the translation of arithmetic binary operations.
+
+use crate::compile::{Compile, CompileState};
 use core_lang::syntax::{
     Ty,
     terms::{Cns, Prd},
@@ -6,36 +8,37 @@ use core_lang::syntax::{
 
 use std::rc::Rc;
 
-impl Compile for fun::syntax::terms::BinOp {
-    type Target = core_lang::syntax::BinOp;
-    fn compile(self, _state: &mut CompileState) -> Self::Target {
-        match self {
-            fun::syntax::terms::BinOp::Div => core_lang::syntax::BinOp::Div,
-            fun::syntax::terms::BinOp::Prod => core_lang::syntax::BinOp::Prod,
-            fun::syntax::terms::BinOp::Rem => core_lang::syntax::BinOp::Rem,
-            fun::syntax::terms::BinOp::Sum => core_lang::syntax::BinOp::Sum,
-            fun::syntax::terms::BinOp::Sub => core_lang::syntax::BinOp::Sub,
-        }
+/// This function converts [arithmetic binary operations in Fun](fun::syntax::terms::BinOp) to
+/// [arithmetic binary operations in Core](core_lang::syntax::BinOp).
+fn compile_op(op: fun::syntax::terms::BinOp) -> core_lang::syntax::BinOp {
+    match op {
+        fun::syntax::terms::BinOp::Div => core_lang::syntax::BinOp::Div,
+        fun::syntax::terms::BinOp::Prod => core_lang::syntax::BinOp::Prod,
+        fun::syntax::terms::BinOp::Rem => core_lang::syntax::BinOp::Rem,
+        fun::syntax::terms::BinOp::Sum => core_lang::syntax::BinOp::Sum,
+        fun::syntax::terms::BinOp::Sub => core_lang::syntax::BinOp::Sub,
     }
 }
 
-impl CompileWithCont for fun::syntax::terms::Op {
+impl Compile for fun::syntax::terms::Op {
+    /// This implementation of [Compile::compile] proceeds as follows.
     /// ```text
     /// 〚t_1 * t_2 〛= *( 〚t_1〛, 〚t_2〛)
     /// ```
-    fn compile_opt(
+    fn compile(
         self,
         state: &mut crate::compile::CompileState,
         _ty: Ty,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
-            op: self.op.compile(state),
-            snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
+            fst: Rc::new(self.fst.compile(state, Ty::I64)),
+            op: compile_op(self.op),
+            snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into()
     }
 
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚t_1 * t_2 〛_{c} = ⟨*( 〚t_1〛, 〚t_2〛) | c⟩
     /// ```
@@ -45,9 +48,9 @@ impl CompileWithCont for fun::syntax::terms::Op {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_opt(state, Ty::I64)),
-            op: self.op.compile(state),
-            snd: Rc::new(self.snd.compile_opt(state, Ty::I64)),
+            fst: Rc::new(self.fst.compile(state, Ty::I64)),
+            op: compile_op(self.op),
+            snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into();
         core_lang::syntax::statements::Cut {
@@ -63,7 +66,7 @@ impl CompileWithCont for fun::syntax::terms::Op {
 mod compile_tests {
     use fun::{parse_term, typing::check::Check};
 
-    use crate::compile::{CompileState, CompileWithCont};
+    use crate::compile::{Compile, CompileState};
     use core_lang::syntax::types::Ty;
 
     use std::collections::{HashSet, VecDeque};
@@ -79,7 +82,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile_opt(&mut state, Ty::I64);
+        let result = term.compile(&mut state, Ty::I64);
 
         let expected = core_lang::syntax::terms::Op::sub(
             core_lang::syntax::terms::Literal::new(2),
@@ -109,7 +112,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile_opt(&mut state, Ty::I64);
+        let result = term_typed.compile(&mut state, Ty::I64);
 
         let expected = core_lang::syntax::terms::Op::prod(
             core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),

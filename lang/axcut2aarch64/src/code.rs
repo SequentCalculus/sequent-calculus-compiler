@@ -1,3 +1,5 @@
+//! This module implements the abstract methods for machine instructions.
+
 use super::Backend;
 use super::config::{
     CALLER_SAVE_FIRST, CALLER_SAVE_LAST, Immediate, REGISTER_NUM, RESERVED, Register, SPILL_TEMP,
@@ -10,40 +12,91 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
 
+/// This enum provides the concrete machine instructions. Each variant stands either for one
+/// instruction or for a label, a comment or a control directive.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]
 pub enum Code {
+    /// [Link to documentation.](<https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADD--shifted-register---Add-optionally-shifted-register-?lang=en>)
     ADD(Register, Register, Register),
+    /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADD--immediate---Add-immediate-value-?lang=en)
     ADDI(Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SUB--shifted-register---Subtract-optionally-shifted-register-?lang=en)
     SUB(Register, Register, Register),
+    /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SUB--immediate---Subtract-immediate-value-?lang=en)
     SUBI(Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MUL--Multiply--an-alias-of-MADD-?lang=en)
     MUL(Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/SDIV--Signed-divide-?lang=en)
     SDIV(Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MSUB--Multiply-subtract-?lang=en)
     MSUB(Register, Register, Register, Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B--Branch-?lang=en)
     B(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/BR--Branch-to-register-?lang=en)
     BR(Register),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/BL--Branch-with-link-?lang=en)
     BL(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/ADR--Form-PC-relative-address-?lang=en)
     ADR(Register, String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOV--register---Move-register-value--an-alias-of-ORR--shifted-register--?lang=en)
     MOVR(Register, Register),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVZ--Move-wide-with-zero-?lang=en)
     MOVZ(Register, Immediate, Immediate),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVN--Move-wide-with-NOT-?lang=en)
     MOVN(Register, Immediate, Immediate),
+    /// This instruction assumes that the first immediate is in the range `0` to `65535` and the
+    /// second immediate is a shift which can be `0`, `16`, `32`, or `48`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/MOVK--Move-wide-with-keep-?lang=en)
     MOVK(Register, Immediate, Immediate),
+    /// This instruction assumes that the immediate is in the range `0` to `32760` and it should be
+    /// a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/LDR--immediate---Load-register--immediate--?lang=en)
     LDR(Register, Register, Immediate),
-    /// This instruction is only used in the cleanup code.
+    /// This instruction is only used in the cleanup code. It assumes that the immediate is in the
+    /// range `-512` to `504` and it should be a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/LDP--Load-pair-of-registers-)
     LDP_POST_INDEX(Register, Register, Register, Immediate),
+    /// This instruction assumes that the immediate is in the range `0` to `32760` and it should be
+    /// a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/STR--immediate---Store-register--immediate--)
     STR(Register, Register, Immediate),
-    /// This instruction is only used in the setup code.
+    /// This instruction is only used in the setup code. It assumes that the immediate is in the
+    /// range `-512` to `504` and it should be a multiple of `8`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/STP--Store-pair-of-registers-)
     STP_PRE_INDEX(Register, Register, Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/CMP--shifted-register---Compare--shifted-register---an-alias-of-SUBS--shifted-register--)
     CMPR(Register, Register),
+    /// This instruction assumes that the immediate is in the range `0` to `4095`.
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/CMP--immediate---Compare--immediate---an-alias-of-SUBS--immediate--)
     CMPI(Register, Immediate),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BEQ(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BNE(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BLT(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
     BLE(String),
-    LAB(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
+    BGT(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/B-cond--Branch-conditionally-)
+    BGE(String),
+    /// [Link to documentation.](https://developer.arm.com/documentation/ddi0602/2025-03/Base-Instructions/RET--Return-from-subroutine-)
     RET,
-    GLOBAL(String),
+    /// An assembly label.
+    LAB(String),
+    /// Marks the start of the text segment.
     TEXT,
+    /// Marks its argument as global routine.
+    GLOBAL(String),
+    /// An assembly comment.
     COMMENT(String),
 }
 
@@ -308,10 +361,20 @@ impl Print for Code {
                 .append(alloc.keyword("BLE"))
                 .append(alloc.space())
                 .append(l),
-            LAB(l) => alloc.hardline().append(l).append(COLON),
+            BGT(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BGT"))
+                .append(alloc.space())
+                .append(l),
+            BGE(l) => alloc
+                .text(INDENT)
+                .append(alloc.keyword("BGE"))
+                .append(alloc.space())
+                .append(l),
             RET => alloc.text(INDENT).append(alloc.keyword("RET")),
-            GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
+            LAB(l) => alloc.hardline().append(l).append(COLON),
             TEXT => alloc.keyword(".text"),
+            GLOBAL(l) => alloc.keyword(".global").append(alloc.space()).append(l),
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("// {msg}"))),
@@ -319,7 +382,8 @@ impl Print for Code {
     }
 }
 
-pub fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a register into a temporary.
+fn move_from_register(temporary: Temporary, register: Register, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(target_register) => {
             instructions.push(Code::MOVR(target_register, register));
@@ -334,7 +398,8 @@ pub fn move_from_register(temporary: Temporary, register: Register, instructions
     }
 }
 
-pub fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for moving the contents of a temporary into a register.
+fn move_to_register(register: Register, temporary: Temporary, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(source_register) => {
             instructions.push(Code::MOVR(register, source_register));
@@ -349,23 +414,31 @@ pub fn move_to_register(register: Register, temporary: Temporary, instructions: 
     }
 }
 
-pub fn add(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for adding the two source registers.
+fn add(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
     instructions.push(Code::ADD(target, source_1, source_2));
 }
 
-pub fn sub(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for subtracting the second source register from the first one.
+fn sub(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
     instructions.push(Code::SUB(target, source_1, source_2));
 }
 
-pub fn mul(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for multiplying the two source registers.
+fn mul(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
     instructions.push(Code::MUL(target, source_1, source_2));
 }
 
-pub fn div(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for dividing the first source register by the second one.
+fn div(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
     instructions.push(Code::SDIV(target, source_1, source_2));
 }
 
-pub fn rem(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
+/// This function generates code for calculating the remainder when dividing the first source
+/// register by the second one. It assumes that if the second source register is the second scratch
+/// register [`super::config::TEMP2`], then the first source register must be the first scratch
+/// register [`super::config::TEMP`].
+fn rem(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>) {
     // this also means `source_1 == TEMP`
     if source_2 == TEMP2 {
         if target == TEMP {
@@ -396,7 +469,14 @@ pub fn rem(target: Register, source_1: Register, source_2: Register, instruction
     }
 }
 
-pub fn op(
+/// This function generates code for arithmetic operations. It distinguishes between register
+/// operands and operands in spill positions.
+/// - `op` is the operation to perform on register operands.
+/// - `target_temporary` is the temporary for the result.
+/// - `source_temporary_1` is the first source temporary.
+/// - `source_temporary_2` is the second source temporary.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn op(
     op: fn(target: Register, source_1: Register, source_2: Register, instructions: &mut Vec<Code>),
     target_temporary: Temporary,
     source_temporary_1: Temporary,
@@ -486,7 +566,8 @@ pub fn op(
     }
 }
 
-pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for comparing the contents of a temporary and a register.
+fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     match (fst, snd) {
         (Temporary::Register(register_fst), Temporary::Register(register_snd)) => {
             instructions.push(Code::CMPR(register_fst, register_snd));
@@ -507,7 +588,9 @@ pub fn compare(fst: Temporary, snd: Temporary, instructions: &mut Vec<Code>) {
     }
 }
 
-pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
+/// This function generates code for comparing the contents of a temporary and an immediate. It
+/// assumes that the immediate is in the range `0` to `4095`.
+fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
     match temporary {
         Temporary::Register(register) => instructions.push(Code::CMPI(register, immediate)),
         Temporary::Spill(position) => {
@@ -517,6 +600,10 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
     }
 }
 
+/// This function calculates information for adhering to the calling convention for calling C
+/// functions based on the current typing context. It returns the first register which can be used
+/// for evacuating registers needed during the function call and a list of the registers that have
+/// to be evacuated.
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
     let first_free_register = 2 * context.len() + RESERVED;
     let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
@@ -531,6 +618,7 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
         registers_to_save.push(REGISTER_NUM - 1);
     }
     for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
+        // values of external types like integers occupy only one register
         if binding.chi == Chirality::Ext {
             registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
         } else {
@@ -542,6 +630,11 @@ fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>)
     (first_backup_register, registers_to_save)
 }
 
+/// This function generates code for for evacuating registers needed during a function call
+/// adhering to the calling convention for C.
+/// - `first_backup_register` is the first register which can be used for evacuating registers.
+/// - `registers_to_save` is a list of the registers that have to be evacuated.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 #[allow(clippy::cast_possible_wrap)]
 fn save_caller_save_registers(
     first_backup_register: usize,
@@ -553,6 +646,7 @@ fn save_caller_save_registers(
     let backup_register_count = (REGISTER_NUM - 1).saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we evacuate as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -564,6 +658,7 @@ fn save_caller_save_registers(
         ));
     }
 
+    // the other registers are evacuated to the stack
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
@@ -573,7 +668,7 @@ fn save_caller_save_registers(
         instructions.push(Code::SUBI(
             Register::SP,
             Register::SP,
-            address(registers_to_push_count as i64).into(),
+            address(registers_to_push_count as isize),
         ));
         for (offset, register) in registers_to_save
             .iter()
@@ -583,12 +678,17 @@ fn save_caller_save_registers(
             instructions.push(Code::STR(
                 (*register).into(),
                 Register::SP,
-                address((registers_to_push_count - 1 - offset) as i64).into(),
+                address((registers_to_push_count - 1 - offset) as isize),
             ));
         }
     }
 }
 
+/// This function generates code for for restoring evacuated registers needed during a function
+/// call adhering to the calling convention for C.
+/// - `first_backup_register` is the first register were used for evacuating registers.
+/// - `registers_to_save` is a list of the registers that had been evacuated.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 #[allow(clippy::cast_possible_wrap)]
 fn restore_caller_save_registers(
     first_backup_register: usize,
@@ -600,6 +700,7 @@ fn restore_caller_save_registers(
     let backup_register_count = (REGISTER_NUM - 1).saturating_sub(first_backup_register);
     let backup_registers_used = std::cmp::min(registers_to_save_count, backup_register_count);
 
+    // we had evacuated as many registers as possible into free registers
     for (offset, register) in registers_to_save
         .iter()
         .take(backup_registers_used)
@@ -611,6 +712,7 @@ fn restore_caller_save_registers(
         ));
     }
 
+    // the other registers had been evacuated to the stack
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
@@ -626,13 +728,13 @@ fn restore_caller_save_registers(
             instructions.push(Code::LDR(
                 (*register).into(),
                 Register::SP,
-                address((registers_to_push_count - 1 - offset) as i64).into(),
+                address((registers_to_push_count - 1 - offset) as isize),
             ));
         }
         instructions.push(Code::ADDI(
             Register::SP,
             Register::SP,
-            address(registers_to_push_count as i64).into(),
+            address(registers_to_push_count as isize),
         ));
     }
 }
@@ -704,6 +806,26 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BLE(name));
     }
 
+    fn jump_label_if_greater(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::BGT(name));
+    }
+
+    fn jump_label_if_greater_or_equal(
+        fst: Temporary,
+        snd: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare(fst, snd, instructions);
+        instructions.push(Code::BGE(name));
+    }
+
     fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::BEQ(name));
@@ -714,6 +836,37 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BNE(name));
     }
 
+    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BLT(name));
+    }
+
+    fn jump_label_if_less_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BLE(name));
+    }
+
+    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BGT(name));
+    }
+
+    fn jump_label_if_greater_or_equal_zero(
+        temporary: Temporary,
+        name: Name,
+        instructions: &mut Vec<Code>,
+    ) {
+        compare_immediate(temporary, 0.into(), instructions);
+        instructions.push(Code::BGE(name));
+    }
+
+    /// This implementation for loading an immediate into a temporary takes into account that an
+    /// immediate in a `MOV` instruction can only have 16 bits (a halfword). Thus we have to load
+    /// the halfwords individually, but we try to minimize the instruction count.
     #[allow(clippy::cast_sign_loss)]
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>) {
         fn number_unset_halfwords(immediate: Immediate) -> usize {
@@ -896,8 +1049,10 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         } else if let Temporary::Register(target_register) = target_temporary {
             move_to_register(target_register, source_temporary, instructions);
         } else {
-            move_to_register(TEMP, source_temporary, instructions);
-            move_from_register(target_temporary, TEMP, instructions);
+            // we use the second scratch register because the parallel-moves algorithm uses the
+            // first one for a different purpose
+            move_to_register(TEMP2, source_temporary, instructions);
+            move_from_register(target_temporary, TEMP2, instructions);
         }
     }
 

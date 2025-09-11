@@ -1,42 +1,33 @@
+//! This module defines arithmetic binary operations in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES},
-};
+use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{
-        check::{Check, check_equality},
-        errors::Error,
-        symbol_table::SymbolTable,
-    },
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This enum encodes the different kinds of arithmetic binary operators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// Division `/`
     Div,
+    /// Multiplication `*`
     Prod,
+    /// Remainder `%`
     Rem,
+    /// Addition `+`
     Sum,
+    /// Subtraction `-`
     Sub,
 }
 
 impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
@@ -47,13 +38,19 @@ impl Print for BinOp {
     }
 }
 
+/// This struct defines arithmetic binary operations in Fun. It consists of the input terms and the
+/// kind of the binary operator.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Op {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The first operand
     pub fst: Rc<Term>,
+    /// The kind of operation
     pub op: BinOp,
+    /// The second operand
     pub snd: Rc<Term>,
 }
 
@@ -64,17 +61,14 @@ impl OptTyped for Op {
 }
 
 impl Print for Op {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.fst
             .print(cfg, alloc)
+            .group()
             .append(alloc.space())
             .append(self.op.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(self.snd.print(cfg, alloc).group())
     }
 }
 
@@ -107,19 +101,13 @@ impl UsedBinders for Op {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::syntax::context::TypingContext;
-    use crate::{parser::fun, syntax::terms::Paren};
-    use crate::{
-        syntax::{
-            terms::{BinOp, Lit, Op},
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

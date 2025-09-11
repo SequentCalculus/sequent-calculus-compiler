@@ -195,7 +195,7 @@ lab26:
 // #load tag
 LI X5 0
 // switch q \{ ... \};
-// #if there is only one clause, we can just fall through
+// #there is only one clause, so we can just fall through
 
 Quad_27:
 

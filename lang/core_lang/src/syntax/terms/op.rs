@@ -1,38 +1,31 @@
-use printer::{
-    DocAllocator, Print,
-    tokens::{COMMA, DIVIDE, MINUS, MODULO, PLUS, TIMES},
-};
+//! This module defines arithmetic binary operations in Core.
 
-use super::{ContextBinding, Covar, Var};
-use crate::{
-    syntax::{
-        context::Chirality,
-        fresh_var,
-        statements::FsCut,
-        terms::{Cns, FsStatement, FsTerm, Mu, Prd, PrdCns, Term},
-        types::Ty,
-    },
-    traits::*,
-};
+use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
+use printer::*;
+
+use crate::syntax::*;
+use crate::traits::*;
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
+/// This enum encodes the different kinds of arithmetic binary operators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
+    /// Division `/`
     Div,
+    /// Multiplication `*`
     Prod,
+    /// Remainder `%`
     Rem,
+    /// Addition `+`
     Sum,
+    /// Subtraction `-`
     Sub,
 }
 
 impl Print for BinOp {
-    fn print<'a>(
-        &'a self,
-        _cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             BinOp::Div => alloc.text(DIVIDE),
             BinOp::Prod => alloc.text(TIMES),
@@ -43,14 +36,24 @@ impl Print for BinOp {
     }
 }
 
+/// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
+/// kind of the binary operator. The type parameter `P` determines whether this is the unfocused
+/// variant (if `P` is instantiated with [`Term<Prd>`], which is the default) or the focused
+/// variant (if `P` is instantiated with [`Var`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Op {
-    pub fst: Rc<Term<Prd>>,
+pub struct Op<P = Rc<Term<Prd>>> {
+    /// The first operand
+    pub fst: P,
+    /// The kind of operation
     pub op: BinOp,
-    pub snd: Rc<Term<Prd>>,
+    /// the second operand
+    pub snd: P,
 }
 
+pub type FsOp = Op<Var>;
+
 impl Op {
+    /// This functions creates a division from two producers.
     pub fn div<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -63,6 +66,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a multiplication from two producers.
     pub fn prod<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -75,6 +79,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a modulo operation on two producers.
     pub fn rem<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -87,6 +92,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a sum operations on two producers.
     pub fn sum<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -99,6 +105,7 @@ impl Op {
         }
     }
 
+    /// This functions creates a subtraction operation on two producers.
     pub fn sub<T, U>(fst: T, snd: U) -> Op
     where
         T: Into<Term<Prd>>,
@@ -119,25 +126,45 @@ impl Typed for Op {
 }
 
 impl Print for Op {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.op.print(cfg, alloc).append(
-            self.fst
-                .print(cfg, alloc)
-                .append(alloc.text(COMMA))
-                .append(alloc.space())
-                .append(self.snd.print(cfg, alloc))
-                .parens(),
-        )
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        let fst = if matches!(*self.fst, Term::Op(_)) {
+            self.fst.print(cfg, alloc).parens()
+        } else {
+            self.fst.print(cfg, alloc)
+        };
+        let snd = if matches!(*self.snd, Term::Op(_)) {
+            self.snd.print(cfg, alloc).parens()
+        } else {
+            self.snd.print(cfg, alloc)
+        };
+        fst.group()
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(snd.group())
     }
 }
 
-impl<T: PrdCns> From<Op> for Term<T> {
+impl Print for FsOp {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.fst
+            .print(cfg, alloc)
+            .append(alloc.space())
+            .append(self.op.print(cfg, alloc))
+            .append(alloc.space())
+            .append(self.snd.print(cfg, alloc))
+    }
+}
+
+impl<T: Chi> From<Op> for Term<T> {
     fn from(value: Op) -> Self {
         Term::Op(value)
+    }
+}
+
+impl<T: Chi> From<FsOp> for FsTerm<T> {
+    fn from(value: FsOp) -> Self {
+        FsTerm::Op(value)
     }
 }
 
@@ -155,10 +182,35 @@ impl Subst for Op {
     }
 }
 
+impl SubstVar for FsOp {
+    type Target = FsOp;
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+        self.fst = self.fst.subst_sim(subst);
+        self.snd = self.snd.subst_sim(subst);
+
+        self
+    }
+}
+
 impl TypedFreeVars for Op {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.fst.typed_free_vars(vars);
         self.snd.typed_free_vars(vars);
+    }
+}
+
+impl TypedFreeVars for FsOp {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
+        vars.insert(ContextBinding {
+            var: self.snd.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        });
     }
 }
 
@@ -179,7 +231,7 @@ impl Focusing for Op {
 }
 
 impl Bind for Op {
-    ///bind(⊙ (p_1, p_2))[k] = bind(p_1)[λa1.bind(p_2)[λa_2.⟨⊙ (a_1, a_2) | ~μx.k(x)⟩]]
+    // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
@@ -212,70 +264,12 @@ impl Bind for Op {
     }
 }
 
-/// Focused binary operation
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FsOp {
-    pub fst: Var,
-    pub op: BinOp,
-    pub snd: Var,
-}
-
-impl Print for FsOp {
-    fn print<'a>(
-        &'a self,
-        cfg: &printer::PrintCfg,
-        alloc: &'a printer::Alloc<'a>,
-    ) -> printer::Builder<'a> {
-        self.fst
-            .print(cfg, alloc)
-            .append(alloc.space())
-            .append(self.op.print(cfg, alloc))
-            .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
-    }
-}
-
-impl<T: PrdCns> From<FsOp> for FsTerm<T> {
-    fn from(value: FsOp) -> Self {
-        FsTerm::Op(value)
-    }
-}
-
-impl SubstVar for FsOp {
-    type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
-        self.fst = self.fst.subst_sim(subst);
-        self.snd = self.snd.subst_sim(subst);
-
-        self
-    }
-}
-
-impl TypedFreeVars for FsOp {
-    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.insert(ContextBinding {
-            var: self.fst.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
-        vars.insert(ContextBinding {
-            var: self.snd.clone(),
-            chi: Chirality::Prd,
-            ty: Ty::I64,
-        });
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{BinOp, Focusing};
-    use crate::syntax::{
-        Term,
-        statements::{Cut, FsCut},
-        terms::{FsOp, Literal, Mu, Op, Prd, XVar},
-        types::Ty,
-    };
-    use crate::{test_common::example_subst, traits::*};
+    use crate::syntax::*;
+    use crate::test_common::example_subst;
+    use crate::traits::*;
+
     use std::rc::Rc;
 
     fn example_op() -> Term<Prd> {

@@ -1,5 +1,7 @@
+//! This module defines the conditionals comparing two integers in AxCut.
+
 use printer::theme::ThemeExt;
-use printer::tokens::{ELSE, EQQ, IF, LT, LTE, NEQ};
+use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
@@ -11,19 +13,48 @@ use crate::traits::substitution::Subst;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IfSort {
+    /// `==`
     Equal,
+    /// `!=`
     NotEqual,
+    /// `<`
     Less,
+    /// `<=`
     LessOrEqual,
+    /// `>`
+    Greater,
+    /// `>=`
+    GreaterOrEqual,
 }
 
+impl Print for IfSort {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            IfSort::Equal => alloc.text(EQQ),
+            IfSort::NotEqual => alloc.text(NEQ),
+            IfSort::Less => alloc.text(LT),
+            IfSort::LessOrEqual => alloc.text(LTE),
+            IfSort::Greater => alloc.text(GT),
+            IfSort::GreaterOrEqual => alloc.text(GTE),
+        }
+    }
+}
+
+/// This struct defines the conditionals comparing either two variables or one variable to zero in
+/// AxCut. It consists of the comparison operation, the first variable and an optional second
+/// variable, and the then-branch and else-branch.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
     pub sort: IfSort,
     pub fst: Var,
-    pub snd: Var,
+    pub snd: Option<Var>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
@@ -34,25 +65,23 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let comparison = match self.sort {
-            IfSort::Equal => EQQ,
-            IfSort::NotEqual => NEQ,
-            IfSort::Less => LT,
-            IfSort::LessOrEqual => LTE,
+        let snd = match self.snd {
+            None => alloc.text(ZERO),
+            Some(ref snd) => snd.print(cfg, alloc),
         };
         alloc
             .keyword(IF)
             .append(alloc.space())
             .append(self.fst.print(cfg, alloc))
             .append(alloc.space())
-            .append(comparison)
+            .append(self.sort.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(snd)
             .append(alloc.space())
             .append(
                 alloc
                     .line()
-                    .append(self.thenc.print(cfg, alloc))
+                    .append(self.thenc.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),
@@ -63,7 +92,7 @@ impl Print for IfC {
             .append(
                 alloc
                     .line()
-                    .append(self.elsec.print(cfg, alloc))
+                    .append(self.elsec.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),
@@ -86,7 +115,9 @@ impl FreeVars for IfC {
 
         vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
-        vars.insert(self.snd.clone());
+        if let Some(snd) = self.snd.clone() {
+            vars.insert(snd);
+        }
 
         self
     }
@@ -107,6 +138,8 @@ impl Subst for IfC {
 impl Linearizing for IfC {
     type Target = IfC;
     fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+        // we do not insert an explicit substitution, as there are no new bindings and there will
+        // be an explicit substitution in each branch
         self.thenc = self.thenc.linearize(context.clone(), used_vars);
         self.elsec = self.elsec.linearize(context, used_vars);
 

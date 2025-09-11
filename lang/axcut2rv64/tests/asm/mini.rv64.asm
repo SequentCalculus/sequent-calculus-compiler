@@ -1,6 +1,6 @@
 // actual code
 main_:
-// jump l_
+// l(...)
 JAL X0 l_
 
 l_:
@@ -8,7 +8,7 @@ l_:
 LI X5 1
 // lit y <- 9;
 LI X7 9
-// jump j_
+// j(...)
 JAL X0 j_
 
 j_:

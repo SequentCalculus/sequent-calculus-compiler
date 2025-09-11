@@ -1,33 +1,40 @@
+//! This module defines let-bindings of a term in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{COLON, EQ, LET, SEMI},
-};
+use printer::tokens::{COLON, EQ, LET, SEMI};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines let-bindings of a term. It consists of the variable the term is bound to,
+/// the annotated type of the bound term, the bound term, the remaining term in which the binding
+/// is visible, and after typechecking also of the inferred type of the entire term.
+///
+/// Example:
+/// ```text
+/// let x: i64 = 2 * 2; x
+/// ```
+/// This binds the variable `x` of type `i64` to `2 * 2` and then returns it.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Let {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The bound variable
     pub variable: Var,
+    /// The (annotated) type of the bound term
     pub var_ty: Ty,
+    /// The bound term
     pub bound_term: Rc<Term>,
+    /// The term in which the variable for the bound term is in scope
     pub in_term: Rc<Term>,
+    /// The (inferred) type of the entire term
     pub ty: Option<Ty>,
 }
 
@@ -46,19 +53,17 @@ impl Print for Let {
         alloc
             .keyword(LET)
             .append(alloc.space())
-            .append(self.variable.clone())
-            .append(alloc.space())
+            .append(self.variable.print(cfg, alloc))
             .append(COLON)
             .append(alloc.space())
             .append(self.var_ty.print(cfg, alloc))
             .append(alloc.space())
             .append(EQ)
             .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc))
+            .append(self.bound_term.print(cfg, alloc).group())
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.in_term.print(cfg, alloc))
-            .align()
+            .append(alloc.hardline())
+            .append(self.in_term.print(cfg, alloc).group())
     }
 }
 
@@ -97,19 +102,14 @@ impl UsedBinders for Let {
 
 #[cfg(test)]
 mod test {
-    use super::{Check, Term};
-    use crate::{
-        parser::fun,
-        syntax::{
-            context::{Chirality::Prd, TypingContext},
-            terms::{Constructor, Let, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        test_common::symbol_table_list,
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::test_common::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
@@ -158,7 +158,7 @@ mod test {
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()],
+                    args: vec![XVar::mk("x").into()].into(),
                     ty: None,
                 }
                 .into(),
@@ -188,13 +188,13 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x : i64 = 2;\n4"
+            "let x: i64 = 2;\n4"
         )
     }
 
     #[test]
     fn parse() {
         let parser = fun::TermParser::new();
-        assert_eq!(parser.parse("let x : i64 = 2; 4"), Ok(example().into()));
+        assert_eq!(parser.parse("let x: i64 = 2; 4"), Ok(example().into()));
     }
 }

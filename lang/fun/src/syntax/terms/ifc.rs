@@ -1,43 +1,72 @@
+//! This module defines the conditionals comparing two integers in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{ELSE, EQQ, IF, LT, LTE, NEQ},
-    util::BracesExt,
-};
+use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This enum encodes the comparison operation used.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IfSort {
+    /// `==`
     Equal,
+    /// `!=`
     NotEqual,
+    /// `<`
     Less,
+    /// `<=`
     LessOrEqual,
+    /// `>`
+    Greater,
+    /// `>=`
+    GreaterOrEqual,
 }
 
+impl Print for IfSort {
+    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        match self {
+            IfSort::Equal => alloc.text(EQQ),
+            IfSort::NotEqual => alloc.text(NEQ),
+            IfSort::Less => alloc.text(LT),
+            IfSort::LessOrEqual => alloc.text(LTE),
+            IfSort::Greater => alloc.text(GT),
+            IfSort::GreaterOrEqual => alloc.text(GTE),
+        }
+    }
+}
+
+/// This struct defines the conditionals comparing either two terms or one term to zero in Fun. It
+/// consists of the comparison operation, the first term and an optional second term, and the
+/// then-branch and else-branch, and after typechecking also of the inferred type.
+///
+/// Example:
+/// ```text
+/// if n == 0 { 1 } else { n * fac(n - 1) }
+/// ```
+/// If `n` is `0` return `1` else calculate `n * fac(n - 1)`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct IfC {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The comparison operation
     pub sort: IfSort,
+    /// The first term of the comparison
     pub fst: Rc<Term>,
-    pub snd: Rc<Term>,
+    /// The optional second term of the comparison
+    pub snd: Option<Rc<Term>>,
+    /// The then-branch
     pub thenc: Rc<Term>,
+    /// The else-branch
     pub elsec: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -53,25 +82,23 @@ impl Print for IfC {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let comparison = match self.sort {
-            IfSort::Equal => EQQ,
-            IfSort::NotEqual => NEQ,
-            IfSort::Less => LT,
-            IfSort::LessOrEqual => LTE,
+        let snd = match self.snd {
+            None => alloc.text(ZERO),
+            Some(ref snd) => snd.print(cfg, alloc),
         };
         alloc
             .keyword(IF)
             .append(alloc.space())
             .append(self.fst.print(cfg, alloc))
             .append(alloc.space())
-            .append(comparison)
+            .append(self.sort.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.snd.print(cfg, alloc))
+            .append(snd)
             .append(alloc.space())
             .append(
                 alloc
                     .line()
-                    .append(self.thenc.print(cfg, alloc))
+                    .append(self.thenc.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),
@@ -82,7 +109,7 @@ impl Print for IfC {
             .append(
                 alloc
                     .line()
-                    .append(self.elsec.print(cfg, alloc))
+                    .append(self.elsec.print(cfg, alloc).group())
                     .nest(cfg.indent)
                     .append(alloc.line())
                     .braces_anno(),
@@ -124,20 +151,13 @@ impl UsedBinders for IfC {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::syntax::terms::IfSort;
-    use crate::{
-        syntax::{
-            terms::{IfC, Lit, XVar},
-            types::{Ty, TypeArgs},
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]
@@ -146,7 +166,7 @@ mod test {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
-            snd: Rc::new(Lit::mk(1).into()),
+            snd: Some(Rc::new(Lit::mk(1).into())),
             thenc: Rc::new(Lit::mk(2).into()),
             elsec: Rc::new(Lit::mk(3).into()),
             ty: None,
@@ -161,13 +181,14 @@ mod test {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
-            snd: Rc::new(Lit::mk(1).into()),
+            snd: Some(Rc::new(Lit::mk(1).into())),
             thenc: Rc::new(Lit::mk(2).into()),
             elsec: Rc::new(Lit::mk(3).into()),
             ty: Some(Ty::mk_i64()),
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_ife_fail() {
         let mut ctx = TypingContext::default();
@@ -176,7 +197,7 @@ mod test {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(XVar::mk("x").into()),
-            snd: Rc::new(XVar::mk("x").into()),
+            snd: Some(Rc::new(XVar::mk("x").into())),
             thenc: Rc::new(Lit::mk(1).into()),
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
@@ -190,7 +211,7 @@ mod test {
             span: Span::default(),
             sort: IfSort::Equal,
             fst: Rc::new(Term::Lit(Lit::mk(1))),
-            snd: Rc::new(Term::Lit(Lit::mk(1))),
+            snd: Some(Rc::new(Term::Lit(Lit::mk(1)))),
             thenc: Rc::new(Term::Lit(Lit::mk(2))),
             elsec: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,
@@ -211,6 +232,110 @@ mod test {
         assert_eq!(
             parser.parse("if 1 == 1 {2 } else { 4}"),
             Ok(example().into())
+        );
+    }
+
+    #[test]
+    fn check_ifz() {
+        let result = IfC {
+            span: Span::default(),
+            sort: IfSort::Equal,
+            fst: Rc::new(Lit::mk(1).into()),
+            snd: None,
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
+            ty: None,
+        }
+        .check(
+            &mut SymbolTable::default(),
+            &TypingContext::default(),
+            &Ty::mk_i64(),
+        )
+        .unwrap();
+        let expected = IfC {
+            span: Span::default(),
+            sort: IfSort::Equal,
+            fst: Rc::new(Lit::mk(1).into()),
+            snd: None,
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
+            ty: Some(Ty::mk_i64()),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_ifz_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let result = IfC {
+            span: Span::default(),
+            sort: IfSort::Equal,
+            fst: Rc::new(XVar::mk("x").into()),
+            snd: None,
+            thenc: Rc::new(Lit::mk(1).into()),
+            elsec: Rc::new(Lit::mk(2).into()),
+            ty: None,
+        }
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
+        assert!(result.is_err())
+    }
+
+    fn example_zero() -> IfC {
+        IfC {
+            span: Span::default(),
+            sort: IfSort::Equal,
+            fst: Rc::new(Term::Lit(Lit::mk(0))),
+            snd: None,
+            thenc: Rc::new(Term::Lit(Lit::mk(2))),
+            elsec: Rc::new(Term::Lit(Lit::mk(4))),
+            ty: None,
+        }
+    }
+
+    fn example_zero_not() -> IfC {
+        IfC {
+            span: Span::default(),
+            sort: IfSort::NotEqual,
+            fst: Rc::new(Term::Lit(Lit::mk(1))),
+            snd: None,
+            thenc: Rc::new(Term::Lit(Lit::mk(2))),
+            elsec: Rc::new(Term::Lit(Lit::mk(4))),
+            ty: None,
+        }
+    }
+
+    #[test]
+    fn display_zero() {
+        assert_eq!(
+            example_zero().print_to_string(Default::default()),
+            "if 0 == 0 {\n    2\n} else {\n    4\n}"
+        )
+    }
+
+    #[test]
+    fn display_zero_not() {
+        assert_eq!(
+            example_zero_not().print_to_string(Default::default()),
+            "if 1 != 0 {\n    2\n} else {\n    4\n}"
+        )
+    }
+
+    #[test]
+    fn parse_zero() {
+        let parser = fun::TermParser::new();
+        assert_eq!(
+            parser.parse("if 0 == 0 { 2} else {4 }"),
+            Ok(example_zero().into())
+        );
+    }
+
+    #[test]
+    fn parse_zero_not() {
+        let parser = fun::TermParser::new();
+        assert_eq!(
+            parser.parse("if 1 != 0 { 2} else {4 }"),
+            Ok(example_zero_not().into())
         );
     }
 }

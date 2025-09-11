@@ -1,28 +1,36 @@
+//! This module defines the control operator for invoking a captured continuation/program context
+//! in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{DocAllocator, Print, theme::ThemeExt, tokens::GOTO};
+use printer::tokens::GOTO;
+use printer::*;
 
-use super::Term;
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        Covar, Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::parser::util::ToMiette;
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines the control operator for invoking a captured continuation/program context
+/// by control operator [`label`](crate::syntax::terms::Label). It consists of a covariable to
+/// which the continuation is bound, the argument of the invocation, and after typechecking also of
+/// the inferred type, which can be arbitrary.
+///
+/// Example:
+/// `goto a (0)` invokes the continuation bound to `a` with argument `0`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Goto {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// The covariable for the continuation
     pub target: Covar,
+    /// The argument
     pub term: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -43,7 +51,15 @@ impl Print for Goto {
             .append(alloc.space())
             .append(self.target.print(cfg, alloc))
             .append(alloc.space())
-            .append(self.term.print(cfg, alloc).parens())
+            .append(
+                alloc
+                    .line_()
+                    .append(self.term.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line_())
+                    .parens()
+                    .group(),
+            )
     }
 }
 
@@ -76,19 +92,13 @@ impl UsedBinders for Goto {
 
 #[cfg(test)]
 mod test {
-    use super::Check;
-    use super::Term;
-    use crate::parser::fun;
-    use crate::syntax::context::TypingContext;
-    use crate::{
-        syntax::{
-            terms::{Goto, Lit},
-            types::Ty,
-        },
-        typing::symbol_table::SymbolTable,
-    };
     use codespan::Span;
     use printer::Print;
+
+    use crate::parser::fun;
+    use crate::syntax::*;
+    use crate::typing::*;
+
     use std::rc::Rc;
 
     #[test]

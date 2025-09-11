@@ -1,3 +1,5 @@
+//! This module contains some functions needed for generating code for explicit substitutions.
+
 use crate::{
     code::Instructions,
     config::{
@@ -13,22 +15,33 @@ use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::Hash;
 
+/// This function takes a list of pairs each of which associates a variable for a new typing
+/// context with a binding from a given context. It then "transposes" this list, returning a mapping
+/// for each binding in the given context to the associated variables in the new context.
+/// - `rearrange` is the list of pairs.
+/// - `context` is the given context.
 pub fn transpose(
-    rearrange: &[(Var, ContextBinding)],
+    rearrange: &[(Var, Var)],
     context: &TypingContext,
 ) -> BTreeMap<ContextBinding, Vec<Var>> {
     let mut target_map = BTreeMap::new();
     for binding in &context.bindings {
         let targets = rearrange
             .iter()
-            .filter(|mapping| binding.var == mapping.1.var)
-            .map(|mapping| mapping.0.clone())
+            .filter(|(_, old)| binding.var == *old)
+            .map(|(new, _)| new.clone())
             .collect();
         let _ = target_map.insert(binding.clone(), targets);
     }
     target_map
 }
 
+/// This function performs the parallel-moves algorithm for the given mapping of old variables to
+/// new variables.
+/// - `target_map` maps the variables in the old context to the targets in the new context.
+/// - `context` is the old context.
+/// - `new_context` is the resulting context.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
@@ -40,6 +53,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         + ParallelMoves<Code, Temporary>
         + Utils<Temporary>,
 {
+    /// This function transforms a mapping of variables to a corresponding mapping of temporaries.
     fn connections<Backend, Temporary: Ord, Immediate>(
         target_map: &BTreeMap<ContextBinding, Vec<Var>>,
         context: &TypingContext,
@@ -50,6 +64,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     {
         let mut target_list_temporaries = BTreeMap::new();
         for (binding, targets) in target_map {
+            // values of external types like integers occupy only one temporary
             if binding.chi == Chirality::Ext {
                 let _ = target_list_temporaries.insert(
                     Backend::variable_temporary(Snd, context, &binding.var),
@@ -84,6 +99,11 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     );
 }
 
+/// This function performs updates of reference counts for the given mapping of old variables to new
+/// variables.
+/// - `target_map` maps the variables in the old context to the targets in the new context.
+/// - `context` is the old context.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     target_map: &BTreeMap<ContextBinding, Vec<Var>>,
     context: &TypingContext,
@@ -119,6 +139,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
     }
 
     for (binding, targets) in target_map {
+        // values of external types like integers have no reference count
         if binding.chi != Chirality::Ext {
             update_reference_count::<Backend, _, _, _>(
                 &binding.var,

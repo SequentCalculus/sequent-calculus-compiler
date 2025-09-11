@@ -1,32 +1,35 @@
+//! This module defines printing an integer in Fun.
+
 use codespan::Span;
 use derivative::Derivative;
-use printer::{
-    DocAllocator, Print,
-    theme::ThemeExt,
-    tokens::{PRINT_I64, PRINTLN_I64, SEMI},
-};
+use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
+use printer::*;
 
-use super::Term;
-use crate::{
-    syntax::{
-        Var,
-        context::TypingContext,
-        types::{OptTyped, Ty},
-    },
-    traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
-};
+use crate::syntax::*;
+use crate::traits::*;
+use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
 
+/// This struct defines printing an integer in Fun. It consists of the information whether a
+/// newline should be printed, the term for the integer to print, the remaining statement, and
+/// after typechecking also of the inferred type.
+///
+/// Example:
+/// `println_i64(x); 1` prints the integer bound to `x` and a newline and then returns `1`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct PrintI64 {
+    /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
+    /// Whether to print a newline after the value
     pub newline: bool,
+    /// The term for the integer to be printed
     pub arg: Rc<Term>,
+    /// The next term after the print
     pub next: Rc<Term>,
+    /// The (inferred) type of the term
     pub ty: Option<Ty>,
 }
 
@@ -45,11 +48,18 @@ impl Print for PrintI64 {
         let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
         alloc
             .keyword(print_i64)
-            .append(self.arg.print(cfg, alloc).parens())
+            .append(
+                alloc
+                    .line_()
+                    .append(self.arg.print(cfg, alloc).group())
+                    .nest(cfg.indent)
+                    .append(alloc.line_())
+                    .parens()
+                    .group(),
+            )
             .append(SEMI)
-            .append(alloc.line())
-            .append(self.next.print(cfg, alloc))
-            .align()
+            .append(alloc.hardline())
+            .append(self.next.print(cfg, alloc).group())
     }
 }
 

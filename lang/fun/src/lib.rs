@@ -1,8 +1,11 @@
+//! This crate contains the [syntax], [parser] and [type checker](typing) for the surface
+//! language Fun, as well as some infrastructure [traits].
 pub mod parser;
 pub mod syntax;
 pub mod traits;
 pub mod typing;
 
+/// Some infrastructure for unit tests.
 #[cfg(feature = "test-common")]
 pub mod test_common {
     use super::{
@@ -144,13 +147,13 @@ pub mod test_common {
             dtors: vec![
                 DtorSig {
                     span: Span::default(),
-                    name: "Hd".to_owned(),
+                    name: "head".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: Span::default(),
-                    name: "Tl".to_owned(),
+                    name: "tail".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl(
                         "Stream",
@@ -168,18 +171,18 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A"]),
-                vec!["Hd".to_owned(), "Tl".to_owned()],
+                vec!["head".to_owned(), "tail".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Hd".to_owned(),
+            "head".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
         );
         table.dtor_templates.insert(
-            "Tl".to_owned(),
+            "tail".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl(
@@ -198,18 +201,18 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A"]),
-                vec!["Hd".to_owned(), "Tl".to_owned()],
+                vec!["head".to_owned(), "tail".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Hd".to_owned(),
+            "head".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
         );
         table.dtor_templates.insert(
-            "Tl".to_owned(),
+            "tail".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl(
@@ -223,15 +226,15 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeArgs::mk(vec![Ty::mk_i64()]),
-                vec!["Hd".to_owned(), "Tl".to_owned()],
+                vec!["head".to_owned(), "tail".to_owned()],
             ),
         );
         table.dtors.insert(
-            "Hd[i64]".to_owned(),
+            "head[i64]".to_owned(),
             (TypingContext::default(), Ty::mk_i64()),
         );
         table.dtors.insert(
-            "Tl[i64]".to_owned(),
+            "tail[i64]".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])),
@@ -261,7 +264,7 @@ pub mod test_common {
             type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![DtorSig {
                 span: Span::default(),
-                name: "Apply".to_owned(),
+                name: "apply".to_owned(),
                 args: context_ap("A", "B"),
                 cont_ty: Ty::mk_decl("B", TypeArgs::default()),
             }],
@@ -275,11 +278,11 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A", "B"]),
-                vec!["Apply".to_owned()],
+                vec!["apply".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Apply".to_owned(),
+            "apply".to_owned(),
             (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
         );
         table
@@ -292,11 +295,11 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A", "B"]),
-                vec!["Apply".to_owned()],
+                vec!["apply".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Apply".to_owned(),
+            "apply".to_owned(),
             (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
         );
         table.types.insert(
@@ -304,11 +307,11 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-                vec!["Apply".to_owned()],
+                vec!["apply".to_owned()],
             ),
         );
         table.dtors.insert(
-            "Apply[i64, i64]".to_owned(),
+            "apply[i64, i64]".to_owned(),
             (context_ap_i64(), Ty::mk_i64()),
         );
         table
@@ -322,13 +325,13 @@ pub mod test_common {
             dtors: vec![
                 DtorSig {
                     span: Span::default(),
-                    name: "Fst".to_owned(),
+                    name: "fst".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: Span::default(),
-                    name: "Snd".to_owned(),
+                    name: "snd".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("B", TypeArgs::default()),
                 },
@@ -343,18 +346,18 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeContext::mk(&vec!["A", "B"]),
-                vec!["Fst".to_owned(), "Snd".to_owned()],
+                vec!["fst".to_owned(), "snd".to_owned()],
             ),
         );
         table.dtor_templates.insert(
-            "Fst".to_owned(),
+            "fst".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
         );
         table.dtor_templates.insert(
-            "Snd".to_owned(),
+            "snd".to_owned(),
             (
                 TypingContext::default(),
                 Ty::mk_decl("B", TypeArgs::default()),
@@ -365,15 +368,15 @@ pub mod test_common {
             (
                 Polarity::Codata,
                 TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-                vec!["Fst".to_owned(), "Snd".to_owned()],
+                vec!["fst".to_owned(), "snd".to_owned()],
             ),
         );
         table.dtors.insert(
-            "Fst[i64, i64]".to_owned(),
+            "fst[i64, i64]".to_owned(),
             (TypingContext::default(), Ty::mk_i64()),
         );
         table.dtors.insert(
-            "Snd[i64, i64]".to_owned(),
+            "snd[i64, i64]".to_owned(),
             (TypingContext::default(), Ty::mk_i64()),
         );
         table
@@ -392,7 +395,7 @@ pub mod test_common {
             context: context_mult(),
             body: Case {
                 span: Span::default(),
-                destructee: Rc::new(XVar::mk("l").into()),
+                scrutinee: Rc::new(XVar::mk("l").into()),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 clauses: vec![
                     Clause {
@@ -417,7 +420,7 @@ pub mod test_common {
                                 Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![XVar::mk("xs").into()],
+                                    args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
                                 }
                                 .into(),
@@ -441,7 +444,7 @@ pub mod test_common {
             ret_ty: Ty::mk_i64(),
             body: Case {
                 span: Span::default(),
-                destructee: Rc::new(
+                scrutinee: Rc::new(
                     XVar {
                         span: Span::default(),
                         var: "l".to_owned(),
@@ -493,7 +496,8 @@ pub mod test_common {
                                             chi: Some(Prd),
                                         }
                                         .into(),
-                                    ],
+                                    ]
+                                    .into(),
                                     ret_ty: Some(Ty::mk_i64()),
                                 }
                                 .into(),

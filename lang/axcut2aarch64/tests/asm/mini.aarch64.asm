@@ -19,7 +19,7 @@ asm_main:
     // actual code
 
 main_:
-    // jump l_
+    // l(...)
     B l_
 
 l_:
@@ -27,7 +27,7 @@ l_:
     MOVZ X5, 1, LSL 0
     // lit y <- 9;
     MOVZ X7, 9, LSL 0
-    // jump j_
+    // j(...)
     B j_
 
 j_:
