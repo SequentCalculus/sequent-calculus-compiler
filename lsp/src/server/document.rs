@@ -1,18 +1,18 @@
 use crate::errors::Error;
-use fun::{parser::parse_module, syntax::declarations::CheckedModule};
+use fun::{parser::parse_module, syntax::program::CheckedProgram};
 use log::info;
 use lsp_types::{Location, Position, Range, Uri};
 
 pub struct Document {
     source: String,
-    module: CheckedModule,
+    module: CheckedProgram,
 }
 
 impl Document {
     pub fn new() -> Document {
         Document {
             source: "".to_owned(),
-            module: CheckedModule {
+            module: CheckedProgram {
                 defs: vec![],
                 data_types: vec![],
                 codata_types: vec![],
@@ -42,7 +42,7 @@ impl Document {
             .nth(pos.character as usize)
             .ok_or(Error::InvalidPosition(pos))?;
         let mut end_pos = pos.character as usize;
-        while following.is_alphanumeric() || following == '_' { 
+        while following.is_alphanumeric() || following == '_' {
             end_pos += 1;
             if end_pos == line.len() {
                 break;
@@ -134,13 +134,12 @@ impl Document {
     }
 
     //eigener Code
-    pub fn find_implementation(&self,ident: String, uri: Uri) -> Result<Location, Error> {
-
+    pub fn find_implementation(&self, ident: String, uri: Uri) -> Result<Location, Error> {
         //Suchen von Funktionsimplementierungen die mit ident übereinstimmen
         if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
             let start = self.ind_to_pos(def.span.start().to_usize());
             let end = self.ind_to_pos(def.span.end().to_usize());
-            return Ok(Location::new(uri, Range { start, end }));       
+            return Ok(Location::new(uri, Range { start, end }));
         }
 
         //Suchen von Konstruktor die mit ident übereinstimmen
@@ -148,7 +147,7 @@ impl Document {
             if let Some(ctor) = data.ctors.iter().find(|ctor| ctor.name == ident) {
                 let start = self.ind_to_pos(ctor.span.start().to_usize());
                 let end = self.ind_to_pos(ctor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end }));                       
+                return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
 
@@ -157,15 +156,15 @@ impl Document {
             if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
                 let start = self.ind_to_pos(dtor.span.start().to_usize());
                 let end = self.ind_to_pos(dtor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end })); 
+                return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
 
         //Fehler abfangen
         Err(Error::UndefinedIdentifier(ident))
     }
-    
-/* TODO!!!!
+
+    /* TODO!!!!
     //eigener Code
     pub fn find_declaration(&self,ident: String, uri: Uri) -> Result<Location, Error> { //TODO
 
@@ -174,7 +173,7 @@ impl Document {
             if let Declaration::Data(d) = data{
                 let start = self.ind_to_pos(ctor.span.start().to_usize());
                 let end = self.ind_to_pos(ctor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end }));                       
+                return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
 
@@ -183,7 +182,7 @@ impl Document {
             if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
                 let start = self.ind_to_pos(dtor.span.start().to_usize());
                 let end = self.ind_to_pos(dtor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end })); 
+                return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
 
@@ -196,23 +195,7 @@ impl Document {
     pub fn get_text(&self) -> &str {
         &self.source
     }
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 impl Default for Document {
     fn default() -> Document {
