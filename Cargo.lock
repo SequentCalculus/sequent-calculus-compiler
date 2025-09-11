@@ -1343,7 +1343,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-lsp"
+name = "scc-lsp"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
