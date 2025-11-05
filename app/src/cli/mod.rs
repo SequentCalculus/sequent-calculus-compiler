@@ -10,6 +10,7 @@ mod compile;
 mod fmt;
 mod focus;
 mod gen_completions;
+mod inline;
 mod linearize;
 mod shrink;
 mod texify;
@@ -48,6 +49,7 @@ pub fn exec() -> miette::Result<()> {
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
+        Inline(args) => inline::exec(args),
     }
 }
 
@@ -87,4 +89,6 @@ enum Command {
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
+    /// Inline definitions of a file
+    Inline(inline::Args),
 }
