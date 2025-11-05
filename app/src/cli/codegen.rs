@@ -21,9 +21,9 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
-    let linearized = drv.linearized(&cmd.filepath);
-    let _linearized = match linearized {
-        Ok(linearized) => linearized,
+    let inlined = drv.inlined(&cmd.filepath);
+    let _inlined = match inlined {
+        Ok(inlined) => inlined,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
     if cmd.print_ir {
@@ -31,6 +31,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
         drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
         drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
+        drv.print_inlined(&cmd.filepath, PrintMode::Textual)?;
     }
 
     match cmd.backend {
