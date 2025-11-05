@@ -12,6 +12,7 @@ members = [
     "lang/driver",
     "lang/fun",
     "lang/fun2core",
+    "lang/optimizations",
     "lang/printer",
     "lang/macros"
 ]
