@@ -19,6 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
+use optimizations::Inline;
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -49,6 +50,8 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// With inlined definitions
+    inlined: HashMap<PathBuf, axcut::syntax::Prog>,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -70,6 +73,7 @@ impl Driver {
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
+            inlined: HashMap::new(),
         }
     }
 
@@ -299,6 +303,54 @@ impl Driver {
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 linearized
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    /// This function returns the inlined [AxCut](axcut) version of the file.
+    pub fn inlined(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.inlined.get(path) {
+            return Ok(res.clone());
+        }
+
+        let linearized = self.linearized(path)?;
+        let inlined = linearized.inline();
+        self.inlined.insert(path.clone(), inlined.clone());
+        Ok(inlined)
+    }
+
+    /// This function prints the inlined [AxCut](axcut) code to a file in the target directory.
+    pub fn print_inlined(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let inlined = self.inlined(path)?;
+
+        Paths::create_inlined_dir();
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+        let filename = Paths::inlined_dir().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                inlined
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                inlined
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
