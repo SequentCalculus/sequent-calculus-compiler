@@ -1,4 +1,4 @@
-use super::{Inline, InlineContext};
+use super::{Error, Inline, InlineContext};
 use axcut::syntax::Statement;
 
 mod call;
@@ -15,19 +15,19 @@ mod switch;
 
 impl Inline for Statement {
     type Target = Statement;
-    fn inline(self, ctx: &mut InlineContext) -> Self::Target {
+    fn inline(self, ctx: &mut InlineContext) -> Result<Self::Target, Error> {
         match self {
-            Statement::Substitute(subst) => subst.inline(ctx).into(),
-            Statement::Call(call) => call.inline(ctx).into(),
-            Statement::Let(lt) => lt.inline(ctx).into(),
-            Statement::Switch(sw) => sw.inline(ctx).into(),
-            Statement::Create(cr) => cr.inline(ctx).into(),
-            Statement::Invoke(inv) => inv.inline(ctx).into(),
-            Statement::Literal(lit) => lit.inline(ctx).into(),
-            Statement::Op(op) => op.inline(ctx).into(),
-            Statement::PrintI64(print) => print.inline(ctx).into(),
-            Statement::IfC(ifc) => ifc.inline(ctx).into(),
-            Statement::Exit(ex) => ex.inline(ctx).into(),
+            Statement::Substitute(subst) => Ok(subst.inline(ctx)?.into()),
+            Statement::Call(call) => Ok(call.inline(ctx)?.into()),
+            Statement::Let(lt) => Ok(lt.inline(ctx)?.into()),
+            Statement::Switch(sw) => Ok(sw.inline(ctx)?.into()),
+            Statement::Create(cr) => Ok(cr.inline(ctx)?.into()),
+            Statement::Invoke(inv) => Ok(inv.inline(ctx)?.into()),
+            Statement::Literal(lit) => Ok(lit.inline(ctx)?.into()),
+            Statement::Op(op) => Ok(op.inline(ctx)?.into()),
+            Statement::PrintI64(print) => Ok(print.inline(ctx)?.into()),
+            Statement::IfC(ifc) => Ok(ifc.inline(ctx)?.into()),
+            Statement::Exit(ex) => Ok(ex.inline(ctx)?.into()),
         }
     }
 }
