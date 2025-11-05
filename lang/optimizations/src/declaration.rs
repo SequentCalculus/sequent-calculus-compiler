@@ -1,16 +1,16 @@
-use super::{Inline, InlineContext};
+use super::{Error, Inline, InlineContext};
 use axcut::syntax::TypeDeclaration;
 
 impl Inline for TypeDeclaration {
     type Target = TypeDeclaration;
-    fn inline(self, ctx: &mut InlineContext) -> Self::Target {
-        TypeDeclaration {
+    fn inline(self, ctx: &mut InlineContext) -> Result<Self::Target, Error> {
+        Ok(TypeDeclaration {
             name: self.name,
             xtors: self
                 .xtors
                 .into_iter()
                 .map(|xtor| xtor.inline(ctx))
-                .collect(),
-        }
+                .collect::<Result<Vec<_>, Error>>()?,
+        })
     }
 }

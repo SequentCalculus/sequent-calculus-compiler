@@ -1,6 +1,9 @@
 use axcut::syntax::{Prog, TypeDeclaration, Var};
 use std::{collections::HashSet, rc::Rc};
 
+pub mod errors;
+use errors::Error;
+
 mod arguments;
 mod clause;
 mod context;
@@ -9,17 +12,41 @@ mod definition;
 mod statement;
 mod xtor;
 
-pub fn inline_prog(prog: Prog) -> Prog {
-    prog
+pub fn inline_prog(prog: Prog) -> Result<Prog, Error> {
+    let mut ctx = InlineContext {
+        decls: prog.types.clone(),
+    };
+    Ok(Prog {
+        defs: prog
+            .defs
+            .into_iter()
+            .map(|def| def.inline(&mut ctx))
+            .collect::<Result<Vec<_>, Error>>()?,
+        types: prog
+            .types
+            .into_iter()
+            .map(|def| def.inline(&mut ctx))
+            .collect::<Result<Vec<_>, Error>>()?,
+    })
 }
 
 pub struct InlineContext {
     decls: Vec<TypeDeclaration>,
 }
 
+impl InlineContext {
+    pub fn lookup_ty(&self, name: &str) -> Result<TypeDeclaration, Error> {
+        self.decls
+            .iter()
+            .find(|decl| decl.name == name)
+            .ok_or(Error::unknown(name))
+            .cloned()
+    }
+}
+
 pub trait Inline {
     type Target;
-    fn inline(self, ctx: &mut InlineContext) -> Self::Target;
+    fn inline(self, ctx: &mut InlineContext) -> Result<Self::Target, Error>;
 }
 
 impl<T> Inline for Rc<T>
@@ -27,8 +54,8 @@ where
     T: Inline + Clone,
 {
     type Target = Rc<T::Target>;
-    fn inline(self, ctx: &mut InlineContext) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).inline(ctx))
+    fn inline(self, ctx: &mut InlineContext) -> Result<Self::Target, Error> {
+        Ok(Rc::new(Rc::unwrap_or_clone(self).inline(ctx)?))
     }
 }
 
