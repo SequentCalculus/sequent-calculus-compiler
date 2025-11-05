@@ -12,6 +12,9 @@ pub enum DriverError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     TypeError(#[from] fun::typing::errors::Error),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    OptError(#[from] optimizations::errors::Error),
     #[error("Unable to find binary {bin_name}")]
     #[diagnostic(code("D-001"))]
     BinaryNotFound { bin_name: String },

@@ -319,7 +319,7 @@ impl Driver {
         }
 
         let linearized = self.linearized(path)?;
-        let inlined = inline_prog(linearized);
+        let inlined = inline_prog(linearized)?;
         self.inlined.insert(path.clone(), inlined.clone());
         Ok(inlined)
     }
