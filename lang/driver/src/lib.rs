@@ -19,7 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use optimizations::Inline;
+use optimizations::inline_prog;
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -319,7 +319,7 @@ impl Driver {
         }
 
         let linearized = self.linearized(path)?;
-        let inlined = linearized.inline();
+        let inlined = inline_prog(linearized);
         self.inlined.insert(path.clone(), inlined.clone());
         Ok(inlined)
     }
