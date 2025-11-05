@@ -13,8 +13,8 @@ impl Driver {
     /// - `path` is the path to the source file.
     /// - `mode` determines whether the assembly code is printed in textual mode or as LaTeX code.
     pub fn print_rv_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
-        let linearized = self.linearized(path)?;
-        let code = compile::<axcut2rv64::Backend, _, _, _>(linearized);
+        let inlined = self.inlined(path)?;
+        let code = compile::<axcut2rv64::Backend, _, _, _>(inlined);
         let code_str = axcut2rv64::into_routine::into_rv64_routine(code).to_string();
 
         Paths::create_risc_v_assembly_dir();

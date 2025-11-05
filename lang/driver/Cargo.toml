@@ -16,6 +16,7 @@ fun2core = { path = "../fun2core" }
 core_lang = { path = "../core_lang" }
 core2axcut = { path = "../core2axcut" }
 printer = { path = "../printer" }
+optimizations = { path="../optimizations" }
 
 thiserror = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
