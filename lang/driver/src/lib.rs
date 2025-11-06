@@ -263,54 +263,6 @@ impl Driver {
         Ok(())
     }
 
-    /// This function returns the linearized [AxCut](axcut) version of the file.
-    pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
-        // Check for cache hit.
-        if let Some(res) = self.linearized.get(path) {
-            return Ok(res.clone());
-        }
-
-        let shrunk = self.shrunk(path)?;
-        let linearized = shrunk.linearize();
-        self.linearized.insert(path.clone(), linearized.clone());
-        Ok(linearized)
-    }
-
-    /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.
-    pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
-        let linearized = self.linearized(path)?;
-
-        Paths::create_linearized_dir();
-
-        let mut filename = PathBuf::from(path.file_name().unwrap());
-        match mode {
-            PrintMode::Textual => {
-                filename.set_extension("txt");
-            }
-            PrintMode::Latex => {
-                filename.set_extension("tex");
-            }
-        }
-        let filename = Paths::linearized_dir().join(filename);
-
-        let mut file = File::create(filename).expect("Could not create file");
-        match mode {
-            PrintMode::Textual => {
-                linearized
-                    .print_io(&PrintCfg::default(), &mut file)
-                    .expect("Could not write to file");
-            }
-            PrintMode::Latex => {
-                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
-                linearized
-                    .print_latex(&LATEX_PRINT_CFG, &mut file)
-                    .expect("Could not write to file");
-                file.write_all(LATEX_END.as_bytes()).unwrap();
-            }
-        }
-        Ok(())
-    }
-
     /// This function returns the inlined [AxCut](axcut) version of the file.
     pub fn inlined(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
@@ -318,8 +270,8 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let linearized = self.linearized(path)?;
-        let inlined = inline_prog(linearized)?;
+        let shrunk = self.shrunk(path)?;
+        let inlined = inline_prog(shrunk)?;
         self.inlined.insert(path.clone(), inlined.clone());
         Ok(inlined)
     }
@@ -351,6 +303,54 @@ impl Driver {
             PrintMode::Latex => {
                 file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
                 inlined
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    /// This function returns the linearized [AxCut](axcut) version of the file.
+    pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.inlined.get(path) {
+            return Ok(res.clone());
+        }
+
+        let inlined = self.inlined(path)?;
+        let linearized = inlined.linearize();
+        self.linearized.insert(path.clone(), linearized.clone());
+        Ok(linearized)
+    }
+
+    /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.
+    pub fn print_linearized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let linearized = self.linearized(path)?;
+
+        Paths::create_linearized_dir();
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+        let filename = Paths::linearized_dir().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                linearized
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                linearized
                     .print_latex(&LATEX_PRINT_CFG, &mut file)
                     .expect("Could not write to file");
                 file.write_all(LATEX_END.as_bytes()).unwrap();
