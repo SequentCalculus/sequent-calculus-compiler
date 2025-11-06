@@ -19,8 +19,8 @@ impl Driver {
     /// - `path` is the path to the source file.
     /// - `mode` determines whether the assembly code is printed in textual mode or as LaTeX code.
     pub fn print_aarch64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<usize, DriverError> {
-        let inlined = self.inlined(path)?;
-        let code = compile::<axcut2aarch64::Backend, _, _, _>(inlined);
+        let linearized = self.linearized(path)?;
+        let code = compile::<axcut2aarch64::Backend, _, _, _>(linearized);
         let number_of_arguments = code.number_of_arguments;
 
         Paths::create_aarch64_assembly_dir();
