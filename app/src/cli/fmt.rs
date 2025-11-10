@@ -1,7 +1,6 @@
 //! This module contains the command for formatting a Fun source code file.
 
-use std::fs::File;
-use std::path::PathBuf;
+use std::{fs::File, path::PathBuf};
 
 use driver::Driver;
 use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};

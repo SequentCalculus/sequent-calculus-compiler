@@ -11,7 +11,9 @@ impl Inline for Def {
         let mut next = self.body.inline(ctx)?;
         let mut new_bindings = vec![];
         for ctx_bind in self.context.bindings {
-            if let Ty::Decl(ref name) = ctx_bind.ty {
+            if let Ty::Decl(ref name) = ctx_bind.ty
+                && name != "_Cont"
+            {
                 let ty_decl = ctx.lookup_ty(&name)?;
                 if ty_decl.xtors.len() == 1 {
                     let xtor_decl = ty_decl.xtors.first().unwrap();
