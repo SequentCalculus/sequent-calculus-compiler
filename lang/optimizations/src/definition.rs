@@ -36,14 +36,18 @@ impl Inline for Def {
                     next = next.free_vars(&mut next_vars);
                     let next_let = Let {
                         var: ctx_bind.var,
-                        tag: name.clone(),
+                        tag: xtor_decl.name.clone(),
                         ty: ctx_bind.ty,
                         args: Arguments { entries: let_vars },
                         next: Rc::new(next),
                         free_vars_next: Some(next_vars),
                     };
                     next = next_let.into();
+                } else {
+                    new_bindings.push(ctx_bind)
                 }
+            } else {
+                new_bindings.push(ctx_bind)
             }
         }
         Ok(Def {
