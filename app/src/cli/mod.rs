@@ -45,7 +45,7 @@ pub fn exec() -> miette::Result<()> {
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
-        Inline(args) => inline::exec(args),
+        Inline(args) => inline::exec(args, !cli.no_color),
     }
 }
 
