@@ -2,6 +2,8 @@ use crate::errors::Error;
 use fun::{parser::parse_module, syntax::declarations::CheckedModule};
 use log::info;
 use lsp_types::{Location, Position, Range, Uri};
+//use serde_json::to_string;
+use printer::Print;
 
 pub struct Document {
     source: String,
@@ -128,7 +130,8 @@ impl Document {
     pub fn find_ident(&self, ident: String, uri: Uri) -> Result<Location, Error> {
         let (start, end) = self
             .find_def(&ident)
-            .or_else(|| self.find_data(&ident).or_else(|| self.find_codata(&ident)))
+            .or_else(|| self.find_data(&ident)
+            .or_else(|| self.find_codata(&ident)))
             .ok_or(Error::UndefinedIdentifier(ident))?;
         Ok(Location::new(uri, Range { start, end }))
     }
@@ -165,31 +168,21 @@ impl Document {
         Err(Error::UndefinedIdentifier(ident))
     }
     
-/* TODO!!!!
+
     //eigener Code
-    pub fn find_declaration(&self,ident: String, uri: Uri) -> Result<Location, Error> { //TODO
-
-        //Suchen von Konstruktor die mit ident übereinstimmen
-        for data in &self.module.declarations {
-            if let Declaration::Data(d) = data{
-                let start = self.ind_to_pos(ctor.span.start().to_usize());
-                let end = self.ind_to_pos(ctor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end }));                       
-            }
+    pub fn find_declaration(&self, ident: String, uri: Uri) -> Result<Location, Error> {
+        //check for type or signature first 
+        if let Some((start, end)) = self.find_data(&ident).or_else(|| self.find_codata(&ident)) {
+            return Ok(Location::new(uri.clone(), Range { start, end }))
         }
 
-        //Suchen von Destruktoren die mit ident übereinstimmen
-        for cod in &self.module.codata_types {
-            if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
-                let start = self.ind_to_pos(dtor.span.start().to_usize());
-                let end = self.ind_to_pos(dtor.span.end().to_usize());
-                return Ok(Location::new(uri.clone(), Range { start, end })); 
-            }
+        //only if no type or signature exist then search for definition
+        if let Some((start, end)) = self.find_def(&ident) {
+            return Ok(Location::new(uri.clone(), Range { start, end }))
         }
 
-        //Fehler abfangen
         Err(Error::UndefinedIdentifier(ident))
-    }*/
+    }
 
     //eigener Code
     //getter für text holen um ihn zu formatieren
@@ -197,19 +190,201 @@ impl Document {
         &self.source
     }
 
+    //eigener Code
+    //ganzen zusammenhängenden String finden auf dem man gerade ist
+    pub fn get_rangeident(&self, pos: Position) -> Result<Range, Error> {
+        let line = self
+            .source
+            .lines()
+            .nth(pos.line as usize)
+            .ok_or(Error::InvalidPosition(pos))?;
+
+
+        let mut following = line
+            .chars()
+            .nth(pos.character as usize)
+            .ok_or(Error::InvalidPosition(pos))?;
+        let mut end_pos = pos.character as usize;
+        while following.is_alphanumeric() || following == '_' { 
+            end_pos += 1;
+            if end_pos == line.len() {
+                break;
+            }
+            following = line.chars().nth(end_pos).unwrap();
+        }
+
+        let mut prev = line
+            .chars()
+            .nth(pos.character as usize)
+            .ok_or(Error::InvalidPosition(pos))?;
+        let mut start_pos = pos.character as usize;
+        while prev.is_alphanumeric() || following == '_' {
+            start_pos -= 1;
+            if start_pos == 0 {
+                break;
+            }
+            prev = line.chars().nth(start_pos).unwrap();
+        }
+        if start_pos > 0 {
+            start_pos += 1
+        }
+
+        Ok(Range{
+            start: Position { line: pos.line, character: start_pos as u32, },
+            end: Position { line: pos.line, character: end_pos as u32, },
+        })
+    }
+
+    //eigener Code
+    //determine hover information
+    pub fn get_hover_information (&self, ident: &str) -> Result<String, Error> {
+        //find definition
+        if let Some(def) = self.module.defs.iter().find(|item| item.name == ident){
+            let def_param_list: Vec<String> = def.context.bindings.iter()
+            .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+            let def_param_string = if def_param_list.is_empty(){
+                "...".to_string()
+            }else{
+                def_param_list.join(", ")
+            };
+            let return_type = def.ret_ty.print_to_string(None);
+            return Ok( format!(
+                "```fun\nfn {}({}) of Type {}\n```\n\nDefinition: **{}**.", //TODO anpassen was es sagen soll
+                def.name, def_param_string, return_type, def.name
+            ));
+             
+        }
+
+        //find datatype
+        if let Some(datatype) = self.module.data_types.iter().find(|item| item.name == ident){
+            return Ok(format!(
+                "```fun\ndata {} = ...\n```\n\nDatatype: **{}**.", //TODO anpassen was es sagen soll
+                datatype.name, datatype.name
+            ));   
+        }
+        
+        //find Constructors
+        for data in &self.module.data_types{
+            if let Some(ctor) = data.ctors.iter().find(|item| item.name == ident){
+                let ctor_param_list: Vec<String> = ctor.args.bindings.iter()
+                .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+
+                let ctor_param_string = if ctor_param_list.is_empty(){
+                    "...".to_string()
+                }else{
+                    ctor_param_list.join(", ")
+                };
+
+                //let return_type = ctor.
+                return Ok( format!(
+                    "```fun\n{}({})\n```\n\nConstructor of Type: **{}**.", //TODO anpassen was es sagen soll
+                    ctor.name, ctor_param_string, data.name
+            ));
+            }
+        }
+
+        //find Deconstructors
+        for cod in &self.module.codata_types{
+            if let Some(dtor) = cod.dtors.iter().find(|item| item.name == ident){
+                let dtor_param_list: Vec<String> = dtor.args.bindings.iter()
+                .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+
+                let dtor_param_string = if dtor_param_list.is_empty(){
+                    "...".to_string()
+                }else{
+                    dtor_param_list.join(", ")
+                };
+                let return_type = dtor.cont_ty.print_to_string(None);
+                
+                return Ok( format!(
+                    "```fun\ndestructor {}({}) -> {}\n```\n\nDeconstructor of Type: **{}**.", //TODO anpassen was es sagen soll
+                    dtor.name, dtor_param_string, return_type, cod.name
+            ));
+            }
+        }
+
+        Err(Error::UndefinedIdentifier(ident.to_owned()))
+
+    }
+
+    //eigener Code
+    //getter für module
+    pub fn module(&self) -> &CheckedModule {
+        &self.module
+    }
+    //eigener Code
+    //determine signature information
+    pub fn get_signature_information (&self, ident: &str) -> Result<String, Error> {
+        //find definition
+        if let Some(def) = self.module.defs.iter().find(|item| item.name == ident){
+            let def_param_list: Vec<String> = def.context.bindings.iter()
+            .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+            let def_param_string = if def_param_list.is_empty(){
+                "...".to_string()
+            }else{
+                def_param_list.join(", ")
+            };
+            let return_type = def.ret_ty.print_to_string(None);
+            return Ok( format!(
+                "```fun\nfn {}({}) of Type {}\n```\n\nDefinition: **{}**.", //TODO anpassen was es sagen soll
+                def.name, def_param_string, return_type, def.name
+            ));
+             
+        }
+
+        //find datatype
+        if let Some(datatype) = self.module.data_types.iter().find(|item| item.name == ident){
+            return Ok(format!(
+                "```fun\ndata {} = ...\n```\n\nDatatype: **{}**.", //TODO anpassen was es sagen soll
+                datatype.name, datatype.name
+            ));   
+        }
+        
+        //find Constructors
+        for data in &self.module.data_types{
+            if let Some(ctor) = data.ctors.iter().find(|item| item.name == ident){
+                let ctor_param_list: Vec<String> = ctor.args.bindings.iter()
+                .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+
+                let ctor_param_string = if ctor_param_list.is_empty(){
+                    "...".to_string()
+                }else{
+                    ctor_param_list.join(", ")
+                };
+
+                //let return_type = ctor.
+                return Ok( format!(
+                    "```fun\n{}({})\n```\n\nConstructor of Type: **{}**.", //TODO anpassen was es sagen soll
+                    ctor.name, ctor_param_string, data.name
+            ));
+            }
+        }
+
+        //find Deconstructors
+        for cod in &self.module.codata_types{
+            if let Some(dtor) = cod.dtors.iter().find(|item| item.name == ident){
+                let dtor_param_list: Vec<String> = dtor.args.bindings.iter()
+                .map(|conbin| format!("{}: {}", conbin.var, conbin.ty.print_to_string(None))).collect();
+
+                let dtor_param_string = if dtor_param_list.is_empty(){
+                    "...".to_string()
+                }else{
+                    dtor_param_list.join(", ")
+                };
+                let return_type = dtor.cont_ty.print_to_string(None);
+                
+                return Ok( format!(
+                    "```fun\ndestructor {}({}) -> {}\n```\n\nDeconstructor of Type: **{}**.", //TODO anpassen was es sagen soll
+                    dtor.name, dtor_param_string, return_type, cod.name
+            ));
+            }
+        }
+
+        Err(Error::UndefinedIdentifier(ident.to_owned()))
+    }
+
 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
