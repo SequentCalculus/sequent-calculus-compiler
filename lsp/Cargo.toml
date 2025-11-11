@@ -16,3 +16,4 @@ serde={version="1.0.218"}
 log={version="0.4.6",features=["std"]}
 crossbeam-channel={version="0.5.14"}
 miette = { workspace = true }
+printer = { version = "0.1.0", path = "../lang/printer" }
