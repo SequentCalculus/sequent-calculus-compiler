@@ -11,27 +11,35 @@ use errors::Error;
 
 mod statement;
 
+pub const MAX_RUNS: u64 = 10;
+
 pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
     Ok(Prog {
         types: prog.types,
         defs: prog
             .defs
             .into_iter()
-            .map(rewrite_def)
+            .map(|def| rewrite_def(def, 0))
             .collect::<Result<Vec<Def>, Error>>()?,
     })
 }
 
-fn rewrite_def(def: Def) -> Result<Def, Error> {
+fn rewrite_def(def: Def, num_run: u64) -> Result<Def, Error> {
+    println!("rewriting {}, run {}", def.name, num_run);
     let mut ctx = RewriteContext::new();
     let mut free = HashSet::new();
     let new_body = def.body.rewrite(&mut ctx)?.free_vars(&mut free);
-    Ok(Def {
+    let new_def = Def {
         name: def.name,
         context: def.context,
         body: new_body,
         used_vars: free,
-    })
+    };
+    if ctx.new_changes && num_run < MAX_RUNS {
+        rewrite_def(new_def, num_run + 1)
+    } else {
+        Ok(new_def)
+    }
 }
 
 trait Rewrite {

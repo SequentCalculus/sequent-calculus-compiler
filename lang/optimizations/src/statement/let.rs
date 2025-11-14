@@ -12,6 +12,7 @@ impl Rewrite for Let {
         let mut free_vars_next = HashSet::new();
         let new_next = self.next.rewrite(ctx)?.free_vars(&mut free_vars_next);
         if !free_vars_next.contains(&self.var) {
+            ctx.new_changes = true;
             Ok(Rc::unwrap_or_clone(new_next))
         } else {
             Ok(Let {
