@@ -10,7 +10,9 @@ impl Rewrite for Switch {
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
         let let_binding = match ctx.get_binding(&self.var) {
             Some(bnd) => bnd,
-            None => return Ok(self.into()),
+            None => {
+                return Ok(self.into());
+            }
         };
         let clause_err = Error::clause(&self, &let_binding.tag);
         let rhs_clause = self

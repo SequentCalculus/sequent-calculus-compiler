@@ -3,7 +3,10 @@ use axcut::syntax::statements::Substitute;
 
 impl Rewrite for Substitute {
     type Target = Self;
-    fn rewrite(self, _: &mut RewriteContext) -> Result<Self::Target, Error> {
-        Ok(self)
+    fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
+        Ok(Substitute {
+            rearrange: self.rearrange,
+            next: self.next.rewrite(ctx)?,
+        })
     }
 }
