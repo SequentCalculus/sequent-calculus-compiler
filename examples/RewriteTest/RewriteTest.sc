@@ -1,4 +1,5 @@
 data Pair[A, B] { Tup(x:A,y:B) }
+codata Fun[A, B] { apply(x: A): B }
 
 def let_switch(x:i64,y:i64) : i64{
   let tup: Pair[i64,i64] = Tup(x,y);
@@ -17,6 +18,13 @@ def let_switch(x:i64,y:i64) : i64{
           }
       }
   }
+}
+
+def create_invoke(): i64{
+  let f: Fun[i64,i64] = new {
+    apply(x) => x + 1
+  };
+  f.apply[i64,i64](1)
 }
 
 def main(): i64 {
