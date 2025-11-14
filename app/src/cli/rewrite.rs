@@ -11,12 +11,12 @@ pub struct Args {
 
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mut drv = Driver::new();
-    let inlined = drv.inlined(&cmd.filepath);
-    let inlined = match inlined {
-        Ok(inlined) => inlined,
+    let rewritten = drv.rewritten(&cmd.filepath);
+    let rewritten = match rewritten {
+        Ok(rewritten) => rewritten,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
-    drv.print_inlined(&cmd.filepath, PrintMode::Textual)?;
-    print_res(&inlined, colored);
+    drv.print_rewritten(&cmd.filepath, PrintMode::Textual)?;
+    print_res(&rewritten, colored);
     Ok(())
 }
