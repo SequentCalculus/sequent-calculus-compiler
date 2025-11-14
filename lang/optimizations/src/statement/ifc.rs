@@ -16,7 +16,7 @@ impl Rewrite for IfC {
 }
 
 impl GetUsedVars for IfC {
-    fn get_used_vars(&self) -> HashSet<String> {
+    fn get_used_vars(&self) -> HashSet<Var> {
         let mut used = HashSet::from([self.fst.clone()]);
         if let Some(ref v) = self.snd {
             used.insert(v.clone());
