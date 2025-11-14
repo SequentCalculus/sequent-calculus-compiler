@@ -1,38 +1,55 @@
 use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
-    syntax::statements::{Statement, Switch},
-    traits::substitution::Subst,
+    syntax::statements::{Let, Statement, Switch},
+    traits::{free_vars::FreeVars, substitution::Subst},
 };
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 impl Rewrite for Switch {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
-        let let_binding = match ctx.get_binding(&self.var) {
-            Some(bnd) => bnd,
-            None => {
-                return Ok(self.into());
-            }
-        };
-        let clause_err = Error::clause(&self, &let_binding.tag);
-        let rhs_clause = self
-            .clauses
-            .into_iter()
-            .find(|clause| clause.xtor == let_binding.tag)
-            .ok_or(clause_err)?;
-        if rhs_clause.context.bindings.len() != let_binding.args.entries.len() {
-            return Err(Error::arity(
-                rhs_clause.context.bindings.len(),
-                let_binding.args.entries.len(),
-            ));
+        match ctx.get_binding(&self.var) {
+            Some(let_binding) => rewrite_subst(let_binding, self),
+            None => rewrite_no_subst(self, ctx),
         }
-        let subst = rhs_clause
-            .context
-            .bindings
-            .into_iter()
-            .map(|bnd| bnd.var)
-            .zip(let_binding.args.entries)
-            .collect::<Vec<_>>();
-        Ok(Rc::unwrap_or_clone(rhs_clause.body.subst_sim(&subst)))
     }
+}
+
+fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
+    let clause_err = Error::clause(&switch, &let_binding.tag);
+    let rhs_clause = switch
+        .clauses
+        .into_iter()
+        .find(|clause| clause.xtor == let_binding.tag)
+        .ok_or(clause_err)?;
+    if rhs_clause.context.bindings.len() != let_binding.args.entries.len() {
+        return Err(Error::arity(
+            rhs_clause.context.bindings.len(),
+            let_binding.args.entries.len(),
+        ));
+    }
+    let subst = rhs_clause
+        .context
+        .bindings
+        .into_iter()
+        .map(|bnd| bnd.var)
+        .zip(let_binding.args.entries)
+        .collect::<Vec<_>>();
+    Ok(Rc::unwrap_or_clone(rhs_clause.body.subst_sim(&subst)))
+}
+
+fn rewrite_no_subst(switch: Switch, ctx: &mut RewriteContext) -> Result<Statement, Error> {
+    let mut free_clauses = HashSet::new();
+    let mut new_clauses = vec![];
+    for clause in switch.clauses {
+        let next_clause = clause.rewrite(ctx)?.free_vars(&mut free_clauses);
+        new_clauses.push(next_clause);
+    }
+    Ok(Switch {
+        var: switch.var,
+        ty: switch.ty,
+        clauses: new_clauses,
+        free_vars_clauses: Some(free_clauses),
+    }
+    .into())
 }
