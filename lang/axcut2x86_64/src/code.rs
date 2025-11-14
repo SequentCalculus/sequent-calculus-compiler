@@ -766,7 +766,7 @@ fn save_caller_save_registers(
     }
 
     // ensure stack pointer alignment
-    if (registers_to_save_count - backup_registers_used) % 2 == 0 {
+    if (registers_to_save_count - backup_registers_used).is_multiple_of(2) {
         instructions.push(Code::SUBI(STACK, address(1)));
     }
 }
@@ -798,7 +798,7 @@ fn restore_caller_save_registers(
     }
 
     // take stack pointer alignment into account
-    if (registers_to_save_count - backup_registers_used) % 2 == 0 {
+    if (registers_to_save_count - backup_registers_used).is_multiple_of(2) {
         instructions.push(Code::ADDI(STACK, address(1)));
     }
 
