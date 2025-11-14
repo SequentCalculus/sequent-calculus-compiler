@@ -1,11 +1,14 @@
-use axcut::syntax::{Name, statements::Switch};
+use axcut::syntax::{
+    Name,
+    statements::{Create, Switch},
+};
 use miette::Diagnostic;
 use std::fmt;
 
 #[derive(Debug, Clone, Diagnostic)]
 pub enum Error {
     NoMatchingClause {
-        switch: String,
+        patterns: String,
         xtor: Name,
     },
     ClauseArity {
@@ -15,9 +18,16 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn clause(switch: &Switch, xtor: &str) -> Error {
+    pub fn switch_clause(switch: &Switch, xtor: &str) -> Error {
         Error::NoMatchingClause {
-            switch: format!("{switch:#?}"),
+            patterns: format!("{switch:#?}"),
+            xtor: xtor.to_owned(),
+        }
+    }
+
+    pub fn create_clause(create: &Create, xtor: &str) -> Error {
+        Error::NoMatchingClause {
+            patterns: format!("{create:#?}"),
             xtor: xtor.to_owned(),
         }
     }
@@ -33,7 +43,10 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::NoMatchingClause { switch, xtor } => {
+            Error::NoMatchingClause {
+                patterns: switch,
+                xtor,
+            } => {
                 write!(f, "Could not find clause for {xtor} in {switch}")
             }
             Error::ClauseArity {

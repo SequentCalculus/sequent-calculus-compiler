@@ -1,6 +1,9 @@
-use crate::{Error, Rewrite, RewriteContext};
+use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
 use axcut::{
-    syntax::statements::{Let, Statement, Switch},
+    syntax::{
+        Var,
+        statements::{Let, Statement, Switch},
+    },
     traits::{free_vars::FreeVars, substitution::Subst},
 };
 use std::{collections::HashSet, rc::Rc};
@@ -8,7 +11,7 @@ use std::{collections::HashSet, rc::Rc};
 impl Rewrite for Switch {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
-        match ctx.get_binding(&self.var) {
+        match ctx.get_let(&self.var) {
             Some(let_binding) => {
                 ctx.new_changes = true;
                 rewrite_subst(let_binding, self)
@@ -19,7 +22,7 @@ impl Rewrite for Switch {
 }
 
 fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
-    let clause_err = Error::clause(&switch, &let_binding.tag);
+    let clause_err = Error::switch_clause(&switch, &let_binding.tag);
     let rhs_clause = switch
         .clauses
         .into_iter()
@@ -55,4 +58,14 @@ fn rewrite_no_subst(switch: Switch, ctx: &mut RewriteContext) -> Result<Statemen
         free_vars_clauses: Some(free_clauses),
     }
     .into())
+}
+
+impl GetUsedVars for Switch {
+    fn get_used_vars(&self) -> HashSet<Var> {
+        let mut used = HashSet::from([self.var.clone()]);
+        for clause in self.clauses.iter() {
+            used.extend(clause.get_used_vars());
+        }
+        used
+    }
 }
