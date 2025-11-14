@@ -458,6 +458,7 @@ dependencies = [
  "fun2core",
  "miette",
  "opener",
+ "optimizations",
  "scc-core-lang",
  "scc-printer",
  "thiserror",
