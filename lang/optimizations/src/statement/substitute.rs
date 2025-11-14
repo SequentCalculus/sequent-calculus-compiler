@@ -1,5 +1,6 @@
-use crate::{Error, Rewrite, RewriteContext};
-use axcut::syntax::statements::Substitute;
+use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use axcut::syntax::{Var, statements::Substitute};
+use std::collections::HashSet;
 
 impl Rewrite for Substitute {
     type Target = Self;
@@ -8,5 +9,16 @@ impl Rewrite for Substitute {
             rearrange: self.rearrange,
             next: self.next.rewrite(ctx)?,
         })
+    }
+}
+
+impl GetUsedVars for Substitute {
+    fn get_used_vars(&self) -> HashSet<Var> {
+        let mut used = self.next.get_used_vars();
+        for (fst, snd) in self.rearrange.iter() {
+            used.insert(fst.clone());
+            used.insert(snd.clone());
+        }
+        used
     }
 }

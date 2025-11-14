@@ -1,6 +1,9 @@
-use crate::{Error, Rewrite, RewriteContext};
+use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
 use axcut::{
-    syntax::statements::{Let, Statement},
+    syntax::{
+        Var,
+        statements::{Let, Statement},
+    },
     traits::free_vars::FreeVars,
 };
 use std::{collections::HashSet, rc::Rc};
@@ -8,7 +11,7 @@ use std::{collections::HashSet, rc::Rc};
 impl Rewrite for Let {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
-        ctx.add_binding(&self);
+        ctx.add_let(&self);
         let mut free_vars_next = HashSet::new();
         let new_next = self.next.rewrite(ctx)?.free_vars(&mut free_vars_next);
         if !free_vars_next.contains(&self.var) {
@@ -25,5 +28,14 @@ impl Rewrite for Let {
             }
             .into())
         }
+    }
+}
+
+impl GetUsedVars for Let {
+    fn get_used_vars(&self) -> HashSet<Var> {
+        let mut used = HashSet::from([self.var.clone()]);
+        used.extend(self.args.entries.iter().cloned());
+        used.extend(self.next.get_used_vars());
+        used
     }
 }
