@@ -12,6 +12,7 @@ impl Rewrite for Invoke {
             None => return Ok(self.into()),
             Some(cr) => cr,
         };
+        ctx.new_changes = true;
         let clause_err = Error::create_clause(&create_binding, &self.tag);
         let bind_rhs = create_binding
             .clauses
