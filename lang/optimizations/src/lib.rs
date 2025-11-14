@@ -1,5 +1,8 @@
-use axcut::syntax::{Def, Prog};
-use std::rc::Rc;
+use axcut::{
+    syntax::{Def, Prog},
+    traits::free_vars::FreeVars,
+};
+use std::{collections::HashSet, rc::Rc};
 
 mod context;
 pub mod errors;
@@ -21,12 +24,13 @@ pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
 
 fn rewrite_def(def: Def) -> Result<Def, Error> {
     let mut ctx = RewriteContext::new();
-    let new_body = def.body.rewrite(&mut ctx)?;
+    let mut free = HashSet::new();
+    let new_body = def.body.rewrite(&mut ctx)?.free_vars(&mut free);
     Ok(Def {
         name: def.name,
         context: def.context,
         body: new_body,
-        used_vars: def.used_vars,
+        used_vars: free,
     })
 }
 
