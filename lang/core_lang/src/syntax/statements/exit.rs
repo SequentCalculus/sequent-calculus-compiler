@@ -107,8 +107,11 @@ impl FsExit {
 }
 
 impl Print for FsExit {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        alloc.keyword(EXIT).append(alloc.space()).append(&self.var)
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        alloc
+            .keyword(EXIT)
+            .append(alloc.space())
+            .append(self.var.print(cfg, alloc))
     }
 }
 

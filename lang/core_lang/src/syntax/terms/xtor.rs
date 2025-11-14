@@ -78,7 +78,7 @@ impl<C: Chi> Print for FsXtor<C> {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc)
+            self.args.print(cfg, alloc).parens()
         };
         if self.prdcns.is_prd() {
             alloc.ctor(&self.id).append(args)
