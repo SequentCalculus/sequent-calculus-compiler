@@ -1,5 +1,8 @@
-use crate::{Error, Rewrite, RewriteContext};
-use axcut::{syntax::statements::Literal, traits::free_vars::FreeVars};
+use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use axcut::{
+    syntax::{Var, statements::Literal},
+    traits::free_vars::FreeVars,
+};
 use std::collections::HashSet;
 
 impl Rewrite for Literal {
@@ -13,5 +16,13 @@ impl Rewrite for Literal {
             next: new_next,
             free_vars_next: Some(free_next),
         })
+    }
+}
+
+impl GetUsedVars for Literal {
+    fn get_used_vars(&self) -> HashSet<Var> {
+        let mut used = HashSet::from([self.var.clone()]);
+        used.extend(self.next.get_used_vars());
+        used
     }
 }
