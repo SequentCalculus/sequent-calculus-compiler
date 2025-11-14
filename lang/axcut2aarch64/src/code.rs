@@ -662,7 +662,7 @@ fn save_caller_save_registers(
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
-        if registers_to_push_count % 2 != 0 {
+        if !registers_to_push_count.is_multiple_of(2) {
             registers_to_push_count += 1;
         }
         instructions.push(Code::SUBI(
@@ -716,7 +716,7 @@ fn restore_caller_save_registers(
     let mut registers_to_push_count = registers_to_save_count - backup_registers_used;
     if registers_to_push_count > 0 {
         // ensure stack pointer alignment
-        if registers_to_push_count % 2 != 0 {
+        if !registers_to_push_count.is_multiple_of(2) {
             registers_to_push_count += 1;
         }
         for (offset, register) in registers_to_save
