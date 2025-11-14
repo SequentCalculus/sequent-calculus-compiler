@@ -1,4 +1,5 @@
 use axcut::syntax::{Def, Prog};
+use std::rc::Rc;
 
 mod context;
 pub mod errors;
@@ -32,4 +33,14 @@ fn rewrite_def(def: Def) -> Result<Def, Error> {
 trait Rewrite {
     type Target;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error>;
+}
+
+impl<T> Rewrite for Rc<T>
+where
+    T: Rewrite + Clone,
+{
+    type Target = Rc<T::Target>;
+    fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
+        Ok(Rc::new(Rc::unwrap_or_clone(self).rewrite(ctx)?))
+    }
 }
