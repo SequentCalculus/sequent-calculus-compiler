@@ -9,7 +9,10 @@ impl Rewrite for Switch {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
         match ctx.get_binding(&self.var) {
-            Some(let_binding) => rewrite_subst(let_binding, self),
+            Some(let_binding) => {
+                ctx.new_changes = true;
+                rewrite_subst(let_binding, self)
+            }
             None => rewrite_no_subst(self, ctx),
         }
     }
