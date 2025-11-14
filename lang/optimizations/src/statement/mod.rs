@@ -20,8 +20,8 @@ impl Rewrite for Statement {
         match self {
             Statement::Substitute(subst) => Ok(subst.rewrite(ctx)?.into()),
             Statement::Call(call) => Ok(call.rewrite(ctx)?.into()),
-            Statement::Let(lt) => Ok(lt.rewrite(ctx)?.into()),
-            Statement::Switch(switch) => Ok(switch.rewrite(ctx)?),
+            Statement::Let(lt) => lt.rewrite(ctx),
+            Statement::Switch(switch) => switch.rewrite(ctx),
             Statement::Create(cr) => Ok(cr.rewrite(ctx)?.into()),
             Statement::Invoke(inv) => Ok(inv.rewrite(ctx)?.into()),
             Statement::Literal(lit) => Ok(lit.rewrite(ctx)?.into()),
