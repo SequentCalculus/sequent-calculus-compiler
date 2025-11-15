@@ -314,7 +314,7 @@ impl Driver {
     /// This function returns the linearized [AxCut](axcut) version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
-        if let Some(res) = self.rewritten.get(path) {
+        if let Some(res) = self.linearized.get(path) {
             return Ok(res.clone());
         }
 
