@@ -57,7 +57,6 @@ impl TypedFreeVars for Call {
 
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
-        self.args = self.args.subst_sim(subst);
         self
     }
 }
