@@ -172,6 +172,11 @@ impl Linearizing for Create {
             ty: self.ty.clone(),
         };
 
+        let new_binding = ContextBinding {
+            var: self.var.clone(),
+            ty: self.ty.clone(),
+            chi: Chirality::Cns,
+        };
         if context_clone == context_rearrange {
             // if the context is exactly right already, we simply annotate the closure environment
             // ...
