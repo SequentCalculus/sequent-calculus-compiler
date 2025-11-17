@@ -174,6 +174,7 @@ impl Linearizing for Create {
 
         let new_binding = ContextBinding {
             var: self.var.clone(),
+
             ty: self.ty.clone(),
             chi: Chirality::Cns,
         };
