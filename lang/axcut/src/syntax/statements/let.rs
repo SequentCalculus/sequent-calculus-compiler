@@ -5,7 +5,10 @@ use printer::tokens::{COLON, COMMA, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
+use crate::syntax::{
+    Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var,
+    names::{filter_by_set, freshen},
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
