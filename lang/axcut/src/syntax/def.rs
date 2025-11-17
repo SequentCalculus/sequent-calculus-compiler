@@ -29,7 +29,7 @@ impl Def {
         // the variables in the context of the body are the parameters of the top-level function
         self.body = self
             .body
-            .linearize(self.context.vars(), &mut self.used_vars);
+            .linearize(self.context.clone(), &mut self.used_vars);
         self
     }
 }

@@ -4,7 +4,9 @@ use printer::tokens::{DIVIDE, LEFT_ARROW, MINUS, MODULO, PLUS, SEMI, TIMES};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Statement, Var, names::filter_by_set};
+use crate::syntax::{
+    Chirality, ContextBinding, Statement, Ty, TypingContext, Var, names::filter_by_set,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -115,7 +117,7 @@ impl Linearizing for Op {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the input variables are not consumed, so we have to keep them
@@ -126,7 +128,12 @@ impl Linearizing for Op {
         let mut new_context = filter_by_set(&context, &free_vars);
         let context_rearrange = new_context.clone();
         // ... and the variable the result is bound to
-        new_context.push(self.var.clone());
+        let new_binding = ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        };
+        new_context.bindings.push(new_binding);
 
         // linearize the remaining statement
         self.next = self.next.linearize(new_context, used_vars);
@@ -137,9 +144,17 @@ impl Linearizing for Op {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
-                .clone()
-                .into_iter()
-                .zip(context_rearrange.clone())
+                .bindings
+                .iter()
+                .map(|bnd| &bnd.var)
+                .cloned()
+                .zip(
+                    context_rearrange
+                        .bindings
+                        .iter()
+                        .map(|bnd| &bnd.var)
+                        .cloned(),
+                )
                 .collect();
             Substitute {
                 rearrange,

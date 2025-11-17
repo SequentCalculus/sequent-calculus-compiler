@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print};
 
 use super::Substitute;
 use crate::syntax::{
-    Arguments, Name, Statement, Ty, Var,
+    Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var,
     names::{filter_by_set, freshen},
 };
 use crate::traits::free_vars::FreeVars;
@@ -24,7 +24,7 @@ pub struct Let {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
-    pub args: Arguments,
+    pub context: TypingContext,
     pub next: Rc<Statement>,
     pub free_vars_next: Option<HashSet<Var>>,
 }
@@ -35,10 +35,10 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.entries.is_empty() {
+        let args = if self.context.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc).parens()
+            self.context.print(cfg, alloc).parens()
         };
 
         alloc
@@ -71,7 +71,7 @@ impl FreeVars for Let {
         self.free_vars_next = Some(vars.clone());
 
         vars.remove(&self.var);
-        vars.extend(self.args.entries.iter().cloned());
+        vars.extend(self.context.vars());
 
         self
     }
@@ -79,7 +79,16 @@ impl FreeVars for Let {
 
 impl Subst for Let {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
-        self.args.entries = self.args.entries.subst_sim(subst);
+        let mut new_binds = vec![];
+        for bnd in self.context.bindings {
+            let new_binding = ContextBinding {
+                var: bnd.var.subst_sim(subst),
+                ty: bnd.ty,
+                chi: bnd.chi,
+            };
+            new_binds.push(new_binding);
+        }
+        self.context.bindings = new_binds;
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
@@ -92,7 +101,7 @@ impl Linearizing for Let {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
 
@@ -100,33 +109,61 @@ impl Linearizing for Let {
         let mut new_context = filter_by_set(&context, &free_vars);
         // ... and the arguments of the xtor
         let mut context_rearrange = new_context.clone();
-        context_rearrange.append(&mut self.args.entries.clone());
+        context_rearrange
+            .bindings
+            .extend(self.context.bindings.clone());
 
         if context == context_rearrange {
             // if the context is exactly right already, we simply linearize the remaining statement
             // with the additional binding for the xtor
-            new_context.push(self.var.clone());
+            let new_bind = ContextBinding {
+                var: self.var.clone(),
+                ty: self.ty.clone(),
+                chi: Chirality::Prd,
+            };
+            new_context.bindings.push(new_bind);
             self.next = self.next.linearize(new_context, used_vars);
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args.entries = freshen(
-                &self.args.entries,
-                new_context.clone().into_iter().collect(),
+            self.context = freshen(
+                &self.context,
+                new_context
+                    .bindings
+                    .iter()
+                    .map(|bnd| &bnd.var)
+                    .cloned()
+                    .collect(),
                 used_vars,
             );
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
-            context_rearrange_freshened.append(&mut self.args.entries.clone());
+            context_rearrange_freshened
+                .bindings
+                .extend(self.context.bindings.clone());
 
             // linearize the remaining statement with the additional binding for the xtor
-            new_context.push(self.var.clone());
+            let new_binding = ContextBinding {
+                var: self.var.clone(),
+                ty: self.ty.clone(),
+                chi: Chirality::Prd,
+            };
+            new_context.bindings.push(new_binding);
             self.next = self.next.linearize(new_context, used_vars);
 
             let rearrange = context_rearrange_freshened
-                .into_iter()
-                .zip(context_rearrange)
+                .bindings
+                .iter()
+                .map(|bnd| &bnd.var)
+                .cloned()
+                .zip(
+                    context_rearrange
+                        .bindings
+                        .iter()
+                        .map(|bnd| &bnd.var)
+                        .cloned(),
+                )
                 .collect();
             Substitute {
                 rearrange,

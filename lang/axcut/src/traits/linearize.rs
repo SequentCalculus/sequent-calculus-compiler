@@ -1,7 +1,7 @@
 //! This module defines a trait with a method for performing the linearization pass translating
 //! the non-linearized version of AxCut into the linearized one.
 
-use crate::syntax::Var;
+use crate::syntax::{TypingContext, Var};
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -34,12 +34,12 @@ pub trait Linearizing {
     /// - `used_vars` is the set of variable names used in the whole top-level definition being
     ///   linearized. It is threaded through the linearization to facilitate generation of fresh
     ///   variables.
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target;
+    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Self::Target;
 }
 
 impl<T: Linearizing + Clone> Linearizing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).linearize(context, used_vars))
     }
 }

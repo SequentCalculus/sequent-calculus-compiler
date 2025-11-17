@@ -5,7 +5,7 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Statement, Var};
+use crate::syntax::{Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -137,7 +137,7 @@ impl Subst for IfC {
 
 impl Linearizing for IfC {
     type Target = IfC;
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> IfC {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> IfC {
         // we do not insert an explicit substitution, as there are no new bindings and there will
         // be an explicit substitution in each branch
         self.thenc = self.thenc.linearize(context.clone(), used_vars);

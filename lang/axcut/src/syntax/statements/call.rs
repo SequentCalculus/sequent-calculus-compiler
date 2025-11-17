@@ -3,7 +3,7 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{Arguments, Name, Statement, Var, names::freshen};
+use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var, names::freshen};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -17,7 +17,7 @@ use std::{collections::HashSet, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
-    pub args: Arguments,
+    pub context: TypingContext,
 }
 
 impl Print for Call {
@@ -28,7 +28,7 @@ impl Print for Call {
     ) -> printer::Builder<'a> {
         self.label
             .print(cfg, alloc)
-            .append(self.args.print(cfg, alloc).parens().group())
+            .append(self.context.print(cfg, alloc).parens().group())
     }
 }
 
@@ -40,31 +40,43 @@ impl From<Call> for Statement {
 
 impl FreeVars for Call {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.entries.iter().cloned());
+        vars.extend(self.context.vars());
         self
     }
 }
 
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
-        self.args.entries = self.args.entries.subst_sim(subst);
+        let mut new_bindings = vec![];
+        for binding in self.context.bindings {
+            new_bindings.push(ContextBinding {
+                var: binding.var.subst_sim(subst),
+                ty: binding.ty,
+                chi: binding.chi,
+            });
+        }
+        self.context.bindings = new_bindings;
         self
     }
 }
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let args = std::mem::take(&mut self.args.entries);
-
+    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         // the context must consist of the arguments for the top-level function
-        if context == args {
+        if context == self.context {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = freshen(&args, HashSet::new(), used_vars);
-            let rearrange = freshened_context.into_iter().zip(args).collect();
+            let freshened_context = freshen(&self.context, HashSet::new(), used_vars);
+            let rearrange = freshened_context
+                .bindings
+                .iter()
+                .map(|bnd| &bnd.var)
+                .cloned()
+                .zip(self.context.bindings.iter().map(|bnd| &bnd.var).cloned())
+                .collect();
             Substitute {
                 rearrange,
                 next: Rc::new(self.into()),

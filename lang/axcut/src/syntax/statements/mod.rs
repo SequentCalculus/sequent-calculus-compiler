@@ -28,7 +28,7 @@ pub use switch::Switch;
 
 use printer::Print;
 
-use super::Var;
+use super::{TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -111,7 +111,7 @@ impl Linearizing for Statement {
     ///
     /// A panic is caused if this method is called on a statement that contains an explicit
     /// substitution.
-    fn linearize(self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         match self {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")

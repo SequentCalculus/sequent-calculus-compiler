@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
 use crate::syntax::{
-    Arguments, Statement, Ty, Var,
+    Chirality, ContextBinding, Statement, Ty, TypingContext, Var,
     names::{filter_by_set, freshen},
 };
 
@@ -27,7 +27,7 @@ pub struct Create {
     pub var: Var,
     pub ty: Ty,
     /// Closure environment
-    pub context: Option<Arguments>,
+    pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
     pub free_vars_clauses: Option<HashSet<Var>>,
     pub next: Rc<Statement>,
@@ -102,7 +102,7 @@ impl Linearizing for Create {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses and the remaining statement are not annotated.
-    fn linearize(mut self, mut context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, mut context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
         let free_vars_next = std::mem::take(&mut self.free_vars_next)
@@ -118,8 +118,10 @@ impl Linearizing for Create {
         // and put them to the end when calculating the closure environment; then `filter_by_set`
         // sees the position where the closure environment will start later at the very beginning
         // (I know, it's a bit consfusing)
-        let mut context_reordered = context.split_off(context_next.len());
-        context_reordered.append(&mut context);
+        let mut context_reordered = TypingContext {
+            bindings: context.bindings.split_off(context_next.bindings.len()),
+        };
+        context_reordered.bindings.append(&mut context.bindings);
         // calculate the closure environment needed by the clauses
         let context_clauses = filter_by_set(&context_reordered, &free_vars_clauses);
 
@@ -128,8 +130,10 @@ impl Linearizing for Create {
             .clauses
             .into_iter()
             .map(|mut clause| {
-                let mut extended_context = clause.context.vars();
-                extended_context.append(&mut context_clauses.clone());
+                let mut extended_context = clause.context.clone();
+                extended_context
+                    .bindings
+                    .append(&mut context_clauses.bindings.clone());
                 clause.body = clause.body.linearize(extended_context, used_vars);
                 clause
             })
@@ -138,16 +142,24 @@ impl Linearizing for Create {
         // the new context consists of the context for the remaining statement ...
         let mut context_rearrange = context_next.clone();
         // ... and the closure environment
-        context_rearrange.append(&mut context_clauses.clone());
+        context_rearrange
+            .bindings
+            .append(&mut context_clauses.bindings.clone());
 
+        let new_binding = ContextBinding {
+            var: self.var.clone(),
+            ty: self.ty.clone(),
+            chi: Chirality::Cns,
+        };
         if context_clone == context_rearrange {
             // if the context is exactly right already, we simply annotate the closure environment
             // ...
-            self.context = Some(context_clauses.into());
+            self.context = Some(context_clauses);
 
             // ... and linearize the remaining statement with the additional binding for the
             // closure
-            context_next.push(self.var.clone());
+
+            context_next.bindings.push(new_binding);
             self.next = self.next.linearize(context_next, used_vars);
 
             self.into()
@@ -155,31 +167,56 @@ impl Linearizing for Create {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
             let mut context_next_freshened = freshen(
                 &context_next,
-                context_clauses.clone().into_iter().collect(),
+                context_clauses
+                    .bindings
+                    .iter()
+                    .map(|bnd| &bnd.var)
+                    .cloned()
+                    .collect(),
                 used_vars,
             );
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = context_next_freshened.clone();
-            context_rearrange_freshened.append(&mut context_clauses.clone());
+            context_rearrange_freshened
+                .bindings
+                .append(&mut context_clauses.bindings.clone());
             let rearrange = context_rearrange_freshened
-                .into_iter()
-                .zip(context_rearrange)
+                .bindings
+                .iter()
+                .map(|bnd| &bnd.var)
+                .cloned()
+                .zip(
+                    context_rearrange
+                        .bindings
+                        .iter()
+                        .map(|bnd| &bnd.var)
+                        .cloned(),
+                )
                 .collect();
 
             // annotate the closure environment
-            self.context = Some(context_clauses.into());
+            self.context = Some(context_clauses);
 
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
             let substitution_next: Vec<(Var, Var)> = context_next
-                .into_iter()
-                .zip(context_next_freshened.clone())
+                .bindings
+                .iter()
+                .map(|bnd| &bnd.var)
+                .cloned()
+                .zip(
+                    context_next_freshened
+                        .bindings
+                        .iter()
+                        .map(|bnd| &bnd.var)
+                        .cloned(),
+                )
                 .collect();
             self.next = self.next.subst_sim(substitution_next.as_slice());
 
             // linearize the remaining statement with the additional binding for the closure
-            context_next_freshened.push(self.var.clone());
+            context_next_freshened.bindings.push(new_binding);
             self.next = self.next.linearize(context_next_freshened, used_vars);
 
             Substitute {
