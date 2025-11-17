@@ -32,7 +32,7 @@ impl Print for Call {
     ) -> printer::Builder<'a> {
         self.label
             .print(cfg, alloc)
-            .append(self.args.print(cfg, alloc).parens().group())
+            .append(self.context.print(cfg, alloc).parens().group())
     }
 }
 
@@ -68,7 +68,7 @@ impl Linearizing for Call {
         let args = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the top-level function
-        if context == args {
+        if context == self.context {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {

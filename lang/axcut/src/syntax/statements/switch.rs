@@ -4,7 +4,7 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
 use crate::syntax::{
-    Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext,
+    Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext, Var,
     names::fresh_identifier,
 };
 use crate::traits::free_vars::FreeVars;
