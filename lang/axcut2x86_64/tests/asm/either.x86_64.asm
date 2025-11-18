@@ -29,7 +29,7 @@ main_:
     mov rdx, 1
     ; lit x <- 9;
     mov rdi, 9
-    ; let p: Either = Right(x);
+    ; let p: Either = Right(x: ext i64);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

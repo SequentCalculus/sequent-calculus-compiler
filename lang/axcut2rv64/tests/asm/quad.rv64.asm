@@ -8,7 +8,7 @@ LI X7 6
 LI X9 4
 // lit w <- 2;
 LI X11 2
-// let q: Quad = Q(z, y, x, w);
+// let q: Quad = Q(z: prd i64, y: prd i64, x: prd i64, w: prd i64);
 // #allocate memory
 // ##store values
 SW X11 56 X2
