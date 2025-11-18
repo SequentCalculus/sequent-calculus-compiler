@@ -25,11 +25,11 @@ asm_main:
     ; actual code
 
 main_:
-    ; lit z_1 <- 1;
+    ; lit z <- 1;
     mov rdx, 1
-    ; lit x_2 <- 9;
+    ; lit x <- 9;
     mov rdi, 9
-    ; let p_3: Either = Right(x_2);
+    ; let p: Either = Right(x: ext i64);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -126,7 +126,7 @@ lab11:
 lab13:
     ; #load tag
     mov rdi, 5
-    ; switch p_3 \{ ... \};
+    ; switch p \{ ... \};
     lea rcx, [rel Either_14]
     add rcx, rdi
     jmp rcx
@@ -155,9 +155,9 @@ lab15:
     mov rdi, [rsi + 56]
 
 lab16:
-    ; lit err_5 <- -1;
+    ; lit err <- -1;
     mov r9, -1
-    ; exit err_5
+    ; exit err
     mov rax, r9
     jmp cleanup
 
@@ -181,10 +181,10 @@ lab17:
     mov rdi, [rsi + 56]
 
 lab18:
-    ; c_7 <- b_6 + z_1;
+    ; c <- b + z;
     mov r9, rdi
     add r9, rdx
-    ; println_i64 c_7;
+    ; println_i64 c;
     ; #save caller-save registers
     mov r12, rdx
     mov r13, rdi
@@ -198,9 +198,9 @@ lab18:
     mov rdi, r13
     mov r9, r14
     add rsp, 8
-    ; lit ret_8 <- 0;
+    ; lit ret <- 0;
     mov r11, 0
-    ; exit ret_8
+    ; exit ret
     mov rax, r11
     jmp cleanup
 

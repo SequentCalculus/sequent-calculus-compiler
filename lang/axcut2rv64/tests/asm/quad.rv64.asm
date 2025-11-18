@@ -1,14 +1,14 @@
 // actual code
 main_:
-// lit z_1 <- 8;
+// lit z <- 8;
 LI X5 8
-// lit y_2 <- 6;
+// lit y <- 6;
 LI X7 6
-// lit x_3 <- 4;
+// lit x <- 4;
 LI X9 4
-// lit w_4 <- 2;
+// lit w <- 2;
 LI X11 2
-// let q_5: Quad = Q(z_1, y_2, x_3, w_4);
+// let q: Quad = Q(z: prd i64, y: prd i64, x: prd i64, w: prd i64);
 // #allocate memory
 // ##store values
 SW X11 56 X2
@@ -194,7 +194,7 @@ lab24:
 lab26:
 // #load tag
 LI X5 0
-// switch q_5 \{ ... \};
+// switch q \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Quad_27:
@@ -235,11 +235,11 @@ LW X9 40 X6
 LW X7 24 X6
 
 lab29:
-// lit z_10 <- 7;
+// lit z <- 7;
 LI X13 7
-// e_11 <- d_6 + z_10;
+// e <- d + z;
 ADD X15 X5 X13
-// exit e_11
+// exit e
 MV X10 X15
 JAL X0 cleanup
 
