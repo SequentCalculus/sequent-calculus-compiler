@@ -1,4 +1,4 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
     syntax::{Var, statements::Op},
     traits::free_vars::FreeVars,
@@ -18,13 +18,5 @@ impl Rewrite for Op {
             next: new_next,
             free_vars_next: Some(free_next),
         })
-    }
-}
-
-impl GetUsedVars for Op {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        let mut used = HashSet::from([self.fst.clone(), self.snd.clone(), self.var.clone()]);
-        used.extend(self.next.get_used_vars());
-        used
     }
 }
