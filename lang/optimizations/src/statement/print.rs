@@ -1,8 +1,5 @@
 use crate::{Error, Rewrite, RewriteContext};
-use axcut::{
-    syntax::{Var, statements::PrintI64},
-    traits::free_vars::FreeVars,
-};
+use axcut::{syntax::statements::PrintI64, traits::free_vars::FreeVars};
 use std::collections::HashSet;
 
 impl Rewrite for PrintI64 {
