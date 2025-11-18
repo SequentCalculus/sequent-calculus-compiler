@@ -1,5 +1,5 @@
 use axcut::syntax::{Def, Prog, Var};
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 mod context;
 pub mod errors;
@@ -22,12 +22,12 @@ pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
 }
 
 fn rewrite_def(def: Def, num_run: u64) -> Result<Vec<Def>, Error> {
-    let mut ctx = RewriteContext::new(&def.name);
+    let mut ctx = RewriteContext::new(&def.name, &def.used_vars);
     let new_body = def.body.rewrite(&mut ctx)?;
     let new_def = Def {
         name: def.name,
         context: def.context,
-        used_vars: new_body.get_used_vars(),
+        used_vars: ctx.current_used_vars,
         body: new_body,
     };
     let mut defs: Vec<Def> = ctx.lifted_defs.into_values().collect();
@@ -43,10 +43,6 @@ fn rewrite_def(def: Def, num_run: u64) -> Result<Vec<Def>, Error> {
 trait Rewrite {
     type Target;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error>;
-}
-
-trait GetUsedVars {
-    fn get_used_vars(&self) -> HashSet<Var>;
 }
 
 impl<T> Rewrite for Rc<T>
