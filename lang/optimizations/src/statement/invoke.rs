@@ -15,9 +15,9 @@ impl Rewrite for Invoke {
             .into_iter()
             .find(|clause| clause.xtor == self.tag)
             .ok_or(clause_err)?;
-        let lifted_name = ctx.lifted_name(&bind_rhs.xtor);
+        let lifted_name = ctx.lifted_name(&bind_rhs.xtor, &self.var);
         if !ctx.already_lifted(&lifted_name) {
-            ctx.lift_clause(bind_rhs)?;
+            ctx.lift_clause(bind_rhs, &self.var)?;
         }
         Ok(Call {
             label: lifted_name,
