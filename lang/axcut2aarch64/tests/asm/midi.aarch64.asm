@@ -24,7 +24,7 @@ main_:
     MOVZ X4, 0, LSL 0
     // #load tag
     ADR X5, ContInt_1
-    // create k: ContList = (t)\{ ... \};
+    // create k: ContList = (t: prd i64)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -217,7 +217,7 @@ range_:
     MOV X9, X7
     MOV X7, X5
     MOV X5, X2
-    // let ys: List = Cons(xs, i);
+    // let ys: List = Cons(xs: prd List, i: prd i64);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
@@ -413,7 +413,7 @@ lab36:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // create j: ContInt = (k, y)\{ ... \};
+    // create j: ContInt = (k: prd i64, y: prd i64)\{ ... \};
     // #allocate memory
     // ##store values
     STR X9, [ X0, 56 ]
