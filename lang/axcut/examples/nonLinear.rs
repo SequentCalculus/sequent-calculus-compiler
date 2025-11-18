@@ -97,12 +97,22 @@ fn main() {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
-                        args: vec!["x1".to_string()].into(),
+                        context: vec![ContextBinding {
+                            var: "x1".to_string(),
+                            ty: Ty::I64,
+                            chi: Chirality::Ext,
+                        }]
+                        .into(),
                         next: Rc::new(Statement::Let(Let {
                             var: "dd1".to_string(),
                             ty: Ty::Decl("BoxBox".to_string()),
                             tag: "BB".to_string(),
-                            args: vec!["d1".to_string()].into(),
+                            context: vec![ContextBinding {
+                                var: "d1".to_string(),
+                                ty: Ty::Decl("Box".to_string()),
+                                chi: Chirality::Prd,
+                            }]
+                            .into(),
                             next: Rc::new(Statement::Literal(Literal {
                                 lit: 4,
                                 var: "y".to_string(),
@@ -110,7 +120,12 @@ fn main() {
                                     var: "a1".to_string(),
                                     ty: Ty::Decl("Box".to_string()),
                                     tag: "B".to_string(),
-                                    args: vec!["y".to_string()].into(),
+                                    context: vec![ContextBinding {
+                                        var: "y".to_string(),
+                                        ty: Ty::I64,
+                                        chi: Chirality::Ext,
+                                    }]
+                                    .into(),
                                     next: Rc::new(Statement::Switch(Switch {
                                         var: "bb".to_string(),
                                         ty: Ty::Decl("BoxBox".to_string()),
@@ -137,7 +152,12 @@ fn main() {
                                                         var: "a2".to_string(),
                                                         ty: Ty::Decl("Box".to_string()),
                                                         tag: "B".to_string(),
-                                                        args: vec!["x2".to_string()].into(),
+                                                        context: vec![ContextBinding {
+                                                            var: "x2".to_string(),
+                                                            ty: Ty::I64,
+                                                            chi: Chirality::Ext,
+                                                        }]
+                                                        .into(),
                                                         next: Rc::new(main_body_switch_switch),
                                                         free_vars_next: None,
                                                     })),
@@ -174,12 +194,22 @@ fn main() {
                     var: "b".to_string(),
                     ty: Ty::Decl("Box".to_string()),
                     tag: "B".to_string(),
-                    args: vec!["x".to_string()].into(),
+                    context: vec![ContextBinding {
+                        var: "x".to_string(),
+                        ty: Ty::I64,
+                        chi: Chirality::Ext,
+                    }]
+                    .into(),
                     next: Rc::new(Statement::Let(Let {
                         var: "bb".to_string(),
                         ty: Ty::Decl("BoxBox".to_string()),
                         tag: "BB".to_string(),
-                        args: vec!["b".to_string()].into(),
+                        context: vec![ContextBinding {
+                            var: "b".to_string(),
+                            ty: Ty::I64,
+                            chi: Chirality::Ext,
+                        }]
+                        .into(),
                         next: Rc::new(main_body_switch),
                         free_vars_next: None,
                     })),

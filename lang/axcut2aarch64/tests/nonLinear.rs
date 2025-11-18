@@ -116,12 +116,22 @@ fn test_non_linear() {
                         var: "d1".to_string(),
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
-                        args: vec!["x1".to_string()].into(),
+                        context: vec![ContextBinding {
+                            var: "x1".to_string(),
+                            ty: Ty::I64,
+                            chi: Chirality::Ext,
+                        }]
+                        .into(),
                         next: Rc::new(Statement::Let(Let {
                             var: "dd1".to_string(),
                             ty: Ty::Decl("BoxBox".to_string()),
                             tag: "BB".to_string(),
-                            args: vec!["d1".to_string()].into(),
+                            context: vec![ContextBinding {
+                                var: "d1".to_string(),
+                                ty: Ty::Decl("Box".to_string()),
+                                chi: Chirality::Prd,
+                            }]
+                            .into(),
                             next: Rc::new(Statement::Substitute(Substitute {
                                 rearrange: vec![("bb2".to_string(), "bb2".to_string())],
                                 next: Rc::new(Statement::Literal(Literal {
@@ -131,7 +141,12 @@ fn test_non_linear() {
                                         var: "a1".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
-                                        args: vec!["y".to_string()].into(),
+                                        context: vec![ContextBinding {
+                                            var: "y".to_string(),
+                                            ty: Ty::I64,
+                                            chi: Chirality::Ext,
+                                        }]
+                                        .into(),
                                         next: Rc::new(Statement::Substitute(Substitute {
                                             rearrange: vec![
                                                 ("a1".to_string(), "a1".to_string()),
@@ -163,7 +178,12 @@ fn test_non_linear() {
                                                                 var: "a2".to_string(),
                                                                 ty: Ty::Decl("Box".to_string()),
                                                                 tag: "B".to_string(),
-                                                                args: vec!["x2".to_string()].into(),
+                                                                context: vec![ContextBinding {
+                                                                    var: "x2".to_string(),
+                                                                    ty: Ty::I64,
+                                                                    chi: Chirality::Ext,
+                                                                }]
+                                                                .into(),
                                                                 next: Rc::new(
                                                                     main_body_switch_switch,
                                                                 ),
@@ -219,12 +239,22 @@ fn test_non_linear() {
                                         var: "b".to_string(),
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
-                                        args: vec!["x".to_string()].into(),
+                                        context: vec![ContextBinding {
+                                            var: "x".to_string(),
+                                            ty: Ty::I64,
+                                            chi: Chirality::Ext,
+                                        }]
+                                        .into(),
                                         next: Rc::new(Statement::Let(Let {
                                             var: "bb".to_string(),
                                             ty: Ty::Decl("BoxBox".to_string()),
                                             tag: "BB".to_string(),
-                                            args: vec!["b".to_string()].into(),
+                                            context: vec![ContextBinding {
+                                                var: "b".to_string(),
+                                                ty: Ty::Decl("Box".to_string()),
+                                                chi: Chirality::Ext,
+                                            }]
+                                            .into(),
                                             next: Rc::new(Statement::Substitute(Substitute {
                                                 rearrange: vec![
                                                     ("f1".to_string(), "f1".to_string()),
