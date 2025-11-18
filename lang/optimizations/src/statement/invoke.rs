@@ -1,9 +1,5 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
-use axcut::syntax::{
-    Var,
-    statements::{Call, Invoke, Statement},
-};
-use std::collections::HashSet;
+use crate::{Error, Rewrite, RewriteContext};
+use axcut::syntax::statements::{Call, Invoke, Statement};
 
 impl Rewrite for Invoke {
     type Target = Statement;
@@ -25,16 +21,8 @@ impl Rewrite for Invoke {
         }
         Ok(Call {
             label: lifted_name,
-            args: self.args,
+            context: self.context,
         }
         .into())
-    }
-}
-
-impl GetUsedVars for Invoke {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        let mut used = HashSet::from([self.var.clone()]);
-        used.extend(self.args.entries.iter().cloned());
-        used
     }
 }
