@@ -32,7 +32,7 @@ impl CodeStatement for Let {
             self.var,
             self.ty.print_to_string(None),
             self.tag,
-            self.args.print_to_string(None)
+            self.context.print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
 
@@ -43,7 +43,7 @@ impl CodeStatement for Let {
 
         let arguments = context
             .bindings
-            .split_off(context.bindings.len() - self.args.entries.len());
+            .split_off(context.bindings.len() - self.context.bindings.len());
         Backend::store(arguments.into(), &context, instructions);
 
         context.bindings.push(ContextBinding {
