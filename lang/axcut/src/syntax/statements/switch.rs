@@ -84,7 +84,7 @@ impl Linearizing for Switch {
             ty: self.ty.clone(),
             chi: Chirality::Cns,
         };
-        context_rearrange.bindings.push(new_binding.clone());
+        context_rearrange.bindings.push(new_binding);
 
         // each clause is linearized with the context for the clauses prepended to the bindings
         self.clauses = self
@@ -107,11 +107,17 @@ impl Linearizing for Switch {
             // , pick a fresh one
             // otherwise we pick a fresh name for the matched on variable if it is duplicated ...
             if new_context.vars().contains(&self.var) {
+                let old = self.var.clone();
                 self.var = fresh_var(used_vars, &self.var);
             }
 
             // ... via an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
+            let new_binding = ContextBinding {
+                var: self.var.clone(),
+                ty: self.ty.clone(),
+                chi: Chirality::Cns,
+            };
 
             context_rearrange_freshened.bindings.push(new_binding);
 

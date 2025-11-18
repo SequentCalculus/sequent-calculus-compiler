@@ -1,0 +1,852 @@
+[0m[35mdata[0m [0m[31mBool[0m [0m{[0m [0m[34mTrue[0m, [0m[34mFalse[0m [0m}[0m
+[0m[35mdata[0m [0m[31mExpr[0m [0m{[0m
+    [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m),
+    [0m[34mX[0m
+[0m}[0m
+[0m[35mdata[0m [0m[31mList[Expr][0m [0m{[0m [0m[34mNil[0m, [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) [0m}[0m
+[0m[35mcodata[0m [0m[31mFun[Expr, Expr][0m [0m{[0m [0m[32mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m}[0m
+
+[0m[35mdef[0m main(iters: [0m[35mprd[0m [0m[31mi64[0m, n: [0m[35mprd[0m [0m[31mi64[0m, m: [0m[35mprd[0m [0m[31mi64[0m) [0m{[0m
+    ⟨[0m[35mmu[0m a0.main_loop(iters: [0m[35mprd[0m [0m[31mi64[0m, n: [0m[35mprd[0m [0m[31mi64[0m, m: [0m[35mprd[0m [0m[31mi64[0m, a0: [0m[35mcns[0m [0m[31mi64[0m) | [0m[35mmutilde[0m x0.[0m[35mexit[0m x0⟩
+[0m}[0m
+
+[0m[35mdef[0m map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, l: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mList[Expr][0m) [0m{[0m
+    ⟨l
+    | [0m[35mcase[0m [0m{[0m
+        [0m[34mNil[0m => ⟨[0m[34mNil[0m | a0⟩,
+        [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a1.⟨f | [0m[32mapply[0mx: [0m[35mprd[0m [0m[31mExpr[0m, a1: [0m[35mcns[0m [0m[31mExpr[0m⟩
+            | [0m[35mmutilde[0m x0.
+                ⟨[0m[35mmu[0m a2.map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m, a2: [0m[35mcns[0m [0m[31mList[Expr][0m)
+                | [0m[35mmutilde[0m x1.⟨[0m[34mCons[0mx0: [0m[35mprd[0m [0m[31mExpr[0m, x1: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩⟩
+    [0m}[0m⟩
+[0m}[0m
+
+[0m[35mdef[0m map_expr(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, e: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    ⟨e
+    | [0m[35mcase[0m [0m{[0m
+        [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a1.map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, sums: [0m[35mprd[0m [0m[31mList[Expr][0m, a1: [0m[35mcns[0m [0m[31mList[Expr][0m)
+            | [0m[35mmutilde[0m x0.⟨[0m[34mAdd[0mx0: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a2.map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, subs: [0m[35mprd[0m [0m[31mList[Expr][0m, a2: [0m[35mcns[0m [0m[31mList[Expr][0m)
+            | [0m[35mmutilde[0m x1.⟨[0m[34mSub[0mx1: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a3.map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, muls: [0m[35mprd[0m [0m[31mList[Expr][0m, a3: [0m[35mcns[0m [0m[31mList[Expr][0m)
+            | [0m[35mmutilde[0m x2.⟨[0m[34mMul[0mx2: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a4.map_list(f: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, divs: [0m[35mprd[0m [0m[31mList[Expr][0m, a4: [0m[35mcns[0m [0m[31mList[Expr][0m)
+            | [0m[35mmutilde[0m x3.⟨[0m[34mDiv[0mx3: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mNum[0mi: [0m[35mprd[0m [0m[31mi64[0m | [0m[35mmutilde[0m x4.⟨f | [0m[32mapply[0mx4: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m⟩⟩,
+        [0m[34mX[0m => ⟨[0m[34mX[0m | [0m[35mmutilde[0m x5.⟨f | [0m[32mapply[0mx5: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m⟩⟩
+    [0m}[0m⟩
+[0m}[0m
+
+[0m[35mdef[0m equal_list(l1: [0m[35mprd[0m [0m[31mList[Expr][0m, l2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m) [0m{[0m
+    ⟨l1
+    | [0m[35mcase[0m [0m{[0m
+        [0m[34mNil[0m =>
+            ⟨l2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mNil[0m => ⟨[0m[34mTrue[0m | a0⟩,
+                [0m[34mCons[0m(e: [0m[35mprd[0m [0m[31mExpr[0m, es: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mCons[0m(e1: [0m[35mprd[0m [0m[31mExpr[0m, es1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨l2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mNil[0m => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mCons[0m(e2: [0m[35mprd[0m [0m[31mExpr[0m, es2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    ⟨[0m[35mmu[0m a1.equal(e1: [0m[35mprd[0m [0m[31mExpr[0m, e2: [0m[35mprd[0m [0m[31mExpr[0m, a1: [0m[35mcns[0m [0m[31mBool[0m)
+                    | [0m[35mcase[0m [0m{[0m
+                        [0m[34mTrue[0m => equal_list(es1: [0m[35mprd[0m [0m[31mList[Expr][0m, es2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m),
+                        [0m[34mFalse[0m => ⟨[0m[34mFalse[0m | a0⟩
+                    [0m}[0m⟩
+            [0m}[0m⟩
+    [0m}[0m⟩
+[0m}[0m
+
+[0m[35mdef[0m equal(exp1: [0m[35mprd[0m [0m[31mExpr[0m, exp2: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mBool[0m) [0m{[0m
+    ⟨exp1
+    | [0m[35mcase[0m [0m{[0m
+        [0m[34mAdd[0m(sums1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    equal_list(sums1: [0m[35mprd[0m [0m[31mList[Expr][0m, sums2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m),
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mX[0m => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mSub[0m(subs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mSub[0m(subs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    equal_list(subs1: [0m[35mprd[0m [0m[31mList[Expr][0m, subs2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m),
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mX[0m => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mMul[0m(muls1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mMul[0m(muls2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    equal_list(muls1: [0m[35mprd[0m [0m[31mList[Expr][0m, muls2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m),
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mX[0m => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mDiv[0m(divs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mDiv[0m(divs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    equal_list(divs1: [0m[35mprd[0m [0m[31mList[Expr][0m, divs2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m),
+                [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mX[0m => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mNum[0m(i1: [0m[35mprd[0m [0m[31mi64[0m) =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mNum[0m(i2: [0m[35mprd[0m [0m[31mi64[0m) => [0m[35mif[0m i1 == i2 [0m{[0m ⟨[0m[34mTrue[0m | a0⟩ [0m}[0m [0m[35melse[0m [0m{[0m ⟨[0m[34mFalse[0m | a0⟩ [0m}[0m,
+                [0m[34mX[0m => ⟨[0m[34mFalse[0m | a0⟩
+            [0m}[0m⟩,
+        [0m[34mX[0m =>
+            ⟨exp2
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨[0m[34mFalse[0m | a0⟩,
+                [0m[34mX[0m => ⟨[0m[34mTrue[0m | a0⟩
+            [0m}[0m⟩
+    [0m}[0m⟩
+[0m}[0m
+
+[0m[35mdef[0m deriv(e: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    ⟨e
+    | [0m[35mcase[0m [0m{[0m
+        [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a1.
+                ⟨[0m[35mnew[0m [0m{[0m [0m[32mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a2: [0m[35mcns[0m [0m[31mExpr[0m) => deriv(x: [0m[35mprd[0m [0m[31mExpr[0m, a2: [0m[35mcns[0m [0m[31mExpr[0m) [0m}[0m
+                | [0m[35mmutilde[0m x1.
+                    map_list(x1: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, sums: [0m[35mprd[0m [0m[31mList[Expr][0m, a1: [0m[35mcns[0m [0m[31mList[Expr][0m)⟩
+            | [0m[35mmutilde[0m x0.⟨[0m[34mAdd[0mx0: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a3.
+                ⟨[0m[35mnew[0m [0m{[0m [0m[32mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a4: [0m[35mcns[0m [0m[31mExpr[0m) => deriv(x: [0m[35mprd[0m [0m[31mExpr[0m, a4: [0m[35mcns[0m [0m[31mExpr[0m) [0m}[0m
+                | [0m[35mmutilde[0m x3.
+                    map_list(x3: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, subs: [0m[35mprd[0m [0m[31mList[Expr][0m, a3: [0m[35mcns[0m [0m[31mList[Expr][0m)⟩
+            | [0m[35mmutilde[0m x2.⟨[0m[34mSub[0mx2: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩,
+        [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨[0m[35mmu[0m a5.
+                ⟨[0m[35mnew[0m [0m{[0m
+                    [0m[32mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a6: [0m[35mcns[0m [0m[31mExpr[0m) =>
+                        ⟨[0m[35mmu[0m a7.deriv(x: [0m[35mprd[0m [0m[31mExpr[0m, a7: [0m[35mcns[0m [0m[31mExpr[0m)
+                        | [0m[35mmutilde[0m x6.
+                            ⟨[0m[34mNil[0m
+                            | [0m[35mmutilde[0m x7.
+                                ⟨[0m[34mCons[0m
+                                    x: [0m[35mprd[0m [0m[31mExpr[0m,
+                                    x7: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                
+                                | [0m[35mmutilde[0m x8.
+                                    ⟨[0m[34mCons[0m
+                                        x6: [0m[35mprd[0m [0m[31mExpr[0m,
+                                        x8: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                    
+                                    | [0m[35mmutilde[0m x9.⟨[0m[34mDiv[0mx9: [0m[35mprd[0m [0m[31mList[Expr][0m | a6⟩⟩⟩⟩⟩
+                [0m}[0m
+                | [0m[35mmutilde[0m x5.
+                    map_list(x5: [0m[35mprd[0m [0m[31mFun[Expr, Expr][0m, muls: [0m[35mprd[0m [0m[31mList[Expr][0m, a5: [0m[35mcns[0m [0m[31mList[Expr][0m)⟩
+            | [0m[35mmutilde[0m x4.
+                ⟨[0m[34mAdd[0m
+                    x4: [0m[35mprd[0m [0m[31mList[Expr][0m
+                
+                | [0m[35mmutilde[0m x10.
+                    ⟨[0m[34mNil[0m
+                    | [0m[35mmutilde[0m x11.
+                        ⟨[0m[34mCons[0m
+                            x10: [0m[35mprd[0m [0m[31mExpr[0m,
+                            x11: [0m[35mprd[0m [0m[31mList[Expr][0m
+                        
+                        | [0m[35mmutilde[0m x12.
+                            ⟨[0m[34mCons[0m
+                                e: [0m[35mprd[0m [0m[31mExpr[0m,
+                                x12: [0m[35mprd[0m [0m[31mList[Expr][0m
+                            
+                            | [0m[35mmutilde[0m x13.⟨[0m[34mMul[0mx13: [0m[35mprd[0m [0m[31mList[Expr][0m | a0⟩⟩⟩⟩⟩⟩,
+        [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            ⟨divs
+            | [0m[35mcase[0m [0m{[0m
+                [0m[34mNil[0m => ⟨[0m[34mX[0m | a0⟩,
+                [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    ⟨xs
+                    | [0m[35mcase[0m [0m{[0m
+                        [0m[34mNil[0m => ⟨[0m[34mX[0m | a0⟩,
+                        [0m[34mCons[0m(y: [0m[35mprd[0m [0m[31mExpr[0m, ys: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            ⟨ys
+                            | [0m[35mcase[0m [0m{[0m
+                                [0m[34mNil[0m =>
+                                    ⟨[0m[35mmu[0m a8.deriv(x: [0m[35mprd[0m [0m[31mExpr[0m, a8: [0m[35mcns[0m [0m[31mExpr[0m)
+                                    | [0m[35mmutilde[0m x14.
+                                        ⟨[0m[34mNil[0m
+                                        | [0m[35mmutilde[0m x15.
+                                            ⟨[0m[34mCons[0m
+                                                y: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                x15: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                            
+                                            | [0m[35mmutilde[0m x16.
+                                                ⟨[0m[34mCons[0m
+                                                    x14: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                    x16: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                
+                                                | [0m[35mmutilde[0m x17.
+                                                    ⟨[0m[34mDiv[0m
+                                                        x17: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                    
+                                                    | [0m[35mmutilde[0m x18.
+                                                        ⟨[0m[35mmu[0m a9.deriv(y: [0m[35mprd[0m [0m[31mExpr[0m, a9: [0m[35mcns[0m [0m[31mExpr[0m)
+                                                        | [0m[35mmutilde[0m x19.
+                                                            ⟨[0m[34mNil[0m
+                                                            | [0m[35mmutilde[0m x20.
+                                                                ⟨[0m[34mCons[0m
+                                                                    x19: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                    x20: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                
+                                                                | [0m[35mmutilde[0m x21.
+                                                                    ⟨[0m[34mCons[0m
+                                                                        y: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                        x21: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                    
+                                                                    | [0m[35mmutilde[0m x22.
+                                                                        ⟨[0m[34mCons[0m
+                                                                            y: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                            x22: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                        
+                                                                        | [0m[35mmutilde[0m x23.
+                                                                            ⟨[0m[34mMul[0m
+                                                                                x23: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                            
+                                                                            | [0m[35mmutilde[0m x24.
+                                                                                ⟨[0m[34mNil[0m
+                                                                                | [0m[35mmutilde[0m x25.
+                                                                                    ⟨[0m[34mCons[0m
+                                                                                        x24: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                        x25: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                    
+                                                                                    | [0m[35mmutilde[0m x26.
+                                                                                        ⟨[0m[34mCons[0m
+                                                                                            x: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                            x26: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                        
+                                                                                        | [0m[35mmutilde[0m x27.
+                                                                                            ⟨[0m[34mDiv[0m
+                                                                                                x27: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                            
+                                                                                            | [0m[35mmutilde[0m x28.
+                                                                                                ⟨[0m[34mNil[0m
+                                                                                                | [0m[35mmutilde[0m x29.
+                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                        x28: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                        x29: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                    
+                                                                                                    | [0m[35mmutilde[0m x30.
+                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                            x18: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                            x30: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                        
+                                                                                                        | [0m[35mmutilde[0m x31.
+                                                                                                            ⟨[0m[34mSub[0m
+                                                                                                                x31: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                            
+                                                                                                            | a0⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩,
+                                [0m[34mCons[0m(z: [0m[35mprd[0m [0m[31mExpr[0m, zs: [0m[35mprd[0m [0m[31mList[Expr][0m) => ⟨[0m[34mX[0m | a0⟩
+                            [0m}[0m⟩
+                    [0m}[0m⟩
+            [0m}[0m⟩,
+        [0m[34mNum[0m(i: [0m[35mprd[0m [0m[31mi64[0m) => ⟨0 | [0m[35mmutilde[0m x32.⟨[0m[34mNum[0mx32: [0m[35mprd[0m [0m[31mi64[0m | a0⟩⟩,
+        [0m[34mX[0m => ⟨1 | [0m[35mmutilde[0m x33.⟨[0m[34mNum[0mx33: [0m[35mprd[0m [0m[31mi64[0m | a0⟩⟩
+    [0m}[0m⟩
+[0m}[0m
+
+[0m[35mdef[0m mk_exp(a: [0m[35mprd[0m [0m[31mExpr[0m, b: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    ⟨3
+    | [0m[35mmutilde[0m x0.
+        ⟨[0m[34mNum[0m
+            x0: [0m[35mprd[0m [0m[31mi64[0m
+        
+        | [0m[35mmutilde[0m x1.
+            ⟨[0m[34mX[0m
+            | [0m[35mmutilde[0m x2.
+                ⟨[0m[34mX[0m
+                | [0m[35mmutilde[0m x3.
+                    ⟨[0m[34mNil[0m
+                    | [0m[35mmutilde[0m x4.
+                        ⟨[0m[34mCons[0m
+                            x3: [0m[35mprd[0m [0m[31mExpr[0m,
+                            x4: [0m[35mprd[0m [0m[31mList[Expr][0m
+                        
+                        | [0m[35mmutilde[0m x5.
+                            ⟨[0m[34mCons[0m
+                                x2: [0m[35mprd[0m [0m[31mExpr[0m,
+                                x5: [0m[35mprd[0m [0m[31mList[Expr][0m
+                            
+                            | [0m[35mmutilde[0m x6.
+                                ⟨[0m[34mCons[0m
+                                    x1: [0m[35mprd[0m [0m[31mExpr[0m,
+                                    x6: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                
+                                | [0m[35mmutilde[0m x7.
+                                    ⟨[0m[34mMul[0m
+                                        x7: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                    
+                                    | [0m[35mmutilde[0m x8.
+                                        ⟨[0m[34mX[0m
+                                        | [0m[35mmutilde[0m x9.
+                                            ⟨[0m[34mX[0m
+                                            | [0m[35mmutilde[0m x10.
+                                                ⟨[0m[34mNil[0m
+                                                | [0m[35mmutilde[0m x11.
+                                                    ⟨[0m[34mCons[0m
+                                                        x10: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                        x11: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                    
+                                                    | [0m[35mmutilde[0m x12.
+                                                        ⟨[0m[34mCons[0m
+                                                            x9: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                            x12: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                        
+                                                        | [0m[35mmutilde[0m x13.
+                                                            ⟨[0m[34mCons[0m
+                                                                a: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                x13: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                            
+                                                            | [0m[35mmutilde[0m x14.
+                                                                ⟨[0m[34mMul[0m
+                                                                    x14: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                
+                                                                | [0m[35mmutilde[0m x15.
+                                                                    ⟨[0m[34mX[0m
+                                                                    | [0m[35mmutilde[0m x16.
+                                                                        ⟨[0m[34mNil[0m
+                                                                        | [0m[35mmutilde[0m x17.
+                                                                            ⟨[0m[34mCons[0m
+                                                                                x16: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                x17: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                            
+                                                                            | [0m[35mmutilde[0m x18.
+                                                                                ⟨[0m[34mCons[0m
+                                                                                    b: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                    x18: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                
+                                                                                | [0m[35mmutilde[0m x19.
+                                                                                    ⟨[0m[34mMul[0m
+                                                                                        x19: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                    
+                                                                                    | [0m[35mmutilde[0m x20.
+                                                                                        ⟨5
+                                                                                        | [0m[35mmutilde[0m x21.
+                                                                                            ⟨[0m[34mNum[0m
+                                                                                                x21: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                            
+                                                                                            | [0m[35mmutilde[0m x22.
+                                                                                                ⟨[0m[34mNil[0m
+                                                                                                | [0m[35mmutilde[0m x23.
+                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                        x22: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                        x23: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                    
+                                                                                                    | [0m[35mmutilde[0m x24.
+                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                            x20: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                            x24: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                        
+                                                                                                        | [0m[35mmutilde[0m x25.
+                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                x15: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                x25: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                            
+                                                                                                            | [0m[35mmutilde[0m x26.
+                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                    x8: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                    x26: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                
+                                                                                                                | [0m[35mmutilde[0m x27.
+                                                                                                                    ⟨[0m[34mAdd[0m
+                                                                                                                        x27: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                    
+                                                                                                                    | a0⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩
+[0m}[0m
+
+[0m[35mdef[0m mk_ans(a: [0m[35mprd[0m [0m[31mExpr[0m, b: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    ⟨3
+    | [0m[35mmutilde[0m x0.
+        ⟨[0m[34mNum[0m
+            x0: [0m[35mprd[0m [0m[31mi64[0m
+        
+        | [0m[35mmutilde[0m x1.
+            ⟨[0m[34mX[0m
+            | [0m[35mmutilde[0m x2.
+                ⟨[0m[34mX[0m
+                | [0m[35mmutilde[0m x3.
+                    ⟨[0m[34mNil[0m
+                    | [0m[35mmutilde[0m x4.
+                        ⟨[0m[34mCons[0m
+                            x3: [0m[35mprd[0m [0m[31mExpr[0m,
+                            x4: [0m[35mprd[0m [0m[31mList[Expr][0m
+                        
+                        | [0m[35mmutilde[0m x5.
+                            ⟨[0m[34mCons[0m
+                                x2: [0m[35mprd[0m [0m[31mExpr[0m,
+                                x5: [0m[35mprd[0m [0m[31mList[Expr][0m
+                            
+                            | [0m[35mmutilde[0m x6.
+                                ⟨[0m[34mCons[0m
+                                    x1: [0m[35mprd[0m [0m[31mExpr[0m,
+                                    x6: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                
+                                | [0m[35mmutilde[0m x7.
+                                    ⟨[0m[34mMul[0m
+                                        x7: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                    
+                                    | [0m[35mmutilde[0m x8.
+                                        ⟨0
+                                        | [0m[35mmutilde[0m x9.
+                                            ⟨[0m[34mNum[0m
+                                                x9: [0m[35mprd[0m [0m[31mi64[0m
+                                            
+                                            | [0m[35mmutilde[0m x10.
+                                                ⟨3
+                                                | [0m[35mmutilde[0m x11.
+                                                    ⟨[0m[34mNum[0m
+                                                        x11: [0m[35mprd[0m [0m[31mi64[0m
+                                                    
+                                                    | [0m[35mmutilde[0m x12.
+                                                        ⟨[0m[34mNil[0m
+                                                        | [0m[35mmutilde[0m x13.
+                                                            ⟨[0m[34mCons[0m
+                                                                x12: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                x13: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                            
+                                                            | [0m[35mmutilde[0m x14.
+                                                                ⟨[0m[34mCons[0m
+                                                                    x10: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                    x14: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                
+                                                                | [0m[35mmutilde[0m x15.
+                                                                    ⟨[0m[34mDiv[0m
+                                                                        x15: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                    
+                                                                    | [0m[35mmutilde[0m x16.
+                                                                        ⟨1
+                                                                        | [0m[35mmutilde[0m x17.
+                                                                            ⟨[0m[34mNum[0m
+                                                                                x17: [0m[35mprd[0m [0m[31mi64[0m
+                                                                            
+                                                                            | [0m[35mmutilde[0m x18.
+                                                                                ⟨[0m[34mX[0m
+                                                                                | [0m[35mmutilde[0m x19.
+                                                                                    ⟨[0m[34mNil[0m
+                                                                                    | [0m[35mmutilde[0m x20.
+                                                                                        ⟨[0m[34mCons[0m
+                                                                                            x19: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                            x20: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                        
+                                                                                        | [0m[35mmutilde[0m x21.
+                                                                                            ⟨[0m[34mCons[0m
+                                                                                                x18: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                x21: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                            
+                                                                                            | [0m[35mmutilde[0m x22.
+                                                                                                ⟨[0m[34mDiv[0m
+                                                                                                    x22: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                
+                                                                                                | [0m[35mmutilde[0m x23.
+                                                                                                    ⟨1
+                                                                                                    | [0m[35mmutilde[0m x24.
+                                                                                                        ⟨[0m[34mNum[0m
+                                                                                                            x24: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                        
+                                                                                                        | [0m[35mmutilde[0m x25.
+                                                                                                            ⟨[0m[34mX[0m
+                                                                                                            | [0m[35mmutilde[0m x26.
+                                                                                                                ⟨[0m[34mNil[0m
+                                                                                                                | [0m[35mmutilde[0m x27.
+                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                        x26: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                        x27: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                    
+                                                                                                                    | [0m[35mmutilde[0m x28.
+                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                            x25: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                            x28: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                        
+                                                                                                                        | [0m[35mmutilde[0m x29.
+                                                                                                                            ⟨[0m[34mDiv[0m
+                                                                                                                                x29: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                            
+                                                                                                                            | [0m[35mmutilde[0m x30.
+                                                                                                                                ⟨[0m[34mNil[0m
+                                                                                                                                | [0m[35mmutilde[0m x31.
+                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                        x30: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                        x31: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                    
+                                                                                                                                    | [0m[35mmutilde[0m x32.
+                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                            x23: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                            x32: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                        
+                                                                                                                                        | [0m[35mmutilde[0m x33.
+                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                x16: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                x33: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                            
+                                                                                                                                            | [0m[35mmutilde[0m x34.
+                                                                                                                                                ⟨[0m[34mAdd[0m
+                                                                                                                                                    x34: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                
+                                                                                                                                                | [0m[35mmutilde[0m x35.
+                                                                                                                                                    ⟨[0m[34mNil[0m
+                                                                                                                                                    | [0m[35mmutilde[0m x36.
+                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                            x35: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                            x36: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                        
+                                                                                                                                                        | [0m[35mmutilde[0m x37.
+                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                x8: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                x37: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                            
+                                                                                                                                                            | [0m[35mmutilde[0m x38.
+                                                                                                                                                                ⟨[0m[34mMul[0m
+                                                                                                                                                                    x38: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                
+                                                                                                                                                                | [0m[35mmutilde[0m x39.
+                                                                                                                                                                    ⟨[0m[34mX[0m
+                                                                                                                                                                    | [0m[35mmutilde[0m x40.
+                                                                                                                                                                        ⟨[0m[34mX[0m
+                                                                                                                                                                        | [0m[35mmutilde[0m x41.
+                                                                                                                                                                            ⟨[0m[34mNil[0m
+                                                                                                                                                                            | [0m[35mmutilde[0m x42.
+                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                    x41: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                    x42: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                
+                                                                                                                                                                                | [0m[35mmutilde[0m x43.
+                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                        x40: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                        x43: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                    
+                                                                                                                                                                                    | [0m[35mmutilde[0m x44.
+                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                            a: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                            x44: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                        
+                                                                                                                                                                                        | [0m[35mmutilde[0m x45.
+                                                                                                                                                                                            ⟨[0m[34mMul[0m
+                                                                                                                                                                                                x45: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                            
+                                                                                                                                                                                            | [0m[35mmutilde[0m x46.
+                                                                                                                                                                                                ⟨0
+                                                                                                                                                                                                | [0m[35mmutilde[0m x47.
+                                                                                                                                                                                                    ⟨[0m[34mNum[0m
+                                                                                                                                                                                                        x47: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                    
+                                                                                                                                                                                                    | [0m[35mmutilde[0m x48.
+                                                                                                                                                                                                        ⟨[0m[34mNil[0m
+                                                                                                                                                                                                        | [0m[35mmutilde[0m x49.
+                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                a: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                x49: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                            
+                                                                                                                                                                                                            | [0m[35mmutilde[0m x50.
+                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                    x48: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                    x50: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                
+                                                                                                                                                                                                                | [0m[35mmutilde[0m x51.
+                                                                                                                                                                                                                    ⟨[0m[34mDiv[0m
+                                                                                                                                                                                                                        x51: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                    
+                                                                                                                                                                                                                    | [0m[35mmutilde[0m x52.
+                                                                                                                                                                                                                        ⟨1
+                                                                                                                                                                                                                        | [0m[35mmutilde[0m x53.
+                                                                                                                                                                                                                            ⟨[0m[34mNum[0m
+                                                                                                                                                                                                                                x53: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                                            
+                                                                                                                                                                                                                            | [0m[35mmutilde[0m x54.
+                                                                                                                                                                                                                                ⟨[0m[34mX[0m
+                                                                                                                                                                                                                                | [0m[35mmutilde[0m x55.
+                                                                                                                                                                                                                                    ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x56.
+                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                            x55: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                            x56: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x57.
+                                                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                x54: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                x57: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x58.
+                                                                                                                                                                                                                                                ⟨[0m[34mDiv[0m
+                                                                                                                                                                                                                                                    x58: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x59.
+                                                                                                                                                                                                                                                    ⟨1
+                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x60.
+                                                                                                                                                                                                                                                        ⟨[0m[34mNum[0m
+                                                                                                                                                                                                                                                            x60: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x61.
+                                                                                                                                                                                                                                                            ⟨[0m[34mX[0m
+                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x62.
+                                                                                                                                                                                                                                                                ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x63.
+                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                        x62: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                        x63: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x64.
+                                                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                            x61: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                            x64: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x65.
+                                                                                                                                                                                                                                                                            ⟨[0m[34mDiv[0m
+                                                                                                                                                                                                                                                                                x65: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x66.
+                                                                                                                                                                                                                                                                                ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x67.
+                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                        x66: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                        x67: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x68.
+                                                                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                            x59: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                            x68: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x69.
+                                                                                                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                x52: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                x69: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x70.
+                                                                                                                                                                                                                                                                                                ⟨[0m[34mAdd[0m
+                                                                                                                                                                                                                                                                                                    x70: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x71.
+                                                                                                                                                                                                                                                                                                    ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x72.
+                                                                                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                            x71: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                            x72: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x73.
+                                                                                                                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                x46: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                x73: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x74.
+                                                                                                                                                                                                                                                                                                                ⟨[0m[34mMul[0m
+                                                                                                                                                                                                                                                                                                                    x74: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x75.
+                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mX[0m
+                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x76.
+                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x77.
+                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                x76: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                x77: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x78.
+                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                    b: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                    x78: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x79.
+                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mMul[0m
+                                                                                                                                                                                                                                                                                                                                        x79: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x80.
+                                                                                                                                                                                                                                                                                                                                        ⟨0
+                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x81.
+                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mNum[0m
+                                                                                                                                                                                                                                                                                                                                                x81: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x82.
+                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x83.
+                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                        b: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                        x83: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x84.
+                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                            x82: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                            x84: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x85.
+                                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mDiv[0m
+                                                                                                                                                                                                                                                                                                                                                                x85: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x86.
+                                                                                                                                                                                                                                                                                                                                                                ⟨1
+                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x87.
+                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mNum[0m
+                                                                                                                                                                                                                                                                                                                                                                        x87: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x88.
+                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mX[0m
+                                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x89.
+                                                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x90.
+                                                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                    x89: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                    x90: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x91.
+                                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                        x88: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                        x91: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x92.
+                                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mDiv[0m
+                                                                                                                                                                                                                                                                                                                                                                                            x92: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x93.
+                                                                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x94.
+                                                                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                    x93: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                    x94: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x95.
+                                                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                        x86: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                        x95: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x96.
+                                                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mAdd[0m
+                                                                                                                                                                                                                                                                                                                                                                                                            x96: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x97.
+                                                                                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x98.
+                                                                                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                    x97: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                    x98: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x99.
+                                                                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                        x80: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                        x99: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x100.
+                                                                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mMul[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                            x100: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x101.
+                                                                                                                                                                                                                                                                                                                                                                                                                            ⟨0
+                                                                                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x102.
+                                                                                                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mNum[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                    x102: [0m[35mprd[0m [0m[31mi64[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x103.
+                                                                                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mNil[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x104.
+                                                                                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                            x103: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                                            x104: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                        | [0m[35mmutilde[0m x105.
+                                                                                                                                                                                                                                                                                                                                                                                                                                            ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                x101: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                x105: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            | [0m[35mmutilde[0m x106.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    x75: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    x106: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                                | [0m[35mmutilde[0m x107.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    ⟨[0m[34mCons[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        x39: [0m[35mprd[0m [0m[31mExpr[0m,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        x107: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    | [0m[35mmutilde[0m x108.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        ⟨[0m[34mAdd[0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            x108: [0m[35mprd[0m [0m[31mList[Expr][0m
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        | a0⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩⟩
+[0m}[0m
+
+[0m[35mdef[0m main_loop(iters: [0m[35mprd[0m [0m[31mi64[0m, n: [0m[35mprd[0m [0m[31mi64[0m, m: [0m[35mprd[0m [0m[31mi64[0m, a0: [0m[35mcns[0m [0m[31mi64[0m) [0m{[0m
+    ⟨[0m[35mmu[0m a1.
+        ⟨[0m[34mNum[0m
+            n: [0m[35mprd[0m [0m[31mi64[0m
+        
+        | [0m[35mmutilde[0m x1.⟨[0m[34mNum[0mm: [0m[35mprd[0m [0m[31mi64[0m | [0m[35mmutilde[0m x2.mk_exp(x1: [0m[35mprd[0m [0m[31mExpr[0m, x2: [0m[35mprd[0m [0m[31mExpr[0m, a1: [0m[35mcns[0m [0m[31mExpr[0m)⟩⟩
+    | [0m[35mmutilde[0m x0.
+        ⟨[0m[35mmu[0m a2.deriv(x0: [0m[35mprd[0m [0m[31mExpr[0m, a2: [0m[35mcns[0m [0m[31mExpr[0m)
+        | [0m[35mmutilde[0m res.
+            ⟨[0m[34mNum[0m
+                n: [0m[35mprd[0m [0m[31mi64[0m
+            
+            | [0m[35mmutilde[0m x3.
+                ⟨[0m[34mNum[0m
+                    m: [0m[35mprd[0m [0m[31mi64[0m
+                
+                | [0m[35mmutilde[0m x4.
+                    ⟨[0m[35mmu[0m a3.mk_ans(x3: [0m[35mprd[0m [0m[31mExpr[0m, x4: [0m[35mprd[0m [0m[31mExpr[0m, a3: [0m[35mcns[0m [0m[31mExpr[0m)
+                    | [0m[35mmutilde[0m expected.
+                        ⟨1
+                        | [0m[35mmutilde[0m x5.
+                            [0m[35mif[0m iters == x5 [0m{[0m
+                                ⟨[0m[35mmu[0m a4.equal(expected: [0m[35mprd[0m [0m[31mExpr[0m, res: [0m[35mprd[0m [0m[31mExpr[0m, a4: [0m[35mcns[0m [0m[31mBool[0m)
+                                | [0m[35mcase[0m [0m{[0m
+                                    [0m[34mTrue[0m =>
+                                        ⟨1
+                                        | [0m[35mmutilde[0m x6.
+                                            [0m[35mprintln_i64[0m(x6);
+                                            ⟨0 | a0⟩⟩,
+                                    [0m[34mFalse[0m =>
+                                        ⟨0
+                                        | [0m[35mmutilde[0m x7.
+                                            [0m[35mprintln_i64[0m(x7);
+                                            ⟨0 | a0⟩⟩
+                                [0m}[0m⟩
+                            [0m}[0m [0m[35melse[0m [0m{[0m
+                                ⟨1
+                                | [0m[35mmutilde[0m x8.
+                                    ⟨iters - x8
+                                    | [0m[35mmutilde[0m x9.
+                                        main_loop(
+                                            x9: [0m[35mprd[0m [0m[31mi64[0m,
+                                            n: [0m[35mprd[0m [0m[31mi64[0m,
+                                            m: [0m[35mprd[0m [0m[31mi64[0m,
+                                            a0: [0m[35mcns[0m [0m[31mi64[0m
+                                        )⟩⟩
+                            [0m}[0m⟩⟩⟩⟩⟩⟩
+[0m}[0m
