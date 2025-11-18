@@ -1,0 +1,964 @@
+[0m[35mtype[0m [0m[31mExpr[0m [0m{[0m
+    [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m),
+    [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m),
+    [0m[34mX[0m
+[0m}[0m
+[0m[35mtype[0m [0m[31mList[Expr][0m [0m{[0m [0m[34mNil[0m, [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) [0m}[0m
+[0m[35mtype[0m [0m[31mBool[0m [0m{[0m [0m[34mTrue[0m, [0m[34mFalse[0m [0m}[0m
+[0m[35mtype[0m [0m[31m_Cont[0m [0m{[0m [0m[34mRet[0m(x: [0m[35mext[0m [0m[31mi64[0m) [0m}[0m
+[0m[35mtype[0m [0m[31mFun[Expr, Expr][0m [0m{[0m [0m[34mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m}[0m
+
+[0m[35mdef[0m main(iters: [0m[35mext[0m [0m[31mi64[0m, n: [0m[35mext[0m [0m[31mi64[0m, m: [0m[35mext[0m [0m[31mi64[0m) [0m{[0m
+    [0m[35mcreate[0m a0: [0m[31m_Cont[0m = ()[0m{[0m [0m[34mRet[0m(x0: [0m[35mext[0m [0m[31mi64[0m) => [0m[35mexit[0m x0 [0m}[0m;
+    main_loop()
+[0m}[0m
+
+[0m[35mdef[0m map_list(f: [0m[35mcns[0m [0m[31mFun[Expr, Expr][0m, l: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mList[Expr][0m) [0m{[0m
+    [0m[35msubstitute[0m (f := f), (a0 := a0), (l := l);
+    [0m[35mswitch[0m l [0m{[0m
+        [0m[34mNil[0m =>
+            [0m[35msubstitute[0m (a0 := a0);
+            [0m[35minvoke[0m a0 Nil,
+        [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (f0 := f), (x := x), (a0 := a0), (xs := xs), (f := f);
+            [0m[35mcreate[0m a1: [0m[31mExpr[0m = (a0, xs, f)[0m{[0m
+                [0m[34mAdd[0m(sums0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (f := f), (a0 := a0), (xs := xs), (sums0 := sums0);
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = Add(sums0);
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0(),
+                [0m[34mSub[0m(subs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (f := f), (a0 := a0), (xs := xs), (subs0 := subs0);
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = Sub(subs0);
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0(),
+                [0m[34mMul[0m(muls0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (f := f), (a0 := a0), (xs := xs), (muls0 := muls0);
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = Mul(muls0);
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0(),
+                [0m[34mDiv[0m(divs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (f := f), (a0 := a0), (xs := xs), (divs0 := divs0);
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = Div(divs0);
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0(),
+                [0m[34mNum[0m(i0: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (f := f), (a0 := a0), (xs := xs), (i0 := i0);
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = Num(i0);
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0(),
+                [0m[34mX[0m =>
+                    [0m[35mlet[0m x0: [0m[31mExpr[0m = X;
+                    [0m[35msubstitute[0m (a0 := a0), (f := f), (x0 := x0), (xs := xs);
+                    lift_map_list_0()
+            [0m}[0m;
+            [0m[35msubstitute[0m (x := x), (a1 := a1), (f0 := f0);
+            [0m[35minvoke[0m f0 apply
+    [0m}[0m
+[0m}[0m
+
+[0m[35mdef[0m lift_map_list_0(a0: [0m[35mcns[0m [0m[31mList[Expr][0m, f: [0m[35mcns[0m [0m[31mFun[Expr, Expr][0m, x0: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) [0m{[0m
+    [0m[35msubstitute[0m (xs := xs), (f := f), (x0 := x0), (a0 := a0);
+    [0m[35mcreate[0m a2: [0m[31mList[Expr][0m = (x0, a0)[0m{[0m
+        [0m[34mNil[0m =>
+            [0m[35mlet[0m x1: [0m[31mList[Expr][0m = Nil;
+            [0m[35msubstitute[0m (x0 := x0), (x1 := x1), (a0 := a0);
+            [0m[35minvoke[0m a0 Cons,
+        [0m[34mCons[0m(x2: [0m[35mprd[0m [0m[31mExpr[0m, xs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x0 := x0), (x2 := x2), (xs0 := xs0);
+            [0m[35mlet[0m x1: [0m[31mList[Expr][0m = Cons(x2, xs0);
+            [0m[35msubstitute[0m (x0 := x0), (x1 := x1), (a0 := a0);
+            [0m[35minvoke[0m a0 Cons
+    [0m}[0m;
+    [0m[35msubstitute[0m (f := f), (xs := xs), (a2 := a2);
+    map_list()
+[0m}[0m
+
+[0m[35mdef[0m map_expr(f: [0m[35mcns[0m [0m[31mFun[Expr, Expr][0m, e: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35msubstitute[0m (f := f), (a0 := a0), (e := e);
+    [0m[35mswitch[0m e [0m{[0m
+        [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (f := f), (sums := sums), (a0 := a0);
+            [0m[35mcreate[0m a1: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x0: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x0 := x0), (a0 := a0);
+                    [0m[35minvoke[0m a0 Add,
+                [0m[34mCons[0m(x6: [0m[35mprd[0m [0m[31mExpr[0m, xs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x6 := x6), (xs0 := xs0);
+                    [0m[35mlet[0m x0: [0m[31mList[Expr][0m = Cons(x6, xs0);
+                    [0m[35msubstitute[0m (x0 := x0), (a0 := a0);
+                    [0m[35minvoke[0m a0 Add
+            [0m}[0m;
+            map_list(),
+        [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (f := f), (subs := subs), (a0 := a0);
+            [0m[35mcreate[0m a2: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x1: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x1 := x1), (a0 := a0);
+                    [0m[35minvoke[0m a0 Sub,
+                [0m[34mCons[0m(x7: [0m[35mprd[0m [0m[31mExpr[0m, xs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x7 := x7), (xs1 := xs1);
+                    [0m[35mlet[0m x1: [0m[31mList[Expr][0m = Cons(x7, xs1);
+                    [0m[35msubstitute[0m (x1 := x1), (a0 := a0);
+                    [0m[35minvoke[0m a0 Sub
+            [0m}[0m;
+            map_list(),
+        [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (f := f), (muls := muls), (a0 := a0);
+            [0m[35mcreate[0m a3: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x2: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x2 := x2), (a0 := a0);
+                    [0m[35minvoke[0m a0 Mul,
+                [0m[34mCons[0m(x8: [0m[35mprd[0m [0m[31mExpr[0m, xs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x8 := x8), (xs2 := xs2);
+                    [0m[35mlet[0m x2: [0m[31mList[Expr][0m = Cons(x8, xs2);
+                    [0m[35msubstitute[0m (x2 := x2), (a0 := a0);
+                    [0m[35minvoke[0m a0 Mul
+            [0m}[0m;
+            map_list(),
+        [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (f := f), (divs := divs), (a0 := a0);
+            [0m[35mcreate[0m a4: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x3: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x3 := x3), (a0 := a0);
+                    [0m[35minvoke[0m a0 Div,
+                [0m[34mCons[0m(x9: [0m[35mprd[0m [0m[31mExpr[0m, xs3: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x9 := x9), (xs3 := xs3);
+                    [0m[35mlet[0m x3: [0m[31mList[Expr][0m = Cons(x9, xs3);
+                    [0m[35msubstitute[0m (x3 := x3), (a0 := a0);
+                    [0m[35minvoke[0m a0 Div
+            [0m}[0m;
+            map_list(),
+        [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35mlet[0m x4: [0m[31mExpr[0m = Num(i);
+            [0m[35msubstitute[0m (x4 := x4), (a0 := a0), (f := f);
+            [0m[35minvoke[0m f apply,
+        [0m[34mX[0m =>
+            [0m[35mlet[0m x5: [0m[31mExpr[0m = X;
+            [0m[35msubstitute[0m (x5 := x5), (a0 := a0), (f := f);
+            [0m[35minvoke[0m f apply
+    [0m}[0m
+[0m}[0m
+
+[0m[35mdef[0m equal_list(l1: [0m[35mprd[0m [0m[31mList[Expr][0m, l2: [0m[35mprd[0m [0m[31mList[Expr][0m, a0: [0m[35mcns[0m [0m[31mBool[0m) [0m{[0m
+    [0m[35msubstitute[0m (a0 := a0), (l2 := l2), (l1 := l1);
+    [0m[35mswitch[0m l1 [0m{[0m
+        [0m[34mNil[0m =>
+            [0m[35mswitch[0m l2 [0m{[0m
+                [0m[34mNil[0m => [0m[35minvoke[0m a0 True,
+                [0m[34mCons[0m(e: [0m[35mprd[0m [0m[31mExpr[0m, es: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mCons[0m(e1: [0m[35mprd[0m [0m[31mExpr[0m, es1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (es1 := es1), (e1 := e1), (l2 := l2);
+            [0m[35mswitch[0m l2 [0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mCons[0m(e2: [0m[35mprd[0m [0m[31mExpr[0m, es2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (e2 := e2), (e1 := e1), (es1 := es1), (a0 := a0), (es2 := es2);
+                    [0m[35mcreate[0m a1: [0m[31mBool[0m = (es1, a0, es2)[0m{[0m
+                        [0m[34mTrue[0m =>
+                            [0m[35msubstitute[0m (es1 := es1), (es2 := es2), (a0 := a0);
+                            equal_list(),
+                        [0m[34mFalse[0m =>
+                            [0m[35msubstitute[0m (a0 := a0);
+                            [0m[35minvoke[0m a0 False
+                    [0m}[0m;
+                    [0m[35msubstitute[0m (e1 := e1), (e2 := e2), (a1 := a1);
+                    equal()
+            [0m}[0m
+    [0m}[0m
+[0m}[0m
+
+[0m[35mdef[0m equal(exp1: [0m[35mprd[0m [0m[31mExpr[0m, exp2: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mBool[0m) [0m{[0m
+    [0m[35msubstitute[0m (a0 := a0), (exp2 := exp2), (exp1 := exp1);
+    [0m[35mswitch[0m exp1 [0m{[0m
+        [0m[34mAdd[0m(sums1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (sums1 := sums1), (exp2 := exp2);
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (sums1 := sums1), (sums2 := sums2), (a0 := a0);
+                    equal_list(),
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mX[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mSub[0m(subs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (subs1 := subs1), (exp2 := exp2);
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mSub[0m(subs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (subs1 := subs1), (subs2 := subs2), (a0 := a0);
+                    equal_list(),
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mX[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mMul[0m(muls1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (muls1 := muls1), (exp2 := exp2);
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mMul[0m(muls2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (muls1 := muls1), (muls2 := muls2), (a0 := a0);
+                    equal_list(),
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mX[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mDiv[0m(divs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (divs1 := divs1), (exp2 := exp2);
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mDiv[0m(divs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (divs1 := divs1), (divs2 := divs2), (a0 := a0);
+                    equal_list(),
+                [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mX[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mNum[0m(i1: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (i1 := i1), (exp2 := exp2);
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mNum[0m(i2: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35mif[0m i1 == i2 [0m{[0m
+                        [0m[35msubstitute[0m (a0 := a0);
+                        [0m[35minvoke[0m a0 True
+                    [0m}[0m [0m[35melse[0m [0m{[0m
+                        [0m[35msubstitute[0m (a0 := a0);
+                        [0m[35minvoke[0m a0 False
+                    [0m}[0m,
+                [0m[34mX[0m =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False
+            [0m}[0m,
+        [0m[34mX[0m =>
+            [0m[35mswitch[0m exp2 [0m{[0m
+                [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+                    [0m[35msubstitute[0m (a0 := a0);
+                    [0m[35minvoke[0m a0 False,
+                [0m[34mX[0m => [0m[35minvoke[0m a0 True
+            [0m}[0m
+    [0m}[0m
+[0m}[0m
+
+[0m[35mdef[0m deriv(e: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35msubstitute[0m (e := e), (a0 := a0), (e0 := e);
+    [0m[35mswitch[0m e0 [0m{[0m
+        [0m[34mAdd[0m(sums: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (sums := sums), (a0 := a0);
+            [0m[35mcreate[0m a1: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x0: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x0 := x0), (a0 := a0);
+                    [0m[35minvoke[0m a0 Add,
+                [0m[34mCons[0m(x34: [0m[35mprd[0m [0m[31mExpr[0m, xs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x34 := x34), (xs0 := xs0);
+                    [0m[35mlet[0m x0: [0m[31mList[Expr][0m = Cons(x34, xs0);
+                    [0m[35msubstitute[0m (x0 := x0), (a0 := a0);
+                    [0m[35minvoke[0m a0 Add
+            [0m}[0m;
+            [0m[35mcreate[0m x1: [0m[31mFun[Expr, Expr][0m = ()[0m{[0m [0m[34mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a2: [0m[35mcns[0m [0m[31mExpr[0m) => deriv() [0m}[0m;
+            [0m[35msubstitute[0m (x1 := x1), (sums := sums), (a1 := a1);
+            map_list(),
+        [0m[34mSub[0m(subs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (subs := subs), (a0 := a0);
+            [0m[35mcreate[0m a3: [0m[31mList[Expr][0m = (a0)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x2: [0m[31mList[Expr][0m = Nil;
+                    [0m[35msubstitute[0m (x2 := x2), (a0 := a0);
+                    [0m[35minvoke[0m a0 Sub,
+                [0m[34mCons[0m(x35: [0m[35mprd[0m [0m[31mExpr[0m, xs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (a0 := a0), (x35 := x35), (xs1 := xs1);
+                    [0m[35mlet[0m x2: [0m[31mList[Expr][0m = Cons(x35, xs1);
+                    [0m[35msubstitute[0m (x2 := x2), (a0 := a0);
+                    [0m[35minvoke[0m a0 Sub
+            [0m}[0m;
+            [0m[35mcreate[0m x3: [0m[31mFun[Expr, Expr][0m = ()[0m{[0m [0m[34mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a4: [0m[35mcns[0m [0m[31mExpr[0m) => deriv() [0m}[0m;
+            [0m[35msubstitute[0m (x3 := x3), (subs := subs), (a3 := a3);
+            map_list(),
+        [0m[34mMul[0m(muls: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (muls := muls), (a0 := a0), (e := e);
+            [0m[35mcreate[0m a5: [0m[31mList[Expr][0m = (a0, e)[0m{[0m
+                [0m[34mNil[0m =>
+                    [0m[35mlet[0m x4: [0m[31mList[Expr][0m = Nil;
+                    lift_deriv_0(),
+                [0m[34mCons[0m(x36: [0m[35mprd[0m [0m[31mExpr[0m, xs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35msubstitute[0m (e := e), (a0 := a0), (x36 := x36), (xs2 := xs2);
+                    [0m[35mlet[0m x4: [0m[31mList[Expr][0m = Cons(x36, xs2);
+                    [0m[35msubstitute[0m (a0 := a0), (e := e), (x4 := x4);
+                    lift_deriv_0()
+            [0m}[0m;
+            [0m[35mcreate[0m x5: [0m[31mFun[Expr, Expr][0m = ()[0m{[0m
+                [0m[34mapply[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, a6: [0m[35mcns[0m [0m[31mExpr[0m) =>
+                    [0m[35msubstitute[0m (x37 := x), (a6 := a6), (x := x);
+                    [0m[35mcreate[0m a7: [0m[31mExpr[0m = (a6, x)[0m{[0m
+                        [0m[34mAdd[0m(sums0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            [0m[35msubstitute[0m (x := x), (a6 := a6), (sums0 := sums0);
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = Add(sums0);
+                            [0m[35msubstitute[0m (a6 := a6), (x := x), (x6 := x6);
+                            lift_deriv_1(),
+                        [0m[34mSub[0m(subs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            [0m[35msubstitute[0m (x := x), (a6 := a6), (subs0 := subs0);
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = Sub(subs0);
+                            [0m[35msubstitute[0m (a6 := a6), (x := x), (x6 := x6);
+                            lift_deriv_1(),
+                        [0m[34mMul[0m(muls0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            [0m[35msubstitute[0m (x := x), (a6 := a6), (muls0 := muls0);
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = Mul(muls0);
+                            [0m[35msubstitute[0m (a6 := a6), (x := x), (x6 := x6);
+                            lift_deriv_1(),
+                        [0m[34mDiv[0m(divs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            [0m[35msubstitute[0m (x := x), (a6 := a6), (divs0 := divs0);
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = Div(divs0);
+                            [0m[35msubstitute[0m (a6 := a6), (x := x), (x6 := x6);
+                            lift_deriv_1(),
+                        [0m[34mNum[0m(i0: [0m[35mext[0m [0m[31mi64[0m) =>
+                            [0m[35msubstitute[0m (x := x), (a6 := a6), (i0 := i0);
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = Num(i0);
+                            [0m[35msubstitute[0m (a6 := a6), (x := x), (x6 := x6);
+                            lift_deriv_1(),
+                        [0m[34mX[0m =>
+                            [0m[35mlet[0m x6: [0m[31mExpr[0m = X;
+                            lift_deriv_1()
+                    [0m}[0m;
+                    deriv()
+            [0m}[0m;
+            [0m[35msubstitute[0m (x5 := x5), (muls := muls), (a5 := a5);
+            map_list(),
+        [0m[34mDiv[0m(divs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (divs := divs);
+            [0m[35mswitch[0m divs [0m{[0m
+                [0m[34mNil[0m => [0m[35minvoke[0m a0 X,
+                [0m[34mCons[0m(x: [0m[35mprd[0m [0m[31mExpr[0m, xs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                    [0m[35mswitch[0m xs [0m{[0m
+                        [0m[34mNil[0m =>
+                            [0m[35msubstitute[0m (a0 := a0);
+                            [0m[35minvoke[0m a0 X,
+                        [0m[34mCons[0m(y: [0m[35mprd[0m [0m[31mExpr[0m, ys: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                            [0m[35mswitch[0m ys [0m{[0m
+                                [0m[34mNil[0m =>
+                                    [0m[35msubstitute[0m (x38 := x), (x := x), (y := y), (a0 := a0);
+                                    [0m[35mcreate[0m a8: [0m[31mExpr[0m = (x, y, a0)[0m{[0m
+                                        [0m[34mAdd[0m(sums2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                                            [0m[35msubstitute[0m
+                                                (a0 := a0),
+                                                (x := x),
+                                                (y := y),
+                                                (sums2 := sums2);
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = Add(sums2);
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2(),
+                                        [0m[34mSub[0m(subs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                                            [0m[35msubstitute[0m
+                                                (a0 := a0),
+                                                (x := x),
+                                                (y := y),
+                                                (subs2 := subs2);
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = Sub(subs2);
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2(),
+                                        [0m[34mMul[0m(muls2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                                            [0m[35msubstitute[0m
+                                                (a0 := a0),
+                                                (x := x),
+                                                (y := y),
+                                                (muls2 := muls2);
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = Mul(muls2);
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2(),
+                                        [0m[34mDiv[0m(divs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                                            [0m[35msubstitute[0m
+                                                (a0 := a0),
+                                                (x := x),
+                                                (y := y),
+                                                (divs2 := divs2);
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = Div(divs2);
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2(),
+                                        [0m[34mNum[0m(i2: [0m[35mext[0m [0m[31mi64[0m) =>
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (i2 := i2);
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = Num(i2);
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2(),
+                                        [0m[34mX[0m =>
+                                            [0m[35mlet[0m x14: [0m[31mExpr[0m = X;
+                                            [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y);
+                                            lift_deriv_2()
+                                    [0m}[0m;
+                                    deriv(),
+                                [0m[34mCons[0m(z: [0m[35mprd[0m [0m[31mExpr[0m, zs: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+                                    [0m[35msubstitute[0m (a0 := a0);
+                                    [0m[35minvoke[0m a0 X
+                            [0m}[0m
+                    [0m}[0m
+            [0m}[0m,
+        [0m[34mNum[0m(i: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (a0 := a0);
+            [0m[35mlit[0m x32 <- 0;
+            [0m[35msubstitute[0m (x32 := x32), (a0 := a0);
+            [0m[35minvoke[0m a0 Num,
+        [0m[34mX[0m =>
+            [0m[35msubstitute[0m (a0 := a0);
+            [0m[35mlit[0m x33 <- 1;
+            [0m[35msubstitute[0m (x33 := x33), (a0 := a0);
+            [0m[35minvoke[0m a0 Num
+    [0m}[0m
+[0m}[0m
+
+[0m[35mdef[0m lift_deriv_2(a0: [0m[35mcns[0m [0m[31mExpr[0m, x: [0m[35mprd[0m [0m[31mExpr[0m, x14: [0m[35mprd[0m [0m[31mExpr[0m, y: [0m[35mprd[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35mlet[0m x15: [0m[31mList[Expr][0m = Nil;
+    [0m[35msubstitute[0m (a0 := a0), (x := x), (x14 := x14), (y := y), (y0 := y), (x15 := x15);
+    [0m[35mlet[0m x16: [0m[31mList[Expr][0m = Cons(y0, x15);
+    [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x14 := x14), (x16 := x16);
+    [0m[35mlet[0m x17: [0m[31mList[Expr][0m = Cons(x14, x16);
+    [0m[35mlet[0m x18: [0m[31mExpr[0m = Div(x17);
+    [0m[35msubstitute[0m (y1 := y), (x := x), (y := y), (x18 := x18), (a0 := a0);
+    [0m[35mcreate[0m a9: [0m[31mExpr[0m = (x, y, x18, a0)[0m{[0m
+        [0m[34mAdd[0m(sums1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x18 := x18), (sums1 := sums1);
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = Add(sums1);
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3(),
+        [0m[34mSub[0m(subs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x18 := x18), (subs1 := subs1);
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = Sub(subs1);
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3(),
+        [0m[34mMul[0m(muls1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x18 := x18), (muls1 := muls1);
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = Mul(muls1);
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3(),
+        [0m[34mDiv[0m(divs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x18 := x18), (divs1 := divs1);
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = Div(divs1);
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3(),
+        [0m[34mNum[0m(i1: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (y := y), (x18 := x18), (i1 := i1);
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = Num(i1);
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3(),
+        [0m[34mX[0m =>
+            [0m[35mlet[0m x19: [0m[31mExpr[0m = X;
+            [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (x19 := x19), (y := y);
+            lift_deriv_3()
+    [0m}[0m;
+    deriv()
+[0m}[0m
+
+[0m[35mdef[0m lift_deriv_3(a0: [0m[35mcns[0m [0m[31mExpr[0m, x: [0m[35mprd[0m [0m[31mExpr[0m, x18: [0m[35mprd[0m [0m[31mExpr[0m, x19: [0m[35mprd[0m [0m[31mExpr[0m, y: [0m[35mprd[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35mlet[0m x20: [0m[31mList[Expr][0m = Nil;
+    [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (y := y), (x19 := x19), (x20 := x20);
+    [0m[35mlet[0m x21: [0m[31mList[Expr][0m = Cons(x19, x20);
+    [0m[35msubstitute[0m (a0 := a0), (x := x), (x18 := x18), (y := y), (y0 := y), (x21 := x21);
+    [0m[35mlet[0m x22: [0m[31mList[Expr][0m = Cons(y0, x21);
+    [0m[35mlet[0m x23: [0m[31mList[Expr][0m = Cons(y, x22);
+    [0m[35mlet[0m x24: [0m[31mExpr[0m = Mul(x23);
+    [0m[35mlet[0m x25: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x26: [0m[31mList[Expr][0m = Cons(x24, x25);
+    [0m[35msubstitute[0m (a0 := a0), (x18 := x18), (x := x), (x26 := x26);
+    [0m[35mlet[0m x27: [0m[31mList[Expr][0m = Cons(x, x26);
+    [0m[35mlet[0m x28: [0m[31mExpr[0m = Div(x27);
+    [0m[35mlet[0m x29: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x30: [0m[31mList[Expr][0m = Cons(x28, x29);
+    [0m[35mlet[0m x31: [0m[31mList[Expr][0m = Cons(x18, x30);
+    [0m[35msubstitute[0m (x31 := x31), (a0 := a0);
+    [0m[35minvoke[0m a0 Sub
+[0m}[0m
+
+[0m[35mdef[0m lift_deriv_1(a6: [0m[35mcns[0m [0m[31mExpr[0m, x: [0m[35mprd[0m [0m[31mExpr[0m, x6: [0m[35mprd[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35mlet[0m x7: [0m[31mList[Expr][0m = Nil;
+    [0m[35msubstitute[0m (a6 := a6), (x6 := x6), (x := x), (x7 := x7);
+    [0m[35mlet[0m x8: [0m[31mList[Expr][0m = Cons(x, x7);
+    [0m[35mlet[0m x9: [0m[31mList[Expr][0m = Cons(x6, x8);
+    [0m[35msubstitute[0m (x9 := x9), (a6 := a6);
+    [0m[35minvoke[0m a6 Div
+[0m}[0m
+
+[0m[35mdef[0m lift_deriv_0(a0: [0m[35mcns[0m [0m[31mExpr[0m, e: [0m[35mprd[0m [0m[31mExpr[0m, x4: [0m[35mprd[0m [0m[31mList[Expr][0m) [0m{[0m
+    [0m[35mlet[0m x10: [0m[31mExpr[0m = Add(x4);
+    [0m[35mlet[0m x11: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x12: [0m[31mList[Expr][0m = Cons(x10, x11);
+    [0m[35mlet[0m x13: [0m[31mList[Expr][0m = Cons(e, x12);
+    [0m[35msubstitute[0m (x13 := x13), (a0 := a0);
+    [0m[35minvoke[0m a0 Mul
+[0m}[0m
+
+[0m[35mdef[0m mk_exp(a: [0m[35mprd[0m [0m[31mExpr[0m, b: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35mlit[0m x0 <- 3;
+    [0m[35mlet[0m x1: [0m[31mExpr[0m = Num(x0);
+    [0m[35mlet[0m x2: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x3: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x4: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x5: [0m[31mList[Expr][0m = Cons(x3, x4);
+    [0m[35mlet[0m x6: [0m[31mList[Expr][0m = Cons(x2, x5);
+    [0m[35mlet[0m x7: [0m[31mList[Expr][0m = Cons(x1, x6);
+    [0m[35mlet[0m x8: [0m[31mExpr[0m = Mul(x7);
+    [0m[35mlet[0m x9: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x10: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x11: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x12: [0m[31mList[Expr][0m = Cons(x10, x11);
+    [0m[35mlet[0m x13: [0m[31mList[Expr][0m = Cons(x9, x12);
+    [0m[35msubstitute[0m (x8 := x8), (b := b), (a0 := a0), (a := a), (x13 := x13);
+    [0m[35mlet[0m x14: [0m[31mList[Expr][0m = Cons(a, x13);
+    [0m[35mlet[0m x15: [0m[31mExpr[0m = Mul(x14);
+    [0m[35mlet[0m x16: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x17: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x18: [0m[31mList[Expr][0m = Cons(x16, x17);
+    [0m[35msubstitute[0m (x8 := x8), (x15 := x15), (a0 := a0), (b := b), (x18 := x18);
+    [0m[35mlet[0m x19: [0m[31mList[Expr][0m = Cons(b, x18);
+    [0m[35mlet[0m x20: [0m[31mExpr[0m = Mul(x19);
+    [0m[35mlit[0m x21 <- 5;
+    [0m[35mlet[0m x22: [0m[31mExpr[0m = Num(x21);
+    [0m[35mlet[0m x23: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x24: [0m[31mList[Expr][0m = Cons(x22, x23);
+    [0m[35mlet[0m x25: [0m[31mList[Expr][0m = Cons(x20, x24);
+    [0m[35msubstitute[0m (x8 := x8), (a0 := a0), (x15 := x15), (x25 := x25);
+    [0m[35mlet[0m x26: [0m[31mList[Expr][0m = Cons(x15, x25);
+    [0m[35msubstitute[0m (a0 := a0), (x8 := x8), (x26 := x26);
+    [0m[35mlet[0m x27: [0m[31mList[Expr][0m = Cons(x8, x26);
+    [0m[35msubstitute[0m (x27 := x27), (a0 := a0);
+    [0m[35minvoke[0m a0 Add
+[0m}[0m
+
+[0m[35mdef[0m mk_ans(a: [0m[35mprd[0m [0m[31mExpr[0m, b: [0m[35mprd[0m [0m[31mExpr[0m, a0: [0m[35mcns[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35mlit[0m x0 <- 3;
+    [0m[35mlet[0m x1: [0m[31mExpr[0m = Num(x0);
+    [0m[35mlet[0m x2: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x3: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x4: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x5: [0m[31mList[Expr][0m = Cons(x3, x4);
+    [0m[35mlet[0m x6: [0m[31mList[Expr][0m = Cons(x2, x5);
+    [0m[35mlet[0m x7: [0m[31mList[Expr][0m = Cons(x1, x6);
+    [0m[35mlet[0m x8: [0m[31mExpr[0m = Mul(x7);
+    [0m[35mlit[0m x9 <- 0;
+    [0m[35mlet[0m x10: [0m[31mExpr[0m = Num(x9);
+    [0m[35mlit[0m x11 <- 3;
+    [0m[35mlet[0m x12: [0m[31mExpr[0m = Num(x11);
+    [0m[35mlet[0m x13: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x14: [0m[31mList[Expr][0m = Cons(x12, x13);
+    [0m[35mlet[0m x15: [0m[31mList[Expr][0m = Cons(x10, x14);
+    [0m[35mlet[0m x16: [0m[31mExpr[0m = Div(x15);
+    [0m[35mlit[0m x17 <- 1;
+    [0m[35mlet[0m x18: [0m[31mExpr[0m = Num(x17);
+    [0m[35mlet[0m x19: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x20: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x21: [0m[31mList[Expr][0m = Cons(x19, x20);
+    [0m[35mlet[0m x22: [0m[31mList[Expr][0m = Cons(x18, x21);
+    [0m[35mlet[0m x23: [0m[31mExpr[0m = Div(x22);
+    [0m[35mlit[0m x24 <- 1;
+    [0m[35mlet[0m x25: [0m[31mExpr[0m = Num(x24);
+    [0m[35mlet[0m x26: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x27: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x28: [0m[31mList[Expr][0m = Cons(x26, x27);
+    [0m[35mlet[0m x29: [0m[31mList[Expr][0m = Cons(x25, x28);
+    [0m[35mlet[0m x30: [0m[31mExpr[0m = Div(x29);
+    [0m[35mlet[0m x31: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x32: [0m[31mList[Expr][0m = Cons(x30, x31);
+    [0m[35mlet[0m x33: [0m[31mList[Expr][0m = Cons(x23, x32);
+    [0m[35mlet[0m x34: [0m[31mList[Expr][0m = Cons(x16, x33);
+    [0m[35mlet[0m x35: [0m[31mExpr[0m = Add(x34);
+    [0m[35mlet[0m x36: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x37: [0m[31mList[Expr][0m = Cons(x35, x36);
+    [0m[35mlet[0m x38: [0m[31mList[Expr][0m = Cons(x8, x37);
+    [0m[35mlet[0m x39: [0m[31mExpr[0m = Mul(x38);
+    [0m[35mlet[0m x40: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x41: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x42: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x43: [0m[31mList[Expr][0m = Cons(x41, x42);
+    [0m[35mlet[0m x44: [0m[31mList[Expr][0m = Cons(x40, x43);
+    [0m[35msubstitute[0m (a := a), (b := b), (a0 := a0), (x39 := x39), (a1 := a), (x44 := x44);
+    [0m[35mlet[0m x45: [0m[31mList[Expr][0m = Cons(a1, x44);
+    [0m[35mlet[0m x46: [0m[31mExpr[0m = Mul(x45);
+    [0m[35mlit[0m x47 <- 0;
+    [0m[35mlet[0m x48: [0m[31mExpr[0m = Num(x47);
+    [0m[35mlet[0m x49: [0m[31mList[Expr][0m = Nil;
+    [0m[35msubstitute[0m
+        (x48 := x48),
+        (b := b),
+        (a0 := a0),
+        (x39 := x39),
+        (x46 := x46),
+        (a := a),
+        (x49 := x49);
+    [0m[35mlet[0m x50: [0m[31mList[Expr][0m = Cons(a, x49);
+    [0m[35msubstitute[0m (x46 := x46), (b := b), (a0 := a0), (x39 := x39), (x48 := x48), (x50 := x50);
+    [0m[35mlet[0m x51: [0m[31mList[Expr][0m = Cons(x48, x50);
+    [0m[35mlet[0m x52: [0m[31mExpr[0m = Div(x51);
+    [0m[35mlit[0m x53 <- 1;
+    [0m[35mlet[0m x54: [0m[31mExpr[0m = Num(x53);
+    [0m[35mlet[0m x55: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x56: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x57: [0m[31mList[Expr][0m = Cons(x55, x56);
+    [0m[35mlet[0m x58: [0m[31mList[Expr][0m = Cons(x54, x57);
+    [0m[35mlet[0m x59: [0m[31mExpr[0m = Div(x58);
+    [0m[35mlit[0m x60 <- 1;
+    [0m[35mlet[0m x61: [0m[31mExpr[0m = Num(x60);
+    [0m[35mlet[0m x62: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x63: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x64: [0m[31mList[Expr][0m = Cons(x62, x63);
+    [0m[35mlet[0m x65: [0m[31mList[Expr][0m = Cons(x61, x64);
+    [0m[35mlet[0m x66: [0m[31mExpr[0m = Div(x65);
+    [0m[35mlet[0m x67: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x68: [0m[31mList[Expr][0m = Cons(x66, x67);
+    [0m[35mlet[0m x69: [0m[31mList[Expr][0m = Cons(x59, x68);
+    [0m[35mlet[0m x70: [0m[31mList[Expr][0m = Cons(x52, x69);
+    [0m[35mlet[0m x71: [0m[31mExpr[0m = Add(x70);
+    [0m[35mlet[0m x72: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x73: [0m[31mList[Expr][0m = Cons(x71, x72);
+    [0m[35msubstitute[0m (x39 := x39), (b := b), (a0 := a0), (x46 := x46), (x73 := x73);
+    [0m[35mlet[0m x74: [0m[31mList[Expr][0m = Cons(x46, x73);
+    [0m[35mlet[0m x75: [0m[31mExpr[0m = Mul(x74);
+    [0m[35mlet[0m x76: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x77: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x78: [0m[31mList[Expr][0m = Cons(x76, x77);
+    [0m[35msubstitute[0m (x39 := x39), (b := b), (a0 := a0), (x75 := x75), (b0 := b), (x78 := x78);
+    [0m[35mlet[0m x79: [0m[31mList[Expr][0m = Cons(b0, x78);
+    [0m[35mlet[0m x80: [0m[31mExpr[0m = Mul(x79);
+    [0m[35mlit[0m x81 <- 0;
+    [0m[35mlet[0m x82: [0m[31mExpr[0m = Num(x81);
+    [0m[35mlet[0m x83: [0m[31mList[Expr][0m = Nil;
+    [0m[35msubstitute[0m
+        (x39 := x39),
+        (x82 := x82),
+        (a0 := a0),
+        (x75 := x75),
+        (x80 := x80),
+        (b := b),
+        (x83 := x83);
+    [0m[35mlet[0m x84: [0m[31mList[Expr][0m = Cons(b, x83);
+    [0m[35msubstitute[0m (x39 := x39), (x80 := x80), (a0 := a0), (x75 := x75), (x82 := x82), (x84 := x84);
+    [0m[35mlet[0m x85: [0m[31mList[Expr][0m = Cons(x82, x84);
+    [0m[35mlet[0m x86: [0m[31mExpr[0m = Div(x85);
+    [0m[35mlit[0m x87 <- 1;
+    [0m[35mlet[0m x88: [0m[31mExpr[0m = Num(x87);
+    [0m[35mlet[0m x89: [0m[31mExpr[0m = X;
+    [0m[35mlet[0m x90: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x91: [0m[31mList[Expr][0m = Cons(x89, x90);
+    [0m[35mlet[0m x92: [0m[31mList[Expr][0m = Cons(x88, x91);
+    [0m[35mlet[0m x93: [0m[31mExpr[0m = Div(x92);
+    [0m[35mlet[0m x94: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x95: [0m[31mList[Expr][0m = Cons(x93, x94);
+    [0m[35mlet[0m x96: [0m[31mList[Expr][0m = Cons(x86, x95);
+    [0m[35mlet[0m x97: [0m[31mExpr[0m = Add(x96);
+    [0m[35mlet[0m x98: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x99: [0m[31mList[Expr][0m = Cons(x97, x98);
+    [0m[35msubstitute[0m (x39 := x39), (x75 := x75), (a0 := a0), (x80 := x80), (x99 := x99);
+    [0m[35mlet[0m x100: [0m[31mList[Expr][0m = Cons(x80, x99);
+    [0m[35mlet[0m x101: [0m[31mExpr[0m = Mul(x100);
+    [0m[35mlit[0m x102 <- 0;
+    [0m[35mlet[0m x103: [0m[31mExpr[0m = Num(x102);
+    [0m[35mlet[0m x104: [0m[31mList[Expr][0m = Nil;
+    [0m[35mlet[0m x105: [0m[31mList[Expr][0m = Cons(x103, x104);
+    [0m[35mlet[0m x106: [0m[31mList[Expr][0m = Cons(x101, x105);
+    [0m[35msubstitute[0m (x39 := x39), (a0 := a0), (x75 := x75), (x106 := x106);
+    [0m[35mlet[0m x107: [0m[31mList[Expr][0m = Cons(x75, x106);
+    [0m[35msubstitute[0m (a0 := a0), (x39 := x39), (x107 := x107);
+    [0m[35mlet[0m x108: [0m[31mList[Expr][0m = Cons(x39, x107);
+    [0m[35msubstitute[0m (x108 := x108), (a0 := a0);
+    [0m[35minvoke[0m a0 Add
+[0m}[0m
+
+[0m[35mdef[0m main_loop(iters: [0m[35mext[0m [0m[31mi64[0m, n: [0m[35mext[0m [0m[31mi64[0m, m: [0m[35mext[0m [0m[31mi64[0m, a0: [0m[35mcns[0m [0m[31m_Cont[0m) [0m{[0m
+    [0m[35msubstitute[0m (m0 := m), (n0 := n), (m := m), (a0 := a0), (iters := iters), (n := n);
+    [0m[35mcreate[0m a1: [0m[31mExpr[0m = (m, a0, iters, n)[0m{[0m
+        [0m[34mAdd[0m(sums2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (n := n), (m := m), (a0 := a0), (iters := iters), (sums2 := sums2);
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = Add(sums2);
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0(),
+        [0m[34mSub[0m(subs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (n := n), (m := m), (a0 := a0), (iters := iters), (subs2 := subs2);
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = Sub(subs2);
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0(),
+        [0m[34mMul[0m(muls2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (n := n), (m := m), (a0 := a0), (iters := iters), (muls2 := muls2);
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = Mul(muls2);
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0(),
+        [0m[34mDiv[0m(divs2: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (n := n), (m := m), (a0 := a0), (iters := iters), (divs2 := divs2);
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = Div(divs2);
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0(),
+        [0m[34mNum[0m(i2: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (n := n), (m := m), (a0 := a0), (iters := iters), (i2 := i2);
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = Num(i2);
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0(),
+        [0m[34mX[0m =>
+            [0m[35mlet[0m x0: [0m[31mExpr[0m = X;
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (x0 := x0);
+            lift_main_loop_0()
+    [0m}[0m;
+    [0m[35msubstitute[0m (m0 := m0), (a1 := a1), (n0 := n0);
+    [0m[35mlet[0m x1: [0m[31mExpr[0m = Num(n0);
+    [0m[35msubstitute[0m (x1 := x1), (a1 := a1), (m0 := m0);
+    [0m[35mlet[0m x2: [0m[31mExpr[0m = Num(m0);
+    [0m[35msubstitute[0m (x1 := x1), (x2 := x2), (a1 := a1);
+    mk_exp()
+[0m}[0m
+
+[0m[35mdef[0m lift_main_loop_0(a0: [0m[35mcns[0m [0m[31m_Cont[0m, iters: [0m[35mext[0m [0m[31mi64[0m, m: [0m[35mext[0m [0m[31mi64[0m, n: [0m[35mext[0m [0m[31mi64[0m, x0: [0m[35mprd[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35msubstitute[0m (x0 := x0), (iters := iters), (m := m), (n := n), (a0 := a0);
+    [0m[35mcreate[0m a2: [0m[31mExpr[0m = (iters, m, n, a0)[0m{[0m
+        [0m[34mAdd[0m(sums1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (sums1 := sums1);
+            [0m[35mlet[0m res: [0m[31mExpr[0m = Add(sums1);
+            lift_main_loop_1(),
+        [0m[34mSub[0m(subs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (subs1 := subs1);
+            [0m[35mlet[0m res: [0m[31mExpr[0m = Sub(subs1);
+            lift_main_loop_1(),
+        [0m[34mMul[0m(muls1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (muls1 := muls1);
+            [0m[35mlet[0m res: [0m[31mExpr[0m = Mul(muls1);
+            lift_main_loop_1(),
+        [0m[34mDiv[0m(divs1: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (divs1 := divs1);
+            [0m[35mlet[0m res: [0m[31mExpr[0m = Div(divs1);
+            lift_main_loop_1(),
+        [0m[34mNum[0m(i1: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (i1 := i1);
+            [0m[35mlet[0m res: [0m[31mExpr[0m = Num(i1);
+            lift_main_loop_1(),
+        [0m[34mX[0m =>
+            [0m[35mlet[0m res: [0m[31mExpr[0m = X;
+            [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (res := res);
+            lift_main_loop_1()
+    [0m}[0m;
+    deriv()
+[0m}[0m
+
+[0m[35mdef[0m lift_main_loop_1(a0: [0m[35mcns[0m [0m[31m_Cont[0m, iters: [0m[35mext[0m [0m[31mi64[0m, m: [0m[35mext[0m [0m[31mi64[0m, n: [0m[35mext[0m [0m[31mi64[0m, res: [0m[35mprd[0m [0m[31mExpr[0m) [0m{[0m
+    [0m[35msubstitute[0m (a0 := a0), (iters := iters), (m := m), (n := n), (res := res), (n0 := n);
+    [0m[35mlet[0m x3: [0m[31mExpr[0m = Num(n0);
+    [0m[35msubstitute[0m
+        (a0 := a0),
+        (iters := iters),
+        (m := m),
+        (n := n),
+        (res := res),
+        (x3 := x3),
+        (m0 := m);
+    [0m[35mlet[0m x4: [0m[31mExpr[0m = Num(m0);
+    [0m[35msubstitute[0m
+        (x4 := x4),
+        (x3 := x3),
+        (m := m),
+        (n := n),
+        (res := res),
+        (iters := iters),
+        (a0 := a0);
+    [0m[35mcreate[0m a3: [0m[31mExpr[0m = (m, n, res, iters, a0)[0m{[0m
+        [0m[34mAdd[0m(sums0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (m := m),
+                (n := n),
+                (res := res),
+                (iters := iters),
+                (sums0 := sums0);
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = Add(sums0);
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2(),
+        [0m[34mSub[0m(subs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (m := m),
+                (n := n),
+                (res := res),
+                (iters := iters),
+                (subs0 := subs0);
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = Sub(subs0);
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2(),
+        [0m[34mMul[0m(muls0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (m := m),
+                (n := n),
+                (res := res),
+                (iters := iters),
+                (muls0 := muls0);
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = Mul(muls0);
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2(),
+        [0m[34mDiv[0m(divs0: [0m[35mprd[0m [0m[31mList[Expr][0m) =>
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (m := m),
+                (n := n),
+                (res := res),
+                (iters := iters),
+                (divs0 := divs0);
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = Div(divs0);
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2(),
+        [0m[34mNum[0m(i0: [0m[35mext[0m [0m[31mi64[0m) =>
+            [0m[35msubstitute[0m (a0 := a0), (m := m), (n := n), (res := res), (iters := iters), (i0 := i0);
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = Num(i0);
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2(),
+        [0m[34mX[0m =>
+            [0m[35mlet[0m expected: [0m[31mExpr[0m = X;
+            [0m[35msubstitute[0m
+                (a0 := a0),
+                (expected := expected),
+                (iters := iters),
+                (m := m),
+                (n := n),
+                (res := res);
+            lift_main_loop_2()
+    [0m}[0m;
+    [0m[35msubstitute[0m (x3 := x3), (x4 := x4), (a3 := a3);
+    mk_ans()
+[0m}[0m
+
+[0m[35mdef[0m lift_main_loop_2(
+    a0: [0m[35mcns[0m [0m[31m_Cont[0m,
+    expected: [0m[35mprd[0m [0m[31mExpr[0m,
+    iters: [0m[35mext[0m [0m[31mi64[0m,
+    m: [0m[35mext[0m [0m[31mi64[0m,
+    n: [0m[35mext[0m [0m[31mi64[0m,
+    res: [0m[35mprd[0m [0m[31mExpr[0m
+) [0m{[0m
+    [0m[35mlit[0m x5 <- 1;
+    [0m[35mif[0m iters == x5 [0m{[0m
+        [0m[35msubstitute[0m (res := res), (expected := expected), (a0 := a0);
+        [0m[35mcreate[0m a4: [0m[31mBool[0m = (a0)[0m{[0m
+            [0m[34mTrue[0m =>
+                [0m[35mlit[0m x6 <- 1;
+                [0m[35mprintln_i64[0m(x6);
+                [0m[35msubstitute[0m (a0 := a0);
+                [0m[35mlit[0m x10 <- 0;
+                [0m[35msubstitute[0m (x10 := x10), (a0 := a0);
+                [0m[35minvoke[0m a0 Ret,
+            [0m[34mFalse[0m =>
+                [0m[35mlit[0m x7 <- 0;
+                [0m[35mprintln_i64[0m(x7);
+                [0m[35msubstitute[0m (a0 := a0);
+                [0m[35mlit[0m x11 <- 0;
+                [0m[35msubstitute[0m (x11 := x11), (a0 := a0);
+                [0m[35minvoke[0m a0 Ret
+        [0m}[0m;
+        [0m[35msubstitute[0m (expected := expected), (res := res), (a4 := a4);
+        equal()
+    [0m}[0m [0m[35melse[0m [0m{[0m
+        [0m[35msubstitute[0m (a0 := a0), (n := n), (iters := iters), (m := m);
+        [0m[35mlit[0m x8 <- 1;
+        x9 <- iters - x8;
+        [0m[35msubstitute[0m (x9 := x9), (n := n), (m := m), (a0 := a0);
+        main_loop()
+    [0m}[0m
+[0m}[0m
