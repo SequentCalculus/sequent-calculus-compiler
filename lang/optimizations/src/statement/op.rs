@@ -1,8 +1,5 @@
 use crate::{Error, Rewrite, RewriteContext};
-use axcut::{
-    syntax::{Var, statements::Op},
-    traits::free_vars::FreeVars,
-};
+use axcut::{syntax::statements::Op, traits::free_vars::FreeVars};
 use std::collections::HashSet;
 
 impl Rewrite for Op {

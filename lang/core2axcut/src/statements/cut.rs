@@ -182,12 +182,13 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     // we collect all lifted statements for the current top-level function
     state.lifted_statements.push_front(axcut::syntax::Def {
         name: label.clone(),
-        context,
+        context: context.clone(),
         body,
         used_vars: state.used_vars.clone(),
     });
 
-    Rc::new(axcut::syntax::statements::Call { label, args }.into())
+    // ... and the arguments of the call to it
+    Rc::new(axcut::syntax::statements::Call { label, context }.into())
 }
 
 /// This function function eliminates the cut of a mu- and a tilde-mu-binding, i.e., critical

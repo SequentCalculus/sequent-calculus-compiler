@@ -1,4 +1,4 @@
-use axcut::syntax::{Def, Prog, Var};
+use axcut::syntax::{Def, Prog};
 use std::rc::Rc;
 
 mod context;
