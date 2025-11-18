@@ -109,7 +109,7 @@ fn main() {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Nil".to_string(),
-                args: vec![].into(),
+                context: vec![].into(),
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
                     var: "n".to_string(),
@@ -167,7 +167,6 @@ fn main() {
             args: vec![ContextBinding {
                 var: "xs".to_string(),
                 chi: Chirality::Prd,
-                ty: Ty::Decl("List".to_string()),
             }]
             .into(),
         })),
