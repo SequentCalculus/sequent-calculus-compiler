@@ -23,7 +23,7 @@ main_:
     MOVZ X5, 1, LSL 0
     // lit x <- 9;
     MOVZ X7, 9, LSL 0
-    // let p: Either = Right(x);
+    // let p: Either = Right(x: ext i64);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
