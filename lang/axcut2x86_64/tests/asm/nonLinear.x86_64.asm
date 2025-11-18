@@ -25,23 +25,23 @@ asm_main:
     ; actual code
 
 main_:
-    ; lit f_1 <- 3;
+    ; lit f1 <- 3;
     mov rdx, 3
-    ; lit f_2 <- 3;
+    ; lit f2 <- 3;
     mov rdi, 3
-    ; lit f_3 <- 3;
+    ; lit f3 <- 3;
     mov r9, 3
-    ; lit f_4 <- 3;
+    ; lit f4 <- 3;
     mov r11, 3
-    ; lit f_5 <- 3;
+    ; lit f5 <- 3;
     mov r13, 3
-    ; lit f_6 <- 3;
+    ; lit f6 <- 3;
     mov r15, 3
-    ; lit f_7 <- 3;
+    ; lit f7 <- 3;
     mov qword [rsp + 2024], 3
-    ; lit x_8 <- 3;
+    ; lit x <- 3;
     mov qword [rsp + 2008], 3
-    ; let b_9: Box = B(x_8);
+    ; let b: Box = B(x: prd i64);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -140,7 +140,7 @@ lab11:
 lab13:
     ; #load tag
     mov qword [rsp + 2008], 0
-    ; let bb_10: BoxBox = BB(b_9);
+    ; let bb: BoxBox = BB(b: prd i64);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -240,8 +240,8 @@ lab24:
 lab26:
     ; #load tag
     mov qword [rsp + 2008], 0
-    ; substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_13 := bb_10)(bb_12 := bb_10)(bb_11 := bb_10);
-    ; #share bb_10
+    ; substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
+    ; #share bb
     cmp qword [rsp + 2016], 0
     je lab27
     ; ####increment refcount
@@ -263,7 +263,7 @@ lab27:
     mov [rsp + 1992], rcx
     mov rcx, [rsp + 2008]
     mov [rsp + 1976], rcx
-    ; switch bb_11 \{ ... \};
+    ; switch bb1 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 BoxBox_28:
@@ -311,7 +311,7 @@ lab30:
     mov rax, [rsp + 2040]
 
 lab31:
-    ; switch b_14 \{ ... \};
+    ; switch b1 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 Box_32:
@@ -349,7 +349,7 @@ lab33:
     mov rax, [rsp + 2040]
 
 lab34:
-    ; let d_16: Box = B(x_15);
+    ; let d1: Box = B(x1: prd i64);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -448,7 +448,7 @@ lab45:
 lab47:
     ; #load tag
     mov qword [rsp + 1976], 0
-    ; let dd_17: BoxBox = BB(d_16);
+    ; let dd1: BoxBox = BB(d1: prd i64);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -548,8 +548,8 @@ lab58:
 lab60:
     ; #load tag
     mov qword [rsp + 1976], 0
-    ; substitute (bb_12 := bb_12);
-    ; #erase bb_13
+    ; substitute (bb2 := bb2);
+    ; #erase bb3
     mov rcx, [rsp + 2016]
     cmp rcx, 0
     je lab63
@@ -568,7 +568,7 @@ lab61:
 lab62:
 
 lab63:
-    ; #erase dd_17
+    ; #erase dd1
     mov rcx, [rsp + 1984]
     cmp rcx, 0
     je lab66
@@ -590,9 +590,9 @@ lab66:
     ; #move variables
     mov rax, [rsp + 2000]
     mov rdx, [rsp + 1992]
-    ; lit y_18 <- 4;
+    ; lit y <- 4;
     mov rdi, 4
-    ; let a_19: Box = B(y_18);
+    ; let a1: Box = B(y: prd i64);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -689,7 +689,7 @@ lab77:
 lab79:
     ; #load tag
     mov rdi, 0
-    ; substitute (a_19 := a_19)(bb_12 := bb_12);
+    ; substitute (a1 := a1)(bb2 := bb2);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -697,7 +697,7 @@ lab79:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; switch bb_12 \{ ... \};
+    ; switch bb2 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 BoxBox_80:
@@ -730,7 +730,7 @@ lab82:
     mov rsi, [rsi + 48]
 
 lab83:
-    ; switch b_20 \{ ... \};
+    ; switch b2 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 Box_84:
@@ -755,7 +755,7 @@ lab85:
     mov rdi, [rsi + 56]
 
 lab86:
-    ; let a_22: Box = B(x_21);
+    ; let a2: Box = B(x2: prd i64);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -852,7 +852,7 @@ lab97:
 lab99:
     ; #load tag
     mov rdi, 0
-    ; switch a_22 \{ ... \};
+    ; switch a2 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 Box_100:
@@ -877,13 +877,13 @@ lab101:
     mov rdi, [rsi + 56]
 
 lab102:
-    ; substitute (x_23 := x_23)(a_19 := a_19);
+    ; substitute (x2 := x2)(a1 := a1);
     ; #move variables
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; switch a_19 \{ ... \};
+    ; switch a1 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 Box_103:
@@ -908,10 +908,10 @@ lab104:
     mov rdi, [rsi + 56]
 
 lab105:
-    ; res_25 <- x_24 + x_23;
+    ; res <- x1 + x2;
     mov r9, rdi
     add r9, rdx
-    ; println_i64 res_25;
+    ; println_i64 res;
     ; #save caller-save registers
     mov r12, rdx
     mov r13, rdi
@@ -925,9 +925,9 @@ lab105:
     mov rdi, r13
     mov r9, r14
     add rsp, 8
-    ; lit ret_26 <- 0;
+    ; lit ret <- 0;
     mov r11, 0
-    ; exit ret_26
+    ; exit ret
     mov rax, r11
     jmp cleanup
 

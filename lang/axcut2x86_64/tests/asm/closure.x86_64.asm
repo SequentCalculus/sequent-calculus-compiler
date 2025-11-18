@@ -25,9 +25,9 @@ asm_main:
     ; actual code
 
 main_:
-    ; lit a_1 <- 9;
+    ; lit a <- 9;
     mov rdx, 9
-    ; create f_2: Fun = (a_1)\{ ... \};
+    ; create f: Fun = (a: ext i64)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -124,27 +124,27 @@ lab11:
 lab13:
     ; #load tag
     lea rdx, [rel Fun_14]
-    ; create k_6: Cont = ()\{ ... \};
+    ; create k: Cont = ()\{ ... \};
     ; #mark no allocation
     mov rsi, 0
     ; #load tag
     lea rdi, [rel Cont_15]
-    ; lit y_9 <- 1;
+    ; lit y <- 1;
     mov r9, 1
-    ; substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
+    ; substitute (y := y)(k := k)(f := f);
     ; #move variables
     mov r8, rax
     mov rcx, r9
     mov r9, rdx
     mov rdx, rcx
-    ; invoke f_2 apply
+    ; invoke f apply
     ; #there is only one clause, so we can jump there directly
     jmp r9
 
 Cont_15:
 
 Cont_15_Ret:
-    ; println_i64 r_7;
+    ; println_i64 r;
     ; #save caller-save registers
     mov r12, rdx
     sub rsp, 8
@@ -154,9 +154,9 @@ Cont_15_Ret:
     ; #restore caller-save registers
     mov rdx, r12
     add rsp, 8
-    ; lit ret_8 <- 0;
+    ; lit ret <- 0;
     mov rdi, 0
-    ; exit ret_8
+    ; exit ret
     mov rax, rdi
     jmp cleanup
 
@@ -182,13 +182,13 @@ lab16:
     mov r9, [r8 + 56]
 
 lab17:
-    ; b_5 <- a_1 + x_3;
+    ; b <- a + x;
     mov r11, r9
     add r11, rdx
-    ; substitute (b_5 := b_5)(k_4 := k_4);
+    ; substitute (b := b)(k := k);
     ; #move variables
     mov rdx, r11
-    ; invoke k_4 Ret
+    ; invoke k Ret
     ; #there is only one clause, so we can jump there directly
     jmp rdi
 

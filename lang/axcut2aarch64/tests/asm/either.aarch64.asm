@@ -19,11 +19,11 @@ asm_main:
     // actual code
 
 main_:
-    // lit z_1 <- 1;
+    // lit z <- 1;
     MOVZ X5, 1, LSL 0
-    // lit x_2 <- 9;
+    // lit x <- 9;
     MOVZ X7, 9, LSL 0
-    // let p_3: Either = Right(x_2);
+    // let p: Either = Right(x: ext i64);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -125,7 +125,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X7, 4, LSL 0
-    // switch p_3 \{ ... \};
+    // switch p \{ ... \};
     ADR X2, Either_14
     ADD X2, X2, X7
     BR X2
@@ -156,9 +156,9 @@ lab15:
     LDR X7, [ X6, 56 ]
 
 lab16:
-    // lit err_5 <- -1;
+    // lit err <- -1;
     MOVN X9, 0, LSL 0
-    // exit err_5
+    // exit err
     MOV X0, X9
     B cleanup
 
@@ -184,9 +184,9 @@ lab17:
     LDR X7, [ X6, 56 ]
 
 lab18:
-    // c_7 <- b_6 + z_1;
+    // c <- b + z;
     ADD X9, X7, X5
-    // println_i64 c_7;
+    // println_i64 c;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -202,9 +202,9 @@ lab18:
     MOV X5, X21
     MOV X7, X22
     MOV X9, X23
-    // lit ret_8 <- 0;
+    // lit ret <- 0;
     MOVZ X11, 0, LSL 0
-    // exit ret_8
+    // exit ret
     MOV X0, X11
     B cleanup
 
