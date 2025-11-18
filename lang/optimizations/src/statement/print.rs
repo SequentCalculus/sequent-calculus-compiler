@@ -1,4 +1,4 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
     syntax::{Var, statements::PrintI64},
     traits::free_vars::FreeVars,
@@ -16,13 +16,5 @@ impl Rewrite for PrintI64 {
             next: new_next,
             free_vars_next: Some(free_next),
         })
-    }
-}
-
-impl GetUsedVars for PrintI64 {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        let mut used = HashSet::from([self.var.clone()]);
-        used.extend(self.next.get_used_vars());
-        used
     }
 }

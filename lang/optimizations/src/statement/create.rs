@@ -1,9 +1,6 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
-    syntax::{
-        Var,
-        statements::{Create, Statement},
-    },
+    syntax::statements::{Create, Statement},
     traits::free_vars::FreeVars,
 };
 use std::{collections::HashSet, rc::Rc};
@@ -34,19 +31,5 @@ impl Rewrite for Create {
             }
             .into())
         }
-    }
-}
-
-impl GetUsedVars for Create {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        let mut used = HashSet::from([self.var.clone()]);
-        if let Some(ref ctx) = self.context {
-            used.extend(ctx.entries.iter().cloned());
-        }
-        used.extend(self.next.get_used_vars());
-        for clause in self.clauses.iter() {
-            used.extend(clause.get_used_vars());
-        }
-        used
     }
 }

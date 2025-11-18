@@ -1,6 +1,5 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
-use axcut::syntax::{Statement, Var};
-use std::collections::HashSet;
+use crate::{Error, Rewrite, RewriteContext};
+use axcut::syntax::Statement;
 
 mod call;
 mod clause;
@@ -30,24 +29,6 @@ impl Rewrite for Statement {
             Statement::PrintI64(prnt) => Ok(prnt.rewrite(ctx)?.into()),
             Statement::IfC(ifc) => Ok(ifc.rewrite(ctx)?.into()),
             Statement::Exit(ex) => Ok(ex.rewrite(ctx)?.into()),
-        }
-    }
-}
-
-impl GetUsedVars for Statement {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        match self {
-            Statement::Substitute(subst) => subst.get_used_vars(),
-            Statement::Call(call) => call.get_used_vars(),
-            Statement::Let(lt) => lt.get_used_vars(),
-            Statement::Switch(switch) => switch.get_used_vars(),
-            Statement::Create(cr) => cr.get_used_vars(),
-            Statement::Invoke(inv) => inv.get_used_vars(),
-            Statement::Literal(lit) => lit.get_used_vars(),
-            Statement::Op(op) => op.get_used_vars(),
-            Statement::PrintI64(prnt) => prnt.get_used_vars(),
-            Statement::IfC(ifc) => ifc.get_used_vars(),
-            Statement::Exit(ex) => ex.get_used_vars(),
         }
     }
 }
