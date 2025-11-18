@@ -56,6 +56,7 @@ fn test_quad() {
                         var: "q".to_string(),
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),
+<<<<<<< HEAD
                         args: vec![
                             ContextBinding {
                                 var: "z".to_string(),

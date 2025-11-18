@@ -130,7 +130,7 @@ fn test_midi() {
                     ],
                     next: Rc::new(Statement::Call(Call {
                         label: "sum".to_string(),
-                        args: vec![].into(),
+                        context: vec![].into(),
                     })),
                 })),
             }],
@@ -139,7 +139,7 @@ fn test_midi() {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Nil".to_string(),
-                args: vec![].into(),
+                context: vec![].into(),
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
                     var: "n".to_string(),
@@ -172,7 +172,7 @@ fn test_midi() {
                         ],
                         next: Rc::new(Statement::Call(Call {
                             label: "range".to_string(),
-                            args: vec![].into(),
+                            context: vec![].into(),
                         })),
                     })),
                     free_vars_next: None,
@@ -217,7 +217,7 @@ fn test_midi() {
                 var: "k".to_string(),
                 tag: "Retl".to_string(),
                 ty: Ty::Decl("ContList".to_string()),
-                args: vec![].into(),
+                context: vec![].into(),
             })),
         })),
         elsec: Rc::new(Statement::Substitute(Substitute {
@@ -309,7 +309,7 @@ fn test_midi() {
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "range".to_string(),
-                                args: vec![].into(),
+                                context: vec![].into(),
                             })),
                         })),
                         free_vars_next: None,
@@ -377,7 +377,7 @@ fn test_midi() {
                             var: "k".to_string(),
                             tag: "Reti".to_string(),
                             ty: Ty::Decl("ContInt".to_string()),
-                            args: vec![].into(),
+                            context: vec![].into(),
                         })),
                     })),
                     free_vars_next: None,
@@ -479,7 +479,7 @@ fn test_midi() {
                                         var: "k".to_string(),
                                         tag: "Reti".to_string(),
                                         ty: Ty::Decl("ContInt".to_string()),
-                                        args: vec![].into(),
+                                        context: vec![].into(),
                                     })),
                                 })),
                                 free_vars_next: None,
@@ -507,7 +507,7 @@ fn test_midi() {
                             ],
                             next: Rc::new(Statement::Call(Call {
                                 label: "sum".to_string(),
-                                args: vec![].into(),
+                                context: vec![].into(),
                             })),
                         })),
                         free_vars_next: None,
