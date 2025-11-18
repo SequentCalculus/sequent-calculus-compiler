@@ -1,12 +1,16 @@
-use crate::{Error, GetUsedVars, Rewrite};
+use crate::{Error, Rewrite};
 use axcut::syntax::{
     Def, Name, Var,
     statements::{Clause, Create, Let},
 };
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 pub struct RewriteContext {
     current_def: String,
+    pub current_used_vars: HashSet<Var>,
     let_bindings: HashMap<Var, Let>,
     create_bindings: HashMap<Var, Create>,
     pub lifted_defs: HashMap<Name, Def>,
@@ -14,9 +18,10 @@ pub struct RewriteContext {
 }
 
 impl RewriteContext {
-    pub fn new(current_def: &str) -> Self {
+    pub fn new(current_def: &str, current_vars: &HashSet<Var>) -> Self {
         Self {
             current_def: current_def.to_owned(),
+            current_used_vars: current_vars.clone(),
             let_bindings: HashMap::new(),
             create_bindings: HashMap::new(),
             new_changes: false,
@@ -55,7 +60,7 @@ impl RewriteContext {
         let new_def = Def {
             name: new_name.clone(),
             context: clause.context,
-            used_vars: new_body.get_used_vars(),
+            used_vars: self.current_used_vars.clone(),
             body: new_body,
         };
         self.lifted_defs.insert(new_name, new_def);

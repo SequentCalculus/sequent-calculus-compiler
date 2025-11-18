@@ -1,4 +1,4 @@
-use crate::{Error, GetUsedVars, Rewrite, RewriteContext};
+use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
     syntax::{
         Var,
@@ -28,10 +28,10 @@ fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
         .into_iter()
         .find(|clause| clause.xtor == let_binding.tag)
         .ok_or(clause_err)?;
-    if rhs_clause.context.bindings.len() != let_binding.args.entries.len() {
+    if rhs_clause.context.bindings.len() != let_binding.context.bindings.len() {
         return Err(Error::arity(
             rhs_clause.context.bindings.len(),
-            let_binding.args.entries.len(),
+            let_binding.context.bindings.len(),
         ));
     }
     let subst = rhs_clause
@@ -39,7 +39,7 @@ fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
         .bindings
         .into_iter()
         .map(|bnd| bnd.var)
-        .zip(let_binding.args.entries)
+        .zip(let_binding.context.vars())
         .collect::<Vec<_>>();
     Ok(Rc::unwrap_or_clone(rhs_clause.body.subst_sim(&subst)))
 }
@@ -58,14 +58,4 @@ fn rewrite_no_subst(switch: Switch, ctx: &mut RewriteContext) -> Result<Statemen
         free_vars_clauses: Some(free_clauses),
     }
     .into())
-}
-
-impl GetUsedVars for Switch {
-    fn get_used_vars(&self) -> HashSet<Var> {
-        let mut used = HashSet::from([self.var.clone()]);
-        for clause in self.clauses.iter() {
-            used.extend(clause.get_used_vars());
-        }
-        used
-    }
 }
