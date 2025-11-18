@@ -21,7 +21,7 @@ asm_main:
 main_:
     // lit a <- 9;
     MOVZ X5, 9, LSL 0
-    // create f: Fun = (a)\{ ... \};
+    // create f: Fun = (a: prd i64)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
