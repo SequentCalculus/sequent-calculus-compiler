@@ -46,16 +46,16 @@ impl RewriteContext {
         self.create_bindings.get(var).cloned()
     }
 
-    pub fn lifted_name(&self, clause_xtor: &Name) -> String {
-        format!("{}_{}_lifted", self.current_def, clause_xtor)
+    pub fn lifted_name(&self, clause_xtor: &Name, bound_var: &Var) -> String {
+        format!("{}_{}_{}_lifted", self.current_def, bound_var, clause_xtor)
     }
 
     pub fn already_lifted(&self, def_name: &Name) -> bool {
         self.lifted_defs.contains_key(def_name)
     }
 
-    pub fn lift_clause(&mut self, clause: Clause) -> Result<(), Error> {
-        let new_name = self.lifted_name(&clause.xtor);
+    pub fn lift_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
+        let new_name = self.lifted_name(&clause.xtor, bound_var);
         let new_body = Rc::unwrap_or_clone(clause.body.rewrite(self)?);
         let new_def = Def {
             name: new_name.clone(),
