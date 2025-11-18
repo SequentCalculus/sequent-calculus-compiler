@@ -107,7 +107,6 @@ impl Linearizing for Switch {
             // , pick a fresh one
             // otherwise we pick a fresh name for the matched on variable if it is duplicated ...
             if new_context.vars().contains(&self.var) {
-                let old = self.var.clone();
                 self.var = fresh_var(used_vars, &self.var);
             }
 
