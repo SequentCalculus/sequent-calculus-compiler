@@ -116,12 +116,20 @@ impl Linearizing for Switch {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
+<<<<<<< HEAD
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
             if new_context.vars_set().contains(&self.var) {
+=======
+            // , pick a fresh one
+            // otherwise we pick a fresh name for the matched on variable if it is duplicated ...
+            if new_context.vars().contains(&self.var) {
+                let old = self.var.clone();
+>>>>>>> bb1112c1 (fixed but in linearize switch)
                 self.var = fresh_var(used_vars, &self.var);
             }
 
             // ... via an explicit substitution
+<<<<<<< HEAD
             let mut context_rearrange_freshened = new_context;
             let new_xtor_binding = ContextBinding {
                 var: self.var.clone(),
@@ -129,6 +137,16 @@ impl Linearizing for Switch {
                 ty: self.ty.clone(),
             };
             context_rearrange_freshened.bindings.push(new_xtor_binding);
+=======
+            let mut context_rearrange_freshened = new_context.clone();
+            let new_binding = ContextBinding {
+                var: self.var.clone(),
+                ty: self.ty.clone(),
+                chi: Chirality::Cns,
+            };
+
+            context_rearrange_freshened.bindings.push(new_binding);
+>>>>>>> bb1112c1 (fixed but in linearize switch)
 
             let rearrange = context_rearrange_freshened
                 .bindings
