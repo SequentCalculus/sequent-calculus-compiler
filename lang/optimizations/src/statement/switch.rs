@@ -1,9 +1,6 @@
 use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
-    syntax::{
-        Var,
-        statements::{Let, Statement, Switch},
-    },
+    syntax::statements::{Let, Statement, Switch},
     traits::{free_vars::FreeVars, substitution::Subst},
 };
 use std::{collections::HashSet, rc::Rc};

@@ -1,6 +1,5 @@
 use crate::{Error, Rewrite, RewriteContext};
-use axcut::syntax::{Var, statements::Substitute};
-use std::collections::HashSet;
+use axcut::syntax::statements::Substitute;
 
 impl Rewrite for Substitute {
     type Target = Self;
