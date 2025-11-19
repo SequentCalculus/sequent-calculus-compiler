@@ -1,6 +1,6 @@
 use crate::{Error, Rewrite, free_bindings::FreeBindings};
 use axcut::syntax::{
-    ContextBinding, Def, Name, Var,
+    ContextBinding, Def, Name, TypingContext, Var,
     statements::{Clause, Create, Let},
 };
 use std::{
@@ -11,8 +11,8 @@ use std::{
 pub struct RewriteContext {
     pub current_def: String,
     pub current_used_vars: HashSet<Var>,
-    let_bindings: HashMap<Var, Let>,
-    create_bindings: HashMap<Var, Create>,
+    let_bindings: HashMap<Var, (Name, TypingContext)>,
+    create_bindings: HashMap<Var, Vec<Clause>>,
     pub lifted_defs: HashMap<Name, Def>,
     pub new_changes: bool,
 }
@@ -30,19 +30,20 @@ impl RewriteContext {
     }
 
     pub fn add_let(&mut self, lt: &Let) {
-        self.let_bindings.insert(lt.var.clone(), lt.clone());
+        self.let_bindings
+            .insert(lt.var.clone(), (lt.tag.clone(), lt.context.clone()));
     }
 
     pub fn add_create(&mut self, create: &Create) {
         self.create_bindings
-            .insert(create.var.clone(), create.clone());
+            .insert(create.var.clone(), create.clauses.clone());
     }
 
-    pub fn get_let(&self, var: &Var) -> Option<Let> {
+    pub fn get_let(&self, var: &Var) -> Option<(Name, TypingContext)> {
         self.let_bindings.get(var).cloned()
     }
 
-    pub fn get_create(&self, var: &Var) -> Option<Create> {
+    pub fn get_create(&self, var: &Var) -> Option<Vec<Clause>> {
         self.create_bindings.get(var).cloned()
     }
 
