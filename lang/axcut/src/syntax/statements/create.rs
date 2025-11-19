@@ -5,10 +5,7 @@ use printer::tokens::{COLON, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{
-    Chirality, ContextBinding, Statement, Ty, TypingContext, Var,
-    names::{filter_by_set, freshen},
-};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -111,7 +108,7 @@ impl Linearizing for Create {
         // back up the current context
         let context_clone = context.clone();
         // calculate the context for the remaining statement
-        let mut context_next = filter_by_set(&context, &free_vars_next);
+        let mut context_next = context.filter_by_set(&free_vars_next);
         // the context for the remaining statement will come before the closure environment in the
         // explicit substitution; as `filter_by_set` tries to retain the positions in the order it
         // gets passed the context, we split off the number of variables for the remaining context
@@ -123,7 +120,7 @@ impl Linearizing for Create {
         };
         context_reordered.bindings.append(&mut context.bindings);
         // calculate the closure environment needed by the clauses
-        let context_clauses = filter_by_set(&context_reordered, &free_vars_clauses);
+        let context_clauses = context_reordered.filter_by_set(&free_vars_clauses);
 
         // each clause is linearized with the closure environment appended to the bindings
         self.clauses = self
@@ -165,8 +162,7 @@ impl Linearizing for Create {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
-            let mut context_next_freshened = freshen(
-                &context_next,
+            let mut context_next_freshened = context_next.freshen(
                 context_clauses
                     .bindings
                     .iter()

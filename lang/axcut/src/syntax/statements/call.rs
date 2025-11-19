@@ -3,7 +3,7 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var, names::freshen};
+use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -69,7 +69,7 @@ impl Linearizing for Call {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = freshen(&self.context, HashSet::new(), used_vars);
+            let freshened_context = self.context.freshen(HashSet::new(), used_vars);
             let rearrange = freshened_context
                 .bindings
                 .iter()

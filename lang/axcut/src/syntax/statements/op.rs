@@ -4,9 +4,7 @@ use printer::tokens::{DIVIDE, LEFT_ARROW, MINUS, MODULO, PLUS, SEMI, TIMES};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{
-    Chirality, ContextBinding, Statement, Ty, TypingContext, Var, names::filter_by_set,
-};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -125,7 +123,7 @@ impl Linearizing for Op {
         free_vars.insert(self.snd.clone());
 
         // the new context consists of the context for the remaining statement ...
-        let mut new_context = filter_by_set(&context, &free_vars);
+        let mut new_context = context.filter_by_set(&free_vars);
         let context_rearrange = new_context.clone();
         // ... and the variable the result is bound to
         let new_binding = ContextBinding {

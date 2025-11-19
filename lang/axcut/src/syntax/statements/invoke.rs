@@ -3,9 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{
-    Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var, names::freshen,
-};
+use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -95,7 +93,7 @@ impl Linearizing for Invoke {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let mut freshened_context = freshen(&self.context, HashSet::new(), used_vars);
+            let mut freshened_context = self.context.freshen(HashSet::new(), used_vars);
             let new_binding = ContextBinding {
                 var: self.var.clone(),
                 ty: self.ty.clone(),

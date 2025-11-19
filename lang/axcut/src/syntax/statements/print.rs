@@ -5,7 +5,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Statement, TypingContext, Var, names::filter_by_set};
+use crate::syntax::{Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -79,7 +79,7 @@ impl Linearizing for PrintI64 {
         free_vars.insert(self.var.clone());
 
         // the new context consists of the context for the remaining statement
-        let new_context = filter_by_set(&context, &free_vars);
+        let new_context = context.filter_by_set(&free_vars);
         let context_rearrange = new_context.clone();
 
         // linearize the remaining statement

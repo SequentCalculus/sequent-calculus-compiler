@@ -3,9 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{
-    Chirality, ContextBinding, Statement, Ty, TypingContext, Var, names::filter_by_set,
-};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, fresh_var};
 use crate::traits::substitution::Subst;
@@ -76,7 +74,7 @@ impl Linearizing for Switch {
             .expect("Free variables must be annotated before linearization");
 
         // the new context consists of the contetx for the clauses ...
-        let new_context = filter_by_set(&context, &free_vars);
+        let new_context = context.filter_by_set(&free_vars);
         // ... followed by the variable of the matched on xtor
         let mut context_rearrange = new_context.clone();
         let new_binding = ContextBinding {

@@ -5,10 +5,7 @@ use printer::tokens::{COLON, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{
-    Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var,
-    names::{filter_by_set, freshen},
-};
+use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -106,7 +103,7 @@ impl Linearizing for Let {
             .expect("Free variables must be annotated before linearization");
 
         // the new context consists of the context for the remaining statement ...
-        let mut new_context = filter_by_set(&context, &free_vars);
+        let mut new_context = context.filter_by_set(&free_vars);
         // ... and the arguments of the xtor
         let mut context_rearrange = new_context.clone();
         context_rearrange
@@ -126,8 +123,7 @@ impl Linearizing for Let {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.context = freshen(
-                &self.context,
+            self.context = self.context.freshen(
                 new_context
                     .bindings
                     .iter()
