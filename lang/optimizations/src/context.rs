@@ -1,6 +1,6 @@
-use crate::{Error, Rewrite};
+use crate::{Error, Rewrite, free_bindings::FreeBindings};
 use axcut::syntax::{
-    Def, Name, Var,
+    Def, Name, TypingContext, Var,
     statements::{Clause, Create, Let},
 };
 use std::{
@@ -56,10 +56,15 @@ impl RewriteContext {
 
     pub fn lift_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
         let new_name = self.lifted_name(&clause.xtor, bound_var);
+        let mut new_context = clause.free_bindings();
+        new_context.extend(clause.context.bindings);
         let new_body = Rc::unwrap_or_clone(clause.body.rewrite(self)?);
+
         let new_def = Def {
             name: new_name.clone(),
-            context: clause.context,
+            context: TypingContext {
+                bindings: new_context,
+            },
             used_vars: self.current_used_vars.clone(),
             body: new_body,
         };
