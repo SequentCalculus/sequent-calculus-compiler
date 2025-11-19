@@ -12,11 +12,8 @@ impl Rewrite for Create {
             new_clauses.push(new_clause);
         }
         let new_next = self.next.rewrite(ctx)?;
-        if !new_next
-            .free_bindings()
-            .iter()
-            .all(|bnd| bnd.var != self.var)
-        {
+        let next_free = new_next.free_bindings();
+        if next_free.iter().all(|bnd| bnd.var != self.var) {
             Ok(Rc::unwrap_or_clone(new_next))
         } else {
             Ok(Create {
