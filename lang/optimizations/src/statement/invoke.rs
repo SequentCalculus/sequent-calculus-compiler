@@ -1,5 +1,8 @@
-use crate::{Error, Rewrite, RewriteContext};
-use axcut::syntax::statements::{Call, Invoke, Statement};
+use crate::{Error, Rewrite, RewriteContext, free_bindings::FreeBindings};
+use axcut::syntax::{
+    ContextBinding,
+    statements::{Call, Invoke, Statement},
+};
 
 impl Rewrite for Invoke {
     type Target = Statement;
@@ -16,12 +19,17 @@ impl Rewrite for Invoke {
             .find(|clause| clause.xtor == self.tag)
             .ok_or(clause_err)?;
         let lifted_name = ctx.lifted_name(&bind_rhs.xtor, &self.var);
+        let mut context = self.context;
+        let mut rhs_bindings: Vec<ContextBinding> = bind_rhs.free_bindings().into_iter().collect();
+        rhs_bindings.sort();
+        context.bindings.extend(rhs_bindings);
+
         if !ctx.already_lifted(&lifted_name) {
             ctx.lift_clause(bind_rhs, &self.var)?;
         }
         Ok(Call {
             label: lifted_name,
-            context: self.context,
+            context,
         }
         .into())
     }
