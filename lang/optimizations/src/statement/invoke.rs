@@ -7,14 +7,13 @@ use axcut::syntax::{
 impl Rewrite for Invoke {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
-        let create_binding = match ctx.get_create(&self.var) {
+        let create_clauses = match ctx.get_create(&self.var) {
             None => return Ok(self.into()),
             Some(cr) => cr,
         };
         ctx.new_changes = true;
-        let clause_err = Error::create_clause(&create_binding, &self.tag);
-        let bind_rhs = create_binding
-            .clauses
+        let clause_err = Error::create_clause(&create_clauses, &self.tag);
+        let bind_rhs = create_clauses
             .into_iter()
             .find(|clause| clause.xtor == self.tag)
             .ok_or(clause_err)?;

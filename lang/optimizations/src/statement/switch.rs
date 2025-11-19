@@ -1,6 +1,9 @@
 use crate::{Error, Rewrite, RewriteContext};
 use axcut::{
-    syntax::statements::{Let, Statement, Switch},
+    syntax::{
+        Name, TypingContext,
+        statements::{Statement, Switch},
+    },
     traits::{free_vars::FreeVars, substitution::Subst},
 };
 use std::{collections::HashSet, rc::Rc};
@@ -9,26 +12,30 @@ impl Rewrite for Switch {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
         match ctx.get_let(&self.var) {
-            Some(let_binding) => {
+            Some((name, context)) => {
                 ctx.new_changes = true;
-                rewrite_subst(let_binding, self)
+                rewrite_subst(name, context, self)
             }
             None => rewrite_no_subst(self, ctx),
         }
     }
 }
 
-fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
-    let clause_err = Error::switch_clause(&switch, &let_binding.tag);
+fn rewrite_subst(
+    let_xtor: Name,
+    let_context: TypingContext,
+    switch: Switch,
+) -> Result<Statement, Error> {
+    let clause_err = Error::switch_clause(&switch, &let_xtor);
     let rhs_clause = switch
         .clauses
         .into_iter()
-        .find(|clause| clause.xtor == let_binding.tag)
+        .find(|clause| clause.xtor == let_xtor)
         .ok_or(clause_err)?;
-    if rhs_clause.context.bindings.len() != let_binding.context.bindings.len() {
+    if rhs_clause.context.bindings.len() != let_context.bindings.len() {
         return Err(Error::arity(
             rhs_clause.context.bindings.len(),
-            let_binding.context.bindings.len(),
+            let_context.bindings.len(),
         ));
     }
     let subst = rhs_clause
@@ -36,7 +43,7 @@ fn rewrite_subst(let_binding: Let, switch: Switch) -> Result<Statement, Error> {
         .bindings
         .into_iter()
         .map(|bnd| bnd.var)
-        .zip(let_binding.context.vars())
+        .zip(let_context.vars())
         .collect::<Vec<_>>();
     Ok(Rc::unwrap_or_clone(rhs_clause.body.subst_sim(&subst)))
 }
