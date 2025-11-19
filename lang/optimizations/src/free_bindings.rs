@@ -106,13 +106,11 @@ impl FreeBindings for Invoke {
 
 impl FreeBindings for Literal {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
-        let mut bindings = HashSet::from([ContextBinding {
-            var: self.var.clone(),
-            ty: Ty::I64,
-            chi: Chirality::Ext,
-        }]);
-        bindings.extend(self.next.free_bindings());
-        bindings
+        self.next
+            .free_bindings()
+            .into_iter()
+            .filter(|bnd| bnd.var != self.var)
+            .collect()
     }
 }
 
