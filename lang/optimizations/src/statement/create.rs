@@ -1,23 +1,22 @@
-use crate::{Error, Rewrite, RewriteContext};
-use axcut::{
-    syntax::statements::{Create, Statement},
-    traits::free_vars::FreeVars,
-};
-use std::{collections::HashSet, rc::Rc};
+use crate::{Error, Rewrite, RewriteContext, free_bindings::FreeBindings};
+use axcut::syntax::statements::{Create, Statement};
+use std::rc::Rc;
 
 impl Rewrite for Create {
     type Target = Statement;
     fn rewrite(self, ctx: &mut RewriteContext) -> Result<Self::Target, Error> {
         ctx.add_create(&self);
         let mut new_clauses = vec![];
-        let mut free_clauses = HashSet::new();
         for clause in self.clauses {
-            let new_clause = clause.rewrite(ctx)?.free_vars(&mut free_clauses);
+            let new_clause = clause.rewrite(ctx)?;
             new_clauses.push(new_clause);
         }
-        let mut free_next = HashSet::new();
-        let new_next = self.next.rewrite(ctx)?.free_vars(&mut free_next);
-        if !free_next.contains(&self.var) {
+        let new_next = self.next.rewrite(ctx)?;
+        if !new_next
+            .free_bindings()
+            .iter()
+            .all(|bnd| bnd.var != self.var)
+        {
             Ok(Rc::unwrap_or_clone(new_next))
         } else {
             Ok(Create {
@@ -25,9 +24,9 @@ impl Rewrite for Create {
                 ty: self.ty,
                 context: self.context,
                 clauses: new_clauses,
-                free_vars_clauses: Some(free_clauses),
+                free_vars_clauses: None,
                 next: new_next,
-                free_vars_next: Some(free_next),
+                free_vars_next: None,
             }
             .into())
         }
