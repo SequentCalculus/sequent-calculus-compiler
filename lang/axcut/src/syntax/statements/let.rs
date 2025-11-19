@@ -128,7 +128,8 @@ impl Linearizing for Let {
             self.next = self.next.linearize(new_context, used_vars);
 
             let rearrange = context_rearrange_freshened
-                .into_iter_vars()
+                .bindings
+                .into_iter()
                 .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {

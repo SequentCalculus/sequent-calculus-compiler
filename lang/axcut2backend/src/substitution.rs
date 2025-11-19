@@ -21,7 +21,7 @@ use std::hash::Hash;
 /// - `rearrange` is the list of pairs.
 /// - `context` is the given context.
 pub fn transpose(
-    rearrange: &[(Var, Var)],
+    rearrange: &[(ContextBinding, Var)],
     context: &TypingContext,
 ) -> BTreeMap<ContextBinding, Vec<Var>> {
     let mut target_map = BTreeMap::new();
@@ -29,7 +29,7 @@ pub fn transpose(
         let targets = rearrange
             .iter()
             .filter(|(_, old)| binding.var == *old)
-            .map(|(new, _)| new.clone())
+            .map(|(new, _)| new.var.clone())
             .collect();
         let _ = target_map.insert(binding.clone(), targets);
     }

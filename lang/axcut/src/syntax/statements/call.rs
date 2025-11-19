@@ -65,7 +65,8 @@ impl Linearizing for Call {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
             let freshened_context = args.freshen(HashSet::new(), used_vars);
             let rearrange = freshened_context
-                .into_iter_vars()
+                .bindings
+                .into_iter()
                 .zip(args.into_iter_vars())
                 .collect();
             Substitute {

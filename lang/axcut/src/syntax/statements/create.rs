@@ -131,7 +131,7 @@ impl Linearizing for Create {
                 let mut extended_context = clause.context.clone();
                 extended_context
                     .bindings
-                    .append(&mut context_clauses.bindings.clone());
+                    .extend(context_clauses.bindings.clone());
                 clause.body = clause.body.linearize(extended_context, used_vars);
                 clause
             })
@@ -142,7 +142,7 @@ impl Linearizing for Create {
         // ... and the closure environment
         context_rearrange
             .bindings
-            .append(&mut context_clauses.bindings.clone());
+            .extend(context_clauses.bindings.clone());
 
         let new_binding = ContextBinding {
             var: self.var.clone(),
@@ -170,9 +170,10 @@ impl Linearizing for Create {
             let mut context_rearrange_freshened = context_next_freshened.clone();
             context_rearrange_freshened
                 .bindings
-                .append(&mut context_clauses.bindings.clone());
+                .extend(context_clauses.bindings.clone());
             let rearrange = context_rearrange_freshened
-                .into_iter_vars()
+                .bindings
+                .into_iter()
                 .zip(context_rearrange.into_iter_vars())
                 .collect();
 

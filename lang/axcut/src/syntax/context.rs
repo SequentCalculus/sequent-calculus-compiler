@@ -100,24 +100,6 @@ impl TypingContext {
         self.bindings.into_iter().map(|binding| binding.var)
     }
 
-    /// This function returns a reference to the binding for a variable in a typing context.
-    /// - `var` is the variable for which to look up the binding.
-    ///
-    /// # Panics
-    ///
-    /// A panic is caused if the variable is not in the context.
-    pub fn lookup_variable<'a>(&'a self, var: &str) -> &'a ContextBinding {
-        self.bindings
-            .iter()
-            .find(|binding| var == binding.var)
-            .unwrap_or_else(|| {
-                panic!(
-                    "Variable {var} not found in context {}",
-                    self.print_to_string(None)
-                )
-            })
-    }
-
     /// This function picks fresh names for variables that are duplicated in a context.
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the

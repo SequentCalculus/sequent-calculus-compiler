@@ -91,8 +91,9 @@ impl Linearizing for PrintI64 {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
+                .bindings
                 .clone()
-                .into_iter_vars()
+                .into_iter()
                 .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {

@@ -117,7 +117,8 @@ impl Linearizing for Switch {
             context_rearrange_freshened.bindings.push(new_xtor_binding);
 
             let rearrange = context_rearrange_freshened
-                .into_iter_vars()
+                .bindings
+                .into_iter()
                 .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {

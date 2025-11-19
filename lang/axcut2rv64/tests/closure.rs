@@ -79,8 +79,22 @@ fn test_closure() {
                     var: "b".to_string(),
                     next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            ("b".to_string(), "b".to_string()),
-                            ("k".to_string(), "k".to_string()),
+                            (
+                                ContextBinding {
+                                    var: "b".to_string(),
+                                    chi: Chirality::Ext,
+                                    ty: Ty::I64,
+                                },
+                                "b".to_string(),
+                            ),
+                            (
+                                ContextBinding {
+                                    var: "k".to_string(),
+                                    chi: Chirality::Cns,
+                                    ty: Ty::Decl("Cont".to_string()),
+                                },
+                                "k".to_string(),
+                            ),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "k".to_string(),
@@ -115,9 +129,30 @@ fn test_closure() {
                     var: "y".to_string(),
                     next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            ("y".to_string(), "y".to_string()),
-                            ("k".to_string(), "k".to_string()),
-                            ("f".to_string(), "f".to_string()),
+                            (
+                                ContextBinding {
+                                    var: "y".to_string(),
+                                    chi: Chirality::Ext,
+                                    ty: Ty::I64,
+                                },
+                                "y".to_string(),
+                            ),
+                            (
+                                ContextBinding {
+                                    var: "k".to_string(),
+                                    chi: Chirality::Cns,
+                                    ty: Ty::Decl("Cont".to_string()),
+                                },
+                                "k".to_string(),
+                            ),
+                            (
+                                ContextBinding {
+                                    var: "f".to_string(),
+                                    chi: Chirality::Prd,
+                                    ty: Ty::Decl("Fun".to_string()),
+                                },
+                                "f".to_string(),
+                            ),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "f".to_string(),

@@ -90,8 +90,9 @@ impl Linearizing for Invoke {
             let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), used_vars);
             freshened_context.bindings.push(closure_binding);
 
-            let rearrange: Vec<(Var, Var)> = freshened_context
-                .into_iter_vars()
+            let rearrange = freshened_context
+                .bindings
+                .into_iter()
                 .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
