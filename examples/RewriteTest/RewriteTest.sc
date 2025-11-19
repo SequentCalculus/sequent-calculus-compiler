@@ -21,8 +21,9 @@ def let_switch(x:i64,y:i64) : i64{
 }
 
 def create_invoke(): i64{
+  let y: i64 = 2;
   let f: Fun[i64,i64] = new {
-    apply(x) => x + 1
+    apply(x) => x + y
   };
   f.apply[i64,i64](1)
 }
