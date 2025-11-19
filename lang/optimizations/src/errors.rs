@@ -1,6 +1,6 @@
 use axcut::syntax::{
     Name,
-    statements::{Create, Switch},
+    statements::{Clause, Switch},
 };
 use miette::Diagnostic;
 use std::fmt;
@@ -25,9 +25,9 @@ impl Error {
         }
     }
 
-    pub fn create_clause(create: &Create, xtor: &str) -> Error {
+    pub fn create_clause(clauses: &Vec<Clause>, xtor: &str) -> Error {
         Error::NoMatchingClause {
-            patterns: format!("{create:#?}"),
+            patterns: format!("{clauses:#?}"),
             xtor: xtor.to_owned(),
         }
     }
