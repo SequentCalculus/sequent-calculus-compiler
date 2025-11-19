@@ -76,16 +76,7 @@ impl FreeVars for Let {
 
 impl Subst for Let {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
-        let mut new_binds = vec![];
-        for bnd in self.args.bindings {
-            let new_binding = ContextBinding {
-                var: bnd.var.subst_sim(subst),
-                ty: bnd.ty,
-                chi: bnd.chi,
-            };
-            new_binds.push(new_binding);
-        }
-        self.args.bindings = new_binds;
+        self.args = self.args.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self

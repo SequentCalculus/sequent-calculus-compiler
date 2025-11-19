@@ -85,6 +85,7 @@ impl FreeVars for Create {
 
 impl Subst for Create {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Create {
+        self.context = self.context.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);

@@ -62,15 +62,7 @@ impl FreeVars for Invoke {
 impl Subst for Invoke {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
-        let mut new_bindings = vec![];
-        for binding in self.args.bindings {
-            new_bindings.push(ContextBinding {
-                var: binding.var.subst_sim(subst),
-                ty: binding.ty,
-                chi: binding.chi,
-            });
-        }
-        self.args.bindings = new_bindings;
+        self.args = self.args.subst_sim(subst);
         self
     }
 }

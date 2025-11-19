@@ -5,7 +5,7 @@ use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
 use super::{Ty, Var};
-use crate::traits::linearize::fresh_var;
+use crate::traits::{linearize::fresh_var, substitution::Subst};
 
 use std::collections::HashSet;
 
@@ -59,6 +59,13 @@ impl Print for ContextBinding {
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
+    }
+}
+
+impl Subst for ContextBinding {
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+        self.var = self.var.subst_sim(subst);
+        self
     }
 }
 
@@ -191,5 +198,12 @@ impl Print for TypingContext {
 impl From<Vec<ContextBinding>> for TypingContext {
     fn from(bindings: Vec<ContextBinding>) -> Self {
         TypingContext { bindings }
+    }
+}
+
+impl Subst for TypingContext {
+    fn subst_sim(mut self, subst: &[(Var, Var)]) -> TypingContext {
+        self.bindings = self.bindings.subst_sim(subst);
+        self
     }
 }
