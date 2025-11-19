@@ -1,7 +1,7 @@
 //! This module defines the creation of a closure in AxCut.
 
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, CREATE, EQ, SEMI};
+use printer::tokens::{COLON, COMMA, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
@@ -38,7 +38,16 @@ impl Print for Create {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         let context = if let Some(ref context) = self.context {
-            context.print(cfg, alloc).parens()
+            let sep = alloc.text(COMMA).append(alloc.line());
+            alloc
+                .intersperse(
+                    context
+                        .bindings
+                        .iter()
+                        .map(|binding| binding.var.print(cfg, alloc).group()),
+                    sep,
+                )
+                .parens()
         } else {
             alloc.nil()
         };

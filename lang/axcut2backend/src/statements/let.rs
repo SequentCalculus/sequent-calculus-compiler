@@ -32,7 +32,7 @@ impl CodeStatement for Let {
             self.var,
             self.ty.print_to_string(None),
             self.tag,
-            self.args.print_to_string(None)
+            self.args.vars().print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
 

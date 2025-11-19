@@ -1,7 +1,7 @@
 //! This module defines the binding of an xtor in AxCut.
 
 use printer::theme::ThemeExt;
-use printer::tokens::{COLON, EQ, LET, SEMI};
+use printer::tokens::{COLON, COMMA, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
@@ -35,7 +35,16 @@ impl Print for Let {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.args.print(cfg, alloc).parens()
+            let sep = alloc.text(COMMA).append(alloc.line());
+            alloc
+                .intersperse(
+                    self.args
+                        .bindings
+                        .iter()
+                        .map(|binding| binding.var.print(cfg, alloc).group()),
+                    sep,
+                )
+                .parens()
         };
 
         alloc

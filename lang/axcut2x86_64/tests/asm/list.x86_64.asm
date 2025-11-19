@@ -32,7 +32,7 @@ main_:
     mov rdx, 0
     ; lit z <- 5;
     mov rdi, 5
-    ; let zs: List = Cons(z: ext i64, ws: prd List);
+    ; let zs: List = Cons(z, ws);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -132,7 +132,7 @@ lab13:
     mov rdx, 5
     ; lit y <- 7;
     mov rdi, 7
-    ; let ys: List = Cons(y: ext i64, zs: prd List);
+    ; let ys: List = Cons(y, zs);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -232,7 +232,7 @@ lab26:
     mov rdx, 5
     ; lit x <- 9;
     mov rdi, 9
-    ; let xs: List = Cons(x: ext i64, ys: prd List);
+    ; let xs: List = Cons(x, ys);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

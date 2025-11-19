@@ -5,7 +5,7 @@ main_:
 MV X4 X0
 // #load tag
 LA X5 ContInt_1
-// create k: ContList = (t: cns ContInt)\{ ... \};
+// create k: ContList = (t)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -173,7 +173,7 @@ MV X11 X9
 MV X9 X7
 MV X7 X5
 MV X5 X1
-// let ys: List = Cons(xs: prd List, i: ext i64);
+// let ys: List = Cons(xs, i);
 // #allocate memory
 // ##store values
 SW X11 56 X2
@@ -359,7 +359,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// create j: ContInt = (k: cns ContInt, y: ext i64)\{ ... \};
+// create j: ContInt = (k, y)\{ ... \};
 // #allocate memory
 // ##store values
 SW X9 56 X2

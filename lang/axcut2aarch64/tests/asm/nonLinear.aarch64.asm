@@ -35,7 +35,7 @@ main_:
     MOVZ X17, 3, LSL 0
     // lit x <- 3;
     MOVZ X20, 3, LSL 0
-    // let b: Box = B(x: ext i64);
+    // let b: Box = B(x);
     // #allocate memory
     // ##store values
     STR X20, [ X0, 56 ]
@@ -137,7 +137,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // let bb: BoxBox = BB(b: prd Box);
+    // let bb: BoxBox = BB(b);
     // #allocate memory
     // ##store values
     STR X20, [ X0, 56 ]
@@ -323,7 +323,7 @@ lab33:
     LDR X24, [ X23, 56 ]
 
 lab34:
-    // let d1: Box = B(x1: ext i64);
+    // let d1: Box = B(x1);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -425,7 +425,7 @@ lab45:
 lab47:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // let dd1: BoxBox = BB(d1: prd Box);
+    // let dd1: BoxBox = BB(d1);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -573,7 +573,7 @@ lab66:
     MOV X5, X22
     // lit y <- 4;
     MOVZ X7, 4, LSL 0
-    // let a1: Box = B(y: ext i64);
+    // let a1: Box = B(y);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -747,7 +747,7 @@ lab85:
     LDR X7, [ X6, 56 ]
 
 lab86:
-    // let a2: Box = B(x2: ext i64);
+    // let a2: Box = B(x2);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]

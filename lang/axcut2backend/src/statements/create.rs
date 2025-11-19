@@ -35,7 +35,11 @@ impl CodeStatement for Create {
             "{CREATE} {}: {} = ({})\\{{ ... \\}};",
             self.var,
             self.ty.print_to_string(None),
-            self.context.print_to_string(None)
+            self.context
+                .as_ref()
+                .expect("Closure environment must be annotated")
+                .vars()
+                .print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
 
