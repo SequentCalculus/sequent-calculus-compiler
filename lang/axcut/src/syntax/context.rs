@@ -78,11 +78,26 @@ pub struct TypingContext {
 impl TypingContext {
     /// This function returns the list of variables in a typing context.
     pub fn vars(&self) -> Vec<Var> {
-        let mut vars = Vec::with_capacity(self.bindings.len());
-        for binding in &self.bindings {
-            vars.push(binding.var.clone());
-        }
-        vars
+        self.bindings
+            .iter()
+            .map(|binding| &binding.var)
+            .cloned()
+            .collect()
+    }
+
+    /// This function returns the list of variables in a typing context.
+    pub fn vars_set(&self) -> HashSet<Var> {
+        self.bindings
+            .iter()
+            .map(|binding| &binding.var)
+            .cloned()
+            .collect()
+    }
+
+    /// This function returns an iterator over the variables in a typing context, consuming the
+    /// context.
+    pub fn into_iter_vars(self) -> impl Iterator<Item = Var> {
+        self.bindings.into_iter().map(|binding| binding.var)
     }
 
     /// This function returns a reference to the binding for a variable in a typing context.

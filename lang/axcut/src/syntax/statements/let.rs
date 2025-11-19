@@ -101,28 +101,21 @@ impl Linearizing for Let {
             .bindings
             .extend(self.args.bindings.clone());
 
+        let new_binding = ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Prd,
+            ty: self.ty.clone(),
+        };
+
         if context == context_rearrange {
             // if the context is exactly right already, we simply linearize the remaining statement
             // with the additional binding for the xtor
-            let new_bind = ContextBinding {
-                var: self.var.clone(),
-                ty: self.ty.clone(),
-                chi: Chirality::Prd,
-            };
-            new_context.bindings.push(new_bind);
+            new_context.bindings.push(new_binding);
             self.next = self.next.linearize(new_context, used_vars);
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args = self.args.freshen(
-                new_context
-                    .bindings
-                    .iter()
-                    .map(|bnd| &bnd.var)
-                    .cloned()
-                    .collect(),
-                used_vars,
-            );
+            self.args = self.args.freshen(new_context.vars_set(), used_vars);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
@@ -131,26 +124,12 @@ impl Linearizing for Let {
                 .extend(self.args.bindings.clone());
 
             // linearize the remaining statement with the additional binding for the xtor
-            let new_binding = ContextBinding {
-                var: self.var.clone(),
-                ty: self.ty.clone(),
-                chi: Chirality::Prd,
-            };
             new_context.bindings.push(new_binding);
             self.next = self.next.linearize(new_context, used_vars);
 
             let rearrange = context_rearrange_freshened
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_rearrange
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

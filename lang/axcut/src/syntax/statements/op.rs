@@ -128,8 +128,8 @@ impl Linearizing for Op {
         // ... and the variable the result is bound to
         let new_binding = ContextBinding {
             var: self.var.clone(),
-            chi: Chirality::Ext,
             ty: Ty::I64,
+            chi: Chirality::Ext,
         };
         new_context.bindings.push(new_binding);
 
@@ -142,17 +142,9 @@ impl Linearizing for Op {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_rearrange
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .clone()
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

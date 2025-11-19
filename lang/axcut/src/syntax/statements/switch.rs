@@ -75,14 +75,14 @@ impl Linearizing for Switch {
 
         // the new context consists of the contetx for the clauses ...
         let new_context = context.filter_by_set(&free_vars);
-        // ... followed by the variable of the matched on xtor
+        // ... followed by the variable of the xtor matched on
         let mut context_rearrange = new_context.clone();
-        let new_binding = ContextBinding {
+        let xtor_binding = ContextBinding {
             var: self.var.clone(),
+            chi: Chirality::Prd,
             ty: self.ty.clone(),
-            chi: Chirality::Cns,
         };
-        context_rearrange.bindings.push(new_binding);
+        context_rearrange.bindings.push(xtor_binding);
 
         // each clause is linearized with the context for the clauses prepended to the bindings
         self.clauses = self
@@ -102,27 +102,23 @@ impl Linearizing for Switch {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
-            // , pick a fresh one
-            // otherwise we pick a fresh name for the matched on variable if it is duplicated ...
-            if new_context.vars().contains(&self.var) {
+            // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
+            if new_context.vars_set().contains(&self.var) {
                 self.var = fresh_var(used_vars, &self.var);
             }
 
             // ... via an explicit substitution
-            let mut context_rearrange_freshened = new_context.clone();
-            let new_binding = ContextBinding {
+            let mut context_rearrange_freshened = new_context;
+            let new_xtor_binding = ContextBinding {
                 var: self.var.clone(),
+                chi: Chirality::Prd,
                 ty: self.ty.clone(),
-                chi: Chirality::Cns,
             };
-
-            context_rearrange_freshened.bindings.push(new_binding);
+            context_rearrange_freshened.bindings.push(new_xtor_binding);
 
             let rearrange = context_rearrange_freshened
-                .bindings
-                .into_iter()
-                .map(|bnd| bnd.var)
-                .zip(context_rearrange.bindings.into_iter().map(|bnd| bnd.var))
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

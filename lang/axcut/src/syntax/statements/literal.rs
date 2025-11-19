@@ -99,17 +99,9 @@ impl Linearizing for Literal {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_rearrange
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .clone()
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

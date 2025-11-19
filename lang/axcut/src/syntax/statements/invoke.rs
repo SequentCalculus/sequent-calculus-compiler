@@ -69,42 +69,30 @@ impl Subst for Invoke {
 
 impl Linearizing for Invoke {
     type Target = Statement;
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+        let args: TypingContext = std::mem::take(&mut self.args.bindings).into();
+
         // the context must consist of the arguments for the method ...
-        let mut context_rearrange = self.args.clone();
-        // ... followed by the binding of the closure
-        let new_binding = ContextBinding {
+        let mut context_rearrange = args.clone();
+        // ... followed by the variable of the closure
+        let closure_binding = ContextBinding {
             var: self.var.clone(),
+            chi: Chirality::Cns,
             ty: self.ty.clone(),
-            chi: Chirality::Prd,
         };
-        context_rearrange.bindings.push(new_binding);
+        context_rearrange.bindings.push(closure_binding.clone());
 
         if context == context_rearrange {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let mut freshened_context = self.args.freshen(HashSet::new(), used_vars);
-            let new_binding = ContextBinding {
-                var: self.var.clone(),
-                ty: self.ty.clone(),
-                chi: Chirality::Prd,
-            };
-            freshened_context.bindings.push(new_binding);
+            let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), used_vars);
+            freshened_context.bindings.push(closure_binding);
 
             let rearrange: Vec<(Var, Var)> = freshened_context
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_rearrange
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

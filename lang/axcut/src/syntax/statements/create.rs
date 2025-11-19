@@ -146,9 +146,10 @@ impl Linearizing for Create {
 
         let new_binding = ContextBinding {
             var: self.var.clone(),
-            ty: self.ty.clone(),
             chi: Chirality::Cns,
+            ty: self.ty.clone(),
         };
+
         if context_clone == context_rearrange {
             // if the context is exactly right already, we simply annotate the closure environment
             // ...
@@ -156,22 +157,14 @@ impl Linearizing for Create {
 
             // ... and linearize the remaining statement with the additional binding for the
             // closure
-
             context_next.bindings.push(new_binding);
             self.next = self.next.linearize(context_next, used_vars);
 
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
-            let mut context_next_freshened = context_next.freshen(
-                context_clauses
-                    .bindings
-                    .iter()
-                    .map(|bnd| &bnd.var)
-                    .cloned()
-                    .collect(),
-                used_vars,
-            );
+            let mut context_next_freshened =
+                context_next.freshen(context_clauses.vars_set(), used_vars);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = context_next_freshened.clone();
@@ -179,17 +172,8 @@ impl Linearizing for Create {
                 .bindings
                 .append(&mut context_clauses.bindings.clone());
             let rearrange = context_rearrange_freshened
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_rearrange
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .into_iter_vars()
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
 
             // annotate the closure environment
@@ -198,17 +182,8 @@ impl Linearizing for Create {
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
             let substitution_next: Vec<(Var, Var)> = context_next
-                .bindings
-                .iter()
-                .map(|bnd| &bnd.var)
-                .cloned()
-                .zip(
-                    context_next_freshened
-                        .bindings
-                        .iter()
-                        .map(|bnd| &bnd.var)
-                        .cloned(),
-                )
+                .into_iter_vars()
+                .zip(context_next_freshened.vars())
                 .collect();
             self.next = self.next.subst_sim(substitution_next.as_slice());
 
