@@ -9,7 +9,7 @@ use std::{
 };
 
 pub struct RewriteContext {
-    current_def: String,
+    pub current_def: String,
     pub current_used_vars: HashSet<Var>,
     let_bindings: HashMap<Var, Let>,
     create_bindings: HashMap<Var, Create>,
