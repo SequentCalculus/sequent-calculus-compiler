@@ -30,7 +30,7 @@ main_:
     mov rax, 0
     ; #load tag
     lea rdx, [rel ContInt_1]
-    ; create k: ContList = (t: prd i64)\{ ... \};
+    ; create k: ContList = (t: cns ContInt)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -212,7 +212,7 @@ range_:
     mov r9, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; let ys: List = Cons(xs: prd List, i: prd i64);
+    ; let ys: List = Cons(xs: prd List, i: ext i64);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11
@@ -400,7 +400,7 @@ lab36:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; create j: ContInt = (k: prd i64, y: prd i64)\{ ... \};
+    ; create j: ContInt = (k: cns ContInt, y: ext i64)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r9

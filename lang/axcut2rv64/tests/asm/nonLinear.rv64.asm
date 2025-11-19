@@ -378,7 +378,7 @@ lab45:
 lab47:
 // #load tag
 LI X23 0
-// let dd1: BoxBox = BB(d1: ext i64);
+// let dd1: BoxBox = BB(d1: prd Box);
 // #allocate memory
 // ##store values
 SW X23 56 X2

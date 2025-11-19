@@ -2,7 +2,7 @@
 main_:
 // lit a <- 9;
 LI X5 9
-// create f: Fun = (a: prd i64)\{ ... \};
+// create f: Fun = (a: ext i64)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2

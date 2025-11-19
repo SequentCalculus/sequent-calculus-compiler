@@ -40,7 +40,7 @@ fn test_list() {
         var: "ws".to_string(),
         ty: Ty::Decl("List".to_string()),
         tag: "Nil".to_string(),
-        context: vec![].into(),
+        args: vec![].into(),
         next: Rc::new(Statement::Literal(Literal {
             lit: 5,
             var: "z".to_string(),
@@ -48,16 +48,16 @@ fn test_list() {
                 var: "zs".to_string(),
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
-                context: vec![
+                args: vec![
                     ContextBinding {
                         var: "z".to_string(),
-                        ty: Ty::I64,
                         chi: Chirality::Ext,
+                        ty: Ty::I64,
                     },
                     ContextBinding {
                         var: "ws".to_string(),
-                        ty: Ty::Decl("List".to_string()),
                         chi: Chirality::Prd,
+                        ty: Ty::Decl("List".to_string()),
                     },
                 ]
                 .into(),
@@ -68,16 +68,16 @@ fn test_list() {
                         var: "ys".to_string(),
                         ty: Ty::Decl("List".to_string()),
                         tag: "Cons".to_string(),
-                        context: vec![
+                        args: vec![
                             ContextBinding {
                                 var: "y".to_string(),
-                                ty: Ty::I64,
                                 chi: Chirality::Ext,
+                                ty: Ty::I64,
                             },
                             ContextBinding {
                                 var: "zs".to_string(),
-                                ty: Ty::Decl("List".to_string()),
                                 chi: Chirality::Prd,
+                                ty: Ty::Decl("List".to_string()),
                             },
                         ]
                         .into(),
@@ -88,16 +88,16 @@ fn test_list() {
                                 var: "xs".to_string(),
                                 ty: Ty::Decl("List".to_string()),
                                 tag: "Cons".to_string(),
-                                context: vec![
+                                args: vec![
                                     ContextBinding {
                                         var: "x".to_string(),
-                                        ty: Ty::I64,
                                         chi: Chirality::Ext,
+                                        ty: Ty::I64,
                                     },
                                     ContextBinding {
                                         var: "ys".to_string(),
-                                        ty: Ty::Decl("List".to_string()),
                                         chi: Chirality::Prd,
+                                        ty: Ty::Decl("List".to_string()),
                                     },
                                 ]
                                 .into(),

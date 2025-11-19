@@ -21,7 +21,7 @@ pub struct Let {
     pub var: Var,
     pub ty: Ty,
     pub tag: Name,
-    pub context: TypingContext,
+    pub args: TypingContext,
     pub next: Rc<Statement>,
     pub free_vars_next: Option<HashSet<Var>>,
 }
@@ -32,10 +32,10 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.context.bindings.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.args.print(cfg, alloc).parens()
         };
 
         alloc
@@ -68,7 +68,7 @@ impl FreeVars for Let {
         self.free_vars_next = Some(vars.clone());
 
         vars.remove(&self.var);
-        vars.extend(self.context.vars());
+        vars.extend(self.args.vars());
 
         self
     }
@@ -77,7 +77,7 @@ impl FreeVars for Let {
 impl Subst for Let {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
         let mut new_binds = vec![];
-        for bnd in self.context.bindings {
+        for bnd in self.args.bindings {
             let new_binding = ContextBinding {
                 var: bnd.var.subst_sim(subst),
                 ty: bnd.ty,
@@ -85,7 +85,7 @@ impl Subst for Let {
             };
             new_binds.push(new_binding);
         }
-        self.context.bindings = new_binds;
+        self.args.bindings = new_binds;
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
@@ -108,7 +108,7 @@ impl Linearizing for Let {
         let mut context_rearrange = new_context.clone();
         context_rearrange
             .bindings
-            .extend(self.context.bindings.clone());
+            .extend(self.args.bindings.clone());
 
         if context == context_rearrange {
             // if the context is exactly right already, we simply linearize the remaining statement
@@ -123,7 +123,7 @@ impl Linearizing for Let {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.context = self.context.freshen(
+            self.args = self.args.freshen(
                 new_context
                     .bindings
                     .iter()
@@ -137,7 +137,7 @@ impl Linearizing for Let {
             let mut context_rearrange_freshened = new_context.clone();
             context_rearrange_freshened
                 .bindings
-                .extend(self.context.bindings.clone());
+                .extend(self.args.bindings.clone());
 
             // linearize the remaining statement with the additional binding for the xtor
             let new_binding = ContextBinding {

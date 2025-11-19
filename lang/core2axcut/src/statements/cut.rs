@@ -76,9 +76,9 @@ fn shrink_unknown_cuts(
             // ... so we wrap the variable into a continuation xtor
             tag: cont_int().xtors[0].name.clone(),
             ty: axcut::syntax::Ty::Decl(cont_int().name),
-            context: vec![axcut::syntax::ContextBinding {
+            args: vec![axcut::syntax::ContextBinding {
                 var: var_prd,
-                chi: axcut::syntax::Chirality::Prd,
+                chi: axcut::syntax::Chirality::Ext,
                 ty: axcut::syntax::Ty::I64,
             }]
             .into(),
@@ -136,7 +136,7 @@ fn shrink_unknown_cuts(
                                 var: var_expand.clone(),
                                 tag: xtor,
                                 ty: translated_ty.clone(),
-                                context: env,
+                                args: env,
                             }
                             .into(),
                         ),
@@ -170,6 +170,8 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
         },
         state.codata,
     );
+    // ... and the arguments of the call to it
+    let args = context.clone();
 
     let label = fresh_name(
         state.used_labels,
@@ -180,13 +182,12 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     // we collect all lifted statements for the current top-level function
     state.lifted_statements.push_front(axcut::syntax::Def {
         name: label.clone(),
-        context: context.clone(),
+        context,
         body,
         used_vars: state.used_vars.clone(),
     });
 
-    // ... and the arguments of the call to it
-    Rc::new(axcut::syntax::statements::Call { label, context }.into())
+    Rc::new(axcut::syntax::statements::Call { label, args }.into())
 }
 
 /// This function function eliminates the cut of a mu- and a tilde-mu-binding, i.e., critical
@@ -307,7 +308,7 @@ fn shrink_critical_pairs(
                                 var: var_expand.clone(),
                                 ty: translated_ty.clone(),
                                 tag: xtor,
-                                context: env,
+                                args: env,
                                 next: shrunk_statement_expand.clone(),
                                 free_vars_next: None,
                             }
@@ -372,10 +373,10 @@ fn shrink_literal_var(
                 // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
-                context: vec![axcut::syntax::ContextBinding {
+                args: vec![axcut::syntax::ContextBinding {
                     var: fresh_var,
+                    chi: axcut::syntax::Chirality::Ext,
                     ty: axcut::syntax::Ty::I64,
-                    chi: axcut::syntax::Chirality::Prd,
                 }]
                 .into(),
             }
@@ -450,10 +451,10 @@ fn shrink_op_var(
                 // ... and wrap it into a continuation xtor
                 tag: cont_int().xtors[0].name.clone(),
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
-                context: vec![axcut::syntax::ContextBinding {
+                args: vec![axcut::syntax::ContextBinding {
                     var: fresh_var,
+                    chi: axcut::syntax::Chirality::Ext,
                     ty: axcut::syntax::Ty::I64,
-                    chi: axcut::syntax::Chirality::Prd,
                 }]
                 .into(),
             }
@@ -634,7 +635,7 @@ impl Shrinking for FsCut {
                 var: variable,
                 ty: shrink_ty(self.ty),
                 tag: id,
-                context: shrink_context(args, state.codata),
+                args: shrink_context(args, state.codata),
                 next: statement.shrink(state),
                 free_vars_next: None,
             }
@@ -670,7 +671,7 @@ impl Shrinking for FsCut {
                 var,
                 tag: id,
                 ty: shrink_ty(self.ty),
-                context: shrink_context(args, state.codata),
+                args: shrink_context(args, state.codata),
             }
             .into(),
 

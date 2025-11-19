@@ -17,7 +17,7 @@ use std::{collections::HashSet, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
-    pub context: TypingContext,
+    pub args: TypingContext,
 }
 
 impl Print for Call {
@@ -28,7 +28,7 @@ impl Print for Call {
     ) -> printer::Builder<'a> {
         self.label
             .print(cfg, alloc)
-            .append(self.context.print(cfg, alloc).parens().group())
+            .append(self.args.print(cfg, alloc).parens().group())
     }
 }
 
@@ -40,7 +40,7 @@ impl From<Call> for Statement {
 
 impl FreeVars for Call {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.context.vars());
+        vars.extend(self.args.vars());
         self
     }
 }
@@ -48,14 +48,14 @@ impl FreeVars for Call {
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
         let mut new_bindings = vec![];
-        for binding in self.context.bindings {
+        for binding in self.args.bindings {
             new_bindings.push(ContextBinding {
                 var: binding.var.subst_sim(subst),
                 ty: binding.ty,
                 chi: binding.chi,
             });
         }
-        self.context.bindings = new_bindings;
+        self.args.bindings = new_bindings;
         self
     }
 }
@@ -64,18 +64,18 @@ impl Linearizing for Call {
     type Target = Statement;
     fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         // the context must consist of the arguments for the top-level function
-        if context == self.context {
+        if context == self.args {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = self.context.freshen(HashSet::new(), used_vars);
+            let freshened_context = self.args.freshen(HashSet::new(), used_vars);
             let rearrange = freshened_context
                 .bindings
                 .iter()
                 .map(|bnd| &bnd.var)
                 .cloned()
-                .zip(self.context.bindings.iter().map(|bnd| &bnd.var).cloned())
+                .zip(self.args.bindings.iter().map(|bnd| &bnd.var).cloned())
                 .collect();
             Substitute {
                 rearrange,

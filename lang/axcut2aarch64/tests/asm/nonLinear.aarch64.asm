@@ -137,7 +137,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // let bb: BoxBox = BB(b: ext Box);
+    // let bb: BoxBox = BB(b: prd Box);
     // #allocate memory
     // ##store values
     STR X20, [ X0, 56 ]

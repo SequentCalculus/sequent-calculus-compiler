@@ -26,7 +26,7 @@ main_:
     MOVZ X5, 0, LSL 0
     // lit z <- 5;
     MOVZ X7, 5, LSL 0
-    // let zs: List = Cons(z: ext i64, ws: ext i64);
+    // let zs: List = Cons(z: ext i64, ws: prd List);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -131,7 +131,7 @@ lab13:
     MOVZ X5, 4, LSL 0
     // lit y <- 7;
     MOVZ X7, 7, LSL 0
-    // let ys: List = Cons(y: ext i64, zs: ext i64);
+    // let ys: List = Cons(y: ext i64, zs: prd List);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]

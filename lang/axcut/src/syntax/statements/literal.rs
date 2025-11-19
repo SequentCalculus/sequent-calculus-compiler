@@ -85,7 +85,7 @@ impl Linearizing for Literal {
         // ... and the variable the literal is bound to
         let new_binding = ContextBinding {
             var: self.var.clone(),
-            chi: Chirality::Prd,
+            chi: Chirality::Ext,
             ty: Ty::I64,
         };
         new_context.bindings.push(new_binding);
