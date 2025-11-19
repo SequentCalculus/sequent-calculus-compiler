@@ -5,7 +5,6 @@
 //! non-linearized version with arbitrary variable usage and a linearized version with explicit
 //! substitutions.
 
-pub mod arguments;
 pub mod context;
 pub mod declaration;
 pub mod def;
@@ -14,7 +13,6 @@ pub mod program;
 pub mod statements;
 pub mod types;
 
-pub use arguments::Arguments;
 pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{TypeDeclaration, XtorSig};
 pub use def::Def;

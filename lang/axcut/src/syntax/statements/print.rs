@@ -5,7 +5,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Statement, Var, names::filter_by_set};
+use crate::syntax::{Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -72,14 +72,14 @@ impl Linearizing for PrintI64 {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the variables is not consumed, so we have to keep it
         free_vars.insert(self.var.clone());
 
         // the new context consists of the context for the remaining statement
-        let new_context = filter_by_set(&context, &free_vars);
+        let new_context = context.filter_by_set(&free_vars);
         let context_rearrange = new_context.clone();
 
         // linearize the remaining statement
@@ -91,9 +91,10 @@ impl Linearizing for PrintI64 {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
+                .bindings
                 .clone()
                 .into_iter()
-                .zip(context_rearrange.clone())
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

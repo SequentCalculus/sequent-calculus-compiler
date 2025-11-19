@@ -3,7 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{Arguments, Name, Statement, Ty, Var, names::freshen};
+use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -20,7 +20,7 @@ pub struct Invoke {
     pub var: Var,
     pub tag: Name,
     pub ty: Ty,
-    pub args: Arguments,
+    pub args: TypingContext,
 }
 
 impl Print for Invoke {
@@ -29,7 +29,7 @@ impl Print for Invoke {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        let args = if self.args.entries.is_empty() {
+        let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
             self.args.print(cfg, alloc).parens()
@@ -53,7 +53,7 @@ impl From<Invoke> for Statement {
 
 impl FreeVars for Invoke {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.entries.iter().cloned());
+        vars.extend(self.args.vars());
         vars.insert(self.var.clone());
         self
     }
@@ -62,32 +62,38 @@ impl FreeVars for Invoke {
 impl Subst for Invoke {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
-        self.args.entries = self.args.entries.subst_sim(subst);
+        self.args = self.args.subst_sim(subst);
         self
     }
 }
 
 impl Linearizing for Invoke {
     type Target = Statement;
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let args = std::mem::take(&mut self.args.entries);
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+        let args: TypingContext = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the method ...
         let mut context_rearrange = args.clone();
-        // ... followed by the binding of the closure
-        context_rearrange.push(self.var.clone());
+        // ... followed by the variable of the closure
+        let closure_binding = ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Cns,
+            ty: self.ty.clone(),
+        };
+        context_rearrange.bindings.push(closure_binding.clone());
 
         if context == context_rearrange {
             // if the context is exactly right already, we do not have to do anything
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let mut freshened_context = freshen(&args, HashSet::new(), used_vars);
-            freshened_context.push(self.var.clone());
+            let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), used_vars);
+            freshened_context.bindings.push(closure_binding);
 
-            let rearrange: Vec<(Var, Var)> = freshened_context
+            let rearrange = freshened_context
+                .bindings
                 .into_iter()
-                .zip(context_rearrange)
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

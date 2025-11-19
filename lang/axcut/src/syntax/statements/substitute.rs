@@ -4,7 +4,7 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
 use printer::{DocAllocator, Print};
 
-use super::{Statement, Var};
+use crate::syntax::{ContextBinding, Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 
@@ -16,7 +16,7 @@ use std::rc::Rc;
 /// statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
-    pub rearrange: Vec<(Var, Var)>,
+    pub rearrange: Vec<(ContextBinding, Var)>,
     pub next: Rc<Statement>,
 }
 
@@ -29,7 +29,8 @@ impl Print for Substitute {
         let sep = alloc.text(COMMA).append(alloc.line());
         let rearrange = alloc.intersperse(
             self.rearrange.iter().map(|(new, old)| {
-                new.print(cfg, alloc)
+                new.var
+                    .print(cfg, alloc)
                     .append(" := ")
                     .append(old.print(cfg, alloc))
                     .parens()
@@ -60,7 +61,7 @@ impl FreeVars for Substitute {
 
         for (new, old) in &self.rearrange {
             vars.insert(old.clone());
-            vars.remove(new);
+            vars.remove(&new.var);
         }
 
         self

@@ -3,7 +3,7 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{Arguments, Name, Statement, Var, names::freshen};
+use crate::syntax::{Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -17,7 +17,7 @@ use std::{collections::HashSet, rc::Rc};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub label: Name,
-    pub args: Arguments,
+    pub args: TypingContext,
 }
 
 impl Print for Call {
@@ -40,22 +40,22 @@ impl From<Call> for Statement {
 
 impl FreeVars for Call {
     fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.entries.iter().cloned());
+        vars.extend(self.args.vars());
         self
     }
 }
 
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
-        self.args.entries = self.args.entries.subst_sim(subst);
+        self.args = self.args.subst_sim(subst);
         self
     }
 }
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
-        let args = std::mem::take(&mut self.args.entries);
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+        let args = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the top-level function
         if context == args {
@@ -63,8 +63,12 @@ impl Linearizing for Call {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = freshen(&args, HashSet::new(), used_vars);
-            let rearrange = freshened_context.into_iter().zip(args).collect();
+            let freshened_context = args.freshen(HashSet::new(), used_vars);
+            let rearrange = freshened_context
+                .bindings
+                .into_iter()
+                .zip(args.into_iter_vars())
+                .collect();
             Substitute {
                 rearrange,
                 next: Rc::new(self.into()),

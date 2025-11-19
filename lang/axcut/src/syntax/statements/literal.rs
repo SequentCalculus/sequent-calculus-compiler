@@ -5,7 +5,7 @@ use printer::tokens::{LEFT_ARROW, LIT, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Statement, Var, names::filter_by_set};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -75,15 +75,20 @@ impl Linearizing for Literal {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: Vec<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
 
         // the new context consists of the context for the remaining statement ...
-        let mut new_context = filter_by_set(&context, &free_vars);
+        let mut new_context = context.filter_by_set(&free_vars);
         let context_rearrange = new_context.clone();
         // ... and the variable the literal is bound to
-        new_context.push(self.var.clone());
+        let new_binding = ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        };
+        new_context.bindings.push(new_binding);
 
         // linearize the remaining statement
         self.next = self.next.linearize(new_context, used_vars);
@@ -94,9 +99,10 @@ impl Linearizing for Literal {
         } else {
             // otherwise we insert an explicit substitution
             let rearrange = context_rearrange
+                .bindings
                 .clone()
                 .into_iter()
-                .zip(context_rearrange)
+                .zip(context_rearrange.into_iter_vars())
                 .collect();
             Substitute {
                 rearrange,

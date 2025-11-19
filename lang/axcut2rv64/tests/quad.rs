@@ -57,10 +57,26 @@ fn test_quad() {
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),
                         args: vec![
-                            "z".to_string(),
-                            "y".to_string(),
-                            "x".to_string(),
-                            "w".to_string(),
+                            ContextBinding {
+                                var: "z".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::I64,
+                            },
+                            ContextBinding {
+                                var: "y".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::I64,
+                            },
+                            ContextBinding {
+                                var: "x".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::I64,
+                            },
+                            ContextBinding {
+                                var: "w".to_string(),
+                                chi: Chirality::Ext,
+                                ty: Ty::I64,
+                            },
                         ]
                         .into(),
                         next: Rc::new(Statement::Switch(Switch {

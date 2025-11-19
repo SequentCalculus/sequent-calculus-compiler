@@ -35,7 +35,11 @@ impl CodeStatement for Create {
             "{CREATE} {}: {} = ({})\\{{ ... \\}};",
             self.var,
             self.ty.print_to_string(None),
-            self.context.print_to_string(None)
+            self.context
+                .as_ref()
+                .expect("Closure environment must be annotated")
+                .vars()
+                .print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
 
@@ -44,7 +48,7 @@ impl CodeStatement for Create {
                 - self
                     .context
                     .expect("Closure environment must be annotated")
-                    .entries
+                    .bindings
                     .len(),
         );
         Backend::store(closure_environment.clone().into(), &context, instructions);
