@@ -17,10 +17,11 @@ pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
         ctx.current_def_runs = 1;
         rewrite_def(def, &mut ctx)?;
     }
-    Ok(Prog {
+    let prog = Prog {
         types: prog.types,
-        defs: ctx.rewritten_defs.into_values().collect(),
-    })
+        defs: ctx.rewritten_defs.into_iter().rev().collect(),
+    };
+    Ok(prog)
 }
 
 fn rewrite_def(def: Def, ctx: &mut RewriteContext) -> Result<(), Error> {

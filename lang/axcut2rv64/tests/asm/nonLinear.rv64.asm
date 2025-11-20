@@ -16,7 +16,7 @@ LI X15 3
 LI X17 3
 // lit x <- 3;
 LI X19 3
-// let b: Box = B(x: ext i64);
+// let b: Box = B(x);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -110,7 +110,7 @@ lab11:
 lab13:
 // #load tag
 LI X19 0
-// let bb: BoxBox = BB(b: prd Box);
+// let bb: BoxBox = BB(b);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -284,7 +284,7 @@ MV X2 X22
 LW X23 56 X22
 
 lab34:
-// let d1: Box = B(x1: ext i64);
+// let d1: Box = B(x1);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -378,7 +378,7 @@ lab45:
 lab47:
 // #load tag
 LI X23 0
-// let dd1: BoxBox = BB(d1: ext i64);
+// let dd1: BoxBox = BB(d1);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -514,7 +514,7 @@ MV X4 X20
 MV X5 X21
 // lit y <- 4;
 LI X7 4
-// let a1: Box = B(y: ext i64);
+// let a1: Box = B(y);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -677,7 +677,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab86:
-// let a2: Box = B(x2: ext i64);
+// let a2: Box = B(x2);
 // #allocate memory
 // ##store values
 SW X7 56 X2

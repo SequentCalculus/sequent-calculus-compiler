@@ -27,7 +27,7 @@ main_:
     MOVZ X9, 4, LSL 0
     // lit w <- 2;
     MOVZ X11, 2, LSL 0
-    // let q: Quad = Q(z: ext i64, y: ext i64, x: ext i64, w: ext i64);
+    // let q: Quad = Q(z, y, x, w);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
