@@ -7,7 +7,7 @@ MV X4 X0
 LI X5 0
 // lit z <- 5;
 LI X7 5
-// let zs: List = Cons(z: ext i64, ws: prd List);
+// let zs: List = Cons(z, ws);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -104,7 +104,7 @@ lab13:
 LI X5 4
 // lit y <- 7;
 LI X7 7
-// let ys: List = Cons(y: ext i64, zs: prd List);
+// let ys: List = Cons(y, zs);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -201,7 +201,7 @@ lab26:
 LI X5 4
 // lit x <- 9;
 LI X7 9
-// let xs: List = Cons(x: ext i64, ys: prd List);
+// let xs: List = Cons(x, ys);
 // #allocate memory
 // ##store values
 SW X7 56 X2

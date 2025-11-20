@@ -41,7 +41,7 @@ main_:
     mov qword [rsp + 2024], 3
     ; lit x <- 3;
     mov qword [rsp + 2008], 3
-    ; let b: Box = B(x: prd i64);
+    ; let b: Box = B(x);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -140,7 +140,7 @@ lab11:
 lab13:
     ; #load tag
     mov qword [rsp + 2008], 0
-    ; let bb: BoxBox = BB(b: prd i64);
+    ; let bb: BoxBox = BB(b);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 2008]
@@ -349,7 +349,7 @@ lab33:
     mov rax, [rsp + 2040]
 
 lab34:
-    ; let d1: Box = B(x1: prd i64);
+    ; let d1: Box = B(x1);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -448,7 +448,7 @@ lab45:
 lab47:
     ; #load tag
     mov qword [rsp + 1976], 0
-    ; let dd1: BoxBox = BB(d1: prd i64);
+    ; let dd1: BoxBox = BB(d1);
     ; #allocate memory
     ; ##store values
     mov rcx, [rsp + 1976]
@@ -592,7 +592,7 @@ lab66:
     mov rdx, [rsp + 1992]
     ; lit y <- 4;
     mov rdi, 4
-    ; let a1: Box = B(y: prd i64);
+    ; let a1: Box = B(y);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -755,7 +755,7 @@ lab85:
     mov rdi, [rsi + 56]
 
 lab86:
-    ; let a2: Box = B(x2: prd i64);
+    ; let a2: Box = B(x2);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi

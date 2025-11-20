@@ -4,7 +4,7 @@ use axcut::syntax::{
     statements::{Clause, Create, Let},
 };
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     rc::Rc,
 };
 
@@ -12,7 +12,7 @@ pub struct RewriteContext {
     pub current_def: Name,
     pub current_used_vars: HashSet<Var>,
     pub current_def_runs: u64,
-    pub rewritten_defs: HashMap<Name, Def>,
+    pub rewritten_defs: VecDeque<Def>,
     let_bindings: HashMap<Var, (Name, TypingContext)>,
     create_bindings: HashMap<Var, Vec<Clause>>,
     pub new_changes: bool,
@@ -23,7 +23,7 @@ impl RewriteContext {
         Self {
             current_def: String::new(),
             current_used_vars: HashSet::new(),
-            rewritten_defs: HashMap::new(),
+            rewritten_defs: VecDeque::new(),
             let_bindings: HashMap::new(),
             create_bindings: HashMap::new(),
             new_changes: false,
@@ -40,7 +40,7 @@ impl RewriteContext {
     }
 
     pub fn add_def(&mut self, def: Def) {
-        self.rewritten_defs.insert(def.name.clone(), def);
+        self.rewritten_defs.push_front(def);
     }
 
     pub fn add_let(&mut self, lt: &Let) {
@@ -66,7 +66,7 @@ impl RewriteContext {
     }
 
     pub fn already_lifted(&self, def_name: &Name) -> bool {
-        self.rewritten_defs.contains_key(def_name)
+        self.rewritten_defs.iter().any(|def| def.name == *def_name)
     }
 
     pub fn lift_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
@@ -83,7 +83,7 @@ impl RewriteContext {
             used_vars: self.current_used_vars.clone(),
             body: new_body,
         };
-        self.rewritten_defs.insert(new_name, new_def);
+        self.rewritten_defs.push_front(new_def);
         Ok(())
     }
 }
