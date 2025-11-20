@@ -27,7 +27,7 @@ asm_main:
 main_:
     ; lit a <- 9;
     mov rdx, 9
-    ; create f: Fun = (a: ext i64)\{ ... \};
+    ; create f: Fun = (a)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
