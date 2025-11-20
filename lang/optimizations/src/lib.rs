@@ -12,33 +12,34 @@ mod statement;
 pub const MAX_RUNS: u64 = 10;
 
 pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
-    let mut new_defs = vec![];
+    let mut ctx = RewriteContext::new();
     for def in prog.defs {
-        new_defs.extend(rewrite_def(def, 1)?);
+        ctx.current_def_runs = 1;
+        rewrite_def(def, &mut ctx)?;
     }
     Ok(Prog {
         types: prog.types,
-        defs: new_defs,
+        defs: ctx.rewritten_defs.into_values().collect(),
     })
 }
 
-fn rewrite_def(def: Def, num_run: u64) -> Result<Vec<Def>, Error> {
-    let mut ctx = RewriteContext::new(&def.name, &def.used_vars);
-    let new_body = def.body.rewrite(&mut ctx)?;
+fn rewrite_def(def: Def, ctx: &mut RewriteContext) -> Result<(), Error> {
+    ctx.set_def(&def.name, &def.used_vars);
+    let new_body = def.body.rewrite(ctx)?;
     let new_def = Def {
         name: def.name,
         context: def.context,
-        used_vars: ctx.current_used_vars,
+        used_vars: ctx.current_used_vars.clone(),
         body: new_body,
     };
-    let mut defs: Vec<Def> = ctx.lifted_defs.into_values().collect();
-    if ctx.new_changes && num_run < MAX_RUNS {
-        let more_defs = rewrite_def(new_def, num_run + 1)?;
-        defs.extend(more_defs);
+    if ctx.new_changes && ctx.current_def_runs < MAX_RUNS {
+        ctx.current_def_runs += 1;
+
+        rewrite_def(new_def, ctx)?;
     } else {
-        defs.push(new_def);
+        ctx.add_def(new_def);
     }
-    Ok(defs)
+    Ok(())
 }
 
 trait Rewrite {
