@@ -9,24 +9,38 @@ use std::{
 };
 
 pub struct RewriteContext {
-    pub current_def: String,
+    pub current_def: Name,
     pub current_used_vars: HashSet<Var>,
+    pub current_def_runs: u64,
+    pub rewritten_defs: HashMap<Name, Def>,
     let_bindings: HashMap<Var, (Name, TypingContext)>,
     create_bindings: HashMap<Var, Vec<Clause>>,
-    pub lifted_defs: HashMap<Name, Def>,
     pub new_changes: bool,
 }
 
 impl RewriteContext {
-    pub fn new(current_def: &str, current_vars: &HashSet<Var>) -> Self {
+    pub fn new() -> Self {
         Self {
-            current_def: current_def.to_owned(),
-            current_used_vars: current_vars.clone(),
+            current_def: String::new(),
+            current_used_vars: HashSet::new(),
+            rewritten_defs: HashMap::new(),
             let_bindings: HashMap::new(),
             create_bindings: HashMap::new(),
             new_changes: false,
-            lifted_defs: HashMap::new(),
+            current_def_runs: 0,
         }
+    }
+
+    pub fn set_def(&mut self, def_name: &str, def_vars: &HashSet<String>) {
+        self.current_def = def_name.to_owned();
+        self.current_used_vars = def_vars.clone();
+        self.let_bindings.clear();
+        self.create_bindings.clear();
+        self.new_changes = false;
+    }
+
+    pub fn add_def(&mut self, def: Def) {
+        self.rewritten_defs.insert(def.name.clone(), def);
     }
 
     pub fn add_let(&mut self, lt: &Let) {
@@ -52,7 +66,7 @@ impl RewriteContext {
     }
 
     pub fn already_lifted(&self, def_name: &Name) -> bool {
-        self.lifted_defs.contains_key(def_name)
+        self.rewritten_defs.contains_key(def_name)
     }
 
     pub fn lift_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
@@ -69,7 +83,7 @@ impl RewriteContext {
             used_vars: self.current_used_vars.clone(),
             body: new_body,
         };
-        self.lifted_defs.insert(new_name, new_def);
+        self.rewritten_defs.insert(new_name, new_def);
         Ok(())
     }
 }
