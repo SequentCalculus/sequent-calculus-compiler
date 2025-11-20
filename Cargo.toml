@@ -14,9 +14,8 @@ members = [
     "lang/fun2core",
     "lang/printer",
 ]
-
-resolver = "2"
 default-members = ["app"]
+resolver = "3"
 
 [workspace.package]
 version = "0.1.0"
