@@ -1,7 +1,5 @@
 //! This module defines some utilities to deal with names and lists of names.
 
-use crate::syntax::{ContextBinding, TypingContext};
-use crate::traits::linearize::fresh_var;
 use crate::traits::substitution::Subst;
 use printer::*;
 

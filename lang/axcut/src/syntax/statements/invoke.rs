@@ -33,7 +33,7 @@ impl Print for Invoke {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.args.print(cfg, alloc).parens()
         };
 
         alloc
