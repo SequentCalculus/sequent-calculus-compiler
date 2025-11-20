@@ -168,13 +168,6 @@ impl Linearizing for Create {
 
         let new_binding = ContextBinding {
             var: self.var.clone(),
-            chi: Chirality::Cns,
-            ty: self.ty.clone(),
-        };
-
-        let new_binding = ContextBinding {
-            var: self.var.clone(),
-
             ty: self.ty.clone(),
             chi: Chirality::Cns,
         };

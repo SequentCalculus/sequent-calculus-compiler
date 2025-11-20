@@ -45,7 +45,7 @@ impl RewriteContext {
 
     pub fn add_let(&mut self, lt: &Let) {
         self.let_bindings
-            .insert(lt.var.clone(), (lt.tag.clone(), lt.context.clone()));
+            .insert(lt.var.clone(), (lt.tag.clone(), lt.args.clone()));
     }
 
     pub fn add_create(&mut self, create: &Create) {
