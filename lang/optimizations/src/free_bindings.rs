@@ -14,10 +14,7 @@ pub trait FreeBindings {
 impl FreeBindings for Clause {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
         let mut bindings = self.body.free_bindings();
-        bindings = bindings
-            .into_iter()
-            .filter(|bnd| !self.context.bindings.contains(&bnd))
-            .collect();
+        bindings.retain(|bnd| !self.context.bindings.contains(bnd));
         bindings
     }
 }
@@ -48,18 +45,15 @@ impl FreeBindings for Substitute {
 
 impl FreeBindings for Call {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
-        self.context.bindings.iter().cloned().collect()
+        self.args.bindings.iter().cloned().collect()
     }
 }
 
 impl FreeBindings for Let {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
         let mut bindings = self.next.free_bindings();
-        bindings = bindings
-            .into_iter()
-            .filter(|bnd| bnd.var != self.var)
-            .collect();
-        bindings.extend(self.context.bindings.iter().cloned());
+        bindings.retain(|bnd| bnd.var != self.var);
+        bindings.extend(self.args.bindings.iter().cloned());
         bindings
     }
 }
@@ -81,10 +75,7 @@ impl FreeBindings for Switch {
 impl FreeBindings for Create {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
         let mut bindings = self.next.free_bindings();
-        bindings = bindings
-            .into_iter()
-            .filter(|bnd| bnd.var != self.var)
-            .collect();
+        bindings.retain(|bnd| bnd.var != self.var);
         for clause in self.clauses.iter() {
             bindings.extend(clause.free_bindings());
         }
@@ -99,7 +90,7 @@ impl FreeBindings for Invoke {
             ty: self.ty.clone(),
             chi: Chirality::Cns,
         }]);
-        bindings.extend(self.context.bindings.iter().cloned());
+        bindings.extend(self.args.bindings.iter().cloned());
         bindings
     }
 }
@@ -117,10 +108,7 @@ impl FreeBindings for Literal {
 impl FreeBindings for Op {
     fn free_bindings(&self) -> HashSet<ContextBinding> {
         let mut bindings = self.next.free_bindings();
-        bindings = bindings
-            .into_iter()
-            .filter(|bnd| bnd.var != self.var)
-            .collect();
+        bindings.retain(|bnd| bnd.var != self.var);
         bindings.insert(ContextBinding {
             var: self.fst.clone(),
             ty: Ty::I64,

@@ -188,7 +188,7 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     });
 
     // ... and the arguments of the call to it
-    Rc::new(axcut::syntax::statements::Call { label, context }.into())
+    Rc::new(axcut::syntax::statements::Call { label, args }.into())
 }
 
 /// This function function eliminates the cut of a mu- and a tilde-mu-binding, i.e., critical

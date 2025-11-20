@@ -40,7 +40,7 @@ fn test_list() {
         var: "ws".to_string(),
         ty: Ty::Decl("List".to_string()),
         tag: "Nil".to_string(),
-        context: vec![].into(),
+        args: vec![].into(),
         next: Rc::new(Statement::Literal(Literal {
             lit: 5,
             var: "z".to_string(),
