@@ -63,7 +63,7 @@ impl FreeBindings for Switch {
         let mut bindings = HashSet::from([ContextBinding {
             var: self.var.clone(),
             ty: self.ty.clone(),
-            chi: Chirality::Cns,
+            chi: Chirality::Prd,
         }]);
         for clause in self.clauses.iter() {
             bindings.extend(clause.free_bindings())
