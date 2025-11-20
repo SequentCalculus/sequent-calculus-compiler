@@ -19,7 +19,7 @@ impl Rewrite for Let {
                 var: self.var,
                 ty: self.ty,
                 tag: self.tag,
-                context: self.context,
+                args: self.args,
                 next: new_next,
                 free_vars_next: Some(free_vars_next),
             }

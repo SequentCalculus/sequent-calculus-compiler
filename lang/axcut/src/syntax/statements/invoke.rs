@@ -3,9 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{
-    Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var, names::freshen,
-};
+use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -35,7 +33,7 @@ impl Print for Invoke {
         let args = if self.args.bindings.is_empty() {
             alloc.nil()
         } else {
-            self.context.print(cfg, alloc).parens()
+            self.args.print(cfg, alloc).parens()
         };
 
         alloc

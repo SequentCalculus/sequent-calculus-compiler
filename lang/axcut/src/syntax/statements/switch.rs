@@ -3,9 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{
-    Chirality, ContextBinding, Statement, Ty, TypingContext, Var, names::filter_by_set,
-};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, fresh_var};
 use crate::traits::substitution::Subst;
