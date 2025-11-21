@@ -24,6 +24,7 @@ impl Rewrite for Create {
                     .clone()
                     .split_off(new_args.bindings.len());
                 new_args.bindings.extend(remaining_args);
+                ctx.new_changes = true;
                 Clause {
                     xtor: clause.xtor,
                     context: clause.context,
