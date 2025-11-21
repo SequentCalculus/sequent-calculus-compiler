@@ -9,8 +9,7 @@ impl Rewrite for Create {
         let mut new_clauses = vec![];
         for clause in self.clauses {
             let lifted_name = ctx.lifted_name(&clause.xtor, &self.var);
-            let new_clause;
-            if ctx.already_lifted(&lifted_name) {
+            let new_clause = if ctx.already_lifted(&lifted_name) {
                 let new_def = ctx
                     .rewritten_defs
                     .iter()
@@ -25,7 +24,7 @@ impl Rewrite for Create {
                     .clone()
                     .split_off(new_args.bindings.len());
                 new_args.bindings.extend(remaining_args);
-                new_clause = Clause {
+                Clause {
                     xtor: clause.xtor,
                     context: clause.context,
                     body: Rc::new(
@@ -35,11 +34,10 @@ impl Rewrite for Create {
                         }
                         .into(),
                     ),
-                };
+                }
             } else {
-                new_clause = clause.rewrite(ctx)?;
-            }
-
+                clause.rewrite(ctx)?
+            };
             new_clauses.push(new_clause);
         }
         let new_next = self.next.rewrite(ctx)?;
