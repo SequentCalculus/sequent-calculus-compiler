@@ -15,6 +15,9 @@ pub enum Error {
         clause_args: usize,
         xtor_args: usize,
     },
+    DefinitionNotFound {
+        name: Name,
+    },
 }
 
 impl Error {
@@ -56,6 +59,7 @@ impl fmt::Display for Error {
                 f,
                 "Arity Mismatch: clause has {clause_args} bindings, xtor has {xtor_args}"
             ),
+            Error::DefinitionNotFound { name } => write!(f, "Could not find definition {name}"),
         }
     }
 }
