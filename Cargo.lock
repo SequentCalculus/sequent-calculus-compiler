@@ -467,6 +467,7 @@ dependencies = [
  "fun2core",
  "miette",
  "opener",
+ "optimizations",
  "printer",
  "thiserror",
 ]
@@ -1039,6 +1040,14 @@ dependencies = [
  "dbus",
  "normpath",
  "windows-sys",
+]
+
+[[package]]
+name = "optimizations"
+version = "0.1.0"
+dependencies = [
+ "axcut",
+ "miette",
 ]
 
 [[package]]

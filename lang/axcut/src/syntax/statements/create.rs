@@ -155,10 +155,9 @@ impl Linearizing for Create {
 
         let new_binding = ContextBinding {
             var: self.var.clone(),
-            chi: Chirality::Cns,
             ty: self.ty.clone(),
+            chi: Chirality::Cns,
         };
-
         if context_clone == context_rearrange {
             // if the context is exactly right already, we simply annotate the closure environment
             // ...
