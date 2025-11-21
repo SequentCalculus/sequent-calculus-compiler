@@ -25,7 +25,9 @@ def create_invoke(): i64{
   let f: Fun[i64,i64] = new {
     apply(x) => x + y
   };
-  f.apply[i64,i64](1)
+  let x: i64 = f.apply[i64,i64](1);
+  let y: i64 = f.apply[i64,i64](2);
+  x + y
 }
 
 def main(): i64 {
