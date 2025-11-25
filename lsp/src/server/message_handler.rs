@@ -10,22 +10,7 @@ use lsp_types::request::{
     GotoDeclarationResponse,
 };
 use lsp_types::{
-    DidChangeTextDocumentParams,
-    DidOpenTextDocumentParams,
-    GotoDefinitionParams,
-    GotoDefinitionResponse,
-    Hover,
-    HoverContents,
-    PublishDiagnosticsParams,
-    Uri,
-    
-    Documentation,
-    MarkupContent,
-    MarkupKind,
-    ParameterInformation,
-    ParameterLabel,
-    SignatureHelp,
-    SignatureInformation,
+    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Documentation, GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents, MarkupContent, MarkupKind, ParameterInformation, ParameterLabel, PublishDiagnosticsParams, RenameParams, SignatureHelp, SignatureInformation, TextEdit, Uri, WorkspaceEdit
 };
 use printer::Print;
 pub struct MessageHandler {
@@ -134,6 +119,15 @@ impl MessageHandler {
                     Err(err) => return Error::ExtractReq(err).to_response(req_id),
                 };
                 self.signature_help(id, params)
+            }
+            Method::Rename => {
+                let (id, params) = match req
+                    .extract::<lsp_types::RenameParams>(&Method::Rename.to_string())
+                {
+                    Ok(res) => res,
+                    Err(err) => return Error::ExtractReq(err).to_response(req_id),
+                };
+                self.rename(id, params)
             }
 
             _ => {
@@ -401,6 +395,7 @@ impl MessageHandler {
         } 
     }
 
+    //eigener Code
     fn signature_help(&mut self, id: RequestId, params: lsp_types::SignatureHelpParams) -> Response {
         let pos = params.text_document_position_params.position;
 
@@ -454,7 +449,42 @@ impl MessageHandler {
         } 
     }
 
+    //eigener Code
+    fn rename(&mut self, id: RequestId,params: RenameParams) -> Response {
 
+        let uri = params.text_document_position.text_document.uri.clone();
+        let pos = params.text_document_position.position;
+        let new_name = params.new_name;
+
+        let ident = match self.doc.get_ident(pos){
+            Ok(string_name) => string_name,
+            Err(err) => return err.to_response(id),
+        };
+
+        let appearances = match self.doc.find_appearences(&ident) {
+            Ok(appearance_vec) => appearance_vec,
+            Err(err) => return err.to_response(id),
+        };
+        
+        let vec_edit: Vec<TextEdit> = appearances.into_iter().map(|range| TextEdit {range, new_text: new_name.clone()}).collect();
+
+        let mut change = std::collections::HashMap::new();
+        change.insert(uri, vec_edit);
+
+        let final_edit = WorkspaceEdit {
+            changes: Some(change),
+            document_changes: None,
+            change_annotations: None, 
+        };
+
+        let result  = serde_json::to_value(final_edit).unwrap();
+
+        Response {
+            id,
+            result: Some(result),
+            error: None,
+        }
+    }
 
 
     fn did_open(&mut self, params: DidOpenTextDocumentParams) -> Notification {

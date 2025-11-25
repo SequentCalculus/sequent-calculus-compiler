@@ -1,3 +1,4 @@
+pub use crate::types::Print;
 pub use pretty::DocAllocator;
 pub use pretty::termcolor;
 pub use pretty::termcolor::Color;
