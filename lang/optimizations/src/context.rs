@@ -4,7 +4,7 @@ use axcut::syntax::{
     statements::{Clause, Create, Let},
 };
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, HashSet},
     rc::Rc,
 };
 
@@ -12,18 +12,18 @@ pub struct RewriteContext {
     pub current_def: Name,
     pub current_used_vars: HashSet<Var>,
     pub current_def_runs: u64,
-    pub rewritten_defs: VecDeque<Def>,
+    pub definitions: Vec<Def>,
     let_bindings: HashMap<Var, (Name, TypingContext)>,
     create_bindings: HashMap<Var, Vec<Clause>>,
     pub new_changes: bool,
 }
 
 impl RewriteContext {
-    pub fn new() -> Self {
+    pub fn new(defs: &[Def]) -> Self {
         Self {
             current_def: String::new(),
             current_used_vars: HashSet::new(),
-            rewritten_defs: VecDeque::new(),
+            definitions: defs.to_owned(),
             let_bindings: HashMap::new(),
             create_bindings: HashMap::new(),
             new_changes: false,
@@ -40,7 +40,15 @@ impl RewriteContext {
     }
 
     pub fn add_def(&mut self, def: Def) {
-        self.rewritten_defs.push_front(def);
+        match self
+            .definitions
+            .iter()
+            .enumerate()
+            .find(|(_, df)| *df.name == def.name)
+        {
+            None => self.definitions.push(def),
+            Some((ind, _)) => self.definitions[ind] = def,
+        }
     }
 
     pub fn add_let(&mut self, lt: &Let) {
@@ -61,16 +69,16 @@ impl RewriteContext {
         self.create_bindings.get(var).cloned()
     }
 
-    pub fn lifted_name(&self, clause_xtor: &Name, bound_var: &Var) -> String {
+    pub fn create_lifted(&self, clause_xtor: &Name, bound_var: &Var) -> String {
         format!("{}_{}_{}_lifted", self.current_def, bound_var, clause_xtor)
     }
 
     pub fn already_lifted(&self, def_name: &Name) -> bool {
-        self.rewritten_defs.iter().any(|def| def.name == *def_name)
+        self.definitions.iter().any(|def| def.name == *def_name)
     }
 
     pub fn lift_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
-        let new_name = self.lifted_name(&clause.xtor, bound_var);
+        let new_name = self.create_lifted(&clause.xtor, bound_var);
         let mut next_bindings: Vec<ContextBinding> = clause.free_bindings().into_iter().collect();
         next_bindings.sort();
         let mut new_context = clause.context;
@@ -83,7 +91,7 @@ impl RewriteContext {
             used_vars: self.current_used_vars.clone(),
             body: new_body,
         };
-        self.rewritten_defs.push_front(new_def);
+        self.definitions.push(new_def);
         Ok(())
     }
 }
