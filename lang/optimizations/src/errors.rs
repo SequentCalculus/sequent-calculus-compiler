@@ -1,5 +1,5 @@
 use axcut::syntax::{
-    Name,
+    Name, TypingContext, Var,
     statements::{Clause, Switch},
 };
 use miette::Diagnostic;
@@ -15,8 +15,21 @@ pub enum Error {
         clause_args: usize,
         xtor_args: usize,
     },
+    CallArity {
+        def: Name,
+        def_args: usize,
+        called_args: usize,
+    },
     DefinitionNotFound {
         name: Name,
+    },
+    VariableNotFound {
+        var: Var,
+        context: TypingContext,
+    },
+    XtorNotFound {
+        xtor: Name,
+        clause_xtors: Vec<Name>,
     },
 }
 
@@ -60,6 +73,22 @@ impl fmt::Display for Error {
                 "Arity Mismatch: clause has {clause_args} bindings, xtor has {xtor_args}"
             ),
             Error::DefinitionNotFound { name } => write!(f, "Could not find definition {name}"),
+            Error::VariableNotFound { var, context } => {
+                write!(f, "Could not find variable {var} in context {context:?}")
+            }
+            Error::CallArity {
+                def,
+                def_args,
+                called_args,
+            } => write!(
+                f,
+                "Wrong number of arguments for {def}, expected: {def_args}, found: {called_args}"
+            ),
+            Error::XtorNotFound { xtor, clause_xtors } => write!(
+                f,
+                "Could not find xtor {xtor} in clauses {}",
+                clause_xtors.join(",")
+            ),
         }
     }
 }
