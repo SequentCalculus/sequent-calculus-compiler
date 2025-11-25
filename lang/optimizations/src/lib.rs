@@ -12,14 +12,14 @@ mod statement;
 pub const MAX_RUNS: u64 = 10;
 
 pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
-    let mut ctx = RewriteContext::new();
+    let mut ctx = RewriteContext::new(&prog.defs);
     for def in prog.defs {
         ctx.current_def_runs = 1;
         rewrite_def(def, &mut ctx)?;
     }
     let prog = Prog {
         types: prog.types,
-        defs: ctx.rewritten_defs.into_iter().rev().collect(),
+        defs: ctx.definitions,
     };
     Ok(prog)
 }
