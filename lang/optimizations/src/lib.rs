@@ -1,4 +1,4 @@
-use axcut::syntax::{Def, Prog};
+use axcut::syntax::{Def, Name, Prog};
 use std::rc::Rc;
 
 mod context;
@@ -12,10 +12,16 @@ mod statement;
 pub const MAX_RUNS: u64 = 10;
 
 pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
-    let mut ctx = RewriteContext::new(&prog.defs);
-    for def in prog.defs {
+    let names = prog
+        .defs
+        .iter()
+        .map(|def| &def.name)
+        .cloned()
+        .collect::<Vec<_>>();
+    let mut ctx = RewriteContext::new(prog.defs);
+    for name in names {
         ctx.current_def_runs = 1;
-        rewrite_def(def, &mut ctx)?;
+        rewrite_def(name, &mut ctx)?;
     }
     let prog = Prog {
         types: prog.types,
@@ -24,21 +30,22 @@ pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
     Ok(prog)
 }
 
-fn rewrite_def(def: Def, ctx: &mut RewriteContext) -> Result<(), Error> {
-    ctx.set_current_def(&def.name, &def.used_vars);
-    let new_body = def.body.rewrite(ctx)?;
+fn rewrite_def(name: Name, ctx: &mut RewriteContext) -> Result<(), Error> {
+    let current_def = ctx
+        .get_def(&name)
+        .ok_or(Error::DefinitionNotFound { name: name.clone() })?;
+    ctx.set_current_def(&name, &current_def.used_vars);
+    let new_body = current_def.body.rewrite(ctx)?;
     let new_def = Def {
-        name: def.name,
-        context: def.context,
+        name: current_def.name.clone(),
+        context: current_def.context,
         used_vars: ctx.current_used_vars.clone(),
         body: new_body,
     };
+    ctx.add_def(new_def);
     if ctx.new_changes && ctx.current_def_runs < MAX_RUNS {
         ctx.current_def_runs += 1;
-
-        rewrite_def(new_def, ctx)?;
-    } else {
-        ctx.add_def(new_def);
+        rewrite_def(current_def.name, ctx)?;
     }
     Ok(())
 }
