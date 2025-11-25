@@ -24,7 +24,7 @@ impl Rewrite for Invoke {
         args.bindings.extend(rhs_bindings);
 
         if !ctx.already_lifted(&lifted_name) {
-            ctx.lift_clause(bind_rhs, &self.var)?;
+            ctx.lift_create_clause(bind_rhs, &self.var)?;
         }
         Ok(Call {
             label: lifted_name,

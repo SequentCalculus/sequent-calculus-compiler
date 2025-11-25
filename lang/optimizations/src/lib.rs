@@ -25,7 +25,7 @@ pub fn rewrite(prog: Prog) -> Result<Prog, Error> {
 }
 
 fn rewrite_def(def: Def, ctx: &mut RewriteContext) -> Result<(), Error> {
-    ctx.set_def(&def.name, &def.used_vars);
+    ctx.set_current_def(&def.name, &def.used_vars);
     let new_body = def.body.rewrite(ctx)?;
     let new_def = Def {
         name: def.name,
