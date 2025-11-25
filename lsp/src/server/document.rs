@@ -1,7 +1,9 @@
+use std::os::windows::raw::SOCKET;
+
 use crate::errors::Error;
 use fun::{parser::parse_module, syntax::declarations::CheckedModule};
 use log::info;
-use lsp_types::{Location, Position, Range, Uri};
+use lsp_types::{Location, ParameterInformationSettings, Position, Range, Uri};
 //use serde_json::to_string;
 use printer::Print;
 
@@ -383,6 +385,36 @@ impl Document {
         Err(Error::UndefinedIdentifier(ident.to_owned()))
     }
 
+
+    //eigener Code
+    pub fn find_appearences(&self, ident: &str) -> Result<Vec<Range>, Error> {
+        let mut appearences = Vec::new();
+
+        for (line_number, line) in self.source.lines().enumerate() {
+            let mut search_index = 0;
+            while let Some(pos) = line[search_index..].find(ident) {
+                let found_appearence = search_index + pos;
+                let chars: Vec<char> = line.chars().collect();
+                let length = ident.len();
+
+                let infront = found_appearence == 0 || !chars[found_appearence - 1].is_alphanumeric() && chars[found_appearence - 1] != '_';
+
+                let behind = found_appearence + length == chars.len() || !chars[found_appearence + length].is_alphanumeric() && chars[found_appearence + length] != '_';
+
+                if infront && behind {
+                    appearences.push(Range {
+                        start: Position { line: line_number as u32, character: found_appearence as u32},
+                        end: Position { line: line_number as u32, character: (found_appearence + length) as u32 },
+                    });
+                }
+                search_index = found_appearence + ident.len();
+            }
+        }
+        if appearences.is_empty(){
+            return Err(Error::UndefinedIdentifier(ident.to_string()));
+        }
+        Ok(appearences)
+    }
 
 }
 

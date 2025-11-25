@@ -1,3 +1,5 @@
+use std::fs::rename;
+
 use crate::errors::Error;
 use log::warn;
 use lsp_server::{Connection, IoThreads, Message};
@@ -40,6 +42,16 @@ impl LspServer {
             )),
             definition_provider: Some(OneOf::Left(true)),
             implementation_provider: Some(ImplementationProviderCapability::Simple(true)),
+            //declaration_provider: nicht existent?
+            document_formatting_provider: Some(OneOf::Left(true)),
+            document_range_formatting_provider: Some(OneOf::Left(true)),
+            hover_provider: Some(lsp_types:: HoverProviderCapability::Simple(true)),
+            signature_help_provider: Some(lsp_types::SignatureHelpOptions {
+                trigger_characters: Some(vec!["(".into(), ",".into()]),
+                retrigger_characters: None,
+                work_done_progress_options: Default::default(),
+            }),
+            rename_provider: Some(lsp_types::OneOf::Left(true)),
             ..Default::default()
         }
     }
