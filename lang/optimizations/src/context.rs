@@ -19,11 +19,11 @@ pub struct RewriteContext {
 }
 
 impl RewriteContext {
-    pub fn new(defs: &[Def]) -> Self {
+    pub fn new(defs: Vec<Def>) -> Self {
         Self {
             current_def: String::new(),
             current_used_vars: HashSet::new(),
-            definitions: defs.to_owned(),
+            definitions: defs,
             let_bindings: HashMap::new(),
             create_bindings: HashMap::new(),
             new_changes: false,
@@ -106,16 +106,16 @@ impl RewriteContext {
         Ok(())
     }
 
-    pub fn lift_switch_clause(&mut self, switch_def: &Name, switch_var: &Var, clause: &Clause) {
+    pub fn lift_switch_clause(
+        &mut self,
+        switch_def: &Name,
+        switch_var: &Var,
+        clause: &Clause,
+        extra_args: Vec<ContextBinding>,
+    ) {
         let lifted_name = self.switch_lifted(switch_def, &clause.xtor, switch_var);
         let mut new_context = clause.context.clone();
-        new_context.bindings.extend(
-            clause
-                .body
-                .free_bindings()
-                .into_iter()
-                .filter(|bnd| !clause.context.bindings.contains(bnd)),
-        );
+        new_context.bindings.extend(extra_args);
         let new_def = Def {
             name: lifted_name,
             context: new_context,
