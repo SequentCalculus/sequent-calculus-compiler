@@ -1301,21 +1301,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scc"
-version = "0.1.0"
-dependencies = [
- "assert_cmd",
- "clap",
- "clap_complete",
- "driver",
- "miette",
- "printer",
- "termsize",
- "thiserror",
-]
-
-[[package]]
-name = "scc-lsp"
+name = "sc-lsp"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
@@ -1327,6 +1313,20 @@ dependencies = [
  "printer",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "scc"
+version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "clap",
+ "clap_complete",
+ "driver",
+ "miette",
+ "printer",
+ "termsize",
+ "thiserror",
 ]
 
 [[package]]
