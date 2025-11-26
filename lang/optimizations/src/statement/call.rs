@@ -24,7 +24,7 @@ impl Rewrite for Call {
             Statement::Invoke(inv) => {
                 rewrite_call_invoke(self, inv, ctx, &called_def.name, called_def.context)
             }
-            _ => return Ok(self),
+            _ => Ok(self),
         }
     }
 }
@@ -77,7 +77,7 @@ fn rewrite_call_switch(
             clause_xtors: sw.clauses.iter().map(|cl| cl.xtor.clone()).collect(),
         })?;
     let xtor_clause = sw.clauses.remove(clause_ind);
-    let lifted_name = ctx.switch_lifted(&def_name, &let_xtor, &sw.var);
+    let lifted_name = ctx.switch_lifted(def_name, &let_xtor, &sw.var);
     let extra_args = def_args
         .bindings
         .iter()
@@ -86,7 +86,7 @@ fn rewrite_call_switch(
         .collect::<Vec<_>>();
     let_args.bindings.extend(extra_args.clone());
     if !ctx.already_lifted(&lifted_name) {
-        ctx.lift_switch_call(&def_name, &sw.var, &xtor_clause, extra_args);
+        ctx.lift_switch_call(def_name, &sw.var, &xtor_clause, extra_args);
     }
     let call_stmt = Call {
         label: lifted_name,
