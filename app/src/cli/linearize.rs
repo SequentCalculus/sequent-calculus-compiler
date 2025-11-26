@@ -1,7 +1,7 @@
 //! This module contains the command for linearizing the definitions of a file.
 
+use super::print_stdout;
 use driver::{Driver, PrintMode};
-use printer::{ColorChoice, Print, PrintCfg, StandardStream};
 use std::path::PathBuf;
 
 #[derive(clap::Args)]
@@ -9,7 +9,7 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mut drv = Driver::new();
     let linearized = drv.linearized(&cmd.filepath);
     let linearized = match linearized {
@@ -17,8 +17,6 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
     drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
-
-    let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
-    let _ = linearized.print_colored(&PrintCfg::default(), &mut stream);
+    print_stdout(&linearized, colored);
     Ok(())
 }
