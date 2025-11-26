@@ -8,7 +8,7 @@ impl Rewrite for Create {
         ctx.add_create(&self);
         let mut new_clauses = vec![];
         for clause in self.clauses {
-            let lifted_name = ctx.create_lifted(&clause.xtor, &self.var);
+            let lifted_name = ctx.create_lifted(&ctx.current_def, &clause.xtor, &self.var);
             let new_clause = if ctx.already_lifted(&lifted_name) {
                 let new_def = ctx
                     .definitions
