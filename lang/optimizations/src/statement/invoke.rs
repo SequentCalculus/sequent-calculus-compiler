@@ -17,7 +17,7 @@ impl Rewrite for Invoke {
             .into_iter()
             .find(|clause| clause.xtor == self.tag)
             .ok_or(clause_err)?;
-        let lifted_name = ctx.create_lifted(&bind_rhs.xtor, &self.var);
+        let lifted_name = ctx.create_lifted(&ctx.current_def, &bind_rhs.xtor, &self.var);
         let mut args = self.args;
         let mut rhs_bindings: Vec<ContextBinding> = bind_rhs.free_bindings().into_iter().collect();
         rhs_bindings.sort();
