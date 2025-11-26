@@ -8,13 +8,28 @@ use std::{
     rc::Rc,
 };
 
+/// Context during rewriting a program
 pub struct RewriteContext {
-    pub current_def: Name,
-    pub current_used_vars: HashSet<Var>,
-    pub current_def_runs: u64,
+    /// All definitions in the current program
+    /// either already rewritten or still to be rewritten
     pub definitions: Vec<Def>,
+    /// Current definition being rewritten
+    pub current_def: Name,
+    /// Used vars of the current definition (corresponds do [`axcut::syntax::Def::used_vars`])
+    pub current_used_vars: HashSet<Var>,
+    /// number of iterations ran on the current definition
+    pub current_def_runs: u64,
+    /// let bindings defined in the current definition
+    /// keys are the variables bound by [`axcut::syntax::statements::Let`]
+    /// values are [`axcut::syntax::statements::Let::tag`] and
+    /// [`axcut::syntax::statements::Let::args`]
     let_bindings: HashMap<Var, (Name, TypingContext)>,
+    /// create bindings defined in the current definition
+    /// keys are the variables bound by [`axcut::syntax::statements::Create`]
+    /// values are the bound clauses
     create_bindings: HashMap<Var, Vec<Clause>>,
+    /// were there new changes in the current run
+    /// if not the current definition is not rewritten again
     pub new_changes: bool,
 }
 
@@ -76,12 +91,12 @@ impl RewriteContext {
             .cloned()
     }
 
-    pub fn create_lifted(&self, clause_xtor: &Name, bound_var: &Var) -> String {
-        format!("{}_{}_{}_lifted", self.current_def, bound_var, clause_xtor)
+    pub fn create_lifted(&self, create_def: &Name, xtor: &Name, create_var: &Var) -> String {
+        format!("{create_def}_create_{xtor}_{create_var}_lifted")
     }
 
     pub fn switch_lifted(&self, switch_def: &Name, xtor: &Name, switch_var: &Var) -> String {
-        format!("{switch_def}_{xtor}_{switch_var}_lifted")
+        format!("{switch_def}_switch_{xtor}_{switch_var}_lifted")
     }
 
     pub fn already_lifted(&self, def_name: &Name) -> bool {
@@ -89,7 +104,7 @@ impl RewriteContext {
     }
 
     pub fn lift_create_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
-        let new_name = self.create_lifted(&clause.xtor, bound_var);
+        let new_name = self.create_lifted(&self.current_def, &clause.xtor, bound_var);
         let mut next_bindings: Vec<ContextBinding> = clause.free_bindings().into_iter().collect();
         next_bindings.sort();
         let mut new_context = clause.context;
@@ -106,7 +121,7 @@ impl RewriteContext {
         Ok(())
     }
 
-    pub fn lift_switch_clause(
+    pub fn lift_switch_call(
         &mut self,
         switch_def: &Name,
         switch_var: &Var,
@@ -121,6 +136,22 @@ impl RewriteContext {
             context: new_context,
             body: Rc::unwrap_or_clone(clause.body.clone()),
             used_vars: HashSet::new(),
+        };
+        self.add_def(new_def);
+    }
+
+    pub fn lift_create_call(&mut self, create_def: &Name, create_var: &Var, clause: Clause) {
+        let lifted_name = self.create_lifted(create_def, &clause.xtor, create_var);
+        let new_def = Def {
+            name: lifted_name,
+            used_vars: clause
+                .body
+                .free_bindings()
+                .into_iter()
+                .map(|bnd| bnd.var)
+                .collect(),
+            context: clause.context,
+            body: Rc::unwrap_or_clone(clause.body),
         };
         self.add_def(new_def);
     }
