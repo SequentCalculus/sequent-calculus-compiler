@@ -5,12 +5,13 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Statement, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This enum encodes the comparison operation used.
@@ -115,11 +116,30 @@ impl FreeVars for IfC {
 
         vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
-        if let Some(snd) = self.snd.clone() {
-            vars.insert(snd);
+        if let Some(ref snd) = self.snd {
+            vars.insert(snd.clone());
         }
 
         self
+    }
+}
+
+impl TypedFreeVars for IfC {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        if let Some(ref snd) = self.snd {
+            vars.insert(ContextBinding {
+                var: snd.clone(),
+                chi: Chirality::Ext,
+                ty: Ty::I64,
+            });
+        }
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
     }
 }
 

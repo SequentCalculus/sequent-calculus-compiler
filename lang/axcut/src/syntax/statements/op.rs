@@ -8,8 +8,9 @@ use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -94,6 +95,27 @@ impl FreeVars for Op {
         vars.insert(self.snd.clone());
 
         self
+    }
+}
+
+impl TypedFreeVars for Op {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        vars.insert(ContextBinding {
+            var: self.snd.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
     }
 }
 
