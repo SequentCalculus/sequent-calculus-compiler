@@ -6,7 +6,6 @@ pub mod errors;
 use context::RewriteContext;
 use errors::Error;
 
-mod free_bindings;
 mod statement;
 
 pub const MAX_RUNS_DEF: u64 = 10;
