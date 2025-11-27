@@ -9,9 +9,8 @@ use std::rc::Rc;
 impl Rewrite for Invoke {
     type Target = Statement;
     fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
-        let (clause, position) = match state.get_create_clause(&self.var, &self.tag) {
-            None => return self.into(),
-            Some(clause_and_position) => clause_and_position,
+        let Some((clause, position)) = state.get_create_clause(&self.var, &self.tag) else {
+            return self.into();
         };
         *state.new_changes = true;
 
@@ -20,15 +19,10 @@ impl Rewrite for Invoke {
             Statement::Exit(_) | Statement::Call(_) | Statement::Invoke(_)
         ) {
             // for leaf statements, we do not lift, but just substitute into them
-            if clause.context.bindings.len() != self.args.bindings.len() {
-                panic!("Number of invoke arguments does not match number of clause arguments")
-            }
             let subst = clause
                 .context
-                .bindings
-                .into_iter()
-                .map(|binding| binding.var)
-                .zip(self.args.vars())
+                .into_iter_vars()
+                .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
             Rc::unwrap_or_clone(clause.body.subst_sim(&subst))
         } else {

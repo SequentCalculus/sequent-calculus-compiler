@@ -24,9 +24,8 @@ def create_invoke(): i64 {
     if n == 0 {
         let y: i64 = 1;
         let z: i64 = 1;
-        let f: Fun[i64, i64] = new { apply(x) => (x + y) + z };
+        let f: Fun[i64, i64] = new { apply(x) => z };
         let x: i64 = f.apply[i64, i64](1);
-        let y: i64 = f.apply[i64, i64](2);
         x + y
     } else {
         let y: i64 = 1;

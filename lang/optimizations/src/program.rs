@@ -13,11 +13,12 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     while new_changes && performed_runs < MAX_RUNS {
         new_changes = false;
         performed_runs += 1;
-        let mut new_defs = Vec::with_capacity(program.defs.len());
-        for def in program.defs {
-            new_defs.extend(rewrite_def(def, &mut used_labels, &mut new_changes));
-        }
-        program.defs = new_defs;
+        program.defs = program
+            .defs
+            .into_iter()
+            .flat_map(|def| rewrite_def(def, &mut used_labels, &mut new_changes))
+            .collect();
     }
+
     program
 }
