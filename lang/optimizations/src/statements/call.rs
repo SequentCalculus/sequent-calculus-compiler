@@ -1,12 +1,9 @@
-use crate::{
-    errors::Error,
-    rewrite::{Rewrite, RewriteState},
-};
+use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::statements::Call;
 
 impl Rewrite for Call {
     type Target = Self;
-    fn rewrite(self, _: &mut RewriteState) -> Result<Self::Target, Error> {
-        Ok(self)
+    fn rewrite(self, _: &mut RewriteState) -> Self::Target {
+        self
     }
 }
