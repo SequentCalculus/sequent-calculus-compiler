@@ -105,6 +105,7 @@ fn rewrite_call_switch(
         used_vars: def_used_vars,
     };
     ctx.add_def(def_updated);
+    ctx.new_changes = true;
     Ok(call_stmt)
 }
 
@@ -132,8 +133,9 @@ fn rewrite_call_invoke(
     if !ctx.already_lifted(&lifted_name) {
         ctx.lift_create_call(def_name, &inv.var, xtor_clause);
     }
+    ctx.new_changes = true;
     Ok(Call {
         label: lifted_name,
-        args: inv.args,
+        args: call.args,
     })
 }
