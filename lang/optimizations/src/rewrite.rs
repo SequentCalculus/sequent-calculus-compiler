@@ -1,6 +1,5 @@
-use crate::errors::Error;
 use axcut::syntax::{
-    ContextBinding, Def, Name, TypingContext, Var, fresh_name, statements::Clause,
+    ContextBinding, Def, Name, TypingContext, Var, names::fresh_name, statements::Clause,
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
 use std::{
@@ -23,18 +22,13 @@ impl RewriteState<'_> {
         self.let_bindings.get(var).cloned()
     }
 
-    pub fn get_create_clause(
-        &self,
-        var: &Var,
-        tag: &Name,
-    ) -> Option<Result<(Clause, usize), Error>> {
+    pub fn get_create_clause(&self, var: &Var, tag: &Name) -> Option<(Clause, usize)> {
         self.create_bindings.get(var).map(|clauses| {
-            let clause_err = Error::create_clause(clauses, tag);
             let position = clauses
                 .iter()
                 .position(|clause| clause.xtor == *tag)
-                .ok_or(clause_err)?;
-            Ok((clauses[position].clone(), position))
+                .expect("Could not find create clause binding for xtor");
+            (clauses[position].clone(), position)
         })
     }
 
@@ -42,7 +36,7 @@ impl RewriteState<'_> {
         &mut self,
         mut clause: Clause,
         bound_var: &Var,
-    ) -> Result<(String, BTreeSet<ContextBinding>), Error> {
+    ) -> (String, BTreeSet<ContextBinding>) {
         let name = fresh_name(
             self.used_labels,
             &("lift_".to_string() + self.current_label + "_" + bound_var + "_" + &clause.xtor),
@@ -59,18 +53,18 @@ impl RewriteState<'_> {
         };
         self.lifted_statements.push_front(def);
 
-        Ok((name, free_vars))
+        (name, free_vars)
     }
 }
 
 pub trait Rewrite {
     type Target;
-    fn rewrite(self, context: &mut RewriteState) -> Result<Self::Target, Error>;
+    fn rewrite(self, context: &mut RewriteState) -> Self::Target;
 }
 
 impl<T: Rewrite + Clone> Rewrite for Rc<T> {
     type Target = Rc<T::Target>;
-    fn rewrite(self, context: &mut RewriteState) -> Result<Self::Target, Error> {
-        Ok(Rc::new(Rc::unwrap_or_clone(self).rewrite(context)?))
+    fn rewrite(self, context: &mut RewriteState) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).rewrite(context))
     }
 }

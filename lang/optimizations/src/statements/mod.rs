@@ -1,7 +1,4 @@
-use crate::{
-    errors::Error,
-    rewrite::{Rewrite, RewriteState},
-};
+use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::Statement;
 
 mod call;
@@ -19,19 +16,19 @@ mod switch;
 
 impl Rewrite for Statement {
     type Target = Self;
-    fn rewrite(self, state: &mut RewriteState) -> Result<Self::Target, Error> {
+    fn rewrite(self, state: &mut RewriteState) -> Self::Target {
         match self {
-            Statement::Substitute(subst) => Ok(subst.rewrite(state)?.into()),
-            Statement::Call(call) => Ok(call.rewrite(state)?.into()),
+            Statement::Substitute(subst) => subst.rewrite(state).into(),
+            Statement::Call(call) => call.rewrite(state).into(),
             Statement::Let(lt) => lt.rewrite(state),
             Statement::Switch(switch) => switch.rewrite(state),
             Statement::Create(cr) => cr.rewrite(state),
             Statement::Invoke(inv) => inv.rewrite(state),
-            Statement::Literal(lit) => Ok(lit.rewrite(state)?.into()),
-            Statement::Op(op) => Ok(op.rewrite(state)?.into()),
-            Statement::PrintI64(prnt) => Ok(prnt.rewrite(state)?.into()),
-            Statement::IfC(ifc) => Ok(ifc.rewrite(state)?.into()),
-            Statement::Exit(ex) => Ok(ex.rewrite(state)?.into()),
+            Statement::Literal(lit) => lit.rewrite(state).into(),
+            Statement::Op(op) => op.rewrite(state).into(),
+            Statement::PrintI64(prnt) => prnt.rewrite(state).into(),
+            Statement::IfC(ifc) => ifc.rewrite(state).into(),
+            Statement::Exit(ex) => ex.rewrite(state).into(),
         }
     }
 }

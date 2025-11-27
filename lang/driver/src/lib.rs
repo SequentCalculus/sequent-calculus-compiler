@@ -271,7 +271,7 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let rewritten = rewrite_prog(shrunk)?;
+        let rewritten = rewrite_prog(shrunk);
         self.rewritten.insert(path.clone(), rewritten.clone());
         Ok(rewritten)
     }
