@@ -98,6 +98,27 @@ impl FreeVars for Op {
     }
 }
 
+impl TypedFreeVars for Op {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        vars.insert(ContextBinding {
+            var: self.snd.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+    }
+}
+
 impl Subst for Op {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Op {
         self.fst = self.fst.subst_sim(subst);
@@ -107,24 +128,6 @@ impl Subst for Op {
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
 
         self
-    }
-}
-
-impl TypedFreeVars for Op {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = self.next.typed_free_vars();
-        bindings.retain(|bnd| bnd.var != self.var);
-        bindings.insert(ContextBinding {
-            var: self.fst.clone(),
-            ty: Ty::I64,
-            chi: Chirality::Ext,
-        });
-        bindings.insert(ContextBinding {
-            var: self.snd.clone(),
-            ty: Ty::I64,
-            chi: Chirality::Ext,
-        });
-        bindings
     }
 }
 

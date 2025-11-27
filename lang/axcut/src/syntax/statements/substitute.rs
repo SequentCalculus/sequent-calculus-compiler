@@ -69,6 +69,20 @@ impl FreeVars for Substitute {
     }
 }
 
+impl TypedFreeVars for Substitute {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.next.typed_free_vars(vars);
+
+        for (new, old) in &self.rearrange {
+            vars.insert(ContextBinding {
+                var: old.clone(),
+                ..new.clone()
+            });
+            vars.remove(new);
+        }
+    }
+}
+
 impl Subst for Substitute {
     // this function is actually never called on the linearized version of AxCut containing
     // explicit substitutions
@@ -80,11 +94,5 @@ impl Subst for Substitute {
             .collect();
         self.next = self.next.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Substitute {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        self.next.typed_free_vars()
     }
 }

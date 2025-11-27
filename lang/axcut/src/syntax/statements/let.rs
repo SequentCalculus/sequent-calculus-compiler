@@ -84,21 +84,24 @@ impl FreeVars for Let {
     }
 }
 
+impl TypedFreeVars for Let {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned());
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Prd,
+            ty: self.ty.clone(),
+        });
+    }
+}
+
 impl Subst for Let {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
         self.args = self.args.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Let {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = self.next.typed_free_vars();
-        bindings.retain(|bnd| bnd.var != self.var);
-        bindings.extend(self.args.bindings.iter().cloned());
-        bindings
     }
 }
 

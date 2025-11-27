@@ -93,6 +93,18 @@ impl FreeVars for Create {
     }
 }
 
+impl TypedFreeVars for Create {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.clauses.typed_free_vars(vars);
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Cns,
+            ty: self.ty.clone(),
+        });
+    }
+}
+
 impl Subst for Create {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Create {
         self.context = self.context.subst_sim(subst);
@@ -101,17 +113,6 @@ impl Subst for Create {
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Create {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = self.next.typed_free_vars();
-        bindings.retain(|bnd| bnd.var != self.var);
-        for clause in self.clauses.iter() {
-            bindings.extend(clause.typed_free_vars());
-        }
-        bindings
     }
 }
 

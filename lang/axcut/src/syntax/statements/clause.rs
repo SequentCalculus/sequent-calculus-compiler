@@ -34,18 +34,19 @@ impl FreeVars for Clause {
     }
 }
 
+impl TypedFreeVars for Clause {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.body.typed_free_vars(vars);
+        for binding in &self.context.bindings {
+            vars.remove(binding);
+        }
+    }
+}
+
 impl Subst for Clause {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
         self.body = self.body.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Clause {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = self.body.typed_free_vars();
-        bindings.retain(|bnd| !self.context.bindings.contains(bnd));
-        bindings
     }
 }
 

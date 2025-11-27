@@ -116,11 +116,30 @@ impl FreeVars for IfC {
 
         vars.extend(vars_elsec);
         vars.insert(self.fst.clone());
-        if let Some(snd) = self.snd.clone() {
-            vars.insert(snd);
+        if let Some(ref snd) = self.snd {
+            vars.insert(snd.clone());
         }
 
         self
+    }
+}
+
+impl TypedFreeVars for IfC {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.fst.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        if let Some(ref snd) = self.snd {
+            vars.insert(ContextBinding {
+                var: snd.clone(),
+                chi: Chirality::Ext,
+                ty: Ty::I64,
+            });
+        }
+        self.thenc.typed_free_vars(vars);
+        self.elsec.typed_free_vars(vars);
     }
 }
 
@@ -133,26 +152,6 @@ impl Subst for IfC {
         self.elsec = self.elsec.subst_sim(subst);
 
         self
-    }
-}
-
-impl TypedFreeVars for IfC {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = BTreeSet::from([ContextBinding {
-            var: self.fst.clone(),
-            ty: Ty::I64,
-            chi: Chirality::Ext,
-        }]);
-        if let Some(ref snd) = self.snd {
-            bindings.insert(ContextBinding {
-                var: snd.clone(),
-                ty: Ty::I64,
-                chi: Chirality::Ext,
-            });
-        }
-        bindings.extend(self.thenc.typed_free_vars());
-        bindings.extend(self.elsec.typed_free_vars());
-        bindings
     }
 }
 

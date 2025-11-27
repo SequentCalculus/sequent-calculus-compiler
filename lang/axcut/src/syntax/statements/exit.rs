@@ -2,12 +2,12 @@
 
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
-use super::{ContextBinding, Statement, Var};
-use crate::syntax::{Chirality, Ty};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, Var};
+use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines the exit statement in AxCut. It consists of a variable which contains the
 /// exit code.
@@ -42,12 +42,19 @@ impl Subst for Exit {
     }
 }
 
+impl FreeVars for Exit {
+    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+        vars.insert(self.var.clone());
+        self
+    }
+}
+
 impl TypedFreeVars for Exit {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        BTreeSet::from([ContextBinding {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
             var: self.var.clone(),
-            ty: Ty::I64,
             chi: Chirality::Ext,
-        }])
+            ty: Ty::I64,
+        });
     }
 }

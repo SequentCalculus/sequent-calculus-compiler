@@ -62,21 +62,22 @@ impl FreeVars for Literal {
     }
 }
 
+impl TypedFreeVars for Literal {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+    }
+}
+
 impl Subst for Literal {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Literal {
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Literal {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        self.next
-            .typed_free_vars()
-            .into_iter()
-            .filter(|bnd| bnd.var != self.var)
-            .collect()
     }
 }
 

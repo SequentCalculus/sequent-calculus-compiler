@@ -55,26 +55,23 @@ impl FreeVars for Switch {
     }
 }
 
+impl TypedFreeVars for Switch {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.clauses.typed_free_vars(vars);
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Prd,
+            ty: self.ty.clone(),
+        });
+    }
+}
+
 impl Subst for Switch {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Switch {
         self.var = self.var.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Switch {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = BTreeSet::from([ContextBinding {
-            var: self.var.clone(),
-            ty: self.ty.clone(),
-            chi: Chirality::Prd,
-        }]);
-        for clause in self.clauses.iter() {
-            bindings.extend(clause.typed_free_vars())
-        }
-        bindings
     }
 }
 

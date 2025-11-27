@@ -49,16 +49,16 @@ impl FreeVars for Call {
     }
 }
 
+impl TypedFreeVars for Call {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned());
+    }
+}
+
 impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
         self.args = self.args.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Call {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        self.args.bindings.iter().cloned().collect()
     }
 }
 

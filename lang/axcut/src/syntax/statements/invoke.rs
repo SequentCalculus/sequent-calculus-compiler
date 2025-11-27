@@ -60,23 +60,22 @@ impl FreeVars for Invoke {
     }
 }
 
+impl TypedFreeVars for Invoke {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.extend(self.args.bindings.iter().cloned());
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Cns,
+            ty: self.ty.clone(),
+        });
+    }
+}
+
 impl Subst for Invoke {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
         self.args = self.args.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for Invoke {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = BTreeSet::from([ContextBinding {
-            var: self.var.clone(),
-            ty: self.ty.clone(),
-            chi: Chirality::Cns,
-        }]);
-        bindings.extend(self.args.bindings.iter().cloned());
-        bindings
     }
 }
 

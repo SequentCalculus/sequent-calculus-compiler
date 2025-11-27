@@ -77,10 +77,25 @@ impl FreeVars for Statement {
             Statement::Op(op) => op.free_vars(vars).into(),
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
-            Statement::Exit(Exit { ref var }) => {
-                vars.insert(var.clone());
-                self
-            }
+            Statement::Exit(exit) => exit.free_vars(vars).into(),
+        }
+    }
+}
+
+impl TypedFreeVars for Statement {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        match self {
+            Statement::Substitute(substitute) => substitute.typed_free_vars(vars),
+            Statement::Call(call) => call.typed_free_vars(vars),
+            Statement::Let(r#let) => r#let.typed_free_vars(vars),
+            Statement::Switch(switch) => switch.typed_free_vars(vars),
+            Statement::Create(create) => create.typed_free_vars(vars),
+            Statement::Invoke(invoke) => invoke.typed_free_vars(vars),
+            Statement::Literal(lit) => lit.typed_free_vars(vars),
+            Statement::Op(op) => op.typed_free_vars(vars),
+            Statement::PrintI64(print) => print.typed_free_vars(vars),
+            Statement::IfC(ifc) => ifc.typed_free_vars(vars),
+            Statement::Exit(exit) => exit.typed_free_vars(vars),
         }
     }
 }
@@ -99,24 +114,6 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
-        }
-    }
-}
-
-impl TypedFreeVars for Statement {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        match self {
-            Statement::Substitute(subst) => subst.typed_free_vars(),
-            Statement::Call(call) => call.typed_free_vars(),
-            Statement::Let(lt) => lt.typed_free_vars(),
-            Statement::Switch(switch) => switch.typed_free_vars(),
-            Statement::Create(cr) => cr.typed_free_vars(),
-            Statement::Invoke(inv) => inv.typed_free_vars(),
-            Statement::Literal(lit) => lit.typed_free_vars(),
-            Statement::Op(op) => op.typed_free_vars(),
-            Statement::PrintI64(prnt) => prnt.typed_free_vars(),
-            Statement::IfC(ifc) => ifc.typed_free_vars(),
-            Statement::Exit(ex) => ex.typed_free_vars(),
         }
     }
 }

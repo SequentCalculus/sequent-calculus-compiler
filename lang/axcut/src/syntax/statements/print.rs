@@ -58,24 +58,23 @@ impl FreeVars for PrintI64 {
     }
 }
 
+impl TypedFreeVars for PrintI64 {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        self.next.typed_free_vars(vars);
+    }
+}
+
 impl Subst for PrintI64 {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> PrintI64 {
         self.var = self.var.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
-    }
-}
-
-impl TypedFreeVars for PrintI64 {
-    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
-        let mut bindings = BTreeSet::from([ContextBinding {
-            var: self.var.clone(),
-            ty: Ty::I64,
-            chi: Chirality::Ext,
-        }]);
-        bindings.extend(self.next.typed_free_vars());
-        bindings
     }
 }
 
