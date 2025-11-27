@@ -1,6 +1,6 @@
 //! This module contains the command for inlining the definitions of a file.
 
-use super::print_res;
+use super::print_stdout;
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
 
@@ -17,6 +17,6 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
     drv.print_rewritten(&cmd.filepath, PrintMode::Textual)?;
-    print_res(&rewritten, colored);
+    print_stdout(&rewritten, colored);
     Ok(())
 }

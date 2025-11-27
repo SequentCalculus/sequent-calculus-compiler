@@ -1,6 +1,9 @@
-use crate::{Error, Rewrite, RewriteContext, free_bindings::FreeBindings};
-use axcut::syntax::statements::{Call, Clause, Create, Statement};
-use std::rc::Rc;
+use crate::{Error, Rewrite, RewriteContext};
+use axcut::{
+    syntax::statements::{Call, Clause, Create, Statement},
+    traits::typed_free_vars::TypedFreeVars,
+};
+use std::{collections::BTreeSet, rc::Rc};
 
 impl Rewrite for Create {
     type Target = Statement;
@@ -42,7 +45,8 @@ impl Rewrite for Create {
             new_clauses.push(new_clause);
         }
         let new_next = self.next.rewrite(ctx)?;
-        let next_free = new_next.free_bindings();
+        let mut next_free = BTreeSet::new();
+        new_next.typed_free_vars(&mut next_free);
         if next_free.iter().all(|bnd| bnd.var != self.var) {
             Ok(Rc::unwrap_or_clone(new_next))
         } else {
