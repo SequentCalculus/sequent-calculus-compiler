@@ -6,10 +6,11 @@ use std::{collections::BTreeSet, rc::Rc};
 impl Rewrite for Create {
     type Target = Statement;
     fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
-        let mut clauses = Vec::with_capacity(self.clauses.len());
-        for clause in self.clauses {
-            clauses.push(clause.rewrite(state));
-        }
+        let clauses = self
+            .clauses
+            .into_iter()
+            .map(|clause| clause.rewrite(state))
+            .collect();
 
         state.create_bindings.insert(self.var.clone(), clauses);
         self.next = self.next.rewrite(state);
