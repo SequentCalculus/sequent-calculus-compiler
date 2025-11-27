@@ -468,7 +468,6 @@ dependencies = [
  "fun2core",
  "miette",
  "opener",
- "optimizations",
  "printer",
  "thiserror",
 ]

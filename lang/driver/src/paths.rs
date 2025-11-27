@@ -26,7 +26,7 @@ pub const SHRUNK_PATH: &str = "shrunk";
 /// Path for linearized axcut files
 pub const LINEARIZED_PATH: &str = "linearized";
 
-/// Path for inlined axcut files
+/// Path for rewritten axcut files
 pub const REWRITTEN_PATH: &str = "rewritten";
 
 /// Path for assembly files

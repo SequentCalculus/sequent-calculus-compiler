@@ -19,7 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use optimizations::rewrite;
+use optimizations::program::rewrite_prog;
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -271,7 +271,7 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let rewritten = rewrite(shrunk)?;
+        let rewritten = rewrite_prog(shrunk)?;
         self.rewritten.insert(path.clone(), rewritten.clone());
         Ok(rewritten)
     }
