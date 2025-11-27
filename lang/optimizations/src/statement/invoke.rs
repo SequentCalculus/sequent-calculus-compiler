@@ -1,8 +1,12 @@
-use crate::{Error, Rewrite, RewriteContext, free_bindings::FreeBindings};
-use axcut::syntax::{
-    ContextBinding,
-    statements::{Call, Invoke, Statement},
+use crate::{Error, Rewrite, RewriteContext};
+use axcut::{
+    syntax::{
+        ContextBinding,
+        statements::{Call, Invoke, Statement},
+    },
+    traits::typed_free_vars::TypedFreeVars,
 };
+use std::collections::BTreeSet;
 
 impl Rewrite for Invoke {
     type Target = Statement;
@@ -19,7 +23,9 @@ impl Rewrite for Invoke {
             .ok_or(clause_err)?;
         let lifted_name = ctx.create_lifted(&ctx.current_def, &bind_rhs.xtor, &self.var);
         let mut args = self.args;
-        let mut rhs_bindings: Vec<ContextBinding> = bind_rhs.free_bindings().into_iter().collect();
+        let mut rhs_bindings: BTreeSet<ContextBinding> = BTreeSet::new();
+        bind_rhs.typed_free_vars(&mut rhs_bindings);
+        let mut rhs_bindings: Vec<ContextBinding> = rhs_bindings.into_iter().collect();
         rhs_bindings.sort();
         args.bindings.extend(rhs_bindings);
 

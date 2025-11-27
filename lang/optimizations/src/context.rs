@@ -1,10 +1,13 @@
-use crate::{Error, Rewrite, free_bindings::FreeBindings};
-use axcut::syntax::{
-    ContextBinding, Def, Name, TypingContext, Var,
-    statements::{Clause, Create, Let},
+use crate::{Error, Rewrite};
+use axcut::{
+    syntax::{
+        ContextBinding, Def, Name, TypingContext, Var,
+        statements::{Clause, Create, Let},
+    },
+    traits::typed_free_vars::TypedFreeVars,
 };
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     rc::Rc,
 };
 
@@ -105,7 +108,9 @@ impl RewriteContext {
 
     pub fn lift_create_clause(&mut self, clause: Clause, bound_var: &Var) -> Result<(), Error> {
         let new_name = self.create_lifted(&self.current_def, &clause.xtor, bound_var);
-        let mut next_bindings: Vec<ContextBinding> = clause.free_bindings().into_iter().collect();
+        let mut next_bindings = BTreeSet::new();
+        clause.typed_free_vars(&mut next_bindings);
+        let mut next_bindings: Vec<ContextBinding> = next_bindings.into_iter().collect();
         next_bindings.sort();
         let mut new_context = clause.context;
         new_context.bindings.extend(next_bindings);
@@ -142,14 +147,11 @@ impl RewriteContext {
 
     pub fn lift_create_call(&mut self, create_def: &Name, create_var: &Var, clause: Clause) {
         let lifted_name = self.create_lifted(create_def, &clause.xtor, create_var);
+        let mut used_vars = BTreeSet::new();
+        clause.body.typed_free_vars(&mut used_vars);
         let new_def = Def {
             name: lifted_name,
-            used_vars: clause
-                .body
-                .free_bindings()
-                .into_iter()
-                .map(|bnd| bnd.var)
-                .collect(),
+            used_vars: used_vars.into_iter().map(|bnd| bnd.var).collect(),
             context: clause.context,
             body: Rc::unwrap_or_clone(clause.body),
         };
