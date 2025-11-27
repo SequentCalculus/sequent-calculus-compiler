@@ -1,5 +1,3 @@
-use std::fs::rename;
-
 use crate::errors::Error;
 use log::warn;
 use lsp_server::{Connection, IoThreads, Message};
