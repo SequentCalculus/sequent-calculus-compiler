@@ -10,8 +10,9 @@ use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the creation of a closure in AxCut. It consists of a variable to which to
@@ -100,6 +101,17 @@ impl Subst for Create {
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Create {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        let mut bindings = self.next.typed_free_vars();
+        bindings.retain(|bnd| bnd.var != self.var);
+        for clause in self.clauses.iter() {
+            bindings.extend(clause.typed_free_vars());
+        }
+        bindings
     }
 }
 

@@ -7,11 +7,12 @@ use printer::{
     util::BracesExt,
 };
 
-use crate::syntax::{Name, Statement, TypingContext, Var};
+use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines a clause in a match or a closure in AxCut. It consists of a name of the
@@ -37,6 +38,14 @@ impl Subst for Clause {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
         self.body = self.body.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Clause {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        let mut bindings = self.body.typed_free_vars();
+        bindings.retain(|bnd| !self.context.bindings.contains(bnd));
+        bindings
     }
 }
 

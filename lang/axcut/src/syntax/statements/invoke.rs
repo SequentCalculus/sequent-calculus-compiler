@@ -7,8 +7,9 @@ use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContex
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the invocation of a method of a closure in AxCut. It consists of the
@@ -64,6 +65,18 @@ impl Subst for Invoke {
         self.var = self.var.subst_sim(subst);
         self.args = self.args.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Invoke {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        let mut bindings = BTreeSet::from([ContextBinding {
+            var: self.var.clone(),
+            ty: self.ty.clone(),
+            chi: Chirality::Cns,
+        }]);
+        bindings.extend(self.args.bindings.iter().cloned());
+        bindings
     }
 }
 

@@ -7,8 +7,9 @@ use printer::{DocAllocator, Print};
 use crate::syntax::{ContextBinding, Statement, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This module defines explicit substitutions in AxCut. They consist of a list of assignments of
@@ -79,5 +80,11 @@ impl Subst for Substitute {
             .collect();
         self.next = self.next.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Substitute {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        self.next.typed_free_vars()
     }
 }

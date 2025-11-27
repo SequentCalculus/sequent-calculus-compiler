@@ -5,12 +5,13 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Statement, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This enum encodes the comparison operation used.
@@ -132,6 +133,26 @@ impl Subst for IfC {
         self.elsec = self.elsec.subst_sim(subst);
 
         self
+    }
+}
+
+impl TypedFreeVars for IfC {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        let mut bindings = BTreeSet::from([ContextBinding {
+            var: self.fst.clone(),
+            ty: Ty::I64,
+            chi: Chirality::Ext,
+        }]);
+        if let Some(ref snd) = self.snd {
+            bindings.insert(ContextBinding {
+                var: snd.clone(),
+                ty: Ty::I64,
+                chi: Chirality::Ext,
+            });
+        }
+        bindings.extend(self.thenc.typed_free_vars());
+        bindings.extend(self.elsec.typed_free_vars());
+        bindings
     }
 }
 

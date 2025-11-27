@@ -3,12 +3,16 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{Name, Statement, TypingContext, Var};
+use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{BTreeSet, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines the call of a top-level function in AxCut. It consists of the name of the
 /// top-level function to call and the arguments. After linearization, the arguments are
@@ -49,6 +53,12 @@ impl Subst for Call {
     fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
         self.args = self.args.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Call {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        self.args.bindings.iter().cloned().collect()
     }
 }
 

@@ -9,8 +9,9 @@ use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContex
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the binding of an xtor in AxCut. It consists of a variable to which to bind
@@ -89,6 +90,15 @@ impl Subst for Let {
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self
+    }
+}
+
+impl TypedFreeVars for Let {
+    fn typed_free_vars(&self) -> BTreeSet<ContextBinding> {
+        let mut bindings = self.next.typed_free_vars();
+        bindings.retain(|bnd| bnd.var != self.var);
+        bindings.extend(self.args.bindings.iter().cloned());
+        bindings
     }
 }
 
