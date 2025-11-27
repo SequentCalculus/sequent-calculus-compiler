@@ -1,9 +1,7 @@
-use std::os::windows::raw::SOCKET;
-
 use crate::errors::Error;
 use fun::{parser::parse_module, syntax::program::CheckedProgram};
 use log::info;
-use lsp_types::{Location, ParameterInformationSettings, Position, Range, Uri};
+use lsp_types::{Location, Position, Range, Uri};
 //use serde_json::to_string;
 use printer::Print;
 
