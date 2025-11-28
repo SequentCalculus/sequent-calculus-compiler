@@ -55,12 +55,12 @@ impl RewriteState {
         self.let_bindings.get(var).cloned()
     }
 
-    pub fn get_create_clause(&self, var: &Var, tag: &Name) -> Option<(Clause, usize)> {
+    pub fn get_create_clause(&self, var: &Var, xtor: &Name) -> Option<(Clause, usize)> {
         self.create_bindings.get(var).map(|clauses| {
             let position = clauses
                 .iter()
-                .position(|clause| clause.xtor == *tag)
-                .expect("Could not find create clause binding for xtor");
+                .position(|clause| clause.xtor == *xtor)
+                .unwrap_or_else(|| panic!("Could not find create clause binding for {xtor}"));
             (clauses[position].clone(), position)
         })
     }
