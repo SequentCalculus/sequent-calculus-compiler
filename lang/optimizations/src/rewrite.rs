@@ -3,21 +3,54 @@ use axcut::syntax::{
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
 use std::{
-    collections::{BTreeSet, HashMap, HashSet, VecDeque},
+    collections::{BTreeSet, HashMap, HashSet},
     rc::Rc,
 };
 
-pub struct RewriteState<'a> {
-    pub used_vars: &'a HashSet<Var>,
-    pub used_labels: &'a mut HashSet<Name>,
-    pub current_label: &'a str,
-    pub lifted_statements: &'a mut VecDeque<Def>,
+/// State during rewriting
+pub struct RewriteState {
+    /// Names of definitions ihn the current program
+    pub used_labels: HashSet<Name>,
+    /// Definitions in the current program
+    pub lifted_statements: Vec<Def>,
+    /// used vars in the current definition
+    pub current_used_vars: HashSet<Var>,
+    /// Name of the current definition
+    pub current_label: String,
+    /// Let bindings defined in the current definition
+    /// Keys are the bound variables
+    /// values are xtor names and arguments
     pub let_bindings: HashMap<Var, (Name, TypingContext)>,
+    /// Create bindings used in the current definition
+    /// keys are bound variables
+    /// values are create clauses
     pub create_bindings: HashMap<Var, Vec<Clause>>,
-    pub new_changes: &'a mut bool,
+    /// Has anything been changed during the current pass
+    pub new_changes: bool,
 }
 
-impl RewriteState<'_> {
+impl RewriteState {
+    /// Updates the current definition
+    pub fn set_current_def(&mut self, def_name: &str, def_vars: HashSet<String>) {
+        self.current_label = def_name.to_owned();
+        self.current_used_vars = def_vars;
+        self.let_bindings.clear();
+        self.create_bindings.clear();
+        self.new_changes = false;
+    }
+
+    pub fn add_def(&mut self, def: Def) {
+        match self
+            .lifted_statements
+            .iter()
+            .enumerate()
+            .find(|(_, df)| *df.name == def.name)
+        {
+            None => self.lifted_statements.push(def),
+            Some((ind, _)) => self.lifted_statements[ind] = def,
+        }
+    }
+
     pub fn get_let(&self, var: &Var) -> Option<(Name, TypingContext)> {
         self.let_bindings.get(var).cloned()
     }
@@ -32,14 +65,14 @@ impl RewriteState<'_> {
         })
     }
 
-    pub fn lift_clause(
+    pub fn lift_create_clause(
         &mut self,
         mut clause: Clause,
         bound_var: &Var,
     ) -> (String, BTreeSet<ContextBinding>) {
         let name = fresh_name(
-            self.used_labels,
-            &("lift_".to_string() + self.current_label + "_" + bound_var + "_" + &clause.xtor),
+            &mut self.used_labels,
+            &("lift_".to_string() + &self.current_label + "_" + bound_var + "_" + &clause.xtor),
         );
         let mut free_vars = BTreeSet::new();
         clause.typed_free_vars(&mut free_vars);
@@ -48,12 +81,54 @@ impl RewriteState<'_> {
         let def = Def {
             name: name.clone(),
             context: clause.context,
-            used_vars: self.used_vars.clone(),
+            used_vars: self.current_used_vars.clone(),
             body: Rc::unwrap_or_clone(clause.body),
         };
-        self.lifted_statements.push_back(def);
-
+        self.lifted_statements.push(def);
         (name, free_vars)
+    }
+
+    pub fn lift_switch_call(
+        &mut self,
+        switch_def: &Name,
+        switch_var: &Var,
+        clause: &Clause,
+    ) -> (String, Vec<ContextBinding>) {
+        let name = fresh_name(
+            &mut self.used_labels,
+            &("lift_".to_string() + switch_def + "_" + switch_var + "_" + &clause.xtor),
+        );
+        self.used_labels.insert(name.clone());
+
+        let mut new_context = clause.context.clone();
+        let mut extra_args = BTreeSet::new();
+        clause.typed_free_vars(&mut extra_args);
+        new_context.bindings.extend(extra_args);
+        let new_def = Def {
+            name: name.clone(),
+            context: new_context.clone(),
+            body: Rc::unwrap_or_clone(clause.body.clone()),
+            used_vars: HashSet::new(),
+        };
+        self.add_def(new_def);
+        (name, new_context.bindings)
+    }
+
+    pub fn lift_create_call(&mut self, create_def: &Name, create_var: &Var, clause: Clause) {
+        let name = fresh_name(
+            &mut self.used_labels,
+            &("lift_".to_string() + create_def + "_" + create_var + "_" + &clause.xtor),
+        );
+        let mut used_vars = BTreeSet::new();
+        clause.body.typed_free_vars(&mut used_vars);
+        self.used_labels.insert(name.clone());
+        let new_def = Def {
+            name,
+            used_vars: used_vars.into_iter().map(|bnd| bnd.var).collect(),
+            context: clause.context,
+            body: Rc::unwrap_or_clone(clause.body),
+        };
+        self.add_def(new_def);
     }
 }
 
