@@ -1,25 +1,15 @@
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{Def, Name};
 
-use std::collections::{HashMap, HashSet, VecDeque};
-
-pub fn rewrite_def(
-    mut def: Def,
-    used_labels: &mut HashSet<Name>,
-    new_changes: &mut bool,
-) -> VecDeque<Def> {
-    let mut def_plus_lifted_statements = VecDeque::new();
-
-    def.body = def.body.rewrite(&mut RewriteState {
-        used_vars: &def.used_vars,
-        used_labels,
-        current_label: &def.name,
-        lifted_statements: &mut def_plus_lifted_statements,
-        let_bindings: HashMap::new(),
-        create_bindings: HashMap::new(),
-        new_changes,
-    });
-    def_plus_lifted_statements.push_front(def);
-
-    def_plus_lifted_statements
+pub fn rewrite_def<'a>(name: &'a Name, state: &mut RewriteState) {
+    println!("getting definition {name}");
+    let def_ind = state
+        .lifted_statements
+        .iter()
+        .position(|def| def.name == *name)
+        .expect("Could not find definition");
+    let mut current_def = state.lifted_statements.remove(def_ind);
+    state.set_current_def(name, current_def.used_vars.clone());
+    current_def.body = current_def.body.rewrite(state);
+    state.lifted_statements.insert(def_ind, current_def)
 }
