@@ -53,7 +53,12 @@ impl Rewrite for Call {
         let switch_clause = switch.clauses.remove(switch_clause_ind);
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(call) => (call.label.clone(), call.args.bindings.clone()),
-            _ => ctx.lift_switch_call(&called_def.name, &switch.var, &switch_clause),
+            _ => ctx.lift_switch_call(
+                &called_def.name,
+                &switch.var,
+                &called_def.context,
+                &switch_clause,
+            ),
         };
 
         let new_clause = Clause {
