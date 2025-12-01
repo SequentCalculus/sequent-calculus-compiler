@@ -38,6 +38,7 @@ impl Rewrite for Call {
             None => {
                 called_def.body = switch.into();
                 ctx.add_def(called_def);
+                self.args.bindings.insert(switch_arg_ind, call_arg);
                 return self;
             }
             Some(lt) => lt,
@@ -68,7 +69,7 @@ impl Rewrite for Call {
                 .into(),
             ),
         };
-        switch.clauses.insert(switch_arg_ind, new_clause);
+        switch.clauses.insert(switch_clause_ind, new_clause);
         called_def.body = switch.into();
         ctx.add_def(called_def);
         Call {
