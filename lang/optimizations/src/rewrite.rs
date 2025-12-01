@@ -92,6 +92,7 @@ impl RewriteState {
         &mut self,
         switch_def: &Name,
         switch_var: &Var,
+        def_args: &TypingContext,
         clause: &Clause,
     ) -> (String, Vec<ContextBinding>) {
         let name = fresh_name(
@@ -101,9 +102,13 @@ impl RewriteState {
         self.used_labels.insert(name.clone());
 
         let mut new_context = clause.context.clone();
-        let mut extra_args = BTreeSet::new();
-        clause.typed_free_vars(&mut extra_args);
-        new_context.bindings.extend(extra_args);
+        new_context.bindings.extend(
+            def_args
+                .bindings
+                .iter()
+                .filter(|bind| bind.var != *switch_var)
+                .cloned(),
+        );
         let new_def = Def {
             name: name.clone(),
             context: new_context.clone(),
