@@ -1,7 +1,7 @@
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{
     Def, Name, TypingContext, Var,
-    statements::{Call, Clause, Invoke, Statement, Switch},
+    statements::{Call, Clause, Statement, Switch},
 };
 use std::{collections::HashSet, rc::Rc};
 
@@ -25,7 +25,6 @@ impl Rewrite for Call {
                 called_def.context,
                 called_def.used_vars,
             ),
-            Statement::Invoke(inv) => rewrite_call_invoke(self, inv, ctx, called_def.context),
             _ => self,
         }
     }
@@ -97,33 +96,4 @@ fn rewrite_call_switch(
     ctx.add_def(def_updated);
     ctx.new_changes = true;
     call_stmt
-}
-
-fn rewrite_call_invoke(
-    call: Call,
-    inv: Invoke,
-    ctx: &mut RewriteState,
-    def_args: TypingContext,
-) -> Call {
-    let translated_name = translate_name(&inv.var, &call.args, &def_args);
-    let mut clauses = match ctx.create_bindings.get(&translated_name) {
-        None => return call,
-        Some(clauses) => clauses.clone(),
-    };
-    let xtor_ind = clauses
-        .iter()
-        .position(|clause| clause.xtor == inv.tag)
-        .expect("No Clause for Xtor in Create");
-    let xtor_clause = clauses.remove(xtor_ind);
-    // TODO: replace `create_lifted` with correct name making sure a clause is not lifted twice
-    //let lifted_name = ctx.create_lifted(def_name, &xtor_clause.xtor, &translated_name);
-    let lifted_name = String::new();
-    /*if !ctx.already_lifted(&lifted_name) {
-        ctx.lift_create_call(def_name, &inv.var, xtor_clause);
-    }*/
-    ctx.new_changes = true;
-    Call {
-        label: lifted_name,
-        args: call.args,
-    }
 }
