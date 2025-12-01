@@ -2,7 +2,6 @@ use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{Def, Name};
 
 pub fn rewrite_def<'a>(name: &'a Name, state: &mut RewriteState) {
-    println!("getting definition {name}");
     let def_ind = state
         .lifted_statements
         .iter()

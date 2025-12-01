@@ -55,6 +55,49 @@ impl RewriteState<'_> {
 
         (name, free_vars)
     }
+
+    pub fn lift_switch_call(
+        &mut self,
+        switch_def: &Name,
+        switch_var: &Var,
+        clause: &Clause,
+    ) -> (String, Vec<ContextBinding>) {
+        let name = fresh_name(
+            &mut self.used_labels,
+            &("lift_".to_string() + switch_def + "_" + switch_var + "_" + &clause.xtor),
+        );
+        self.used_labels.insert(name.clone());
+
+        let mut new_context = clause.context.clone();
+        let mut extra_args = BTreeSet::new();
+        clause.typed_free_vars(&mut extra_args);
+        new_context.bindings.extend(extra_args);
+        let new_def = Def {
+            name: name.clone(),
+            context: new_context.clone(),
+            body: Rc::unwrap_or_clone(clause.body.clone()),
+            used_vars: HashSet::new(),
+        };
+        self.add_def(new_def);
+        (name, new_context.bindings)
+    }
+
+    pub fn lift_create_call(&mut self, create_def: &Name, create_var: &Var, clause: Clause) {
+        let name = fresh_name(
+            &mut self.used_labels,
+            &("lift_".to_string() + create_def + "_" + create_var + "_" + &clause.xtor),
+        );
+        let mut used_vars = BTreeSet::new();
+        clause.body.typed_free_vars(&mut used_vars);
+        self.used_labels.insert(name.clone());
+        let new_def = Def {
+            name,
+            used_vars: used_vars.into_iter().map(|bnd| bnd.var).collect(),
+            context: clause.context,
+            body: Rc::unwrap_or_clone(clause.body),
+        };
+        self.add_def(new_def);
+    }
 }
 
 pub trait Rewrite {
