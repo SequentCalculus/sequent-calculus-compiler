@@ -34,7 +34,7 @@ impl Rewrite for Call {
             .expect("Could not find switch variable");
 
         let call_arg = self.args.bindings.remove(switch_arg_ind);
-        let (let_xtor, let_args) = match ctx.get_let(&call_arg.var) {
+        let (let_xtor, mut let_args) = match ctx.get_let(&call_arg.var) {
             None => {
                 called_def.body = switch.into();
                 ctx.add_def(called_def);
@@ -43,7 +43,8 @@ impl Rewrite for Call {
             }
             Some(lt) => lt,
         };
-        self.args.bindings.extend(let_args.bindings);
+        let_args.bindings.extend(self.args.bindings);
+        self.args = let_args;
 
         let switch_clause_ind = switch
             .clauses
