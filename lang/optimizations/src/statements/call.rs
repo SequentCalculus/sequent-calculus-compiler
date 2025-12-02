@@ -43,8 +43,6 @@ impl Rewrite for Call {
             }
             Some(lt) => lt,
         };
-        let_args.bindings.extend(self.args.bindings);
-        self.args = let_args;
 
         let switch_clause_ind = switch
             .clauses
@@ -53,13 +51,21 @@ impl Rewrite for Call {
             .expect("Could not find clause for xtor");
         let switch_clause = switch.clauses.remove(switch_clause_ind);
         let (lifted_name, lifted_args) = match &*switch_clause.body {
-            Statement::Call(call) => (call.label.clone(), call.args.bindings.clone()),
-            _ => ctx.lift_switch_call(
-                &called_def.name,
-                &switch.var,
-                &called_def.context,
-                &switch_clause,
-            ),
+            Statement::Call(call) => {
+                self.args.bindings.insert(switch_arg_ind, call_arg);
+                (call.label.clone(), call.args.bindings.clone())
+            }
+            _ => {
+                let_args.bindings.extend(self.args.bindings);
+                self.args = let_args;
+
+                ctx.lift_switch_call(
+                    &called_def.name,
+                    &switch.var,
+                    &called_def.context,
+                    &switch_clause,
+                )
+            }
         };
 
         let new_clause = Clause {
@@ -69,7 +75,7 @@ impl Rewrite for Call {
                 Call {
                     label: lifted_name.clone(),
                     args: TypingContext {
-                        bindings: lifted_args.into_iter().collect(),
+                        bindings: lifted_args,
                     },
                 }
                 .into(),
