@@ -113,7 +113,7 @@ impl RewriteState {
             name: name.clone(),
             context: new_context.clone(),
             body: Rc::unwrap_or_clone(clause.body.clone()),
-            used_vars: HashSet::new(),
+            used_vars: self.current_used_vars.clone(),
         };
         self.add_def(new_def);
         (name, new_context.bindings)
