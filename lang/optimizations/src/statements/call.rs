@@ -53,6 +53,9 @@ impl Rewrite for Call {
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
                 self.args.bindings.insert(switch_arg_ind, call_arg);
+                switch.clauses.insert(switch_clause_ind, switch_clause);
+                called_def.body = switch.into();
+                ctx.add_def(called_def);
                 return self;
             }
             _ => {
