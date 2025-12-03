@@ -12,5 +12,6 @@ def main(): i64 {
   let f: Fun[i64,i64] = new { apply(x) => x + 1 };
   let l: List[i64] = Cons(1,Cons(2,Cons(3,Cons(4,Nil))));
   let res: List[i64] = map(l,f);
+  println_i64(1);
   0
 }
