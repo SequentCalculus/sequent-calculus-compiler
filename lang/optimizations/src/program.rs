@@ -1,7 +1,7 @@
 use crate::def::rewrite_def;
 use axcut::syntax::Prog;
 
-pub const MAX_RUNS: u64 = 10;
+pub const MAX_RUNS: u64 = 1;
 
 pub fn rewrite_prog(mut program: Prog) -> Prog {
     // we thread the set of labels of top-level functions through the translation, because we need
