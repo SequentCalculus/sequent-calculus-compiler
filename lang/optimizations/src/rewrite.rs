@@ -93,6 +93,7 @@ impl RewriteState {
         switch_def: &Name,
         switch_var: &Var,
         def_args: &TypingContext,
+        def_used_vars: &HashSet<Var>,
         clause: &Clause,
     ) -> (String, Vec<ContextBinding>) {
         let name = fresh_name(
@@ -113,7 +114,7 @@ impl RewriteState {
             name: name.clone(),
             context: new_context.clone(),
             body: Rc::unwrap_or_clone(clause.body.clone()),
-            used_vars: self.current_used_vars.clone(),
+            used_vars: def_used_vars.iter().cloned().collect(),
         };
         self.add_def(new_def);
         (name, new_context.bindings)
