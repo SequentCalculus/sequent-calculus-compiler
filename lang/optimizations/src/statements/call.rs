@@ -51,9 +51,9 @@ impl Rewrite for Call {
             .expect("Could not find clause for xtor");
         let switch_clause = switch.clauses.remove(switch_clause_ind);
         let (lifted_name, lifted_args) = match &*switch_clause.body {
-            Statement::Call(call) => {
+            Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
                 self.args.bindings.insert(switch_arg_ind, call_arg);
-                (call.label.clone(), call.args.bindings.clone())
+                return self;
             }
             _ => {
                 let_args.bindings.extend(self.args.bindings);
