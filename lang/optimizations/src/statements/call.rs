@@ -66,6 +66,7 @@ impl Rewrite for Call {
                     &called_def.name,
                     &switch.var,
                     &called_def.context,
+                    &called_def.used_vars,
                     &switch_clause,
                 )
             }
