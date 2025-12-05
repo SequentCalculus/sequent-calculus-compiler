@@ -80,6 +80,7 @@ impl Rewrite for Call {
                     .insert(switch_clause_ind, switch_clause.clone());
                 called_def.body = switch.into();
                 ctx.add_def(called_def);
+                ctx.new_changes = true;
 
                 return Rc::unwrap_or_clone(switch_clause.body.subst_sim(&subst));
             }
@@ -113,6 +114,7 @@ impl Rewrite for Call {
         switch.clauses.insert(switch_clause_ind, new_clause);
         called_def.body = switch.into();
         ctx.add_def(called_def);
+        ctx.new_changes = true;
         Call {
             label: lifted_name,
             args: self.args,
