@@ -1,19 +1,22 @@
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::{
-    TypingContext,
-    statements::{Call, Clause, Statement},
+use axcut::{
+    syntax::{
+        TypingContext,
+        statements::{Call, Clause, Statement},
+    },
+    traits::{substitution::Subst, typed_free_vars::TypedFreeVars},
 };
-use std::rc::Rc;
+use std::{collections::BTreeSet, rc::Rc};
 
 impl Rewrite for Call {
-    type Target = Self;
+    type Target = Statement;
     fn rewrite(mut self, ctx: &mut RewriteState) -> Self::Target {
         let called_ind = match ctx
             .lifted_statements
             .iter()
             .position(|df| df.name == self.label)
         {
-            None => return self,
+            None => return self.into(),
             Some(ind) => ind,
         };
 
@@ -22,7 +25,7 @@ impl Rewrite for Call {
             Statement::Switch(sw) => sw,
             _ => {
                 ctx.add_def(called_def);
-                return self;
+                return self.into();
             }
         };
 
@@ -39,7 +42,7 @@ impl Rewrite for Call {
                 called_def.body = switch.into();
                 ctx.add_def(called_def);
                 self.args.bindings.insert(switch_arg_ind, call_arg);
-                return self;
+                return self.into();
             }
             Some(lt) => lt,
         };
@@ -52,11 +55,33 @@ impl Rewrite for Call {
         let switch_clause = switch.clauses.remove(switch_clause_ind);
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
+                let mut subst = vec![];
+                let mut free = BTreeSet::new();
+                switch_clause.typed_free_vars(&mut free);
                 self.args.bindings.insert(switch_arg_ind, call_arg);
-                switch.clauses.insert(switch_clause_ind, switch_clause);
+                for binding in free {
+                    let call_pos = called_def
+                        .context
+                        .bindings
+                        .iter()
+                        .position(|bind| bind.var == binding.var)
+                        .expect("Could not find variable in definition");
+                    subst.push((
+                        called_def.context.bindings[call_pos].var.clone(),
+                        self.args.bindings[call_pos].var.clone(),
+                    ));
+                }
+                for (ind, bind) in switch_clause.context.bindings.iter().enumerate() {
+                    subst.push((bind.var.clone(), let_args.bindings[ind].var.clone()));
+                }
+
+                switch
+                    .clauses
+                    .insert(switch_clause_ind, switch_clause.clone());
                 called_def.body = switch.into();
                 ctx.add_def(called_def);
-                return self;
+
+                return Rc::unwrap_or_clone(switch_clause.body.subst_sim(&subst));
             }
             _ => {
                 let_args.bindings.extend(self.args.bindings);
@@ -92,5 +117,6 @@ impl Rewrite for Call {
             label: lifted_name,
             args: self.args,
         }
+        .into()
     }
 }
