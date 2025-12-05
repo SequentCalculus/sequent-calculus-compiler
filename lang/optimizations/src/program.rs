@@ -26,7 +26,8 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     while state.new_changes && performed_runs < MAX_RUNS {
         state.new_changes = false;
         performed_runs += 1;
-        let current_labels = state.used_labels.iter().cloned().collect::<Vec<_>>();
+        let mut current_labels = state.used_labels.iter().cloned().collect::<Vec<_>>();
+        current_labels.sort();
         for def_name in current_labels.iter() {
             rewrite_def(def_name, &mut state);
         }
