@@ -62,6 +62,20 @@ fn compile_versions(hashes: &[String]) -> Result<(), Error> {
             ));
         }
 
+        let cargo_res = Command::new("cargo")
+            .arg("build")
+            .arg("--release")
+            .status()
+            .map_err(|err| Error::cmd("cargo", "build version", err))?;
+
+        if !cargo_res.success() {
+            return Err(Error::cmd(
+                "carg",
+                "build version",
+                format!("exited with code {cargo_res}"),
+            ));
+        }
+
         let out_path = bin_path.join(format!("scc_{index}"));
         rename(&compiled_path, &out_path)
             .map_err(|err| Error::move_file(&compiled_path, &out_path, err))?;
