@@ -46,7 +46,7 @@ fn compile_examples(examples: Vec<Example>, hashes: &[String]) -> Result<(), Err
             compile_cmd.arg("aarch64");
 
             if let Some(size) = example.config.heap_size {
-                compile_cmd.arg("--heap_size").arg(size.to_string());
+                compile_cmd.arg("--heap-size").arg(size.to_string());
             }
 
             let compile_res = compile_cmd.output().map_err(|err| {
