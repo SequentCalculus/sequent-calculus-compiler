@@ -1,4 +1,4 @@
-version_git_hashes = {
-  "no_opt":"e5c9c17f9503bb4b56d31970b278dcd6416e769c", # current main
-  "rewrite":"1d69340e739bf82ee3b9543394511d4686497b7e", # most recent optimizations
+version_git_hashes = { 
+  no_opt = "e5c9c17f9503bb4b56d31970b278dcd6416e769c",
+  rewrite="1d69340e739bf82ee3b9543394511d4686497b7e" 
 }
