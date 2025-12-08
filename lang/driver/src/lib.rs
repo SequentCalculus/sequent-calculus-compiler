@@ -54,6 +54,8 @@ pub struct Driver {
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Maximum number of optimization passes
     max_opt_passes: u64,
+    /// Optimization Stats
+    optimization_stats: HashMap<PathBuf, optimizations::OptimizationStats>,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -77,6 +79,7 @@ impl Driver {
             rewritten: HashMap::new(),
             linearized: HashMap::new(),
             max_opt_passes,
+            optimization_stats: HashMap::new(),
         }
     }
 
@@ -274,8 +277,9 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let rewritten = rewrite_prog(shrunk, self.max_opt_passes);
+        let (rewritten, stats) = rewrite_prog(shrunk, self.max_opt_passes);
         self.rewritten.insert(path.clone(), rewritten.clone());
+        self.optimization_stats.insert(path.clone(), stats);
         Ok(rewritten)
     }
 
