@@ -1,6 +1,7 @@
+#![allow(unused_imports)]
 use crate::{
     BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86,
-    errors::Error,
+    EvalResults, errors::Error,
 };
 use std::{
     fs::{read_dir, read_to_string, rename},
@@ -99,7 +100,11 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
     Ok(examples)
 }
 
-pub fn compile_examples(examples: &[Example], compiler_names: &[String]) -> Result<(), Error> {
+pub fn compile_examples(
+    examples: &[Example],
+    compiler_names: &[String],
+    results: &mut EvalResults,
+) -> Result<(), Error> {
     let compiler_bins: Vec<(&String, PathBuf)> = compiler_names
         .iter()
         .map(|name| (name, PathBuf::from(BIN_OUT).join(format!("scc_{name}"))))
@@ -132,15 +137,33 @@ pub fn compile_examples(examples: &[Example], compiler_names: &[String]) -> Resu
                     err,
                 )
             })?;
+            let compile_stdout = String::from_utf8(compile_res.stdout)
+                .map_err(|err| Error::parse_out("scc", err))?;
+            if *compiler_name != "no_opt" {
+                let opt_line = compile_stdout
+                    .lines()
+                    .find(|line| line.contains("Number of Passes"))
+                    .expect("Could not get optimization stats");
+                let mut line_parts = opt_line.split(":");
+                line_parts.next().expect("Could not get optimization stats");
+                let num_passes = line_parts
+                    .next()
+                    .expect("Could not get optimization stats")
+                    .trim()
+                    .parse::<u64>()
+                    .expect("Could not get optimization stats");
+                results
+                    .optimization_stats
+                    .insert(example.name.clone(), num_passes);
+            }
+
             if !compile_res.status.success() {
-                let stdout_str = String::from_utf8(compile_res.stdout)
-                    .map_err(|err| Error::parse_out("scc", err))?;
                 let stderr_str = String::from_utf8(compile_res.stderr)
                     .map_err(|err| Error::parse_out("scc", err))?;
                 return Err(Error::run_cmd(
                     &format!("scc_{compiler_name}"),
                     compile_res.status,
-                    &stdout_str,
+                    &compile_stdout,
                     &stderr_str,
                 ));
             }
