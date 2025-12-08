@@ -44,6 +44,7 @@ pub fn benchmark_examples(
                     let mut line_parts = line.split(":");
                     line_parts.next();
                     let time_str = line_parts.next().expect("Could not get hyperfine time");
+                    println!("{time_str}");
                     let mut time_parts = time_str.split(" ");
                     let time = time_parts
                         .next()
