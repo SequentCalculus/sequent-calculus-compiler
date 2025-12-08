@@ -22,7 +22,7 @@ struct SwitchContext<'a> {
 }
 
 fn get_switch<'a>(
-    lifted_statements: &'a mut Vec<Def>,
+    lifted_statements: &'a mut [Def],
     let_bindings: &'a HashMap<Var, (Name, TypingContext)>,
     called_label: &Name,
     called_args: &TypingContext,
@@ -98,7 +98,7 @@ impl Rewrite for Call {
             &("lift_".to_string()
                 + &self.label
                 + "_"
-                + &ctx.switch_var
+                + ctx.switch_var
                 + "_"
                 + &ctx.switch_clause.xtor),
         );
