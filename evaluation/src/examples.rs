@@ -4,6 +4,7 @@ use crate::{
     errors::Error,
 };
 use std::{
+    collections::HashMap,
     fs::{read_dir, read_to_string, rename},
     path::{Path, PathBuf},
     process::Command,
@@ -216,5 +217,6 @@ fn update_results(results: &mut Vec<EvalResult>, stdout: String, example_name: &
         num_passes: num_passes.expect("Could not get number of passes"),
         lifted_create: num_create.expect("Could not get number of lifted create clauses"),
         lifted_switch: num_switch.expect("Could not get number of lifted switch clauses"),
+        benchmark_times: HashMap::new(),
     });
 }

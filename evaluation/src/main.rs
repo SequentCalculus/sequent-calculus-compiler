@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 mod benchmark;
 mod compile_scc;
 mod config;
@@ -27,6 +29,7 @@ pub struct EvalResult {
     num_passes: u64,
     lifted_create: u64,
     lifted_switch: u64,
+    benchmark_times: HashMap<String, f64>,
 }
 
 fn main() -> Result<(), Error> {
@@ -41,7 +44,7 @@ fn main() -> Result<(), Error> {
     let version_names: Vec<String> = config.version_git_hashes.keys().cloned().collect();
     compile_examples(&examples, &version_names, &mut results)?;
     println!("Benchmarking examples...");
-    benchmark_examples(&examples, &version_names)?;
+    benchmark_examples(&examples, &version_names, &mut results)?;
     println!("Results: {results:?}");
     Ok(())
 }
