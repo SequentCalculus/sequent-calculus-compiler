@@ -1,7 +1,8 @@
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
     syntax::{
-        TypingContext, Var,
+        Def, Var,
+        names::fresh_name,
         statements::{Call, Clause, Statement},
     },
     traits::{substitution::Subst, typed_free_vars::TypedFreeVars},
@@ -20,11 +21,10 @@ impl Rewrite for Call {
             Some(ind) => ind,
         };
 
-        let mut called_def = state.lifted_statements.remove(called_ind);
+        let called_def = &mut state.lifted_statements[called_ind];
         let switch = match &mut called_def.body {
             Statement::Switch(sw) => sw,
             _ => {
-                state.add_def(called_def);
                 return self.into();
             }
         };
@@ -36,10 +36,11 @@ impl Rewrite for Call {
             .position(|bind| bind.var == switch.var)
             .expect("Could not find switch variable");
 
-        let (let_xtor, mut let_args) = match state.get_let(&self.args.bindings[switch_arg_ind].var)
+        let (let_xtor, let_args) = match state
+            .let_bindings
+            .get(&self.args.bindings[switch_arg_ind].var)
         {
             None => {
-                state.add_def(called_def);
                 return self.into();
             }
             Some(lt) => lt,
@@ -48,11 +49,11 @@ impl Rewrite for Call {
         let switch_clause_ind = switch
             .clauses
             .iter()
-            .position(|clause| clause.xtor == let_xtor)
+            .position(|clause| clause.xtor == *let_xtor)
             .expect("Could not find clause for xtor");
         let switch_clause = &mut switch.clauses[switch_clause_ind];
         state.new_changes = true;
-        let (lifted_name, lifted_args) = match &*switch_clause.body {
+        match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
                 let return_stmt = inline_leaf(
                     &switch_clause,
@@ -60,35 +61,49 @@ impl Rewrite for Call {
                     &self.args.vars(),
                     &let_args.vars(),
                 );
-
-                state.add_def(called_def);
                 return return_stmt;
             }
-            _ => {
-                self.args.bindings.remove(switch_arg_ind);
-                let_args.bindings.extend(self.args.bindings);
-                self.args = let_args;
+            _ => (),
+        }
 
-                state.lift_switch_call(
-                    &called_def.name,
-                    &switch.var,
-                    &called_def.context,
-                    &called_def.used_vars,
-                    &switch_clause,
-                )
-            }
-        };
+        self.args.bindings.remove(switch_arg_ind);
+        let old_args = self.args.bindings;
+        self.args = let_args.clone();
+        self.args.bindings.extend(old_args);
 
-        switch_clause.body = Rc::new(
-            Call {
-                label: lifted_name.clone(),
-                args: TypingContext {
-                    bindings: lifted_args,
-                },
-            }
-            .into(),
+        let lifted_name = fresh_name(
+            &mut state.used_labels,
+            &("lift_".to_string() + &self.label + "_" + &switch.var + "_" + &switch_clause.xtor),
         );
-        state.add_def(called_def);
+        state.used_labels.insert(lifted_name.clone());
+
+        let mut new_context = switch_clause.context.clone();
+        new_context.bindings.extend(
+            called_def
+                .context
+                .bindings
+                .iter()
+                .filter(|bind| bind.var != *switch.var)
+                .cloned(),
+        );
+        let old_body = std::mem::replace(
+            &mut switch_clause.body,
+            Rc::new(
+                Call {
+                    label: lifted_name.clone(),
+                    args: new_context.clone(),
+                }
+                .into(),
+            ),
+        );
+
+        let new_def = Def {
+            name: lifted_name.clone(),
+            context: new_context,
+            body: Rc::unwrap_or_clone(old_body),
+            used_vars: called_def.used_vars.iter().cloned().collect(),
+        };
+        state.add_def(new_def);
         Call {
             label: lifted_name,
             args: self.args,
