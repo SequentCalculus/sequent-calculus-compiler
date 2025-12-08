@@ -18,6 +18,8 @@ pub fn rewrite_prog(mut program: Prog, max_runs: u64) -> (Prog, OptimizationStat
         let_bindings: HashMap::new(),
         create_bindings: HashMap::new(),
         new_changes: true,
+        num_create_lifts: 0,
+        num_switch_lifts: 0,
     };
 
     let mut performed_runs = 0;
@@ -34,6 +36,8 @@ pub fn rewrite_prog(mut program: Prog, max_runs: u64) -> (Prog, OptimizationStat
     program.defs = state.lifted_statements;
     let stats = OptimizationStats {
         num_passes: performed_runs,
+        num_create_lifts: state.num_create_lifts,
+        num_switch_lifts: state.num_switch_lifts,
     };
     (program, stats)
 }

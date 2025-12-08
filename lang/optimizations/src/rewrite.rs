@@ -27,6 +27,10 @@ pub struct RewriteState {
     pub create_bindings: HashMap<Var, Vec<Clause>>,
     /// Has anything been changed during the current pass
     pub new_changes: bool,
+    /// Number of lifted create clauses (for stats)
+    pub num_create_lifts: u64,
+    /// Number of lifted switch clauses (for stats)
+    pub num_switch_lifts: u64,
 }
 
 impl RewriteState {
@@ -85,6 +89,7 @@ impl RewriteState {
             body: Rc::unwrap_or_clone(clause.body),
         };
         self.lifted_statements.push(def);
+        self.num_create_lifts += 1;
         (name, free_vars)
     }
 

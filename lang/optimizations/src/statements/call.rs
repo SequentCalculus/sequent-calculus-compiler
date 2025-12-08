@@ -112,6 +112,7 @@ impl Rewrite for Call {
             &lifted_name,
         );
         state.add_def(new_def);
+        state.num_switch_lifts += 1;
         Call {
             label: lifted_name,
             args: self.args,
