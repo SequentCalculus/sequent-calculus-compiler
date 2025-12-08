@@ -19,7 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use optimizations::program::rewrite_prog;
+use optimizations::{OptimizationStats, program::rewrite_prog};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -283,6 +283,15 @@ impl Driver {
         Ok(rewritten)
     }
 
+    pub fn optimization_stats(&mut self, path: &PathBuf) -> Result<OptimizationStats, DriverError> {
+        if let Some(stats) = self.optimization_stats.get(path) {
+            return Ok(stats.clone());
+        }
+
+        let _ = self.rewritten(path)?;
+        self.optimization_stats(path)
+    }
+
     /// This function prints the rewritten [AxCut](axcut) code to a file in the target directory.
     pub fn print_rewritten(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let rewritten = self.rewritten(path)?;
@@ -363,6 +372,13 @@ impl Driver {
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
+        Ok(())
+    }
+
+    pub fn print_opt_stats(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let stats = self.optimization_stats(path)?;
+        println!("Stats for {}", path.display());
+        println!("{stats}");
         Ok(())
     }
 
