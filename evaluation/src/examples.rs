@@ -156,12 +156,10 @@ pub fn compile_examples(
             }
 
             if *compiler_name != "no_opt" {
-                println!("{compile_stdout}");
                 let opt_line = compile_stdout
                     .lines()
                     .find(|line| line.contains("Number of Passes"))
                     .expect("Could not get optimization stats");
-                println!("{opt_line}");
                 let mut line_parts = opt_line.split(":");
                 line_parts.next().expect("Could not get optimization stats");
                 let num_passes = line_parts
