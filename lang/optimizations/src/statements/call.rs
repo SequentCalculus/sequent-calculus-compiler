@@ -21,7 +21,7 @@ impl Rewrite for Call {
         };
 
         let mut called_def = state.lifted_statements.remove(called_ind);
-        let mut switch = match called_def.body {
+        let switch = match &mut called_def.body {
             Statement::Switch(sw) => sw,
             _ => {
                 state.add_def(called_def);
@@ -36,11 +36,9 @@ impl Rewrite for Call {
             .position(|bind| bind.var == switch.var)
             .expect("Could not find switch variable");
 
-        let call_arg = self.args.bindings.remove(switch_arg_ind);
-        let (let_xtor, mut let_args) = match state.get_let(&call_arg.var) {
+        let (let_xtor, mut let_args) = match state.get_let(&self.args.bindings[switch_arg_ind].var)
+        {
             None => {
-                self.args.bindings.insert(switch_arg_ind, call_arg);
-                called_def.body = switch.into();
                 state.add_def(called_def);
                 return self.into();
             }
@@ -53,9 +51,9 @@ impl Rewrite for Call {
             .position(|clause| clause.xtor == let_xtor)
             .expect("Could not find clause for xtor");
         let switch_clause = &mut switch.clauses[switch_clause_ind];
+        state.new_changes = true;
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
-                self.args.bindings.insert(switch_arg_ind, call_arg);
                 let return_stmt = inline_leaf(
                     &switch_clause,
                     &called_def.context.vars(),
@@ -63,12 +61,11 @@ impl Rewrite for Call {
                     &let_args.vars(),
                 );
 
-                called_def.body = switch.into();
                 state.add_def(called_def);
-                state.new_changes = true;
                 return return_stmt;
             }
             _ => {
+                self.args.bindings.remove(switch_arg_ind);
                 let_args.bindings.extend(self.args.bindings);
                 self.args = let_args;
 
@@ -91,9 +88,7 @@ impl Rewrite for Call {
             }
             .into(),
         );
-        called_def.body = switch.into();
         state.add_def(called_def);
-        state.new_changes = true;
         Call {
             label: lifted_name,
             args: self.args,
