@@ -1,7 +1,10 @@
-use crate::{BENCHMARK_PATH, BIN_OUT, EXAMPLES_PATH, errors::Error};
+use crate::{
+    BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86,
+    errors::Error,
+};
 use std::{
     collections::HashMap,
-    fs::{read_dir, read_to_string},
+    fs::{read_dir, read_to_string, rename},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -85,9 +88,14 @@ pub fn compile_examples(
         .map(|(name, _)| (name, PathBuf::from(BIN_OUT).join(format!("scc_{name}"))))
         .collect();
 
+    #[cfg(target_arch = "x86_64")]
+    let out_path = PathBuf::from(EXAMPLES_OUT).join(EXAMPLES_X86);
+    #[cfg(target_arch = "aarch64")]
+    let out_path = PathBuf::from(EXAMPLES_OUT).join(EXAMPLES_AARCH);
+
     for example in examples {
-        for (name, bin_path) in compiler_bins.iter() {
-            println!("Compiling {} with compiler {name}", example.name);
+        for (compiler_name, bin_path) in compiler_bins.iter() {
+            println!("Compiling {} with compiler {compiler_name}", example.name);
             let mut compile_cmd = Command::new(bin_path);
             compile_cmd.arg("codegen").arg(&example.source_path);
 
@@ -102,7 +110,7 @@ pub fn compile_examples(
 
             let compile_res = compile_cmd.output().map_err(|err| {
                 Error::start_cmd(
-                    &format!("scc_{name}"),
+                    &format!("scc_{compiler_name}"),
                     &format!("Compile example {}", example.source_path.display()),
                     err,
                 )
@@ -113,12 +121,17 @@ pub fn compile_examples(
                 let stderr_str = String::from_utf8(compile_res.stderr)
                     .map_err(|err| Error::parse_out("scc", err))?;
                 return Err(Error::run_cmd(
-                    &format!("scc_{name}"),
+                    &format!("scc_{compiler_name}"),
                     compile_res.status,
                     &stdout_str,
                     &stderr_str,
                 ));
             }
+
+            let example_from = out_path.join(&example.name);
+            let example_to = out_path.join(format!("{}_{}", example.name, compiler_name));
+            rename(&example_from, &example_to)
+                .map_err(|err| Error::move_file(&example_from, &example_to, err))?;
         }
     }
     Ok(())
