@@ -181,7 +181,7 @@ impl fmt::Display for Error {
                 write!(f, "Could not create directory {}:{msg}", path.display())
             }
             Error::RemoveDir { path, msg } => {
-                write!(f, "Could not remove directory {}:{mag}", path.display())
+                write!(f, "Could not remove directory {}:{msg}", path.display())
             }
             Error::MoveFile { from, to, msg } => write!(
                 f,
