@@ -1,8 +1,10 @@
+mod benchmark;
 mod compile_scc;
 mod config;
 mod errors;
 mod examples;
 
+use benchmark::benchmark_examples;
 use compile_scc::compile_versions;
 use config::EvalConfig;
 use errors::Error;
@@ -25,6 +27,9 @@ fn main() -> Result<(), Error> {
     println!("Compiling compiler versions...");
     compile_versions(&config.version_git_hashes)?;
     println!("Compiling examples...");
-    compile_examples(&examples, &config.version_git_hashes)?;
+    let version_names: Vec<String> = config.version_git_hashes.values().cloned().collect();
+    compile_examples(&examples, &version_names)?;
+    println!("Benchmarking examples...");
+    benchmark_examples(&examples, &version_names)?;
     Ok(())
 }

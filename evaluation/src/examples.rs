@@ -45,6 +45,15 @@ impl Example {
             config,
         })
     }
+
+    pub fn compiled_path(&self, compiler_name: &str) -> PathBuf {
+        #[cfg(target_arch = "x86_64")]
+        let out_path = PathBuf::from(EXAMPLES_OUT).join(EXAMPLES_X86);
+        #[cfg(target_arch = "aarch64")]
+        let out_path = PathBuf::from(EXAMPLES_OUT).join(EXAMPLES_AARCH);
+
+        out_path.join(format!("{}_{}", self.name, compiler_name))
+    }
 }
 
 pub fn load_examples() -> Result<Vec<Example>, Error> {
@@ -79,13 +88,10 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
     Ok(examples)
 }
 
-pub fn compile_examples(
-    examples: &[Example],
-    versions: &HashMap<String, String>,
-) -> Result<(), Error> {
-    let compiler_bins: Vec<(&String, PathBuf)> = versions
+pub fn compile_examples(examples: &[Example], compiler_names: &[String]) -> Result<(), Error> {
+    let compiler_bins: Vec<(&String, PathBuf)> = compiler_names
         .iter()
-        .map(|(name, _)| (name, PathBuf::from(BIN_OUT).join(format!("scc_{name}"))))
+        .map(|name| (name, PathBuf::from(BIN_OUT).join(format!("scc_{name}"))))
         .collect();
 
     #[cfg(target_arch = "x86_64")]
@@ -129,7 +135,7 @@ pub fn compile_examples(
             }
 
             let example_from = out_path.join(&example.name);
-            let example_to = out_path.join(format!("{}_{}", example.name, compiler_name));
+            let example_to = example.compiled_path(&compiler_name);
             rename(&example_from, &example_to)
                 .map_err(|err| Error::move_file(&example_from, &example_to, err))?;
         }
