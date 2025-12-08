@@ -5,9 +5,7 @@ use std::{
     mem::take,
 };
 
-pub const MAX_RUNS: u64 = 1;
-
-pub fn rewrite_prog(mut program: Prog) -> Prog {
+pub fn rewrite_prog(mut program: Prog, max_runs: u64) -> Prog {
     // we thread the set of labels of top-level functions through the translation, because we need
     // to generate fresh labels when we lift statements
     let used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
@@ -23,7 +21,7 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     };
 
     let mut performed_runs = 0;
-    while state.new_changes && performed_runs < MAX_RUNS {
+    while state.new_changes && performed_runs < max_runs {
         state.new_changes = false;
         performed_runs += 1;
         let mut current_labels = state.used_labels.iter().cloned().collect::<Vec<_>>();

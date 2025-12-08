@@ -10,8 +10,8 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
-    let mut drv = Driver::new();
+pub fn exec(cmd: Args, colored: bool, opt_passes: u64) -> miette::Result<()> {
+    let mut drv = Driver::new(opt_passes);
     let compiled = drv.compiled(&cmd.filepath);
     let compiled = match compiled {
         Ok(compiled) => compiled,

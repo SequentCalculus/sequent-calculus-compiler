@@ -52,6 +52,8 @@ pub struct Driver {
     rewritten: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// Maximum number of optimization passes
+    max_opt_passes: u64,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -64,7 +66,7 @@ pub enum PrintMode {
 impl Driver {
     /// This function creates a new driver.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(max_opt_passes: u64) -> Self {
         Driver {
             sources: HashMap::new(),
             parsed: HashMap::new(),
@@ -74,6 +76,7 @@ impl Driver {
             shrunk: HashMap::new(),
             rewritten: HashMap::new(),
             linearized: HashMap::new(),
+            max_opt_passes,
         }
     }
 
@@ -271,7 +274,7 @@ impl Driver {
         }
 
         let shrunk = self.shrunk(path)?;
-        let rewritten = rewrite_prog(shrunk);
+        let rewritten = rewrite_prog(shrunk, self.max_opt_passes);
         self.rewritten.insert(path.clone(), rewritten.clone());
         Ok(rewritten)
     }

@@ -19,8 +19,8 @@ pub struct Args {
     print_ir: bool,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
-    let mut drv = Driver::new();
+pub fn exec(cmd: Args, opt_passes: u64) -> miette::Result<()> {
+    let mut drv = Driver::new(opt_passes);
     let linearized = drv.linearized(&cmd.filepath);
     let _linearized = match linearized {
         Ok(linearized) => linearized,
