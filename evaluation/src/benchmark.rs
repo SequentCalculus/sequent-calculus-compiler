@@ -57,7 +57,6 @@ pub fn benchmark_examples(
                         .expect("Could not get hyperfine time")
                         .trim();
                 }
-                println!("{time_str}");
                 let time = time_str
                     .parse::<f64>()
                     .expect("Could not get hyperfine time");
