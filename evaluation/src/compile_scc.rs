@@ -73,7 +73,7 @@ fn compile_current(index: usize, bin_path: &Path, compiled_path: &Path) -> Resul
     }
 
     let out_path = bin_path.join(format!("scc_{index}"));
-    rename(&compiled_path, &out_path)
-        .map_err(|err| Error::move_file(&compiled_path, &out_path, err))?;
+    rename(compiled_path, &out_path)
+        .map_err(|err| Error::move_file(compiled_path, &out_path, err))?;
     Ok(())
 }

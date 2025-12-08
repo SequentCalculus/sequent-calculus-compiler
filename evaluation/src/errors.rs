@@ -31,6 +31,13 @@ pub enum Error {
         to: PathBuf,
         msg: String,
     },
+    ReadDir {
+        path: PathBuf,
+        msg: String,
+    },
+    ReadFileName {
+        path: PathBuf,
+    },
 }
 
 impl Error {
@@ -95,6 +102,22 @@ impl Error {
             msg: err.to_string(),
         }
     }
+
+    pub fn read_dir<Err>(path: &Path, err: Err) -> Error
+    where
+        Err: std::error::Error,
+    {
+        Error::ReadDir {
+            path: path.to_path_buf(),
+            msg: err.to_string(),
+        }
+    }
+
+    pub fn read_file_name(path: &Path) -> Error {
+        Error::ReadFileName {
+            path: path.to_path_buf(),
+        }
+    }
 }
 
 impl fmt::Display for Error {
@@ -122,6 +145,12 @@ impl fmt::Display for Error {
                 from.display(),
                 to.display()
             ),
+            Error::ReadDir { path, msg } => {
+                write!(f, "Could not read dir {}:{msg}", path.display())
+            }
+            Error::ReadFileName { path } => {
+                write!(f, "Could not get file name of {}", path.display())
+            }
         }
     }
 }
