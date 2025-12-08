@@ -27,7 +27,7 @@ fn main() -> Result<(), Error> {
     println!("Compiling compiler versions...");
     compile_versions(&config.version_git_hashes)?;
     println!("Compiling examples...");
-    let version_names: Vec<String> = config.version_git_hashes.values().cloned().collect();
+    let version_names: Vec<String> = config.version_git_hashes.keys().cloned().collect();
     compile_examples(&examples, &version_names)?;
     println!("Benchmarking examples...");
     benchmark_examples(&examples, &version_names)?;

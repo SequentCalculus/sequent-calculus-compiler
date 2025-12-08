@@ -13,9 +13,7 @@ impl EvalConfig {
             .map_err(|err| Error::read_conf(&config_path, err))?
             // Newlines have to be replaced because basic_toml will only parse without them
             .replace('\n', "");
-        let conf = basic_toml::from_str::<EvalConfig>(&config_contents)
-            .map_err(|err| Error::toml(&config_path, err))?;
-        println!("{conf:?}");
-        Ok(conf)
+        basic_toml::from_str::<EvalConfig>(&config_contents)
+            .map_err(|err| Error::toml(&config_path, err))
     }
 }
