@@ -19,8 +19,8 @@ impl EvalResult {
             self.lifted_create,
             self.lifted_switch,
             self.benchmark_times
-                .iter()
-                .map(|(_, time)| time.to_string())
+                .values()
+                .map(|time| time.to_string())
                 .collect::<Vec<_>>()
                 .join(",")
         )

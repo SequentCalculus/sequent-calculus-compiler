@@ -4,11 +4,11 @@ use std::process::Command;
 pub fn benchmark_examples(
     examples: &[Example],
     compiler_names: &[String],
-    results: &mut Vec<EvalResult>,
+    results: &mut [EvalResult],
 ) -> Result<(), Error> {
     for example in examples {
         for compiler_name in compiler_names {
-            let compiled_path = example.compiled_path(&compiler_name);
+            let compiled_path = example.compiled_path(compiler_name);
             println!("Benchmarking {}", compiled_path.display());
             let mut command = Command::new("hyperfine");
             let args = example.get_args();

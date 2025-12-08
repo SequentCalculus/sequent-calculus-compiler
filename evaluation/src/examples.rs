@@ -160,7 +160,7 @@ pub fn compile_examples(
                 update_results(results, compile_stdout, &example.name);
             }
             let example_from = out_path.join(&example.name);
-            let example_to = example.compiled_path(&compiler_name);
+            let example_to = example.compiled_path(compiler_name);
             rename(&example_from, &example_to)
                 .map_err(|err| Error::move_file(&example_from, &example_to, err))?;
         }
