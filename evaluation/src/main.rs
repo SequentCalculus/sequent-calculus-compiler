@@ -10,6 +10,7 @@ use compile_scc::compile_versions;
 use config::EvalConfig;
 use errors::Error;
 use examples::{compile_examples, load_examples};
+use results::write_csv;
 
 const CONFIG_PATH: &str = "evaluation/config.toml";
 const SCC_BIN: &str = "target/release/scc";
@@ -36,6 +37,6 @@ fn main() -> Result<(), Error> {
     compile_examples(&examples, &version_names, &mut results)?;
     println!("Benchmarking examples...");
     benchmark_examples(&examples, &version_names, &mut results)?;
-    println!("Results: {results:?}");
+    write_csv(results, &version_names)?;
     Ok(())
 }

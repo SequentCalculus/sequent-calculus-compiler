@@ -1,4 +1,4 @@
-use crate::{EvalResult, errors::Error, examples::Example};
+use crate::{errors::Error, examples::Example, results::EvalResult};
 use std::process::Command;
 
 pub fn benchmark_examples(

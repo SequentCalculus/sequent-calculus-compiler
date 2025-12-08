@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 use crate::{
-    BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86, EvalResult,
-    errors::Error,
+    BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86,
+    errors::Error, results::EvalResult,
 };
 use std::{
     collections::HashMap,

@@ -3,11 +3,11 @@ use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 #[derive(Debug)]
 pub struct EvalResult {
-    example: String,
-    num_passes: u64,
-    lifted_create: u64,
-    lifted_switch: u64,
-    benchmark_times: HashMap<String, f64>,
+    pub example: String,
+    pub num_passes: u64,
+    pub lifted_create: u64,
+    pub lifted_switch: u64,
+    pub benchmark_times: HashMap<String, f64>,
 }
 
 impl EvalResult {
