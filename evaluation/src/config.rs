@@ -1,9 +1,9 @@
 use crate::{CONFIG_PATH, errors::Error};
-use std::{fs::read_to_string, path::PathBuf};
+use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct EvalConfig {
-    pub version_git_hashes: Vec<String>,
+    pub version_git_hashes: HashMap<String, String>,
 }
 
 impl EvalConfig {

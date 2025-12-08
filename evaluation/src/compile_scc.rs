@@ -1,20 +1,21 @@
 use crate::{BIN_OUT, SCC_BIN, errors::Error};
 use std::{
+    collections::HashMap,
     fs::{create_dir_all, rename},
     path::{Path, PathBuf},
     process::Command,
 };
 
-pub fn compile_versions(hashes: &[String]) -> Result<(), Error> {
+pub fn compile_versions(versions: &HashMap<String, String>) -> Result<(), Error> {
     let current_branch = get_current_branch()?;
 
     let bin_path = PathBuf::from(BIN_OUT);
     create_dir_all(&bin_path).map_err(|err| Error::create_dir(&bin_path, err))?;
     let compiled_path = PathBuf::from(SCC_BIN);
 
-    for (index, hash) in hashes.iter().enumerate() {
+    for (name, hash) in versions.iter() {
         checkout_branch(hash)?;
-        compile_current(index, &bin_path, &compiled_path)?;
+        compile_current(name, &bin_path, &compiled_path)?;
     }
 
     checkout_branch(&current_branch)?;
@@ -68,7 +69,7 @@ fn checkout_branch(branch: &str) -> Result<(), Error> {
     Ok(())
 }
 
-fn compile_current(index: usize, bin_path: &Path, compiled_path: &Path) -> Result<(), Error> {
+fn compile_current(name: &str, bin_path: &Path, compiled_path: &Path) -> Result<(), Error> {
     let cargo_res = Command::new("cargo")
         .arg("build")
         .arg("--release")
@@ -89,7 +90,7 @@ fn compile_current(index: usize, bin_path: &Path, compiled_path: &Path) -> Resul
         ));
     }
 
-    let out_path = bin_path.join(format!("scc_{index}"));
+    let out_path = bin_path.join(format!("scc_{name}"));
     rename(compiled_path, &out_path)
         .map_err(|err| Error::move_file(compiled_path, &out_path, err))?;
     Ok(())

@@ -1,5 +1,6 @@
 use crate::{BENCHMARK_PATH, BIN_OUT, EXAMPLES_PATH, errors::Error};
 use std::{
+    collections::HashMap,
     fs::{read_dir, read_to_string},
     path::{Path, PathBuf},
     process::Command,
@@ -72,8 +73,11 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
     Ok(examples)
 }
 
-pub fn compile_examples(examples: &[Example], hashes: &[String]) -> Result<(), Error> {
-    let compiler_bins: Vec<PathBuf> = hashes
+pub fn compile_examples(
+    examples: &[Example],
+    versions: &HashMap<String, String>,
+) -> Result<(), Error> {
+    let compiler_bins: Vec<PathBuf> = versions
         .iter()
         .enumerate()
         .map(|(ind, _)| PathBuf::from(BIN_OUT).join(format!("scc_{ind}")))
