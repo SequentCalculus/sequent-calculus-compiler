@@ -5,14 +5,14 @@ use std::{
 };
 
 pub struct Example {
-    source_path: PathBuf,
-    config: ExampleConfig,
+    pub source_path: PathBuf,
+    pub config: ExampleConfig,
 }
 
 #[derive(serde::Deserialize)]
-struct ExampleConfig {
-    test_args: Vec<String>,
-    heap_size: Option<u64>,
+pub struct ExampleConfig {
+    pub test_args: Vec<String>,
+    pub heap_size: Option<u64>,
 }
 
 impl Example {
