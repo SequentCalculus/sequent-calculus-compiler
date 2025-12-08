@@ -121,6 +121,10 @@ pub fn compile_examples(
             let mut compile_cmd = Command::new(bin_path);
             compile_cmd.arg("codegen").arg(&example.source_path);
 
+            if *compiler_name != "no_opt" {
+                compile_cmd.arg("--print-opt");
+            }
+
             #[cfg(target_arch = "x86_64")]
             compile_cmd.arg("x86-64");
             #[cfg(target_arch = "aarch64")]
