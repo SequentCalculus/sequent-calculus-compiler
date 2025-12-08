@@ -11,31 +11,6 @@ use std::{collections::BTreeSet, rc::Rc};
 impl Rewrite for Call {
     type Target = Statement;
     fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
-        // look up definition (index)
-        // check definition body for switch
-        // get index of definition variable that is switched
-        // get the variable used in the call for the switch variable
-        // check if there is a let binding for it
-        // when there is get the matched clause (from the let xtor)
-        // if the body is a leaf, inline the leaf (with substitutions) and exit
-        // otherwise lift the statement to a new definition
-        // replace the call with a call to the new definition and substitute arguments
-        // replace the switch body with a call to the lifted definition with correct args
-        //
-        //
-        // we need to look up
-        // - called definition
-        // - called definition body (for switch)
-        // - switch variable
-        // - called variable (used in the switch) (in self)
-        // - let binding for that variable
-        // - the body of the corresponding switch clause
-        // these are all read only
-        // we then later need to update (at most)
-        // - current statement
-        // - switch clause body
-        //
-        // that means we only need a mutable reference to the needed switch clause and nothing else
         let called_ind = match state
             .lifted_statements
             .iter()
@@ -64,9 +39,9 @@ impl Rewrite for Call {
         let call_arg = self.args.bindings.remove(switch_arg_ind);
         let (let_xtor, mut let_args) = match state.get_let(&call_arg.var) {
             None => {
+                self.args.bindings.insert(switch_arg_ind, call_arg);
                 called_def.body = switch.into();
                 state.add_def(called_def);
-                self.args.bindings.insert(switch_arg_ind, call_arg);
                 return self.into();
             }
             Some(lt) => lt,
@@ -77,7 +52,7 @@ impl Rewrite for Call {
             .iter()
             .position(|clause| clause.xtor == let_xtor)
             .expect("Could not find clause for xtor");
-        let switch_clause = switch.clauses.remove(switch_clause_ind);
+        let switch_clause = &mut switch.clauses[switch_clause_ind];
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
                 self.args.bindings.insert(switch_arg_ind, call_arg);
@@ -88,9 +63,6 @@ impl Rewrite for Call {
                     &let_args.vars(),
                 );
 
-                switch
-                    .clauses
-                    .insert(switch_clause_ind, switch_clause.clone());
                 called_def.body = switch.into();
                 state.add_def(called_def);
                 state.new_changes = true;
@@ -110,20 +82,15 @@ impl Rewrite for Call {
             }
         };
 
-        let new_clause = Clause {
-            xtor: switch_clause.xtor,
-            context: switch_clause.context,
-            body: Rc::new(
-                Call {
-                    label: lifted_name.clone(),
-                    args: TypingContext {
-                        bindings: lifted_args,
-                    },
-                }
-                .into(),
-            ),
-        };
-        switch.clauses.insert(switch_clause_ind, new_clause);
+        switch_clause.body = Rc::new(
+            Call {
+                label: lifted_name.clone(),
+                args: TypingContext {
+                    bindings: lifted_args,
+                },
+            }
+            .into(),
+        );
         called_def.body = switch.into();
         state.add_def(called_def);
         state.new_changes = true;
