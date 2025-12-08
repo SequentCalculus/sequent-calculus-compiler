@@ -1,5 +1,7 @@
 use axcut::syntax::{
-    ContextBinding, Def, Name, TypingContext, Var, names::fresh_name, statements::Clause,
+    ContextBinding, Def, Name, TypingContext, Var,
+    names::fresh_name,
+    statements::{Call, Clause},
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
 use std::{
@@ -86,38 +88,6 @@ impl RewriteState {
         };
         self.lifted_statements.push(def);
         (name, free_vars)
-    }
-
-    pub fn lift_switch_call(
-        &mut self,
-        switch_def: &Name,
-        switch_var: &Var,
-        def_args: &TypingContext,
-        def_used_vars: &HashSet<Var>,
-        clause: &Clause,
-    ) -> (String, Vec<ContextBinding>) {
-        let name = fresh_name(
-            &mut self.used_labels,
-            &("lift_".to_string() + switch_def + "_" + switch_var + "_" + &clause.xtor),
-        );
-        self.used_labels.insert(name.clone());
-
-        let mut new_context = clause.context.clone();
-        new_context.bindings.extend(
-            def_args
-                .bindings
-                .iter()
-                .filter(|bind| bind.var != *switch_var)
-                .cloned(),
-        );
-        let new_def = Def {
-            name: name.clone(),
-            context: new_context.clone(),
-            body: Rc::unwrap_or_clone(clause.body.clone()),
-            used_vars: def_used_vars.iter().cloned().collect(),
-        };
-        self.add_def(new_def);
-        (name, new_context.bindings)
     }
 
     pub fn lift_create_call(&mut self, create_def: &Name, create_var: &Var, clause: Clause) {
