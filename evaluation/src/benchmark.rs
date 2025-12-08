@@ -47,10 +47,16 @@ pub fn benchmark_examples(
                 line_parts.next();
                 let time_str = line_parts.next().expect("Could not get hyperfine time");
                 let mut time_parts = time_str.split(" ");
-                let time_str = time_parts
+                let mut time_str = time_parts
                     .next()
                     .expect("Could not get hyperfine time")
                     .trim();
+                while time_str.is_empty() {
+                    time_str = time_parts
+                        .next()
+                        .expect("Could not get hyperfine time")
+                        .trim();
+                }
                 println!("{time_str}");
                 let time = time_str
                     .parse::<f64>()
