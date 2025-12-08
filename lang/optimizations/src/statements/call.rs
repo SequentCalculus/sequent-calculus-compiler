@@ -1,7 +1,7 @@
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
     syntax::{
-        TypingContext,
+        TypingContext, Var,
         statements::{Call, Clause, Statement},
     },
     traits::{substitution::Subst, typed_free_vars::TypedFreeVars},
@@ -10,8 +10,33 @@ use std::{collections::BTreeSet, rc::Rc};
 
 impl Rewrite for Call {
     type Target = Statement;
-    fn rewrite(mut self, ctx: &mut RewriteState) -> Self::Target {
-        let called_ind = match ctx
+    fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
+        // look up definition (index)
+        // check definition body for switch
+        // get index of definition variable that is switched
+        // get the variable used in the call for the switch variable
+        // check if there is a let binding for it
+        // when there is get the matched clause (from the let xtor)
+        // if the body is a leaf, inline the leaf (with substitutions) and exit
+        // otherwise lift the statement to a new definition
+        // replace the call with a call to the new definition and substitute arguments
+        // replace the switch body with a call to the lifted definition with correct args
+        //
+        //
+        // we need to look up
+        // - called definition
+        // - called definition body (for switch)
+        // - switch variable
+        // - called variable (used in the switch) (in self)
+        // - let binding for that variable
+        // - the body of the corresponding switch clause
+        // these are all read only
+        // we then later need to update (at most)
+        // - current statement
+        // - switch clause body
+        //
+        // that means we only need a mutable reference to the needed switch clause and nothing else
+        let called_ind = match state
             .lifted_statements
             .iter()
             .position(|df| df.name == self.label)
@@ -20,11 +45,11 @@ impl Rewrite for Call {
             Some(ind) => ind,
         };
 
-        let mut called_def = ctx.lifted_statements.remove(called_ind);
+        let mut called_def = state.lifted_statements.remove(called_ind);
         let mut switch = match called_def.body {
             Statement::Switch(sw) => sw,
             _ => {
-                ctx.add_def(called_def);
+                state.add_def(called_def);
                 return self.into();
             }
         };
@@ -37,10 +62,10 @@ impl Rewrite for Call {
             .expect("Could not find switch variable");
 
         let call_arg = self.args.bindings.remove(switch_arg_ind);
-        let (let_xtor, mut let_args) = match ctx.get_let(&call_arg.var) {
+        let (let_xtor, mut let_args) = match state.get_let(&call_arg.var) {
             None => {
                 called_def.body = switch.into();
-                ctx.add_def(called_def);
+                state.add_def(called_def);
                 self.args.bindings.insert(switch_arg_ind, call_arg);
                 return self.into();
             }
@@ -55,40 +80,27 @@ impl Rewrite for Call {
         let switch_clause = switch.clauses.remove(switch_clause_ind);
         let (lifted_name, lifted_args) = match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
-                let mut subst = vec![];
-                let mut free = BTreeSet::new();
-                switch_clause.typed_free_vars(&mut free);
                 self.args.bindings.insert(switch_arg_ind, call_arg);
-                for binding in free {
-                    let call_pos = called_def
-                        .context
-                        .bindings
-                        .iter()
-                        .position(|bind| bind.var == binding.var)
-                        .expect("Could not find variable in definition");
-                    subst.push((
-                        called_def.context.bindings[call_pos].var.clone(),
-                        self.args.bindings[call_pos].var.clone(),
-                    ));
-                }
-                for (ind, bind) in switch_clause.context.bindings.iter().enumerate() {
-                    subst.push((bind.var.clone(), let_args.bindings[ind].var.clone()));
-                }
+                let return_stmt = inline_leaf(
+                    &switch_clause,
+                    &called_def.context.vars(),
+                    &self.args.vars(),
+                    &let_args.vars(),
+                );
 
                 switch
                     .clauses
                     .insert(switch_clause_ind, switch_clause.clone());
                 called_def.body = switch.into();
-                ctx.add_def(called_def);
-                ctx.new_changes = true;
-
-                return Rc::unwrap_or_clone(switch_clause.body.subst_sim(&subst));
+                state.add_def(called_def);
+                state.new_changes = true;
+                return return_stmt;
             }
             _ => {
                 let_args.bindings.extend(self.args.bindings);
                 self.args = let_args;
 
-                ctx.lift_switch_call(
+                state.lift_switch_call(
                     &called_def.name,
                     &switch.var,
                     &called_def.context,
@@ -113,12 +125,35 @@ impl Rewrite for Call {
         };
         switch.clauses.insert(switch_clause_ind, new_clause);
         called_def.body = switch.into();
-        ctx.add_def(called_def);
-        ctx.new_changes = true;
+        state.add_def(called_def);
+        state.new_changes = true;
         Call {
             label: lifted_name,
             args: self.args,
         }
         .into()
     }
+}
+
+fn inline_leaf(
+    switch_clause: &Clause,
+    def_args: &[Var],
+    call_args: &[Var],
+    let_args: &[Var],
+) -> Statement {
+    let mut subst = vec![];
+    let mut free = BTreeSet::new();
+    switch_clause.typed_free_vars(&mut free);
+    for binding in free {
+        let call_pos = def_args
+            .iter()
+            .position(|bind| *bind == binding.var)
+            .expect("Could not find variable in definition");
+        subst.push((def_args[call_pos].clone(), call_args[call_pos].clone()));
+    }
+    for (ind, bind) in switch_clause.context.bindings.iter().enumerate() {
+        subst.push((bind.var.clone(), let_args[ind].clone()));
+    }
+
+    return Rc::unwrap_or_clone(switch_clause.body.clone().subst_sim(&subst));
 }
