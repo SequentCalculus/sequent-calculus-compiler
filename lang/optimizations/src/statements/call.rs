@@ -56,7 +56,7 @@ impl Rewrite for Call {
         match &*switch_clause.body {
             Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_) => {
                 let return_stmt = inline_leaf(
-                    &switch_clause,
+                    switch_clause,
                     &called_def.context.vars(),
                     &self.args.vars(),
                     &let_args.vars(),
@@ -132,5 +132,5 @@ fn inline_leaf(
         subst.push((bind.var.clone(), let_args[ind].clone()));
     }
 
-    return Rc::unwrap_or_clone(switch_clause.body.clone().subst_sim(&subst));
+    Rc::unwrap_or_clone(switch_clause.body.clone().subst_sim(&subst))
 }
