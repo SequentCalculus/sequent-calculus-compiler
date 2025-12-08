@@ -15,8 +15,8 @@ pub struct OptimizationStats {
 impl fmt::Display for OptimizationStats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Number of Passes: {}", self.num_passes)?;
-        writeln!(f, "Lifted Create Claues: {}", self.num_create_lifts)?;
-        writeln!(f, "Lifted Switch Claues: {}", self.num_switch_lifts)?;
+        writeln!(f, "Lifted Create Clauses: {}", self.num_create_lifts)?;
+        writeln!(f, "Lifted Switch Clauses: {}", self.num_switch_lifts)?;
         Ok(())
     }
 }
