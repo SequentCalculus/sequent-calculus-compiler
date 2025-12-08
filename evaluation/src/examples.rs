@@ -49,6 +49,10 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
         let dir_path = example_dir
             .map_err(|err| Error::read_dir(&examples_path, err))?
             .path();
+        if dir_path.is_file() {
+            continue;
+        }
+
         examples.push(Example::from_dir(&dir_path)?);
     }
 
@@ -57,6 +61,10 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
         let dir_path = benchmark_dir
             .map_err(|err| Error::read_dir(&bench_path, err))?
             .path();
+        if dir_path.is_file() {
+            continue;
+        }
+
         examples.push(Example::from_dir(&dir_path)?);
     }
 
