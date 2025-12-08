@@ -6,7 +6,17 @@ pub const MAX_RUNS: u64 = 1;
 pub fn rewrite_prog(mut program: Prog) -> Prog {
     // we thread the set of labels of top-level functions through the translation, because we need
     // to generate fresh labels when we lift statements
-    let mut used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
+    let used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
+    let defs = take(&mut program.defs);
+    let mut state = RewriteState {
+        used_labels,
+        lifted_statements: defs,
+        current_label: "main".to_owned(),
+        current_used_vars: HashSet::new(),
+        let_bindings: HashMap::new(),
+        create_bindings: HashMap::new(),
+        new_changes: true,
+    };
 
     let mut performed_runs = 0;
     let mut new_changes = true;
