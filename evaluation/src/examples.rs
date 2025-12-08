@@ -119,11 +119,11 @@ pub fn compile_examples(
         for (compiler_name, bin_path) in compiler_bins.iter() {
             println!("Compiling {} with compiler {compiler_name}", example.name);
             let mut compile_cmd = Command::new(bin_path);
-            compile_cmd.arg("codegen").arg(&example.source_path);
 
             if *compiler_name != "no_opt" {
                 compile_cmd.arg("--print-opt");
             }
+            compile_cmd.arg("codegen").arg(&example.source_path);
 
             #[cfg(target_arch = "x86_64")]
             compile_cmd.arg("x86-64");
