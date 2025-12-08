@@ -12,12 +12,7 @@ pub fn benchmark_examples(
             println!("Benchmarking {}", compiled_path.display());
             let mut command = Command::new("hyperfine");
             let args = example.get_args();
-            let mut run_str = format!("\"{}", compiled_path.display());
-            for arg in args {
-                run_str += &arg;
-                run_str += " ";
-            }
-            run_str += "\"";
+            let run_str = format!("\"{} {}\"", compiled_path.display(), args.join(" "));
             command.arg(run_str);
             command.arg("-u");
             command.arg("microsecond");

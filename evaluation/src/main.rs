@@ -37,6 +37,8 @@ fn main() -> Result<(), Error> {
     compile_examples(&examples, &version_names, &mut results)?;
     println!("Benchmarking examples...");
     benchmark_examples(&examples, &version_names, &mut results)?;
+    println!("Writing results...");
     write_csv(results, &version_names)?;
+    println!("Done");
     Ok(())
 }
