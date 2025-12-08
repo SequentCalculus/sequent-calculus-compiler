@@ -143,6 +143,18 @@ pub fn compile_examples(
             })?;
             let compile_stdout = String::from_utf8(compile_res.stdout)
                 .map_err(|err| Error::parse_out("scc", err))?;
+
+            if !compile_res.status.success() {
+                let stderr_str = String::from_utf8(compile_res.stderr)
+                    .map_err(|err| Error::parse_out("scc", err))?;
+                return Err(Error::run_cmd(
+                    &format!("scc_{compiler_name}"),
+                    compile_res.status,
+                    &compile_stdout,
+                    &stderr_str,
+                ));
+            }
+
             if *compiler_name != "no_opt" {
                 println!("{compile_stdout}");
                 let opt_line = compile_stdout
@@ -162,18 +174,6 @@ pub fn compile_examples(
                     .optimization_stats
                     .insert(example.name.clone(), num_passes);
             }
-
-            if !compile_res.status.success() {
-                let stderr_str = String::from_utf8(compile_res.stderr)
-                    .map_err(|err| Error::parse_out("scc", err))?;
-                return Err(Error::run_cmd(
-                    &format!("scc_{compiler_name}"),
-                    compile_res.status,
-                    &compile_stdout,
-                    &stderr_str,
-                ));
-            }
-
             let example_from = out_path.join(&example.name);
             let example_to = example.compiled_path(&compiler_name);
             rename(&example_from, &example_to)
