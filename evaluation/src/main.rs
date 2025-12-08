@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 mod benchmark;
 mod compile_scc;
 mod config;
 mod errors;
 mod examples;
+mod results;
 
 use benchmark::benchmark_examples;
 use compile_scc::compile_versions;
@@ -22,15 +21,7 @@ const EXAMPLES_OUT: &str = "target_scc/bin/";
 const EXAMPLES_X86: &str = "x86_64";
 #[allow(unused)]
 const EXAMPLES_AARCH: &str = "aarch_64";
-
-#[derive(Debug)]
-pub struct EvalResult {
-    example: String,
-    num_passes: u64,
-    lifted_create: u64,
-    lifted_switch: u64,
-    benchmark_times: HashMap<String, f64>,
-}
+const RESULTS_OUT: &str = "target_scc/eval_opt.csv";
 
 fn main() -> Result<(), Error> {
     println!("Loading configuration...");

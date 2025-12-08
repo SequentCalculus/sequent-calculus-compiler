@@ -49,6 +49,14 @@ pub enum Error {
     ReadFileName {
         path: PathBuf,
     },
+    CreateFile {
+        path: PathBuf,
+        msg: String,
+    },
+    WriteFile {
+        path: PathBuf,
+        msg: String,
+    },
 }
 
 impl Error {
@@ -149,6 +157,26 @@ where {
             path: path.to_path_buf(),
         }
     }
+
+    pub fn create_file<Err>(path: &Path, err: Err) -> Error
+    where
+        Err: std::error::Error,
+    {
+        Error::CreateFile {
+            path: path.to_path_buf(),
+            msg: err.to_string(),
+        }
+    }
+
+    pub fn write_file<Err>(path: &Path, err: Err) -> Error
+    where
+        Err: std::error::Error,
+    {
+        Error::WriteFile {
+            path: path.to_path_buf(),
+            msg: err.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for Error {
@@ -194,6 +222,12 @@ impl fmt::Display for Error {
             }
             Error::ReadFileName { path } => {
                 write!(f, "Could not get file name of {}", path.display())
+            }
+            Error::CreateFile { path, msg } => {
+                write!(f, "Could not create file {}: {msg}", path.display())
+            }
+            Error::WriteFile { path, msg } => {
+                write!(f, "Could not write file {}: {msg}", path.display())
             }
         }
     }
