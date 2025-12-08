@@ -172,7 +172,6 @@ fn update_results(results: &mut Vec<EvalResult>, stdout: String, example_name: &
     let mut num_create = None;
     let mut num_switch = None;
     for line in stdout.lines() {
-        println!("{line}");
         if line.contains("Number of Passes") {
             let mut line_parts = line.split(":");
             line_parts.next();
