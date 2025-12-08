@@ -3,7 +3,6 @@ use crate::{
     errors::Error,
 };
 use std::{
-    collections::HashMap,
     fs::{read_dir, read_to_string, rename},
     path::{Path, PathBuf},
     process::Command,
@@ -17,7 +16,8 @@ pub struct Example {
 
 #[derive(serde::Deserialize)]
 pub struct ExampleConfig {
-    pub test_args: Vec<String>,
+    pub test_args: Option<Vec<String>>,
+    pub args: Option<Vec<String>>,
     pub heap_size: Option<u64>,
 }
 
@@ -53,6 +53,17 @@ impl Example {
         let out_path = PathBuf::from(EXAMPLES_OUT).join(EXAMPLES_AARCH);
 
         out_path.join(format!("{}_{}", self.name, compiler_name))
+    }
+
+    pub fn get_args(&self) -> Vec<String> {
+        if let Some(ref args) = self.config.args {
+            args.clone()
+        } else {
+            self.config
+                .test_args
+                .clone()
+                .expect("Neither args nor test_args defined")
+        }
     }
 }
 
