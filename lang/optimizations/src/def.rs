@@ -1,7 +1,7 @@
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::Name;
 
-pub fn rewrite_def<'a>(name: &'a Name, state: &mut RewriteState) {
+pub fn rewrite_def(name: &Name, state: &mut RewriteState) {
     let def_ind = state
         .lifted_statements
         .iter()

@@ -19,7 +19,7 @@ impl Rewrite for Statement {
     fn rewrite(self, state: &mut RewriteState) -> Self::Target {
         match self {
             Statement::Substitute(subst) => subst.rewrite(state).into(),
-            Statement::Call(call) => call.rewrite(state).into(),
+            Statement::Call(call) => call.rewrite(state),
             Statement::Let(lt) => lt.rewrite(state),
             Statement::Switch(switch) => switch.rewrite(state),
             Statement::Create(cr) => cr.rewrite(state),

@@ -13,7 +13,7 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     let used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
     let defs = take(&mut program.defs);
     let mut state = RewriteState {
-        used_labels: used_labels,
+        used_labels,
         lifted_statements: defs,
         current_label: "main".to_owned(),
         current_used_vars: HashSet::new(),

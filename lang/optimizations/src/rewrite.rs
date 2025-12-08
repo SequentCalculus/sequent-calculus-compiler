@@ -1,7 +1,5 @@
 use axcut::syntax::{
-    ContextBinding, Def, Name, TypingContext, Var,
-    names::fresh_name,
-    statements::{Call, Clause},
+    ContextBinding, Def, Name, TypingContext, Var, names::fresh_name, statements::Clause,
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
 use std::{
