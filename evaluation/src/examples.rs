@@ -7,6 +7,7 @@ use std::{
 };
 
 pub struct Example {
+    pub name: String,
     pub source_path: PathBuf,
     pub config: ExampleConfig,
 }
@@ -23,11 +24,12 @@ impl Example {
             .file_name()
             .ok_or(Error::read_file_name(dir))?
             .to_str()
-            .ok_or(Error::read_file_name(dir))?;
-        let mut source_path = dir.join(name);
+            .ok_or(Error::read_file_name(dir))?
+            .to_owned();
+        let mut source_path = dir.join(&name);
         source_path.set_extension("sc");
 
-        let mut config_path = dir.join(name);
+        let mut config_path = dir.join(&name);
         config_path.set_extension("args");
         let config_contents =
             read_to_string(&config_path).map_err(|err| Error::read_conf(&config_path, err))?;
@@ -35,6 +37,7 @@ impl Example {
             .map_err(|err| Error::toml(&config_path, err))?;
 
         Ok(Example {
+            name,
             source_path,
             config,
         })
@@ -77,15 +80,15 @@ pub fn compile_examples(
     examples: &[Example],
     versions: &HashMap<String, String>,
 ) -> Result<(), Error> {
-    let compiler_bins: Vec<PathBuf> = versions
+    let compiler_bins: Vec<(&String, PathBuf)> = versions
         .iter()
-        .enumerate()
-        .map(|(ind, _)| PathBuf::from(BIN_OUT).join(format!("scc_{ind}")))
+        .map(|(name, _)| (name, PathBuf::from(BIN_OUT).join(format!("scc_{name}"))))
         .collect();
 
     for example in examples {
-        for compiler_bin in compiler_bins.iter() {
-            let mut compile_cmd = Command::new(compiler_bin);
+        for (name, bin_path) in compiler_bins.iter() {
+            println!("Compiling {} with compiler {name}", example.name);
+            let mut compile_cmd = Command::new(bin_path);
             compile_cmd.arg("codegen").arg(&example.source_path);
 
             #[cfg(target_arch = "x86_64")]
@@ -99,7 +102,7 @@ pub fn compile_examples(
 
             let compile_res = compile_cmd.output().map_err(|err| {
                 Error::start_cmd(
-                    "scc",
+                    &format!("scc_{name}"),
                     &format!("Compile example {}", example.source_path.display()),
                     err,
                 )
@@ -110,7 +113,7 @@ pub fn compile_examples(
                 let stderr_str = String::from_utf8(compile_res.stderr)
                     .map_err(|err| Error::parse_out("scc", err))?;
                 return Err(Error::run_cmd(
-                    "scc",
+                    &format!("scc_{name}"),
                     compile_res.status,
                     &stdout_str,
                     &stderr_str,

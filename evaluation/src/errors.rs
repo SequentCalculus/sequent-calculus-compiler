@@ -33,6 +33,10 @@ pub enum Error {
         path: PathBuf,
         msg: String,
     },
+    RemoveDir {
+        path: PathBuf,
+        msg: String,
+    },
     MoveFile {
         from: PathBuf,
         to: PathBuf,
@@ -109,6 +113,16 @@ where {
         }
     }
 
+    pub fn remove_dir<Err>(path: &Path, err: Err) -> Error
+    where
+        Err: std::error::Error,
+    {
+        Error::RemoveDir {
+            path: path.to_path_buf(),
+            msg: err.to_string(),
+        }
+    }
+
     pub fn move_file<Err>(from: &Path, to: &Path, err: Err) -> Error
     where
         Err: std::error::Error,
@@ -165,6 +179,9 @@ impl fmt::Display for Error {
             }
             Error::CreateDir { path, msg } => {
                 write!(f, "Could not create directory {}:{msg}", path.display())
+            }
+            Error::RemoveDir { path, msg } => {
+                write!(f, "Could not remove directory {}:{mag}", path.display())
             }
             Error::MoveFile { from, to, msg } => write!(
                 f,

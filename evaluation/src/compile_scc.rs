@@ -1,7 +1,7 @@
 use crate::{BIN_OUT, SCC_BIN, errors::Error};
 use std::{
     collections::HashMap,
-    fs::{create_dir_all, rename},
+    fs::{create_dir_all, remove_dir_all, rename},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -10,10 +10,12 @@ pub fn compile_versions(versions: &HashMap<String, String>) -> Result<(), Error>
     let current_branch = get_current_branch()?;
 
     let bin_path = PathBuf::from(BIN_OUT);
+    remove_dir_all(&bin_path).map_err(|err| Error::remove_dir(&bin_path, err))?;
     create_dir_all(&bin_path).map_err(|err| Error::create_dir(&bin_path, err))?;
     let compiled_path = PathBuf::from(SCC_BIN);
 
     for (name, hash) in versions.iter() {
+        println!("Compiling {name}");
         checkout_branch(hash)?;
         compile_current(name, &bin_path, &compiled_path)?;
     }
