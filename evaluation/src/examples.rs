@@ -144,6 +144,7 @@ pub fn compile_examples(
             let compile_stdout = String::from_utf8(compile_res.stdout)
                 .map_err(|err| Error::parse_out("scc", err))?;
             if *compiler_name != "no_opt" {
+                println!("{compile_stdout}");
                 let opt_line = compile_stdout
                     .lines()
                     .find(|line| line.contains("Number of Passes"))
