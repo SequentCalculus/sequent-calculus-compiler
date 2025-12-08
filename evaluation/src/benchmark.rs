@@ -40,26 +40,28 @@ pub fn benchmark_examples(
             }
 
             for line in stdout_str.lines() {
-                if line.contains("Time") {
-                    let mut line_parts = line.split(":");
-                    line_parts.next();
-                    let time_str = line_parts.next().expect("Could not get hyperfine time");
-                    println!("{time_str}");
-                    let mut time_parts = time_str.split(" ");
-                    let time = time_parts
-                        .next()
-                        .expect("Could not get hyperfine time")
-                        .trim()
-                        .parse::<f64>()
-                        .expect("Could not get hyperfine time");
-                    let example_results = results
-                        .iter_mut()
-                        .find(|res| res.example == example.name)
-                        .expect("Could not find example results");
-                    example_results
-                        .benchmark_times
-                        .insert(compiler_name.clone(), time);
+                if !line.contains("Time") {
+                    continue;
                 }
+                let mut line_parts = line.split(":");
+                line_parts.next();
+                let time_str = line_parts.next().expect("Could not get hyperfine time");
+                let mut time_parts = time_str.split(" ");
+                let time_str = time_parts
+                    .next()
+                    .expect("Could not get hyperfine time")
+                    .trim();
+                println!("{time_str}");
+                let time = time_str
+                    .parse::<f64>()
+                    .expect("Could not get hyperfine time");
+                let example_results = results
+                    .iter_mut()
+                    .find(|res| res.example == example.name)
+                    .expect("Could not find example results");
+                example_results
+                    .benchmark_times
+                    .insert(compiler_name.clone(), time);
             }
         }
     }
