@@ -1,0 +1,10 @@
+[package]
+name = "eval_scc"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "eval_scc"
+path = "src/main.rs"
