@@ -49,18 +49,23 @@ fn compile_examples(examples: Vec<Example>, hashes: &[String]) -> Result<(), Err
                 compile_cmd.arg("--heap_size").arg(size.to_string());
             }
 
-            let compile_res = compile_cmd.status().map_err(|err| {
-                Error::cmd(
+            let compile_res = compile_cmd.output().map_err(|err| {
+                Error::start_cmd(
                     "scc",
-                    &format!("Compile exmaple {}", example.source_path.display()),
+                    &format!("Compile example {}", example.source_path.display()),
                     err,
                 )
             })?;
-            if !compile_res.success() {
-                return Err(Error::cmd(
+            if !compile_res.status.success() {
+                let stdout_str = String::from_utf8(compile_res.stdout)
+                    .map_err(|err| Error::parse_out("scc", err))?;
+                let stderr_str = String::from_utf8(compile_res.stderr)
+                    .map_err(|err| Error::parse_out("scc", err))?;
+                return Err(Error::run_cmd(
                     "scc",
-                    &format!("Compile exmaple {}", example.source_path.display()),
-                    format!("Exited with code {compile_res}"),
+                    compile_res.status,
+                    &stdout_str,
+                    &stderr_str,
                 ));
             }
         }

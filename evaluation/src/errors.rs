@@ -1,6 +1,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
+    process::ExitStatus,
 };
 
 #[derive(Debug)]
@@ -13,10 +14,16 @@ pub enum Error {
         path: PathBuf,
         msg: String,
     },
-    Command {
+    StartCommand {
         cmd: String,
         tried: String,
         msg: String,
+    },
+    RunCommand {
+        cmd: String,
+        status: ExitStatus,
+        stdout: String,
+        stderr: String,
     },
     ParseStdOut {
         cmd: String,
@@ -61,14 +68,24 @@ impl Error {
         }
     }
 
-    pub fn cmd<T>(cmd: &str, tried: &str, err: T) -> Error
+    pub fn start_cmd<Err>(cmd: &str, tried: &str, err: Err) -> Error
     where
-        T: fmt::Display,
+        Err: std::error::Error,
     {
-        Error::Command {
+        Error::StartCommand {
             cmd: cmd.to_owned(),
             tried: tried.to_owned(),
             msg: err.to_string(),
+        }
+    }
+
+    pub fn run_cmd(cmd: &str, status: ExitStatus, stdout: &str, stderr: &str) -> Error
+where {
+        Error::RunCommand {
+            cmd: cmd.to_owned(),
+            status,
+            stdout: stdout.to_owned(),
+            stderr: stderr.to_owned(),
         }
     }
 
@@ -129,9 +146,19 @@ impl fmt::Display for Error {
             Error::Toml { path, msg } => {
                 write!(f, "Could not read toml {}:\n{msg}", path.display())
             }
-            Error::Command { cmd, tried, msg } => write!(
+            Error::RunCommand {
+                cmd,
+                status,
+                stdout,
+                stderr,
+            } => write!(
                 f,
-                "Could not {tried}, command {cmd} exited with error {msg}"
+                "Command {cmd} exited with status {status}, stdout: {stdout}, stderr: {stderr}"
+            ),
+
+            Error::StartCommand { cmd, tried, msg } => write!(
+                f,
+                "Error during {tried}, could not run command {cmd}: {msg}"
             ),
             Error::ParseStdOut { cmd, msg } => {
                 write!(f, "Could not read std out from {cmd}: {msg}")

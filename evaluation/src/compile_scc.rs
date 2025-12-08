@@ -26,13 +26,18 @@ fn get_current_branch() -> Result<String, Error> {
         .arg("branch")
         .arg("--show-current")
         .output()
-        .map_err(|err| Error::cmd("git", "get current branch", err))?;
+        .map_err(|err| Error::start_cmd("git", "get current branch", err))?;
 
     if !branch_res.status.success() {
-        return Err(Error::cmd(
+        let stdout_str =
+            String::from_utf8(branch_res.stdout).map_err(|err| Error::parse_out("git", err))?;
+        let stderr_str =
+            String::from_utf8(branch_res.stderr).map_err(|err| Error::parse_out("git", err))?;
+        return Err(Error::run_cmd(
             "git",
-            "get current branch",
-            format!("exited with code {}", branch_res.status),
+            branch_res.status,
+            &stdout_str,
+            &stderr_str,
         ));
     }
     Ok(String::from_utf8(branch_res.stdout)
@@ -45,13 +50,19 @@ fn checkout_branch(branch: &str) -> Result<(), Error> {
     let checkout_res = Command::new("git")
         .arg("checkout")
         .arg(branch)
-        .status()
-        .map_err(|err| Error::cmd("git", "checkout branch", err))?;
-    if !checkout_res.success() {
-        return Err(Error::cmd(
+        .output()
+        .map_err(|err| Error::start_cmd("git", "checkout branch", err))?;
+    if !checkout_res.status.success() {
+        let stdout_str =
+            String::from_utf8(checkout_res.stdout).map_err(|err| Error::parse_out("git", err))?;
+        let stderr_str =
+            String::from_utf8(checkout_res.stderr).map_err(|err| Error::parse_out("git", err))?;
+
+        return Err(Error::run_cmd(
             "git",
-            "checkout branch",
-            format!("exited with code {checkout_res}"),
+            checkout_res.status,
+            &stdout_str,
+            &stderr_str,
         ));
     }
     Ok(())
@@ -61,14 +72,20 @@ fn compile_current(index: usize, bin_path: &Path, compiled_path: &Path) -> Resul
     let cargo_res = Command::new("cargo")
         .arg("build")
         .arg("--release")
-        .status()
-        .map_err(|err| Error::cmd("cargo", "build version", err))?;
+        .output()
+        .map_err(|err| Error::start_cmd("cargo", "build version", err))?;
 
-    if !cargo_res.success() {
-        return Err(Error::cmd(
-            "carg",
-            "build version",
-            format!("exited with code {cargo_res}"),
+    if !cargo_res.status.success() {
+        let stdout_str =
+            String::from_utf8(cargo_res.stdout).map_err(|err| Error::parse_out("git", err))?;
+        let stderr_str =
+            String::from_utf8(cargo_res.stderr).map_err(|err| Error::parse_out("git", err))?;
+
+        return Err(Error::run_cmd(
+            "cargo",
+            cargo_res.status,
+            &stdout_str,
+            &stderr_str,
         ));
     }
 
