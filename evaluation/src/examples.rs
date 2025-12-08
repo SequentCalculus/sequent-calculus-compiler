@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 use crate::{
-    BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86,
-    EvalResults, errors::Error,
+    BENCHMARK_PATH, BIN_OUT, EXAMPLES_AARCH, EXAMPLES_OUT, EXAMPLES_PATH, EXAMPLES_X86, EvalResult,
+    errors::Error,
 };
 use std::{
     fs::{read_dir, read_to_string, rename},
@@ -103,7 +103,7 @@ pub fn load_examples() -> Result<Vec<Example>, Error> {
 pub fn compile_examples(
     examples: &[Example],
     compiler_names: &[String],
-    results: &mut EvalResults,
+    results: &mut Vec<EvalResult>,
 ) -> Result<(), Error> {
     let compiler_bins: Vec<(&String, PathBuf)> = compiler_names
         .iter()
@@ -156,21 +156,7 @@ pub fn compile_examples(
             }
 
             if *compiler_name != "no_opt" {
-                let opt_line = compile_stdout
-                    .lines()
-                    .find(|line| line.contains("Number of Passes"))
-                    .expect("Could not get optimization stats");
-                let mut line_parts = opt_line.split(":");
-                line_parts.next().expect("Could not get optimization stats");
-                let num_passes = line_parts
-                    .next()
-                    .expect("Could not get optimization stats")
-                    .trim()
-                    .parse::<u64>()
-                    .expect("Could not get optimization stats");
-                results
-                    .optimization_stats
-                    .insert(example.name.clone(), num_passes);
+                update_results(results, compile_stdout, &example.name);
             }
             let example_from = out_path.join(&example.name);
             let example_to = example.compiled_path(&compiler_name);
@@ -179,4 +165,56 @@ pub fn compile_examples(
         }
     }
     Ok(())
+}
+
+fn update_results(results: &mut Vec<EvalResult>, stdout: String, example_name: &str) {
+    let mut num_passes = None;
+    let mut num_create = None;
+    let mut num_switch = None;
+    for line in stdout.lines() {
+        if line.contains("Number of Passes") {
+            let mut line_parts = line.split(":");
+            line_parts.next();
+            num_passes = Some(
+                line_parts
+                    .next()
+                    .expect("Could not get number of passes")
+                    .trim()
+                    .parse::<u64>()
+                    .expect("Could not get Number of Passes"),
+            );
+        }
+
+        if line.contains("Lifted Create Clauses") {
+            let mut line_parts = line.split(":");
+            line_parts.next();
+            num_create = Some(
+                line_parts
+                    .next()
+                    .expect("Could not get number of Create Clauses")
+                    .trim()
+                    .parse::<u64>()
+                    .expect("Could not get number of create clauses"),
+            );
+        }
+
+        if line.contains("Lifted Switch Clauses") {
+            let mut line_parts = line.split(":");
+            line_parts.next();
+            num_switch = Some(
+                line_parts
+                    .next()
+                    .expect("Could not get number of Switch Clauses")
+                    .trim()
+                    .parse::<u64>()
+                    .expect("Could not get number of Switch clauses"),
+            );
+        }
+    }
+    results.push(EvalResult {
+        example: example_name.to_string(),
+        num_passes: num_passes.expect("Could not get number of passes"),
+        lifted_create: num_create.expect("Could not get number of lifted create clauses"),
+        lifted_switch: num_switch.expect("Could not get number of lifted switch clauses"),
+    });
 }

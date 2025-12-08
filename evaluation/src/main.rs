@@ -1,5 +1,3 @@
-use std::{collections::HashMap, fmt};
-
 mod benchmark;
 mod compile_scc;
 mod config;
@@ -21,18 +19,20 @@ const EXAMPLES_OUT: &str = "target_scc/bin/";
 const EXAMPLES_X86: &str = "x86_64";
 const EXAMPLES_AARCH: &str = "aarch_64";
 
-pub struct EvalResults {
-    optimization_stats: HashMap<String, u64>,
+#[derive(Debug)]
+pub struct EvalResult {
+    example: String,
+    num_passes: u64,
+    lifted_create: u64,
+    lifted_switch: u64,
 }
 
 fn main() -> Result<(), Error> {
-    let mut results = EvalResults {
-        optimization_stats: HashMap::new(),
-    };
     println!("Loading configuration...");
     let config = EvalConfig::load()?;
     println!("Loading examples...");
     let examples = load_examples()?;
+    let mut results = Vec::with_capacity(examples.len());
     println!("Compiling compiler versions...");
     compile_versions(&config.version_git_hashes)?;
     println!("Compiling examples...");
@@ -40,16 +40,6 @@ fn main() -> Result<(), Error> {
     compile_examples(&examples, &version_names, &mut results)?;
     println!("Benchmarking examples...");
     benchmark_examples(&examples, &version_names)?;
-    println!("Results: {results}");
+    println!("Results: {results:?}");
     Ok(())
-}
-
-impl fmt::Display for EvalResults {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "=== Evaluation Results ===")?;
-        for (example, num_passes) in self.optimization_stats.iter() {
-            write!(f, "{example}: {num_passes} passes")?;
-        }
-        Ok(())
-    }
 }
