@@ -20,6 +20,7 @@ pub fn benchmark_examples(
             command.arg(run_str);
             command.arg("-u");
             command.arg("microsecond");
+            command.arg("--show-output");
 
             let hyperfine_res = command.output().map_err(|err| {
                 Error::start_cmd("hyperfine", &format!("benchmark {}", example.name), err)
