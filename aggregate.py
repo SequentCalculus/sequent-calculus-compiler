@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import matplotlib.pyplot as plt
 
 res_path: str = "target_scc/eval_opt.csv"
 
@@ -52,6 +53,7 @@ class ResultAggregate:
 
     min_time_diff: float
     min_time_diff_names: list[str]
+    names_neg_diff: list[str]
 
     avg_switch: int
     avg_create: int
@@ -73,6 +75,7 @@ class ResultAggregate:
         self.max_total_names = []
         self.max_time_diff_names = []
         self.min_time_diff_names = []
+        self.names_neg_diff = []
 
         total_switch = 0
         total_create = 0
@@ -107,6 +110,9 @@ class ResultAggregate:
                 self.max_total_names = [res.name]
 
             time_diff = res.time_noopt - res.time_rewrite
+
+            if time_diff < 0.0:
+                self.names_neg_diff.append(res.name)
 
             if self.max_time_diff == time_diff:
                 self.max_time_diff_names.append(res.name)
@@ -145,6 +151,7 @@ Average Switch Lifts: {avg_switch}
 Average Create Lifts: {avg_create}
 Average Total Lifts: {avg_total}
 Average Time Difference: {avg_time} mus
+Negative Time Difference: {names_neg_diff}
 """.format(
             num_runs=self.max_runs,
             max_run_names=", ".join(self.max_runs_names),
@@ -163,6 +170,7 @@ Average Time Difference: {avg_time} mus
             avg_create=self.avg_create,
             avg_total=self.avg_total,
             avg_time=round(self.avg_time_diff, 2),
+            names_neg_diff=", ".join(self.names_neg_diff),
         )
 
     def __repr__(self) -> str:
@@ -174,5 +182,29 @@ def load_csv() -> list[EvalResult]:
     return list(map(lambda line: EvalResult(line), csv_file.readlines()[1:]))
 
 
+def plot_results(data: list[EvalResult]):
+    fig, ax = plt.subplots()
+    ax.plot(
+        list(map(lambda res: res.name, data)),
+        list(map(lambda res: res.passes, data)),
+        label="Number of Runs",
+    )
+    ax.plot(
+        list(map(lambda res: res.name, data)),
+        list(map(lambda res: res.switch + res.create, data)),
+        label="Number of Lifted Clauses",
+    )
+    ax.plot(
+        list(map(lambda res: res.name, data)),
+        list(map(lambda res: (res.time_noopt - res.time_rewrite) / 10000.0, data)),
+        label="Time Difference (10mus)",
+    )
+    plt.xticks(rotation=45, ha="right")
+    ax.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
-    print(ResultAggregate(load_csv()))
+    data = load_csv()
+    print(ResultAggregate(data))
+    plot_results(data)
