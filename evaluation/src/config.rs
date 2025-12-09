@@ -4,6 +4,7 @@ use std::{collections::HashMap, fs::read_to_string, path::PathBuf};
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct EvalConfig {
     pub version_git_hashes: HashMap<String, String>,
+    pub num_hyperfine: u64,
 }
 
 impl EvalConfig {

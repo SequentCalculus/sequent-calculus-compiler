@@ -2,3 +2,4 @@ version_git_hashes = {
   no_opt = "e5c9c17f9503bb4b56d31970b278dcd6416e769c",
   rewrite = "640cd0df584f983272aae92ede34b068c5615c6c"
 }
+num_hyperfine = 50

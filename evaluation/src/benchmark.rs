@@ -4,6 +4,7 @@ use std::process::Command;
 pub fn benchmark_examples(
     examples: &[Example],
     compiler_names: &[String],
+    num_runs: u64,
     results: &mut [EvalResult],
 ) -> Result<(), Error> {
     for example in examples {
@@ -20,7 +21,8 @@ pub fn benchmark_examples(
             command.arg(run_str);
             command.arg("-u");
             command.arg("microsecond");
-            command.arg("--show-output");
+            command.arg("-r");
+            command.arg(num_runs.to_string());
 
             let hyperfine_res = command.output().map_err(|err| {
                 Error::start_cmd("hyperfine", &format!("benchmark {}", example.name), err)

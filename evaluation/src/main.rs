@@ -36,7 +36,12 @@ fn main() -> Result<(), Error> {
     let version_names: Vec<String> = config.version_git_hashes.keys().cloned().collect();
     compile_examples(&examples, &version_names, &mut results)?;
     println!("Benchmarking examples...");
-    benchmark_examples(&examples, &version_names, &mut results)?;
+    benchmark_examples(
+        &examples,
+        &version_names,
+        config.num_hyperfine,
+        &mut results,
+    )?;
     println!("Writing results...");
     write_csv(results, &version_names)?;
     println!("Done");
