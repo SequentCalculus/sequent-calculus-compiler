@@ -13,9 +13,9 @@ pub fn benchmark_examples(
             let mut command = Command::new("hyperfine");
             let args = example.get_args();
             let run_str = if args.is_empty() {
-                format!("\"{}\"", compiled_path.display())
+                format!("{}", compiled_path.display())
             } else {
-                format!("\"{} {}\"", compiled_path.display(), args.join(" "))
+                format!("{} {}", compiled_path.display(), args.join(" "))
             };
             command.arg(run_str);
             command.arg("-u");
