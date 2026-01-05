@@ -26,6 +26,8 @@ pub struct Def {
     pub span: Span,
     /// The name of the definition
     pub name: Name,
+    /// The type paramenters
+    pub type_params: TypeContext,
     /// The parameters
     pub context: TypingContext,
     /// The return type
@@ -86,7 +88,7 @@ mod def_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
+            context::{TypeContext, TypingContext},
             program::Program,
             terms::{Lit, Term},
             types::Ty,
@@ -102,6 +104,10 @@ mod def_tests {
         Def {
             span: Span::default(),
             name: "x".to_string(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: TypingContext {
                 span: Span::default(),
                 bindings: vec![],

@@ -417,20 +417,21 @@ Dtor: DtorSig = {
         }
 }
 
+pub OptTypeContext: TypeContext = {
+    <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
+}
+
 Def: Def = {
-    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+    <l: @L> "def" <name: Name> <type_params: OptTypeContext> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Def {
             span: span(l, r),
-            name,
+            name,type_params,
             context,
             body,
             ret_ty,
         }
 }
 
-pub OptTypeContext: TypeContext = {
-    <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
-}
 
 Data: Data = {
     <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
