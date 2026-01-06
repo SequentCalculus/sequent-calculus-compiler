@@ -2,7 +2,7 @@ use crate::{def::rewrite_def, rewrite::RewriteState};
 use axcut::syntax::Prog;
 use std::collections::{HashMap, HashSet};
 
-pub const MAX_RUNS: u64 = u64::MAX;
+pub const MAX_RUNS: usize = usize::MAX;
 
 pub fn rewrite_prog(mut program: Prog) -> Prog {
     let defs = std::mem::take(&mut program.defs);
@@ -23,8 +23,17 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     while state.new_changes && performed_runs < MAX_RUNS {
         state.new_changes = false;
         performed_runs += 1;
-        for def_position in 0..state.defs.len() {
-            rewrite_def(def_position, &mut state);
+
+        // after rewriting the original `Def`s, we repeatedly rewrite all the lifted `Clause`s,
+        // located at the end of the `Def` vector, if any, to ensure that all statements are
+        // rewritten once
+        let mut number_of_rewritten_defs = 0;
+        while state.defs.len() > number_of_rewritten_defs {
+            let number_of_defs = state.defs.len();
+            for def_position in number_of_rewritten_defs..number_of_defs {
+                rewrite_def(def_position, &mut state);
+            }
+            number_of_rewritten_defs = number_of_defs;
         }
     }
 

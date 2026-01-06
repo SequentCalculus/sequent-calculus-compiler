@@ -76,8 +76,9 @@ impl RewriteState {
             .let_bindings
             .get(&called_args.bindings[switch_var_position].var)?;
 
+        // swap the body of the current Definition with a temporary placeholder
         let Statement::Switch(switch) = std::mem::take(&mut called_def.body) else {
-            panic!("Statement must be a Switch")
+            unreachable!("we already know that the body is a Switch")
         };
         let clause_position = switch
             .clauses
