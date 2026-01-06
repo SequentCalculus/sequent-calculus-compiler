@@ -166,8 +166,8 @@ fn main() {
             ty: Ty::Decl("ContList".to_string()),
             args: vec![ContextBinding {
                 var: "xs".to_string(),
-                ty: Ty::Decl("List".to_string()),
                 chi: Chirality::Prd,
+                ty: Ty::Decl("List".to_string()),
             }]
             .into(),
         })),
