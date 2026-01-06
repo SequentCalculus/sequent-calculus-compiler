@@ -62,6 +62,14 @@ pub enum Statement {
     IfC(IfC),
     /// Exiting the program
     Exit(Exit),
+    /// A temporary placeholder that should otherwise never occur
+    Default(),
+}
+
+impl Default for Statement {
+    fn default() -> Statement {
+        Statement::Default()
+    }
 }
 
 impl FreeVars for Statement {
@@ -78,6 +86,7 @@ impl FreeVars for Statement {
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
             Statement::Exit(exit) => exit.free_vars(vars).into(),
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }
@@ -96,6 +105,7 @@ impl TypedFreeVars for Statement {
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::IfC(ifc) => ifc.typed_free_vars(vars),
             Statement::Exit(exit) => exit.typed_free_vars(vars),
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }
@@ -114,6 +124,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }
@@ -142,6 +153,7 @@ impl Linearizing for Statement {
             Statement::PrintI64(print) => print.linearize(context, used_vars),
             Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
             Statement::Exit(ref _exit) => self,
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }
@@ -164,6 +176,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }

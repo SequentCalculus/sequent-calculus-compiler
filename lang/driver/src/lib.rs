@@ -19,6 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
+use optimizations::program::rewrite_prog;
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -47,6 +48,8 @@ pub struct Driver {
     focused: HashMap<PathBuf, core_lang::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// With rewritten definitions
+    rewritten: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
@@ -69,6 +72,7 @@ impl Driver {
             compiled: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
+            rewritten: HashMap::new(),
             linearized: HashMap::new(),
         }
     }
@@ -259,6 +263,54 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the rewritten [AxCut](axcut) version of the file.
+    pub fn rewritten(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.rewritten.get(path) {
+            return Ok(res.clone());
+        }
+
+        let shrunk = self.shrunk(path)?;
+        let rewritten = rewrite_prog(shrunk);
+        self.rewritten.insert(path.clone(), rewritten.clone());
+        Ok(rewritten)
+    }
+
+    /// This function prints the rewritten [AxCut](axcut) code to a file in the target directory.
+    pub fn print_rewritten(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let rewritten = self.rewritten(path)?;
+
+        Paths::create_rewritten_dir();
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+        let filename = Paths::rewritten_dir().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                rewritten
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                rewritten
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
     /// This function returns the linearized [AxCut](axcut) version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
@@ -266,8 +318,8 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let shrunk = self.shrunk(path)?;
-        let linearized = shrunk.linearize();
+        let rewritten = self.rewritten(path)?;
+        let linearized = rewritten.linearize();
         self.linearized.insert(path.clone(), linearized.clone());
         Ok(linearized)
     }
