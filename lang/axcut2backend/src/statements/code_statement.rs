@@ -100,6 +100,7 @@ impl CodeStatement for Statement {
             Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }

@@ -1,14 +1,13 @@
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::Name;
 
-pub fn rewrite_def(name: &Name, state: &mut RewriteState) {
-    let def_ind = state
-        .lifted_statements
-        .iter()
-        .position(|def| def.name == *name)
-        .expect("Could not find definition");
-    let mut current_def = state.lifted_statements.remove(def_ind);
-    state.set_current_def(name, current_def.used_vars.clone());
-    current_def.body = current_def.body.rewrite(state);
-    state.lifted_statements.insert(def_ind, current_def)
+pub fn rewrite_def(def_position: usize, state: &mut RewriteState) {
+    // swap the body of the current Definition with a temporary placeholder
+    let current_body = std::mem::take(&mut state.defs[def_position].body);
+    state.current_label = state.defs[def_position].name.clone();
+    state.current_used_vars = state.defs[def_position].used_vars.clone();
+    state.let_bindings.clear();
+    state.create_bindings.clear();
+
+    // write the rewritten body back into place
+    state.defs[def_position].body = current_body.rewrite(state)
 }
