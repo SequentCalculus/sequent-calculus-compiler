@@ -4,6 +4,7 @@ use axcut::syntax::{
     statements::{Call, Clause, Statement, Switch},
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
+
 use std::{
     collections::{BTreeSet, HashMap, HashSet},
     rc::Rc,
