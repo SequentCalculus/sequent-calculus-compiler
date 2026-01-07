@@ -1,3 +1,4 @@
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
     syntax::statements::{Call, Invoke, Statement},
@@ -53,5 +54,19 @@ impl Rewrite for Invoke {
             }
             .into()
         }
+    }
+}
+
+impl CleanupInlineGather for Invoke {
+    type Target = Self;
+    fn cleanup_inline_gather(self, _: &mut CleanupInlineState) -> Self::Target {
+        self
+    }
+}
+
+impl CleanupInline for Invoke {
+    type Target = Self;
+    fn cleanup_inline(self, _: &mut CleanupInlineState) -> Self::Target {
+        self
     }
 }
