@@ -2,7 +2,7 @@ use crate::{OptimizationStats, def::rewrite_def, rewrite::RewriteState};
 use axcut::syntax::Prog;
 use std::collections::{HashMap, HashSet};
 
-pub fn rewrite_prog(mut program: Prog, max_runs: u64) -> Prog {
+pub fn rewrite_prog(mut program: Prog, max_runs: u64) -> (Prog, OptimizationStats) {
     let defs = std::mem::take(&mut program.defs);
     // we thread the set of labels of top-level functions through the translation, because we need
     // to generate fresh labels when we lift statements
