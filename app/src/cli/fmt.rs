@@ -38,8 +38,8 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
     }
 }
 
-pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
-    let mut drv = Driver::new();
+pub fn exec(cmd: Args, colored: bool, opt_passes: u64) -> miette::Result<()> {
+    let mut drv = Driver::new(opt_passes);
     let parsed = drv.parsed(&cmd.filepath);
     let parsed = match parsed {
         Ok(parsed) => parsed,

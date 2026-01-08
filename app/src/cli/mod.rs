@@ -11,6 +11,7 @@ mod fmt;
 mod focus;
 mod gen_completions;
 mod linearize;
+mod rewrite;
 mod shrink;
 mod texify;
 
@@ -34,15 +35,16 @@ pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
     match cli.command {
-        Check(args) => check::exec(args),
+        Check(args) => check::exec(args, cli.opt_passes),
         Clean(args) => clean::exec(args),
-        Codegen(args) => codegen::exec(args),
-        Compile(args) => compile::exec(args, !cli.no_color),
-        Focus(args) => focus::exec(args, !cli.no_color),
-        Fmt(args) => fmt::exec(args, !cli.no_color),
-        Linearize(args) => linearize::exec(args, !cli.no_color),
-        Shrink(args) => shrink::exec(args, !cli.no_color),
-        Texify(args) => texify::exec(args),
+        Codegen(args) => codegen::exec(args, cli.opt_passes),
+        Compile(args) => compile::exec(args, !cli.no_color, cli.opt_passes),
+        Focus(args) => focus::exec(args, !cli.no_color, cli.opt_passes),
+        Fmt(args) => fmt::exec(args, !cli.no_color, cli.opt_passes),
+        Linearize(args) => linearize::exec(args, !cli.no_color, cli.opt_passes),
+        Rewrite(args) => rewrite::exec(args, !cli.no_color, cli.opt_passes),
+        Shrink(args) => shrink::exec(args, !cli.no_color, cli.opt_passes),
+        Texify(args) => texify::exec(args, cli.opt_passes),
         GenerateCompletion(args) => gen_completions::exec(args),
     }
 }
@@ -51,10 +53,15 @@ pub fn exec() -> miette::Result<()> {
 #[derive(Parser)]
 #[clap(version, author, about, long_about = None)]
 struct Cli {
+    /// Command to execute
     #[clap(subcommand)]
     command: Command,
+    /// Print output without color
     #[clap(short, long)]
     no_color: bool,
+    /// maximum number of optimization passes to run
+    #[clap(short, long, default_value_t = 10)]
+    opt_passes: u64,
 }
 
 /// This enum encodes the commands the compiler can execute.
@@ -76,6 +83,8 @@ enum Command {
     Linearize(linearize::Args),
     /// Shrink the definitions of a file to AxCut
     Shrink(shrink::Args),
+    /// Rewrite the definitions of a file
+    Rewrite(rewrite::Args),
     /// Print program representations as LaTeX code
     Texify(texify::Args),
     /// Generate completion scripts for various shells

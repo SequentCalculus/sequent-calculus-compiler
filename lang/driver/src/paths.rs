@@ -26,6 +26,9 @@ pub const SHRUNK_PATH: &str = "shrunk";
 /// Path for linearized axcut files
 pub const LINEARIZED_PATH: &str = "linearized";
 
+/// Path for rewritten axcut files
+pub const REWRITTEN_PATH: &str = "rewritten";
+
 /// Path for assembly files
 pub const ASSEMBLY_PATH: &str = "assembly";
 
@@ -118,9 +121,23 @@ impl Paths {
         Path::new(TARGET_PATH).join(LINEARIZED_PATH)
     }
 
+    /// Return the directory for files after inlining.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::rewritten_dir().to_str().unwrap(), "target_scc/rewritten")
+    /// ```
+    pub fn rewritten_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(REWRITTEN_PATH)
+    }
+
     /// Create the directory for files after linearization, if it doesn't exist yet.
     pub fn create_linearized_dir() {
         create_dir_all(Paths::linearized_dir()).expect("Could not create path");
+    }
+
+    /// Create the directory for files after inlining, if it doesn't exist yet.
+    pub fn create_rewritten_dir() {
+        create_dir_all(Paths::rewritten_dir()).expect("Could not create path");
     }
 
     /// Return the directory for the infrastructure files.

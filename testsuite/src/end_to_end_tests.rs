@@ -128,9 +128,10 @@ impl EndToEndTest {
 
 pub fn run_tests(tests: &Vec<EndToEndTest>) -> Vec<TestResult> {
     let mut results = vec![];
-    let mut driver = Driver::new();
+    let mut driver = Driver::new(10);
 
     for test in tests {
+        println!("running test {}", test.name);
         #[cfg(target_arch = "aarch64")]
         results.push(test.run_aarch64(&mut driver));
 

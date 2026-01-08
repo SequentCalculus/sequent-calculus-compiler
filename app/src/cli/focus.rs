@@ -10,8 +10,8 @@ pub struct Args {
     filepath: PathBuf,
 }
 
-pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
-    let mut drv = Driver::new();
+pub fn exec(cmd: Args, colored: bool, opt_passes: u64) -> miette::Result<()> {
+    let mut drv = Driver::new(opt_passes);
     let focused = drv.focused(&cmd.filepath);
     let focused = match focused {
         Ok(focused) => focused,

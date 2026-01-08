@@ -53,7 +53,7 @@ pub struct Args {
     open: bool,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub fn exec(cmd: Args, opt_passes: u64) -> miette::Result<()> {
     let cfg = PrintCfg {
         width: cmd.width,
         allow_linebreaks: true,
@@ -62,10 +62,11 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         indent: cmd.indent,
     };
 
-    let mut drv = Driver::new();
+    let mut drv = Driver::new(opt_passes);
     drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_focused(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_rewritten(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_parsed_tex(&cmd.filepath, &cfg, &format!("{}", cmd.fontsize))?;
     match cmd.backend {
