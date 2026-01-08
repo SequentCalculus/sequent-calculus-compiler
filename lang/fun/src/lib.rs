@@ -392,6 +392,10 @@ pub mod test_common {
         Def {
             span: Span::default(),
             name: "mult".to_owned(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: context_mult(),
             body: Case {
                 span: Span::default(),
@@ -440,6 +444,10 @@ pub mod test_common {
         Def {
             span: Span::default(),
             name: "mult".to_owned(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: context_mult(),
             ret_ty: Ty::mk_i64(),
             body: Case {

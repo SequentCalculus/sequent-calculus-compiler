@@ -59,7 +59,7 @@ mod compile_tests {
     };
     use codespan::Span;
     use fun::syntax::{
-        context::Chirality::Prd,
+        context::{Chirality::Prd, TypeContext},
         declarations::Def,
         program::CheckedProgram,
         terms::{Lit, XVar},
@@ -73,6 +73,10 @@ mod compile_tests {
         Def {
             span: Span::default(),
             name: "main".to_string(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: ctx,
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_i64(),
@@ -84,6 +88,10 @@ mod compile_tests {
         Def {
             span: Span::default(),
             name: "id".to_string(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: ctx,
             body: XVar {
                 span: Span::default(),

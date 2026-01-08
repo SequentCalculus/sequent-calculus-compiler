@@ -66,6 +66,7 @@ mod compile_tests {
                         ctor_templates: HashMap::default(),
                         dtor_templates: HashMap::default(),
                         type_templates: HashMap::default(),
+                        def_templates: HashMap::default(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),

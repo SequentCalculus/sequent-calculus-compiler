@@ -51,6 +51,7 @@ pub struct SymbolTable {
     /// their [polarity](Polarity) determining whether they are data or codata, to their type
     /// parameters, and to their name of xtors.
     pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
+    pub def_templates: HashMap<Name, TypeContext>,
 }
 
 impl SymbolTable {
@@ -233,6 +234,9 @@ impl BuildSymbolTable for Def {
             self.name.clone(),
             (self.context.clone(), self.ret_ty.clone()),
         );
+        symbol_table
+            .def_templates
+            .insert(self.name.clone(), self.type_params.clone());
         Ok(())
     }
 }
