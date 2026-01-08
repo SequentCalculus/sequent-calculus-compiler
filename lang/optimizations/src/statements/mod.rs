@@ -29,6 +29,7 @@ impl Rewrite for Statement {
             Statement::PrintI64(prnt) => prnt.rewrite(state).into(),
             Statement::IfC(ifc) => ifc.rewrite(state).into(),
             Statement::Exit(ex) => ex.rewrite(state).into(),
+            Statement::Default() => unreachable!("default statement should never occur"),
         }
     }
 }

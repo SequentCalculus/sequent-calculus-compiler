@@ -100,6 +100,12 @@ impl TypingContext {
         self.bindings.into_iter().map(|binding| binding.var)
     }
 
+    /// This function returns an iterator over the variables in a typing context, cloning the
+    /// variables.
+    pub fn iter_vars_cloned(&self) -> impl Iterator<Item = Var> {
+        self.bindings.iter().map(|binding| binding.var.clone())
+    }
+
     /// This function picks fresh names for variables that are duplicated in a context.
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the
