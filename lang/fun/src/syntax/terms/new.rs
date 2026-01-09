@@ -10,7 +10,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// This struct defines a copattern match of a codata type. It consists of a list of clauses, and
 /// after typechecking also of the inferred type.
@@ -30,6 +30,12 @@ pub struct New {
     pub clauses: Vec<Clause>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl New {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for New {

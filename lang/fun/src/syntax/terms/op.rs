@@ -4,6 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::*;
+use std::collections::HashMap;
 
 use crate::syntax::*;
 use crate::traits::*;
@@ -52,6 +53,12 @@ pub struct Op {
     pub op: BinOp,
     /// The second operand
     pub snd: Rc<Term>,
+}
+
+impl Op {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Op {

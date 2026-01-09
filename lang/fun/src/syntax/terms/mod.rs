@@ -37,9 +37,10 @@ pub use print::*;
 pub use var::*;
 
 use printer::Print;
+use std::collections::HashMap;
 
 use crate::{
-    syntax::names::Var,
+    syntax::names::{Name, Var},
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -87,6 +88,29 @@ pub enum Term {
     Exit(Exit),
     /// Parethesized term
     Paren(Paren),
+}
+
+impl Term {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        match self {
+            Term::XVar(var) => var.subst_ty(mappings).into(),
+            Term::Lit(lit) => lit.subst_ty(mappings).into(),
+            Term::Op(op) => op.subst_ty(mappings).into(),
+            Term::IfC(ifc) => ifc.subst_ty(mappings).into(),
+            Term::PrintI64(print) => print.subst_ty(mappings).into(),
+            Term::Let(lt) => lt.subst_ty(mappings).into(),
+            Term::Call(call) => call.subst_ty(mappings).into(),
+            Term::CallTemplate(ct) => ct.subst_ty(mappings).into(),
+            Term::Constructor(ctor) => ctor.subst_ty(mappings).into(),
+            Term::Destructor(dtor) => dtor.subst_ty(mappings).into(),
+            Term::Case(case) => case.subst_ty(mappings).into(),
+            Term::New(new) => new.subst_ty(mappings).into(),
+            Term::Goto(goto) => goto.subst_ty(mappings).into(),
+            Term::Label(label) => label.subst_ty(mappings).into(),
+            Term::Exit(exit) => exit.subst_ty(mappings).into(),
+            Term::Paren(paren) => paren.subst_ty(mappings).into(),
+        }
+    }
 }
 
 impl OptTyped for Term {

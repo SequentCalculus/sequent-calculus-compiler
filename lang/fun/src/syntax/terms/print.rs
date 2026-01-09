@@ -4,6 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
+use std::collections::HashMap;
 
 use crate::syntax::*;
 use crate::traits::*;
@@ -31,6 +32,12 @@ pub struct PrintI64 {
     pub next: Rc<Term>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl PrintI64 {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for PrintI64 {

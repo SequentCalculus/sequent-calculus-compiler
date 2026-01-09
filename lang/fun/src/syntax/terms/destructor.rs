@@ -10,7 +10,10 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
 /// on which to invoke the destructor, the name of the destructor, a list of type arguments
@@ -35,6 +38,12 @@ pub struct Destructor {
     pub args: Arguments,
     /// Type (inferred) of the term
     pub ty: Option<Ty>,
+}
+
+impl Destructor {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Destructor {

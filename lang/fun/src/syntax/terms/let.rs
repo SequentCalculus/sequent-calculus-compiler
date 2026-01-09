@@ -4,6 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{COLON, EQ, LET, SEMI};
 use printer::*;
+use std::collections::HashMap;
 
 use crate::syntax::*;
 use crate::traits::*;
@@ -36,6 +37,12 @@ pub struct Let {
     pub in_term: Rc<Term>,
     /// The (inferred) type of the entire term
     pub ty: Option<Ty>,
+}
+
+impl Let {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Let {

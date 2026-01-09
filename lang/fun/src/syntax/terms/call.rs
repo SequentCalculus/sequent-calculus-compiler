@@ -3,6 +3,7 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::*;
+use std::collections::HashMap;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
@@ -28,6 +29,12 @@ pub struct Call {
     pub args: Arguments,
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
+}
+
+impl Call {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Call {

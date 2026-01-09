@@ -49,13 +49,13 @@ impl Program {
                 Declaration::Def(def) => {
                     defs.push(def);
                 }
-                Declaration::DefTemplate(_) => {
-                    todo!()
+                Declaration::DefTemplate(templ) => {
+                    templ.check(&symbol_table)?;
                 }
             }
         }
 
-        let defs = defs
+        let mut defs: Vec<Def> = defs
             .into_iter()
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
@@ -124,6 +124,8 @@ impl Program {
                 }
             }
         }
+
+        defs.extend(symbol_table.instantiated_defs);
 
         Ok(CheckedProgram {
             defs,

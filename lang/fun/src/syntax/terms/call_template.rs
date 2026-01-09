@@ -3,6 +3,7 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::*;
+use std::collections::HashMap;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
@@ -30,6 +31,12 @@ pub struct CallTemplate {
     pub args: Arguments,
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
+}
+
+impl CallTemplate {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for CallTemplate {
@@ -60,7 +67,35 @@ impl Check for CallTemplate {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        todo!()
+        let def_template = symbol_table
+            .def_templates
+            .get(&self.name)
+            .ok_or(Error::Undefined {
+                span: self.span.to_miette(),
+                name: self.name.clone(),
+            })?;
+        let def_instantiated = def_template.instantiate(self.span, self.type_args.args.clone())?;
+        let def_checked = def_instantiated.check(symbol_table)?;
+
+        let (def_context, def_ty) = (def_checked.context.clone(), def_checked.ret_ty.clone());
+        symbol_table.defs.insert(
+            def_checked.name.clone(),
+            (def_context.clone(), def_ty.clone()),
+        );
+        symbol_table.instantiated_defs.push(def_checked);
+
+        check_equality(&self.span, symbol_table, expected, &def_ty)?;
+
+        self.args = check_args(
+            &self.span.to_miette(),
+            symbol_table,
+            context,
+            self.args,
+            &def_context,
+        )?;
+
+        self.ret_ty = Some(expected.clone());
+        Ok(self)
     }
 }
 

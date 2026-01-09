@@ -10,7 +10,10 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines the control operator capturing the current continuation/program context. It
 /// consists of a covariable to which the continuation is bound, the body in which the continuation
@@ -31,6 +34,12 @@ pub struct Label {
     pub term: Rc<Term>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl Label {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Label {

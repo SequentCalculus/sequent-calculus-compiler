@@ -10,7 +10,10 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
 /// match, a list of type arguments instantiating the type parameters of the data type, a list of
@@ -36,6 +39,12 @@ pub struct Case {
     pub clauses: Vec<Clause>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl Case {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Case {

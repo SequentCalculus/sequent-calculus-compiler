@@ -11,7 +11,10 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines the control operator for invoking a captured continuation/program context
 /// by control operator [`label`](crate::syntax::terms::Label). It consists of a covariable to
@@ -32,6 +35,12 @@ pub struct Goto {
     pub term: Rc<Term>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl Goto {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Goto {

@@ -4,6 +4,7 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::*;
+use std::collections::HashMap;
 
 use crate::syntax::*;
 use crate::traits::*;
@@ -68,6 +69,12 @@ pub struct IfC {
     pub elsec: Rc<Term>,
     /// The (inferred) type of the term
     pub ty: Option<Ty>,
+}
+
+impl IfC {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for IfC {

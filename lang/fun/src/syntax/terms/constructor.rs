@@ -9,7 +9,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
 /// constructor, the arguments of the constructor, and after typechecking also of the inferred
@@ -29,6 +29,12 @@ pub struct Constructor {
     pub args: Arguments,
     /// The (inferred) type of the constructor
     pub ty: Option<Ty>,
+}
+
+impl Constructor {
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
+    }
 }
 
 impl OptTyped for Constructor {

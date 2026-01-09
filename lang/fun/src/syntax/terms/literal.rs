@@ -3,6 +3,7 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::*;
+use std::collections::HashMap;
 
 use crate::syntax::*;
 use crate::typing::*;
@@ -25,6 +26,10 @@ impl Lit {
             span: Span::default(),
             lit,
         }
+    }
+
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
     }
 }
 

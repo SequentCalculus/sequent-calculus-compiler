@@ -8,7 +8,10 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 /// This struct defines a term in parentheses.
 #[derive(Derivative, Debug, Clone)]
@@ -28,6 +31,10 @@ impl Paren {
             span: Span::default(),
             inner: Rc::new(tm.into()),
         }
+    }
+
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
     }
 }
 

@@ -3,6 +3,7 @@
 use codespan::Span;
 use derivative::Derivative;
 use printer::*;
+use std::collections::HashMap;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
@@ -35,6 +36,10 @@ impl XVar {
             ty: None,
             chi: None,
         }
+    }
+
+    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+        todo!()
     }
 }
 

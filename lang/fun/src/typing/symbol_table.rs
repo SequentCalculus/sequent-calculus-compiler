@@ -51,7 +51,8 @@ pub struct SymbolTable {
     /// their [polarity](Polarity) determining whether they are data or codata, to their type
     /// parameters, and to their name of xtors.
     pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
-    pub def_templates: HashMap<Name, TypeContext>,
+    pub def_templates: HashMap<Name, DefTemplate>,
+    pub instantiated_defs: Vec<Def>,
 }
 
 impl SymbolTable {
@@ -174,8 +175,8 @@ impl SymbolTable {
                 }
             }
         }
-        for (name, type_params) in &self.def_templates {
-            type_params.no_dups(name)?;
+        for (name, def) in &self.def_templates {
+            def.type_params.no_dups(name)?;
         }
         Ok(())
     }
@@ -243,12 +244,17 @@ impl BuildSymbolTable for Def {
 }
 
 impl BuildSymbolTable for DefTemplate {
-    fn build(&self, _: &mut SymbolTable) -> Result<(), Error> {
-        /*        symbol_table
-        .def_templates
-        .insert(self.name.clone(), self.type_params.clone());*/
-
-        todo!()
+    fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        if symbol_table.defs.contains_key(&self.name) {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span.to_miette(),
+                name: self.name.clone(),
+            });
+        }
+        symbol_table
+            .def_templates
+            .insert(self.name.clone(), self.clone());
+        Ok(())
     }
 }
 

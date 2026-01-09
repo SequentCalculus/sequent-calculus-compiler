@@ -4,7 +4,9 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{COLON, DEF};
 use printer::*;
+use std::collections::HashMap;
 
+use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::typing::*;
 
@@ -37,17 +39,42 @@ pub struct DefTemplate {
 }
 
 impl DefTemplate {
-    /// This function checks the well-formedness of the top-level function. This consists of
-    /// checking the well-formedness of the paramater list and return type, and typechecking the
-    /// body in the context given by the parameters.
-    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<DefTemplate, Error> {
-        self.context.no_dups(&self.name)?;
-        self.context.check(symbol_table)?;
-        self.ret_ty.check(&self.span, symbol_table)?;
+    /// This function checks the well-formedness of the top-level template. This consists of
+    /// checking the well-formedness of the paramater list and return type
+    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        self.type_params.no_dups(&self.name)?;
+        self.context
+            .check_template(symbol_table, &self.type_params)?;
+        self.ret_ty
+            .check_template(&self.span, symbol_table, &self.type_params)?;
+        Ok(())
+    }
 
-        self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
-
-        Ok(self)
+    pub fn instantiate(&self, span: Span, args: Vec<Ty>) -> Result<Def, Error> {
+        if self.type_params.bindings.len() != args.len() {
+            return Err(Error::WrongNumberOfTypeArguments {
+                span: span.to_miette(),
+                expected: self.type_params.bindings.len(),
+                got: args.len(),
+            });
+        }
+        let mappings = self
+            .type_params
+            .bindings
+            .iter()
+            .cloned()
+            .zip(args.into_iter())
+            .collect();
+        let new_context = self.context.clone().subst_ty(&mappings);
+        let new_ret = self.ret_ty.clone().subst_ty(&mappings);
+        let new_body = self.body.clone().subst_ty(&mappings);
+        Ok(Def {
+            span: self.span,
+            name: self.name.clone(),
+            context: new_context,
+            ret_ty: new_ret,
+            body: new_body,
+        })
     }
 }
 
