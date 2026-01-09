@@ -67,6 +67,7 @@ mod compile_tests {
                         dtor_templates: HashMap::default(),
                         type_templates: HashMap::default(),
                         def_templates: HashMap::default(),
+                        instantiated_defs: Vec::new(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),
