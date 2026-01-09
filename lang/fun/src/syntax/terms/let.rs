@@ -40,8 +40,12 @@ pub struct Let {
 }
 
 impl Let {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.var_ty = self.var_ty.subst_ty(mappings);
+        self.bound_term = Rc::new(Rc::unwrap_or_clone(self.bound_term).subst_ty(mappings));
+        self.in_term = Rc::new(Rc::unwrap_or_clone(self.in_term).subst_ty(mappings));
+        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

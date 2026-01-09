@@ -299,6 +299,15 @@ impl TypeArgs {
             args,
         }
     }
+
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.args = self
+            .args
+            .into_iter()
+            .map(|arg| arg.subst_ty(mappings))
+            .collect();
+        self
+    }
 }
 
 impl Print for TypeArgs {

@@ -9,7 +9,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// This struct defines a clause in a match or a comatch in Fun. It consists of a
 /// [polarity](Polarity) that determines whether it is in a match (of a data type) or a comatch
@@ -37,6 +37,14 @@ pub struct Clause {
     pub context: TypingContext,
     /// The body of the pattern
     pub body: Term,
+}
+
+impl Clause {
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.context = self.context.subst_ty(mappings);
+        self.body = self.body.subst_ty(mappings);
+        self
+    }
 }
 
 impl OptTyped for Clause {

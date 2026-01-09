@@ -34,8 +34,11 @@ pub struct CallTemplate {
 }
 
 impl CallTemplate {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.type_args = self.type_args.subst_ty(mappings);
+        self.args = self.args.subst_ty(mappings);
+        self.ret_ty = self.ret_ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

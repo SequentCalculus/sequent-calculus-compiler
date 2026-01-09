@@ -38,8 +38,10 @@ pub struct Goto {
 }
 
 impl Goto {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.term = Rc::new(Rc::unwrap_or_clone(self.term).subst_ty(mappings));
+        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

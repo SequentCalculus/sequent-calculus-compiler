@@ -72,8 +72,15 @@ pub struct IfC {
 }
 
 impl IfC {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.fst = Rc::new(Rc::unwrap_or_clone(self.fst).subst_ty(mappings));
+        self.snd = self
+            .snd
+            .map(|snd| Rc::new(Rc::unwrap_or_clone(snd).subst_ty(mappings)));
+        self.thenc = Rc::new(Rc::unwrap_or_clone(self.thenc).subst_ty(mappings));
+        self.elsec = Rc::new(Rc::unwrap_or_clone(self.elsec).subst_ty(mappings));
+        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

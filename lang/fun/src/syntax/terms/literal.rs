@@ -28,8 +28,8 @@ impl Lit {
         }
     }
 
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(self, _: &HashMap<Name, Ty>) -> Self {
+        self
     }
 }
 

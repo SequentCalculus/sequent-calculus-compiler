@@ -4,7 +4,6 @@ use codespan::Span;
 use derivative::Derivative;
 use printer::tokens::{COLON, DEF};
 use printer::*;
-use std::collections::HashMap;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;

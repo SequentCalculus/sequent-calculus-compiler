@@ -4,10 +4,23 @@ use printer::*;
 
 use crate::syntax::*;
 
+use std::collections::HashMap;
+
 /// This struct defines arguments in Fun. They consist of a list of [`Term`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
     pub entries: Vec<Term>,
+}
+
+impl Arguments {
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.entries = self
+            .entries
+            .into_iter()
+            .map(|ent| ent.subst_ty(mappings))
+            .collect();
+        self
+    }
 }
 
 impl Print for Arguments {

@@ -42,8 +42,16 @@ pub struct Case {
 }
 
 impl Case {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.scrutinee = Rc::new(Rc::unwrap_or_clone(self.scrutinee).subst_ty(mappings));
+        self.type_args = self.type_args.subst_ty(mappings);
+        self.clauses = self
+            .clauses
+            .into_iter()
+            .map(|cl| cl.subst_ty(mappings))
+            .collect();
+        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

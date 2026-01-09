@@ -32,8 +32,10 @@ pub struct Call {
 }
 
 impl Call {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.args = self.args.subst_ty(mappings);
+        self.ret_ty = self.ret_ty.map(|ty| ty.subst_ty(mappings));
+        self
     }
 }
 

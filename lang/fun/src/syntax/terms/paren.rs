@@ -33,8 +33,9 @@ impl Paren {
         }
     }
 
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
-        todo!()
+    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.inner = Rc::new(Rc::unwrap_or_clone(self.inner).subst_ty(mappings));
+        self
     }
 }
 
