@@ -28,10 +28,10 @@ pub struct Exit {
     pub ty: Option<Ty>,
 }
 
-impl Exit {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.arg = Rc::new(Rc::unwrap_or_clone(self.arg).subst_ty(mappings));
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+impl SubstType for Exit {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.arg = self.arg.subst_ty(mappings);
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

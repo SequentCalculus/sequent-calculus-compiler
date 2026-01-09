@@ -32,14 +32,10 @@ pub struct New {
     pub ty: Option<Ty>,
 }
 
-impl New {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.clauses = self
-            .clauses
-            .into_iter()
-            .map(|cl| cl.subst_ty(mappings))
-            .collect();
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+impl SubstType for New {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.clauses = self.clauses.subst_ty(mappings);
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

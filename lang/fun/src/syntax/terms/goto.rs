@@ -37,10 +37,10 @@ pub struct Goto {
     pub ty: Option<Ty>,
 }
 
-impl Goto {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.term = Rc::new(Rc::unwrap_or_clone(self.term).subst_ty(mappings));
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+impl SubstType for Goto {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.term = self.term.subst_ty(mappings);
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

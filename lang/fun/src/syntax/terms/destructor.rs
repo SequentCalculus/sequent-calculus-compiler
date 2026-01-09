@@ -40,12 +40,12 @@ pub struct Destructor {
     pub ty: Option<Ty>,
 }
 
-impl Destructor {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.scrutinee = Rc::new(Rc::unwrap_or_clone(self.scrutinee).subst_ty(mappings));
+impl SubstType for Destructor {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.scrutinee = self.scrutinee.subst_ty(mappings);
         self.type_args = self.type_args.subst_ty(mappings);
         self.args = self.args.subst_ty(mappings);
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

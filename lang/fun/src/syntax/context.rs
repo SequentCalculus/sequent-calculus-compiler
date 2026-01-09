@@ -8,6 +8,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::SubstType;
 use crate::typing::*;
 
 use std::collections::{HashMap, HashSet};
@@ -46,10 +47,8 @@ pub struct ContextBinding {
     pub ty: Ty,
 }
 
-impl ContextBinding {
-    /// This function substitutes type parameters with concrete types in the type of the binding.
-    /// - `mappings` contains the substitutions to perform.
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
+impl SubstType for ContextBinding {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> ContextBinding {
         self.ty = self.ty.subst_ty(mappings);
         self
     }
@@ -184,16 +183,11 @@ impl TypingContext {
             ty,
         });
     }
+}
 
-    /// This function substitutes type parameters with concrete types in all types found in the
-    /// context bindings.
-    /// - `mappings` contains the substitutions to perform.
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> TypingContext {
-        self.bindings = self
-            .bindings
-            .into_iter()
-            .map(|binding| binding.subst_ty(mappings))
-            .collect();
+impl SubstType for TypingContext {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> TypingContext {
+        self.bindings = self.bindings.subst_ty(mappings);
         self
     }
 }

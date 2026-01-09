@@ -55,10 +55,10 @@ pub struct Op {
     pub snd: Rc<Term>,
 }
 
-impl Op {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.fst = Rc::new(Rc::unwrap_or_clone(self.fst).subst_ty(mappings));
-        self.snd = Rc::new(Rc::unwrap_or_clone(self.snd).subst_ty(mappings));
+impl SubstType for Op {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.fst = self.fst.subst_ty(mappings);
+        self.snd = self.snd.subst_ty(mappings);
         self
     }
 }

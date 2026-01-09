@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::SubstType;
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name

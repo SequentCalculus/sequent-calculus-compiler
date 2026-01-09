@@ -39,12 +39,12 @@ pub struct Let {
     pub ty: Option<Ty>,
 }
 
-impl Let {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+impl SubstType for Let {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
         self.var_ty = self.var_ty.subst_ty(mappings);
-        self.bound_term = Rc::new(Rc::unwrap_or_clone(self.bound_term).subst_ty(mappings));
-        self.in_term = Rc::new(Rc::unwrap_or_clone(self.in_term).subst_ty(mappings));
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+        self.bound_term = self.bound_term.subst_ty(mappings);
+        self.in_term = self.in_term.subst_ty(mappings);
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

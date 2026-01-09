@@ -34,11 +34,11 @@ pub struct PrintI64 {
     pub ty: Option<Ty>,
 }
 
-impl PrintI64 {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.arg = Rc::new(Rc::unwrap_or_clone(self.arg).subst_ty(mappings));
-        self.next = Rc::new(Rc::unwrap_or_clone(self.next).subst_ty(mappings));
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+impl SubstType for PrintI64 {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.arg = self.arg.subst_ty(mappings);
+        self.next = self.next.subst_ty(mappings);
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

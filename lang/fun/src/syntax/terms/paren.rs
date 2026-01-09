@@ -32,9 +32,11 @@ impl Paren {
             inner: Rc::new(tm.into()),
         }
     }
+}
 
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.inner = Rc::new(Rc::unwrap_or_clone(self.inner).subst_ty(mappings));
+impl SubstType for Paren {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.inner = self.inner.subst_ty(mappings);
         self
     }
 }

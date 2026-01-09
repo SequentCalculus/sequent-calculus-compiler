@@ -41,7 +41,7 @@ use std::collections::HashMap;
 
 use crate::{
     syntax::names::{Name, Var},
-    traits::used_binders::UsedBinders,
+    traits::{subst_type::SubstType, used_binders::UsedBinders},
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
@@ -90,8 +90,8 @@ pub enum Term {
     Paren(Paren),
 }
 
-impl Term {
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
+impl SubstType for Term {
+    fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Self {
         match self {
             Term::XVar(var) => var.subst_ty(mappings).into(),
             Term::Lit(lit) => lit.subst_ty(mappings).into(),

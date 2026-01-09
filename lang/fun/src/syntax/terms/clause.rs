@@ -39,8 +39,8 @@ pub struct Clause {
     pub body: Term,
 }
 
-impl Clause {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+impl SubstType for Clause {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
         self.context = self.context.subst_ty(mappings);
         self.body = self.body.subst_ty(mappings);
         self

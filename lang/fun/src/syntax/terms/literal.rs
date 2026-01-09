@@ -6,6 +6,7 @@ use printer::*;
 use std::collections::HashMap;
 
 use crate::syntax::*;
+use crate::traits::SubstType;
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -27,8 +28,10 @@ impl Lit {
             lit,
         }
     }
+}
 
-    pub fn subst_ty(self, _: &HashMap<Name, Ty>) -> Self {
+impl SubstType for Lit {
+    fn subst_ty(self, _: &HashMap<Name, Ty>) -> Self {
         self
     }
 }

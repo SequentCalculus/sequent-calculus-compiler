@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::SubstType;
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -116,10 +117,10 @@ impl Ty {
             type_args,
         }
     }
+}
 
-    /// This function substitutes type parameters with monomorphic types inside a given type.
-    /// - `mappings` contains the substitutions to perform.
-    pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {
+impl SubstType for Ty {
+    fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {
         match self {
             Ty::I64 { .. } => self,
             Ty::Decl {
@@ -131,14 +132,7 @@ impl Ty {
                 None => Ty::Decl {
                     span,
                     name,
-                    type_args: TypeArgs {
-                        span: type_args.span,
-                        args: type_args
-                            .args
-                            .into_iter()
-                            .map(|ty| ty.subst_ty(mappings))
-                            .collect(),
-                    },
+                    type_args: type_args.subst_ty(mappings),
                 },
             },
         }
@@ -299,13 +293,11 @@ impl TypeArgs {
             args,
         }
     }
+}
 
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.args = self
-            .args
-            .into_iter()
-            .map(|arg| arg.subst_ty(mappings))
-            .collect();
+impl SubstType for TypeArgs {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.args = self.args.subst_ty(mappings);
         self
     }
 }

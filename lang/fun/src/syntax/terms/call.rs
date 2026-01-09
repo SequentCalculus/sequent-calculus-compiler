@@ -31,10 +31,10 @@ pub struct Call {
     pub ret_ty: Option<Ty>,
 }
 
-impl Call {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+impl SubstType for Call {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
         self.args = self.args.subst_ty(mappings);
-        self.ret_ty = self.ret_ty.map(|ty| ty.subst_ty(mappings));
+        self.ret_ty = self.ret_ty.subst_ty(mappings);
         self
     }
 }

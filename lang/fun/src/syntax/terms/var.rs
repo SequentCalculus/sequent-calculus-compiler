@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::SubstType;
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -37,9 +38,11 @@ impl XVar {
             chi: None,
         }
     }
+}
 
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.ty = self.ty.map(|ty| ty.subst_ty(mappings));
+impl SubstType for XVar {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.ty = self.ty.subst_ty(mappings);
         self
     }
 }

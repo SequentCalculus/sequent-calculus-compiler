@@ -3,6 +3,7 @@
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::SubstType;
 
 use std::collections::HashMap;
 
@@ -12,13 +13,9 @@ pub struct Arguments {
     pub entries: Vec<Term>,
 }
 
-impl Arguments {
-    pub fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
-        self.entries = self
-            .entries
-            .into_iter()
-            .map(|ent| ent.subst_ty(mappings))
-            .collect();
+impl SubstType for Arguments {
+    fn subst_ty(mut self, mappings: &HashMap<Name, Ty>) -> Self {
+        self.entries = self.entries.subst_ty(mappings);
         self
     }
 }
