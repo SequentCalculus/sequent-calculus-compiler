@@ -70,22 +70,28 @@ impl Check for CallTemplate {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let def_template = symbol_table
-            .def_templates
-            .get(&self.name)
-            .ok_or(Error::Undefined {
-                span: self.span.to_miette(),
-                name: self.name.clone(),
-            })?;
-        let def_instantiated = def_template.instantiate(self.span, self.type_args.args.clone())?;
-        let def_checked = def_instantiated.check(symbol_table)?;
+        let def_template =
+            symbol_table
+                .def_templates
+                .get(&self.name)
+                .cloned()
+                .ok_or(Error::Undefined {
+                    span: self.span.to_miette(),
+                    name: self.name.clone(),
+                })?;
+        let instantiated_name =
+            def_template.instantiate(self.span, self.type_args.args.clone(), symbol_table)?;
+        self.name = instantiated_name.clone();
 
-        let (def_context, def_ty) = (def_checked.context.clone(), def_checked.ret_ty.clone());
-        symbol_table.defs.insert(
-            def_checked.name.clone(),
-            (def_context.clone(), def_ty.clone()),
-        );
-        symbol_table.instantiated_defs.push(def_checked);
+        let (def_context, def_ty) =
+            symbol_table
+                .defs
+                .get(&instantiated_name)
+                .cloned()
+                .ok_or(Error::Undefined {
+                    span: self.span.to_miette(),
+                    name: instantiated_name,
+                })?;
 
         check_equality(&self.span, symbol_table, expected, &def_ty)?;
 

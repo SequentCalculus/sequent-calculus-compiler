@@ -5,7 +5,7 @@ codata Fun[A,B] { apply(a:A): B }
 def map[A,B](ls:List[A],f:Fun[A,B]): List[B]{
   ls.case[A]{
     Nil => Nil,
-    Cons(a,b) => Cons(f.apply[A,B](a),map[A,B](f,b))
+    Cons(a,b) => Cons(f.apply[A,B](a),map[A,B](b,f))
   }
 }
 

@@ -50,7 +50,29 @@ impl DefTemplate {
         Ok(())
     }
 
-    pub fn instantiate(&self, span: Span, args: Vec<Ty>) -> Result<Def, Error> {
+    pub fn instantiate(
+        &self,
+        span: Span,
+        args: Vec<Ty>,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<Name, Error> {
+        let new_name = format!(
+            "{}_{}",
+            self.name,
+            args.iter()
+                .map(|arg| arg.print_to_string(None))
+                .collect::<Vec<_>>()
+                .join("_")
+        );
+
+        if let Some(def) = symbol_table
+            .instantiated_defs
+            .iter()
+            .find(|def| def.name == new_name)
+        {
+            return Ok(def.name.clone());
+        }
+
         if self.type_params.bindings.len() != args.len() {
             return Err(Error::WrongNumberOfTypeArguments {
                 span: span.to_miette(),
@@ -68,13 +90,19 @@ impl DefTemplate {
         let new_context = self.context.clone().subst_ty(&mappings);
         let new_ret = self.ret_ty.clone().subst_ty(&mappings);
         let new_body = self.body.clone().subst_ty(&mappings);
-        Ok(Def {
+        let new_def = Def {
             span: self.span,
-            name: self.name.clone(),
-            context: new_context,
-            ret_ty: new_ret,
+            name: new_name.clone(),
+            context: new_context.clone(),
+            ret_ty: new_ret.clone(),
             body: new_body,
-        })
+        };
+        symbol_table
+            .defs
+            .insert(new_name.clone(), (new_context, new_ret));
+        symbol_table.instantiated_defs.push(new_def.clone());
+        new_def.check(symbol_table)?;
+        Ok(new_name)
     }
 }
 
