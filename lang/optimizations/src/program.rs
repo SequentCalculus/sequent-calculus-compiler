@@ -22,6 +22,7 @@ pub fn cleanup_inline_defs(defs: Vec<Def>) -> Vec<Def> {
         defs,
         def_map,
         used_vars: HashSet::default(),
+        current_def_mark: Mark::Once,
     };
     // we traverse the call graph starting at the entry point, gathering information and inlining
     // trivial definitions
