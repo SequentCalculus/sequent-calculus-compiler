@@ -32,6 +32,7 @@ pub struct CleanupInlineState {
     pub defs: Vec<Def>,
     pub def_map: HashMap<Name, DefInfo>,
     pub used_vars: HashSet<Var>,
+    pub current_def_mark: Mark,
 }
 
 pub trait CleanupInlineGather {
