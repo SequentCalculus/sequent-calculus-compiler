@@ -67,7 +67,8 @@ impl CleanupInlineGather for Call {
         let called_def_position = called_def_info.position;
         let called_def = &state.defs[called_def_position];
         if matches!(&called_def.body, Statement::Invoke(_) | Statement::Exit(_)) {
-            // we can always inline leaf statements, except for `Call`s
+            // we can always inline definitions only consisting of leaf statements, except for
+            // `Call`s
             let subst = called_def
                 .context
                 .iter_vars_cloned()
@@ -75,15 +76,46 @@ impl CleanupInlineGather for Call {
                 .collect::<Vec<_>>();
 
             called_def.body.clone().subst_sim(&subst)
+        } else if matches!(&called_def.body, Statement::Call(_)) {
+            // definitions only consisting of `Call`s could lead to non-termination if always
+            // inlined recursively, because they could form cycles in the call graph; thus, we take
+            // the body out temporarily when inlining recursively, so that we encounter a `Default`
+            // statement when we have reached the last call before closing the cycle
+
+            let subst = called_def
+                .context
+                .iter_vars_cloned()
+                .zip(self.args.iter_vars_cloned())
+                .collect::<Vec<_>>();
+
+            // we always recursively visit the definitions only consisting of `Call`s, but we only
+            // increment their mark on the first time for each call site
+            if state.current_def_mark == Mark::Once {
+                called_def_info.mark.increment();
+            }
+
+            let current_def_mark = state.current_def_mark;
+            state.current_def_mark = called_def_info.mark;
+            let called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
+            let inlined_body = called_def_body.clone().cleanup_inline_gather(state);
+            state.defs[called_def_position].body = called_def_body;
+            state.current_def_mark = current_def_mark;
+
+            inlined_body.subst_sim(&subst)
         } else {
-            let called_def_mark = &mut called_def_info.mark;
-            let called_def_mark_old = *called_def_mark;
-            called_def_mark.increment();
-            if called_def_mark_old == Mark::None {
-                // if we have not yet visited the called `Def`, we do so now
+            // in all other cases we only gather the marking information ...
+            called_def_info.mark.increment();
+            if called_def_info.mark == Mark::Once
+                && !matches!(&called_def.body, Statement::Default())
+            {
+                // ... and only visit the called `Def` if we have not done so yet
+                let current_def_mark = state.current_def_mark;
+                state.current_def_mark = called_def_info.mark;
                 let called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
                 state.defs[called_def_position].body = called_def_body.cleanup_inline_gather(state);
+                state.current_def_mark = current_def_mark;
             }
+
             self.into()
         }
     }
