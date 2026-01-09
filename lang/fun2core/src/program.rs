@@ -59,7 +59,7 @@ mod compile_tests {
     };
     use codespan::Span;
     use fun::syntax::{
-        context::{Chirality::Prd, TypeContext},
+        context::Chirality::Prd,
         declarations::Def,
         program::CheckedProgram,
         terms::{Lit, XVar},

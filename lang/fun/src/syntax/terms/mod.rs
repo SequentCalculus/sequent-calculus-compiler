@@ -1,6 +1,7 @@
 //! This module defines the terms of Fun.
 
 pub mod call;
+pub mod call_template;
 pub mod case;
 pub mod clause;
 pub mod constructor;
@@ -18,6 +19,7 @@ pub mod print;
 pub mod var;
 
 pub use call::*;
+pub use call_template::*;
 pub use case::*;
 pub use clause::*;
 pub use constructor::*;
@@ -67,6 +69,8 @@ pub enum Term {
     Let(Let),
     /// Call of a top-level function
     Call(Call),
+    /// Call of a top-level template
+    CallTemplate(CallTemplate),
     /// Constructor of a data type
     Constructor(Constructor),
     /// Destructor of a codata type
@@ -95,6 +99,7 @@ impl OptTyped for Term {
             Term::PrintI64(print) => print.get_type(),
             Term::Let(lt) => lt.get_type(),
             Term::Call(call) => call.get_type(),
+            Term::CallTemplate(ct) => ct.get_type(),
             Term::Constructor(ctor) => ctor.get_type(),
             Term::Destructor(dtor) => dtor.get_type(),
             Term::Case(case) => case.get_type(),
@@ -121,6 +126,7 @@ impl Print for Term {
             Term::PrintI64(print) => print.print(cfg, alloc),
             Term::Let(r#let) => r#let.print(cfg, alloc),
             Term::Call(call) => call.print(cfg, alloc),
+            Term::CallTemplate(ct) => ct.print(cfg, alloc),
             Term::Constructor(constructor) => constructor.print(cfg, alloc),
             Term::Destructor(destructor) => destructor.print(cfg, alloc),
             Term::Case(case) => case.print(cfg, alloc),
@@ -150,6 +156,7 @@ impl Check for Term {
                 .check(symbol_table, context, expected)
                 .map(Into::into),
             Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
+            Term::CallTemplate(ct) => ct.check(symbol_table, context, expected).map(Into::into),
             Term::Constructor(constructor) => constructor
                 .check(symbol_table, context, expected)
                 .map(Into::into),
@@ -175,6 +182,7 @@ impl UsedBinders for Term {
             Term::PrintI64(print) => print.used_binders(used),
             Term::Let(r#let) => r#let.used_binders(used),
             Term::Call(call) => call.used_binders(used),
+            Term::CallTemplate(ct) => ct.used_binders(used),
             Term::Constructor(constructor) => constructor.used_binders(used),
             Term::Destructor(destructor) => destructor.used_binders(used),
             Term::Case(case) => case.used_binders(used),

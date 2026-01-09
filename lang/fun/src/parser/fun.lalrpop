@@ -129,6 +129,10 @@ OptTypeArgs: TypeArgs = {
     <l: @L> <args: OptBracketedList<Ty>> <r: @R> => TypeArgs { span: span(l, r), args, },
 }
 
+TypeArgs: TypeArgs = {
+    <l:@L> <args:BracketedList<Ty>> <r:@R> => TypeArgs { span: span(l,r), args }
+}
+
 TyDecl: Ty = {
     <l: @L> <name: TypeName> <type_args: OptTypeArgs> <r: @R> =>
         Ty::Decl { span: span(l, r), name, type_args },
@@ -183,6 +187,11 @@ Lit: Lit = {
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
       Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+}
+
+CallTemplate: Term = {
+    <l:@L> <v:Name> <type_args: TypeArgs> <args:Arguments> <r:@R> => 
+        CallTemplate { span:span(l,r), name:v, type_args, args, ret_ty:None }.into()
 }
 
 Label: Label = {

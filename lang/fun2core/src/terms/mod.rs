@@ -5,6 +5,7 @@ use crate::compile::{Compile, CompileState};
 use core_lang::syntax::Ty;
 
 pub mod call;
+pub mod call_template;
 pub mod case;
 pub mod clause;
 pub mod constructor;
@@ -35,6 +36,7 @@ impl Compile for fun::syntax::terms::Term {
             fun::syntax::terms::Term::PrintI64(print) => print.compile(state, ty),
             fun::syntax::terms::Term::Let(r#let) => r#let.compile(state, ty),
             fun::syntax::terms::Term::Call(call) => call.compile(state, ty),
+            fun::syntax::terms::Term::CallTemplate(ct) => ct.compile(state, ty),
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile(state, ty),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile(state, ty),
             fun::syntax::terms::Term::Case(case) => case.compile(state, ty),
@@ -59,6 +61,7 @@ impl Compile for fun::syntax::terms::Term {
             fun::syntax::terms::Term::PrintI64(print) => print.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Let(r#let) => r#let.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Call(call) => call.compile_with_cont(cont, state),
+            fun::syntax::terms::Term::CallTemplate(ct) => ct.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_with_cont(cont, state),
             fun::syntax::terms::Term::Case(case) => case.compile_with_cont(cont, state),
