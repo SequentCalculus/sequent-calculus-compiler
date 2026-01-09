@@ -174,6 +174,9 @@ impl SymbolTable {
                 }
             }
         }
+        for (name, type_params) in &self.def_templates {
+            type_params.no_dups(name)?;
+        }
         Ok(())
     }
 
