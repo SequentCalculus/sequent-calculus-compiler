@@ -15,7 +15,7 @@ pub trait Subst: Clone {
     /// further assumes that all variables substituted into the statement are fresh for this
     /// statement, so that no care is needed to avoid capture.
     /// - `subst` is the list of substitutions to perform. Each substitution is represented by a
-    ///   pair with the first component being the new variable substituted for the old variable in
+    ///   pair with the first component being the old variable substituted by the new variable in
     ///   the second component.
     fn subst_sim(self, subst: &[(Var, Var)]) -> Self;
 }
