@@ -6,10 +6,12 @@ use printer::*;
 pub mod codata;
 pub mod data;
 pub mod def;
+pub mod def_template;
 
 pub use codata::*;
 pub use data::*;
 pub use def::*;
+pub use def_template::*;
 
 /// This enum encodes whether a user-declared type is a data or codata type.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,12 +29,14 @@ pub enum Declaration {
     Data(Data),
     Codata(Codata),
     Def(Def),
+    DefTemplate(DefTemplate),
 }
 
 impl Print for Declaration {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Declaration::Def(def) => def.print(cfg, alloc),
+            Declaration::DefTemplate(temp) => temp.print(cfg, alloc),
             Declaration::Data(data) => data.print(cfg, alloc),
             Declaration::Codata(codata) => codata.print(cfg, alloc),
         }

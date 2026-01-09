@@ -49,6 +49,9 @@ impl Program {
                 Declaration::Def(def) => {
                     defs.push(def);
                 }
+                Declaration::DefTemplate(_) => {
+                    todo!()
+                }
             }
         }
 
@@ -184,7 +187,7 @@ mod program_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::{TypeContext, TypingContext},
+            context::TypingContext,
             declarations::Def,
             program::Program,
             terms::{Lit, Term},
@@ -203,10 +206,6 @@ mod program_tests {
                 Def {
                     span: Span::default(),
                     name: "x".to_string(),
-                    type_params: TypeContext {
-                        span: Span::default(),
-                        bindings: Vec::new(),
-                    },
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -260,10 +259,6 @@ mod program_tests {
                 Def {
                     span: Span::default(),
                     name: "f".to_string(),
-                    type_params: TypeContext {
-                        span: Span::default(),
-                        bindings: Vec::new(),
-                    },
                     context: ctx,
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -298,10 +293,6 @@ mod program_tests {
         let d1 = Def {
             span: Span::default(),
             name: "f".to_string(),
-            type_params: TypeContext {
-                span: Span::default(),
-                bindings: Vec::new(),
-            },
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_i64(),
@@ -310,10 +301,6 @@ mod program_tests {
         let d2 = Def {
             span: Span::default(),
             name: "g".to_string(),
-            type_params: TypeContext {
-                span: Span::default(),
-                bindings: Vec::new(),
-            },
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_i64(),

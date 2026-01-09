@@ -421,15 +421,31 @@ pub OptTypeContext: TypeContext = {
     <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
 }
 
+TypeContext: TypeContext = {
+    <l:@L> <bindings:BracketedList<TypeName>> <r:@R> => TypeContext{span:span(l,r),bindings}
+}
+
 Def: Def = {
-    <l: @L> "def" <name: Name> <type_params: OptTypeContext> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Def {
             span: span(l, r),
-            name,type_params,
+            name,
             context,
             body,
             ret_ty,
         }
+}
+
+DefTemplate: DefTemplate = {
+    <l: @L> "def" <name:Name> <lc:@L> <type_params: TypeContext> <context: OptContext> <rc:@R> ":" <ret_ty:Ty> <body: Braces<Term>> <r:@R> => 
+        DefTemplate{
+            span:span(l,r),
+            name,
+            type_params,
+            context,
+            body,
+            ret_ty
+    }
 }
 
 
@@ -455,6 +471,7 @@ Codata: Codata = {
 
 Declaration: Declaration = {
     <def: Def> => def.into(),
+    <def_temp:DefTemplate> => def_temp.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
 }

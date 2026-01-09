@@ -20,12 +20,14 @@ use crate::typing::*;
 /// an `i64`. Its body is contained within `{...}`
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Def {
+pub struct DefTemplate {
     /// The Source Location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The name of the definition
     pub name: Name,
+    /// The type paramenters
+    pub type_params: TypeContext,
     /// The parameters
     pub context: TypingContext,
     /// The return type
@@ -34,11 +36,11 @@ pub struct Def {
     pub body: Term,
 }
 
-impl Def {
+impl DefTemplate {
     /// This function checks the well-formedness of the top-level function. This consists of
     /// checking the well-formedness of the paramater list and return type, and typechecking the
     /// body in the context given by the parameters.
-    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<DefTemplate, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
         self.ret_ty.check(&self.span, symbol_table)?;
@@ -49,12 +51,13 @@ impl Def {
     }
 }
 
-impl Print for Def {
+impl Print for DefTemplate {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
+            .append(self.type_params.print(cfg, alloc))
             .append(self.context.print(cfg, alloc).parens())
             .append(COLON)
             .append(alloc.space())
@@ -72,9 +75,9 @@ impl Print for Def {
     }
 }
 
-impl From<Def> for Declaration {
-    fn from(value: Def) -> Self {
-        Declaration::Def(value)
+impl From<DefTemplate> for Declaration {
+    fn from(value: DefTemplate) -> Self {
+        Declaration::DefTemplate(value)
     }
 }
 
@@ -95,13 +98,17 @@ mod def_tests {
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
-    use super::Def;
+    use super::DefTemplate;
 
     /// A definition with no arguments.
-    fn simple_def() -> Def {
-        Def {
+    fn simple_def() -> DefTemplate {
+        DefTemplate {
             span: Span::default(),
             name: "x".to_string(),
+            type_params: TypeContext {
+                span: Span::default(),
+                bindings: Vec::new(),
+            },
             context: TypingContext {
                 span: Span::default(),
                 bindings: vec![],
