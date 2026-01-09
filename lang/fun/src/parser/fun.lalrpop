@@ -184,15 +184,17 @@ Lit: Lit = {
     <l: @L> "-" <n: Num> <r: @R> => Lit { span: span(l, r), lit: -n, },
 }
 
+CallTemplate: Term = {
+    <l:@L> <v:Name> <type_args: TypeArgs> <args:Arguments> <r:@R> => 
+        CallTemplate { span:span(l,r), name:v, type_args, args, ret_ty:None }.into()
+}
+
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
       Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
 }
 
-CallTemplate: Term = {
-    <l:@L> <v:Name> <type_args: TypeArgs> <args:Arguments> <r:@R> => 
-        CallTemplate { span:span(l,r), name:v, type_args, args, ret_ty:None }.into()
-}
+
 
 Label: Label = {
     <l: @L> "label" <label: Name> <term: Braces<Term>> <r: @R> =>
@@ -358,6 +360,7 @@ Term0: Term = {
 Term1: Term = {
     <l: Lit> => l.into(),
     <v: XVar> => v.into(),
+    <c: CallTemplate> => c.into(),
     <c: Call> => c.into(),
     Term0,
 }
@@ -434,16 +437,6 @@ TypeContext: TypeContext = {
     <l:@L> <bindings:BracketedList<TypeName>> <r:@R> => TypeContext{span:span(l,r),bindings}
 }
 
-Def: Def = {
-    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
-        Def {
-            span: span(l, r),
-            name,
-            context,
-            body,
-            ret_ty,
-        }
-}
 
 DefTemplate: DefTemplate = {
     <l: @L> "def" <name:Name> <lc:@L> <type_params: TypeContext> <context: OptContext> <rc:@R> ":" <ret_ty:Ty> <body: Braces<Term>> <r:@R> => 
@@ -455,6 +448,17 @@ DefTemplate: DefTemplate = {
             body,
             ret_ty
     }
+}
+
+Def: Def = {
+    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+        Def {
+            span: span(l, r),
+            name,
+            context,
+            body,
+            ret_ty,
+        }
 }
 
 
