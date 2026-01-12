@@ -35,16 +35,16 @@ pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
     match cli.command {
-        Check(args) => check::exec(args, cli.opt_passes),
+        Check(args) => check::exec(args),
         Clean(args) => clean::exec(args),
-        Codegen(args) => codegen::exec(args, cli.opt_passes, cli.print_opt),
-        Compile(args) => compile::exec(args, !cli.no_color, cli.opt_passes, cli.print_opt),
-        Focus(args) => focus::exec(args, !cli.no_color, cli.opt_passes, cli.print_opt),
-        Fmt(args) => fmt::exec(args, !cli.no_color, cli.opt_passes),
-        Linearize(args) => linearize::exec(args, !cli.no_color, cli.opt_passes, cli.print_opt),
-        Rewrite(args) => rewrite::exec(args, !cli.no_color, cli.opt_passes, cli.print_opt),
-        Shrink(args) => shrink::exec(args, !cli.no_color, cli.opt_passes, cli.print_opt),
-        Texify(args) => texify::exec(args, cli.opt_passes),
+        Codegen(args) => codegen::exec(args),
+        Compile(args) => compile::exec(args, !cli.no_color),
+        Focus(args) => focus::exec(args, !cli.no_color),
+        Fmt(args) => fmt::exec(args, !cli.no_color),
+        Linearize(args) => linearize::exec(args, !cli.no_color),
+        Rewrite(args) => rewrite::exec(args, !cli.no_color),
+        Shrink(args) => shrink::exec(args, !cli.no_color),
+        Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
     }
 }
@@ -59,12 +59,6 @@ struct Cli {
     /// Print output without color
     #[clap(short, long)]
     no_color: bool,
-    /// maximum number of optimization passes to run
-    #[clap(short, long, default_value_t = 10)]
-    opt_passes: u64,
-    /// Print stats of optimization
-    #[clap(short, long)]
-    print_opt: bool,
 }
 
 /// This enum encodes the commands the compiler can execute.
