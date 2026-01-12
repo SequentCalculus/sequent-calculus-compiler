@@ -11,6 +11,7 @@ mod fmt;
 mod focus;
 mod gen_completions;
 mod linearize;
+mod rewrite;
 mod shrink;
 mod texify;
 
@@ -41,6 +42,7 @@ pub fn exec() -> miette::Result<()> {
         Focus(args) => focus::exec(args, !cli.no_color),
         Fmt(args) => fmt::exec(args, !cli.no_color),
         Linearize(args) => linearize::exec(args, !cli.no_color),
+        Rewrite(args) => rewrite::exec(args, !cli.no_color),
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
@@ -51,8 +53,10 @@ pub fn exec() -> miette::Result<()> {
 #[derive(Parser)]
 #[clap(version, author, about, long_about = None)]
 struct Cli {
+    /// Command to execute
     #[clap(subcommand)]
     command: Command,
+    /// Print output without color
     #[clap(short, long)]
     no_color: bool,
 }
@@ -76,6 +80,8 @@ enum Command {
     Linearize(linearize::Args),
     /// Shrink the definitions of a file to AxCut
     Shrink(shrink::Args),
+    /// Rewrite the definitions of a file
+    Rewrite(rewrite::Args),
     /// Print program representations as LaTeX code
     Texify(texify::Args),
     /// Generate completion scripts for various shells

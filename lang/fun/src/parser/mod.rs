@@ -4,6 +4,7 @@ use result::ParseError;
 
 use crate::syntax::{program::Program, terms::Term};
 
+#[allow(unused_assignments)]
 pub mod result;
 pub mod util;
 

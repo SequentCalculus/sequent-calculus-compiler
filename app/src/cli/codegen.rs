@@ -30,6 +30,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
         drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
         drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
+        drv.print_rewritten(&cmd.filepath, PrintMode::Textual)?;
         drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
     }
 
