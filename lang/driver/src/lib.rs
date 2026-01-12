@@ -68,7 +68,7 @@ pub enum PrintMode {
 impl Driver {
     /// This function creates a new driver.
     #[allow(clippy::new_without_default)]
-    pub fn new(max_opt_passes: u64) -> Self {
+    pub fn new() -> Self {
         Driver {
             sources: HashMap::new(),
             parsed: HashMap::new(),
@@ -78,9 +78,16 @@ impl Driver {
             shrunk: HashMap::new(),
             rewritten: HashMap::new(),
             linearized: HashMap::new(),
-            max_opt_passes,
+            max_opt_passes: optimizations::DEFAULT_NUM_PASSES,
             optimization_stats: HashMap::new(),
         }
+    }
+
+    /// Create a new driver with a given maximum number of optimization passes
+    pub fn new_with_num_passes(num_passes: u64) -> Self {
+        let mut slf = Self::new();
+        slf.max_opt_passes = num_passes;
+        slf
     }
 
     /// This function returns the unparsed source code for the given file.

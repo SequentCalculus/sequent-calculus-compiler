@@ -5,6 +5,8 @@ pub mod program;
 pub mod rewrite;
 pub mod statements;
 
+pub const DEFAULT_NUM_PASSES: u64 = 15;
+
 #[derive(Clone)]
 pub struct OptimizationStats {
     num_passes: u64,

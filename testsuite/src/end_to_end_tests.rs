@@ -128,7 +128,7 @@ impl EndToEndTest {
 
 pub fn run_tests(tests: &Vec<EndToEndTest>) -> Vec<TestResult> {
     let mut results = vec![];
-    let mut driver = Driver::new(10);
+    let mut driver = Driver::new();
 
     for test in tests {
         println!("running test {}", test.name);
