@@ -2,7 +2,6 @@
 members = [
     "app",
     "testsuite",
-    "evaluation",
     "lang/axcut",
     "lang/axcut2aarch64",
     "lang/axcut2backend",
