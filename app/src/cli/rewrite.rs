@@ -25,7 +25,8 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     drv.print_rewritten(&cmd.filepath, PrintMode::Textual)?;
     if cmd.print_opt {
         drv.print_opt_stats(&cmd.filepath)?;
+    } else {
+        print_stdout(&rewritten, colored);
     }
-    print_stdout(&rewritten, colored);
     Ok(())
 }
