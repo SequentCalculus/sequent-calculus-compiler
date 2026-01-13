@@ -12,7 +12,7 @@ use core_lang::syntax::{
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::names::{Covar, Name, Var};
+use fun::syntax::names::Name;
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},
@@ -27,7 +27,7 @@ use std::{
 /// current function that have been lifted to the top-level.
 pub struct CompileState<'a> {
     /// The names used in the top-level definition
-    pub used_vars: HashSet<Var>,
+    pub used_vars: HashSet<core_lang::syntax::names::Var>,
     /// The codata types in the program
     pub codata_types: &'a [CodataDeclaration],
     /// The labels for top-level functions used in the program
@@ -40,12 +40,12 @@ pub struct CompileState<'a> {
 
 impl CompileState<'_> {
     /// This function generates a fresh variable with base name `"x"`.
-    pub fn fresh_var(&mut self) -> Var {
+    pub fn fresh_var(&mut self) -> core_lang::syntax::names::Var {
         fresh_var(&mut self.used_vars)
     }
 
     /// This function generates a fresh covariable with base name `"a"`.
-    pub fn fresh_covar(&mut self) -> Covar {
+    pub fn fresh_covar(&mut self) -> core_lang::syntax::names::Var {
         fresh_covar(&mut self.used_vars)
     }
 }
@@ -131,7 +131,7 @@ pub fn share(
         let var = state.fresh_var();
         let ty = cont.get_type();
         let body = Cut::new(
-            core_lang::syntax::terms::XVar::var(&var, ty.clone()),
+            core_lang::syntax::terms::XVar::var(var.clone(), ty.clone()),
             cont,
             ty.clone(),
         )
@@ -154,12 +154,12 @@ pub fn share(
         .map(|binding| match binding.chi {
             Chirality::Prd => {
                 let term: core_lang::syntax::terms::Term<Prd> =
-                    core_lang::syntax::terms::XVar::var(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::var(binding.var, binding.ty).into();
                 term.into()
             }
             Chirality::Cns => {
                 let term: core_lang::syntax::terms::Term<Cns> =
-                    core_lang::syntax::terms::XVar::covar(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::covar(binding.var, binding.ty).into();
                 term.into()
             }
         })
@@ -179,7 +179,7 @@ pub fn share(
     });
 
     Mu::tilde_mu::<core_lang::syntax::Statement>(
-        &var,
+        var,
         core_lang::syntax::statements::Call {
             name,
             args,

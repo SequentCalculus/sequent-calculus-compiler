@@ -196,6 +196,14 @@ impl TypingContext {
             .collect();
         self
     }
+
+    /// This functions returns a set of the (co)variable names in the context.
+    pub fn vars(&self) -> HashSet<Var> {
+        self.bindings
+            .iter()
+            .map(|binding| binding.var.clone())
+            .collect()
+    }
 }
 
 impl Print for TypingContext {

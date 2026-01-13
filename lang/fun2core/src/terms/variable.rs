@@ -1,6 +1,6 @@
 //! This module defines the translation for variables.
 
-use crate::{compile::Compile, types::compile_ty};
+use crate::{compile::Compile, names::compile_var, types::compile_ty};
 use core_lang::syntax::{
     Ty,
     terms::{Cns, Prd},
@@ -24,7 +24,7 @@ impl Compile for fun::syntax::terms::XVar {
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: compile_var(self.var),
             ty: compile_ty(
                 &self
                     .ty
@@ -54,7 +54,7 @@ impl Compile for fun::syntax::terms::XVar {
         );
         let new_var: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: compile_var(self.var),
             ty: ty.clone(),
         }
         .into();

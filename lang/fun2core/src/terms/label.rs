@@ -2,6 +2,7 @@
 
 use crate::{
     compile::{Compile, CompileState},
+    names::compile_var,
     types::compile_ty,
 };
 use core_lang::syntax::{
@@ -28,14 +29,14 @@ impl Compile for fun::syntax::terms::Label {
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
-            var: self.label.clone(),
+            var: compile_var(self.label.clone()),
             ty: var_ty.clone(),
         }
         .into();
 
         core_lang::syntax::terms::Mu {
             prdcns: Prd,
-            variable: self.label,
+            variable: compile_var(self.label),
             ty: var_ty,
             statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }

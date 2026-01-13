@@ -2,6 +2,7 @@
 
 use crate::{
     compile::{Compile, CompileState},
+    names::compile_var,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
@@ -30,7 +31,7 @@ pub fn compile_subst(
                 }) => core_lang::syntax::arguments::Argument::Consumer(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
-                        var,
+                        var: compile_var(var),
                         ty: compile_ty(&ty.expect("Types should be annotated before translation")),
                     }
                     .into(),

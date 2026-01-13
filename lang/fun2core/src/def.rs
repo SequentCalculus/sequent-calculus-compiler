@@ -3,6 +3,7 @@
 use crate::{
     compile::{Compile, CompileState},
     context::compile_context,
+    names::compile_var,
     types::compile_ty,
 };
 use core_lang::syntax::CodataDeclaration;
@@ -28,14 +29,14 @@ pub fn compile_def(
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
 ) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
     let mut context = compile_context(def.context);
-
-    let mut used_vars = context.vars();
     def.body.used_binders(&mut used_vars);
+
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
-        used_vars,
+        used_vars: used_vars.into_iter().map(|var| compile_var(var)).collect(),
         codata_types,
         used_labels,
         current_label: &def.name,
@@ -50,7 +51,7 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::terms::XVar::covar(&new_covar, ty).into(),
+        core_lang::syntax::terms::XVar::covar(new_covar.clone(), ty).into(),
         &mut state,
     );
 
@@ -90,14 +91,13 @@ pub fn compile_main(
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
 ) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
     let context = compile_context(def.context);
-
-    let mut used_vars = context.vars();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
-        used_vars,
+        used_vars: used_vars.into_iter().map(|var| compile_var(var)).collect(),
         codata_types,
         used_labels,
         current_label: &def.name,
@@ -113,9 +113,9 @@ pub fn compile_main(
 
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
-            &new_var,
+            new_var.clone(),
             core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
-                core_lang::syntax::terms::XVar::var(&new_var, ty.clone()),
+                core_lang::syntax::terms::XVar::var(new_var, ty.clone()),
                 ty.clone(),
             )),
             ty,

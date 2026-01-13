@@ -2,6 +2,7 @@
 
 use crate::{
     compile::{Compile, CompileState},
+    names::compile_var,
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
@@ -23,7 +24,7 @@ impl Compile for fun::syntax::terms::Goto {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
-                var: self.target,
+                var: compile_var(self.target),
                 ty: compile_ty(
                     &self
                         .ty
