@@ -26,7 +26,7 @@ pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The covariable to which the continuation is bound
-    pub label: Covar,
+    pub label: Var,
     /// The body in which the continuation is in scope
     pub term: Rc<Term>,
     /// The (inferred) type of the term
@@ -44,7 +44,7 @@ impl Print for Label {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
-            .append(self.label.clone())
+            .append(self.label.print(cfg, alloc))
             .append(alloc.space())
             .append(
                 alloc
@@ -71,7 +71,7 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
-        new_context.add_covar(&self.label, expected.clone());
+        new_context.add_covar(self.label.clone(), expected.clone());
         self.term = self.term.check(symbol_table, &new_context, expected)?;
 
         self.ty = Some(expected.clone());

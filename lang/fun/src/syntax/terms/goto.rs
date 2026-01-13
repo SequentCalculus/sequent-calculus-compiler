@@ -27,7 +27,7 @@ pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The covariable for the continuation
-    pub target: Covar,
+    pub target: Var,
     /// The argument
     pub term: Rc<Term>,
     /// The (inferred) type of the term

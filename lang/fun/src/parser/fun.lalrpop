@@ -93,12 +93,16 @@ Name: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
+Var: Var = {
+    <var: Name> => Var { name:var,id:0}
+}
+
 ContextVar: ContextBinding = {
-    <var: Name> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
+    <var: Var> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
 }
 
 ContextCovar: ContextBinding = {
-    <var: Name> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
+    <var: Var> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
@@ -109,8 +113,8 @@ pub OptContext: TypingContext = {
     <l: @L> <bindings: OptParenthesizedList<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
 }
 
-pub OptNameContext: NameContext = {
-    <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: span(l, r), bindings, },
+pub OptVarContext: VarContext = {
+    <l: @L> <bindings: OptParenthesizedList<Var>> <r: @R> => VarContext { span: span(l, r), bindings, },
 }
 
 //
@@ -148,7 +152,7 @@ Num: i64 = {
 }
 
 XVar: XVar = {
-    <l: @L> <var: Name> <r: @R> => XVar { span: span(l, r), var, ty: None, chi: None, },
+    <l: @L> <var: Var> <r: @R> => XVar { span: span(l, r), var, ty: None, chi: None, },
 }
 
 CtorName: String = {
@@ -186,12 +190,12 @@ Call: Term = {
 }
 
 Label: Label = {
-    <l: @L> "label" <label: Name> <term: Braces<Term>> <r: @R> =>
+    <l: @L> "label" <label: Var> <term: Braces<Term>> <r: @R> =>
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
 Goto: Goto = {
-    <l: @L> "goto" <target: Name> <term: Parens<Term>> <r: @R> =>
+    <l: @L> "goto" <target: Var> <term: Parens<Term>> <r: @R> =>
       Goto { span: span(l, r), target, term: Rc::new(term), ty: None, },
 }
 
@@ -301,7 +305,7 @@ PrintLnI64: PrintI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Name> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Var> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 
@@ -316,7 +320,7 @@ Destructor: Destructor = {
 }
 
 Clause: Clause = {
-    <l: @L> <xtor: CtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+    <l: @L> <xtor: CtorName> <context_names: OptVarContext> "=>" <body: Term> <r: @R> =>
         Clause { span: span(l, r), pol: Polarity::Data, xtor, context_names, context: TypingContext::default(), body, },
 }
 
@@ -326,7 +330,7 @@ Case: Case = {
 }
 
 Coclause: Clause = {
-    <l: @L> <xtor: DtorName> <context_names: OptNameContext> "=>" <body: Term> <r: @R> =>
+    <l: @L> <xtor: DtorName> <context_names: OptVarContext> "=>" <body: Term> <r: @R> =>
         Clause { span: span(l, r), pol: Polarity::Codata, xtor, context_names, context: TypingContext::default(), body, },
 }
 

@@ -174,7 +174,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
                 },
@@ -182,7 +182,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
                 },
@@ -202,7 +202,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
                 },
@@ -210,7 +210,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
                 },
@@ -225,7 +225,7 @@ mod test {
 
     #[test]
     fn check_fun() {
-        let mut ctx_names = NameContext::default();
+        let mut ctx_names = VarContext::default();
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("a".to_string());
         let mut ctx = TypingContext::default();
@@ -283,7 +283,7 @@ mod test {
                 span: Span::default(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
-                context_names: NameContext::default(),
+                context_names: VarContext::default(),
                 context: TypingContext::default(),
                 body: Lit::mk(1).into(),
             }],
@@ -313,7 +313,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "head".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(2)),
                 },
@@ -321,7 +321,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Codata,
                     xtor: "tail".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                 },

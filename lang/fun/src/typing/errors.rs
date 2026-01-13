@@ -7,7 +7,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::names::{Covar, Name, Var};
+use crate::syntax::names::{Name, Var};
 
 /// This enum defines the errors that can occur during typechecking.
 #[derive(Error, Diagnostic, Debug, Clone)]
@@ -62,7 +62,7 @@ pub enum Error {
         #[label]
         span: SourceSpan,
         /// The unbound covariable
-        covar: Covar,
+        covar: Var,
     },
     /// Argument arity mismatch
     #[error("Wrong number of arguments.\nExpected: {expected}\nGot: {got}")]
@@ -202,7 +202,7 @@ pub enum Error {
         #[label]
         span: SourceSpan,
         /// The covariable that was bound multiple times
-        covar: Covar,
+        covar: Var,
         /// The definition in which the covariable was used
         name: Name,
     },

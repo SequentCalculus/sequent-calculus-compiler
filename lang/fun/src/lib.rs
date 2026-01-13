@@ -10,7 +10,7 @@ pub mod typing;
 pub mod test_common {
     use super::{
         syntax::{
-            context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
+            context::{Chirality::Prd, TypeContext, TypingContext, VarContext},
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
@@ -33,8 +33,8 @@ pub mod test_common {
         ctx_cons
     }
 
-    fn context_cons_i64_names() -> NameContext {
-        let mut ctx_cons_names = NameContext::default();
+    fn context_cons_i64_names() -> VarContext {
+        let mut ctx_cons_names = VarContext::default();
         ctx_cons_names.bindings.push("x".to_string());
         ctx_cons_names.bindings.push("xs".to_string());
         ctx_cons_names
@@ -402,7 +402,7 @@ pub mod test_common {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
-                        context_names: NameContext::default(),
+                        context_names: VarContext::default(),
                         context: TypingContext::default(),
                         body: Lit::mk(1).into(),
                     },
@@ -459,7 +459,7 @@ pub mod test_common {
                         span: Span::default(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
-                        context_names: NameContext::default(),
+                        context_names: VarContext::default(),
                         context: TypingContext::default(),
                         body: Lit::mk(1).into(),
                     },

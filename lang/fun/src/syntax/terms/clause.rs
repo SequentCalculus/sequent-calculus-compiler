@@ -32,7 +32,7 @@ pub struct Clause {
     /// The name of the xtor
     pub xtor: Name,
     /// The names (without types) to which the arguments of the xtor are bound
-    pub context_names: NameContext,
+    pub context_names: VarContext,
     /// The bindings (with types) to which the arguments of the xtor are bound
     pub context: TypingContext,
     /// The body of the pattern

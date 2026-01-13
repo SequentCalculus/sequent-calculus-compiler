@@ -151,7 +151,7 @@ impl TypingContext {
     }
 
     /// This function looks up the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Covar, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Var, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_covar {
@@ -168,18 +168,18 @@ impl TypingContext {
     }
 
     /// This function adds a variable (producer) to the context.
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
+    pub fn add_var(&mut self, var: Var, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: var.to_owned(),
+            var,
             chi: Chirality::Prd,
             ty,
         });
     }
 
     /// This funciton adds a covariable (consumer) to the context.
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+    pub fn add_covar(&mut self, covar: Var, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: covar.to_owned(),
+            var: covar,
             chi: Chirality::Cns,
             ty,
         });
@@ -217,27 +217,27 @@ impl Print for TypingContext {
     }
 }
 
-/// This struct defines name context, which is a list of parameters without types.
+/// This struct defines var context, which is a list of parameters without types.
 #[derive(Derivative, Default, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct NameContext {
+pub struct VarContext {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: Span,
     /// The named bindings
-    pub bindings: Vec<Name>,
+    pub bindings: Vec<Var>,
 }
 
-impl NameContext {
+impl VarContext {
     /// This function checks that no variable in the name context is duplicated.
     /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
         let mut params: HashSet<Var> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
-                return Err(Error::TypeParameterBoundMultipleTimes {
+                return Err(Error::VarBoundMultipleTimes {
                     span: self.span.to_miette(),
-                    param: binding.clone(),
+                    var: binding.clone(),
                     name: binding_site.to_string(),
                 });
             }
@@ -270,7 +270,7 @@ impl NameContext {
     }
 }
 
-impl Print for NameContext {
+impl Print for VarContext {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = if cfg.allow_linebreaks {
             alloc.line_()
@@ -306,7 +306,7 @@ impl TypeContext {
     /// This function checks that no variable in the type context is duplicated.
     /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut params: HashSet<Var> = HashSet::new();
+        let mut params: HashSet<Name> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {

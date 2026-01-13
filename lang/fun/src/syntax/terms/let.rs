@@ -84,7 +84,7 @@ impl Check for Let {
         self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
 
         let mut new_context = context.clone();
-        new_context.add_var(&self.variable, self.var_ty.clone());
+        new_context.add_var(self.variable.clone(), self.var_ty.clone());
         self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
 
         self.ty = Some(expected.clone());

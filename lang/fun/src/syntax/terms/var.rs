@@ -28,10 +28,10 @@ pub struct XVar {
 impl XVar {
     /// This function returns a (co)variable from a given string, without chirality and type
     /// information.
-    pub fn mk(var: &str) -> Self {
+    pub fn mk(var: Var) -> Self {
         XVar {
             span: Span::default(),
-            var: var.to_string(),
+            var,
             ty: None,
             chi: None,
         }

@@ -182,7 +182,7 @@ mod test {
 
     #[test]
     fn check_case_list() {
-        let mut ctx_case_names = NameContext::default();
+        let mut ctx_case_names = VarContext::default();
         ctx_case_names.bindings.push("x".to_string());
         ctx_case_names.bindings.push("xs".to_string());
         let mut ctx_case = TypingContext::default();
@@ -198,7 +198,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
                 },
@@ -224,7 +224,7 @@ mod test {
                     span: Span::default(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
-                    context_names: NameContext::default(),
+                    context_names: VarContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
                 },
@@ -260,7 +260,7 @@ mod test {
 
     #[test]
     fn check_case_fail() {
-        let mut ctx_names = NameContext::default();
+        let mut ctx_names = VarContext::default();
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("y".to_string());
         let mut symbol_table = symbol_table_list_template();
@@ -293,7 +293,7 @@ mod test {
     }
 
     fn example_tup() -> Case {
-        let mut ctx_names = NameContext::default();
+        let mut ctx_names = VarContext::default();
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("y".to_string());
         Case {
