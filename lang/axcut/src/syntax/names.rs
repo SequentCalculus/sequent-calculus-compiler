@@ -3,7 +3,7 @@
 use crate::traits::substitution::Subst;
 use printer::*;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt};
 
 /// Names of top-level functions, user-declared types and xtors.
 pub type Name = String;
@@ -30,6 +30,20 @@ pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     new_name
 }
 
+pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
+    let new_id = used_vars
+        .iter()
+        .filter_map(|var| (var.name == base_name).then_some(var.id))
+        .max()
+        .unwrap_or(0);
+    let new_var = Var {
+        name: base_name.to_string(),
+        id: new_id,
+    };
+    used_vars.insert(new_var.clone());
+    new_var
+}
+
 impl Subst for Var {
     fn subst_sim(self, subst: &[(Var, Var)]) -> Var {
         match subst.iter().find(|(old, _)| *old == self) {
@@ -46,5 +60,11 @@ impl Print for Var {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         self.name.print(cfg, alloc)
+    }
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }

@@ -3,7 +3,7 @@
 use crate::traits::*;
 use printer::*;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt};
 
 /// Type alias for variables
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -66,5 +66,11 @@ impl SubstVar for Var {
 impl Print for Var {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name.print(cfg, alloc)
+    }
+}
+
+impl fmt::Display for Var {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
