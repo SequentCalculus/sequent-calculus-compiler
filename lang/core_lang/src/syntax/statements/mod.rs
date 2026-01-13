@@ -64,7 +64,7 @@ impl Subst for Statement {
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),

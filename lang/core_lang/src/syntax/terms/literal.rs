@@ -56,7 +56,7 @@ impl Bind for Literal {
         };
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+            Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
             Ty::I64,
         )
         .into()

@@ -42,7 +42,7 @@ impl Subst for Argument {
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Argument::Producer(prod) => Argument::Producer(prod.subst_sim(prod_subst, cons_subst)),
@@ -134,7 +134,7 @@ impl Subst for Arguments {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.entries = self.entries.subst_sim(prod_subst, cons_subst);
         self

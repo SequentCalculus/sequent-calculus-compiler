@@ -68,18 +68,18 @@ pub struct TypingContext {
 
 impl TypingContext {
     /// This function adds a variable (producer) to the context.
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
+    pub fn add_var(&mut self, var: Var, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: var.to_owned(),
+            var,
             chi: Chirality::Prd,
             ty,
         });
     }
 
     /// This funciton adds a covariable (consumer) to the context.
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+    pub fn add_covar(&mut self, covar: Var, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: covar.to_owned(),
+            var: covar,
             chi: Chirality::Cns,
             ty,
         });

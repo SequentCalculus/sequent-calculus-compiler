@@ -22,20 +22,20 @@ pub struct XVar<C: Chi> {
 
 impl XVar<Prd> {
     /// This function creates a variable with the given name and type.
-    pub fn var(name: &str, ty: Ty) -> Self {
+    pub fn var(var: Var, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
-            var: name.to_string(),
+            var,
             ty,
         }
     }
 }
 impl XVar<Cns> {
     /// This function creates a covariable with the given name and type.
-    pub fn covar(name: &str, ty: Ty) -> Self {
+    pub fn covar(var: Var, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,
-            var: name.to_string(),
+            var,
             ty,
         }
     }
@@ -70,7 +70,7 @@ impl Subst for XVar<Prd> {
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
-        _cons_subst: &[(Covar, Term<Cns>)],
+        _cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         match prod_subst.iter().find(|(var, _)| *var == self.var) {
             None => self.into(),
@@ -83,7 +83,7 @@ impl Subst for XVar<Cns> {
     fn subst_sim(
         self,
         _prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         match cons_subst.iter().find(|(covar, _)| *covar == self.var) {
             None => self.into(),

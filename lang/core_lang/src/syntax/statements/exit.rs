@@ -56,7 +56,7 @@ impl Subst for Exit {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
 
@@ -99,10 +99,8 @@ pub struct FsExit {
 impl FsExit {
     /// This fcuntion constructs an exit statement from a given variable.
     #[allow(clippy::self_named_constructors)]
-    pub fn exit(var: &str) -> Self {
-        FsExit {
-            var: var.to_string(),
-        }
+    pub fn exit(var: Var) -> Self {
+        FsExit { var }
     }
 }
 

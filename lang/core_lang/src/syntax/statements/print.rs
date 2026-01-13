@@ -88,7 +88,7 @@ impl Subst for PrintI64 {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
         self.next = self.next.subst_sim(prod_subst, cons_subst);

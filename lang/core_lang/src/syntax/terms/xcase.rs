@@ -62,7 +62,7 @@ impl<C: Chi> Subst for XCase<C> {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
         self
@@ -118,7 +118,7 @@ impl Bind for XCase<Prd> {
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
-        let cns = Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone());
+        let cns = Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
@@ -132,7 +132,7 @@ impl Bind for XCase<Cns> {
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
-        let prd = Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone());
+        let prd = Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }

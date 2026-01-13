@@ -167,7 +167,10 @@ pub fn cont_int() -> DataDeclaration {
             name: "Ret".to_string(),
             args: TypingContext {
                 bindings: vec![ContextBinding {
-                    var: "x".to_string(),
+                    var: Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Prd,
                     ty: Ty::I64,
                 }],

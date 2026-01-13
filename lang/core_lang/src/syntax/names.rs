@@ -1,13 +1,16 @@
 //! This module defines some utilities to deal with names and lists of names.
 
 use crate::traits::*;
+use printer::*;
 
 use std::collections::HashSet;
 
 /// Type alias for variables
-pub type Var = String;
-/// Type alias for covariables
-pub type Covar = String;
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Var {
+    pub name: Name,
+    pub id: usize,
+}
 /// Type alias for names of top-level functions, user-declared types and xtors
 pub type Name = String;
 
@@ -26,14 +29,28 @@ pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
     new_name
 }
 
+pub fn fresh_xvar(used_vars: &mut HashSet<Var>, name: &str) -> Var {
+    let new_id = used_vars
+        .iter()
+        .filter_map(|var| (var.name == name).then_some(var.id))
+        .max()
+        .unwrap_or(0);
+    let new_var = Var {
+        name: name.to_string(),
+        id: new_id,
+    };
+    used_vars.insert(new_var.clone());
+    new_var
+}
+
 /// This function generates a fresh variable with base name `"x"`.
 pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
-    fresh_name(used_vars, "x")
+    fresh_xvar(used_vars, "x")
 }
 
 /// This function generates a fresh covariable with base name `"a"`.
-pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
-    fresh_name(used_covars, "a")
+pub fn fresh_covar(used_covars: &mut HashSet<Var>) -> Var {
+    fresh_xvar(used_covars, "a")
 }
 
 impl SubstVar for Var {
@@ -43,5 +60,11 @@ impl SubstVar for Var {
             None => self,
             Some((_, new)) => new.clone(),
         }
+    }
+}
+
+impl Print for Var {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.name.print(cfg, alloc)
     }
 }

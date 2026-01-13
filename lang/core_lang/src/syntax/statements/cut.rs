@@ -80,7 +80,7 @@ impl Subst for Cut {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.producer = self.producer.subst_sim(prod_subst, cons_subst);
         self.consumer = self.consumer.subst_sim(prod_subst, cons_subst);
