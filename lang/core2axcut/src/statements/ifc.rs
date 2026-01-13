@@ -2,7 +2,10 @@
 
 use core_lang::syntax::statements::FsIfC;
 
-use crate::shrinking::{Shrinking, ShrinkingState};
+use crate::{
+    names::shrink_var,
+    shrinking::{Shrinking, ShrinkingState},
+};
 
 impl Shrinking for FsIfC {
     type Target = axcut::syntax::Statement;
@@ -29,8 +32,8 @@ impl Shrinking for FsIfC {
                     axcut::syntax::statements::ifc::IfSort::GreaterOrEqual
                 }
             },
-            fst: self.fst,
-            snd: self.snd,
+            fst: shrink_var(self.fst),
+            snd: self.snd.map(|snd| shrink_var(snd)),
             thenc: self.thenc.shrink(state),
             elsec: self.elsec.shrink(state),
         })

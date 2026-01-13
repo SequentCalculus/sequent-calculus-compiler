@@ -14,6 +14,7 @@
 pub mod context;
 pub mod declaration;
 pub mod def;
+pub mod names;
 pub mod program;
 pub mod shrinking;
 pub mod statements;
