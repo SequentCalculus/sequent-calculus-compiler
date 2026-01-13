@@ -122,7 +122,7 @@ impl TypingContext {
             if clashes.contains(&binding.var) {
                 // if the variable has occurred already we pick a fresh one
                 new_bindings.push(ContextBinding {
-                    var: fresh_var(used_vars, &binding.var),
+                    var: fresh_var(used_vars, &binding.var.name),
                     ty: binding.ty.clone(),
                     chi: binding.chi.clone(),
                 });

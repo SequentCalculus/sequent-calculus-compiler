@@ -1,13 +1,19 @@
 //! This module defines some utilities to deal with names and lists of names.
 
 use crate::traits::substitution::Subst;
+use printer::*;
 
 use std::collections::HashSet;
 
 /// Names of top-level functions, user-declared types and xtors.
 pub type Name = String;
+
 /// Variables
-pub type Var = String;
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Var {
+    pub name: Name,
+    pub id: usize,
+}
 
 /// This function generates a fresh name with respect to a given set of names.
 /// - `used_vars` is the set of names for which to generate a fresh one.
@@ -30,5 +36,15 @@ impl Subst for Var {
             None => self,
             Some((_, new)) => new.clone(),
         }
+    }
+}
+
+impl Print for Var {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        self.name.print(cfg, alloc)
     }
 }
