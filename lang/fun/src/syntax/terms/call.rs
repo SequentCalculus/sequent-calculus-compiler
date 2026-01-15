@@ -101,7 +101,13 @@ mod test {
     fn check_mult() {
         let mut symbol_table = symbol_table_list();
         let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            Var {
+                name: "l".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         symbol_table
             .defs
             .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
@@ -159,7 +165,15 @@ mod test {
         Call {
             span: Span::default(),
             name: "foo".to_string(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
+            args: vec![
+                Term::Lit(Lit::mk(2)).into(),
+                XVar::mk(Var {
+                    name: "a".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ]
+            .into(),
             ret_ty: None,
         }
     }

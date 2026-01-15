@@ -16,22 +16,34 @@ fn test_quad() {
             name: "Q".to_string(),
             args: vec![
                 ContextBinding {
-                    var: "d".to_string(),
+                    var: Var {
+                        name: "d".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 },
                 ContextBinding {
-                    var: "c".to_string(),
+                    var: Var {
+                        name: "c".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 },
                 ContextBinding {
-                    var: "b".to_string(),
+                    var: Var {
+                        name: "b".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 },
                 ContextBinding {
-                    var: "a".to_string(),
+                    var: Var {
+                        name: "a".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 },
@@ -42,66 +54,108 @@ fn test_quad() {
 
     let main_body = Statement::Literal(Literal {
         lit: 8,
-        var: "z".to_string(),
+        var: Var {
+            name: "z".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Literal(Literal {
             lit: 6,
-            var: "y".to_string(),
+            var: Var {
+                name: "y".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Literal(Literal {
                 lit: 4,
-                var: "x".to_string(),
+                var: Var {
+                    name: "x".to_string(),
+                    id: 0,
+                },
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 2,
-                    var: "w".to_string(),
+                    var: Var {
+                        name: "w".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Let(Let {
-                        var: "q".to_string(),
+                        var: Var {
+                            name: "q".to_string(),
+                            id: 0,
+                        },
                         ty: Ty::Decl("Quad".to_string()),
                         tag: "Q".to_string(),
                         args: vec![
                             ContextBinding {
-                                var: "z".to_string(),
+                                var: Var {
+                                    name: "z".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             },
                             ContextBinding {
-                                var: "y".to_string(),
+                                var: Var {
+                                    name: "y".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             },
                             ContextBinding {
-                                var: "x".to_string(),
+                                var: Var {
+                                    name: "x".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             },
                             ContextBinding {
-                                var: "w".to_string(),
+                                var: Var {
+                                    name: "w".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             },
                         ]
                         .into(),
                         next: Rc::new(Statement::Switch(Switch {
-                            var: "q".to_string(),
+                            var: Var {
+                                name: "q".to_string(),
+                                id: 0,
+                            },
                             ty: Ty::Decl("Quad".to_string()),
                             clauses: vec![Clause {
                                 xtor: "Q".to_string(),
                                 context: vec![
                                     ContextBinding {
-                                        var: "d".to_string(),
+                                        var: Var {
+                                            name: "d".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Ext,
                                         ty: Ty::I64,
                                     },
                                     ContextBinding {
-                                        var: "c".to_string(),
+                                        var: Var {
+                                            name: "c".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Ext,
                                         ty: Ty::I64,
                                     },
                                     ContextBinding {
-                                        var: "b".to_string(),
+                                        var: Var {
+                                            name: "b".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Ext,
                                         ty: Ty::I64,
                                     },
                                     ContextBinding {
-                                        var: "a".to_string(),
+                                        var: Var {
+                                            name: "a".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Ext,
                                         ty: Ty::I64,
                                     },
@@ -109,14 +163,29 @@ fn test_quad() {
                                 .into(),
                                 body: Rc::new(Statement::Literal(Literal {
                                     lit: 7,
-                                    var: "z".to_string(),
+                                    var: Var {
+                                        name: "z".to_string(),
+                                        id: 0,
+                                    },
                                     next: Rc::new(Statement::Op(Op {
-                                        fst: "d".to_string(),
+                                        fst: Var {
+                                            name: "d".to_string(),
+                                            id: 0,
+                                        },
                                         op: BinOp::Sum,
-                                        snd: "z".to_string(),
-                                        var: "e".to_string(),
+                                        snd: Var {
+                                            name: "z".to_string(),
+                                            id: 0,
+                                        },
+                                        var: Var {
+                                            name: "e".to_string(),
+                                            id: 0,
+                                        },
                                         next: Rc::new(Statement::Exit(Exit {
-                                            var: "e".to_string(),
+                                            var: Var {
+                                                name: "e".to_string(),
+                                                id: 0,
+                                            },
                                         })),
                                         free_vars_next: None,
                                     })),

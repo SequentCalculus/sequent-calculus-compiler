@@ -101,7 +101,10 @@ mod test {
     fn check_label() {
         let result = Label {
             span: Span::default(),
-            label: "a".to_owned(),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             ty: None,
             term: Rc::new(Lit::mk(1).into()),
         }
@@ -113,7 +116,10 @@ mod test {
         .unwrap();
         let expected = Label {
             span: Span::default(),
-            label: "a".to_owned(),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             ty: Some(Ty::mk_i64()),
             term: Rc::new(Lit::mk(1).into()),
         };
@@ -122,11 +128,26 @@ mod test {
     #[test]
     fn check_label_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let result = Label {
             span: Span::default(),
-            label: "a".to_owned(),
-            term: Rc::new(XVar::mk("x").into()),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
+            term: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
@@ -136,7 +157,10 @@ mod test {
     fn example() -> Label {
         Label {
             span: Span::default(),
-            label: "x".to_string(),
+            label: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             term: Rc::new(Term::Lit(Lit::mk(2))),
             ty: None,
         }

@@ -146,7 +146,10 @@ mod destructor_tests {
     fn check_fst() {
         let mut ctx = TypingContext::default();
         ctx.add_var(
-            "x",
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
         let mut symbol_table = symbol_table_lpair();
@@ -155,7 +158,13 @@ mod destructor_tests {
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![].into(),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
@@ -168,7 +177,10 @@ mod destructor_tests {
             scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_decl(
                         "LPair",
                         TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
@@ -186,17 +198,40 @@ mod destructor_tests {
     fn check_ap() {
         let mut ctx = TypingContext::default();
         ctx.add_var(
-            "x",
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         let mut symbol_table = symbol_table_fun_template();
         let result = Destructor {
             span: Span::default(),
             id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            args: vec![
+                Lit::mk(1).into(),
+                XVar::mk(Var {
+                    name: "a".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ]
+            .into(),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
@@ -209,7 +244,10 @@ mod destructor_tests {
                 Lit::mk(1).into(),
                 XVar {
                     span: Span::default(),
-                    var: "a".to_owned(),
+                    var: Var {
+                        name: "a".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Cns),
                 }
@@ -219,7 +257,10 @@ mod destructor_tests {
             scrutinee: Rc::new(
                 XVar {
                     span: Span::default(),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_decl(
                         "Fun",
                         TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
@@ -236,13 +277,25 @@ mod destructor_tests {
     #[test]
     fn check_dtor_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let result = Destructor {
             span: Span::default(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             args: vec![].into(),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
@@ -255,7 +308,13 @@ mod destructor_tests {
             span: Span::default(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             args: vec![].into(),
             ty: None,
         }
@@ -295,8 +354,26 @@ mod destructor_tests {
             span: Span::default(),
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
-            scrutinee: Rc::new(XVar::mk("x").into()),
-            args: vec![XVar::mk("y").into(), XVar::mk("z").into()].into(),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
+            args: vec![
+                XVar::mk(Var {
+                    name: "y".to_string(),
+                    id: 0,
+                })
+                .into(),
+                XVar::mk(Var {
+                    name: "z".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ]
+            .into(),
             ty: None,
         };
         let result = dest.print_to_string(Default::default());

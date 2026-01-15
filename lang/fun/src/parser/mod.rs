@@ -52,6 +52,7 @@ mod parser_tests {
     use crate::{
         syntax::{
             context::TypingContext,
+            names::Var,
             program::Program,
             terms::{Lit, Paren, Term, XVar},
             types::Ty,
@@ -80,7 +81,11 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = XVar::mk("x").into();
+        let expected = XVar::mk(Var {
+            name: "x".to_string(),
+            id: 0,
+        })
+        .into();
         assert_eq!(parser.parse("x"), Ok(expected));
     }
 
@@ -94,8 +99,20 @@ mod parser_tests {
     #[test]
     fn parse_ctx() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         let parser = fun::OptContextParser::new();
         assert_eq!(parser.parse("(x : i64, a:cns i64)"), Ok(ctx))
     }

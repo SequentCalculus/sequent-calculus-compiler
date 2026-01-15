@@ -15,7 +15,10 @@ fn test_closure() {
         xtors: vec![XtorSig {
             name: "Ret".to_string(),
             args: vec![ContextBinding {
-                var: "r".to_string(),
+                var: Var {
+                    name: "r".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Ext,
                 ty: Ty::I64,
             }]
@@ -29,12 +32,18 @@ fn test_closure() {
             name: "apply".to_string(),
             args: vec![
                 ContextBinding {
-                    var: "x".to_string(),
+                    var: Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 },
                 ContextBinding {
-                    var: "k".to_string(),
+                    var: Var {
+                        name: "k".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Cns,
                     ty: Ty::Decl("Cont".to_string()),
                 },
@@ -45,13 +54,22 @@ fn test_closure() {
 
     let main_body = Statement::Literal(Literal {
         lit: 9,
-        var: "a".to_string(),
+        var: Var {
+            name: "a".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Create(Create {
-            var: "f".to_string(),
+            var: Var {
+                name: "f".to_string(),
+                id: 0,
+            },
             ty: Ty::Decl("Fun".to_string()),
             context: Some(
                 vec![ContextBinding {
-                    var: "a".to_string(),
+                    var: Var {
+                        name: "a".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 }]
@@ -61,43 +79,73 @@ fn test_closure() {
                 xtor: "apply".to_string(),
                 context: vec![
                     ContextBinding {
-                        var: "x".to_string(),
+                        var: Var {
+                            name: "x".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Ext,
                         ty: Ty::I64,
                     },
                     ContextBinding {
-                        var: "k".to_string(),
+                        var: Var {
+                            name: "k".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Cns,
                         ty: Ty::Decl("Cont".to_string()),
                     },
                 ]
                 .into(),
                 body: Rc::new(Statement::Op(Op {
-                    fst: "a".to_string(),
+                    fst: Var {
+                        name: "a".to_string(),
+                        id: 0,
+                    },
                     op: BinOp::Sum,
-                    snd: "x".to_string(),
-                    var: "b".to_string(),
+                    snd: Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    },
+                    var: Var {
+                        name: "b".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             (
                                 ContextBinding {
-                                    var: "b".to_string(),
+                                    var: Var {
+                                        name: "b".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Ext,
                                     ty: Ty::I64,
                                 },
-                                "b".to_string(),
+                                Var {
+                                    name: "b".to_string(),
+                                    id: 0,
+                                },
                             ),
                             (
                                 ContextBinding {
-                                    var: "k".to_string(),
+                                    var: Var {
+                                        name: "k".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Cns,
                                     ty: Ty::Decl("Cont".to_string()),
                                 },
-                                "k".to_string(),
+                                Var {
+                                    name: "k".to_string(),
+                                    id: 0,
+                                },
                             ),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
-                            var: "k".to_string(),
+                            var: Var {
+                                name: "k".to_string(),
+                                id: 0,
+                            },
                             tag: "Ret".to_string(),
                             ty: Ty::Decl("Cont".to_string()),
                             args: vec![].into(),
@@ -108,54 +156,87 @@ fn test_closure() {
             }],
             free_vars_clauses: None,
             next: Rc::new(Statement::Create(Create {
-                var: "k".to_string(),
+                var: Var {
+                    name: "k".to_string(),
+                    id: 0,
+                },
                 ty: Ty::Decl("Cont".to_string()),
                 context: Some(Vec::new().into()),
                 clauses: vec![Clause {
                     xtor: "Ret".to_string(),
                     context: vec![ContextBinding {
-                        var: "r".to_string(),
+                        var: Var {
+                            name: "r".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Ext,
                         ty: Ty::I64,
                     }]
                     .into(),
                     body: Rc::new(Statement::Exit(Exit {
-                        var: "r".to_string(),
+                        var: Var {
+                            name: "r".to_string(),
+                            id: 0,
+                        },
                     })),
                 }],
                 free_vars_clauses: None,
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 1,
-                    var: "y".to_string(),
+                    var: Var {
+                        name: "y".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
                             (
                                 ContextBinding {
-                                    var: "y".to_string(),
+                                    var: Var {
+                                        name: "y".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Ext,
                                     ty: Ty::I64,
                                 },
-                                "y".to_string(),
+                                Var {
+                                    name: "y".to_string(),
+                                    id: 0,
+                                },
                             ),
                             (
                                 ContextBinding {
-                                    var: "k".to_string(),
+                                    var: Var {
+                                        name: "k".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Cns,
                                     ty: Ty::Decl("Cont".to_string()),
                                 },
-                                "k".to_string(),
+                                Var {
+                                    name: "k".to_string(),
+                                    id: 0,
+                                },
                             ),
                             (
                                 ContextBinding {
-                                    var: "f".to_string(),
+                                    var: Var {
+                                        name: "f".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Prd,
                                     ty: Ty::Decl("Fun".to_string()),
                                 },
-                                "f".to_string(),
+                                Var {
+                                    name: "f".to_string(),
+                                    id: 0,
+                                },
                             ),
                         ],
                         next: Rc::new(Statement::Invoke(Invoke {
-                            var: "f".to_string(),
+                            var: Var {
+                                name: "f".to_string(),
+                                id: 0,
+                            },
                             tag: "apply".to_string(),
                             ty: Ty::Decl("Fun".to_string()),
                             args: vec![].into(),

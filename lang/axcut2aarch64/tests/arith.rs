@@ -13,47 +13,107 @@ use std::rc::Rc;
 fn test_arith() {
     let main_body = Statement::Literal(Literal {
         lit: 1,
-        var: "a".to_string(),
+        var: Var {
+            name: "a".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Literal(Literal {
             lit: 3,
-            var: "b".to_string(),
+            var: Var {
+                name: "b".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Op(Op {
-                fst: "a".to_string(),
+                fst: Var {
+                    name: "a".to_string(),
+                    id: 0,
+                },
                 op: BinOp::Sub,
-                snd: "b".to_string(),
-                var: "c".to_string(),
+                snd: Var {
+                    name: "b".to_string(),
+                    id: 0,
+                },
+                var: Var {
+                    name: "c".to_string(),
+                    id: 0,
+                },
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 8,
-                    var: "d".to_string(),
+                    var: Var {
+                        name: "d".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Literal(Literal {
                         lit: -1,
-                        var: "e".to_string(),
+                        var: Var {
+                            name: "e".to_string(),
+                            id: 0,
+                        },
                         next: Rc::new(Statement::Op(Op {
-                            fst: "e".to_string(),
+                            fst: Var {
+                                name: "e".to_string(),
+                                id: 0,
+                            },
                             op: BinOp::Prod,
-                            snd: "d".to_string(),
-                            var: "f".to_string(),
+                            snd: Var {
+                                name: "d".to_string(),
+                                id: 0,
+                            },
+                            var: Var {
+                                name: "f".to_string(),
+                                id: 0,
+                            },
                             next: Rc::new(Statement::Op(Op {
-                                fst: "f".to_string(),
+                                fst: Var {
+                                    name: "f".to_string(),
+                                    id: 0,
+                                },
                                 op: BinOp::Sum,
-                                snd: "c".to_string(),
-                                var: "g".to_string(),
+                                snd: Var {
+                                    name: "c".to_string(),
+                                    id: 0,
+                                },
+                                var: Var {
+                                    name: "g".to_string(),
+                                    id: 0,
+                                },
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: -6,
-                                    var: "h".to_string(),
+                                    var: Var {
+                                        name: "h".to_string(),
+                                        id: 0,
+                                    },
                                     next: Rc::new(Statement::Op(Op {
-                                        fst: "h".to_string(),
+                                        fst: Var {
+                                            name: "h".to_string(),
+                                            id: 0,
+                                        },
                                         op: BinOp::Prod,
-                                        snd: "g".to_string(),
-                                        var: "i".to_string(),
+                                        snd: Var {
+                                            name: "g".to_string(),
+                                            id: 0,
+                                        },
+                                        var: Var {
+                                            name: "i".to_string(),
+                                            id: 0,
+                                        },
                                         next: Rc::new(Statement::PrintI64(PrintI64 {
                                             newline: true,
-                                            var: "i".to_string(),
+                                            var: Var {
+                                                name: "i".to_string(),
+                                                id: 0,
+                                            },
                                             next: Rc::new(Statement::Literal(Literal {
                                                 lit: 0,
-                                                var: "ret".to_string(),
+                                                var: Var {
+                                                    name: "ret".to_string(),
+                                                    id: 0,
+                                                },
                                                 next: Rc::new(Statement::Exit(Exit {
-                                                    var: "ret".to_string(),
+                                                    var: Var {
+                                                        name: "ret".to_string(),
+                                                        id: 0,
+                                                    },
                                                 })),
                                                 free_vars_next: None,
                                             })),

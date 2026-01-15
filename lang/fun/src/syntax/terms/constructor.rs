@@ -142,12 +142,22 @@ mod test {
     #[test]
     fn check_cons() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         let result = Constructor {
             span: Span::default(),
             id: "Cons".to_owned(),
             args: vec![
-                XVar::mk("x").into(),
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
@@ -171,7 +181,10 @@ mod test {
             args: vec![
                 XVar {
                     span: Span::default(),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Prd),
                 }

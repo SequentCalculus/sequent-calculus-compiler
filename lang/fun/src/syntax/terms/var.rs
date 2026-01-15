@@ -95,23 +95,46 @@ mod test {
     #[test]
     fn check_var() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x")
-            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-            .unwrap();
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        let result = XVar::mk(Var {
+            name: "x".to_string(),
+            id: 0,
+        })
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
+        .unwrap();
         let expected = XVar {
             span: Span::default(),
-            var: "x".to_owned(),
+            var: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             ty: Some(Ty::mk_i64()),
             chi: Some(Prd),
         };
         assert_eq!(result, expected)
     }
+
     #[test]
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x").check(
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        let result = XVar::mk(Var {
+            name: "x".to_string(),
+            id: 0,
+        })
+        .check(
             &mut SymbolTable::default(),
             &ctx,
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),

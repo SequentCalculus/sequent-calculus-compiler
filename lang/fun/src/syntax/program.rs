@@ -186,6 +186,7 @@ mod program_tests {
         syntax::{
             context::TypingContext,
             declarations::Def,
+            names::Var,
             program::Program,
             terms::{Lit, Term},
             types::Ty,
@@ -249,8 +250,20 @@ mod program_tests {
 
     fn example_args() -> Program {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         Program {
             declarations: vec![
                 Def {

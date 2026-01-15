@@ -16,7 +16,10 @@ fn test_either() {
             XtorSig {
                 name: "Left".to_string(),
                 args: vec![ContextBinding {
-                    var: "x".to_string(),
+                    var: Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 }]
@@ -25,7 +28,10 @@ fn test_either() {
             XtorSig {
                 name: "Right".to_string(),
                 args: vec![ContextBinding {
-                    var: "y".to_string(),
+                    var: Var {
+                        name: "y".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 }]
@@ -36,37 +42,61 @@ fn test_either() {
 
     let main_body = Statement::Literal(Literal {
         lit: 1,
-        var: "z".to_string(),
+        var: Var {
+            name: "z".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Literal(Literal {
             lit: 9,
-            var: "x".to_string(),
+            var: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Let(Let {
-                var: "p".to_string(),
+                var: Var {
+                    name: "p".to_string(),
+                    id: 0,
+                },
                 ty: Ty::Decl("Either".to_string()),
                 tag: "Right".to_string(),
                 args: vec![ContextBinding {
-                    var: "x".to_string(),
+                    var: Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Ext,
                     ty: Ty::I64,
                 }]
                 .into(),
                 next: Rc::new(Statement::Switch(Switch {
-                    var: "p".to_string(),
+                    var: Var {
+                        name: "p".to_string(),
+                        id: 0,
+                    },
                     ty: Ty::Decl("Either".to_string()),
                     clauses: vec![
                         Clause {
                             xtor: "Left".to_string(),
                             context: vec![ContextBinding {
-                                var: "a".to_string(),
+                                var: Var {
+                                    name: "a".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             }]
                             .into(),
                             body: Rc::new(Statement::Literal(Literal {
                                 lit: -1,
-                                var: "err".to_string(),
+                                var: Var {
+                                    name: "err".to_string(),
+                                    id: 0,
+                                },
                                 next: Rc::new(Statement::Exit(Exit {
-                                    var: "err".to_string(),
+                                    var: Var {
+                                        name: "err".to_string(),
+                                        id: 0,
+                                    },
                                 })),
                                 free_vars_next: None,
                             })),
@@ -74,18 +104,33 @@ fn test_either() {
                         Clause {
                             xtor: "Right".to_string(),
                             context: vec![ContextBinding {
-                                var: "b".to_string(),
+                                var: Var {
+                                    name: "b".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             }]
                             .into(),
                             body: Rc::new(Statement::Op(Op {
-                                fst: "b".to_string(),
+                                fst: Var {
+                                    name: "b".to_string(),
+                                    id: 0,
+                                },
                                 op: BinOp::Sum,
-                                snd: "z".to_string(),
-                                var: "c".to_string(),
+                                snd: Var {
+                                    name: "z".to_string(),
+                                    id: 0,
+                                },
+                                var: Var {
+                                    name: "c".to_string(),
+                                    id: 0,
+                                },
                                 next: Rc::new(Statement::Exit(Exit {
-                                    var: "c".to_string(),
+                                    var: Var {
+                                        name: "c".to_string(),
+                                        id: 0,
+                                    },
                                 })),
                                 free_vars_next: None,
                             })),

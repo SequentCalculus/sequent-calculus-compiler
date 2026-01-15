@@ -12,6 +12,7 @@ pub mod test_common {
         syntax::{
             context::{Chirality::Prd, TypeContext, TypingContext, VarContext},
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
+            names::Var,
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
         },
@@ -22,9 +23,18 @@ pub mod test_common {
 
     fn context_cons(type_param: &str) -> TypingContext {
         let mut ctx_cons = TypingContext::default();
-        ctx_cons.add_var("x", Ty::mk_decl(type_param, TypeArgs::default()));
         ctx_cons.add_var(
-            "xs",
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl(type_param, TypeArgs::default()),
+        );
+        ctx_cons.add_var(
+            Var {
+                name: "xs".to_string(),
+                id: 0,
+            },
             Ty::mk_decl(
                 "List",
                 TypeArgs::mk(vec![Ty::mk_decl(type_param, TypeArgs::default())]),
@@ -35,15 +45,33 @@ pub mod test_common {
 
     fn context_cons_i64_names() -> VarContext {
         let mut ctx_cons_names = VarContext::default();
-        ctx_cons_names.bindings.push("x".to_string());
-        ctx_cons_names.bindings.push("xs".to_string());
+        ctx_cons_names.bindings.push(Var {
+            name: "x".to_string(),
+            id: 0,
+        });
+        ctx_cons_names.bindings.push(Var {
+            name: "xs".to_string(),
+            id: 0,
+        });
         ctx_cons_names
     }
 
     fn context_cons_i64() -> TypingContext {
         let mut ctx_cons = TypingContext::default();
-        ctx_cons.add_var("x", Ty::mk_i64());
-        ctx_cons.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx_cons.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx_cons.add_var(
+            Var {
+                name: "xs".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         ctx_cons
     }
 
@@ -245,15 +273,39 @@ pub mod test_common {
 
     fn context_ap(type_param_in: &str, type_param_out: &str) -> TypingContext {
         let mut ctx_ap = TypingContext::default();
-        ctx_ap.add_var("x", Ty::mk_decl(type_param_in, TypeArgs::default()));
-        ctx_ap.add_covar("a", Ty::mk_decl(type_param_out, TypeArgs::default()));
+        ctx_ap.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl(type_param_in, TypeArgs::default()),
+        );
+        ctx_ap.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl(type_param_out, TypeArgs::default()),
+        );
         ctx_ap
     }
 
     fn context_ap_i64() -> TypingContext {
         let mut ctx_ap = TypingContext::default();
-        ctx_ap.add_var("x", Ty::mk_i64());
-        ctx_ap.add_covar("a", Ty::mk_i64());
+        ctx_ap.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx_ap.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         ctx_ap
     }
 
@@ -384,7 +436,13 @@ pub mod test_common {
 
     fn context_mult() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            Var {
+                name: "l".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         ctx
     }
 
@@ -395,7 +453,13 @@ pub mod test_common {
             context: context_mult(),
             body: Case {
                 span: Span::default(),
-                scrutinee: Rc::new(XVar::mk("l").into()),
+                scrutinee: Rc::new(
+                    XVar::mk(Var {
+                        name: "l".to_string(),
+                        id: 0,
+                    })
+                    .into(),
+                ),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 clauses: vec![
                     Clause {
@@ -414,13 +478,26 @@ pub mod test_common {
                         context: TypingContext::default(),
                         body: Op {
                             span: Span::default(),
-                            fst: Rc::new(XVar::mk("x").into()),
+                            fst: Rc::new(
+                                XVar::mk(Var {
+                                    name: "x".to_string(),
+                                    id: 0,
+                                })
+                                .into(),
+                            ),
                             op: BinOp::Prod,
                             snd: Rc::new(
                                 Call {
                                     span: Span::default(),
                                     name: "mult".to_owned(),
-                                    args: vec![XVar::mk("xs").into()].into(),
+                                    args: vec![
+                                        XVar::mk(Var {
+                                            name: "xs".to_string(),
+                                            id: 0,
+                                        })
+                                        .into(),
+                                    ]
+                                    .into(),
                                     ret_ty: None,
                                 }
                                 .into(),
@@ -447,7 +524,10 @@ pub mod test_common {
                 scrutinee: Rc::new(
                     XVar {
                         span: Span::default(),
-                        var: "l".to_owned(),
+                        var: Var {
+                            name: "l".to_owned(),
+                            id: 0,
+                        },
                         ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                         chi: Some(Prd),
                     }
@@ -474,7 +554,10 @@ pub mod test_common {
                             fst: Rc::new(
                                 XVar {
                                     span: Span::default(),
-                                    var: "x".to_owned(),
+                                    var: Var {
+                                        name: "x".to_owned(),
+                                        id: 0,
+                                    },
                                     ty: Some(Ty::mk_i64()),
                                     chi: Some(Prd),
                                 }
@@ -488,7 +571,10 @@ pub mod test_common {
                                     args: vec![
                                         XVar {
                                             span: Span::default(),
-                                            var: "xs".to_owned(),
+                                            var: Var {
+                                                name: "xs".to_owned(),
+                                                id: 0,
+                                            },
                                             ty: Some(Ty::mk_decl(
                                                 "List",
                                                 TypeArgs::mk(vec![Ty::mk_i64()]),

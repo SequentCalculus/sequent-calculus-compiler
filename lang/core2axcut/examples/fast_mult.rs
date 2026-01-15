@@ -22,12 +22,18 @@ fn main() {
                 args: TypingContext {
                     bindings: vec![
                         ContextBinding {
-                            var: "x".to_string(),
+                            var: Var {
+                                name: "x".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Prd,
                             ty: Ty::I64,
                         },
                         ContextBinding {
-                            var: "xs".to_string(),
+                            var: Var {
+                                name: "xs".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Prd,
                             ty: Ty::Decl("ListInt".to_string()),
                         },
@@ -38,20 +44,44 @@ fn main() {
     };
 
     let mut subst = Arguments::default();
-    subst.add_prod(terms::XVar::var("l", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
+    subst.add_prod(terms::XVar::var(
+        Var {
+            name: "l".to_string(),
+            id: 0,
+        },
+        Ty::Decl("ListInt".to_string()),
+    ));
+    subst.add_cons(terms::XVar::covar(
+        Var {
+            name: "a".to_string(),
+            id: 0,
+        },
+        Ty::Decl("Int".to_string()),
+    ));
+    subst.add_cons(terms::XVar::covar(
+        Var {
+            name: "a".to_string(),
+            id: 0,
+        },
+        Ty::Decl("Int".to_string()),
+    ));
     let fmult = Def {
         name: "fmult".to_string(),
         context: TypingContext {
             bindings: vec![
                 ContextBinding {
-                    var: "l".to_string(),
+                    var: Var {
+                        name: "l".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Prd,
                     ty: Ty::Decl("ListInt".to_string()),
                 },
                 ContextBinding {
-                    var: "a0".to_string(),
+                    var: Var {
+                        name: "a0".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
@@ -59,7 +89,10 @@ fn main() {
         },
         body: Statement::Cut(statements::Cut::new(
             Term::Mu(terms::Mu::mu(
-                "a",
+                Var {
+                    name: "a".to_string(),
+                    id: 0,
+                },
                 Statement::Call(statements::Call {
                     name: "mult".to_string(),
                     args: subst,
@@ -67,40 +100,92 @@ fn main() {
                 }),
                 Ty::I64,
             )),
-            Term::XVar(terms::XVar::covar("a0", Ty::I64)),
+            Term::XVar(terms::XVar::covar(
+                Var {
+                    name: "a0".to_string(),
+                    id: 0,
+                },
+                Ty::I64,
+            )),
             Ty::I64,
         )),
-        used_vars: HashSet::from(["l".to_string(), "a".to_string(), "a0".to_string()]),
+        used_vars: HashSet::from([
+            Var {
+                name: "l".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "a0".to_string(),
+                id: 0,
+            },
+        ]),
     };
 
     let mut subst = Arguments::default();
-    subst.add_prod(terms::XVar::var("xs", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(terms::XVar::covar("a1", Ty::Decl("Int".to_string())));
+    subst.add_prod(terms::XVar::var(
+        Var {
+            name: "xs".to_string(),
+            id: 0,
+        },
+        Ty::Decl("ListInt".to_string()),
+    ));
+    subst.add_cons(terms::XVar::covar(
+        Var {
+            name: "a".to_string(),
+            id: 0,
+        },
+        Ty::Decl("Int".to_string()),
+    ));
+    subst.add_cons(terms::XVar::covar(
+        Var {
+            name: "a1".to_string(),
+            id: 0,
+        },
+        Ty::Decl("Int".to_string()),
+    ));
 
     let mult = Def {
         name: "mult".to_string(),
         context: TypingContext {
             bindings: vec![
                 ContextBinding {
-                    var: "l".to_string(),
+                    var: Var {
+                        name: "l".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Prd,
                     ty: Ty::Decl("ListInt".to_string()),
                 },
                 ContextBinding {
-                    var: "a".to_string(),
+                    var: Var {
+                        name: "a".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
                 ContextBinding {
-                    var: "a0".to_string(),
+                    var: Var {
+                        name: "a0".to_string(),
+                        id: 0,
+                    },
                     chi: Chirality::Cns,
                     ty: Ty::I64,
                 },
             ],
         },
         body: Statement::Cut(statements::Cut::new(
-            Term::XVar(terms::XVar::var("l", Ty::Decl("ListInt".to_string()))),
+            Term::XVar(terms::XVar::var(
+                Var {
+                    name: "l".to_string(),
+                    id: 0,
+                },
+                Ty::Decl("ListInt".to_string()),
+            )),
             Term::XCase(terms::XCase {
                 prdcns: terms::Cns,
                 clauses: vec![
@@ -110,7 +195,13 @@ fn main() {
                         context: TypingContext { bindings: vec![] },
                         body: Rc::new(Statement::Cut(statements::Cut::new(
                             Term::Literal(terms::Literal { lit: 1 }),
-                            Term::XVar(terms::XVar::covar("a0", Ty::I64)),
+                            Term::XVar(terms::XVar::covar(
+                                Var {
+                                    name: "a0".to_string(),
+                                    id: 0,
+                                },
+                                Ty::I64,
+                            )),
                             Ty::I64,
                         ))),
                     },
@@ -120,12 +211,18 @@ fn main() {
                         context: TypingContext {
                             bindings: vec![
                                 ContextBinding {
-                                    var: "x".to_string(),
+                                    var: Var {
+                                        name: "x".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Prd,
                                     ty: Ty::I64,
                                 },
                                 ContextBinding {
-                                    var: "xs".to_string(),
+                                    var: Var {
+                                        name: "xs".to_string(),
+                                        id: 0,
+                                    },
                                     chi: Chirality::Prd,
                                     ty: Ty::Decl("ListInt".to_string()),
                                 },
@@ -133,19 +230,40 @@ fn main() {
                         },
                         body: Rc::new(Statement::IfC(statements::IfC {
                             sort: statements::IfSort::Equal,
-                            fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                            fst: Rc::new(Term::XVar(terms::XVar::var(
+                                Var {
+                                    name: "x".to_string(),
+                                    id: 0,
+                                },
+                                Ty::I64,
+                            ))),
                             snd: None,
                             thenc: Rc::new(Statement::Cut(statements::Cut::new(
                                 Term::Literal(terms::Literal { lit: 0 }),
-                                Term::XVar(terms::XVar::covar("a", Ty::I64)),
+                                Term::XVar(terms::XVar::covar(
+                                    Var {
+                                        name: "a".to_string(),
+                                        id: 0,
+                                    },
+                                    Ty::I64,
+                                )),
                                 Ty::I64,
                             ))),
                             elsec: Rc::new(Statement::Cut(statements::Cut::new(
                                 Term::Op(terms::Op {
-                                    fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
+                                    fst: Rc::new(Term::XVar(terms::XVar::var(
+                                        Var {
+                                            name: "x".to_string(),
+                                            id: 0,
+                                        },
+                                        Ty::I64,
+                                    ))),
                                     op: BinOp::Prod,
                                     snd: Rc::new(Term::Mu(terms::Mu::mu(
-                                        "a1",
+                                        Var {
+                                            name: "a1".to_string(),
+                                            id: 0,
+                                        },
                                         Statement::Call(statements::Call {
                                             name: "mult".to_string(),
                                             args: subst,
@@ -154,7 +272,13 @@ fn main() {
                                         Ty::I64,
                                     ))),
                                 }),
-                                Term::XVar(terms::XVar::covar("a0", Ty::I64)),
+                                Term::XVar(terms::XVar::covar(
+                                    Var {
+                                        name: "a0".to_string(),
+                                        id: 0,
+                                    },
+                                    Ty::I64,
+                                )),
                                 Ty::I64,
                             ))),
                         })),
@@ -165,12 +289,30 @@ fn main() {
             Ty::Decl("ListInt".to_string()),
         )),
         used_vars: HashSet::from([
-            "l".to_string(),
-            "a".to_string(),
-            "a0".to_string(),
-            "a1".to_string(),
-            "x".to_string(),
-            "xs".to_string(),
+            Var {
+                name: "l".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "a0".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "a1".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Var {
+                name: "xs".to_string(),
+                id: 0,
+            },
         ]),
     };
 
@@ -198,13 +340,22 @@ fn main() {
 
     let mut subst = Arguments::default();
     subst.add_prod(cons4);
-    subst.add_cons(terms::XVar::covar("a0", Ty::I64));
+    subst.add_cons(terms::XVar::covar(
+        Var {
+            name: "a0".to_string(),
+            id: 0,
+        },
+        Ty::I64,
+    ));
 
     let main = Def {
         name: "main".to_string(),
         context: TypingContext {
             bindings: vec![ContextBinding {
-                var: "a0".to_string(),
+                var: Var {
+                    name: "a0".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Cns,
                 ty: Ty::I64,
             }],
@@ -214,7 +365,10 @@ fn main() {
             args: subst,
             ty: Ty::Decl("Int".to_string()),
         }),
-        used_vars: HashSet::from(["a0".to_string()]),
+        used_vars: HashSet::from([Var {
+            name: "a0".to_string(),
+            id: 0,
+        }]),
     };
 
     let program = Prog {

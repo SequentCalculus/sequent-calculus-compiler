@@ -10,9 +10,35 @@ pub mod traits;
 pub mod test_common {
     use crate::syntax::*;
 
-    pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {
-        let prod_subst = vec![("x".to_string(), XVar::var("y", Ty::I64).into())];
-        let cnos_subst = vec![("a".to_string(), XVar::covar("b", Ty::I64).into())];
-        (prod_subst, cnos_subst)
+    pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Var, Term<Cns>)>) {
+        let prod_subst = vec![(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            XVar::var(
+                Var {
+                    name: "y".to_string(),
+                    id: 0,
+                },
+                Ty::I64,
+            )
+            .into(),
+        )];
+        let cons_subst = vec![(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            XVar::covar(
+                Var {
+                    name: "b".to_string(),
+                    id: 0,
+                },
+                Ty::I64,
+            )
+            .into(),
+        )];
+        (prod_subst, cons_subst)
     }
 }

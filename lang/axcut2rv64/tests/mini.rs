@@ -23,10 +23,16 @@ fn test_mini() {
 
     let l_body = Statement::Literal(Literal {
         lit: 1,
-        var: "x".to_string(),
+        var: Var {
+            name: "x".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Literal(Literal {
             lit: 9,
-            var: "y".to_string(),
+            var: Var {
+                name: "y".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Call(Call {
                 label: "j".to_string(),
                 args: vec![].into(),
@@ -43,12 +49,24 @@ fn test_mini() {
     };
 
     let j_body = Statement::Op(Op {
-        fst: "x".to_string(),
+        fst: Var {
+            name: "x".to_string(),
+            id: 0,
+        },
         op: BinOp::Sum,
-        snd: "y".to_string(),
-        var: "z".to_string(),
+        snd: Var {
+            name: "y".to_string(),
+            id: 0,
+        },
+        var: Var {
+            name: "z".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Exit(Exit {
-            var: "z".to_string(),
+            var: Var {
+                name: "z".to_string(),
+                id: 0,
+            },
         })),
         free_vars_next: None,
     });
@@ -56,12 +74,18 @@ fn test_mini() {
         name: "j".to_string(),
         context: vec![
             ContextBinding {
-                var: "y".to_string(),
+                var: Var {
+                    name: "y".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Ext,
                 ty: Ty::I64,
             },
             ContextBinding {
-                var: "x".to_string(),
+                var: Var {
+                    name: "x".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Ext,
                 ty: Ty::I64,
             },

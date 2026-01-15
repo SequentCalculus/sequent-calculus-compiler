@@ -116,10 +116,19 @@ mod test {
     fn check_let1() {
         let result = Let {
             span: Span::default(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(XVar::mk("x").into()),
+            in_term: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(
@@ -130,14 +139,20 @@ mod test {
         .unwrap();
         let expected = Let {
             span: Span::default(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 XVar {
                     span: Span::default(),
                     ty: Some(Ty::mk_i64()),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     chi: Some(Prd),
                 }
                 .into(),
@@ -151,14 +166,24 @@ mod test {
         let mut symbol_table = symbol_table_list();
         let result = Let {
             span: Span::default(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
                     span: Span::default(),
                     id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()].into(),
+                    args: vec![
+                        XVar::mk(Var {
+                            name: "x".to_string(),
+                            id: 0,
+                        })
+                        .into(),
+                    ]
+                    .into(),
                     ty: None,
                 }
                 .into(),
@@ -176,7 +201,10 @@ mod test {
     fn example() -> Let {
         Let {
             span: Span::default(),
-            variable: "x".to_string(),
+            variable: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),

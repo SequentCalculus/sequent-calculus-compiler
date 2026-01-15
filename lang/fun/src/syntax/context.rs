@@ -366,6 +366,7 @@ impl Print for TypeContext {
 mod tests {
     use crate::{
         parser::util::ToMiette,
+        syntax::names::Var,
         syntax::{
             context::TypingContext,
             types::{Ty, TypeArgs},
@@ -380,17 +381,53 @@ mod tests {
     /// `x: i64, y: List[i64], a: cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_var("y", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx.add_var(
+            Var {
+                name: "y".to_string(),
+                id: 0,
+            },
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         ctx
     }
 
     fn example_context_dup() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_covar("a", Ty::mk_i64());
-        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
+        ctx.add_var(
+            Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         ctx
     }
 
@@ -441,7 +478,13 @@ mod tests {
     fn var_lookup() {
         assert!(
             example_context()
-                .lookup_var(&"x".to_owned(), &Span::default().to_miette())
+                .lookup_var(
+                    &Var {
+                        name: "x".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_ok()
         )
     }
@@ -450,7 +493,13 @@ mod tests {
     fn var_lookup_fail() {
         assert!(
             example_context()
-                .lookup_var(&"z".to_owned(), &Span::default().to_miette())
+                .lookup_var(
+                    &Var {
+                        name: "z".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_err()
         )
     }
@@ -459,7 +508,13 @@ mod tests {
     fn covar_lookup() {
         assert!(
             example_context()
-                .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
+                .lookup_covar(
+                    &Var {
+                        name: "a".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_ok()
         )
     }
@@ -468,7 +523,13 @@ mod tests {
     fn covar_lookup_fail() {
         assert!(
             example_context()
-                .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
+                .lookup_covar(
+                    &Var {
+                        name: "b".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_err()
         )
     }

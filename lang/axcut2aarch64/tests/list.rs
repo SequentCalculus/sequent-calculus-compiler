@@ -22,12 +22,18 @@ fn test_list() {
                 name: "Cons".to_string(),
                 args: vec![
                     ContextBinding {
-                        var: "xs".to_string(),
+                        var: Var {
+                            name: "xs".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
                     ContextBinding {
-                        var: "x".to_string(),
+                        var: Var {
+                            name: "x".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Ext,
                         ty: Ty::I64,
                     },
@@ -38,25 +44,40 @@ fn test_list() {
     };
 
     let main_body = Statement::Let(Let {
-        var: "ws".to_string(),
+        var: Var {
+            name: "ws".to_string(),
+            id: 0,
+        },
         ty: Ty::Decl("List".to_string()),
         tag: "Nil".to_string(),
         args: vec![].into(),
         next: Rc::new(Statement::Literal(Literal {
             lit: 5,
-            var: "z".to_string(),
+            var: Var {
+                name: "z".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Let(Let {
-                var: "zs".to_string(),
+                var: Var {
+                    name: "zs".to_string(),
+                    id: 0,
+                },
                 ty: Ty::Decl("List".to_string()),
                 tag: "Cons".to_string(),
                 args: vec![
                     ContextBinding {
-                        var: "z".to_string(),
+                        var: Var {
+                            name: "z".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Ext,
                         ty: Ty::I64,
                     },
                     ContextBinding {
-                        var: "ws".to_string(),
+                        var: Var {
+                            name: "ws".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Prd,
                         ty: Ty::Decl("List".to_string()),
                     },
@@ -64,19 +85,31 @@ fn test_list() {
                 .into(),
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 7,
-                    var: "y".to_string(),
+                    var: Var {
+                        name: "y".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Let(Let {
-                        var: "ys".to_string(),
+                        var: Var {
+                            name: "ys".to_string(),
+                            id: 0,
+                        },
                         ty: Ty::Decl("List".to_string()),
                         tag: "Cons".to_string(),
                         args: vec![
                             ContextBinding {
-                                var: "y".to_string(),
+                                var: Var {
+                                    name: "y".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Ext,
                                 ty: Ty::I64,
                             },
                             ContextBinding {
-                                var: "zs".to_string(),
+                                var: Var {
+                                    name: "zs".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Prd,
                                 ty: Ty::Decl("List".to_string()),
                             },
@@ -84,26 +117,41 @@ fn test_list() {
                         .into(),
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 9,
-                            var: "x".to_string(),
+                            var: Var {
+                                name: "x".to_string(),
+                                id: 0,
+                            },
                             next: Rc::new(Statement::Let(Let {
-                                var: "xs".to_string(),
+                                var: Var {
+                                    name: "xs".to_string(),
+                                    id: 0,
+                                },
                                 ty: Ty::Decl("List".to_string()),
                                 tag: "Cons".to_string(),
                                 args: vec![
                                     ContextBinding {
-                                        var: "x".to_string(),
+                                        var: Var {
+                                            name: "x".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Ext,
                                         ty: Ty::I64,
                                     },
                                     ContextBinding {
-                                        var: "ys".to_string(),
+                                        var: Var {
+                                            name: "ys".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Prd,
                                         ty: Ty::Decl("List".to_string()),
                                     },
                                 ]
                                 .into(),
                                 next: Rc::new(Statement::Switch(Switch {
-                                    var: "xs".to_string(),
+                                    var: Var {
+                                        name: "xs".to_string(),
+                                        id: 0,
+                                    },
                                     ty: Ty::Decl("List".to_string()),
                                     clauses: vec![
                                         Clause {
@@ -111,9 +159,15 @@ fn test_list() {
                                             context: vec![].into(),
                                             body: Rc::new(Statement::Literal(Literal {
                                                 lit: -1,
-                                                var: "err".to_string(),
+                                                var: Var {
+                                                    name: "err".to_string(),
+                                                    id: 0,
+                                                },
                                                 next: Rc::new(Statement::Exit(Exit {
-                                                    var: "err".to_string(),
+                                                    var: Var {
+                                                        name: "err".to_string(),
+                                                        id: 0,
+                                                    },
                                                 })),
                                                 free_vars_next: None,
                                             })),
@@ -122,12 +176,18 @@ fn test_list() {
                                             xtor: "Cons".to_string(),
                                             context: vec![
                                                 ContextBinding {
-                                                    var: "as".to_string(),
+                                                    var: Var {
+                                                        name: "as".to_string(),
+                                                        id: 0,
+                                                    },
                                                     chi: Chirality::Prd,
                                                     ty: Ty::Decl("List".to_string()),
                                                 },
                                                 ContextBinding {
-                                                    var: "a".to_string(),
+                                                    var: Var {
+                                                        name: "a".to_string(),
+                                                        id: 0,
+                                                    },
                                                     chi: Chirality::Ext,
                                                     ty: Ty::I64,
                                                 },
@@ -135,12 +195,21 @@ fn test_list() {
                                             .into(),
                                             body: Rc::new(Statement::PrintI64(PrintI64 {
                                                 newline: true,
-                                                var: "a".to_string(),
+                                                var: Var {
+                                                    name: "a".to_string(),
+                                                    id: 0,
+                                                },
                                                 next: Rc::new(Statement::Literal(Literal {
                                                     lit: 0,
-                                                    var: "ret".to_string(),
+                                                    var: Var {
+                                                        name: "ret".to_string(),
+                                                        id: 0,
+                                                    },
                                                     next: Rc::new(Statement::Exit(Exit {
-                                                        var: "ret".to_string(),
+                                                        var: Var {
+                                                            name: "ret".to_string(),
+                                                            id: 0,
+                                                        },
                                                     })),
                                                     free_vars_next: None,
                                                 })),

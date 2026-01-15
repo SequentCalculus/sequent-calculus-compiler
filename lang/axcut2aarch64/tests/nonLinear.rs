@@ -16,7 +16,10 @@ fn test_non_linear() {
         xtors: vec![XtorSig {
             name: "B".to_string(),
             args: vec![ContextBinding {
-                var: "b".to_string(),
+                var: Var {
+                    name: "b".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Ext,
                 ty: Ty::I64,
             }]
@@ -28,7 +31,10 @@ fn test_non_linear() {
         xtors: vec![XtorSig {
             name: "BB".to_string(),
             args: vec![ContextBinding {
-                var: "bb".to_string(),
+                var: Var {
+                    name: "bb".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }]
@@ -37,12 +43,18 @@ fn test_non_linear() {
     };
 
     let main_body_switch_switch = Statement::Switch(Switch {
-        var: "a2".to_string(),
+        var: Var {
+            name: "a2".to_string(),
+            id: 0,
+        },
         ty: Ty::Decl("Box".to_string()),
         clauses: vec![Clause {
             xtor: "B".to_string(),
             context: vec![ContextBinding {
-                var: "x2".to_string(),
+                var: Var {
+                    name: "x2".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Ext,
                 ty: Ty::I64,
             }]
@@ -51,45 +63,81 @@ fn test_non_linear() {
                 rearrange: vec![
                     (
                         ContextBinding {
-                            var: "x2".to_string(),
+                            var: Var {
+                                name: "x2".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Ext,
                             ty: Ty::I64,
                         },
-                        "x2".to_string(),
+                        Var {
+                            name: "x2".to_string(),
+                            id: 0,
+                        },
                     ),
                     (
                         ContextBinding {
-                            var: "a1".to_string(),
+                            var: Var {
+                                name: "a1".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Prd,
                             ty: Ty::Decl("Box".to_string()),
                         },
-                        "a1".to_string(),
+                        Var {
+                            name: "a1".to_string(),
+                            id: 0,
+                        },
                     ),
                 ],
                 next: Rc::new(Statement::Switch(Switch {
-                    var: "a1".to_string(),
+                    var: Var {
+                        name: "a1".to_string(),
+                        id: 0,
+                    },
                     ty: Ty::Decl("Box".to_string()),
                     clauses: vec![Clause {
                         xtor: "B".to_string(),
                         context: vec![ContextBinding {
-                            var: "x1".to_string(),
+                            var: Var {
+                                name: "x1".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Ext,
                             ty: Ty::I64,
                         }]
                         .into(),
                         body: Rc::new(Statement::Op(Op {
-                            fst: "x1".to_string(),
+                            fst: Var {
+                                name: "x1".to_string(),
+                                id: 0,
+                            },
                             op: BinOp::Sum,
-                            snd: "x2".to_string(),
-                            var: "res".to_string(),
+                            snd: Var {
+                                name: "x2".to_string(),
+                                id: 0,
+                            },
+                            var: Var {
+                                name: "res".to_string(),
+                                id: 0,
+                            },
                             next: Rc::new(Statement::PrintI64(PrintI64 {
                                 newline: true,
-                                var: "res".to_string(),
+                                var: Var {
+                                    name: "res".to_string(),
+                                    id: 0,
+                                },
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 0,
-                                    var: "ret".to_string(),
+                                    var: Var {
+                                        name: "ret".to_string(),
+                                        id: 0,
+                                    },
                                     next: Rc::new(Statement::Exit(Exit {
-                                        var: "ret".to_string(),
+                                        var: Var {
+                                            name: "ret".to_string(),
+                                            id: 0,
+                                        },
                                     })),
                                     free_vars_next: None,
                                 })),
@@ -105,43 +153,67 @@ fn test_non_linear() {
         free_vars_clauses: None,
     });
     let main_body_switch = Statement::Switch(Switch {
-        var: "bb1".to_string(),
+        var: Var {
+            name: "bb1".to_string(),
+            id: 0,
+        },
         ty: Ty::Decl("BoxBox".to_string()),
         clauses: vec![Clause {
             xtor: "BB".to_string(),
             context: vec![ContextBinding {
-                var: "b1".to_string(),
+                var: Var {
+                    name: "b1".to_string(),
+                    id: 0,
+                },
                 chi: Chirality::Prd,
                 ty: Ty::Decl("Box".to_string()),
             }]
             .into(),
             body: Rc::new(Statement::Switch(Switch {
-                var: "b1".to_string(),
+                var: Var {
+                    name: "b1".to_string(),
+                    id: 0,
+                },
                 ty: Ty::Decl("Box".to_string()),
                 clauses: vec![Clause {
                     xtor: "B".to_string(),
                     context: vec![ContextBinding {
-                        var: "x1".to_string(),
+                        var: Var {
+                            name: "x1".to_string(),
+                            id: 0,
+                        },
                         chi: Chirality::Ext,
                         ty: Ty::I64,
                     }]
                     .into(),
                     body: Rc::new(Statement::Let(Let {
-                        var: "d1".to_string(),
+                        var: Var {
+                            name: "d1".to_string(),
+                            id: 0,
+                        },
                         ty: Ty::Decl("Box".to_string()),
                         tag: "B".to_string(),
                         args: vec![ContextBinding {
-                            var: "x1".to_string(),
+                            var: Var {
+                                name: "x1".to_string(),
+                                id: 0,
+                            },
                             chi: Chirality::Ext,
                             ty: Ty::I64,
                         }]
                         .into(),
                         next: Rc::new(Statement::Let(Let {
-                            var: "dd1".to_string(),
+                            var: Var {
+                                name: "dd1".to_string(),
+                                id: 0,
+                            },
                             ty: Ty::Decl("BoxBox".to_string()),
                             tag: "BB".to_string(),
                             args: vec![ContextBinding {
-                                var: "d1".to_string(),
+                                var: Var {
+                                    name: "d1".to_string(),
+                                    id: 0,
+                                },
                                 chi: Chirality::Prd,
                                 ty: Ty::Decl("Box".to_string()),
                             }]
@@ -149,21 +221,36 @@ fn test_non_linear() {
                             next: Rc::new(Statement::Substitute(Substitute {
                                 rearrange: vec![(
                                     ContextBinding {
-                                        var: "bb2".to_string(),
+                                        var: Var {
+                                            name: "bb2".to_string(),
+                                            id: 0,
+                                        },
                                         chi: Chirality::Prd,
                                         ty: Ty::Decl("BoxBox".to_string()),
                                     },
-                                    "bb2".to_string(),
+                                    Var {
+                                        name: "bb2".to_string(),
+                                        id: 0,
+                                    },
                                 )],
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 4,
-                                    var: "y".to_string(),
+                                    var: Var {
+                                        name: "y".to_string(),
+                                        id: 0,
+                                    },
                                     next: Rc::new(Statement::Let(Let {
-                                        var: "a1".to_string(),
+                                        var: Var {
+                                            name: "a1".to_string(),
+                                            id: 0,
+                                        },
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
                                         args: vec![ContextBinding {
-                                            var: "y".to_string(),
+                                            var: Var {
+                                                name: "y".to_string(),
+                                                id: 0,
+                                            },
                                             chi: Chirality::Ext,
                                             ty: Ty::I64,
                                         }]
@@ -172,49 +259,79 @@ fn test_non_linear() {
                                             rearrange: vec![
                                                 (
                                                     ContextBinding {
-                                                        var: "a1".to_string(),
+                                                        var: Var {
+                                                            name: "a1".to_string(),
+                                                            id: 0,
+                                                        },
                                                         chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
                                                     },
-                                                    "a1".to_string(),
+                                                    Var {
+                                                        name: "a1".to_string(),
+                                                        id: 0,
+                                                    },
                                                 ),
                                                 (
                                                     ContextBinding {
-                                                        var: "bb2".to_string(),
+                                                        var: Var {
+                                                            name: "bb2".to_string(),
+                                                            id: 0,
+                                                        },
                                                         chi: Chirality::Prd,
                                                         ty: Ty::Decl("BoxBox".to_string()),
                                                     },
-                                                    "bb2".to_string(),
+                                                    Var {
+                                                        name: "bb2".to_string(),
+                                                        id: 0,
+                                                    },
                                                 ),
                                             ],
                                             next: Rc::new(Statement::Switch(Switch {
-                                                var: "bb2".to_string(),
+                                                var: Var {
+                                                    name: "bb2".to_string(),
+                                                    id: 0,
+                                                },
                                                 ty: Ty::Decl("BoxBox".to_string()),
                                                 clauses: vec![Clause {
                                                     xtor: "BB".to_string(),
                                                     context: vec![ContextBinding {
-                                                        var: "b2".to_string(),
+                                                        var: Var {
+                                                            name: "b2".to_string(),
+                                                            id: 0,
+                                                        },
                                                         chi: Chirality::Prd,
                                                         ty: Ty::Decl("Box".to_string()),
                                                     }]
                                                     .into(),
                                                     body: Rc::new(Statement::Switch(Switch {
-                                                        var: "b2".to_string(),
+                                                        var: Var {
+                                                            name: "b2".to_string(),
+                                                            id: 0,
+                                                        },
                                                         ty: Ty::Decl("Box".to_string()),
                                                         clauses: vec![Clause {
                                                             xtor: "B".to_string(),
                                                             context: vec![ContextBinding {
-                                                                var: "x2".to_string(),
+                                                                var: Var {
+                                                                    name: "x2".to_string(),
+                                                                    id: 0,
+                                                                },
                                                                 chi: Chirality::Ext,
                                                                 ty: Ty::I64,
                                                             }]
                                                             .into(),
                                                             body: Rc::new(Statement::Let(Let {
-                                                                var: "a2".to_string(),
+                                                                var: Var {
+                                                                    name: "a2".to_string(),
+                                                                    id: 0,
+                                                                },
                                                                 ty: Ty::Decl("Box".to_string()),
                                                                 tag: "B".to_string(),
                                                                 args: vec![ContextBinding {
-                                                                    var: "x2".to_string(),
+                                                                    var: Var {
+                                                                        name: "x2".to_string(),
+                                                                        id: 0,
+                                                                    },
                                                                     chi: Chirality::Ext,
                                                                     ty: Ty::I64,
                                                                 }]
@@ -248,44 +365,80 @@ fn test_non_linear() {
     });
     let main_body = Statement::Literal(Literal {
         lit: 3,
-        var: "f1".to_string(),
+        var: Var {
+            name: "f1".to_string(),
+            id: 0,
+        },
         next: Rc::new(Statement::Literal(Literal {
             lit: 3,
-            var: "f2".to_string(),
+            var: Var {
+                name: "f2".to_string(),
+                id: 0,
+            },
             next: Rc::new(Statement::Literal(Literal {
                 lit: 3,
-                var: "f3".to_string(),
+                var: Var {
+                    name: "f3".to_string(),
+                    id: 0,
+                },
                 next: Rc::new(Statement::Literal(Literal {
                     lit: 3,
-                    var: "f4".to_string(),
+                    var: Var {
+                        name: "f4".to_string(),
+                        id: 0,
+                    },
                     next: Rc::new(Statement::Literal(Literal {
                         lit: 3,
-                        var: "f5".to_string(),
+                        var: Var {
+                            name: "f5".to_string(),
+                            id: 0,
+                        },
                         next: Rc::new(Statement::Literal(Literal {
                             lit: 3,
-                            var: "f6".to_string(),
+                            var: Var {
+                                name: "f6".to_string(),
+                                id: 0,
+                            },
                             next: Rc::new(Statement::Literal(Literal {
                                 lit: 3,
-                                var: "f7".to_string(),
+                                var: Var {
+                                    name: "f7".to_string(),
+                                    id: 0,
+                                },
                                 next: Rc::new(Statement::Literal(Literal {
                                     lit: 3,
-                                    var: "x".to_string(),
+                                    var: Var {
+                                        name: "x".to_string(),
+                                        id: 0,
+                                    },
                                     next: Rc::new(Statement::Let(Let {
-                                        var: "b".to_string(),
+                                        var: Var {
+                                            name: "b".to_string(),
+                                            id: 0,
+                                        },
                                         ty: Ty::Decl("Box".to_string()),
                                         tag: "B".to_string(),
                                         args: vec![ContextBinding {
-                                            var: "x".to_string(),
+                                            var: Var {
+                                                name: "x".to_string(),
+                                                id: 0,
+                                            },
                                             chi: Chirality::Ext,
                                             ty: Ty::I64,
                                         }]
                                         .into(),
                                         next: Rc::new(Statement::Let(Let {
-                                            var: "bb".to_string(),
+                                            var: Var {
+                                                name: "bb".to_string(),
+                                                id: 0,
+                                            },
                                             ty: Ty::Decl("BoxBox".to_string()),
                                             tag: "BB".to_string(),
                                             args: vec![ContextBinding {
-                                                var: "b".to_string(),
+                                                var: Var {
+                                                    name: "b".to_string(),
+                                                    id: 0,
+                                                },
                                                 chi: Chirality::Prd,
                                                 ty: Ty::Decl("Box".to_string()),
                                             }]
@@ -294,83 +447,143 @@ fn test_non_linear() {
                                                 rearrange: vec![
                                                     (
                                                         ContextBinding {
-                                                            var: "f1".to_string(),
+                                                            var: Var {
+                                                                name: "f1".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f1".to_string(),
+                                                        Var {
+                                                            name: "f1".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f2".to_string(),
+                                                            var: Var {
+                                                                name: "f2".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f2".to_string(),
+                                                        Var {
+                                                            name: "f2".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f3".to_string(),
+                                                            var: Var {
+                                                                name: "f3".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f3".to_string(),
+                                                        Var {
+                                                            name: "f3".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f5".to_string(),
+                                                            var: Var {
+                                                                name: "f5".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f5".to_string(),
+                                                        Var {
+                                                            name: "f5".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f6".to_string(),
+                                                            var: Var {
+                                                                name: "f6".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f6".to_string(),
+                                                        Var {
+                                                            name: "f6".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f7".to_string(),
+                                                            var: Var {
+                                                                name: "f7".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f7".to_string(),
+                                                        Var {
+                                                            name: "f7".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "f4".to_string(),
+                                                            var: Var {
+                                                                name: "f4".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Ext,
                                                             ty: Ty::I64,
                                                         },
-                                                        "f4".to_string(),
+                                                        Var {
+                                                            name: "f4".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "bb3".to_string(),
+                                                            var: Var {
+                                                                name: "bb3".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
-                                                        "bb".to_string(),
+                                                        Var {
+                                                            name: "bb".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "bb2".to_string(),
+                                                            var: Var {
+                                                                name: "bb2".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
-                                                        "bb".to_string(),
+                                                        Var {
+                                                            name: "bb".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                     (
                                                         ContextBinding {
-                                                            var: "bb1".to_string(),
+                                                            var: Var {
+                                                                name: "bb1".to_string(),
+                                                                id: 0,
+                                                            },
                                                             chi: Chirality::Prd,
                                                             ty: Ty::Decl("BoxBox".to_string()),
                                                         },
-                                                        "bb".to_string(),
+                                                        Var {
+                                                            name: "bb".to_string(),
+                                                            id: 0,
+                                                        },
                                                     ),
                                                 ],
                                                 next: Rc::new(main_body_switch),

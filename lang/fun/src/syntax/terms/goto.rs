@@ -104,10 +104,19 @@ mod test {
     #[test]
     fn check_goto() {
         let mut ctx = TypingContext::default();
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_covar(
+            Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            Ty::mk_i64(),
+        );
         let result = Goto {
             span: Span::default(),
-            target: "a".to_owned(),
+            target: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
@@ -115,7 +124,10 @@ mod test {
         .unwrap();
         let expected = Goto {
             span: Span::default(),
-            target: "a".to_owned(),
+            target: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             term: Rc::new(Lit::mk(1).into()),
             ty: Some(Ty::mk_i64()),
         };
@@ -126,7 +138,10 @@ mod test {
     fn check_goto_fail() {
         let result = Goto {
             span: Span::default(),
-            target: "a".to_owned(),
+            target: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
@@ -141,7 +156,10 @@ mod test {
     fn example() -> Goto {
         Goto {
             span: Span::default(),
-            target: "x".to_string(),
+            target: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             term: Rc::new(Term::Lit(Lit::mk(2))),
             ty: None,
         }
