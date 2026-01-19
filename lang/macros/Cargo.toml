@@ -1,0 +1,15 @@
+[package]
+name = "macros"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+
+[lib]
+proc-macro=true
+
+[dependencies]
+core_lang = { path = "../core_lang" }
+quote = "1.0"
+proc-macro2 = "1.0"
+syn = "2.0"
