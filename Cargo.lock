@@ -376,6 +376,7 @@ dependencies = [
 name = "core_lang"
 version = "0.1.0"
 dependencies = [
+ "macros",
  "printer",
 ]
 
