@@ -1,38 +1,38 @@
 use core_lang::syntax::Chirality;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Expr, ExprArray, ExprLit, Lit, Token, parse::Parser, punctuated::Punctuated};
 
-fn parse_args<const N: usize>(input: TokenStream, arg_names: [&str; N]) -> [Expr; N] {
-    let mut parsed = Punctuated::<Expr, Token![,]>::parse_terminated
-        .parse2(input.into())
-        .expect("Macro arguments could not be parsed")
-        .into_iter();
-    arg_names.map(|arg_name| {
-        let err_msg = format!("Please provide {arg_name}");
-        parsed.next().expect(&err_msg)
-    })
-}
+mod utils;
+use utils::{expr_to_array, expr_to_str, parse_args};
 
-fn expr_to_str(expr: &Expr) -> String {
-    match expr {
-        Expr::Lit(ExprLit {
-            lit: Lit::Str(s), ..
-        }) => s.value(),
-        _ => panic!("Please provide string literal"),
+/// Create a [`core_lang::syntax::types::Type`] from a string literal
+/// `int` will create [`core_lang::syntax::types::Type::I64`]
+/// anything else will create [`core_lang::syntax::types::Type::Decl`]
+/// ```
+/// use macros::ty;
+/// use core_lang::syntax::types::Ty;
+/// let int1 = ty!("int");
+/// let int2 = Ty::I64;
+/// assert_eq!(int1,int2);
+/// let list1 = ty!("ListInt");
+/// let list2 = Ty::Decl("ListInt".to_string());
+/// assert_eq!(list1,list2)
+/// ```
+#[proc_macro]
+pub fn ty(input: TokenStream) -> TokenStream {
+    let args = parse_args(input, ["Type Name"]);
+    let ty = expr_to_str(&args[0]);
+    if ty == "int" {
+        quote! {core_lang::syntax::types::Ty::I64}
+    } else {
+        quote! {core_lang::syntax::types::Ty::Decl(#ty.to_string())}
     }
-}
-
-fn expr_to_array(expr: &Expr) -> Vec<Expr> {
-    match expr {
-        Expr::Array(ExprArray { elems, .. }) => elems.into_iter().cloned().collect(),
-        _ => panic!("Please provide an array expression"),
-    }
+    .into()
 }
 
 fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
     let (chi, xtor_desc) = match prdcns {
-        Chirality::Prd => (quote! {core_lang::syntax::Prd}, "Ctor Name"),
+        Chirality::Prd => (quote! { core_lang::syntax::Prd}, "Ctor Name"),
         Chirality::Cns => (quote! { core_lang::syntax::Cns}, "Dtor Name"),
     };
 
@@ -60,7 +60,7 @@ fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
 /// Create a [`core_lang::syntax::statements::Cut`] with given arguments
 /// ```
 /// use macros::cut;
-/// use core_lang::syntax::{statements::Cut, terms::xvar::XVar,types::Ty};
+/// use core_lang::syntax::{ statements::Cut, terms::xvar::XVar,types::Ty};
 /// let cut1 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
 /// let cut2 = Cut::new(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
 /// assert_eq!(cut1,cut2)
@@ -73,8 +73,8 @@ pub fn cut(input: TokenStream) -> TokenStream {
     let ty = &args[2];
     quote! {
         core_lang::syntax::statements::Cut{
-            producer: ::std::rc::Rc::new(#prod),
-            consumer: ::std::rc::Rc::new(#cons),
+            producer: ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#prod)),
+            consumer: ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#cons)),
             ty:#ty
         }
     }
