@@ -291,17 +291,19 @@ impl Focusing for IfC {
 mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
+    use macros::{cut, ifc, ifcz, ty};
     use std::rc::Rc;
+    extern crate self as core_lang;
 
     #[test]
     fn transform_ife1() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(Literal::new(2).into()),
-            snd: Some(Rc::new(Literal::new(1).into())),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
-        }
+        let result = ifc!(
+            IfSort::Equal,
+            Literal::new(2),
+            Literal::new(1),
+            cut!(Literal::new(1), XVar::covar("a", ty!("int")), ty!("int")),
+            Exit::exit(XVar::var("x", ty!("int")), ty!("int"))
+        )
         .focus(&mut Default::default());
 
         let expected = FsCut::new(
@@ -335,15 +337,17 @@ mod transform_tests {
     }
     #[test]
     fn transform_ife2() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: Some(Rc::new(XVar::var("x", Ty::I64).into())),
-            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let result = ifc!(
+            IfSort::Equal,
+            XVar::var("x", ty!("int")),
+            XVar::var("x", ty!("int")),
+            Exit::exit(XVar::var("y", ty!("int")), ty!("int")),
+            cut!(
+                XVar::var("x", ty!("int")),
+                XVar::covar("a", ty!("int")),
+                ty!("int")
+            )
+        )
         .focus(&mut Default::default());
         let expected = FsIfC {
             sort: IfSort::Equal,
@@ -360,13 +364,12 @@ mod transform_tests {
 
     #[test]
     fn transform_ifz1() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(Literal::new(1).into()),
-            snd: None,
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
-        }
+        let result = ifcz!(
+            IfSort::Equal,
+            Literal::new(1),
+            cut!(Literal::new(1), XVar::covar("a", ty!("int")), ty!("int")),
+            Exit::exit(XVar::var("x", ty!("int")), ty!("int"))
+        )
         .focus(&mut Default::default());
         let expected = FsCut::new(
             Literal::new(1),
@@ -390,15 +393,16 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: None,
-            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let result = ifcz!(
+            IfSort::Equal,
+            XVar::var("x", ty!("int")),
+            Exit::exit(XVar::var("y", ty!("int")), ty!("int")),
+            cut!(
+                XVar::var("x", ty!("int")),
+                XVar::covar("a", ty!("int")),
+                ty!("int")
+            )
+        )
         .focus(&mut Default::default());
         let expected = FsIfC {
             sort: IfSort::Equal,
