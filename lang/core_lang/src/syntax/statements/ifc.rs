@@ -301,7 +301,7 @@ mod transform_tests {
             IfSort::Equal,
             Literal::new(2),
             Literal::new(1),
-            cut!(Literal::new(1), XVar::covar("a", ty!("int")), ty!("int")),
+            cut!(Literal::new(1), XVar::covar("a", ty!("int")),),
             Exit::exit(XVar::var("x", ty!("int")), ty!("int"))
         )
         .focus(&mut Default::default());
@@ -342,11 +342,7 @@ mod transform_tests {
             XVar::var("x", ty!("int")),
             XVar::var("x", ty!("int")),
             Exit::exit(XVar::var("y", ty!("int")), ty!("int")),
-            cut!(
-                XVar::var("x", ty!("int")),
-                XVar::covar("a", ty!("int")),
-                ty!("int")
-            )
+            cut!(XVar::var("x", ty!("int")), XVar::covar("a", ty!("int")),)
         )
         .focus(&mut Default::default());
         let expected = FsIfC {

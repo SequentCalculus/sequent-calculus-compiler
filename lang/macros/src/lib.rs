@@ -3,8 +3,10 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::Expr;
 
+mod args;
 mod utils;
-use utils::{expr_to_array, expr_to_str, parse_args};
+use args::parse_args;
+use utils::{expr_to_array, expr_to_str};
 
 /// Create a [`core_lang::syntax::types::Type`] from a string literal
 /// `int` will create [`core_lang::syntax::types::Type::I64`]
@@ -21,7 +23,7 @@ use utils::{expr_to_array, expr_to_str, parse_args};
 /// ```
 #[proc_macro]
 pub fn ty(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, ["Type Name"]);
+    let args = parse_args(input, &["Type Name"], false);
     let ty = expr_to_str(&args[0]);
     if ty == "int" {
         quote! {core_lang::syntax::types::Ty::I64}
@@ -49,7 +51,7 @@ fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
         Chirality::Cns => (quote! { core_lang::syntax::Cns}, "Dtor Name"),
     };
 
-    let args = parse_args(input, [xtor_desc, "Argument list", "Type"]);
+    let args = parse_args(input, &[xtor_desc, "Argument list"], true);
 
     let xtor_name = expr_to_str(&args[0]);
     let xtor_args = arguments(&args[1]);
@@ -66,16 +68,19 @@ fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
 }
 
 /// Create a [`core_lang::syntax::statements::Cut`] with given arguments
+/// if no type is provided, the cut type will default to [`core_lang::syntax::types::Ty::I64`]
 /// ```
 /// use macros::cut;
 /// use core_lang::syntax::{ statements::Cut, terms::xvar::XVar,types::Ty};
-/// let cut1 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
-/// let cut2 = Cut::new(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
-/// assert_eq!(cut1,cut2)
+/// let cut1 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64));
+/// let cut2 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
+/// let cut3 = Cut::new(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
+/// assert_eq!(cut1,cut2);
+/// assert_eq!(cut2,cut3)
 /// ```
 #[proc_macro]
 pub fn cut(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, ["Producer", "Consumer", "Type"]);
+    let args = parse_args(input, &["Producer", "Consumer"], true);
     let prod = &args[0];
     let cons = &args[1];
     let ty = &args[2];
@@ -154,13 +159,14 @@ pub fn dtor(input: TokenStream) -> TokenStream {
 pub fn ifc(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input,
-        [
+        &[
             "If Sort",
             "If first",
             "If Second",
             "Then Clause",
             "Else Clause",
         ],
+        false,
     );
     let sort = &args[0];
     let fst = &args[1];
@@ -202,7 +208,11 @@ pub fn ifc(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn ifcz(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, ["If Sort", "If First", "Then Clause", "Else Clause"]);
+    let args = parse_args(
+        input,
+        &["If Sort", "If First", "Then Clause", "Else Clause"],
+        false,
+    );
     let sort = &args[0];
     let fst = &args[1];
     let thenc = &args[2];
@@ -220,20 +230,23 @@ pub fn ifcz(input: TokenStream) -> TokenStream {
 }
 
 /// Create a [`core_lang::syntax::statements::Call`]
+/// if no return type is provided it will default to [`core_lang::syntax::types::Ty::I64`]
 /// ```
 /// use macros::call;
 /// use core_lang::syntax::{arguments::{Argument,Arguments}, statements::Call, types::Ty, terms::{Term, xvar::XVar}};
 /// let call1 = call!("print",[XVar::var("x",Ty::I64)],Ty::I64);
-/// let call2 = Call{
+/// let call2 = call!("print",[XVar::var("x",Ty::I64)]);
+/// let call3 = Call{
 ///     name:"print".to_string(),
 ///     args:Arguments{entries:Vec::from([Argument::from(Term::from(XVar::var("x",Ty::I64)))])},
 ///     ty:Ty::I64
 /// };
-/// assert_eq!(call1,call2)
+/// assert_eq!(call1,call2);
+/// assert_eq!(call2,call3)
 /// ```
 #[proc_macro]
 pub fn call(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, ["Called Name", "Arguments", "Return Type"]);
+    let args = parse_args(input, &["Called Name", "Arguments"], true);
     let name = expr_to_str(&args[0]);
     let call_args = arguments(&args[1]);
     let call_ty = &args[2];
