@@ -8,19 +8,7 @@ mod utils;
 use args::parse_args;
 use utils::{expr_to_array, expr_to_str};
 
-/// Create a [`core_lang::syntax::types::Type`] from a string literal
-/// `int` will create [`core_lang::syntax::types::Type::I64`]
-/// anything else will create [`core_lang::syntax::types::Type::Decl`]
-/// ```
-/// use macros::ty;
-/// use core_lang::syntax::types::Ty;
-/// let int1 = ty!("int");
-/// let int2 = Ty::I64;
-/// assert_eq!(int1,int2);
-/// let list1 = ty!("ListInt");
-/// let list2 = Ty::Decl("ListInt".to_string());
-/// assert_eq!(list1,list2)
-/// ```
+#[doc = include_str!("../doc/ty.md")]
 #[proc_macro]
 pub fn ty(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Type Name"], false);
@@ -85,51 +73,19 @@ fn xvar(input: TokenStream, prdcns: Chirality) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::xvar::XVar`] with chrality
-/// [`core_lang::syntax::terms::Prd`]
-/// If no type is provided, the variable will default to [`core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::{ty,var};
-/// use core_lang::syntax::{types::Ty, terms::xvar::XVar};
-/// let var1 = var!("x");
-/// let var2 = var!("x",Ty::I64);
-/// let var3 = XVar::var("x",Ty::I64);
-/// assert_eq!(var1,var2);
-/// assert_eq!(var2,var3);
-/// ```
+#[doc = include_str!("../doc/var.md")]
 #[proc_macro]
 pub fn var(input: TokenStream) -> TokenStream {
     xvar(input, Chirality::Prd)
 }
 
-/// Create a [`core_lang::syntax::terms::xvar::XVar`] with chirality
-/// [`core_lang::syntax::terms::Cns`]
-/// If no type is provided the covariable will default to [`core_lang::syntax::types::ty::I64`]
-/// ```
-/// use macros::covar;
-/// use core_lang::syntax::{terms::xvar::XVar,types::Ty};
-/// let covar1 = covar!("a");
-/// let covar2 = covar!("a",Ty::I64);
-/// let covar3 = XVar::covar("a",Ty::I64);
-/// assert_eq!(covar1,covar2);
-/// assert_eq!(covar2,covar3);
-/// ```
+#[doc = include_str!("../doc/covar.md")]
 #[proc_macro]
 pub fn covar(input: TokenStream) -> TokenStream {
     xvar(input, Chirality::Cns)
 }
 
-/// Create a [`core_lang::syntax::statements::Cut`] with given arguments
-/// if no type is provided, the cut type will default to [`core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::cut;
-/// use core_lang::syntax::{ statements::Cut, terms::xvar::XVar,types::Ty};
-/// let cut1 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64));
-/// let cut2 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
-/// let cut3 = Cut::new(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
-/// assert_eq!(cut1,cut2);
-/// assert_eq!(cut2,cut3)
-/// ```
+#[doc = include_str!("../doc/cut.md")]
 #[proc_macro]
 pub fn cut(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Producer", "Consumer"], true);
@@ -146,67 +102,19 @@ pub fn cut(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::terms::Prd`]
-/// (i.e. a constructor)
-/// ```
-/// use macros::ctor;
-/// use core_lang::syntax::{arguments::Arguments, types::Ty, terms::{XVar, Xtor}};
-/// let ctor1 = ctor!("Cons",
-///     [XVar::var("x",Ty::I64),ctor!("Nil",[],Ty::Decl("ListInt".to_string()))],
-///     Ty::Decl("ListInt".to_string()));
-///
-/// let mut arguments = Arguments::default();
-/// arguments.add_prod(XVar::var("x",Ty::I64));
-/// arguments.add_prod(Xtor::ctor("Nil", Arguments::default(), Ty::Decl("ListInt".to_string()),));
-/// let ctor2 = Xtor::ctor("Cons",arguments,Ty::Decl("ListInt".to_string()));
-/// assert_eq!(ctor1,ctor2)
-/// ```
+#[doc = include_str!("../doc/ctor.md")]
 #[proc_macro]
 pub fn ctor(input: TokenStream) -> TokenStream {
     xtor(input, Chirality::Prd)
 }
 
-/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::terms::Cns`]
-/// (i.e. a destructor)
-/// ```
-/// use macros::dtor;
-/// use core_lang::syntax::{types::Ty, arguments::Arguments, terms::{XVar, Xtor}};
-/// let dtor1 = dtor!("apply",
-///     [XVar::var("x",Ty::I64)],
-///     Ty::Decl("FunI64I64".to_string()));
-///
-/// let mut arguments = Arguments::default();
-/// arguments.add_prod(XVar::var("x",Ty::I64));
-/// let dtor2 = Xtor::dtor("apply",arguments,Ty::Decl("FunI64I64".to_string()));
-/// assert_eq!(dtor1,dtor2)
-/// ```
+#[doc = include_str!("../doc/dtor.md")]
 #[proc_macro]
 pub fn dtor(input: TokenStream) -> TokenStream {
     xtor(input, Chirality::Cns)
 }
 
-/// Create a [`core_lang::syntax::terms::ifc::IfC`]
-/// ```
-/// use macros::ifc;
-/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{Term, xvar::XVar,}};
-/// use std::rc::Rc;
-///
-/// let if1 = ifc!(
-///     IfSort::Equal,
-///     XVar::var("x",Ty::I64),
-///     XVar::var("y",Ty::I64),
-///     Exit::exit(XVar::var("z",Ty::I64),Ty::I64),
-///     Exit::exit(XVar::var("w",Ty::I64),Ty::I64),
-/// );
-/// let if2 = IfC{
-///     sort:IfSort::Equal,
-///     fst:Rc::new(Term::from(XVar::var("x",Ty::I64))),
-///     snd:Some(Rc::new(Term::from(XVar::var("y",Ty::I64)))),
-///     thenc:Rc::new(Exit::exit(XVar::var("z",Ty::I64),Ty::I64).into()),
-///     elsec:Rc::new(Exit::exit(XVar::var("w",Ty::I64),Ty::I64).into())
-///     };
-/// assert_eq!(if1,if2)
-/// ```
+#[doc = include_str!("../doc/ifc.md")]
 #[proc_macro]
 pub fn ifc(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -237,27 +145,7 @@ pub fn ifc(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::ifc::IfC`] with comparison to zero
-/// ```
-/// use macros::ifcz;
-/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{Term, xvar::XVar,}};
-/// use std::rc::Rc;
-///
-/// let if1 = ifcz!(
-///     IfSort::Equal,
-///     XVar::var("x",Ty::I64),
-///     Exit::exit(XVar::var("z",Ty::I64),Ty::I64),
-///     Exit::exit(XVar::var("w",Ty::I64),Ty::I64),
-/// );
-/// let if2 = IfC{
-///     sort:IfSort::Equal,
-///     fst:Rc::new(Term::from(XVar::var("x",Ty::I64))),
-///     snd:None,
-///     thenc:Rc::new(Exit::exit(XVar::var("z",Ty::I64),Ty::I64).into()),
-///     elsec:Rc::new(Exit::exit(XVar::var("w",Ty::I64),Ty::I64).into())
-///     };
-/// assert_eq!(if1,if2)
-/// ```
+#[doc = include_str!("../doc/ifcz.md")]
 #[proc_macro]
 pub fn ifcz(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -281,21 +169,7 @@ pub fn ifcz(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::statements::Call`]
-/// if no return type is provided it will default to [`core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::call;
-/// use core_lang::syntax::{arguments::{Argument,Arguments}, statements::Call, types::Ty, terms::{Term, xvar::XVar}};
-/// let call1 = call!("print",[XVar::var("x",Ty::I64)],Ty::I64);
-/// let call2 = call!("print",[XVar::var("x",Ty::I64)]);
-/// let call3 = Call{
-///     name:"print".to_string(),
-///     args:Arguments{entries:Vec::from([Argument::from(Term::from(XVar::var("x",Ty::I64)))])},
-///     ty:Ty::I64
-/// };
-/// assert_eq!(call1,call2);
-/// assert_eq!(call2,call3)
-/// ```
+#[doc = include_str!("../doc/call.md")]
 #[proc_macro]
 pub fn call(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Called Name", "Arguments"], true);
@@ -312,17 +186,7 @@ pub fn call(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::statements::Exit`]
-/// if no return type is provided, the type will default to `[core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::exit;
-/// use core_lang::syntax::{types::Ty,terms::xvar::XVar,statements::Exit};
-/// let exit1 = exit!(XVar::var("x",Ty::I64),Ty::I64);
-/// let exit2 = exit!(XVar::var("x",Ty::I64));
-/// let exit3 = Exit::exit(XVar::var("x",Ty::I64),Ty::I64);
-/// assert_eq!(exit1,exit2);
-/// assert_eq!(exit2,exit3);
-/// ```
+#[doc = include_str!("../doc/exit.md")]
 #[proc_macro]
 pub fn exit(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Exit Term"], true);
@@ -336,17 +200,7 @@ pub fn exit(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::context::ContextBinding`]
-/// If no type is provided, it defaults to [`core_lang::syntax::types::Ty`]
-/// ```
-/// use macros::bind;
-/// use core_lang::syntax::{types::Ty, context::{ContextBinding,Chirality}};
-/// let bnd1 = bind!("x",Chirality::Prd);
-/// let bnd2 = bind!("x",Chirality::Prd,Ty::I64);
-/// let bnd3 = ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64};
-/// assert_eq!(bnd1,bnd2);
-/// assert_eq!(bnd2,bnd3);
-/// ```
+#[doc = include_str!("../doc/bind.md")]
 #[proc_macro]
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Context Variable", "Context Chirality"], true);
@@ -363,39 +217,7 @@ pub fn bind(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::def::Def`]
-/// ```
-/// use macros::def;
-/// use core_lang::syntax::{
-///     def::Def,
-///     types::Ty,
-///     context::{Chirality, ContextBinding, TypingContext},
-///     statements::{Statement, Call},
-///     arguments::{Argument,Arguments},
-///     terms::{xvar::XVar, Term}
-/// };
-/// use std::collections::HashSet;
-/// let def1 = def!(
-///     "print",
-///     [ContextBinding{ var:"x".to_string(), chi: Chirality::Prd, ty: Ty::I64 } ],
-///     Call {
-///         name:"print_i64".to_string(),
-///         args: Arguments { entries: vec![Argument::from(Term::from(XVar::var("x",Ty::I64)))] },
-///         ty:Ty::I64
-///     }, ["a","x"]);
-/// let def2 = Def {
-///     name:"print".to_string(),
-///     context: TypingContext{
-///         bindings: vec![ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64}]
-///     },
-///     body:Statement::from(Call {
-///         name:"print_i64".to_string(),
-///         args: Arguments { entries: vec![Argument::from(Term::from(XVar::var("x",Ty::I64)))] },
-///         ty:Ty::I64
-///     }),
-///     used_vars: HashSet::from(["x".to_string(),"a".to_string()])};
-/// assert_eq!(def1,def2)
-/// ```
+#[doc = include_str!("../doc/def.md")]
 #[proc_macro]
 pub fn def(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -425,63 +247,7 @@ pub fn def(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::program::Program`]
-/// ```
-/// use macros::prog;
-/// use core_lang::syntax::{
-///     Data,Codata,
-///     declaration::TypeDeclaration,
-///     context::TypingContext,
-///     def::Def,
-///     program::Prog,
-///     statements::Exit,
-///     terms::XVar,
-///     types::Ty,
-/// };
-/// use std::collections::HashSet;
-/// let prog1 = prog!([
-///     Def {
-///             name:"exit".to_string(),
-///             context:TypingContext::default(),
-///             body:Exit::exit(XVar::var("x",Ty::I64),Ty::I64),
-///             used_vars:HashSet::from(["x".to_string()])
-///     }],[
-///     TypeDeclaration {
-///         dat:Data,
-///         name:"Unit".to_string(),
-///         xtors:Vec::new()
-///     }],[
-///     TypeDeclaration {
-///         dat:Codata,
-///         name:"Void".to_string(),
-///         xtors:Vec::new()
-///     }]);
-/// let prog2 = Prog{
-///     defs:vec![
-///         Def {
-///             name:"exit".to_string(),
-///             context:TypingContext::default(),
-///             body:Exit::exit(XVar::var("x",Ty::I64),Ty::I64),
-///             used_vars:HashSet::from(["x".to_string()])
-///         }
-///     ],
-///     data_types:vec![
-///         TypeDeclaration {
-///             dat:Data,
-///             name:"Unit".to_string(),
-///             xtors:Vec::new()
-///         }
-///     ],
-///     codata_types:vec![
-///         TypeDeclaration {
-///             dat:Codata,
-///             name:"Void".to_string(),
-///             xtors:Vec::new()
-///         }
-///     ]
-/// };
-/// assert_eq!(prog1,prog2)
-/// ```
+#[doc = include_str!("../doc/prog.md")]
 #[proc_macro]
 pub fn prog(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -508,20 +274,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::op::Op`]
-/// ```
-/// use macros::op;
-/// use core_lang::syntax::terms::{literal::Literal, Term, op::{BinOp,Op}};
-/// use std::rc::Rc;
-///
-/// let op1 = op!(Literal::new(1),BinOp::Sum, Literal::new(2));
-/// let op2 = Op{
-///     fst:Rc::new(Term::from(Literal::new(1))),
-///     op:BinOp::Sum,
-///     snd:Rc::new(Term::from(Literal::new(2)))
-/// };
-/// assert_eq!(op1,op2)
-/// ```
+#[doc=include_str!("../doc/op.md")]
 #[proc_macro]
 pub fn op(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -542,31 +295,7 @@ pub fn op(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::clause::Clause`]
-/// ```
-/// use macros::clause;
-/// use core_lang::syntax::{ Prd,
-///     context::{Chirality, ContextBinding,TypingContext},
-///     terms::{xvar::XVar,clause::Clause},
-///     types::Ty,
-///     statements::{Statement,Exit},
-/// };
-/// use std::rc::Rc;
-///
-/// let clause1 = clause!(Prd,"apply",
-///     [ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64}],
-///     Exit::exit(XVar::var("x",Ty::I64),Ty::I64)
-/// );
-/// let clause2 = Clause{
-///     prdcns:Prd,
-///     xtor:"apply".to_string(),
-///     context:TypingContext{ bindings: vec![
-///         ContextBinding{ var:"x".to_string(), chi:Chirality::Prd, ty:Ty::I64 }
-///     ] },
-///     body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64))),
-/// };
-/// assert_eq!(clause1,clause2)
-/// ```
+#[doc = include_str!("../doc/clause.md")]
 #[proc_macro]
 pub fn clause(input: TokenStream) -> TokenStream {
     let args = parse_args(
@@ -614,142 +343,13 @@ fn xcase(input: TokenStream, prdcns: Chirality) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::xcase::XCase`] with chirality [`core_lang::syntax::Cns`],
-/// i.e. a case expression
-/// If the continuation type is not specified, it defaults to [`core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::case;
-/// use core_lang::syntax::{
-///     Cns,
-///     statements::{Exit,Statement},
-///     context::{Chirality, ContextBinding,TypingContext},
-///     terms::{clause::Clause,xvar::XVar, xcase::XCase},
-///     types::Ty,
-/// };
-/// use std::rc::Rc;
-///
-/// let case1 = case!([
-///     Clause{
-///         prdcns:Cns,
-///         xtor:"Nil".to_string(),
-///         context:TypingContext::default(),
-///         body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64)))
-///     },
-///     Clause{
-///         prdcns:Cns,
-///         xtor:"Cons".to_string(),
-///         context:TypingContext{
-///                 bindings:vec![
-///                     ContextBinding{
-///                         var:"x".to_string(),
-///                         chi:Chirality::Prd,
-///                         ty:Ty::I64
-///                     },
-///                     ContextBinding{
-///                         var:"xs".to_string(),
-///                         chi:Chirality::Prd,
-///                         ty:Ty::Decl("ListInt".to_string())
-///                     },
-///                     ContextBinding{
-///                         var:"a".to_string(),
-///                         chi:Chirality::Cns,
-///                         ty:Ty::Decl("ListInt".to_string())
-///                     }
-///                 ]
-///             },
-///             body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64)))
-///         }
-///     ],Ty::Decl("ListInt".to_string()));
-///
-/// let case2 = XCase{
-///     prdcns:Cns,
-///     clauses: vec![
-///         Clause{
-///             prdcns:Cns,
-///             xtor:"Nil".to_string(),
-///             context:TypingContext::default(),
-///             body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64)))
-///         },
-///         Clause{
-///             prdcns:Cns,
-///             xtor:"Cons".to_string(),
-///             context:TypingContext{
-///                 bindings:vec![
-///                     ContextBinding{
-///                         var:"x".to_string(),
-///                         chi:Chirality::Prd,
-///                         ty:Ty::I64
-///                     },
-///                     ContextBinding{
-///                         var:"xs".to_string(),
-///                         chi:Chirality::Prd,
-///                         ty:Ty::Decl("ListInt".to_string())
-///                     },
-///                     ContextBinding{
-///                         var:"a".to_string(),
-///                         chi:Chirality::Cns,
-///                         ty:Ty::Decl("ListInt".to_string())
-///                     }
-///                 ]
-///             },
-///             body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64)))
-///         }
-///     ],
-///     ty:Ty::Decl("ListInt".to_string())
-/// };
-/// assert_eq!(case1,case2)
-/// ```
+#[doc=include_str!("../doc/case.md")]
 #[proc_macro]
 pub fn case(input: TokenStream) -> TokenStream {
     xcase(input, Chirality::Cns)
 }
 
-/// Create a [`core_lang::syntax::terms::xcase::XCase`] with chirality [`core_lang::syntax::Cns`]
-/// i.e. a cocase / new expression
-/// if the return type is not specified it defaults to [`core_lang::syntax::types::Ty::I64`]
-/// ```
-/// use macros::cocase;
-/// use core_lang::syntax::{
-///     Cns,Prd,
-///     terms::{xvar::XVar,xcase::XCase,clause::Clause},
-///     statements::exit::Exit,
-///     context::{ContextBinding,Chirality,TypingContext},
-///     types::Ty
-/// };
-/// use std::rc::Rc;
-///
-/// let cocase1 =
-/// cocase!([
-///     Clause{
-///         prdcns:Prd,
-///         xtor:"apply".to_string(),
-///         context: TypingContext{ bindings:vec![
-///             ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64},
-///             ContextBinding{var:"a".to_string(),chi:Chirality::Cns,ty:Ty::I64}
-///         ]},
-///         body:Rc::new(Exit::exit(XVar::var("x",Ty::I64),Ty::I64)) }
-///     ],Ty::Decl("FunI64I64".to_string()));
-/// let cocase2 = XCase{
-///     prdcns:Prd,
-///     clauses:vec![
-///         Clause{
-///             prdcns:Prd,
-///             xtor:"apply".to_string(),
-///             context:TypingContext{
-///                 bindings:vec![
-///                     ContextBinding{ var:"x".to_string(), chi:Chirality::Prd, ty:Ty::I64},
-///                     ContextBinding{ var:"a".to_string(), chi:Chirality::Cns, ty:Ty::I64},
-///                 ]
-///             },
-///             body:Rc::new(Exit::exit(XVar::var("x",Ty::I64),Ty::I64))
-///
-///         }
-///     ],
-///     ty:Ty::Decl("FunI64I64".to_string()),
-///
-/// };
-/// assert_eq!(cocase1,cocase2)
-/// ```
+#[doc=include_str!("../doc/cocase.md")]
 #[proc_macro]
 pub fn cocase(input: TokenStream) -> TokenStream {
     xcase(input, Chirality::Prd)
