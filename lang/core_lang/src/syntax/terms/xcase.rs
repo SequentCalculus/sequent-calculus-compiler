@@ -157,7 +157,7 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, clause, covar, cut, ty, var};
+    use macros::{bind, case, clause, cocase, covar, cut, ty, var};
 
     use std::rc::Rc;
 
@@ -226,13 +226,8 @@ mod tests {
     }
 
     fn example_case() -> XCase<Cns> {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
-        ctx.add_covar("a", Ty::I64);
-        XCase {
-            prdcns: Cns,
-            clauses: vec![
+        case!(
+            [
                 clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
                 clause!(
                     Cns,
@@ -243,24 +238,19 @@ mod tests {
                         bind!("a", Chirality::Cns)
                     ],
                     cut!(var!("x"), covar!("a"))
-                ),
+                )
             ],
-            ty: Ty::Decl("ListInt".to_string()),
-        }
+            ty!("ListInt")
+        )
         .into()
     }
 
     #[test]
     fn subst_case() {
         let subst = example_subst();
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
-        ctx.add_covar("a", Ty::I64);
         let result = example_case().subst_sim(&subst.0, &subst.1);
-        let expected = XCase {
-            prdcns: Cns,
-            clauses: vec![
+        let expected = case!(
+            [
                 clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
                 clause!(
                     Cns,
@@ -271,10 +261,10 @@ mod tests {
                         bind!("a", Chirality::Cns)
                     ],
                     cut!(var!("x"), covar!("a"))
-                ),
+                )
             ],
-            ty: Ty::Decl("ListInt".to_string()),
-        };
+            ty!("ListInt")
+        );
         assert_eq!(result, expected)
     }
 
@@ -285,30 +275,18 @@ mod tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
-        let expected = XCase {
-            prdcns: Prd,
-            clauses: vec![
-                Clause {
-                    prdcns: Prd,
-                    xtor: "fst".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Prd,
-                    xtor: "snd".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        let expected = cocase!(
+            [
+                clause!(
+                    Prd,
+                    "fst",
+                    [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+                    cut!(var!("x"), covar!("a"))
+                ),
+                clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))
             ],
-            ty: Ty::Decl("LPairIntInt".to_string()),
-        };
+            ty!("LPairIntInt")
+        );
         assert_eq!(result, expected)
     }
 }
