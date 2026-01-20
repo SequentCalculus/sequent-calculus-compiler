@@ -12,11 +12,7 @@ use std::rc::Rc;
 
 #[test]
 fn cut_macro() {
-    let cut1 = cut!(
-        XVar::var("x", Ty::I64),
-        XVar::covar("a", Ty::I64),
-        ty!("int")
-    );
+    let cut1 = cut!(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64),);
     let cut2 = Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64);
     assert_eq!(cut1, cut2)
 }
@@ -55,16 +51,8 @@ fn if_zero() {
         IfSort::Equal,
         XVar::var("x", ty!("int")),
         XVar::var("y", ty!("int")),
-        cut!(
-            XVar::var("a", ty!("int")),
-            XVar::covar("b", ty!("int")),
-            ty!("int")
-        ),
-        cut!(
-            XVar::var("c", ty!("int")),
-            XVar::covar("d", ty!("int")),
-            ty!("int")
-        )
+        cut!(XVar::var("a", ty!("int")), XVar::covar("b", ty!("int")),),
+        cut!(XVar::var("c", ty!("int")), XVar::covar("d", ty!("int")),)
     );
     let if2 = IfC {
         sort: IfSort::Equal,
@@ -92,7 +80,7 @@ fn if_zero() {
 
 #[test]
 fn call_print() {
-    let call1 = call!("print", [XVar::var("x", ty!("int"))], ty!("int"));
+    let call1 = call!("print", [XVar::var("x", ty!("int"))],);
     let call2 = Call {
         name: "print".to_string(),
         args: Arguments {
