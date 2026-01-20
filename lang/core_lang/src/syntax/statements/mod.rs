@@ -172,7 +172,7 @@ mod test {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{call, cut, ifcz, ty};
+    use macros::{call, covar, cut, ifcz, ty, var};
 
     fn example_cut() -> Statement {
         cut!(
@@ -202,27 +202,14 @@ mod test {
     }
 
     fn example_call() -> Statement {
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("x", Ty::I64));
-        arguments.add_cons(XVar::covar("a", Ty::I64));
-        Call {
-            name: "main".to_string(),
-            args: arguments,
-            ty: Ty::I64,
-        }
-        .into()
+        call!("main", [var!("x"), covar!("a")]).into()
     }
 
     #[test]
     fn subst_cut() {
         let subst = example_subst();
         let result = example_cut().subst_sim(&subst.0, &subst.1);
-        let expected = cut!(
-            XVar::var("y", ty!("int")),
-            XVar::covar("b", ty!("int")),
-            ty!("int")
-        )
-        .into();
+        let expected = cut!(var!("y"), covar!("b")).into();
         assert_eq!(result, expected)
     }
 
@@ -232,17 +219,9 @@ mod test {
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = ifcz!(
             IfSort::Equal,
-            XVar::var("y", ty!("int")),
-            cut!(
-                XVar::var("y", ty!("int")),
-                XVar::covar("b", ty!("int")),
-                ty!("int")
-            ),
-            cut!(
-                XVar::var("y", ty!("int")),
-                XVar::covar("b", ty!("int")),
-                ty!("int")
-            )
+            var!("y"),
+            cut!(var!("y"), covar!("b"),),
+            cut!(var!("y"), covar!("b"))
         )
         .into();
         assert_eq!(result, expected)
@@ -252,12 +231,7 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let expected = call!(
-            "main",
-            [XVar::var("y", ty!("int")), XVar::covar("b", ty!("int"))],
-            ty!("int")
-        )
-        .into();
+        let expected = call!("main", [var!("y"), covar!("b")]).into();
         assert_eq!(result, expected)
     }
 }

@@ -124,11 +124,11 @@ mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{call, ty};
+    use macros::{call, covar, var};
 
     #[test]
     fn transform_call1() {
-        let result = call!("main", [], ty!("int")).focus(&mut Default::default());
+        let result = call!("main", []).focus(&mut Default::default());
         let expected = FsCall {
             name: "main".to_string(),
             args: TypingContext::default(),
@@ -139,12 +139,7 @@ mod transform_tests {
 
     #[test]
     fn transform_call2() {
-        let result = call!(
-            "fun",
-            [XVar::var("x", ty!("int")), XVar::covar("a", ty!("int"))],
-            ty!("int")
-        )
-        .focus(&mut Default::default());
+        let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
         let mut args = TypingContext::default();
         args.add_var("x", Ty::I64);
         args.add_covar("a", Ty::I64);

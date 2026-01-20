@@ -291,7 +291,7 @@ impl Focusing for IfC {
 mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{cut, ifc, ifcz, ty};
+    use macros::{covar, cut, exit, ifc, ifcz, var};
     use std::rc::Rc;
     extern crate self as core_lang;
 
@@ -301,8 +301,8 @@ mod transform_tests {
             IfSort::Equal,
             Literal::new(2),
             Literal::new(1),
-            cut!(Literal::new(1), XVar::covar("a", ty!("int")),),
-            Exit::exit(XVar::var("x", ty!("int")), ty!("int"))
+            cut!(Literal::new(1), covar!("a")),
+            exit!(var!("x"))
         )
         .focus(&mut Default::default());
 
@@ -339,10 +339,10 @@ mod transform_tests {
     fn transform_ife2() {
         let result = ifc!(
             IfSort::Equal,
-            XVar::var("x", ty!("int")),
-            XVar::var("x", ty!("int")),
-            Exit::exit(XVar::var("y", ty!("int")), ty!("int")),
-            cut!(XVar::var("x", ty!("int")), XVar::covar("a", ty!("int")),)
+            var!("x"),
+            var!("x"),
+            exit!(var!("y")),
+            cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
         let expected = FsIfC {
@@ -363,8 +363,8 @@ mod transform_tests {
         let result = ifcz!(
             IfSort::Equal,
             Literal::new(1),
-            cut!(Literal::new(1), XVar::covar("a", ty!("int")), ty!("int")),
-            Exit::exit(XVar::var("x", ty!("int")), ty!("int"))
+            cut!(Literal::new(1), covar!("a")),
+            exit!(var!("x"))
         )
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -391,13 +391,9 @@ mod transform_tests {
     fn transform_ifz2() {
         let result = ifcz!(
             IfSort::Equal,
-            XVar::var("x", ty!("int")),
-            Exit::exit(XVar::var("y", ty!("int")), ty!("int")),
-            cut!(
-                XVar::var("x", ty!("int")),
-                XVar::covar("a", ty!("int")),
-                ty!("int")
-            )
+            var!("x"),
+            exit!(var!("y")),
+            cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
         let expected = FsIfC {

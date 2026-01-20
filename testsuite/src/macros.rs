@@ -7,12 +7,12 @@ use core_lang::syntax::{
     terms::{Term, xtor::Xtor, xvar::XVar},
     types::Ty,
 };
-use macros::{call, ctor, cut, dtor, ifc, ty};
+use macros::{call, covar, ctor, cut, dtor, ifc, ty, var};
 use std::rc::Rc;
 
 #[test]
 fn cut_macro() {
-    let cut1 = cut!(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64),);
+    let cut1 = cut!(var!("x"), covar!("a"));
     let cut2 = Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64);
     assert_eq!(cut1, cut2)
 }
@@ -21,7 +21,7 @@ fn cut_macro() {
 fn list_int() {
     let list1 = ctor!(
         "Cons",
-        [XVar::var("x", ty!("int")), ctor!("Nil", [], ty!("ListInt")),],
+        [var!("x"), ctor!("Nil", [], ty!("ListInt"))],
         ty!("ListInt")
     );
 
@@ -38,7 +38,7 @@ fn list_int() {
 
 #[test]
 fn fun_int() {
-    let fun1 = dtor!("apply", [XVar::var("x", ty!("int"))], ty!("FunI64I64"));
+    let fun1 = dtor!("apply", [var!("x")], ty!("FunI64I64"));
     let mut arguments = Arguments::default();
     arguments.add_prod(XVar::var("x", Ty::I64));
     let fun2 = Xtor::dtor("apply", arguments, Ty::Decl("FunI64I64".to_string()));
@@ -49,10 +49,10 @@ fn fun_int() {
 fn if_zero() {
     let if1 = ifc!(
         IfSort::Equal,
-        XVar::var("x", ty!("int")),
-        XVar::var("y", ty!("int")),
-        cut!(XVar::var("a", ty!("int")), XVar::covar("b", ty!("int")),),
-        cut!(XVar::var("c", ty!("int")), XVar::covar("d", ty!("int")),)
+        var!("x"),
+        var!("y"),
+        cut!(var!("a"), covar!("b")),
+        cut!(var!("c"), covar!("d"))
     );
     let if2 = IfC {
         sort: IfSort::Equal,
@@ -80,7 +80,7 @@ fn if_zero() {
 
 #[test]
 fn call_print() {
-    let call1 = call!("print", [XVar::var("x", ty!("int"))],);
+    let call1 = call!("print", [var!("x")],);
     let call2 = Call {
         name: "print".to_string(),
         args: Arguments {

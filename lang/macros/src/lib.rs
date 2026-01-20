@@ -67,6 +67,58 @@ fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
     .into()
 }
 
+fn xvar(input: TokenStream, prdcns: Chirality) -> TokenStream {
+    let prdcns = match prdcns {
+        Chirality::Prd => quote! {core_lang::syntax::terms::Prd},
+        Chirality::Cns => quote! {core_lang::syntax::terms::Cns},
+    };
+    let args = parse_args(input, &["Variable Name"], true);
+    let var_name = expr_to_str(&args[0]);
+    let var_ty = &args[1];
+    quote! {
+        core_lang::syntax::terms::xvar::XVar{
+            prdcns: #prdcns,
+            var: #var_name.to_string(),
+            ty: #var_ty
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::terms::xvar::XVar`] with chrality
+/// [`core_lang::syntax::terms::Prd`]
+/// If no type is provided, the variable will default to [`core_lang::syntax::types::Ty::I64`]
+/// ```
+/// use macros::{ty,var};
+/// use core_lang::syntax::{types::Ty, terms::xvar::XVar};
+/// let var1 = var!("x");
+/// let var2 = var!("x",Ty::I64);
+/// let var3 = XVar::var("x",Ty::I64);
+/// assert_eq!(var1,var2);
+/// assert_eq!(var2,var3);
+/// ```
+#[proc_macro]
+pub fn var(input: TokenStream) -> TokenStream {
+    xvar(input, Chirality::Prd)
+}
+
+/// Create a [`core_lang::syntax::terms::xvar::XVar`] with chirality
+/// [`core_lang::syntax::terms::Cns`]
+/// If no type is provided the covariable will default to [`core_lang::syntax::types::ty::I64`]
+/// ```
+/// use macros::covar;
+/// use core_lang::syntax::{terms::xvar::XVar,types::Ty};
+/// let covar1 = covar!("a");
+/// let covar2 = covar!("a",Ty::I64);
+/// let covar3 = XVar::covar("a",Ty::I64);
+/// assert_eq!(covar1,covar2);
+/// assert_eq!(covar2,covar3);
+/// ```
+#[proc_macro]
+pub fn covar(input: TokenStream) -> TokenStream {
+    xvar(input, Chirality::Cns)
+}
+
 /// Create a [`core_lang::syntax::statements::Cut`] with given arguments
 /// if no type is provided, the cut type will default to [`core_lang::syntax::types::Ty::I64`]
 /// ```
@@ -94,7 +146,7 @@ pub fn cut(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::Chirality::Prd`]
+/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::terms::Prd`]
 /// (i.e. a constructor)
 /// ```
 /// use macros::ctor;
@@ -114,7 +166,7 @@ pub fn ctor(input: TokenStream) -> TokenStream {
     xtor(input, Chirality::Prd)
 }
 
-/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::Chirality::Cns`]
+/// Create a [`core_lang::syntax::terms::Xtor`] with chirality [`core_lang::syntax::terms::Cns`]
 /// (i.e. a destructor)
 /// ```
 /// use macros::dtor;
@@ -255,6 +307,202 @@ pub fn call(input: TokenStream) -> TokenStream {
             name: #name.to_string(),
             args: #call_args,
             ty:#call_ty
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::statements::Exit`]
+/// if no return type is provided, the type will default to `[core_lang::syntax::types::Ty::I64`]
+/// ```
+/// use macros::exit;
+/// use core_lang::syntax::{types::Ty,terms::xvar::XVar,statements::Exit};
+/// let exit1 = exit!(XVar::var("x",Ty::I64),Ty::I64);
+/// let exit2 = exit!(XVar::var("x",Ty::I64));
+/// let exit3 = Exit::exit(XVar::var("x",Ty::I64),Ty::I64);
+/// assert_eq!(exit1,exit2);
+/// assert_eq!(exit2,exit3);
+/// ```
+#[proc_macro]
+pub fn exit(input: TokenStream) -> TokenStream {
+    let args = parse_args(input, &["Exit Term"], true);
+    let exit_term = &args[0];
+    let exit_ty = &args[1];
+    quote! { core_lang::syntax::statements::exit::Exit{
+        arg: ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#exit_term)),
+        ty: #exit_ty
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::context::ContextBinding`]
+/// If no type is provided, it defaults to [`core_lang::syntax::types::Ty`]
+/// ```
+/// use macros::bind;
+/// use core_lang::syntax::{types::Ty, context::{ContextBinding,Chirality}};
+/// let bnd1 = bind!("x",Chirality::Prd);
+/// let bnd2 = bind!("x",Chirality::Prd,Ty::I64);
+/// let bnd3 = ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64};
+/// assert_eq!(bnd1,bnd2);
+/// assert_eq!(bnd2,bnd3);
+/// ```
+#[proc_macro]
+pub fn bind(input: TokenStream) -> TokenStream {
+    let args = parse_args(input, &["Context Variable", "Context Chirality"], true);
+    let var = expr_to_str(&args[0]);
+    let chi = &args[1];
+    let ty = &args[2];
+    quote! {
+        core_lang::syntax::context::ContextBinding{
+            var: #var.to_string(),
+            chi: #chi,
+            ty: #ty
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::def::Def`]
+/// ```
+/// use macros::def;
+/// use core_lang::syntax::{
+///     def::Def,
+///     types::Ty,
+///     context::{Chirality, ContextBinding, TypingContext},
+///     statements::{Statement, Call},
+///     arguments::{Argument,Arguments},
+///     terms::{xvar::XVar, Term}
+/// };
+/// use std::collections::HashSet;
+/// let def1 = def!(
+///     "print",
+///     [ContextBinding{ var:"x".to_string(), chi: Chirality::Prd, ty: Ty::I64 } ],
+///     Call {
+///         name:"print_i64".to_string(),
+///         args: Arguments { entries: vec![Argument::from(Term::from(XVar::var("x",Ty::I64)))] },
+///         ty:Ty::I64
+///     }, ["a","x"]);
+/// let def2 = Def {
+///     name:"print".to_string(),
+///     context: TypingContext{
+///         bindings: vec![ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64}]
+///     },
+///     body:Statement::from(Call {
+///         name:"print_i64".to_string(),
+///         args: Arguments { entries: vec![Argument::from(Term::from(XVar::var("x",Ty::I64)))] },
+///         ty:Ty::I64
+///     }),
+///     used_vars: HashSet::from(["x".to_string(),"a".to_string()])};
+/// assert_eq!(def1,def2)
+/// ```
+#[proc_macro]
+pub fn def(input: TokenStream) -> TokenStream {
+    let args = parse_args(
+        input,
+        &["Def Name", "Def Args", "Def Body", "Def Used Vars"],
+        false,
+    );
+    let name = expr_to_str(&args[0]);
+    let def_args = expr_to_array(&args[1]);
+    let def_body = &args[2];
+    let def_used = expr_to_array(&args[3])
+        .iter()
+        .map(|arg| quote! { #arg.to_string() })
+        .collect::<Vec<_>>();
+    quote! {
+        core_lang::syntax::def::Def{
+            name: #name.to_string(),
+            context: core_lang::syntax::context::TypingContext{
+                bindings: ::std::vec::Vec::from([
+                    #(#def_args),*
+                ]),
+            },
+            body: core_lang::syntax::statements::Statement::from(#def_body),
+            used_vars: std::collections::HashSet::from([#(#def_used),*])
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::program::Program`]
+/// ```
+/// use macros::prog;
+/// use core_lang::syntax::{
+///     Data,Codata,
+///     declaration::TypeDeclaration,
+///     context::TypingContext,
+///     def::Def,
+///     program::Prog,
+///     statements::Exit,
+///     terms::XVar,
+///     types::Ty,
+/// };
+/// use std::collections::HashSet;
+/// let prog1 = prog!([
+///     Def {
+///             name:"exit".to_string(),
+///             context:TypingContext::default(),
+///             body:Exit::exit(XVar::var("x",Ty::I64),Ty::I64),
+///             used_vars:HashSet::from(["x".to_string()])
+///     }],[
+///     TypeDeclaration {
+///         dat:Data,
+///         name:"Unit".to_string(),
+///         xtors:Vec::new()
+///     }],[
+///     TypeDeclaration {
+///         dat:Codata,
+///         name:"Void".to_string(),
+///         xtors:Vec::new()
+///     }]);
+/// let prog2 = Prog{
+///     defs:vec![
+///         Def {
+///             name:"exit".to_string(),
+///             context:TypingContext::default(),
+///             body:Exit::exit(XVar::var("x",Ty::I64),Ty::I64),
+///             used_vars:HashSet::from(["x".to_string()])
+///         }
+///     ],
+///     data_types:vec![
+///         TypeDeclaration {
+///             dat:Data,
+///             name:"Unit".to_string(),
+///             xtors:Vec::new()
+///         }
+///     ],
+///     codata_types:vec![
+///         TypeDeclaration {
+///             dat:Codata,
+///             name:"Void".to_string(),
+///             xtors:Vec::new()
+///         }
+///     ]
+/// };
+/// assert_eq!(prog1,prog2)
+/// ```
+#[proc_macro]
+pub fn prog(input: TokenStream) -> TokenStream {
+    let args = parse_args(
+        input,
+        &["Definitions", "Data Declarations", "Codata Declarations"],
+        false,
+    );
+    let def_list = expr_to_array(&args[0]);
+    let data_list = expr_to_array(&args[1]);
+    let codata_list = expr_to_array(&args[2]);
+    quote! {
+        core_lang::syntax::program::Prog{
+            defs: ::std::vec::Vec::from([
+                      #(#def_list),*
+            ]),
+            data_types: ::std::vec::Vec::from([
+                #(#data_list),*
+            ]),
+            codata_types: ::std::vec::Vec::from([
+                #(#codata_list),*
+            ])
         }
     }
     .into()

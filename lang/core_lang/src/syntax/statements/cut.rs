@@ -197,7 +197,7 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{ctor, cut, dtor, ty};
+    use macros::{covar, ctor, cut, dtor, ty, var};
     extern crate self as core_lang;
 
     #[test]
@@ -209,7 +209,7 @@ mod tests {
                 [Literal::new(1), ctor!("Nil", [], ty!("ListInt"))],
                 ty!("ListInt")
             ),
-            XVar::covar("a", ty!("ListInt")),
+            covar!("a", ty!("ListInt")),
             ty!("ListInt")
         )
         .focus(&mut Default::default());
@@ -250,12 +250,8 @@ mod tests {
     #[test]
     fn transform_dtor() {
         let result = cut!(
-            XVar::var("x", ty!("Fun[i64, i64]")),
-            dtor!(
-                "apply",
-                [XVar::var("y", ty!("int")), XVar::covar("a", ty!("int"))],
-                ty!("Fun[i64, i64]")
-            ),
+            var!("x", ty!("Fun[i64, i64]")),
+            dtor!("apply", [var!("y"), covar!("a")], ty!("Fun[i64, i64]")),
             ty!("Fun[i64, i64]")
         )
         .focus(&mut Default::default());
@@ -277,12 +273,7 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = cut!(
-            XVar::var("x", ty!("int")),
-            XVar::covar("a", ty!("int")),
-            ty!("int")
-        )
-        .focus(&mut Default::default());
+        let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
         let expected =
             FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected);
