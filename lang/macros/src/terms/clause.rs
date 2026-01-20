@@ -2,7 +2,15 @@ use crate::utils::{expr_to_array, expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
-pub fn clause(input: TokenStream) -> TokenStream {
+pub fn unfocused_clause(input: TokenStream) -> TokenStream {
+    clause(input, quote! {core_lang::syntax::statements::Statement })
+}
+
+pub fn fs_clause(input: TokenStream) -> TokenStream {
+    clause(input, quote! {core_lang::syntax::statements::FsStatement })
+}
+
+fn clause(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input,
         &["Chirality", "Xtor Name", "Xtor Arguments", "Clause Body"],
@@ -22,7 +30,7 @@ pub fn clause(input: TokenStream) -> TokenStream {
                     #(#xtor_args),*
                 ])
             },
-            body: ::std::rc::Rc::new(core_lang::syntax::statements::Statement::from(#body))
+            body: ::std::rc::Rc::new(#stmt_ty::from(#body))
         }
     }
     .into()

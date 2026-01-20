@@ -197,7 +197,7 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{covar, ctor, cut, dtor, ty, var};
+    use macros::{bind, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, ty, var};
     extern crate self as core_lang;
 
     #[test]
@@ -214,33 +214,31 @@ mod tests {
         )
         .focus(&mut Default::default());
 
-        let mut args = TypingContext::default();
-        args.add_var("x0", Ty::I64);
-        args.add_var("x1", Ty::Decl("ListInt".to_string()));
-        let expected = FsCut::new(
+        let expected = fs_cut!(
             Literal::new(1),
-            Mu::tilde_mu(
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
-                    FsXtor::ctor(
-                        "Nil",
-                        TypingContext::default(),
-                        Ty::Decl("ListInt".to_string()),
-                    ),
-                    Mu::tilde_mu(
+                fs_cut!(
+                    fs_ctor!("Nil", [], ty!("ListInt")),
+                    fs_mutilde!(
                         "x1",
-                        FsCut::new(
-                            FsXtor::ctor("Cons", args, Ty::Decl("ListInt".to_string())),
-                            XVar::covar("a", Ty::Decl("ListInt".to_string())),
-                            Ty::Decl("ListInt".to_string()),
+                        fs_cut!(
+                            fs_ctor!(
+                                "Cons",
+                                [
+                                    bind!("x0", Chirality::Prd),
+                                    bind!("x1", Chirality::Prd, ty!("ListInt"))
+                                ],
+                                ty!("ListInt")
+                            ),
+                            covar!("a", ty!("ListInt")),
+                            ty!("ListInt")
                         ),
-                        Ty::Decl("ListInt".to_string()),
+                        ty!("ListInt")
                     ),
-                    Ty::Decl("ListInt".to_string()),
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                    ty!("ListInt")
+                )
+            )
         )
         .into();
 
@@ -256,17 +254,15 @@ mod tests {
         )
         .focus(&mut Default::default());
 
-        let mut args = TypingContext::default();
-        args.add_var("y", Ty::I64);
-        args.add_covar("a", Ty::I64);
-        let expected = {
-            let ap = FsXtor::dtor("apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
-            FsCut::new(
-                XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
-                ap,
-                Ty::Decl("Fun[i64, i64]".to_string()),
-            )
-        }
+        let expected = fs_cut!(
+            var!("x", ty!("Fun[i64, i64]")),
+            fs_dtor!(
+                "apply",
+                [bind!("y", Chirality::Prd), bind!("a", Chirality::Cns)],
+                ty!("Fun[i64, i64]")
+            ),
+            ty!("Fun[i64, i64]")
+        )
         .into();
         assert_eq!(result, expected);
     }

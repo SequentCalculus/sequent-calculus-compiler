@@ -291,8 +291,7 @@ impl Focusing for IfC {
 mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{covar, cut, exit, ifc, ifcz, var};
-    use std::rc::Rc;
+    use macros::{covar, cut, exit, fs_cut, fs_ifc, fs_ifcz, fs_mutilde, ifc, ifcz, var};
     extern crate self as core_lang;
 
     #[test]
@@ -306,33 +305,27 @@ mod transform_tests {
         )
         .focus(&mut Default::default());
 
-        let expected = FsCut::new(
+        let expected = fs_cut!(
             Literal::new(2),
-            Mu::tilde_mu(
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
+                fs_cut!(
                     Literal::new(1),
-                    Mu::tilde_mu(
+                    fs_mutilde!(
                         "x1",
-                        FsIfC {
-                            sort: IfSort::Equal,
-                            fst: "x0".to_string(),
-                            snd: Some("x1".to_string()),
-                            thenc: Rc::new(
-                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64)
-                                    .into(),
-                            ),
-                            elsec: Rc::new(FsExit::exit("x").into()),
-                        },
-                        Ty::I64,
-                    ),
-                    Ty::I64,
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                        fs_ifc!(
+                            IfSort::Equal,
+                            "x0",
+                            "x1",
+                            fs_cut!(Literal::new(1), covar!("a")),
+                            FsExit::exit("x")
+                        )
+                    )
+                )
+            )
         )
         .into();
+
         assert_eq!(result, expected)
     }
     #[test]
@@ -345,15 +338,13 @@ mod transform_tests {
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
-        let expected = FsIfC {
-            sort: IfSort::Equal,
-            fst: "x".to_string(),
-            snd: Some("x".to_string()),
-            thenc: Rc::new(FsExit::exit("y").into()),
-            elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let expected = fs_ifc!(
+            IfSort::Equal,
+            "x",
+            "x",
+            FsExit::exit("y"),
+            fs_cut!(var!("x"), covar!("a"))
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -367,22 +358,17 @@ mod transform_tests {
             exit!(var!("x"))
         )
         .focus(&mut Default::default());
-        let expected = FsCut::new(
+        let expected = fs_cut!(
             Literal::new(1),
-            Mu::tilde_mu(
+            fs_mutilde!(
                 "x0",
-                FsIfC {
-                    sort: IfSort::Equal,
-                    fst: "x0".to_string(),
-                    snd: None,
-                    thenc: Rc::new(
-                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
-                    ),
-                    elsec: Rc::new(FsExit::exit("x").into()),
-                },
-                Ty::I64,
-            ),
-            Ty::I64,
+                fs_ifcz!(
+                    IfSort::Equal,
+                    "x0",
+                    fs_cut!(Literal::new(1), covar!("a")),
+                    FsExit::exit("x")
+                )
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -396,15 +382,12 @@ mod transform_tests {
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
-        let expected = FsIfC {
-            sort: IfSort::Equal,
-            fst: "x".to_string(),
-            snd: None,
-            thenc: Rc::new(FsExit::exit("y").into()),
-            elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let expected = fs_ifcz!(
+            IfSort::Equal,
+            "x",
+            FsExit::exit("y"),
+            fs_cut!(var!("x"), covar!("a"))
+        )
         .into();
         assert_eq!(result, expected)
     }

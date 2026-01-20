@@ -68,6 +68,8 @@ mod lit_tests {
     use crate::syntax::*;
     use crate::traits::*;
 
+    use macros::{fs_cut, fs_mutilde};
+    extern crate self as core_lang;
     // Focusing tests
 
     #[test]
@@ -76,12 +78,7 @@ mod lit_tests {
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
-        let expected = FsCut::new(
-            Literal::new(1),
-            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
-            Ty::I64,
-        )
-        .into();
+        let expected = fs_cut!(Literal::new(1), fs_mutilde!("x0", FsExit::exit("x0"))).into();
         assert_eq!(result, expected)
     }
 
@@ -91,12 +88,7 @@ mod lit_tests {
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
-        let expected = FsCut::new(
-            Literal::new(2),
-            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
-            Ty::I64,
-        )
-        .into();
+        let expected = fs_cut!(Literal::new(2), fs_mutilde!("x0", FsExit::exit("x0"))).into();
         assert_eq!(result, expected)
     }
 }

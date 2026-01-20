@@ -124,30 +124,22 @@ mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{call, covar, var};
+    use macros::{bind, call, covar, fs_call, var};
 
     #[test]
     fn transform_call1() {
         let result = call!("main", []).focus(&mut Default::default());
-        let expected = FsCall {
-            name: "main".to_string(),
-            args: TypingContext::default(),
-        }
-        .into();
+        let expected = fs_call!("main", []).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_call2() {
         let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
-        let mut args = TypingContext::default();
-        args.add_var("x", Ty::I64);
-        args.add_covar("a", Ty::I64);
-
-        let expected = FsCall {
-            name: "fun".to_string(),
-            args,
-        }
+        let expected = fs_call!(
+            "fun",
+            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)]
+        )
         .into();
         assert_eq!(result, expected)
     }

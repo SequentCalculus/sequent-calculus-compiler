@@ -1,6 +1,7 @@
-use crate::utils::{expr_to_str, parse_args};
+use crate::utils::{expr_to_array, expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::Expr;
 
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Context Variable", "Context Chirality"], true);
@@ -15,4 +16,13 @@ pub fn bind(input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+pub fn typing_context(arg: &Expr) -> proc_macro2::TokenStream {
+    let args = expr_to_array(arg);
+    quote! {
+        core_lang::syntax::context::TypingContext { bindings: ::std::vec::Vec::from([
+            #(#args),*
+        ]) }
+    }
 }

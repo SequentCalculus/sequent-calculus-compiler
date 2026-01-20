@@ -157,40 +157,23 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, case, clause, cocase, covar, cut, ty, var};
-
-    use std::rc::Rc;
+    use macros::{bind, case, clause, cocase, covar, cut, fs_clause, fs_cut, ty, var};
 
     #[test]
     fn focus_clause() {
         let result = clause!(
             Prd,
             "apply",
-            [bind!("x", Chirality::Prd,), bind!("a", Chirality::Cns)],
+            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
-        let expected = Clause {
-            prdcns: Prd,
-            xtor: "apply".to_string(),
-            context: TypingContext {
-                bindings: vec![
-                    ContextBinding {
-                        var: "x".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::I64,
-                    },
-                    ContextBinding {
-                        var: "a".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::I64,
-                    },
-                ],
-            },
-            body: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        };
+        let expected = fs_clause!(
+            Prd,
+            "apply",
+            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+            fs_cut!(var!("x"), covar!("a"))
+        );
         assert_eq!(result, expected)
     }
 

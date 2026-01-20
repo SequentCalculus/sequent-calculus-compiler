@@ -270,7 +270,7 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{covar, cut, op, var};
+    use macros::{covar, cut, fs_cut, fs_mutilde, fs_op, op, var};
 
     fn example_op() -> Term<Prd> {
         op!(var!("x"), BinOp::Prod, var!("x")).into()
@@ -291,30 +291,15 @@ mod tests {
             covar!("a")
         )
         .focus(&mut Default::default());
-        let expected = FsCut::new(
+        let expected = fs_cut!(
             Literal::new(1),
-            Mu::tilde_mu(
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
+                fs_cut!(
                     Literal::new(2),
-                    Mu::tilde_mu(
-                        "x1",
-                        FsCut::new(
-                            FsOp {
-                                fst: "x0".to_string(),
-                                op: BinOp::Sum,
-                                snd: "x1".to_string(),
-                            },
-                            XVar::covar("a", Ty::I64),
-                            Ty::I64,
-                        ),
-                        Ty::I64,
-                    ),
-                    Ty::I64,
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                    fs_mutilde!("x1", fs_cut!(fs_op!("x0", BinOp::Sum, "x1"), covar!("a")))
+                )
+            )
         )
         .into();
 
@@ -325,16 +310,7 @@ mod tests {
     fn transform_op2() {
         let result = cut!(op!(var!("x"), BinOp::Prod, var!("y")), covar!("a"))
             .focus(&mut Default::default());
-        let expected = FsCut::new(
-            FsOp {
-                fst: "x".to_string(),
-                op: BinOp::Prod,
-                snd: "y".to_string(),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
-        )
-        .into();
+        let expected = fs_cut!(fs_op!("x", BinOp::Prod, "y"), covar!("a")).into();
         assert_eq!(result, expected)
     }
 }

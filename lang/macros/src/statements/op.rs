@@ -1,21 +1,39 @@
-use crate::utils::parse_args;
+use crate::utils::{expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::Expr;
 
-pub fn op(input: TokenStream) -> TokenStream {
+pub fn unfocused_op(input: TokenStream) -> TokenStream {
+    op(input, |exp| {
+        quote! {
+            ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#exp))
+        }
+    })
+}
+
+pub fn fs_op(input: TokenStream) -> TokenStream {
+    op(input, |exp| {
+        let var = expr_to_str(exp);
+        quote! {
+                #var.to_string()
+        }
+    })
+}
+
+fn op(input: TokenStream, prod_fun: fn(&Expr) -> proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input,
         &["First Operand", "Operation", "Second Operand"],
         false,
     );
-    let fst = &args[0];
+    let fst = prod_fun(&args[0]);
     let op = &args[1];
-    let snd = &args[2];
+    let snd = prod_fun(&args[2]);
     quote! {
         core_lang::syntax::terms::op::Op{
-            fst: ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#fst)),
+            fst: #fst,
             op: #op,
-            snd: ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#snd)),
+            snd: #snd,
         }
     }
     .into()
