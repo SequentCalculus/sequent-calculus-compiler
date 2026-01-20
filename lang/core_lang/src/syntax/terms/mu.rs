@@ -264,40 +264,25 @@ mod mu_tests {
         },
         test_common::example_subst,
     };
+    extern crate self as core_lang;
+    use macros::{covar, cut, mu, mutilde, var};
 
     // Substitution tests
 
     #[test]
     fn subst_mu() {
         let subst = example_subst();
-        let result = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        )
-        .subst_sim(&subst.0, &subst.1);
-        let expected = Mu::mu(
-            "a",
-            Cut::new(XVar::var("y", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let result = mu!("a", cut!(var!("x"), covar!("a"))).subst_sim(&subst.0, &subst.1);
+        let expected = mu!("a", cut!(var!("y"), covar!("a")));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
         let subst = example_subst();
-        let example = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mutilde!("x", cut!(var!("x"), covar!("a")));
         let result = example.subst_sim(&subst.0, &subst.1);
-        let expected = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let expected = mutilde!("x", cut!(var!("x"), covar!("b")));
         assert_eq!(result, expected)
     }
 
@@ -305,11 +290,7 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mu!("a", cut!(Literal::new(1), covar!("a")));
         let example_var = Mu::mu(
             "a",
             FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
@@ -321,11 +302,7 @@ mod mu_tests {
 
     #[test]
     fn bind_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mu!("a", cut!(Literal::new(1), covar!("a")));
         let example_var = Mu::mu(
             "a",
             FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),

@@ -1,4 +1,4 @@
-use crate::utils::{expr_to_array, expr_to_str, parse_args};
+use crate::utils::{expr_to_array, parse_args};
 use core_lang::syntax::Chirality;
 use proc_macro::TokenStream;
 use quote::quote;

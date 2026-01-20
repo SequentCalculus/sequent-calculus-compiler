@@ -1,8 +1,10 @@
 mod clause;
+mod mu;
 mod xcase;
 mod xtor;
 mod xvar;
 pub use clause::clause;
+pub use mu::xmu;
 pub use xcase::xcase;
 pub use xtor::xtor;
 pub use xvar::xvar;

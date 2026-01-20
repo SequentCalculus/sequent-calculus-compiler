@@ -112,3 +112,15 @@ pub fn case(input: TokenStream) -> TokenStream {
 pub fn cocase(input: TokenStream) -> TokenStream {
     xcase(input, Chirality::Prd)
 }
+
+#[doc=include_str!("../doc/mu.md")]
+#[proc_macro]
+pub fn mu(input: TokenStream) -> TokenStream {
+    terms::xmu(input, Chirality::Prd)
+}
+
+#[doc=include_str!("../doc/mutilde.md")]
+#[proc_macro]
+pub fn mutilde(input: TokenStream) -> TokenStream {
+    terms::xmu(input, Chirality::Cns)
+}

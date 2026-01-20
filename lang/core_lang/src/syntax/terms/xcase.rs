@@ -198,30 +198,18 @@ mod tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
-        XCase {
-            prdcns: Prd,
-            clauses: vec![
-                Clause {
-                    prdcns: Prd,
-                    xtor: "fst".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Prd,
-                    xtor: "snd".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        cocase!(
+            [
+                clause!(
+                    Prd,
+                    "fst",
+                    [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+                    cut!(var!("x"), covar!("a"))
+                ),
+                clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
             ],
-            ty: Ty::Decl("LPairIntInt".to_string()),
-        }
+            ty!("LPairIntInt")
+        )
         .into()
     }
 
