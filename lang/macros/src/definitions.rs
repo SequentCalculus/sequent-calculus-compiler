@@ -2,7 +2,15 @@ use crate::utils::{expr_to_array, expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
-pub fn def(input: TokenStream) -> TokenStream {
+pub fn unfocused_def(input: TokenStream) -> TokenStream {
+    def(input, quote! {core_lang::syntax::statements::Statement})
+}
+
+pub fn fs_def(input: TokenStream) -> TokenStream {
+    def(input, quote! {core_lang::syntax::statements::FsStatement})
+}
+
+fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input,
         &["Def Name", "Def Args", "Def Body", "Def Used Vars"],
@@ -23,7 +31,7 @@ pub fn def(input: TokenStream) -> TokenStream {
                     #(#def_args),*
                 ]),
             },
-            body: core_lang::syntax::statements::Statement::from(#def_body),
+            body: #stmt_ty::from(#def_body),
             used_vars: std::collections::HashSet::from([#(#def_used),*])
         }
     }
