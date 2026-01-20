@@ -171,25 +171,33 @@ mod test {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
-
-    use std::rc::Rc;
+    extern crate self as core_lang;
+    use macros::{call, cut, ifcz, ty};
 
     fn example_cut() -> Statement {
-        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into()
+        cut!(
+            XVar::var("x", ty!("int")),
+            XVar::covar("a", ty!("int")),
+            ty!("int")
+        )
+        .into()
     }
 
     fn example_ifz() -> Statement {
-        IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: None,
-            thenc: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
+        ifcz!(
+            IfSort::Equal,
+            XVar::var("x", ty!("int")),
+            cut!(
+                XVar::var("x", ty!("int")),
+                XVar::covar("a", ty!("int")),
+                ty!("int")
             ),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+            cut!(
+                XVar::var("x", ty!("int")),
+                XVar::covar("a", ty!("int")),
+                ty!("int")
+            )
+        )
         .into()
     }
 
@@ -209,7 +217,12 @@ mod test {
     fn subst_cut() {
         let subst = example_subst();
         let result = example_cut().subst_sim(&subst.0, &subst.1);
-        let expected = Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into();
+        let expected = cut!(
+            XVar::var("y", ty!("int")),
+            XVar::covar("b", ty!("int")),
+            ty!("int")
+        )
+        .into();
         assert_eq!(result, expected)
     }
 
@@ -217,17 +230,20 @@ mod test {
     fn subst_ifz() {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
-        let expected = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("y", Ty::I64).into()),
-            snd: None,
-            thenc: Rc::new(
-                Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into(),
+        let expected = ifcz!(
+            IfSort::Equal,
+            XVar::var("y", ty!("int")),
+            cut!(
+                XVar::var("y", ty!("int")),
+                XVar::covar("b", ty!("int")),
+                ty!("int")
             ),
-            elsec: Rc::new(
-                Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64).into(),
-            ),
-        }
+            cut!(
+                XVar::var("y", ty!("int")),
+                XVar::covar("b", ty!("int")),
+                ty!("int")
+            )
+        )
         .into();
         assert_eq!(result, expected)
     }
@@ -236,14 +252,11 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("y", Ty::I64));
-        arguments.add_cons(XVar::covar("b", Ty::I64));
-        let expected = Call {
-            name: "main".to_string(),
-            args: arguments,
-            ty: Ty::I64,
-        }
+        let expected = call!(
+            "main",
+            [XVar::var("y", ty!("int")), XVar::covar("b", ty!("int"))],
+            ty!("int")
+        )
         .into();
         assert_eq!(result, expected)
     }

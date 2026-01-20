@@ -1,6 +1,7 @@
 use core_lang::syntax::Chirality;
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::Expr;
 
 mod utils;
 use utils::{expr_to_array, expr_to_str, parse_args};
@@ -30,6 +31,18 @@ pub fn ty(input: TokenStream) -> TokenStream {
     .into()
 }
 
+fn arguments(arg: &Expr) -> proc_macro2::TokenStream {
+    let args = expr_to_array(arg)
+        .iter()
+        .map(|arg| quote! { core_lang::syntax::terms::Term::from(#arg).into() })
+        .collect::<Vec<_>>();
+    quote! {
+        core_lang::syntax::arguments::Arguments { entries: ::std::vec::Vec::from([
+            #(#args),*
+        ]) }
+    }
+}
+
 fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
     let (chi, xtor_desc) = match prdcns {
         Chirality::Prd => (quote! { core_lang::syntax::Prd}, "Ctor Name"),
@@ -39,18 +52,13 @@ fn xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
     let args = parse_args(input, [xtor_desc, "Argument list", "Type"]);
 
     let xtor_name = expr_to_str(&args[0]);
-    let xtor_args = expr_to_array(&args[1])
-        .iter()
-        .map(|arg| quote! { core_lang::syntax::terms::Term::from(#arg).into() })
-        .collect::<Vec<_>>();
+    let xtor_args = arguments(&args[1]);
     let ty = &args[2];
     quote! {
         core_lang::syntax::terms::xtor::Xtor{
             prdcns: #chi,
             id: #xtor_name.to_string(),
-            args: core_lang::syntax::arguments::Arguments { entries: ::std::vec::Vec::from([
-                    #(#xtor_args),*
-            ]) },
+            args: #xtor_args,
             ty: #ty
         }
     }
@@ -123,7 +131,7 @@ pub fn dtor(input: TokenStream) -> TokenStream {
 /// Create a [`core_lang::syntax::terms::ifc::IfC`]
 /// ```
 /// use macros::ifc;
-/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{xvar::XVar,}};
+/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{Term, xvar::XVar,}};
 /// use std::rc::Rc;
 ///
 /// let if1 = ifc!(
@@ -135,8 +143,8 @@ pub fn dtor(input: TokenStream) -> TokenStream {
 /// );
 /// let if2 = IfC{
 ///     sort:IfSort::Equal,
-///     fst:XVar::var("x",Ty::I64),
-///     snd:Some(XVar::var("y",Ty::I64)),
+///     fst:Rc::new(Term::from(XVar::var("x",Ty::I64))),
+///     snd:Some(Rc::new(Term::from(XVar::var("y",Ty::I64)))),
 ///     thenc:Rc::new(Exit::exit(XVar::var("z",Ty::I64),Ty::I64).into()),
 ///     elsec:Rc::new(Exit::exit(XVar::var("w",Ty::I64),Ty::I64).into())
 ///     };
@@ -174,7 +182,7 @@ pub fn ifc(input: TokenStream) -> TokenStream {
 /// Create a [`core_lang::syntax::terms::ifc::IfC`] with comparison to zero
 /// ```
 /// use macros::ifcz;
-/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{xvar::XVar,}};
+/// use core_lang::syntax::{types::Ty, statements::{exit::Exit,ifc::{IfSort,IfC}},terms::{Term, xvar::XVar,}};
 /// use std::rc::Rc;
 ///
 /// let if1 = ifcz!(
@@ -185,7 +193,7 @@ pub fn ifc(input: TokenStream) -> TokenStream {
 /// );
 /// let if2 = IfC{
 ///     sort:IfSort::Equal,
-///     fst:XVar::var("x",Ty::I64),
+///     fst:Rc::new(Term::from(XVar::var("x",Ty::I64))),
 ///     snd:None,
 ///     thenc:Rc::new(Exit::exit(XVar::var("z",Ty::I64),Ty::I64).into()),
 ///     elsec:Rc::new(Exit::exit(XVar::var("w",Ty::I64),Ty::I64).into())
@@ -206,6 +214,34 @@ pub fn ifcz(input: TokenStream) -> TokenStream {
             snd: ::core::option::Option::None,
             thenc: ::std::rc::Rc::new(core_lang::syntax::statements::Statement::from(#thenc)),
             elsec: ::std::rc::Rc::new(core_lang::syntax::statements::Statement::from(#elsec))
+        }
+    }
+    .into()
+}
+
+/// Create a [`core_lang::syntax::statements::Call`]
+/// ```
+/// use macros::call;
+/// use core_lang::syntax::{arguments::{Argument,Arguments}, statements::Call, types::Ty, terms::{Term, xvar::XVar}};
+/// let call1 = call!("print",[XVar::var("x",Ty::I64)],Ty::I64);
+/// let call2 = Call{
+///     name:"print".to_string(),
+///     args:Arguments{entries:Vec::from([Argument::from(Term::from(XVar::var("x",Ty::I64)))])},
+///     ty:Ty::I64
+/// };
+/// assert_eq!(call1,call2)
+/// ```
+#[proc_macro]
+pub fn call(input: TokenStream) -> TokenStream {
+    let args = parse_args(input, ["Called Name", "Arguments", "Return Type"]);
+    let name = expr_to_str(&args[0]);
+    let call_args = arguments(&args[1]);
+    let call_ty = &args[2];
+    quote! {
+        core_lang::syntax::statements::call::Call{
+            name: #name.to_string(),
+            args: #call_args,
+            ty:#call_ty
         }
     }
     .into()

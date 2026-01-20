@@ -1,13 +1,13 @@
 use core_lang::syntax::{
     Arguments,
     statements::{
-        Cut,
+        Call, Cut,
         ifc::{IfC, IfSort},
     },
-    terms::{xtor::Xtor, xvar::XVar},
+    terms::{Term, xtor::Xtor, xvar::XVar},
     types::Ty,
 };
-use macros::{ctor, cut, dtor, ifc, ty};
+use macros::{call, ctor, cut, dtor, ifc, ty};
 use std::rc::Rc;
 
 #[test]
@@ -68,8 +68,8 @@ fn if_zero() {
     );
     let if2 = IfC {
         sort: IfSort::Equal,
-        fst: XVar::var("x", ty!("int")),
-        snd: Some(XVar::var("y", ty!("int"))),
+        fst: Rc::new(Term::from(XVar::var("x", ty!("int")))),
+        snd: Some(Rc::new(Term::from(XVar::var("y", ty!("int"))))),
         thenc: Rc::new(
             Cut::new(
                 XVar::var("a", ty!("int")),
@@ -88,4 +88,17 @@ fn if_zero() {
         ),
     };
     assert_eq!(if1, if2)
+}
+
+#[test]
+fn call_print() {
+    let call1 = call!("print", [XVar::var("x", ty!("int"))], ty!("int"));
+    let call2 = Call {
+        name: "print".to_string(),
+        args: Arguments {
+            entries: vec![Term::from(XVar::var("x", Ty::I64)).into()],
+        },
+        ty: Ty::I64,
+    };
+    assert_eq!(call1, call2);
 }
