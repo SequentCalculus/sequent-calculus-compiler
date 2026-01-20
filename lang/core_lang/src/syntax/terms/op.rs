@@ -269,41 +269,26 @@ mod tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
-
-    use std::rc::Rc;
+    extern crate self as core_lang;
+    use macros::{covar, cut, op, var};
 
     fn example_op() -> Term<Prd> {
-        Op {
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("x", Ty::I64).into()),
-        }
-        .into()
+        op!(var!("x"), BinOp::Prod, var!("x")).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = Op {
-            fst: Rc::new(XVar::var("y", Ty::I64).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::I64).into()),
-        }
-        .into();
+        let expected = op!(var!("y"), BinOp::Prod, var!("y")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = Cut::new(
-            Op {
-                fst: Rc::new(Literal::new(1).into()),
-                op: BinOp::Sum,
-                snd: Rc::new(Literal::new(2).into()),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
+        let result = cut!(
+            op!(Literal::new(1), BinOp::Sum, Literal::new(2)),
+            covar!("a")
         )
         .focus(&mut Default::default());
         let expected = FsCut::new(
@@ -338,16 +323,8 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = Cut::new(
-            Op {
-                fst: Rc::new(XVar::var("x", Ty::I64).into()),
-                op: BinOp::Prod,
-                snd: Rc::new(XVar::var("y", Ty::I64).into()),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
-        )
-        .focus(&mut Default::default());
+        let result = cut!(op!(var!("x"), BinOp::Prod, var!("y")), covar!("a"))
+            .focus(&mut Default::default());
         let expected = FsCut::new(
             FsOp {
                 fst: "x".to_string(),
