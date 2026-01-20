@@ -541,3 +541,56 @@ pub fn op(input: TokenStream) -> TokenStream {
     }
     .into()
 }
+
+/// Create a [`core_lang::syntax::terms::clause::Clause`]
+/// ```
+/// use macros::clause;
+/// use core_lang::syntax::{
+///     Prd,
+///     context::{Chirality, ContextBinding,TypingContext},
+///     terms::{xvar::XVar,clause::Clause},
+///     types::Ty,
+///     statements::{Statement,Exit},
+/// };
+/// use std::rc::Rc;
+///
+/// let clause1 = clause!(Prd,"apply",
+///     [ContextBinding{var:"x".to_string(),chi:Chirality::Prd,ty:Ty::I64}],
+///     Exit::exit(XVar::var("x",Ty::I64),Ty::I64)
+/// );
+/// let clause2 = Clause{
+///     prdcns:Prd,
+///     xtor:"apply".to_string(),
+///     context:TypingContext{ bindings: vec![
+///         ContextBinding{ var:"x".to_string(), chi:Chirality::Prd, ty:Ty::I64 }
+///     ] },
+///     body:Rc::new(Statement::from(Exit::exit(XVar::var("x",Ty::I64),Ty::I64))),
+/// };
+/// assert_eq!(clause1,clause2)
+/// ```
+#[proc_macro]
+pub fn clause(input: TokenStream) -> TokenStream {
+    let args = parse_args(
+        input,
+        &["Chirality", "Xtor Name", "Xtor Arguments", "Clause Body"],
+        false,
+    );
+    let chi = &args[0];
+    let xtor = expr_to_str(&args[1]);
+    let xtor_args = expr_to_array(&args[2]);
+    let body = &args[3];
+
+    quote! {
+        core_lang::syntax::terms::clause::Clause{
+            prdcns: #chi,
+            xtor: #xtor.to_string(),
+            context: core_lang::syntax::context::TypingContext{
+                bindings: Vec::from([
+                    #(#xtor_args),*
+                ])
+            },
+            body: ::std::rc::Rc::new(core_lang::syntax::statements::Statement::from(#body))
+        }
+    }
+    .into()
+}

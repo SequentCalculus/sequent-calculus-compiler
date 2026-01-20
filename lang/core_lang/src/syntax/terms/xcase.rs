@@ -156,27 +156,37 @@ mod tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
+    extern crate self as core_lang;
+    use macros::{bind, clause, covar, cut, ty, var};
 
     use std::rc::Rc;
 
     #[test]
     fn focus_clause() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
-        let result = Clause {
-            prdcns: Prd,
-            xtor: "apply".to_string(),
-            context: ctx.clone(),
-            body: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let result = clause!(
+            Prd,
+            "apply",
+            [bind!("x", Chirality::Prd,), bind!("a", Chirality::Cns)],
+            cut!(var!("x"), covar!("a"))
+        )
         .focus(&mut Default::default());
         let expected = Clause {
             prdcns: Prd,
             xtor: "apply".to_string(),
-            context: ctx,
+            context: TypingContext {
+                bindings: vec![
+                    ContextBinding {
+                        var: "x".to_string(),
+                        chi: Chirality::Prd,
+                        ty: Ty::I64,
+                    },
+                    ContextBinding {
+                        var: "a".to_string(),
+                        chi: Chirality::Cns,
+                        ty: Ty::I64,
+                    },
+                ],
+            },
             body: Rc::new(
                 FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
             ),
@@ -223,24 +233,17 @@ mod tests {
         XCase {
             prdcns: Cns,
             clauses: vec![
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Nil".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Cons".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+                clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
+                clause!(
+                    Cns,
+                    "Cons",
+                    [
+                        bind!("x", Chirality::Prd),
+                        bind!("xs", Chirality::Prd, ty!("ListInt")),
+                        bind!("a", Chirality::Cns)
+                    ],
+                    cut!(var!("x"), covar!("a"))
+                ),
             ],
             ty: Ty::Decl("ListInt".to_string()),
         }
@@ -258,24 +261,17 @@ mod tests {
         let expected = XCase {
             prdcns: Cns,
             clauses: vec![
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Nil".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Cons".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+                clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
+                clause!(
+                    Cns,
+                    "Cons",
+                    [
+                        bind!("x", Chirality::Prd),
+                        bind!("xs", Chirality::Prd, ty!("ListInt")),
+                        bind!("a", Chirality::Cns)
+                    ],
+                    cut!(var!("x"), covar!("a"))
+                ),
             ],
             ty: Ty::Decl("ListInt".to_string()),
         };
