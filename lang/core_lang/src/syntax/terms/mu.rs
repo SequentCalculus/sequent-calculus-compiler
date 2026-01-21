@@ -256,7 +256,7 @@ impl Bind for Mu<Cns> {
 mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
-        syntax::{FsStatement, statements::FsExit, terms::Literal, types::Ty},
+        syntax::{FsStatement, statements::FsExit, terms::Literal},
         test_common::example_subst,
     };
     extern crate self as core_lang;

@@ -67,7 +67,7 @@ impl Compile for fun::syntax::terms::IfC {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ifc, ifcz, mu, ty, var};
+    use macros::{covar, cut, ife, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -86,8 +86,7 @@ mod compile_tests {
 
         let expected = mu!(
             "a0",
-            ifc!(
-                core_lang::syntax::statements::ifc::IfSort::Equal,
+            ife!(
                 core_lang::syntax::terms::Literal::new(3),
                 core_lang::syntax::terms::Literal::new(4),
                 cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
@@ -122,8 +121,7 @@ mod compile_tests {
 
         let expected = mu!(
             "a0",
-            ifc!(
-                core_lang::syntax::statements::ifc::IfSort::Equal,
+            ife!(
                 var!("x"),
                 var!("x"),
                 cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
@@ -149,8 +147,7 @@ mod compile_tests {
 
         let expected = mu!(
             "a0",
-            ifcz!(
-                core_lang::syntax::statements::ifc::IfSort::Equal,
+            ife!(
                 core_lang::syntax::terms::Literal::new(0),
                 cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
                 cut!(core_lang::syntax::terms::Literal::new(2), covar!("a0"))
@@ -184,8 +181,7 @@ mod compile_tests {
 
         let expected = mu!(
             "a0",
-            ifcz!(
-                core_lang::syntax::statements::ifc::IfSort::Equal,
+            ife!(
                 var!("x"),
                 cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
                 cut!(var!("x"), covar!("a0"))

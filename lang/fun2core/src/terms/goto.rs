@@ -40,7 +40,7 @@ impl Compile for fun::syntax::terms::Goto {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ifcz, mu, op, ty, var};
+    use macros::{covar, cut, ife, mu, op, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -95,8 +95,7 @@ mod compile_tests {
 
         let expected = mu!(
             "a",
-            ifcz!(
-                core_lang::syntax::statements::ifc::IfSort::Equal,
+            ife!(
                 var!("x"),
                 cut!(core_lang::syntax::terms::Literal::new(0), covar!("a")),
                 cut!(

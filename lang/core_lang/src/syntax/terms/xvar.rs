@@ -140,7 +140,6 @@ impl<C: Chi> SubstVar for XVar<C> {
 #[cfg(test)]
 mod var_tests {
     use super::Subst;
-    use crate::syntax::*;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
     use macros::{covar, var};

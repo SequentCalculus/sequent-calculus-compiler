@@ -291,13 +291,12 @@ impl Focusing for IfC {
 mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{covar, cut, exit, fs_cut, fs_ifc, fs_ifcz, fs_mutilde, ifc, ifcz, var};
+    use macros::{covar, cut, exit, fs_cut, fs_ife, fs_mutilde, ife, var};
     extern crate self as core_lang;
 
     #[test]
     fn transform_ife1() {
-        let result = ifc!(
-            IfSort::Equal,
+        let result = ife!(
             Literal::new(2),
             Literal::new(1),
             cut!(Literal::new(1), covar!("a")),
@@ -313,8 +312,7 @@ mod transform_tests {
                     Literal::new(1),
                     fs_mutilde!(
                         "x1",
-                        fs_ifc!(
-                            IfSort::Equal,
+                        fs_ife!(
                             "x0",
                             "x1",
                             fs_cut!(Literal::new(1), covar!("a")),
@@ -330,29 +328,20 @@ mod transform_tests {
     }
     #[test]
     fn transform_ife2() {
-        let result = ifc!(
-            IfSort::Equal,
+        let result = ife!(
             var!("x"),
             var!("x"),
             exit!(var!("y")),
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
-        let expected = fs_ifc!(
-            IfSort::Equal,
-            "x",
-            "x",
-            FsExit::exit("y"),
-            fs_cut!(var!("x"), covar!("a"))
-        )
-        .into();
+        let expected = fs_ife!("x", "x", FsExit::exit("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz1() {
-        let result = ifcz!(
-            IfSort::Equal,
+        let result = ife!(
             Literal::new(1),
             cut!(Literal::new(1), covar!("a")),
             exit!(var!("x"))
@@ -362,8 +351,7 @@ mod transform_tests {
             Literal::new(1),
             fs_mutilde!(
                 "x0",
-                fs_ifcz!(
-                    IfSort::Equal,
+                fs_ife!(
                     "x0",
                     fs_cut!(Literal::new(1), covar!("a")),
                     FsExit::exit("x")
@@ -375,20 +363,9 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = ifcz!(
-            IfSort::Equal,
-            var!("x"),
-            exit!(var!("y")),
-            cut!(var!("x"), covar!("a"))
-        )
-        .focus(&mut Default::default());
-        let expected = fs_ifcz!(
-            IfSort::Equal,
-            "x",
-            FsExit::exit("y"),
-            fs_cut!(var!("x"), covar!("a"))
-        )
-        .into();
+        let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
+            .focus(&mut Default::default());
+        let expected = fs_ife!("x", FsExit::exit("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 }

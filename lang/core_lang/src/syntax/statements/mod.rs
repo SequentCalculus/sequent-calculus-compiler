@@ -172,7 +172,7 @@ mod test {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{call, covar, cut, ifcz, ty, var};
+    use macros::{call, covar, cut, ife, ty, var};
 
     fn example_cut() -> Statement {
         cut!(
@@ -184,8 +184,7 @@ mod test {
     }
 
     fn example_ifz() -> Statement {
-        ifcz!(
-            IfSort::Equal,
+        ife!(
             XVar::var("x", ty!("int")),
             cut!(
                 XVar::var("x", ty!("int")),
@@ -217,8 +216,7 @@ mod test {
     fn subst_ifz() {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
-        let expected = ifcz!(
-            IfSort::Equal,
+        let expected = ife!(
             var!("y"),
             cut!(var!("y"), covar!("b"),),
             cut!(var!("y"), covar!("b"))

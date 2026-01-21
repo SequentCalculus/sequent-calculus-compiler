@@ -7,7 +7,7 @@ use core_lang::syntax::{
     terms::{Term, xtor::Xtor, xvar::XVar},
     types::Ty,
 };
-use macros::{call, covar, ctor, cut, dtor, ifc, ty, var};
+use macros::{call, covar, ctor, cut, dtor, ife, ty, var};
 use std::rc::Rc;
 
 #[test]
@@ -47,8 +47,7 @@ fn fun_int() {
 
 #[test]
 fn if_zero() {
-    let if1 = ifc!(
-        IfSort::Equal,
+    let if1 = ife!(
         var!("x"),
         var!("y"),
         cut!(var!("a"), covar!("b")),

@@ -70,7 +70,7 @@ impl Compile for fun::syntax::terms::New {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::{Cns, Prd};
+    use core_lang::syntax::Prd;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,

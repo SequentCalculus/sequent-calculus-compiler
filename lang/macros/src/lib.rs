@@ -123,28 +123,76 @@ pub fn fs_cut(input: TokenStream) -> TokenStream {
     statements::fs_cut(input)
 }
 
-#[doc = include_str!("../doc/ifc.md")]
+#[doc = include_str!("../doc/ife.md")]
 #[proc_macro]
-pub fn ifc(input: TokenStream) -> TokenStream {
-    statements::unfocused_ifc(input)
+pub fn ife(input: TokenStream) -> TokenStream {
+    statements::unfocused_ife(input)
 }
 
-#[doc = include_str!("../doc/ifcz.md")]
+#[doc = include_str!("../doc/ifne.md")]
 #[proc_macro]
-pub fn ifcz(input: TokenStream) -> TokenStream {
-    statements::unfocused_ifcz(input)
+pub fn ifne(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifne(input)
 }
 
-#[doc = include_str!("../doc/fs_ifc.md")]
+#[doc = include_str!("../doc/ifl.md")]
 #[proc_macro]
-pub fn fs_ifc(input: TokenStream) -> TokenStream {
-    statements::fs_ifc(input)
+pub fn ifl(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifl(input)
 }
 
-#[doc=include_str!("../doc/fs_ifcz.md")]
+#[doc = include_str!("../doc/ifle.md")]
 #[proc_macro]
-pub fn fs_ifcz(input: TokenStream) -> TokenStream {
-    statements::fs_ifcz(input)
+pub fn ifle(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifle(input)
+}
+
+#[doc = include_str!("../doc/ifg.md")]
+#[proc_macro]
+pub fn ifg(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifg(input)
+}
+
+#[doc = include_str!("../doc/ifge.md")]
+#[proc_macro]
+pub fn ifge(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifge(input)
+}
+
+#[doc = include_str!("../doc/fs_ife.md")]
+#[proc_macro]
+pub fn fs_ife(input: TokenStream) -> TokenStream {
+    statements::fs_ife(input)
+}
+
+#[doc = include_str!("../doc/fs_ifne.md")]
+#[proc_macro]
+pub fn fs_ifne(input: TokenStream) -> TokenStream {
+    statements::fs_ifne(input)
+}
+
+#[doc = include_str!("../doc/fs_ifl.md")]
+#[proc_macro]
+pub fn fs_ifl(input: TokenStream) -> TokenStream {
+    statements::fs_ifl(input)
+}
+
+#[doc = include_str!("../doc/fs_ifle.md")]
+#[proc_macro]
+pub fn fs_ifle(input: TokenStream) -> TokenStream {
+    statements::fs_ifle(input)
+}
+
+#[doc = include_str!("../doc/fs_ifg.md")]
+#[proc_macro]
+pub fn fs_ifg(input: TokenStream) -> TokenStream {
+    statements::fs_ifg(input)
+}
+
+#[doc = include_str!("../doc/fs_ifge.md")]
+#[proc_macro]
+pub fn fs_ifge(input: TokenStream) -> TokenStream {
+    statements::fs_ifge(input)
 }
 
 #[doc = include_str!("../doc/call.md")]

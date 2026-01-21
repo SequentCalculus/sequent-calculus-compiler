@@ -6,5 +6,8 @@ mod op;
 pub use call::{fs_call, unfocused_call};
 pub use cut::{fs_cut, unfocused_cut};
 pub use exit::exit;
-pub use ifc::{fs_ifc, fs_ifcz, unfocused_ifc, unfocused_ifcz};
+pub use ifc::{
+    fs_ife, fs_ifg, fs_ifge, fs_ifl, fs_ifle, fs_ifne, unfocused_ife, unfocused_ifg,
+    unfocused_ifge, unfocused_ifl, unfocused_ifle, unfocused_ifne,
+};
 pub use op::{fs_op, unfocused_op};
