@@ -14,7 +14,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
     quote! {
         core_lang::syntax::program::Prog{
             defs: ::std::vec::Vec::from([
-                      #(#def_list),*
+                #(#def_list),*
             ]),
             data_types: ::std::vec::Vec::from([
                 #(#data_list),*
