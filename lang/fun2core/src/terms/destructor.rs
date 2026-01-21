@@ -47,7 +47,7 @@ impl Compile for fun::syntax::terms::Destructor {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
-    use core_lang::syntax::{terms::Prd, types::Ty};
+    use core_lang::syntax::terms::Prd;
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use macros::{bind, clause, cocase, covar, cut, dtor, mu, ty};
     use std::collections::{HashSet, VecDeque};
