@@ -211,7 +211,7 @@ mod xtor_tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use macros::{ctor, ty, var};
+    use core_macros::{ctor, ty, var};
 
     fn example() -> Xtor<Prd> {
         ctor!(

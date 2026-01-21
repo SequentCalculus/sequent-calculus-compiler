@@ -1,5 +1,5 @@
 [package]
-name = "macros"
+name = "core_macros"
 
 # Inherited from workspace Cargo.toml
 version.workspace = true
@@ -9,7 +9,7 @@ edition.workspace = true
 proc-macro = true
 
 [dependencies]
-core_lang = { path = "../core_lang" }
+core_lang = { path = "../../core_lang" }
 quote = "1.0"
 proc-macro2 = "1.0"
 syn = { version = "2.0", features = ["full"] }

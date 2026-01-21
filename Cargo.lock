@@ -376,8 +376,18 @@ dependencies = [
 name = "core_lang"
 version = "0.1.0"
 dependencies = [
- "macros",
+ "core_macros",
  "printer",
+]
+
+[[package]]
+name = "core_macros"
+version = "0.1.0"
+dependencies = [
+ "core_lang",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]
@@ -549,8 +559,8 @@ version = "0.1.0"
 dependencies = [
  "codespan",
  "core_lang",
+ "core_macros",
  "fun",
- "macros",
  "printer",
 ]
 
@@ -911,16 +921,6 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "url",
-]
-
-[[package]]
-name = "macros"
-version = "0.1.0"
-dependencies = [
- "core_lang",
- "proc-macro2",
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]
@@ -1537,9 +1537,9 @@ version = "0.1.0"
 dependencies = [
  "basic-toml",
  "core_lang",
+ "core_macros",
  "driver",
  "fun",
- "macros",
  "printer",
  "serde",
 ]

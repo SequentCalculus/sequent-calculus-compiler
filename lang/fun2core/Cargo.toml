@@ -22,5 +22,4 @@ core_lang = { workspace = true }
 
 [dev-dependencies]
 fun = { workspace = true, features = ["test-common"] }
-macros = { workspace = true }
-
+core_macros = { workspace = true }
