@@ -6,6 +6,7 @@
 //! invocations.
 
 pub mod check;
+#[allow(unused_assignments)]
 pub mod errors;
 pub mod symbol_table;
 
