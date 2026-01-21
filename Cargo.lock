@@ -550,6 +550,7 @@ dependencies = [
  "codespan",
  "core_lang",
  "fun",
+ "macros",
  "printer",
 ]
 

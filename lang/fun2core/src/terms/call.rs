@@ -38,13 +38,13 @@ impl Compile for fun::syntax::terms::Call {
 
 #[cfg(test)]
 mod compile_tests {
+    use crate::compile::{Compile, CompileState};
     use fun::{
         parse_term,
         syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
-
-    use crate::compile::{Compile, CompileState};
+    use macros::{call, covar, mu, ty};
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]
@@ -80,7 +80,7 @@ mod compile_tests {
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
         let mut arguments = core_lang::syntax::arguments::Arguments::default();
         arguments.add_prod(core_lang::syntax::terms::Literal::new(3));
@@ -88,14 +88,12 @@ mod compile_tests {
             "a0",
             core_lang::syntax::types::Ty::I64,
         ));
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::Call {
-                name: "fac".to_owned(),
-                args: arguments,
-                ty: core_lang::syntax::types::Ty::I64,
-            },
-            core_lang::syntax::types::Ty::I64,
+            call!(
+                "fac",
+                [core_lang::syntax::terms::Literal::new(3), covar!("a0")]
+            )
         )
         .into();
         assert_eq!(result, expected)

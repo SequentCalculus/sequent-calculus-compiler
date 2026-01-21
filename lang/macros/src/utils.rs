@@ -35,7 +35,7 @@ pub fn parse_args(input: TokenStream, arg_names: &[&str], optional_ty: bool) -> 
         if let Some(ty) = parsed.next() {
             args.push(ty)
         } else {
-            args.push(parse_str("Ty::I64").expect("Could not parse Type"))
+            args.push(parse_str("core_lang::syntax::types::Ty::I64").expect("Could not parse Type"))
         }
     }
     args

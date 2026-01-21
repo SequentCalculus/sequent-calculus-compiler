@@ -203,18 +203,6 @@ pub fn codata(input: TokenStream) -> TokenStream {
     declarations::codata(input)
 }
 
-#[doc=include_str!("../doc/ctor_sig.md")]
-#[proc_macro]
-pub fn ctor_sig(input: TokenStream) -> TokenStream {
-    declarations::ctor_sig(input)
-}
-
-#[doc=include_str!("../doc/dtor_sig.md")]
-#[proc_macro]
-pub fn dtor_sig(input: TokenStream) -> TokenStream {
-    declarations::dtor_sig(input)
-}
-
 #[doc = include_str!("../doc/prog.md")]
 #[proc_macro]
 pub fn prog(input: TokenStream) -> TokenStream {

@@ -49,10 +49,9 @@ impl Compile for fun::syntax::terms::Let {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
-
     use crate::compile::{Compile, CompileState};
-
+    use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
+    use macros::{covar, ctor, cut, mu, mutilde, op, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -75,34 +74,22 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::Cut::new(
+            cut!(
                 core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::Mu::tilde_mu(
+                mutilde!(
                     "x",
-                    core_lang::syntax::statements::Cut::new(
-                        core_lang::syntax::terms::Op::prod(
-                            core_lang::syntax::terms::XVar::var(
-                                "x",
-                                core_lang::syntax::types::Ty::I64,
-                            ),
-                            core_lang::syntax::terms::XVar::var(
-                                "x",
-                                core_lang::syntax::types::Ty::I64,
-                            ),
+                    cut!(
+                        op!(
+                            var!("x"),
+                            core_lang::syntax::terms::op::BinOp::Prod,
+                            var!("x")
                         ),
-                        core_lang::syntax::terms::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::I64,
-                        ),
-                        core_lang::syntax::types::Ty::I64,
-                    ),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::types::Ty::I64,
-            ),
-            core_lang::syntax::types::Ty::I64,
+                        covar!("a0")
+                    )
+                )
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -131,49 +118,31 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(
-            &mut state,
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        );
+        let result = term_typed.compile(&mut state, ty!("List[i64]"));
 
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_prod(core_lang::syntax::terms::XVar::var(
-            "x",
-            core_lang::syntax::types::Ty::I64,
-        ));
-        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
-            "Nil",
-            core_lang::syntax::arguments::Arguments::default(),
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        ));
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::Xtor::ctor(
+            cut!(
+                ctor!(
                     "Cons",
-                    arguments,
-                    core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+                    [var!("x"), ctor!("Nil", [], ty!("List[i64]"))],
+                    ty!("List[i64]")
                 ),
-                core_lang::syntax::terms::Mu::tilde_mu(
+                mutilde!(
                     "x",
-                    core_lang::syntax::statements::Cut::new(
-                        core_lang::syntax::terms::XVar::var(
-                            "x",
-                            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-                        ),
-                        core_lang::syntax::terms::XVar::covar(
-                            "a0",
-                            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-                        ),
-                        core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+                    cut!(
+                        var!("x", ty!("List[i64]")),
+                        covar!("a0", ty!("List[i64]")),
+                        ty!("List[i64]")
                     ),
-                    core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+                    ty!("List[i64]")
                 ),
-                core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+                ty!("List[i64]")
             ),
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+            ty!("List[i64]")
         )
         .into();
+
         assert_eq!(result, expected)
     }
 }

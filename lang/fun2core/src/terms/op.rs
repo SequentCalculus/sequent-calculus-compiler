@@ -64,10 +64,10 @@ impl Compile for fun::syntax::terms::Op {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
-
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::types::Ty;
+    use fun::{parse_term, typing::check::Check};
+    use macros::{op, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -84,9 +84,10 @@ mod compile_tests {
         };
         let result = term.compile(&mut state, Ty::I64);
 
-        let expected = core_lang::syntax::terms::Op::sub(
+        let expected = op!(
             core_lang::syntax::terms::Literal::new(2),
-            core_lang::syntax::terms::Literal::new(1),
+            core_lang::syntax::terms::op::BinOp::Sub,
+            core_lang::syntax::terms::Literal::new(1)
         )
         .into();
         assert_eq!(result, expected);
@@ -114,12 +115,14 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, Ty::I64);
 
-        let expected = core_lang::syntax::terms::Op::prod(
-            core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-            core_lang::syntax::terms::Op::sub(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::Literal::new(1),
-            ),
+        let expected = op!(
+            var!("x"),
+            core_lang::syntax::terms::op::BinOp::Prod,
+            op!(
+                var!("x"),
+                core_lang::syntax::terms::op::BinOp::Sub,
+                core_lang::syntax::terms::Literal::new(1)
+            )
         )
         .into();
         assert_eq!(result, expected);

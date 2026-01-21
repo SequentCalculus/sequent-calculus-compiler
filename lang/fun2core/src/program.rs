@@ -65,6 +65,7 @@ mod compile_tests {
         terms::{Lit, XVar},
         types::Ty,
     };
+    use macros::{bind, covar, cut, def, exit, mutilde, var};
     use std::collections::HashSet;
 
     fn example_def1() -> Def {
@@ -119,29 +120,16 @@ mod compile_tests {
             &[],
             &mut HashSet::from(["main".to_string()]),
         );
-        let mut ctx = core_lang::syntax::TypingContext::default();
-        ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::Def {
-            name: "main".to_string(),
-            context: ctx,
-            body: core_lang::syntax::statements::Cut::new(
+        let expected = def!(
+            "main",
+            [bind!("a", core_lang::syntax::context::Chirality::Cns)],
+            cut!(
                 core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::Mu::tilde_mu(
-                    "x0",
-                    core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
-                        core_lang::syntax::terms::XVar::var(
-                            "x0",
-                            core_lang::syntax::types::Ty::I64,
-                        ),
-                        core_lang::syntax::types::Ty::I64,
-                    )),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::types::Ty::I64,
-            )
-            .into(),
-            used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
-        };
+                mutilde!("x0", exit!(var!("x0")))
+            ),
+            ["a", "x0"]
+        );
+
         assert_eq!(result[0].name, expected.name);
         assert_eq!(result[0].context, expected.context);
         assert_eq!(result[0].body, expected.body);
@@ -150,20 +138,15 @@ mod compile_tests {
     #[test]
     fn compile_def2() {
         let result = compile_def(example_def2(), &[], &mut HashSet::from(["id".to_string()]));
-        let mut ctx = core_lang::syntax::TypingContext::default();
-        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
-        ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
-        let expected = core_lang::syntax::Def {
-            name: "id".to_owned(),
-            context: ctx,
-            body: core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::types::Ty::I64,
-            )
-            .into(),
-            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
-        };
+        let expected = def!(
+            "id",
+            [
+                bind!("x", core_lang::syntax::context::Chirality::Prd),
+                bind!("a0", core_lang::syntax::context::Chirality::Cns)
+            ],
+            cut!(var!("x"), covar!("a0")),
+            ["x", "a0"]
+        );
         assert_eq!(result[0].name, expected.name);
         assert_eq!(result[0].context, expected.context);
         assert_eq!(result[0].body, expected.body);
@@ -181,43 +164,24 @@ mod compile_tests {
     fn compile_prog2() {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
-        let mut ctx = core_lang::syntax::TypingContext::default();
-        ctx.add_covar("a", core_lang::syntax::types::Ty::I64);
-        let expected1 = core_lang::syntax::Def {
-            name: "main".to_owned(),
-            context: ctx,
-            body: core_lang::syntax::statements::Cut::new(
+        let expected1 = def!(
+            "main",
+            [bind!("a", core_lang::syntax::context::Chirality::Cns)],
+            cut!(
                 core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::Mu::tilde_mu(
-                    "x0",
-                    core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
-                        core_lang::syntax::terms::XVar::var(
-                            "x0",
-                            core_lang::syntax::types::Ty::I64,
-                        ),
-                        core_lang::syntax::types::Ty::I64,
-                    )),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::types::Ty::I64,
-            )
-            .into(),
-            used_vars: HashSet::from(["a".to_string(), "x0".to_string()]),
-        };
-        let mut ctx = core_lang::syntax::TypingContext::default();
-        ctx.add_var("x", core_lang::syntax::types::Ty::I64);
-        ctx.add_covar("a0", core_lang::syntax::types::Ty::I64);
-        let expected2 = core_lang::syntax::Def {
-            name: "id".to_owned(),
-            context: ctx,
-            body: core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::types::Ty::I64,
-            )
-            .into(),
-            used_vars: HashSet::from(["x".to_string(), "a0".to_string()]),
-        };
+                mutilde!("x0", exit!(var!("x0")))
+            ),
+            ["a", "x0"]
+        );
+        let expected2 = def!(
+            "id",
+            [
+                bind!("x", core_lang::syntax::context::Chirality::Prd),
+                bind!("a0", core_lang::syntax::context::Chirality::Cns)
+            ],
+            cut!(var!("x"), covar!("a0")),
+            ["x", "a0"]
+        );
 
         let def1 = &result.defs[0];
         let def2 = &result.defs[1];
