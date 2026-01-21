@@ -46,15 +46,11 @@ impl Compile for fun::syntax::terms::Destructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::{
-        terms::{Cns, Prd},
-        types::Ty,
-    };
+    use core_lang::syntax::{terms::Prd, types::Ty};
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use macros::{bind, clause, cocase, covar, cut, dtor, mu, ty};
 
     use std::collections::{HashSet, VecDeque};
-    use std::rc::Rc;
 
     #[test]
     fn compile_fst() {

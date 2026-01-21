@@ -51,7 +51,7 @@ impl Compile for fun::syntax::terms::Let {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
-    use macros::{covar, ctor, cut, mu, mutilde, op, ty, var};
+    use macros::{covar, ctor, cut, mu, mutilde, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -78,17 +78,7 @@ mod compile_tests {
             "a0",
             cut!(
                 core_lang::syntax::terms::Literal::new(1),
-                mutilde!(
-                    "x",
-                    cut!(
-                        op!(
-                            var!("x"),
-                            core_lang::syntax::terms::op::BinOp::Prod,
-                            var!("x")
-                        ),
-                        covar!("a0")
-                    )
-                )
+                mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
             )
         )
         .into();

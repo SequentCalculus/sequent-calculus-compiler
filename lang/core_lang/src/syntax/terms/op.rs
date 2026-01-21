@@ -270,34 +270,31 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mutilde, fs_op, op, var};
+    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
-        op!(var!("x"), BinOp::Prod, var!("x")).into()
+        prod!(var!("x"), var!("x")).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = op!(var!("y"), BinOp::Prod, var!("y")).into();
+        let expected = prod!(var!("y"), var!("y")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = cut!(
-            op!(Literal::new(1), BinOp::Sum, Literal::new(2)),
-            covar!("a")
-        )
-        .focus(&mut Default::default());
+        let result = cut!(sum!(Literal::new(1), Literal::new(2)), covar!("a"))
+            .focus(&mut Default::default());
         let expected = fs_cut!(
             Literal::new(1),
             fs_mutilde!(
                 "x0",
                 fs_cut!(
                     Literal::new(2),
-                    fs_mutilde!("x1", fs_cut!(fs_op!("x0", BinOp::Sum, "x1"), covar!("a")))
+                    fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
                 )
             )
         )
@@ -308,9 +305,8 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = cut!(op!(var!("x"), BinOp::Prod, var!("y")), covar!("a"))
-            .focus(&mut Default::default());
-        let expected = fs_cut!(fs_op!("x", BinOp::Prod, "y"), covar!("a")).into();
+        let result = cut!(prod!(var!("x"), var!("y")), covar!("a")).focus(&mut Default::default());
+        let expected = fs_cut!(fs_prod!("x", "y"), covar!("a")).into();
         assert_eq!(result, expected)
     }
 }

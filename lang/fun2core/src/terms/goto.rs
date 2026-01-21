@@ -40,7 +40,7 @@ impl Compile for fun::syntax::terms::Goto {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ife, mu, op, ty, var};
+    use macros::{covar, cut, ife, mu, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -99,11 +99,7 @@ mod compile_tests {
                 var!("x"),
                 cut!(core_lang::syntax::terms::Literal::new(0), covar!("a")),
                 cut!(
-                    op!(
-                        var!("x"),
-                        core_lang::syntax::terms::op::BinOp::Prod,
-                        core_lang::syntax::terms::Literal::new(2)
-                    ),
+                    prod!(var!("x"), core_lang::syntax::terms::Literal::new(2)),
                     covar!("a")
                 )
             )

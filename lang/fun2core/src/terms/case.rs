@@ -69,7 +69,7 @@ impl Compile for fun::syntax::terms::Case {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::terms::{Cns, Prd};
+    use core_lang::syntax::terms::Cns;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -77,7 +77,6 @@ mod compile_tests {
     use macros::{bind, case, clause, covar, ctor, cut, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
-    use std::rc::Rc;
 
     #[test]
     fn compile_list() {

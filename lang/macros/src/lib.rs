@@ -213,16 +213,55 @@ pub fn exit(input: TokenStream) -> TokenStream {
     statements::exit(input)
 }
 
-#[doc=include_str!("../doc/op.md")]
+#[doc=include_str!("../doc/div.md")]
 #[proc_macro]
-pub fn op(input: TokenStream) -> TokenStream {
-    statements::unfocused_op(input)
+pub fn div(input: TokenStream) -> TokenStream {
+    terms::unfocused_div(input)
 }
-
-#[doc=include_str!("../doc/fs_op.md")]
+#[doc=include_str!("../doc/prod.md")]
 #[proc_macro]
-pub fn fs_op(input: TokenStream) -> TokenStream {
-    statements::fs_op(input)
+pub fn prod(input: TokenStream) -> TokenStream {
+    terms::unfocused_prod(input)
+}
+#[doc=include_str!("../doc/rem.md")]
+#[proc_macro]
+pub fn rem(input: TokenStream) -> TokenStream {
+    terms::unfocused_rem(input)
+}
+#[doc=include_str!("../doc/sub.md")]
+#[proc_macro]
+pub fn sub(input: TokenStream) -> TokenStream {
+    terms::unfocused_sub(input)
+}
+#[doc=include_str!("../doc/sum.md")]
+#[proc_macro]
+pub fn sum(input: TokenStream) -> TokenStream {
+    terms::unfocused_sum(input)
+}
+#[doc=include_str!("../doc/fs_div.md")]
+#[proc_macro]
+pub fn fs_div(input: TokenStream) -> TokenStream {
+    terms::fs_div(input)
+}
+#[doc=include_str!("../doc/fs_prod.md")]
+#[proc_macro]
+pub fn fs_prod(input: TokenStream) -> TokenStream {
+    terms::fs_prod(input)
+}
+#[doc=include_str!("../doc/fs_rem.md")]
+#[proc_macro]
+pub fn fs_rem(input: TokenStream) -> TokenStream {
+    terms::fs_rem(input)
+}
+#[doc=include_str!("../doc/fs_sub.md")]
+#[proc_macro]
+pub fn fs_sub(input: TokenStream) -> TokenStream {
+    terms::fs_sub(input)
+}
+#[doc=include_str!("../doc/fs_sum.md")]
+#[proc_macro]
+pub fn fs_sum(input: TokenStream) -> TokenStream {
+    terms::fs_sum(input)
 }
 
 // Declarations

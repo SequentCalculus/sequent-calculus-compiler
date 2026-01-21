@@ -67,7 +67,7 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::types::Ty;
     use fun::{parse_term, typing::check::Check};
-    use macros::{op, var};
+    use macros::{prod, sub, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -84,9 +84,8 @@ mod compile_tests {
         };
         let result = term.compile(&mut state, Ty::I64);
 
-        let expected = op!(
+        let expected = sub!(
             core_lang::syntax::terms::Literal::new(2),
-            core_lang::syntax::terms::op::BinOp::Sub,
             core_lang::syntax::terms::Literal::new(1)
         )
         .into();
@@ -115,14 +114,9 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, Ty::I64);
 
-        let expected = op!(
+        let expected = prod!(
             var!("x"),
-            core_lang::syntax::terms::op::BinOp::Prod,
-            op!(
-                var!("x"),
-                core_lang::syntax::terms::op::BinOp::Sub,
-                core_lang::syntax::terms::Literal::new(1)
-            )
+            sub!(var!("x"), core_lang::syntax::terms::Literal::new(1))
         )
         .into();
         assert_eq!(result, expected);
