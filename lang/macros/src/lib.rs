@@ -183,33 +183,46 @@ pub fn fs_cut(input: TokenStream) -> TokenStream {
     statements::fs_cut(input)
 }
 
+<<<<<<< HEAD
 ///Create a [`core_lang::syntax::statements::ifc::IfC`] with comparison
 ///[`core_lang::syntax::statements::ifc::IfSort::Equal`]
 /// and given first, second, then statement and else statement.
 /// If only one comparison argument is provided, default to using zero (i.e. `IfC.snd == None`)
+=======
+#[doc = include_str!("../doc/ife.md")]
+>>>>>>> 47eb428 (updated ifc macros)
 #[proc_macro]
 pub fn ife(input: TokenStream) -> TokenStream {
     statements::unfocused_ife(input)
 }
 
+<<<<<<< HEAD
 ///Create a [`core_lang::syntax::statements::ifc::IfC`] with comparison
 ///[`core_lang::syntax::statements::ifc::IfSort::NotEqual`]
 ///and given first, second, then statement and else statement.
 ///If only one comparison argument is provided, default to using zero (i.e. `IfC.snd == None`)
+=======
+#[doc = include_str!("../doc/ifne.md")]
+>>>>>>> 47eb428 (updated ifc macros)
 #[proc_macro]
 pub fn ifne(input: TokenStream) -> TokenStream {
     statements::unfocused_ifne(input)
 }
 
+<<<<<<< HEAD
 ///Create a [`core_lang::syntax::statements::ifc::IfC`] with comparison
 ///[`core_lang::syntax::statements::ifc::IfSort::Less`]
 ///and given first, second, then statement and else statement.
 ///If only one comparison argument is provided, default to using zero (i.e. `IfC.snd == None`)
+=======
+#[doc = include_str!("../doc/ifl.md")]
+>>>>>>> 47eb428 (updated ifc macros)
 #[proc_macro]
 pub fn ifl(input: TokenStream) -> TokenStream {
     statements::unfocused_ifl(input)
 }
 
+<<<<<<< HEAD
 ///Create a [`core_lang::syntax::statements::ifc::IfC`] with comparison
 ///[`core_lang::syntax::statements::ifc::IfSort::LessOrEqual`]
 ///and given first, second, then statement and else statement.
@@ -217,6 +230,60 @@ pub fn ifl(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn ifle(input: TokenStream) -> TokenStream {
     statements::unfocused_ifle(input)
+=======
+#[doc = include_str!("../doc/ifle.md")]
+#[proc_macro]
+pub fn ifle(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifle(input)
+}
+
+#[doc = include_str!("../doc/ifg.md")]
+#[proc_macro]
+pub fn ifg(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifg(input)
+}
+
+#[doc = include_str!("../doc/ifge.md")]
+#[proc_macro]
+pub fn ifge(input: TokenStream) -> TokenStream {
+    statements::unfocused_ifge(input)
+}
+
+#[doc = include_str!("../doc/fs_ife.md")]
+#[proc_macro]
+pub fn fs_ife(input: TokenStream) -> TokenStream {
+    statements::fs_ife(input)
+}
+
+#[doc = include_str!("../doc/fs_ifne.md")]
+#[proc_macro]
+pub fn fs_ifne(input: TokenStream) -> TokenStream {
+    statements::fs_ifne(input)
+}
+
+#[doc = include_str!("../doc/fs_ifl.md")]
+#[proc_macro]
+pub fn fs_ifl(input: TokenStream) -> TokenStream {
+    statements::fs_ifl(input)
+}
+
+#[doc = include_str!("../doc/fs_ifle.md")]
+#[proc_macro]
+pub fn fs_ifle(input: TokenStream) -> TokenStream {
+    statements::fs_ifle(input)
+}
+
+#[doc = include_str!("../doc/fs_ifg.md")]
+#[proc_macro]
+pub fn fs_ifg(input: TokenStream) -> TokenStream {
+    statements::fs_ifg(input)
+}
+
+#[doc = include_str!("../doc/fs_ifge.md")]
+#[proc_macro]
+pub fn fs_ifge(input: TokenStream) -> TokenStream {
+    statements::fs_ifge(input)
+>>>>>>> 47eb428 (updated ifc macros)
 }
 
 ///Create a [`core_lang::syntax::statements::ifc::IfC`] with comparison
