@@ -69,7 +69,7 @@ impl Compile for fun::syntax::terms::Case {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::terms::Cns;
+    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -98,19 +98,13 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let mut context = core_lang::syntax::TypingContext::default();
-        context.add_var("x", core_lang::syntax::types::Ty::I64);
-        context.add_var(
-            "xs",
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        );
         let expected = mu!(
             "a0",
             cut!(
                 ctor!(
                     "Cons",
                     [
-                        core_lang::syntax::terms::Literal::new(1),
+                        core_syntax::Literal::new(1),
                         ctor!("Nil", [], ty!("List[i64]"))
                     ],
                     ty!("List[i64]")
@@ -118,21 +112,17 @@ mod compile_tests {
                 case!(
                     [
                         clause!(
-                            Cns,
+                            core_syntax::Cns,
                             "Nil",
                             [],
-                            cut!(core_lang::syntax::terms::Literal::new(0), covar!("a0"))
+                            cut!(core_syntax::Literal::new(0), covar!("a0"))
                         ),
                         clause!(
-                            Cns,
+                            core_syntax::Cns,
                             "Cons",
                             [
-                                bind!("x", core_lang::syntax::context::Chirality::Prd),
-                                bind!(
-                                    "xs",
-                                    core_lang::syntax::context::Chirality::Prd,
-                                    ty!("List[i64]")
-                                )
+                                bind!("x", core_syntax::Chirality::Prd),
+                                bind!("xs", core_syntax::Chirality::Prd, ty!("List[i64]"))
                             ],
                             cut!(var!("x"), covar!("a0"))
                         )

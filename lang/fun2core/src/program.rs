@@ -58,6 +58,7 @@ mod compile_tests {
         program::compile_prog,
     };
     use codespan::Span;
+    use core_lang::syntax as core_syntax;
     use fun::syntax::{
         context::Chirality::Prd,
         declarations::Def,
@@ -122,9 +123,9 @@ mod compile_tests {
         );
         let expected = def!(
             "main",
-            [bind!("a", core_lang::syntax::context::Chirality::Cns)],
+            [bind!("a", core_syntax::Chirality::Cns)],
             cut!(
-                core_lang::syntax::terms::Literal::new(1),
+                core_syntax::Literal::new(1),
                 mutilde!("x0", exit!(var!("x0")))
             ),
             ["a", "x0"]
@@ -141,8 +142,8 @@ mod compile_tests {
         let expected = def!(
             "id",
             [
-                bind!("x", core_lang::syntax::context::Chirality::Prd),
-                bind!("a0", core_lang::syntax::context::Chirality::Cns)
+                bind!("x", core_syntax::Chirality::Prd),
+                bind!("a0", core_syntax::Chirality::Cns)
             ],
             cut!(var!("x"), covar!("a0")),
             ["x", "a0"]
@@ -166,9 +167,9 @@ mod compile_tests {
         assert_eq!(result.defs.len(), 2);
         let expected1 = def!(
             "main",
-            [bind!("a", core_lang::syntax::context::Chirality::Cns)],
+            [bind!("a", core_syntax::Chirality::Cns)],
             cut!(
-                core_lang::syntax::terms::Literal::new(1),
+                core_syntax::Literal::new(1),
                 mutilde!("x0", exit!(var!("x0")))
             ),
             ["a", "x0"]
@@ -176,8 +177,8 @@ mod compile_tests {
         let expected2 = def!(
             "id",
             [
-                bind!("x", core_lang::syntax::context::Chirality::Prd),
-                bind!("a0", core_lang::syntax::context::Chirality::Cns)
+                bind!("x", core_syntax::Chirality::Prd),
+                bind!("a0", core_syntax::Chirality::Cns)
             ],
             cut!(var!("x"), covar!("a0")),
             ["x", "a0"]

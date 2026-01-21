@@ -70,7 +70,7 @@ impl Compile for fun::syntax::terms::New {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::Prd;
+    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
@@ -109,16 +109,16 @@ mod compile_tests {
         let expected = cocase!(
             [
                 clause!(
-                    Prd,
+                    core_syntax::Prd,
                     "fst",
-                    [bind!("a0", core_lang::syntax::context::Chirality::Cns),],
-                    cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0"))
+                    [bind!("a0", core_syntax::Chirality::Cns),],
+                    cut!(core_syntax::Literal::new(1), covar!("a0"))
                 ),
                 clause!(
-                    Prd,
+                    core_syntax::Prd,
                     "snd",
-                    [bind!("a1", core_lang::syntax::context::Chirality::Cns)],
-                    cut!(core_lang::syntax::terms::Literal::new(2), covar!("a1"))
+                    [bind!("a1", core_syntax::Chirality::Cns)],
+                    cut!(core_syntax::terms::Literal::new(2), covar!("a1"))
                 )
             ],
             ty!("LPair[i64, i64]")

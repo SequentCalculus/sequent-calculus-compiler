@@ -66,6 +66,7 @@ impl Compile for fun::syntax::terms::IfC {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax as core_syntax;
     use fun::{parse_term, typing::check::Check};
     use macros::{covar, cut, ife, mu, ty, var};
 
@@ -82,15 +83,15 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
             "a0",
             ife!(
-                core_lang::syntax::terms::Literal::new(3),
-                core_lang::syntax::terms::Literal::new(4),
-                cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
-                cut!(core_lang::syntax::terms::Literal::new(2), covar!("a0"))
+                core_syntax::Literal::new(3),
+                core_syntax::Literal::new(4),
+                cut!(core_syntax::Literal::new(1), covar!("a0")),
+                cut!(core_syntax::Literal::new(2), covar!("a0"))
             )
         )
         .into();
@@ -124,7 +125,7 @@ mod compile_tests {
             ife!(
                 var!("x"),
                 var!("x"),
-                cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
+                cut!(core_syntax::Literal::new(1), covar!("a0")),
                 cut!(var!("x"), covar!("a0"))
             )
         )
@@ -143,14 +144,14 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
             "a0",
             ife!(
-                core_lang::syntax::terms::Literal::new(0),
-                cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
-                cut!(core_lang::syntax::terms::Literal::new(2), covar!("a0"))
+                core_syntax::Literal::new(0),
+                cut!(core_syntax::Literal::new(1), covar!("a0")),
+                cut!(core_syntax::Literal::new(2), covar!("a0"))
             )
         )
         .into();
@@ -183,7 +184,7 @@ mod compile_tests {
             "a0",
             ife!(
                 var!("x"),
-                cut!(core_lang::syntax::terms::Literal::new(1), covar!("a0")),
+                cut!(core_syntax::Literal::new(1), covar!("a0")),
                 cut!(var!("x"), covar!("a0"))
             )
         )

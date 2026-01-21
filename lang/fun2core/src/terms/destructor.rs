@@ -46,10 +46,10 @@ impl Compile for fun::syntax::terms::Destructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax as core_syntax;
     use core_lang::syntax::{terms::Prd, types::Ty};
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use macros::{bind, clause, cocase, covar, cut, dtor, mu, ty};
-
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -72,15 +72,6 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
-        let mut context1 = core_lang::syntax::TypingContext::default();
-        context1.add_covar("a1", Ty::I64);
-        let mut context2 = core_lang::syntax::TypingContext::default();
-        context2.add_covar("a2", Ty::I64);
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
-            "a0",
-            core_lang::syntax::types::Ty::I64,
-        ));
         let expected = mu!(
             "a0",
             cut!(
@@ -89,14 +80,14 @@ mod compile_tests {
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", core_lang::syntax::context::Chirality::Cns)],
-                            cut!(core_lang::syntax::terms::Literal::new(1), covar!("a1"))
+                            [bind!("a1", core_syntax::Chirality::Cns)],
+                            cut!(core_syntax::Literal::new(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", core_lang::syntax::context::Chirality::Cns)],
-                            cut!(core_lang::syntax::terms::Literal::new(2), covar!("a2"))
+                            [bind!("a2", core_syntax::context::Chirality::Cns)],
+                            cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
                         )
                     ],
                     ty!("LPair[i64, i64]")
@@ -129,15 +120,6 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let mut context1 = core_lang::syntax::TypingContext::default();
-        context1.add_covar("a1", Ty::I64);
-        let mut context2 = core_lang::syntax::TypingContext::default();
-        context2.add_covar("a2", Ty::I64);
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
-            "a0",
-            core_lang::syntax::types::Ty::I64,
-        ));
         let expected = mu!(
             "a0",
             cut!(
@@ -146,14 +128,14 @@ mod compile_tests {
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", core_lang::syntax::context::Chirality::Cns)],
-                            cut!(core_lang::syntax::terms::Literal::new(1), covar!("a1"))
+                            [bind!("a1", core_syntax::context::Chirality::Cns)],
+                            cut!(core_syntax::terms::Literal::new(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", core_lang::syntax::context::Chirality::Cns)],
-                            cut!(core_lang::syntax::terms::Literal::new(2), covar!("a2"))
+                            [bind!("a2", core_syntax::context::Chirality::Cns)],
+                            cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
                         )
                     ],
                     ty!("LPair[i64, i64]")

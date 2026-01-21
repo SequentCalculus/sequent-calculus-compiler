@@ -50,6 +50,7 @@ impl Compile for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax as core_syntax;
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
     use macros::{covar, ctor, cut, mu, mutilde, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
@@ -72,12 +73,12 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
             "a0",
             cut!(
-                core_lang::syntax::terms::Literal::new(1),
+                core_syntax::Literal::new(1),
                 mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
             )
         )

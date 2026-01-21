@@ -39,6 +39,7 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term,
         syntax::context::TypingContext,
@@ -82,18 +83,9 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_prod(core_lang::syntax::terms::Literal::new(3));
-        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
-            "a0",
-            core_lang::syntax::types::Ty::I64,
-        ));
         let expected = mu!(
             "a0",
-            call!(
-                "fac",
-                [core_lang::syntax::terms::Literal::new(3), covar!("a0")]
-            )
+            call!("fac", [core_syntax::Literal::new(3), covar!("a0")])
         )
         .into();
         assert_eq!(result, expected)
