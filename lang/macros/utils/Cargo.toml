@@ -1,0 +1,11 @@
+[package]
+name = "macro_utils"
+
+# Inherited from workspace Cargo.toml
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+quote = "1.0"
+proc-macro2 = "1.0"
+syn = { version= "2.0", features =["full"] }

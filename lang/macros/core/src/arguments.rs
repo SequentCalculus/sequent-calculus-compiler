@@ -1,4 +1,4 @@
-use crate::utils::expr_to_array;
+use macro_utils::expr_to_array;
 use quote::quote;
 use syn::Expr;
 

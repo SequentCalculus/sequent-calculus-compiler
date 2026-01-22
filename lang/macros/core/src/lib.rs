@@ -9,7 +9,6 @@ pub(crate) mod prog;
 pub(crate) mod statements;
 pub(crate) mod terms;
 pub(crate) mod types;
-mod utils;
 use terms::{fs_xtor, unfocused_xtor, xcase, xvar};
 
 ///Create a [`core_lang::syntax::types::Ty`] from a string literal\

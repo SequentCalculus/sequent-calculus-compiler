@@ -1,10 +1,10 @@
-use crate::utils::{expr_to_array, parse_args};
+use macro_utils::{expr_to_array, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
 pub fn prog(input: TokenStream) -> TokenStream {
     let args = parse_args(
-        input,
+        input.into(),
         &["Definitions", "Data Declarations", "Codata Declarations"],
         false,
     );

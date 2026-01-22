@@ -395,6 +395,7 @@ name = "core_macros"
 version = "0.1.0"
 dependencies = [
  "core_lang",
+ "macro_utils",
  "proc-macro2",
  "quote",
  "syn 2.0.98",
@@ -931,6 +932,15 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "url",
+]
+
+[[package]]
+name = "macro_utils"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]

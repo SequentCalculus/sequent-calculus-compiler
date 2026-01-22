@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use syn::{Expr, ExprArray, ExprLit, Lit};
 use syn::{Token, parse::Parser, parse_str, punctuated::Punctuated};
 

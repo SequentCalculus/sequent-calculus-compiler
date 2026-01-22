@@ -13,6 +13,7 @@ members = [
     "lang/fun",
     "lang/fun2core",
     "lang/printer",
+    "lang/macros/utils",
     "lang/macros/core",
     "lang/macros/axcut",
 ]
