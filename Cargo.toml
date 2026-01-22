@@ -13,7 +13,8 @@ members = [
     "lang/fun",
     "lang/fun2core",
     "lang/printer",
-    "lang/macros/core"
+    "lang/macros/core",
+    "lang/macros/axcut",
 ]
 default-members = ["app"]
 resolver = "3"
