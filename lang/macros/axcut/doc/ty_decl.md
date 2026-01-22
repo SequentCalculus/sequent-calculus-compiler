@@ -42,4 +42,5 @@ let decl2 = TypeDeclaration{
         }
     ]
 };
+assert_eq!(decl1,decl2)
 ```

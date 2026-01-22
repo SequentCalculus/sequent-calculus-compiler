@@ -9,20 +9,15 @@ use std::collections::HashSet;
 use std::io::prelude::*;
 use std::rc::Rc;
 
+use axcut_macros::{bind, invoke, substitute, sum, ty, ty_decl, xtor_sig};
 #[test]
 fn test_closure() {
-    use axcut_macros::{bind, ty_decl, xtor_sig};
-
     let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
-
     let ty_func = ty_decl!(
         "Fun",
         [xtor_sig!(
             "apply",
-            [
-                bind!("x"),
-                bind!("k", Chirality::Cns, Ty::Decl("Cont".to_string()))
-            ]
+            [bind!("x"), bind!("k", Chirality::Cns, ty!("Cont"))]
         )],
     );
 
@@ -31,75 +26,35 @@ fn test_closure() {
         var: "a".to_string(),
         next: Rc::new(Statement::Create(Create {
             var: "f".to_string(),
-            ty: Ty::Decl("Fun".to_string()),
-            context: Some(
-                vec![ContextBinding {
-                    var: "a".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                }]
-                .into(),
-            ),
+            ty: ty!("Fun"),
+            context: Some(vec![bind!("a")].into()),
             clauses: vec![Clause {
                 xtor: "apply".to_string(),
-                context: vec![
-                    ContextBinding {
-                        var: "x".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    },
-                    ContextBinding {
-                        var: "k".to_string(),
-                        chi: Chirality::Cns,
-                        ty: Ty::Decl("Cont".to_string()),
-                    },
-                ]
-                .into(),
-                body: Rc::new(Statement::Op(Op {
-                    fst: "a".to_string(),
-                    op: BinOp::Sum,
-                    snd: "x".to_string(),
-                    var: "b".to_string(),
-                    next: Rc::new(Statement::Substitute(Substitute {
-                        rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "b".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::I64,
-                                },
-                                "b".to_string(),
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
-                                },
-                                "k".to_string(),
-                            ),
+                context: vec![bind!("x"), bind!("k", Chirality::Cns, ty!("Cont"))].into(),
+                body: Rc::new(Statement::Op(sum!(
+                    "a",
+                    "x",
+                    "b",
+                    substitute!(
+                        [
+                            (bind!("b"), "b"),
+                            (bind!("k", Chirality::Cns, ty!("Cont")), "k")
                         ],
-                        next: Rc::new(Statement::Invoke(Invoke {
-                            var: "k".to_string(),
-                            tag: "Ret".to_string(),
-                            ty: Ty::Decl("Cont".to_string()),
-                            args: vec![].into(),
-                        })),
-                    })),
-                    free_vars_next: None,
-                })),
+                        invoke!("k", "Ret", [], ty!("Cont")),
+                    )
+                ))),
             }],
             free_vars_clauses: None,
             next: Rc::new(Statement::Create(Create {
                 var: "k".to_string(),
-                ty: Ty::Decl("Cont".to_string()),
+                ty: ty!("Cont"),
                 context: Some(Vec::new().into()),
                 clauses: vec![Clause {
                     xtor: "Ret".to_string(),
                     context: vec![ContextBinding {
                         var: "r".to_string(),
                         chi: Chirality::Ext,
-                        ty: Ty::I64,
+                        ty: ty!("int"),
                     }]
                     .into(),
                     body: Rc::new(Statement::PrintI64(PrintI64 {
@@ -126,7 +81,7 @@ fn test_closure() {
                                 ContextBinding {
                                     var: "y".to_string(),
                                     chi: Chirality::Ext,
-                                    ty: Ty::I64,
+                                    ty: ty!("int"),
                                 },
                                 "y".to_string(),
                             ),
@@ -134,7 +89,7 @@ fn test_closure() {
                                 ContextBinding {
                                     var: "k".to_string(),
                                     chi: Chirality::Cns,
-                                    ty: Ty::Decl("Cont".to_string()),
+                                    ty: ty!("Cont"),
                                 },
                                 "k".to_string(),
                             ),
@@ -142,7 +97,7 @@ fn test_closure() {
                                 ContextBinding {
                                     var: "f".to_string(),
                                     chi: Chirality::Prd,
-                                    ty: Ty::Decl("Fun".to_string()),
+                                    ty: ty!("Fun"),
                                 },
                                 "f".to_string(),
                             ),
@@ -150,7 +105,7 @@ fn test_closure() {
                         next: Rc::new(Statement::Invoke(Invoke {
                             var: "f".to_string(),
                             tag: "apply".to_string(),
-                            ty: Ty::Decl("Fun".to_string()),
+                            ty: ty!("Fun"),
                             args: vec![].into(),
                         })),
                     })),
