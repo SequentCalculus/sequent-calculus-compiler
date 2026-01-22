@@ -11,38 +11,20 @@ use std::rc::Rc;
 
 #[test]
 fn test_closure() {
-    let ty_cont = TypeDeclaration {
-        name: "Cont".to_string(),
-        xtors: vec![XtorSig {
-            name: "Ret".to_string(),
-            args: vec![ContextBinding {
-                var: "r".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            }]
-            .into(),
-        }],
-    };
+    use axcut_macros::{bind, ty_decl, xtor_sig};
 
-    let ty_func = TypeDeclaration {
-        name: "Fun".to_string(),
-        xtors: vec![XtorSig {
-            name: "apply".to_string(),
-            args: vec![
-                ContextBinding {
-                    var: "x".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                },
-                ContextBinding {
-                    var: "k".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::Decl("Cont".to_string()),
-                },
+    let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
+
+    let ty_func = ty_decl!(
+        "Fun",
+        [xtor_sig!(
+            "apply",
+            [
+                bind!("x"),
+                bind!("k", Chirality::Cns, Ty::Decl("Cont".to_string()))
             ]
-            .into(),
-        }],
-    };
+        )],
+    );
 
     let main_body = Statement::Literal(Literal {
         lit: 9,

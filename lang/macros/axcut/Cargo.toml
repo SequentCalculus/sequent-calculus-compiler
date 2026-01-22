@@ -9,6 +9,7 @@ edition.workspace = true
 proc-macro=true
 
 [dependencies]
+macro_utils = { path="../utils" }
 axcut = { path="../../axcut"}
 quote = "1.0"
 proc-macro2 = "1.0"
