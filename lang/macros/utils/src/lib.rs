@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use syn::{Expr, ExprArray, ExprLit, ExprTuple, Lit};
+use syn::{Expr, ExprArray, ExprLit, ExprPath, ExprTuple, Ident, Lit, Path, spanned::Spanned};
 use syn::{Token, parse::Parser, parse_str, punctuated::Punctuated};
 
 pub fn expr_to_string(expr: &Expr, number_of_args: usize) -> String {
@@ -22,6 +22,21 @@ pub fn expr_to_tuple(expr: &Expr) -> Vec<Expr> {
     match expr {
         Expr::Tuple(ExprTuple { elems, .. }) => elems.into_iter().cloned().collect(),
         _ => panic!("Please provide a tuple expression"),
+    }
+}
+
+pub fn is_none(expr: &Expr) -> bool {
+    match expr {
+        Expr::Path(ExprPath {
+            path: Path { segments, .. },
+            ..
+        }) => {
+            let Some(last) = segments.last() else {
+                return false;
+            };
+            last.ident == Ident::new("None", last.span())
+        }
+        _ => false,
     }
 }
 

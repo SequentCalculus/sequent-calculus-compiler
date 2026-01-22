@@ -30,6 +30,12 @@ pub fn invoke(input: TokenStream) -> TokenStream {
     statements::invoke(input)
 }
 
+#[doc=include_str!("../doc/create.md")]
+#[proc_macro]
+pub fn create(input: TokenStream) -> TokenStream {
+    statements::create(input)
+}
+
 #[doc=include_str!("../doc/div.md")]
 #[proc_macro]
 pub fn div(input: TokenStream) -> TokenStream {

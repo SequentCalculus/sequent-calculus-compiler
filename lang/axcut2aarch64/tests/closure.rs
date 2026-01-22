@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::io::prelude::*;
 use std::rc::Rc;
 
-use axcut_macros::{bind, invoke, substitute, sum, ty, ty_decl, xtor_sig};
+use axcut_macros::{bind, create, invoke, substitute, sum, ty, ty_decl, xtor_sig};
 #[test]
 fn test_closure() {
     let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
@@ -24,11 +24,10 @@ fn test_closure() {
     let main_body = Statement::Literal(Literal {
         lit: 9,
         var: "a".to_string(),
-        next: Rc::new(Statement::Create(Create {
-            var: "f".to_string(),
-            ty: ty!("Fun"),
-            context: Some(vec![bind!("a")].into()),
-            clauses: vec![Clause {
+        next: Rc::new(Statement::Create(create!(
+            "f",
+            ty!("Fun"),
+            [Clause {
                 xtor: "apply".to_string(),
                 context: vec![bind!("x"), bind!("k", Chirality::Cns, ty!("Cont"))].into(),
                 body: Rc::new(Statement::Op(sum!(
@@ -44,19 +43,12 @@ fn test_closure() {
                     )
                 ))),
             }],
-            free_vars_clauses: None,
-            next: Rc::new(Statement::Create(Create {
-                var: "k".to_string(),
-                ty: ty!("Cont"),
-                context: Some(Vec::new().into()),
-                clauses: vec![Clause {
+            create!(
+                "k",
+                ty!("Cont"),
+                [Clause {
                     xtor: "Ret".to_string(),
-                    context: vec![ContextBinding {
-                        var: "r".to_string(),
-                        chi: Chirality::Ext,
-                        ty: ty!("int"),
-                    }]
-                    .into(),
+                    context: vec![bind!("r")].into(),
                     body: Rc::new(Statement::PrintI64(PrintI64 {
                         newline: true,
                         var: "r".to_string(),
@@ -71,50 +63,23 @@ fn test_closure() {
                         free_vars_next: None,
                     })),
                 }],
-                free_vars_clauses: None,
-                next: Rc::new(Statement::Literal(Literal {
+                Literal {
                     lit: 1,
                     var: "y".to_string(),
                     next: Rc::new(Statement::Substitute(Substitute {
                         rearrange: vec![
-                            (
-                                ContextBinding {
-                                    var: "y".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: ty!("int"),
-                                },
-                                "y".to_string(),
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "k".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: ty!("Cont"),
-                                },
-                                "k".to_string(),
-                            ),
-                            (
-                                ContextBinding {
-                                    var: "f".to_string(),
-                                    chi: Chirality::Prd,
-                                    ty: ty!("Fun"),
-                                },
-                                "f".to_string(),
-                            ),
+                            (bind!("y"), "y".to_string(),),
+                            (bind!("k", Chirality::Cns, ty!("Cont")), "k".to_string(),),
+                            (bind!("f", Chirality::Prd, ty!("Fun")), "f".to_string(),),
                         ],
-                        next: Rc::new(Statement::Invoke(Invoke {
-                            var: "f".to_string(),
-                            tag: "apply".to_string(),
-                            ty: ty!("Fun"),
-                            args: vec![].into(),
-                        })),
+                        next: Rc::new(Statement::Invoke(invoke!("f", "apply", [], ty!("Fun")),)),
                     })),
                     free_vars_next: None,
-                })),
-                free_vars_next: None,
-            })),
-            free_vars_next: None,
-        })),
+                },
+                []
+            ),
+            [bind!("a")],
+        ))),
         free_vars_next: None,
     });
     let main = Def {
