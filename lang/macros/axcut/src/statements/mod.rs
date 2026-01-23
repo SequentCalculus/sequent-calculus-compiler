@@ -1,3 +1,4 @@
+mod call;
 mod clause;
 mod create;
 mod exit;
@@ -9,6 +10,7 @@ mod print;
 mod substitute;
 mod switch;
 
+pub use call::call;
 pub use clause::clause;
 pub use create::create;
 pub use exit::exit;

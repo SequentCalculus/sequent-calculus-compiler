@@ -55,6 +55,12 @@ pub fn lit(input: TokenStream) -> TokenStream {
     statements::lit(input)
 }
 
+#[doc=include_str!("../doc/call.md")]
+#[proc_macro]
+pub fn call(input: TokenStream) -> TokenStream {
+    statements::call(input)
+}
+
 #[doc=include_str!("../doc/print.md")]
 #[proc_macro]
 pub fn print_i64(input: TokenStream) -> TokenStream {
