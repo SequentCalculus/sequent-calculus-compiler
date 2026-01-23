@@ -1,12 +1,18 @@
 use macro_utils::{expr_to_array, expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::parse_str;
 
 pub fn invoke(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Invoked variable", "Invoked tag", "Invoke Arguments"],
-        true,
+        &[
+            "Invoked variable",
+            "Invoked tag",
+            "Invoke Arguments",
+            "Type",
+        ],
+        &[(3, parse_str("axcut::syntax::types::Ty::I64").unwrap())],
     );
     let var = expr_to_str(&args[0]);
     let tag = expr_to_str(&args[1]);

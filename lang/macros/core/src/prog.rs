@@ -6,7 +6,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
         &["Definitions", "Data Declarations", "Codata Declarations"],
-        false,
+        &[],
     );
     let def_list = expr_to_array(&args[0], 0);
     let data_list = expr_to_array(&args[1], 1);

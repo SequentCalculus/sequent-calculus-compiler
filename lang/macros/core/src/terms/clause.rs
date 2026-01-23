@@ -14,7 +14,7 @@ fn clause(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> Token
     let args = parse_args(
         input,
         &["Chirality", "Xtor Name", "Xtor Arguments", "Clause Body"],
-        false,
+        &[],
     );
     let prdcns = &args[0];
     let xtor = expr_to_string(&args[1], 1);

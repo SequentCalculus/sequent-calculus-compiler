@@ -36,6 +36,18 @@ pub fn create(input: TokenStream) -> TokenStream {
     statements::create(input)
 }
 
+#[doc=include_str!("../doc/literal.md")]
+#[proc_macro]
+pub fn lit(input: TokenStream) -> TokenStream {
+    statements::lit(input)
+}
+
+#[doc=include_str!("../doc/clause.md")]
+#[proc_macro]
+pub fn clause(input: TokenStream) -> TokenStream {
+    statements::clause(input)
+}
+
 #[doc=include_str!("../doc/div.md")]
 #[proc_macro]
 pub fn div(input: TokenStream) -> TokenStream {

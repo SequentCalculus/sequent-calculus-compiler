@@ -1,6 +1,9 @@
 use proc_macro2::TokenStream;
-use syn::{Expr, ExprArray, ExprLit, ExprPath, ExprTuple, Ident, Lit, Path, spanned::Spanned};
-use syn::{Token, parse::Parser, parse_str, punctuated::Punctuated};
+use quote::quote;
+use syn::{
+    Expr, ExprArray, ExprLit, ExprPath, ExprTuple, Ident, Lit, Path, Token, parse::Parser,
+    punctuated::Punctuated, spanned::Spanned,
+};
 
 pub fn expr_to_string(expr: &Expr, number_of_args: usize) -> String {
     match expr {
@@ -41,24 +44,47 @@ pub fn is_none(expr: &Expr) -> bool {
 }
 
 /// Parse macro arguments from an input stream
-/// if `optional_ty` is set, after parsing the arg_names a [`core_lang::syntax::types::Ty`] will be added as well
-/// if none is provided it will default to [`core_lang::syntax::types::Ty::I64`]
-pub fn parse_args(input: TokenStream, arg_names: &[&str], optional_ty: bool) -> Vec<Expr> {
-    let mut parsed = Punctuated::<Expr, Token![,]>::parse_terminated
+/// Arguments in the `args` list will be parsed in the given order
+/// any index in `skip_indices` will default to the given expression if there are less than
+/// `args.len()` arguments provided
+/// # Panics
+/// This function panics if the arguments could not be parsed or ir the total number of arguments
+/// is less than `args.len() - skip_indices.len()`
+pub fn parse_args(input: TokenStream, args: &[&str], skip_indices: &[(usize, Expr)]) -> Vec<Expr> {
+    let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
         .parse2(input.into())
         .expect("Macro arguments could not be parsed")
-        .into_iter();
-    let mut args = Vec::with_capacity(arg_names.len() + 1);
-    for arg_name in arg_names {
-        let err_msg = format!("Please provide {arg_name}");
-        args.push(parsed.next().expect(&err_msg));
-    }
-    if optional_ty {
-        if let Some(ty) = parsed.next() {
-            args.push(ty)
-        } else {
-            args.push(parse_str("core_lang::syntax::types::Ty::I64").expect("Could not parse Type"))
+        .into_iter()
+        .collect::<Vec<_>>();
+    let num_parsed = parsed.len();
+
+    let mut parsed_iter = parsed.into_iter();
+    let mut exprs = Vec::with_capacity(args.len());
+    let to_skip = args.len() - num_parsed;
+    let mut skip_indices = skip_indices.to_vec();
+    skip_indices.reverse();
+    skip_indices.truncate(to_skip);
+    skip_indices.reverse();
+    for (ind, arg_name) in args.into_iter().enumerate() {
+        if let Some((_, default)) = skip_indices.iter().find(|(skip_ind, _)| *skip_ind == ind) {
+            exprs.push(default.clone());
+            continue;
         }
+
+        let err_msg = format!("Please provide {arg_name}");
+        exprs.push(parsed_iter.next().expect(&err_msg));
     }
-    args
+    exprs
+}
+
+pub fn quote_option(
+    expr: &Expr,
+    some_fun: impl Fn(&Expr) -> proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    if is_none(expr) {
+        quote! { #expr }
+    } else {
+        let mapped = some_fun(expr);
+        quote! { ::std::option::Option::Some(#mapped) }
+    }
 }

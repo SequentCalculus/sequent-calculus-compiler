@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 pub fn xtor_sig(input: TokenStream) -> TokenStream {
-    let args = parse_args(input.into(), &["Xtor Name", "Xtor Args"], false);
+    let args = parse_args(input.into(), &["Xtor Name", "Xtor Args"], &[]);
     let name = expr_to_str(&args[0]);
     let xtor_args = expr_to_array(&args[1]);
     quote! {

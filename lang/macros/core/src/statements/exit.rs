@@ -1,9 +1,14 @@
-use crate::utils::{expr_to_string, parse_args};
+use macro_utils::parse_args;
 use proc_macro::TokenStream;
 use quote::quote;
+use syn::parse_str;
 
 pub fn exit(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, &["Exit Term"], true);
+    let args = parse_args(
+        input.into(),
+        &["Exit Term", "Type"],
+        &[(1, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
+    );
     let exit_term = &args[0];
     let exit_ty = &args[1];
     quote! { core_lang::syntax::statements::exit::Exit{
@@ -16,6 +21,6 @@ pub fn exit(input: TokenStream) -> TokenStream {
 
 pub fn fs_exit(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Exit Var"], false);
-    let var = expr_to_string(&args[0], 0);
+    let var = expr_to_str(&args[0], 0);
     quote! { core_lang::syntax::statements::exit::FsExit { var: #var.to_string() } }.into()
 }

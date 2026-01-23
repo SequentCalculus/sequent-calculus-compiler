@@ -14,7 +14,7 @@ fn def(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStr
     let args = parse_args(
         input,
         &["Def Name", "Def Args", "Def Body", "Def Used Vars"],
-        false,
+        &[],
     );
     let name = expr_to_string(&args[0], 0);
     let def_args = expr_to_array(&args[1], 1);
