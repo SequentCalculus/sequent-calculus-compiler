@@ -17,7 +17,7 @@ pub fn xtor(
 
     let args = parse_args(
         input.into(),
-        &[xtor_desc, "Argument list", "Type"],
+        [xtor_desc, "Argument list", "Type"],
         &[(2, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
 

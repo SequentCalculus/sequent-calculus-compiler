@@ -42,6 +42,24 @@ pub fn lit(input: TokenStream) -> TokenStream {
     statements::lit(input)
 }
 
+#[doc=include_str!("../doc/print.md")]
+#[proc_macro]
+pub fn print_i64(input: TokenStream) -> TokenStream {
+    statements::print_i64(input)
+}
+
+#[doc=include_str!("../doc/println.md")]
+#[proc_macro]
+pub fn println_i64(input: TokenStream) -> TokenStream {
+    statements::println_i64(input)
+}
+
+#[doc=include_str!("../doc/exit.md")]
+#[proc_macro]
+pub fn exit(input: TokenStream) -> TokenStream {
+    statements::exit(input)
+}
+
 #[doc=include_str!("../doc/clause.md")]
 #[proc_macro]
 pub fn clause(input: TokenStream) -> TokenStream {
@@ -83,6 +101,12 @@ pub fn sub(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn xtor_sig(input: TokenStream) -> TokenStream {
     declarations::xtor_sig(input)
+}
+
+#[doc=include_str!("../doc/def.md")]
+#[proc_macro]
+pub fn def(input: TokenStream) -> TokenStream {
+    declarations::def(input)
 }
 
 #[doc=include_str!("../doc/ty_decl.md")]

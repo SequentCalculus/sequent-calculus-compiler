@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 
 pub fn substitute(input: TokenStream) -> TokenStream {
-    let args = parse_args(input.into(), &["Rearrange", "Next Statement"], &[]);
+    let args = parse_args(input.into(), ["Rearrange", "Next Statement"], &[]);
     let rearrange = expr_to_array(&args[0]).into_iter().map(|expr| {
         let tuple_elems = expr_to_tuple(&expr);
         let binding = &tuple_elems[0];

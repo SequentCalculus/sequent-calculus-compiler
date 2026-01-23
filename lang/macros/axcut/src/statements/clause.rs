@@ -5,7 +5,7 @@ use quote::quote;
 pub fn clause(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Clause Xtor", "Clause Context", "Clause Body"],
+        ["Clause Xtor", "Clause Context", "Clause Body"],
         &[],
     );
     let xtor = expr_to_str(&args[0]);

@@ -6,7 +6,7 @@ use syn::parse_str;
 pub fn exit(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Exit Term", "Type"],
+        ["Exit Term", "Type"],
         &[(1, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
     let exit_term = &args[0];

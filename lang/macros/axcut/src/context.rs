@@ -7,7 +7,7 @@ use syn::parse_str;
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Variable", "Chirality", "Type"],
+        ["Variable", "Chirality", "Type"],
         &[
             (
                 1,

@@ -6,7 +6,7 @@ use syn::parse_str;
 pub fn invoke(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &[
+        [
             "Invoked variable",
             "Invoked tag",
             "Invoke Arguments",

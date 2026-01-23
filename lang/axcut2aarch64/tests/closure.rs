@@ -1,4 +1,3 @@
-use axcut::syntax::statements::*;
 use axcut::syntax::*;
 use axcut2aarch64::Backend;
 use axcut2aarch64::into_routine::into_aarch64_routine;
@@ -7,9 +6,11 @@ use goldenfile::Mint;
 use printer::Print;
 use std::collections::HashSet;
 use std::io::prelude::*;
-use std::rc::Rc;
 
-use axcut_macros::{bind, clause, create, invoke, lit, substitute, sum, ty, ty_decl, xtor_sig};
+use axcut_macros::{
+    bind, clause, create, def, exit, invoke, lit, println_i64, substitute, sum, ty, ty_decl,
+    xtor_sig,
+};
 #[test]
 fn test_closure() {
     let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
@@ -51,42 +52,25 @@ fn test_closure() {
                 [clause!(
                     "Ret",
                     [bind!("r")],
-                    PrintI64 {
-                        newline: true,
-                        var: "r".to_string(),
-                        next: Rc::new(Statement::Literal(lit!(
-                            0,
-                            "ret",
-                            Exit {
-                                var: "ret".to_string()
-                            }
-                        ))),
-                        free_vars_next: None,
-                    }
+                    println_i64!("r", lit!(0, "ret", exit!("ret"))),
                 ),],
-                Literal {
-                    lit: 1,
-                    var: "y".to_string(),
-                    next: Rc::new(Statement::Substitute(substitute!(
+                lit!(
+                    1,
+                    "y",
+                    substitute!(
                         [
                             (bind!("y"), "y"),
                             (bind!("k", Chirality::Cns, ty!("Cont")), "k"),
                             (bind!("f", Chirality::Prd, ty!("Fun")), "f"),
                         ],
                         invoke!("f", "apply", [], ty!("Fun"))
-                    ))),
-                    free_vars_next: None,
-                },
+                    )
+                ),
             ),
         )
     )
     .into();
-    let main = Def {
-        name: "main".to_string(),
-        context: Vec::new().into(),
-        body: main_body,
-        used_vars: HashSet::new(),
-    };
+    let main = def!("main", [], main_body);
 
     let program = Prog {
         defs: vec![main],

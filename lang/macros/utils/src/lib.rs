@@ -50,7 +50,11 @@ pub fn is_none(expr: &Expr) -> bool {
 /// # Panics
 /// This function panics if the arguments could not be parsed or ir the total number of arguments
 /// is less than `args.len() - skip_indices.len()`
-pub fn parse_args(input: TokenStream, args: &[&str], skip_indices: &[(usize, Expr)]) -> Vec<Expr> {
+pub fn parse_args<const N: usize>(
+    input: TokenStream,
+    args: [&str; N],
+    skip_indices: &[(usize, Expr)],
+) -> [Expr; N] {
     let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
         .parse2(input.into())
         .expect("Macro arguments could not be parsed")
@@ -59,22 +63,21 @@ pub fn parse_args(input: TokenStream, args: &[&str], skip_indices: &[(usize, Exp
     let num_parsed = parsed.len();
 
     let mut parsed_iter = parsed.into_iter();
-    let mut exprs = Vec::with_capacity(args.len());
     let to_skip = args.len() - num_parsed;
     let mut skip_indices = skip_indices.to_vec();
     skip_indices.reverse();
     skip_indices.truncate(to_skip);
     skip_indices.reverse();
-    for (ind, arg_name) in args.into_iter().enumerate() {
-        if let Some((_, default)) = skip_indices.iter().find(|(skip_ind, _)| *skip_ind == ind) {
-            exprs.push(default.clone());
-            continue;
-        }
 
-        let err_msg = format!("Please provide {arg_name}");
-        exprs.push(parsed_iter.next().expect(&err_msg));
-    }
-    exprs
+    std::array::from_fn(|ind| {
+        let arg_name = args[ind];
+        if let Some((_, default)) = skip_indices.iter().find(|(skip_ind, _)| *skip_ind == ind) {
+            default.clone()
+        } else {
+            let err_msg = format!("Please provide {arg_name}");
+            parsed_iter.next().expect(&err_msg)
+        }
+    })
 }
 
 pub fn quote_option(

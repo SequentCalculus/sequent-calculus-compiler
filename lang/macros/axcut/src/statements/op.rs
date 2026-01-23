@@ -31,7 +31,7 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
     };
     let args = parse_args(
         input.into(),
-        &["Fst", "Snd", "Var", "Next", "Free Vars Next"],
+        ["Fst", "Snd", "Var", "Next", "Free Vars Next"],
         &[(4, parse_str("::std::option::Option::None").unwrap())],
     );
     let fst = expr_to_str(&args[0]);

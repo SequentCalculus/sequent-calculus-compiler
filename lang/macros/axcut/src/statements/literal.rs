@@ -6,7 +6,7 @@ use syn::parse_str;
 pub fn lit(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Literal", "Variable", "Next", "Free Vars Next"],
+        ["Literal", "Variable", "Next", "Free Vars Next"],
         &[(3, parse_str("::std::option::Option::None").unwrap())],
     );
     let lit = &args[0];

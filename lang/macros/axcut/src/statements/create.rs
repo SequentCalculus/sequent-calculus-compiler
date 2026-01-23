@@ -7,7 +7,7 @@ use syn::parse_str;
 pub fn create(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &[
+        [
             "Variable",
             "Type",
             "Context",

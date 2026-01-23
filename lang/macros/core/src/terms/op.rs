@@ -58,7 +58,7 @@ fn op(
     op: BinOp,
     prod_fun: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> TokenStream {
-    let args = parse_args(input.into(), &["First Operand", "Second Operand"], &[]);
+    let args = parse_args(input.into(), ["First Operand", "Second Operand"], &[]);
     let op = match op {
         BinOp::Div => quote! {core_lang::syntax::terms::op::BinOp::Div},
         BinOp::Prod => quote! {core_lang::syntax::terms::op::BinOp::Prod},

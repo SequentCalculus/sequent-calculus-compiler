@@ -5,7 +5,7 @@ use quote::quote;
 pub fn prog(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Definitions", "Data Declarations", "Codata Declarations"],
+        ["Definitions", "Data Declarations", "Codata Declarations"],
         &[],
     );
     let def_list = expr_to_array(&args[0], 0);

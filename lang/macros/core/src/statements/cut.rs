@@ -6,7 +6,7 @@ use syn::parse_str;
 pub fn cut(input: TokenStream, term_ty: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        &["Producer", "Consumer", "Type"],
+        ["Producer", "Consumer", "Type"],
         &[(2, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
     let prod = &args[0];
