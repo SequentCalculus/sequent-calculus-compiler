@@ -9,15 +9,15 @@ pub fn invoke(input: TokenStream) -> TokenStream {
         [
             "Invoked variable",
             "Invoked tag",
-            "Invoke Arguments",
             "Type",
+            "Invoke Arguments",
         ],
         &[(3, parse_str("axcut::syntax::types::Ty::I64").unwrap())],
     );
     let var = expr_to_str(&args[0]);
     let tag = expr_to_str(&args[1]);
-    let invoke_args = expr_to_array(&args[2]);
-    let ty = &args[3];
+    let ty = &args[2];
+    let invoke_args = expr_to_array(&args[3]);
     quote! {
         axcut::syntax::statements::invoke::Invoke{
             var: #var.to_string(),

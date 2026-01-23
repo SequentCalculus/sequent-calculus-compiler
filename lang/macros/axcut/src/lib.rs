@@ -115,6 +115,42 @@ pub fn sub(input: TokenStream) -> TokenStream {
     statements::sub(input)
 }
 
+#[doc = include_str!("../doc/ife.md")]
+#[proc_macro]
+pub fn ife(input: TokenStream) -> TokenStream {
+    statements::ife(input)
+}
+
+#[doc = include_str!("../doc/ifne.md")]
+#[proc_macro]
+pub fn ifne(input: TokenStream) -> TokenStream {
+    statements::ifne(input)
+}
+
+#[doc = include_str!("../doc/ifl.md")]
+#[proc_macro]
+pub fn ifl(input: TokenStream) -> TokenStream {
+    statements::ifl(input)
+}
+
+#[doc = include_str!("../doc/ifle.md")]
+#[proc_macro]
+pub fn ifle(input: TokenStream) -> TokenStream {
+    statements::ifle(input)
+}
+
+#[doc = include_str!("../doc/ifg.md")]
+#[proc_macro]
+pub fn ifg(input: TokenStream) -> TokenStream {
+    statements::ifg(input)
+}
+
+#[doc = include_str!("../doc/ifge.md")]
+#[proc_macro]
+pub fn ifge(input: TokenStream) -> TokenStream {
+    statements::ifge(input)
+}
+
 // Declarations
 #[doc = include_str!("../doc/xtor_sig.md")]
 #[proc_macro]

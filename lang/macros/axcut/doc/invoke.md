@@ -11,8 +11,8 @@ use axcut::syntax::{
 let invoke1 = invoke!(
     "f",
     "apply",
-    [ContextBinding{var:"x".to_string(),chi:Chirality::Ext,ty:Ty::I64}],
     Ty::Decl("FunIntInt".to_string()),
+    [ContextBinding{var:"x".to_string(),chi:Chirality::Ext,ty:Ty::I64}],
 );
 let invoke2 = Invoke{
     var:"f".to_string(),

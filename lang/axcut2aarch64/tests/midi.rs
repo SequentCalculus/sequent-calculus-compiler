@@ -10,8 +10,8 @@ use std::io::prelude::*;
 use std::rc::Rc;
 
 use axcut_macros::{
-    bind, call, clause, create, def, exit, letin, lit, println_i64, substitute, ty, ty_decl,
-    xtor_sig,
+    bind, call, clause, create, def, exit, ife, invoke, letin, lit, println_i64, substitute, sum,
+    switch, ty, ty_decl, xtor_sig,
 };
 
 #[test]
@@ -83,77 +83,61 @@ fn test_midi() {
     );
     let main = def!("main", [], main_body);
 
-    let range_body = Statement::IfC(IfC {
-        sort: ifc::IfSort::Equal,
-        fst: "i".to_string(),
-        snd: None,
-        thenc: Rc::new(Statement::Substitute(Substitute {
-            rearrange: vec![
-                (bind!("xs", Chirality::Prd, ty!("List")), "xs".to_string()),
-                (bind!("k", Chirality::Cns, ty!("ContList")), "k".to_string()),
+    let range_body = Statement::IfC(ife!(
+        "i",
+        substitute!(
+            [
+                (bind!("xs", Chirality::Prd, ty!("List")), "xs"),
+                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
             ],
-            next: Rc::new(Statement::Invoke(Invoke {
-                var: "k".to_string(),
-                tag: "Retl".to_string(),
-                ty: Ty::Decl("ContList".to_string()),
-                args: vec![].into(),
-            })),
-        })),
-        elsec: Rc::new(Statement::Substitute(Substitute {
-            rearrange: vec![
-                (bind!("n"), "i".to_string()),
-                (bind!("k", Chirality::Cns, ty!("ContList")), "k".to_string()),
-                (bind!("xs", Chirality::Prd, ty!("List")), "xs".to_string()),
-                (bind!("i"), "i".to_string()),
+            invoke!("k", "Retl", ty!("ContList"), [])
+        ),
+        substitute!(
+            [
+                (bind!("n"), "i"),
+                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
+                (bind!("xs", Chirality::Prd, ty!("List")), "xs"),
+                (bind!("i"), "i"),
             ],
-            next: Rc::new(Statement::Let(Let {
-                var: "ys".to_string(),
-                ty: Ty::Decl("List".to_string()),
-                tag: "Cons".to_string(),
-                args: vec![bind!("xs", Chirality::Prd, ty!("List")), bind!("i")].into(),
-                next: Rc::new(Statement::Literal(Literal {
-                    lit: -1,
-                    var: "o".to_string(),
-                    next: Rc::new(Statement::Op(Op {
-                        fst: "n".to_string(),
-                        op: BinOp::Sum,
-                        snd: "o".to_string(),
-                        var: "j".to_string(),
-                        next: Rc::new(Statement::Substitute(Substitute {
-                            rearrange: vec![
-                                (bind!("k", Chirality::Cns, ty!("ContList")), "k".to_string()),
-                                (bind!("ys", Chirality::Prd, ty!("List")), "ys".to_string()),
-                                (bind!("j"), "j".to_string()),
+            letin!(
+                "ys",
+                ty!("List"),
+                "Cons",
+                [bind!("xs", Chirality::Prd, ty!("List")), bind!("i")],
+                lit!(
+                    -1,
+                    "o",
+                    sum!(
+                        "n",
+                        "o",
+                        "j",
+                        substitute!(
+                            [
+                                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
+                                (bind!("ys", Chirality::Prd, ty!("List")), "ys"),
+                                (bind!("j"), "j"),
                             ],
-                            next: Rc::new(Statement::Call(Call {
-                                label: "range".to_string(),
-                                args: vec![].into(),
-                            })),
-                        })),
-                        free_vars_next: None,
-                    })),
-                    free_vars_next: None,
-                })),
-                free_vars_next: None,
-            })),
-        })),
-    });
-    let range = Def {
-        name: "range".to_string(),
-        context: vec![
+                            call!("range", [])
+                        )
+                    ),
+                )
+            )
+        ),
+    ));
+    let range = def!(
+        "range",
+        [
             bind!("k", Chirality::Cns, ty!("ContList")),
             bind!("xs", Chirality::Prd, ty!("List")),
             bind!("i"),
-        ]
-        .into(),
-        body: range_body,
-        used_vars: HashSet::new(),
-    };
+        ],
+        range_body
+    );
 
-    let sum_body = Statement::Switch(Switch {
-        var: "xs".to_string(),
-        ty: Ty::Decl("List".to_string()),
-        clauses: vec![
+    let sum_body = switch!(
+        "xs",
+        ty!("List"),
+        [
             Clause {
                 xtor: "Nil".to_string(),
                 context: vec![].into(),
@@ -230,10 +214,9 @@ fn test_midi() {
                         free_vars_next: None,
                     })),
                 })),
-            },
-        ],
-        free_vars_clauses: None,
-    });
+            }
+        ]
+    );
     let sum = Def {
         name: "sum".to_string(),
         context: vec![
@@ -241,7 +224,7 @@ fn test_midi() {
             bind!("xs", Chirality::Prd, ty!("List")),
         ]
         .into(),
-        body: sum_body,
+        body: sum_body.into(),
         used_vars: HashSet::new(),
     };
 
