@@ -4,11 +4,10 @@ use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2backend::coder::compile;
 use goldenfile::Mint;
 use printer::Print;
-use std::collections::HashSet;
 use std::io::prelude::*;
 
 use axcut_macros::{
-    bind, clause, create, def, exit, invoke, lit, println_i64, substitute, sum, ty, ty_decl,
+    bind, clause, create, def, exit, invoke, lit, println_i64, prog, substitute, sum, ty, ty_decl,
     xtor_sig,
 };
 #[test]
@@ -22,7 +21,7 @@ fn test_closure() {
         )],
     );
 
-    let main_body = lit!(
+    let main_body = Statement::from(lit!(
         9,
         "a",
         create!(
@@ -68,14 +67,10 @@ fn test_closure() {
                 ),
             ),
         )
-    )
-    .into();
+    ));
     let main = def!("main", [], main_body);
 
-    let program = Prog {
-        defs: vec![main],
-        types: vec![ty_cont, ty_func],
-    };
+    let program = prog!([main], [ty_cont, ty_func]);
 
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);

@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 
 pub(crate) mod context;
 pub(crate) mod declarations;
+pub(crate) mod program;
 pub(crate) mod statements;
 pub(crate) mod types;
 
@@ -22,6 +23,18 @@ pub fn bind(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn substitute(input: TokenStream) -> TokenStream {
     statements::substitute(input)
+}
+
+#[doc=include_str!("../doc/let.md")]
+#[proc_macro]
+pub fn letin(input: TokenStream) -> TokenStream {
+    statements::letin(input)
+}
+
+#[doc=include_str!("../doc/switch.md")]
+#[proc_macro]
+pub fn switch(input: TokenStream) -> TokenStream {
+    statements::switch(input)
 }
 
 #[doc=include_str!("../doc/invoke.md")]
@@ -113,4 +126,10 @@ pub fn def(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn ty_decl(input: TokenStream) -> TokenStream {
     declarations::ty_decl(input)
+}
+
+#[doc=include_str!("../doc/prog.md")]
+#[proc_macro]
+pub fn prog(input: TokenStream) -> TokenStream {
+    program::prog(input)
 }
