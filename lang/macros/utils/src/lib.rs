@@ -56,7 +56,7 @@ pub fn parse_args<const N: usize>(
     skip_indices: &[(usize, Expr)],
 ) -> [Expr; N] {
     let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
-        .parse2(input.into())
+        .parse2(input)
         .expect("Macro arguments could not be parsed")
         .into_iter()
         .collect::<Vec<_>>();

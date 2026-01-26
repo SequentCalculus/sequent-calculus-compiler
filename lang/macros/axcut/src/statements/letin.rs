@@ -25,7 +25,7 @@ pub fn letin(input: TokenStream) -> TokenStream {
     let let_args = expr_to_array(&args[3]);
     let next = &args[4];
     let free_vars = quote_option(&args[5], |expr| {
-        let free_arr = expr_to_array(&expr)
+        let free_arr = expr_to_array(expr)
             .into_iter()
             .map(|expr| quote! {#expr.to_string()})
             .collect::<Vec<_>>();
