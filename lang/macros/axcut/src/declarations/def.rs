@@ -12,7 +12,6 @@ pub fn def(input: TokenStream) -> TokenStream {
     let name = expr_to_str(&args[0]);
     let def_args = expr_to_array(&args[1]);
     let body = &args[2];
-    println!("is none:{} ", is_none(&args[3]));
     let used_vars = if is_none(&args[3]) {
         quote! { ::std::collections::HashSet::new() }
     } else {

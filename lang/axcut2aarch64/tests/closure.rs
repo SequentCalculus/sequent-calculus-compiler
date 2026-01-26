@@ -40,7 +40,7 @@ fn test_closure() {
                             (bind!("b"), "b"),
                             (bind!("k", Chirality::Cns, ty!("Cont")), "k")
                         ],
-                        invoke!("k", "Ret", [], ty!("Cont")),
+                        invoke!("k", "Ret", ty!("Cont"), []),
                     )
                 )
             )],
@@ -62,7 +62,7 @@ fn test_closure() {
                             (bind!("k", Chirality::Cns, ty!("Cont")), "k"),
                             (bind!("f", Chirality::Prd, ty!("Fun")), "f"),
                         ],
-                        invoke!("f", "apply", [], ty!("Fun"))
+                        invoke!("f", "apply", ty!("Fun"), [])
                     )
                 ),
             ),
