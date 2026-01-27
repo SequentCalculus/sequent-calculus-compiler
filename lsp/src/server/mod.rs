@@ -41,6 +41,7 @@ impl LspServer {
             definition_provider: Some(OneOf::Left(true)),
             implementation_provider: Some(ImplementationProviderCapability::Simple(true)),
             //declaration_provider: nicht existent?
+            declaration_provider: Some(lsp_types::DeclarationCapability::Simple(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
             document_range_formatting_provider: Some(OneOf::Left(true)),
             hover_provider: Some(lsp_types:: HoverProviderCapability::Simple(true)),
