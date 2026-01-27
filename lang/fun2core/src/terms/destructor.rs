@@ -49,7 +49,7 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_lang::syntax::terms::Prd;
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
-    use macros::{bind, clause, cocase, covar, cut, dtor, mu, ty};
+    use macros::{bind, clause, cns, cocase, covar, cut, dtor, mu, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -80,13 +80,13 @@ mod compile_tests {
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", core_syntax::Chirality::Cns)],
+                            [bind!("a1", cns!())],
                             cut!(core_syntax::Literal::new(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", core_syntax::context::Chirality::Cns)],
+                            [bind!("a2", cns!())],
                             cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
                         )
                     ],
@@ -128,13 +128,13 @@ mod compile_tests {
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", core_syntax::context::Chirality::Cns)],
+                            [bind!("a1", cns!())],
                             cut!(core_syntax::terms::Literal::new(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", core_syntax::context::Chirality::Cns)],
+                            [bind!("a2", cns!())],
                             cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
                         )
                     ],

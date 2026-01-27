@@ -197,7 +197,9 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{bind, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, ty, var};
+    use macros::{
+        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, prd, ty, var,
+    };
     extern crate self as core_lang;
 
     #[test]
@@ -225,10 +227,7 @@ mod tests {
                         fs_cut!(
                             fs_ctor!(
                                 "Cons",
-                                [
-                                    bind!("x0", Chirality::Prd),
-                                    bind!("x1", Chirality::Prd, ty!("ListInt"))
-                                ],
+                                [bind!("x0", prd!()), bind!("x1", prd!(), ty!("ListInt"))],
                                 ty!("ListInt")
                             ),
                             covar!("a", ty!("ListInt")),
@@ -258,7 +257,7 @@ mod tests {
             var!("x", ty!("Fun[i64, i64]")),
             fs_dtor!(
                 "apply",
-                [bind!("y", Chirality::Prd), bind!("a", Chirality::Cns)],
+                [bind!("y", prd!()), bind!("a", cns!())],
                 ty!("Fun[i64, i64]")
             ),
             ty!("Fun[i64, i64]")

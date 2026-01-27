@@ -75,7 +75,7 @@ mod compile_tests {
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
     };
-    use macros::{bind, clause, cocase, codata, covar, cut, ty};
+    use macros::{bind, clause, cns, cocase, codata, covar, cut, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -111,13 +111,13 @@ mod compile_tests {
                 clause!(
                     core_syntax::Prd,
                     "fst",
-                    [bind!("a0", core_syntax::Chirality::Cns),],
+                    [bind!("a0", cns!()),],
                     cut!(core_syntax::Literal::new(1), covar!("a0"))
                 ),
                 clause!(
                     core_syntax::Prd,
                     "snd",
-                    [bind!("a1", core_syntax::Chirality::Cns)],
+                    [bind!("a1", cns!())],
                     cut!(core_syntax::terms::Literal::new(2), covar!("a1"))
                 )
             ],

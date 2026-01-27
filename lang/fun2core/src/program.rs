@@ -60,13 +60,13 @@ mod compile_tests {
     use codespan::Span;
     use core_lang::syntax as core_syntax;
     use fun::syntax::{
-        context::Chirality::Prd,
+        Chirality,
         declarations::Def,
         program::CheckedProgram,
         terms::{Lit, XVar},
         types::Ty,
     };
-    use macros::{bind, covar, cut, def, exit, mutilde, var};
+    use macros::{bind, cns, covar, cut, def, exit, mutilde, prd, var};
     use std::collections::HashSet;
 
     fn example_def1() -> Def {
@@ -91,7 +91,7 @@ mod compile_tests {
                 span: Span::default(),
                 var: "x".to_owned(),
                 ty: Some(Ty::mk_i64()),
-                chi: Some(Prd),
+                chi: Some(Chirality::Prd),
             }
             .into(),
             ret_ty: Ty::mk_i64(),
@@ -123,7 +123,7 @@ mod compile_tests {
         );
         let expected = def!(
             "main",
-            [bind!("a", core_syntax::Chirality::Cns)],
+            [bind!("a", cns!())],
             cut!(
                 core_syntax::Literal::new(1),
                 mutilde!("x0", exit!(var!("x0")))
@@ -141,10 +141,7 @@ mod compile_tests {
         let result = compile_def(example_def2(), &[], &mut HashSet::from(["id".to_string()]));
         let expected = def!(
             "id",
-            [
-                bind!("x", core_syntax::Chirality::Prd),
-                bind!("a0", core_syntax::Chirality::Cns)
-            ],
+            [bind!("x", prd!()), bind!("a0", cns!())],
             cut!(var!("x"), covar!("a0")),
             ["x", "a0"]
         );
@@ -167,7 +164,7 @@ mod compile_tests {
         assert_eq!(result.defs.len(), 2);
         let expected1 = def!(
             "main",
-            [bind!("a", core_syntax::Chirality::Cns)],
+            [bind!("a", cns!())],
             cut!(
                 core_syntax::Literal::new(1),
                 mutilde!("x0", exit!(var!("x0")))
@@ -176,10 +173,7 @@ mod compile_tests {
         );
         let expected2 = def!(
             "id",
-            [
-                bind!("x", core_syntax::Chirality::Prd),
-                bind!("a0", core_syntax::Chirality::Cns)
-            ],
+            [bind!("x", prd!()), bind!("a0", cns!())],
             cut!(var!("x"), covar!("a0")),
             ["x", "a0"]
         );

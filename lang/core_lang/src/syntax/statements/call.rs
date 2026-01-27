@@ -121,10 +121,9 @@ impl TypedFreeVars for FsCall {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::syntax::*;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, call, covar, fs_call, var};
+    use macros::{bind, call, cns, covar, fs_call, prd, var};
 
     #[test]
     fn transform_call1() {
@@ -136,11 +135,7 @@ mod transform_tests {
     #[test]
     fn transform_call2() {
         let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
-        let expected = fs_call!(
-            "fun",
-            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)]
-        )
-        .into();
+        let expected = fs_call!("fun", [bind!("x", prd!()), bind!("a", cns!())]).into();
         assert_eq!(result, expected)
     }
 }

@@ -70,7 +70,7 @@ impl<D: Print> Print for Prog<D> {
 mod program_tests {
     use crate::syntax::*;
     extern crate self as core_lang;
-    use macros::{bind, covar, cut, def, fs_cut, fs_def, prog, var};
+    use macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         let mut ctx = TypingContext::default();
@@ -78,7 +78,7 @@ mod program_tests {
         ctx.add_covar("a", Ty::I64);
         fs_def!(
             "cut",
-            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+            [bind!("x", prd!()), bind!("a", cns!())],
             fs_cut!(var!("x"), covar!("a")),
             ["a", "x"]
         )
@@ -89,7 +89,7 @@ mod program_tests {
         let prog = prog!(
             [def!(
                 "cut",
-                [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+                [bind!("x", prd!()), bind!("a", cns!())],
                 cut!(var!("x"), covar!("a")),
                 ["a", "x"]
             )],

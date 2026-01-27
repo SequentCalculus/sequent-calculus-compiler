@@ -157,21 +157,21 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, case, clause, cocase, covar, cut, fs_clause, fs_cut, ty, var};
+    use macros::{bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var};
 
     #[test]
     fn focus_clause() {
         let result = clause!(
             Prd,
             "apply",
-            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+            [bind!("x", prd!()), bind!("a", cns!())],
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
         let expected = fs_clause!(
             Prd,
             "apply",
-            [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+            [bind!("x", prd!()), bind!("a", cns!())],
             fs_cut!(var!("x"), covar!("a"))
         );
         assert_eq!(result, expected)
@@ -186,7 +186,7 @@ mod tests {
                 clause!(
                     Prd,
                     "fst",
-                    [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+                    [bind!("x", prd!()), bind!("a", cns!())],
                     cut!(var!("x"), covar!("a"))
                 ),
                 clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
@@ -204,9 +204,9 @@ mod tests {
                     Cns,
                     "Cons",
                     [
-                        bind!("x", Chirality::Prd),
-                        bind!("xs", Chirality::Prd, ty!("ListInt")),
-                        bind!("a", Chirality::Cns)
+                        bind!("x", prd!()),
+                        bind!("xs", prd!(), ty!("ListInt")),
+                        bind!("a", cns!())
                     ],
                     cut!(var!("x"), covar!("a"))
                 )
@@ -227,9 +227,9 @@ mod tests {
                     Cns,
                     "Cons",
                     [
-                        bind!("x", Chirality::Prd),
-                        bind!("xs", Chirality::Prd, ty!("ListInt")),
-                        bind!("a", Chirality::Cns)
+                        bind!("x", prd!()),
+                        bind!("xs", prd!(), ty!("ListInt")),
+                        bind!("a", cns!())
                     ],
                     cut!(var!("x"), covar!("a"))
                 )
@@ -251,7 +251,7 @@ mod tests {
                 clause!(
                     Prd,
                     "fst",
-                    [bind!("x", Chirality::Prd), bind!("a", Chirality::Cns)],
+                    [bind!("x", prd!()), bind!("a", cns!())],
                     cut!(var!("x"), covar!("a"))
                 ),
                 clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))

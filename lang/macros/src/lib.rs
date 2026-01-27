@@ -1,5 +1,6 @@
 use core_lang::syntax::Chirality;
 use proc_macro::TokenStream;
+use quote::quote;
 
 pub(crate) mod arguments;
 pub(crate) mod context;
@@ -21,6 +22,18 @@ pub fn ty(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn bind(input: TokenStream) -> TokenStream {
     context::bind(input)
+}
+
+#[doc = include_str!("../doc/cns.md")]
+#[proc_macro]
+pub fn cns(_: TokenStream) -> TokenStream {
+    quote! {core_lang::syntax::context::Chirality::Cns}.into()
+}
+
+#[doc = include_str!("../doc/prd.md")]
+#[proc_macro]
+pub fn prd(_: TokenStream) -> TokenStream {
+    quote! {core_lang::syntax::context::Chirality::Prd}.into()
 }
 
 // Terms
