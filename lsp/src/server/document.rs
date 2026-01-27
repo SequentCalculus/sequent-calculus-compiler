@@ -39,38 +39,71 @@ impl Document {
             .nth(pos.line as usize)
             .ok_or(Error::InvalidPosition(pos))?;
 
-        let mut following = line
-            .chars()
-            .nth(pos.character as usize)
-            .ok_or(Error::InvalidPosition(pos))?;
+        if pos.character as usize >= line.len(){
+            return Err(Error::InvalidPosition(pos));
+        }
+        
         let mut end_pos = pos.character as usize;
-        while following.is_alphanumeric() || following == '_' {
-            end_pos += 1;
-            if end_pos == line.len() {
+        while end_pos < line.len() {
+            let character = line.chars().nth(end_pos).unwrap();
+            if !character.is_alphanumeric() && character != '_' {
                 break;
             }
-            following = line.chars().nth(end_pos).unwrap();
+            end_pos += 1;
         }
 
-        let mut prev = line
-            .chars()
-            .nth(pos.character as usize)
-            .ok_or(Error::InvalidPosition(pos))?;
         let mut start_pos = pos.character as usize;
-        while prev.is_alphanumeric() || following == '_' {
-            start_pos -= 1;
-            if start_pos == 0 {
+        while start_pos > 0 {
+            let character = line.chars().nth(start_pos - 1).unwrap();
+            if !character.is_alphanumeric() && character != '_'{
                 break;
             }
-            prev = line.chars().nth(start_pos).unwrap();
-        }
-        if start_pos > 0 {
-            start_pos += 1
+            start_pos -= 1;
         }
 
         let ident = &line[start_pos..end_pos];
         Ok(ident.to_owned())
     }
+
+    // pub fn get_ident(&self, pos: Position) -> Result<String, Error> {
+    //     let line = self
+    //         .source
+    //         .lines()
+    //         .nth(pos.line as usize)
+    //         .ok_or(Error::InvalidPosition(pos))?;
+
+    //     let mut following = line
+    //         .chars()
+    //         .nth(pos.character as usize)
+    //         .ok_or(Error::InvalidPosition(pos))?;
+    //     let mut end_pos = pos.character as usize;
+    //     while following.is_alphanumeric() || following == '_' {
+    //         end_pos += 1;
+    //         if end_pos == line.len() {
+    //             break;
+    //         }
+    //         following = line.chars().nth(end_pos).unwrap();
+    //     }
+
+    //     let mut prev = line
+    //         .chars()
+    //         .nth(pos.character as usize)
+    //         .ok_or(Error::InvalidPosition(pos))?;
+    //     let mut start_pos = pos.character as usize;
+    //     while prev.is_alphanumeric() || following == '_' {
+    //         start_pos -= 1;
+    //         if start_pos == 0 {
+    //             break;
+    //         }
+    //         prev = line.chars().nth(start_pos).unwrap();
+    //     }
+    //     if start_pos > 0 {
+    //         start_pos += 1
+    //     }
+
+    //     let ident = &line[start_pos..end_pos];
+    //     Ok(ident.to_owned())
+    // }
 
     pub fn ind_to_pos(&self, index: usize) -> Position {
         let mut line = 0;
@@ -127,12 +160,20 @@ impl Document {
         Some((start, end))
     }
 
+    //bearbeitet auch selbstprüfend jetzt
     pub fn find_ident(&self, ident: String, uri: Uri) -> Result<Location, Error> {
-        let (start, end) = self
+        if let Some ((start, end)) = self
             .find_def(&ident)
-            .or_else(|| self.find_data(&ident).or_else(|| self.find_codata(&ident)))
-            .ok_or(Error::UndefinedIdentifier(ident))?;
-        Ok(Location::new(uri, Range { start, end }))
+            .or_else(|| self.find_data(&ident))
+            .or_else(|| self.find_codata(&ident)){
+                Ok(Location::new(uri, Range { start, end }))
+            }else if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
+                let start = self.ind_to_pos(def.span.start().to_usize());
+                let end = self.ind_to_pos(def.span.end().to_usize());
+                Ok(Location::new(uri, Range { start, end }))
+            }else{
+                Err(Error::UndefinedIdentifier(ident))
+            }
     }
 
     //eigener Code
@@ -321,7 +362,8 @@ impl Document {
             }
         }
 
-        Err(Error::UndefinedIdentifier(ident.to_owned()))
+        //Err(Error::UndefinedIdentifier(ident.to_owned()))
+        Ok(format!("{} is undefined", ident))
     }
 
     //eigener Code
