@@ -1,6 +1,6 @@
 Create a [`core_lang::syntax::terms::xvar::XVar`] with chirality
 [`core_lang::syntax::terms::Cns`] If no type is provided the covariable will
-default to [`core_lang::syntax::types::ty::I64`]
+default to [`core_lang::syntax::types::Ty::I64`]
 
 ```
 use core_lang::syntax::{terms::xvar::XVar, types::Ty};
