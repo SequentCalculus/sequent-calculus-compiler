@@ -3,12 +3,12 @@ Create a [`axcut::syntax::types::Ty`] from a string literal\
 [`axcut::syntax::types::Ty::Decl`]
 
 ```
-use axcut_macros::ty;
 use axcut::syntax::types::Ty;
+use axcut_macros::ty;
 let int1 = ty!("int");
 let int2 = Ty::I64;
-assert_eq!(int1,int2);
+assert_eq!(int1, int2);
 let list1 = ty!("ListInt");
 let list2 = Ty::Decl("ListInt".to_string());
-assert_eq!(list1,list2)
+assert_eq!(list1, list2)
 ```

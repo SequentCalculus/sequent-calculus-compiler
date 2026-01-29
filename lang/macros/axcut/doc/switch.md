@@ -5,52 +5,81 @@ provide `free_vars_clauses`. Instead use `axcut_macros::ty`] with argument
 `"int"`.
 
 ```
-use axcut_macros::switch;
 use axcut::syntax::{
-    statements::{Clause, Switch, Exit, Statement},
-    context::{TypingContext,ContextBinding,Chirality},
-    types::Ty
+    context::{Chirality, ContextBinding, TypingContext},
+    statements::{Clause, Exit, Statement, Switch},
+    types::Ty,
 };
-use std::{rc::Rc,collections::HashSet};
+use axcut_macros::switch;
+use std::{collections::HashSet, rc::Rc};
 
-let switch1 = switch!("x",Ty::Decl("ListInt".to_string()),[
-    Clause{
-        xtor:"Nil".to_string(),
-        context:TypingContext{bindings:vec![]},
-        body:Rc::new(Statement::from(Exit{var:"x".to_string()}))
-    },
-    Clause{
-        xtor:"Cons".to_string(),
-        context:TypingContext{
-            bindings:vec![
-                ContextBinding{var:"x".to_string(),chi:Chirality::Ext,ty:Ty::I64},
-                ContextBinding{var:"xs".to_string(),chi:Chirality::Prd,ty:Ty::Decl("ListInt".to_string())}
-            ]
+let switch1 = switch!(
+    "x",
+    Ty::Decl("ListInt".to_string()),
+    [
+        Clause {
+            xtor: "Nil".to_string(),
+            context: TypingContext { bindings: vec![] },
+            body: Rc::new(Statement::from(Exit {
+                var: "x".to_string()
+            }))
         },
-            body:Rc::new(Statement::from(Exit { var:"x".to_string() }))
-    }
-],["x"]);
-let switch2 = Switch{
-    var:"x".to_string(),
-    ty:Ty::Decl("ListInt".to_string()),
-    clauses:vec![
-        Clause{
-            xtor:"Nil".to_string(),
-            context:TypingContext{bindings:vec![]},
-            body:Rc::new(Statement::from(Exit{var:"x".to_string()}))
-        },
-        Clause{
-            xtor:"Cons".to_string(),
-            context:TypingContext{
-                bindings:vec![
-                    ContextBinding{var:"x".to_string(),chi:Chirality::Ext,ty:Ty::I64},
-                    ContextBinding{var:"xs".to_string(),chi:Chirality::Prd,ty:Ty::Decl("ListInt".to_string())}
+        Clause {
+            xtor: "Cons".to_string(),
+            context: TypingContext {
+                bindings: vec![
+                    ContextBinding {
+                        var: "x".to_string(),
+                        chi: Chirality::Ext,
+                        ty: Ty::I64
+                    },
+                    ContextBinding {
+                        var: "xs".to_string(),
+                        chi: Chirality::Prd,
+                        ty: Ty::Decl("ListInt".to_string())
+                    }
                 ]
             },
-            body:Rc::new(Statement::from(Exit { var:"x".to_string() }))
+            body: Rc::new(Statement::from(Exit {
+                var: "x".to_string()
+            }))
         }
     ],
-    free_vars_clauses:Some(HashSet::from(["x".to_string()]))
+    ["x"]
+);
+let switch2 = Switch {
+    var: "x".to_string(),
+    ty: Ty::Decl("ListInt".to_string()),
+    clauses: vec![
+        Clause {
+            xtor: "Nil".to_string(),
+            context: TypingContext { bindings: vec![] },
+            body: Rc::new(Statement::from(Exit {
+                var: "x".to_string(),
+            })),
+        },
+        Clause {
+            xtor: "Cons".to_string(),
+            context: TypingContext {
+                bindings: vec![
+                    ContextBinding {
+                        var: "x".to_string(),
+                        chi: Chirality::Ext,
+                        ty: Ty::I64,
+                    },
+                    ContextBinding {
+                        var: "xs".to_string(),
+                        chi: Chirality::Prd,
+                        ty: Ty::Decl("ListInt".to_string()),
+                    },
+                ],
+            },
+            body: Rc::new(Statement::from(Exit {
+                var: "x".to_string(),
+            })),
+        },
+    ],
+    free_vars_clauses: Some(HashSet::from(["x".to_string()])),
 };
-assert_eq!(switch1,switch2);
+assert_eq!(switch1, switch2);
 ```
