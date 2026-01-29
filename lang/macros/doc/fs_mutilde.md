@@ -3,21 +3,21 @@ Create a [`core_lang::syntax::terms::FsMu`] with chirality
 provided, [`core_lang::syntax::types::Ty::I64`] is used
 
 ```
-use macros::fs_mutilde;
 use core_lang::syntax::{
-    Cns, 
-    statements::{exit::FsExit,FsStatement}, 
-    terms::{XVar,mu::FsMu},
-    types::Ty
+    statements::{exit::FsExit, FsStatement},
+    terms::{mu::FsMu, XVar},
+    types::Ty,
+    Cns,
 };
+use macros::fs_mutilde;
 use std::rc::Rc;
 
-let mu1 = fs_mutilde!("x",FsExit::exit("x"));
-let mu2 = FsMu{
-    prdcns:Cns, 
-    variable:"x".to_string(),
-    statement:Rc::new(FsStatement::from(FsExit::exit("x"))),
-    ty:Ty::I64
+let mu1 = fs_mutilde!("x", FsExit::exit("x"));
+let mu2 = FsMu {
+    prdcns: Cns,
+    variable: "x".to_string(),
+    statement: Rc::new(FsStatement::from(FsExit::exit("x"))),
+    ty: Ty::I64,
 };
-assert_eq!(mu1,mu2)
+assert_eq!(mu1, mu2)
 ```

@@ -3,31 +3,34 @@ Create a [`core_lang::syntax::statements::ifc::FsIfC`] with comparison
 argument is provided, default to using zero (i.e. `IfC.snd == None`)
 
 ```
-use macros::fs_ife;
 use core_lang::syntax::{
-    statements::{FsStatement, ifc::{IfSort, IfC},FsExit},
+    statements::{
+        ifc::{IfC, IfSort},
+        FsExit, FsStatement,
+    },
+    terms::{FsTerm, Literal},
     types::Ty,
-    terms::{FsTerm, Literal}
 };
+use macros::fs_ife;
 use std::rc::Rc;
 
-let if1 = fs_ife!("x","y",FsExit::exit("x"),FsExit::exit("y"));
-let if2 = IfC{
+let if1 = fs_ife!("x", "y", FsExit::exit("x"), FsExit::exit("y"));
+let if2 = IfC {
     sort: IfSort::Equal,
     fst: "x".to_string(),
     snd: Some("y".to_string()),
     thenc: Rc::new(FsStatement::from(FsExit::exit("x"))),
-    elsec: Rc::new(FsStatement::from(FsExit::exit("y")))
+    elsec: Rc::new(FsStatement::from(FsExit::exit("y"))),
 };
-assert_eq!(if1,if2);
+assert_eq!(if1, if2);
 
-let if1 = fs_ife!("x",FsExit::exit("x"),FsExit::exit("x"));
-let if2 = IfC{
+let if1 = fs_ife!("x", FsExit::exit("x"), FsExit::exit("x"));
+let if2 = IfC {
     sort: IfSort::Equal,
-    fst:"x".to_string(),
+    fst: "x".to_string(),
     snd: None,
     thenc: Rc::new(FsStatement::from(FsExit::exit("x"))),
     elsec: Rc::new(FsStatement::from(FsExit::exit("x"))),
 };
-assert_eq!(if1,if2);
+assert_eq!(if1, if2);
 ```
