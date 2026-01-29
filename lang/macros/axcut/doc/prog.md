@@ -1,4 +1,4 @@
-Create a [`axcut::syntax::program::Program`]
+Create a [`axcut::syntax::program::Prog`]
 
 ```
 use axcut_macros::prog;

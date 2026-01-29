@@ -1,6 +1,6 @@
-Create a [`axcut::syntax::types::Type`] from a string literal\
-`int` will create [`axcut::syntax::types::Type::I64`] anything else will create
-[`axcut::syntax::types::Type::Decl`]
+Create a [`axcut::syntax::types::Ty`] from a string literal\
+`int` will create [`axcut::syntax::types::Ty::I64`] anything else will create
+[`axcut::syntax::types::Ty::Decl`]
 
 ```
 use axcut_macros::ty;
