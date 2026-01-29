@@ -1,5 +1,3 @@
-use axcut::syntax::statements::*;
-use axcut::syntax::*;
 use axcut2aarch64::Backend;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2backend::coder::compile;
@@ -8,7 +6,7 @@ use printer::Print;
 use std::io::prelude::*;
 
 use axcut_macros::{
-    bind, clause, def, exit, letin, lit, println_i64, prog, switch, ty, ty_decl, xtor_sig,
+    bind, clause, def, exit, letin, lit, prd, println_i64, prog, switch, ty, ty_decl, xtor_sig,
 };
 
 #[test]
@@ -17,14 +15,11 @@ fn test_list() {
         "List",
         [
             xtor_sig!("Nil", []),
-            xtor_sig!(
-                "Cons",
-                [bind!("xs", Chirality::Prd, ty!("List")), bind!("x")]
-            ),
+            xtor_sig!("Cons", [bind!("xs", prd!(), ty!("List")), bind!("x")]),
         ],
     );
 
-    let main_body = Statement::Let(letin!(
+    let main_body = letin!(
         "ws",
         ty!("List"),
         "Nil",
@@ -36,7 +31,7 @@ fn test_list() {
                 "zs",
                 ty!("List"),
                 "Cons",
-                [bind!("z"), bind!("ws", Chirality::Prd, ty!("List"))],
+                [bind!("z"), bind!("ws", prd!(), ty!("List"))],
                 lit!(
                     7,
                     "y",
@@ -44,7 +39,7 @@ fn test_list() {
                         "ys",
                         ty!("List"),
                         "Cons",
-                        [bind!("y"), bind!("zs", Chirality::Prd, ty!("List"))],
+                        [bind!("y"), bind!("zs", prd!(), ty!("List"))],
                         lit!(
                             9,
                             "x",
@@ -52,7 +47,7 @@ fn test_list() {
                                 "xs",
                                 ty!("List"),
                                 "Cons",
-                                [bind!("x"), bind!("ys", Chirality::Prd, ty!("List"))],
+                                [bind!("x"), bind!("ys", prd!(), ty!("List"))],
                                 switch!(
                                     "xs",
                                     ty!("List"),
@@ -60,7 +55,7 @@ fn test_list() {
                                         clause!("Nil", [], lit!(-1, "err", exit!("err"))),
                                         clause!(
                                             "Cons",
-                                            [bind!("as", Chirality::Prd, ty!("List")), bind!("a"),],
+                                            [bind!("as", prd!(), ty!("List")), bind!("a"),],
                                             println_i64!("a", lit!(0, "ret", exit!("ret")))
                                         ),
                                     ]
@@ -71,7 +66,7 @@ fn test_list() {
                 )
             )
         )
-    ));
+    );
     let main = def!("main", [], main_body);
 
     let program = prog!([main], [ty_list]);

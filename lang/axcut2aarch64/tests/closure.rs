@@ -7,8 +7,8 @@ use printer::Print;
 use std::io::prelude::*;
 
 use axcut_macros::{
-    bind, clause, create, def, exit, invoke, lit, println_i64, prog, substitute, sum, ty, ty_decl,
-    xtor_sig,
+    bind, clause, cns, create, def, exit, invoke, lit, prd, println_i64, prog, substitute, sum, ty,
+    ty_decl, xtor_sig,
 };
 #[test]
 fn test_closure() {
@@ -17,7 +17,7 @@ fn test_closure() {
         "Fun",
         [xtor_sig!(
             "apply",
-            [bind!("x"), bind!("k", Chirality::Cns, ty!("Cont"))]
+            [bind!("x"), bind!("k", cns!(), ty!("Cont"))]
         )],
     );
 
@@ -30,16 +30,13 @@ fn test_closure() {
             [bind!("a")],
             [clause!(
                 "apply",
-                [bind!("x"), bind!("k", Chirality::Cns, ty!("Cont"))],
+                [bind!("x"), bind!("k", cns!(), ty!("Cont"))],
                 sum!(
                     "a",
                     "x",
                     "b",
                     substitute!(
-                        [
-                            (bind!("b"), "b"),
-                            (bind!("k", Chirality::Cns, ty!("Cont")), "k")
-                        ],
+                        [(bind!("b"), "b"), (bind!("k", cns!(), ty!("Cont")), "k")],
                         invoke!("k", "Ret", ty!("Cont"), []),
                     )
                 )
@@ -59,8 +56,8 @@ fn test_closure() {
                     substitute!(
                         [
                             (bind!("y"), "y"),
-                            (bind!("k", Chirality::Cns, ty!("Cont")), "k"),
-                            (bind!("f", Chirality::Prd, ty!("Fun")), "f"),
+                            (bind!("k", cns!(), ty!("Cont")), "k"),
+                            (bind!("f", prd!(), ty!("Fun")), "f"),
                         ],
                         invoke!("f", "apply", ty!("Fun"), [])
                     )

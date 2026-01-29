@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+use quote::quote;
 
 pub(crate) mod context;
 pub(crate) mod declarations;
@@ -16,6 +17,24 @@ pub fn ty(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn bind(input: TokenStream) -> TokenStream {
     context::bind(input)
+}
+
+#[doc=include_str!("../doc/prd.md")]
+#[proc_macro]
+pub fn prd(_: TokenStream) -> TokenStream {
+    quote! {axcut::syntax::context::Chirality::Prd}.into()
+}
+
+#[doc=include_str!("../doc/cns.md")]
+#[proc_macro]
+pub fn cns(_: TokenStream) -> TokenStream {
+    quote! {axcut::syntax::context::Chirality::Cns}.into()
+}
+
+#[doc=include_str!("../doc/ext.md")]
+#[proc_macro]
+pub fn ext(_: TokenStream) -> TokenStream {
+    quote! {axcut::syntax::context::Chirality::Ext}.into()
 }
 
 // Statements

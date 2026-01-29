@@ -1,5 +1,4 @@
 use axcut::syntax::statements::*;
-use axcut::syntax::*;
 use axcut2backend::coder::compile;
 use axcut2rv64::Backend;
 use axcut2rv64::into_routine::into_rv64_routine;
@@ -7,8 +6,8 @@ use goldenfile::Mint;
 use std::io::prelude::*;
 
 use axcut_macros::{
-    bind, call, clause, create, def, exit, ife, invoke, letin, lit, prog, substitute, sum, switch,
-    ty, ty_decl, xtor_sig,
+    bind, call, clause, cns, create, def, exit, ife, invoke, letin, lit, prd, prog, substitute,
+    sum, switch, ty, ty_decl, xtor_sig,
 };
 
 #[test]
@@ -17,19 +16,13 @@ fn test_midi() {
         "List",
         [
             xtor_sig!("Nil", []),
-            xtor_sig!(
-                "Cons",
-                [bind!("xs", Chirality::Prd, ty!("List")), bind!("x")]
-            ),
+            xtor_sig!("Cons", [bind!("xs", prd!(), ty!("List")), bind!("x")]),
         ],
     );
 
     let ty_cont_list = ty_decl!(
         "ContList",
-        [xtor_sig!(
-            "Retl",
-            [bind!("kl", Chirality::Prd, ty!("List"))]
-        )]
+        [xtor_sig!("Retl", [bind!("kl", prd!(), ty!("List"))])]
     );
 
     let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki")])]);
@@ -42,14 +35,14 @@ fn test_midi() {
         create!(
             "k",
             ty!("ContList"),
-            [bind!("t", Chirality::Cns, ty!("ContInt"))],
+            [bind!("t", cns!(), ty!("ContInt"))],
             [clause!(
                 "Retl",
-                [bind!("as", Chirality::Prd, ty!("List"))],
+                [bind!("as", prd!(), ty!("List"))],
                 substitute!(
                     [
-                        (bind!("t", Chirality::Cns, ty!("ContInt")), "t"),
-                        (bind!("as", Chirality::Prd, ty!("List")), "as"),
+                        (bind!("t", cns!(), ty!("ContInt")), "t"),
+                        (bind!("as", prd!(), ty!("List")), "as"),
                     ],
                     call!("sum", [])
                 )
@@ -64,8 +57,8 @@ fn test_midi() {
                     "n",
                     substitute!(
                         [
-                            (bind!("k", Chirality::Cns, ty!("ContInt")), "k"),
-                            (bind!("zs", Chirality::Prd, ty!("List")), "zs"),
+                            (bind!("k", cns!(), ty!("ContInt")), "k"),
+                            (bind!("zs", prd!(), ty!("List")), "zs"),
                             (bind!("n"), "n"),
                         ],
                         call!("range", [])
@@ -80,23 +73,23 @@ fn test_midi() {
         "i",
         substitute!(
             [
-                (bind!("xs", Chirality::Prd, ty!("List")), "xs"),
-                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
+                (bind!("xs", prd!(), ty!("List")), "xs"),
+                (bind!("k", cns!(), ty!("ContList")), "k"),
             ],
             invoke!("k", "Retl", ty!("ContList"), [])
         ),
         substitute!(
             [
                 (bind!("n"), "i"),
-                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
-                (bind!("xs", Chirality::Prd, ty!("List")), "xs"),
+                (bind!("k", cns!(), ty!("ContList")), "k"),
+                (bind!("xs", prd!(), ty!("List")), "xs"),
                 (bind!("i"), "i"),
             ],
             letin!(
                 "ys",
                 ty!("List"),
                 "Cons",
-                [bind!("xs", Chirality::Prd, ty!("List")), bind!("i")],
+                [bind!("xs", prd!(), ty!("List")), bind!("i")],
                 lit!(
                     -1,
                     "o",
@@ -106,8 +99,8 @@ fn test_midi() {
                         "j",
                         substitute!(
                             [
-                                (bind!("k", Chirality::Cns, ty!("ContList")), "k"),
-                                (bind!("ys", Chirality::Prd, ty!("List")), "ys"),
+                                (bind!("k", cns!(), ty!("ContList")), "k"),
+                                (bind!("ys", prd!(), ty!("List")), "ys"),
                                 (bind!("j"), "j"),
                             ],
                             call!("range", [])
@@ -120,8 +113,8 @@ fn test_midi() {
     let range = def!(
         "range",
         [
-            bind!("k", Chirality::Cns, ty!("ContList")),
-            bind!("xs", Chirality::Prd, ty!("List")),
+            bind!("k", cns!(), ty!("ContList")),
+            bind!("xs", prd!(), ty!("List")),
             bind!("i")
         ],
         range_body
@@ -138,27 +131,24 @@ fn test_midi() {
                     0,
                     "z",
                     substitute!(
-                        [
-                            (bind!("z"), "z"),
-                            (bind!("k", Chirality::Cns, ty!("ContInt")), "k"),
-                        ],
+                        [(bind!("z"), "z"), (bind!("k", cns!(), ty!("ContInt")), "k"),],
                         invoke!("k", "Reti", ty!("ContInt"), [])
                     )
                 )
             ),
             clause!(
                 "Cons",
-                [bind!("ys", Chirality::Prd, ty!("List")), bind!("y")],
+                [bind!("ys", prd!(), ty!("List")), bind!("y")],
                 substitute!(
                     [
-                        (bind!("ys", Chirality::Prd, ty!("List")), "ys"),
-                        (bind!("k", Chirality::Cns, ty!("ContInt")), "k"),
+                        (bind!("ys", prd!(), ty!("List")), "ys"),
+                        (bind!("k", cns!(), ty!("ContInt")), "k"),
                         (bind!("y"), "y"),
                     ],
                     create!(
                         "j",
                         ty!("ContInt"),
-                        [bind!("k", Chirality::Cns, ty!("ContInt")), bind!("y")],
+                        [bind!("k", cns!(), ty!("ContInt")), bind!("y")],
                         [clause!(
                             "Reti",
                             [bind!("r")],
@@ -169,7 +159,7 @@ fn test_midi() {
                                 substitute!(
                                     [
                                         (bind!("s"), "s"),
-                                        (bind!("k", Chirality::Cns, ty!("ContInt")), "k",),
+                                        (bind!("k", cns!(), ty!("ContInt")), "k",),
                                     ],
                                     invoke!("k", "Reti", ty!("ContInt"), [])
                                 )
@@ -177,8 +167,8 @@ fn test_midi() {
                         )],
                         substitute!(
                             [
-                                (bind!("j", Chirality::Cns, ty!("ContInt")), "j"),
-                                (bind!("ys", Chirality::Prd, ty!("List")), "ys"),
+                                (bind!("j", cns!(), ty!("ContInt")), "j"),
+                                (bind!("ys", prd!(), ty!("List")), "ys"),
                             ],
                             call!("sum", [])
                         )
@@ -190,8 +180,8 @@ fn test_midi() {
     let sum = def!(
         "sum",
         [
-            bind!("k", Chirality::Cns, ty!("ContList")),
-            bind!("xs", Chirality::Prd, ty!("List"))
+            bind!("k", cns!(), ty!("ContList")),
+            bind!("xs", prd!(), ty!("List"))
         ],
         sum_body
     );

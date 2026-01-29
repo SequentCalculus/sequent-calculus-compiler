@@ -1,4 +1,3 @@
-use axcut::syntax::statements::*;
 use axcut2aarch64::Backend;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2backend::coder::compile;
@@ -20,7 +19,7 @@ fn test_quad() {
         )]
     );
 
-    let main_body = Statement::Literal(lit!(
+    let main_body = lit!(
         8,
         "z",
         lit!(
@@ -59,7 +58,7 @@ fn test_quad() {
                 )
             )
         )
-    ));
+    );
     let main = def!("main", [], main_body);
 
     let program = prog!([main], [ty_quad]);
