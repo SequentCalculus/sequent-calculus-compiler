@@ -1,11 +1,9 @@
-use axcut::syntax::statements::*;
 use axcut2aarch64::Backend;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2backend::coder::compile;
 use goldenfile::Mint;
 use printer::Print;
 use std::io::prelude::*;
-use std::rc::Rc;
 
 use axcut_macros::{
     bind, clause, def, exit, letin, lit, prd, println_i64, prog, substitute, sum, switch, ty,
@@ -46,13 +44,13 @@ fn test_non_linear() {
         )]
     );
 
-    let main_body_switch = Statement::Switch(switch!(
+    let main_body_switch = switch!(
         "bb1",
         ty!("BoxBox"),
-        [Clause {
-            xtor: "BB".to_string(),
-            context: vec![bind!("b1", prd!(), ty!("Box"))].into(),
-            body: Rc::new(Statement::Switch(switch!(
+        [clause!(
+            "BB",
+            [bind!("b1", prd!(), ty!("Box"))],
+            switch!(
                 "b1",
                 ty!("Box"),
                 [clause!(
@@ -113,11 +111,11 @@ fn test_non_linear() {
                         )
                     )
                 )]
-            ))),
-        }]
-    ));
+            )
+        )]
+    );
 
-    let main_body = Statement::Literal(lit!(
+    let main_body = lit!(
         3,
         "f1",
         lit!(
@@ -175,7 +173,7 @@ fn test_non_linear() {
                 )
             )
         )
-    ));
+    );
     let main = def!("main", [], main_body);
 
     let program = prog!([main], [ty_box, ty_box_box]);

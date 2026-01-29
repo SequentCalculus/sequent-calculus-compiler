@@ -23,7 +23,7 @@ fn test_midi() {
 
     let ty_cont_list = ty_decl!(
         "ContList",
-        [xtor_sig!("Retl", [bind!("kl", prd!(), ty!("List"))]),]
+        [xtor_sig!("Retl", [bind!("kl", prd!(), ty!("List"))])]
     );
 
     let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki")]),]);
@@ -74,7 +74,7 @@ fn test_midi() {
     );
     let main = def!("main", [], main_body);
 
-    let range_body = Statement::IfC(ife!(
+    let range_body = ife!(
         "i",
         substitute!(
             [
@@ -114,7 +114,7 @@ fn test_midi() {
                 )
             )
         ),
-    ));
+    );
     let range = def!(
         "range",
         [

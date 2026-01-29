@@ -1,4 +1,3 @@
-use axcut::syntax::*;
 use axcut2aarch64::Backend;
 use axcut2aarch64::into_routine::into_aarch64_routine;
 use axcut2backend::coder::compile;
@@ -21,7 +20,7 @@ fn test_closure() {
         )],
     );
 
-    let main_body = Statement::from(lit!(
+    let main_body = lit!(
         9,
         "a",
         create!(
@@ -64,7 +63,7 @@ fn test_closure() {
                 ),
             ),
         )
-    ));
+    );
     let main = def!("main", [], main_body);
 
     let program = prog!([main], [ty_cont, ty_func]);
