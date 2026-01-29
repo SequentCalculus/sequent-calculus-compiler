@@ -175,27 +175,14 @@ mod test {
     use macros::{call, covar, cut, ife, ty, var};
 
     fn example_cut() -> Statement {
-        cut!(
-            XVar::var("x", ty!("int")),
-            XVar::covar("a", ty!("int")),
-            ty!("int")
-        )
-        .into()
+        cut!(var!("x"), covar!("a"), ty!("int")).into()
     }
 
     fn example_ifz() -> Statement {
         ife!(
-            XVar::var("x", ty!("int")),
-            cut!(
-                XVar::var("x", ty!("int")),
-                XVar::covar("a", ty!("int")),
-                ty!("int")
-            ),
-            cut!(
-                XVar::var("x", ty!("int")),
-                XVar::covar("a", ty!("int")),
-                ty!("int")
-            )
+            var!("x"),
+            cut!(var!("x"), covar!("a"), ty!("int")),
+            cut!(var!("x"), covar!("a"), ty!("int"))
         )
         .into()
     }
