@@ -66,9 +66,8 @@ impl Compile for fun::syntax::terms::IfC {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ife, mu, ty, var};
+    use macros::{covar, cut, ife, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -88,10 +87,10 @@ mod compile_tests {
         let expected = mu!(
             "a0",
             ife!(
-                core_syntax::Literal::new(3),
-                core_syntax::Literal::new(4),
-                cut!(core_syntax::Literal::new(1), covar!("a0")),
-                cut!(core_syntax::Literal::new(2), covar!("a0"))
+                lit!(3),
+                lit!(4),
+                cut!(lit!(1), covar!("a0")),
+                cut!(lit!(2), covar!("a0"))
             )
         )
         .into();
@@ -125,7 +124,7 @@ mod compile_tests {
             ife!(
                 var!("x"),
                 var!("x"),
-                cut!(core_syntax::Literal::new(1), covar!("a0")),
+                cut!(lit!(1), covar!("a0")),
                 cut!(var!("x"), covar!("a0"))
             )
         )
@@ -149,9 +148,9 @@ mod compile_tests {
         let expected = mu!(
             "a0",
             ife!(
-                core_syntax::Literal::new(0),
-                cut!(core_syntax::Literal::new(1), covar!("a0")),
-                cut!(core_syntax::Literal::new(2), covar!("a0"))
+                lit!(0),
+                cut!(lit!(1), covar!("a0")),
+                cut!(lit!(2), covar!("a0"))
             )
         )
         .into();
@@ -184,7 +183,7 @@ mod compile_tests {
             "a0",
             ife!(
                 var!("x"),
-                cut!(core_syntax::Literal::new(1), covar!("a0")),
+                cut!(lit!(1), covar!("a0")),
                 cut!(var!("x"), covar!("a0"))
             )
         )

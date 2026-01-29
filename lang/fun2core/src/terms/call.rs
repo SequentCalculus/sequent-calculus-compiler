@@ -39,13 +39,12 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term,
         syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
-    use macros::{call, covar, mu, ty};
+    use macros::{call, covar, lit, mu, ty};
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]
@@ -83,11 +82,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!(
-            "a0",
-            call!("fac", [core_syntax::Literal::new(3), covar!("a0")])
-        )
-        .into();
+        let expected = mu!("a0", call!("fac", [lit!(3), covar!("a0")])).into();
         assert_eq!(result, expected)
     }
 }

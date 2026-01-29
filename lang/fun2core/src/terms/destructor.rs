@@ -46,10 +46,9 @@ impl Compile for fun::syntax::terms::Destructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
     use core_lang::syntax::terms::Prd;
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
-    use macros::{bind, clause, cns, cocase, covar, cut, dtor, mu, ty};
+    use macros::{bind, clause, cns, cocase, covar, cut, dtor, lit, mu, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -81,13 +80,13 @@ mod compile_tests {
                             Prd,
                             "fst",
                             [bind!("a1", cns!())],
-                            cut!(core_syntax::Literal::new(1), covar!("a1"))
+                            cut!(lit!(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
                             [bind!("a2", cns!())],
-                            cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
+                            cut!(lit!(2), covar!("a2"))
                         )
                     ],
                     ty!("LPair[i64, i64]")
@@ -129,13 +128,13 @@ mod compile_tests {
                             Prd,
                             "fst",
                             [bind!("a1", cns!())],
-                            cut!(core_syntax::terms::Literal::new(1), covar!("a1"))
+                            cut!(lit!(1), covar!("a1"))
                         ),
                         clause!(
                             Prd,
                             "snd",
                             [bind!("a2", cns!())],
-                            cut!(core_syntax::terms::Literal::new(2), covar!("a2"))
+                            cut!(lit!(2), covar!("a2"))
                         )
                     ],
                     ty!("LPair[i64, i64]")

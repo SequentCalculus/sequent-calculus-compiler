@@ -50,9 +50,8 @@ impl Compile for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
-    use macros::{covar, ctor, cut, mu, mutilde, prod, ty, var};
+    use macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -78,7 +77,7 @@ mod compile_tests {
         let expected = mu!(
             "a0",
             cut!(
-                core_syntax::Literal::new(1),
+                lit!(1),
                 mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
             )
         )

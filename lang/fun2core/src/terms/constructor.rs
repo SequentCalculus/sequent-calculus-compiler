@@ -66,12 +66,11 @@ impl Compile for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-    use macros::{ctor, ty};
+    use macros::{ctor, lit, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -99,10 +98,7 @@ mod compile_tests {
 
         let expected = ctor!(
             "Cons",
-            [
-                core_syntax::Literal::new(1),
-                ctor!("Nil", [], ty!("List[i64]"))
-            ],
+            [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
             ty!("List[i64]")
         )
         .into();

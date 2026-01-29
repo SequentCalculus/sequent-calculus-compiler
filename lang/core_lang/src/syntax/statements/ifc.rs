@@ -291,33 +291,28 @@ impl Focusing for IfC {
 mod transform_tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{covar, cut, exit, fs_cut, fs_ife, fs_mutilde, ife, var};
+    use macros::{covar, cut, exit, fs_cut, fs_ife, fs_mutilde, ife, lit, var};
     extern crate self as core_lang;
 
     #[test]
     fn transform_ife1() {
         let result = ife!(
-            Literal::new(2),
-            Literal::new(1),
-            cut!(Literal::new(1), covar!("a")),
+            lit!(2),
+            lit!(1),
+            cut!(lit!(1), covar!("a")),
             exit!(var!("x"))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
-            Literal::new(2),
+            lit!(2),
             fs_mutilde!(
                 "x0",
                 fs_cut!(
-                    Literal::new(1),
+                    lit!(1),
                     fs_mutilde!(
                         "x1",
-                        fs_ife!(
-                            "x0",
-                            "x1",
-                            fs_cut!(Literal::new(1), covar!("a")),
-                            FsExit::exit("x")
-                        )
+                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), FsExit::exit("x"))
                     )
                 )
             )
@@ -341,21 +336,13 @@ mod transform_tests {
 
     #[test]
     fn transform_ifz1() {
-        let result = ife!(
-            Literal::new(1),
-            cut!(Literal::new(1), covar!("a")),
-            exit!(var!("x"))
-        )
-        .focus(&mut Default::default());
+        let result = ife!(lit!(1), cut!(lit!(1), covar!("a")), exit!(var!("x")))
+            .focus(&mut Default::default());
         let expected = fs_cut!(
-            Literal::new(1),
+            lit!(1),
             fs_mutilde!(
                 "x0",
-                fs_ife!(
-                    "x0",
-                    fs_cut!(Literal::new(1), covar!("a")),
-                    FsExit::exit("x")
-                )
+                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), FsExit::exit("x"))
             )
         )
         .into();

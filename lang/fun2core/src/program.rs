@@ -58,7 +58,6 @@ mod compile_tests {
         program::compile_prog,
     };
     use codespan::Span;
-    use core_lang::syntax as core_syntax;
     use fun::syntax::{
         Chirality,
         declarations::Def,
@@ -66,7 +65,7 @@ mod compile_tests {
         terms::{Lit, XVar},
         types::Ty,
     };
-    use macros::{bind, cns, covar, cut, def, exit, mutilde, prd, var};
+    use macros::{bind, cns, covar, cut, def, exit, lit, mutilde, prd, var};
     use std::collections::HashSet;
 
     fn example_def1() -> Def {
@@ -124,10 +123,7 @@ mod compile_tests {
         let expected = def!(
             "main",
             [bind!("a", cns!())],
-            cut!(
-                core_syntax::Literal::new(1),
-                mutilde!("x0", exit!(var!("x0")))
-            ),
+            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
             ["a", "x0"]
         );
 
@@ -165,10 +161,7 @@ mod compile_tests {
         let expected1 = def!(
             "main",
             [bind!("a", cns!())],
-            cut!(
-                core_syntax::Literal::new(1),
-                mutilde!("x0", exit!(var!("x0")))
-            ),
+            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
             ["a", "x0"]
         );
         let expected2 = def!(

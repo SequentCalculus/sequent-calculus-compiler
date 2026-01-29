@@ -74,7 +74,7 @@ mod compile_tests {
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-    use macros::{bind, case, clause, covar, ctor, cut, mu, ty, var};
+    use macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -103,20 +103,12 @@ mod compile_tests {
             cut!(
                 ctor!(
                     "Cons",
-                    [
-                        core_syntax::Literal::new(1),
-                        ctor!("Nil", [], ty!("List[i64]"))
-                    ],
+                    [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
                     ty!("List[i64]")
                 ),
                 case!(
                     [
-                        clause!(
-                            core_syntax::Cns,
-                            "Nil",
-                            [],
-                            cut!(core_syntax::Literal::new(0), covar!("a0"))
-                        ),
+                        clause!(core_syntax::Cns, "Nil", [], cut!(lit!(0), covar!("a0"))),
                         clause!(
                             core_syntax::Cns,
                             "Cons",

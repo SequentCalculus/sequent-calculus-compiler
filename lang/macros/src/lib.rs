@@ -50,6 +50,12 @@ pub fn covar(input: TokenStream) -> TokenStream {
     xvar(input, Chirality::Cns)
 }
 
+#[doc = include_str!("../doc/lit.md")]
+#[proc_macro]
+pub fn lit(input: TokenStream) -> TokenStream {
+    terms::lit(input)
+}
+
 #[doc = include_str!("../doc/ctor.md")]
 #[proc_macro]
 pub fn ctor(input: TokenStream) -> TokenStream {

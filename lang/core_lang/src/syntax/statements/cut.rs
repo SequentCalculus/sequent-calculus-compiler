@@ -198,7 +198,7 @@ mod tests {
     use crate::syntax::*;
     use crate::traits::*;
     use macros::{
-        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, prd, ty, var,
+        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
     };
     extern crate self as core_lang;
 
@@ -208,7 +208,7 @@ mod tests {
         let result = cut!(
             ctor!(
                 "Cons",
-                [Literal::new(1), ctor!("Nil", [], ty!("ListInt"))],
+                [lit!(1), ctor!("Nil", [], ty!("ListInt"))],
                 ty!("ListInt")
             ),
             covar!("a", ty!("ListInt")),
@@ -217,7 +217,7 @@ mod tests {
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
-            Literal::new(1),
+            lit!(1),
             fs_mutilde!(
                 "x0",
                 fs_cut!(

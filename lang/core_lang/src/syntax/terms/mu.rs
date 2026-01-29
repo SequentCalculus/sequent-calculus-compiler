@@ -256,11 +256,11 @@ impl Bind for Mu<Cns> {
 mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
-        syntax::{FsStatement, statements::FsExit, terms::Literal},
+        syntax::{FsStatement, statements::FsExit},
         test_common::example_subst,
     };
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mu, fs_mutilde, mu, mutilde, var};
+    use macros::{covar, cut, fs_cut, fs_mu, fs_mutilde, lit, mu, mutilde, var};
 
     // Substitution tests
 
@@ -285,16 +285,16 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = mu!("a", cut!(Literal::new(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(Literal::new(1), covar!("a")));
+        let example = mu!("a", cut!(lit!(1), covar!("a")));
+        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
 
     #[test]
     fn bind_mu() {
-        let example = mu!("a", cut!(Literal::new(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(Literal::new(1), covar!("a")));
+        let example = mu!("a", cut!(lit!(1), covar!("a")));
+        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
         let result = example.clone().bind(
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),

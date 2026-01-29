@@ -270,7 +270,7 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, prod, sum, var};
+    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
         prod!(var!("x"), var!("x")).into()
@@ -286,14 +286,13 @@ mod tests {
 
     #[test]
     fn transform_op1() {
-        let result = cut!(sum!(Literal::new(1), Literal::new(2)), covar!("a"))
-            .focus(&mut Default::default());
+        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a")).focus(&mut Default::default());
         let expected = fs_cut!(
-            Literal::new(1),
+            lit!(1),
             fs_mutilde!(
                 "x0",
                 fs_cut!(
-                    Literal::new(2),
+                    lit!(2),
                     fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
                 )
             )
