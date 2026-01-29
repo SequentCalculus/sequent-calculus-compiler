@@ -7,7 +7,7 @@ use core_lang::syntax::terms::{
     op::{BinOp, Op},
     Term,
 };
-use macros::sum;
+use core_macros::sum;
 use std::rc::Rc;
 
 let sum1 = sum!(Literal::new(1), Literal::new(2));

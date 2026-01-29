@@ -3,7 +3,7 @@ Create a [`core_lang::syntax::terms::op::FsOp`] with
 
 ```
 use core_lang::syntax::terms::op::{BinOp, FsOp};
-use macros::fs_rem;
+use core_macros::fs_rem;
 let rem1 = fs_rem!("x", "y");
 let rem2 = FsOp {
     fst: "x".to_string(),

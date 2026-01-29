@@ -197,7 +197,7 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{
+    use core_macros::{
         bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
     };
     extern crate self as core_lang;

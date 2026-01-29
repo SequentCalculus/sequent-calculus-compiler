@@ -39,12 +39,12 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{call, covar, lit, mu, ty};
     use fun::{
         parse_term,
         syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
-    use macros::{call, covar, lit, mu, ty};
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]

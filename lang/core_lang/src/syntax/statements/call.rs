@@ -123,7 +123,7 @@ impl TypedFreeVars for FsCall {
 mod transform_tests {
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, call, cns, covar, fs_call, prd, var};
+    use core_macros::{bind, call, cns, covar, fs_call, prd, var};
 
     #[test]
     fn transform_call1() {

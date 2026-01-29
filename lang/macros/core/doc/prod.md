@@ -7,7 +7,7 @@ use core_lang::syntax::terms::{
     op::{BinOp, Op},
     Term,
 };
-use macros::prod;
+use core_macros::prod;
 use std::rc::Rc;
 
 let prod1 = prod!(Literal::new(1), Literal::new(2));

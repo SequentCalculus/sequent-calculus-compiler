@@ -10,7 +10,7 @@ use core_lang::syntax::{
     types::Ty,
     Prd,
 };
-use macros::mu;
+use core_macros::mu;
 use std::rc::Rc;
 
 let mu1 = mu!("a", Exit::exit(XVar::var("x", Ty::I64), Ty::I64));

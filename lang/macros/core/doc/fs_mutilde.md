@@ -9,7 +9,7 @@ use core_lang::syntax::{
     types::Ty,
     Cns,
 };
-use macros::fs_mutilde;
+use core_macros::fs_mutilde;
 use std::rc::Rc;
 
 let mu1 = fs_mutilde!("x", FsExit::exit("x"));

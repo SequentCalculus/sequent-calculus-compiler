@@ -65,8 +65,8 @@ impl Compile for fun::syntax::terms::Op {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{lit, prod, sub, ty, var};
     use fun::{parse_term, typing::check::Check};
-    use macros::{lit, prod, sub, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 

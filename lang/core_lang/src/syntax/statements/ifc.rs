@@ -290,7 +290,7 @@ impl Focusing for IfC {
 #[cfg(test)]
 mod transform_tests {
     use crate::traits::*;
-    use macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
+    use core_macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
     extern crate self as core_lang;
 
     #[test]

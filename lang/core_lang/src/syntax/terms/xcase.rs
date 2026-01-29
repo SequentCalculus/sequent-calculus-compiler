@@ -157,7 +157,9 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var};
+    use core_macros::{
+        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var,
+    };
 
     #[test]
     fn focus_clause() {

@@ -8,7 +8,7 @@ use core_lang::syntax::{
     types::Ty,
     Cns,
 };
-use macros::fs_dtor;
+use core_macros::fs_dtor;
 let xtor1 = fs_dtor!(
     "apply",
     [ContextBinding {

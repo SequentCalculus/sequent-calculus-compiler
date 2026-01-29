@@ -8,7 +8,7 @@ use core_lang::syntax::{
     types::Ty,
     Prd,
 };
-use macros::fs_ctor;
+use core_macros::fs_ctor;
 let xtor1 = fs_ctor!(
     "Cons",
     [

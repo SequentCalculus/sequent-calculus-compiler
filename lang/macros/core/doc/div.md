@@ -7,7 +7,7 @@ use core_lang::syntax::terms::{
     op::{BinOp, Op},
     Term,
 };
-use macros::div;
+use core_macros::div;
 use std::rc::Rc;
 
 let div1 = div!(Literal::new(1), Literal::new(2));

@@ -7,7 +7,7 @@ use core_lang::syntax::terms::{
     op::{BinOp, Op},
     Term,
 };
-use macros::rem;
+use core_macros::rem;
 use std::rc::Rc;
 
 let rem1 = rem!(Literal::new(1), Literal::new(2));

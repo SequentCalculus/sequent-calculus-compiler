@@ -7,7 +7,7 @@ use core_lang::syntax::{
     terms::{FsTerm, XVar},
     types::Ty,
 };
-use macros::fs_cut;
+use core_macros::fs_cut;
 use std::rc::Rc;
 
 let cut1 = fs_cut!(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64));

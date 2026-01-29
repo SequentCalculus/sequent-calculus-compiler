@@ -70,7 +70,7 @@ impl<D: Print> Print for Prog<D> {
 mod program_tests {
     use crate::syntax::*;
     extern crate self as core_lang;
-    use macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
+    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         let mut ctx = TypingContext::default();

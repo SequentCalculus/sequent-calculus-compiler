@@ -6,7 +6,7 @@ use core_lang::syntax::{
     statements::call::FsCall,
     types::Ty,
 };
-use macros::fs_call;
+use core_macros::fs_call;
 
 let call1 = fs_call!(
     "exit",

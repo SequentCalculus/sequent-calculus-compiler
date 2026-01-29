@@ -68,7 +68,7 @@ mod lit_tests {
     use crate::syntax::*;
     use crate::traits::*;
 
-    use macros::{fs_cut, fs_exit, fs_mutilde, lit};
+    use core_macros::{fs_cut, fs_exit, fs_mutilde, lit};
     extern crate self as core_lang;
     // Focusing tests
 

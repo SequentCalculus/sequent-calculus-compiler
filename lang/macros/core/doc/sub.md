@@ -7,7 +7,7 @@ use core_lang::syntax::terms::{
     op::{BinOp, Op},
     Term,
 };
-use macros::sub;
+use core_macros::sub;
 use std::rc::Rc;
 
 let sub1 = sub!(Literal::new(1), Literal::new(2));

@@ -3,7 +3,7 @@ Create a [`core_lang::syntax::terms::op::FsOp`] with
 
 ```
 use core_lang::syntax::terms::op::{BinOp, FsOp};
-use macros::fs_sum;
+use core_macros::fs_sum;
 let sum1 = fs_sum!("x", "y");
 let sum2 = FsOp {
     fst: "x".to_string(),

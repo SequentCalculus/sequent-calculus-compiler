@@ -11,7 +11,7 @@ use core_lang::syntax::{
     terms::{literal::Literal, Term},
     types::Ty,
 };
-use macros::ife;
+use core_macros::ife;
 use std::rc::Rc;
 
 let if1 = ife!(

@@ -7,7 +7,7 @@ use core_lang::syntax::{
     statements::{exit::FsExit, FsStatement},
     types::Ty,
 };
-use macros::fs_def;
+use core_macros::fs_def;
 use std::{collections::HashSet, rc::Rc};
 
 let def1 = fs_def!(

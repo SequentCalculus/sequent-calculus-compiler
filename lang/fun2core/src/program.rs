@@ -58,6 +58,7 @@ mod compile_tests {
         program::compile_prog,
     };
     use codespan::Span;
+    use core_macros::{bind, cns, covar, cut, def, exit, lit, mutilde, prd, var};
     use fun::syntax::{
         Chirality,
         declarations::Def,
@@ -65,7 +66,6 @@ mod compile_tests {
         terms::{Lit, XVar},
         types::Ty,
     };
-    use macros::{bind, cns, covar, cut, def, exit, lit, mutilde, prd, var};
     use std::collections::HashSet;
 
     fn example_def1() -> Def {

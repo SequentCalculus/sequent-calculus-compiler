@@ -10,7 +10,7 @@ use core_lang::syntax::{
     types::Ty,
     Cns,
 };
-use macros::mutilde;
+use core_macros::mutilde;
 use std::rc::Rc;
 
 let mu1 = mutilde!("x", Exit::exit(XVar::var("x", Ty::I64), Ty::I64));

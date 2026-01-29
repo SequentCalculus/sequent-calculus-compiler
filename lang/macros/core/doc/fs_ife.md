@@ -11,7 +11,7 @@ use core_lang::syntax::{
     terms::{FsTerm, Literal},
     types::Ty,
 };
-use macros::fs_ife;
+use core_macros::fs_ife;
 use std::rc::Rc;
 
 let if1 = fs_ife!("x", "y", FsExit::exit("x"), FsExit::exit("y"));

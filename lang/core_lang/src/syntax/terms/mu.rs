@@ -260,7 +260,7 @@ mod mu_tests {
         test_common::example_subst,
     };
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
+    use core_macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
 
     // Substitution tests
 

@@ -3,7 +3,7 @@ Create a [`core_lang::syntax::terms::op::FsOp`] with
 
 ```
 use core_lang::syntax::terms::op::{BinOp, FsOp};
-use macros::fs_div;
+use core_macros::fs_div;
 let div1 = fs_div!("x", "y");
 let div2 = FsOp {
     fst: "x".to_string(),

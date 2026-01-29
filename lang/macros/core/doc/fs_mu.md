@@ -9,7 +9,7 @@ use core_lang::syntax::{
     types::Ty,
     Prd,
 };
-use macros::fs_mu;
+use core_macros::fs_mu;
 use std::rc::Rc;
 
 let mu1 = fs_mu!("a", FsExit::exit("a"));

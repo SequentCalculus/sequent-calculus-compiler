@@ -270,7 +270,7 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
+    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
         prod!(var!("x"), var!("x")).into()

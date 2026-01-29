@@ -66,8 +66,8 @@ impl Compile for fun::syntax::terms::IfC {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{covar, cut, ife, lit, mu, ty, var};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ife, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 

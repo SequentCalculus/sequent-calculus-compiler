@@ -2,7 +2,7 @@ Create [`core_lang::syntax::context::Chirality::Prd`]
 
 ```
 use core_lang::syntax::context::Chirality;
-use macros::prd;
+use core_macros::prd;
 
 let cns1 = prd!();
 let cns2 = Chirality::Prd;

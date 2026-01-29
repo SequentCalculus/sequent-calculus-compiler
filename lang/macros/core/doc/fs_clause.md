@@ -8,7 +8,7 @@ use core_lang::syntax::{
     types::Ty,
     Prd,
 };
-use macros::fs_clause;
+use core_macros::fs_clause;
 use std::rc::Rc;
 
 let clause1 = fs_clause!(
