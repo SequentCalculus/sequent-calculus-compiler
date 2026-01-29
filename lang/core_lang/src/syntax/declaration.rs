@@ -12,12 +12,12 @@ pub trait Polarity {
     fn is_data(&self) -> bool;
 }
 
-/// This marker struct is used to instantiate a type parameter satisfying the [DataCodata] marker
+/// This marker struct is used to instantiate a type parameter satisfying the [Polarity] marker
 /// trait as data.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Data;
 
-/// This marker struct is used to instantiate a type parameter satisfying the [DataCodata] marker
+/// This marker struct is used to instantiate a type parameter satisfying the [Polarity] marker
 /// trait as codata.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Codata;

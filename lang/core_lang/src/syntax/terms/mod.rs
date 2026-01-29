@@ -36,11 +36,11 @@ pub trait Chi: Clone {
     }
 }
 
-/// This marker struct is used to instantiate a type parameter satisfying the [PrdCns] marker trait
+/// This marker struct is used to instantiate a type parameter satisfying the [Chi] marker trait
 /// as producer.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Prd;
-/// This marker struct is used to instantiate a type parameter satisfying the [PrdCns] marker trait
+/// This marker struct is used to instantiate a type parameter satisfying the [Chi] marker trait
 /// as consumer.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Cns;

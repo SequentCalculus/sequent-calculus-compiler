@@ -1,4 +1,4 @@
-Create a [`core_lang::syntax::terms::literal::Lit`]
+Create a [`core_lang::syntax::terms::literal::Literal`]
 
 ```
 use core_lang::syntax::terms::literal::Literal;

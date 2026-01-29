@@ -1,4 +1,4 @@
-Create a [`core_lang::syntax::terms::FsMu`] with chirality
+Create a [`core_lang::syntax::terms::mu::FsMu`] with chirality
 [`core_lang::syntax::Cns`] that is, a focused mu-tilde binding. If no type is
 provided, [`core_lang::syntax::types::Ty::I64`] is used
 

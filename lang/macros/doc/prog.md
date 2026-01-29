@@ -1,4 +1,4 @@
-Create a [`core_lang::syntax::program::Program`] ///
+Create a [`core_lang::syntax::program::Prog`] ///
 
 ```
 use core_lang::syntax::{

@@ -1,5 +1,5 @@
 Create a [`core_lang::syntax::terms::op::Op`] with
-[`core_lang::syhntax::terms::op::BinOp::Rem`]
+[`core_lang::syntax::terms::op::BinOp::Rem`]
 
 ```
 use core_lang::syntax::terms::{
