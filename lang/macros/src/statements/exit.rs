@@ -1,4 +1,4 @@
-use crate::utils::parse_args;
+use crate::utils::{expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -12,4 +12,10 @@ pub fn exit(input: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+pub fn fs_exit(input: TokenStream) -> TokenStream {
+    let args = parse_args(input, &["Exit Var"], false);
+    let var = expr_to_str(&args[0]);
+    quote! { core_lang::syntax::statements::exit::FsExit { var: #var.to_string() } }.into()
 }

@@ -232,6 +232,12 @@ pub fn exit(input: TokenStream) -> TokenStream {
     statements::exit(input)
 }
 
+#[doc = include_str!("../doc/fs_exit.md")]
+#[proc_macro]
+pub fn fs_exit(input: TokenStream) -> TokenStream {
+    statements::fs_exit(input)
+}
+
 #[doc=include_str!("../doc/div.md")]
 #[proc_macro]
 pub fn div(input: TokenStream) -> TokenStream {

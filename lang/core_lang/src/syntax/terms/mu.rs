@@ -260,7 +260,7 @@ mod mu_tests {
         test_common::example_subst,
     };
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mu, fs_mutilde, lit, mu, mutilde, var};
+    use macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
 
     // Substitution tests
 
@@ -299,7 +299,7 @@ mod mu_tests {
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(example_var, fs_mutilde!("x0", FsExit::exit("x0"))).into();
+        let expected = fs_cut!(example_var, fs_mutilde!("x0", fs_exit!("x0"))).into();
         assert_eq!(result, expected)
     }
 }

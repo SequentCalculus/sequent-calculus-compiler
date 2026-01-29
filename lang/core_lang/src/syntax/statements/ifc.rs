@@ -289,9 +289,8 @@ impl Focusing for IfC {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::syntax::*;
     use crate::traits::*;
-    use macros::{covar, cut, exit, fs_cut, fs_ife, fs_mutilde, ife, lit, var};
+    use macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
     extern crate self as core_lang;
 
     #[test]
@@ -312,7 +311,7 @@ mod transform_tests {
                     lit!(1),
                     fs_mutilde!(
                         "x1",
-                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), FsExit::exit("x"))
+                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
                     )
                 )
             )
@@ -330,7 +329,7 @@ mod transform_tests {
             cut!(var!("x"), covar!("a"))
         )
         .focus(&mut Default::default());
-        let expected = fs_ife!("x", "x", FsExit::exit("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let expected = fs_ife!("x", "x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 
@@ -342,7 +341,7 @@ mod transform_tests {
             lit!(1),
             fs_mutilde!(
                 "x0",
-                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), FsExit::exit("x"))
+                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
             )
         )
         .into();
@@ -352,7 +351,7 @@ mod transform_tests {
     fn transform_ifz2() {
         let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
             .focus(&mut Default::default());
-        let expected = fs_ife!("x", FsExit::exit("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let expected = fs_ife!("x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 }
