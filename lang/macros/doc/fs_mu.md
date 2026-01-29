@@ -3,21 +3,21 @@ Create a [`core_lang::syntax::terms::FsMu`] with chirality
 provided, [`core_lang::syntax::types::Ty::I64`] is used
 
 ```
-use macros::fs_mu;
 use core_lang::syntax::{
-    Prd, 
-    statements::{FsExit,FsStatement}, 
-    terms::{XVar,mu::FsMu},
-    types::Ty
+    statements::{FsExit, FsStatement},
+    terms::{mu::FsMu, XVar},
+    types::Ty,
+    Prd,
 };
+use macros::fs_mu;
 use std::rc::Rc;
 
-let mu1 = fs_mu!("a",FsExit::exit("a"));
-let mu2 = FsMu{
-    prdcns:Prd, 
-    variable:"a".to_string(),
-    statement:Rc::new(FsStatement::from(FsExit::exit("a"))),
-    ty:Ty::I64
+let mu1 = fs_mu!("a", FsExit::exit("a"));
+let mu2 = FsMu {
+    prdcns: Prd,
+    variable: "a".to_string(),
+    statement: Rc::new(FsStatement::from(FsExit::exit("a"))),
+    ty: Ty::I64,
 };
-assert_eq!(mu1,mu2)
+assert_eq!(mu1, mu2)
 ```

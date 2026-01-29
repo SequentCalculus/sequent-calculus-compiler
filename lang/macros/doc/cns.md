@@ -6,5 +6,5 @@ use macros::cns;
 
 let cns1 = cns!();
 let cns2 = Chirality::Cns;
-assert_eq!(cns1,cns2)
+assert_eq!(cns1, cns2)
 ```
