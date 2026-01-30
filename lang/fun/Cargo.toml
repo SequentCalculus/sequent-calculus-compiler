@@ -1,5 +1,6 @@
 [package]
-name = "fun"
+name        = "fun"
+description = "The Fun surface language"
 
 version.workspace      = true
 edition.workspace      = true

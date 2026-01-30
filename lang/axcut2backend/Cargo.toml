@@ -1,5 +1,6 @@
 [package]
-name = "axcut2backend"
+name        = "axcut2backend"
+description = "Translation of AxCut to backend IR"
 
 version.workspace      = true
 edition.workspace      = true

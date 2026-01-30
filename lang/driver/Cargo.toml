@@ -1,5 +1,6 @@
 [package]
-name = "driver"
+name        = "driver"
+description = "The compiler driver that orchestrates the different compilation steps"
 
 version.workspace      = true
 edition.workspace      = true

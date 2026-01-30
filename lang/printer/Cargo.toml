@@ -1,5 +1,6 @@
 [package]
-name = "printer"
+name        = "printer"
+description = "Utilities for prettyprinting code"
 
 version.workspace      = true
 edition.workspace      = true

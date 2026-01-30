@@ -1,5 +1,6 @@
 [package]
-name = "core2axcut"
+name        = "core2axcut"
+description = "Translating the Core intermediate representation to AxCut"
 
 version.workspace      = true
 edition.workspace      = true

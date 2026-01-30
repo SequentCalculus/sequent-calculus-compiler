@@ -1,5 +1,6 @@
 [package]
-name = "fun2core"
+name        = "fun2core"
+description = "Translating the Fun surface language to the Core intermediate representation"
 
 version.workspace      = true
 edition.workspace      = true

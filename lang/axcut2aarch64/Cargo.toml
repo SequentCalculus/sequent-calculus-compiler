@@ -1,5 +1,6 @@
 [package]
-name = "axcut2aarch64"
+name        = "axcut2aarch64"
+description = "Translating AxCut to aarch64 instructions"
 
 version.workspace      = true
 edition.workspace      = true

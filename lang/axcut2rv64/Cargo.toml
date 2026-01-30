@@ -1,5 +1,6 @@
 [package]
-name = "axcut2rv64"
+name        = "axcut2rv64"
+description = "Translating AxCut to 64-Bit Risc-V instructions"
 
 version.workspace      = true
 edition.workspace      = true
