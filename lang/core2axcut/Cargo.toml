@@ -1,11 +1,18 @@
 [package]
-name = "core2axcut"
+name        = "core2axcut"
+description = "Translating the Core intermediate representation to AxCut"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-axcut = { path="../axcut" }
-core_lang = { path="../core_lang" }
-printer = { path="../printer" }
+# Workspace members
+axcut     = { workspace = true }
+core_lang = { workspace = true }
+printer   = { workspace = true }

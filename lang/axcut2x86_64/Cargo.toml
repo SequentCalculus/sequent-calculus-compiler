@@ -1,14 +1,21 @@
 [package]
-name = "axcut2x86_64"
+name        = "axcut2x86_64"
+description = "Translating AxCut to x86-64 instructions"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-axcut2backend = { path = "../axcut2backend" }
-printer = { path = "../printer" }
+# Workspace members
+axcut         = { workspace = true }
+axcut2backend = { workspace = true }
+printer       = { workspace = true }
 
 [dev-dependencies]
 goldenfile = { workspace = true }

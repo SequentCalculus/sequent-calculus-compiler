@@ -1,3 +1,7 @@
+// FIXME: Ignore false positive lints resulting from a bug in Rust 1.92
+// https://github.com/rust-lang/rust/issues/147648
+#![allow(unused_assignments)]
+
 //! This module contains some helper functions and errors for the Fun parser.
 use lalrpop_util::lexer::Token;
 use miette::{Diagnostic, SourceOffset, SourceSpan};

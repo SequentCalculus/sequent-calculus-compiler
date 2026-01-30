@@ -1,10 +1,17 @@
 [package]
-name = "axcut2backend"
+name        = "axcut2backend"
+description = "Translation of AxCut to backend IR"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-printer = { path = "../printer" }
+# Workspace members
+axcut   = { workspace = true }
+printer = { workspace = true }

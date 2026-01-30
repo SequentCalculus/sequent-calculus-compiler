@@ -18,18 +18,33 @@ default-members = ["app"]
 resolver = "3"
 
 [workspace.package]
-version = "0.1.0"
-edition = "2024"
-authors = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
-license = "MIT OR Apache-2.0"
-categories = ["compilers"]
+version      = "0.1.0"
+edition      = "2024"
+rust-version = "1.87"
+authors      = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
+license      = "MIT OR Apache-2.0"
+homepage     = "https://github.com/SequentCalculus"
+repository   = "https://github.com/SequentCalculus/sequent-calculus-compiler"
+categories   = ["compilers"]
 
 [workspace.dependencies]
-# source code locations
-codespan = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
-# ignoring fields when deriving traits (e.g. Eq, Hash)
-derivative = { version = "2" }
-thiserror = { version = "1" }
-miette = { version = "5" }
-pretty = { version = "0.11", features = ["termcolor"] }
-goldenfile = { version = "1.7.3" }
+codespan     = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }
+derivative   = { version = "2" }
+thiserror    = { version = "1" }
+miette       = { version = "5" }
+pretty       = { version = "0.11", features = ["termcolor"] }
+goldenfile   = { version = "1.7.3" }
+
+# Workspace members
+axcut         = { version = "0.1.0", path = "./lang/axcut" }
+axcut2aarch64 = { version = "0.1.0", path = "./lang/axcut2aarch64" }
+axcut2backend = { version = "0.1.0", path = "./lang/axcut2backend" }
+axcut2rv64    = { version = "0.1.0", path = "./lang/axcut2rv64" }
+axcut2x86_64  = { version = "0.1.0", path = "./lang/axcut2x86_64" }
+core_lang     = { version = "0.1.0", path = "./lang/core_lang" }
+core2axcut    = { version = "0.1.0", path = "./lang/core2axcut" }
+driver        = { version = "0.1.0", path = "./lang/driver" }
+fun           = { version = "0.1.0", path = "./lang/fun" }
+fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
+printer       = { version = "0.1.0", path = "./lang/printer" }
+

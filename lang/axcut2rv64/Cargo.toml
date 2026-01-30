@@ -1,13 +1,20 @@
 [package]
-name = "axcut2rv64"
+name        = "axcut2rv64"
+description = "Translating AxCut to 64-Bit Risc-V instructions"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-axcut2backend = { path = "../axcut2backend" }
+# Workspace members
+axcut         = { workspace = true }
+axcut2backend = { workspace = true }
 
 [dev-dependencies]
 goldenfile = { workspace = true }

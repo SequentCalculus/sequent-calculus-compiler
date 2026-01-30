@@ -1,9 +1,16 @@
 [package]
-name = "core_lang"
+name        = "core_lang"
+description = "The Core intermediate representation"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-printer = { path = "../printer" }
+# Workspace members
+printer = { workspace = true }
