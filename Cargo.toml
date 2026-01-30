@@ -18,11 +18,14 @@ default-members = ["app"]
 resolver = "3"
 
 [workspace.package]
-version = "0.1.0"
-edition = "2024"
-authors = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
-license = "MIT OR Apache-2.0"
-categories = ["compilers"]
+version      = "0.1.0"
+edition      = "2024"
+rust-version = "1.85"
+authors      = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
+license      = "MIT OR Apache-2.0"
+homepage     = "https://github.com/SequentCalculus"
+repository   = "https://github.com/SequentCalculus/sequent-calculus-compiler"
+categories   = ["compilers"]
 
 [workspace.dependencies]
 codespan     = { git = "https://github.com/polarity-lang/codespan.git", rev = "542320ab177fd38fff3a398a97b3f0352e065149" }

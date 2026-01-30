@@ -1,9 +1,14 @@
 [package]
 name = "testsuite"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 autobins = false
 
@@ -13,9 +18,11 @@ path = "src/main.rs"
 harness = false
 
 [dependencies]
-# Workspace dependencies
-driver = { path = "../lang/driver" }
-fun = { path = "../lang/fun" }
-printer = {path = "../lang/printer" }
+# External dependencies
 basic-toml = { version = "0.1.9" }
-serde = { version = "1.0.217" }
+serde      = { version = "1.0.217" }
+
+# Workspace members
+driver  = { workspace = true }
+fun     = { workspace = true }
+printer = { workspace = true }
