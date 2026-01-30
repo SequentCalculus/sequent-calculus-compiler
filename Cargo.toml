@@ -15,12 +15,12 @@ members = [
     "lang/printer",
 ]
 default-members = ["app"]
-resolver = "3"
+resolver = "2"
 
 [workspace.package]
 version      = "0.1.0"
 edition      = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 authors      = ["Marius Müller", "Marco Tzschentke", "Philipp Schuster", "Jonathan Immanuel Brachthäuser", "Klaus Ostermann", "David Binder"]
 license      = "MIT OR Apache-2.0"
 homepage     = "https://github.com/SequentCalculus"
