@@ -1,6 +1,7 @@
 //! This module defines the command-line interface of the `scc` compiler.
 
 use clap::{Parser, Subcommand};
+use printer::{ColorChoice, Print, PrintCfg, StandardStream};
 
 mod check;
 mod clean;
@@ -13,7 +14,22 @@ mod linearize;
 mod shrink;
 mod texify;
 
-/// This functions executes the compiler. It parsed the command to perform and then performs it.
+/// This function prints a given `printable` object to stdout. The `colored` flag controls whether
+/// the result of printing is colorful.
+pub fn print_stdout<P: Print>(printable: &P, colored: bool) {
+    let mut stream = Box::new(StandardStream::stdout(ColorChoice::Auto));
+    if colored {
+        printable
+            .print_colored(&PrintCfg::default(), &mut stream)
+            .expect("Failed to print to stdout");
+    } else {
+        printable
+            .print_io(&PrintCfg::default(), &mut stream)
+            .expect("Failed to print to stdout");
+    }
+}
+
+/// This function executes the compiler. It parses the command to perform and then performs it.
 pub fn exec() -> miette::Result<()> {
     use Command::*;
     let cli = Cli::parse();
@@ -21,11 +37,11 @@ pub fn exec() -> miette::Result<()> {
         Check(args) => check::exec(args),
         Clean(args) => clean::exec(args),
         Codegen(args) => codegen::exec(args),
-        Compile(args) => compile::exec(args),
-        Focus(args) => focus::exec(args),
-        Fmt(args) => fmt::exec(args),
-        Linearize(args) => linearize::exec(args),
-        Shrink(args) => shrink::exec(args),
+        Compile(args) => compile::exec(args, !cli.no_color),
+        Focus(args) => focus::exec(args, !cli.no_color),
+        Fmt(args) => fmt::exec(args, !cli.no_color),
+        Linearize(args) => linearize::exec(args, !cli.no_color),
+        Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
     }
@@ -37,6 +53,8 @@ pub fn exec() -> miette::Result<()> {
 struct Cli {
     #[clap(subcommand)]
     command: Command,
+    #[clap(short, long)]
+    no_color: bool,
 }
 
 /// This enum encodes the commands the compiler can execute.

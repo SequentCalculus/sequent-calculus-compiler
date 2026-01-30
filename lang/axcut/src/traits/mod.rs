@@ -8,3 +8,4 @@
 pub mod free_vars;
 pub mod linearize;
 pub mod substitution;
+pub mod typed_free_vars;

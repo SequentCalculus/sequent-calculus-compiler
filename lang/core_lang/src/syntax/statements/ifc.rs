@@ -221,9 +221,9 @@ impl TypedFreeVars for FsIfC {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
-        if let Some(var) = self.snd.clone() {
+        if let Some(ref snd) = self.snd {
             vars.insert(ContextBinding {
-                var,
+                var: snd.clone(),
                 chi: Chirality::Prd,
                 ty: Ty::I64,
             });

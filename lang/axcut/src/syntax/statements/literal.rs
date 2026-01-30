@@ -9,8 +9,9 @@ use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines integer literals in AxCut. They consist of the literal, the variable the
@@ -58,6 +59,17 @@ impl FreeVars for Literal {
         vars.remove(&self.var);
 
         self
+    }
+}
+
+impl TypedFreeVars for Literal {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.next.typed_free_vars(vars);
+        vars.remove(&ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
     }
 }
 

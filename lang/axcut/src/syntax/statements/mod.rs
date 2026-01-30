@@ -28,12 +28,13 @@ pub use switch::Switch;
 
 use printer::Print;
 
-use super::{TypingContext, Var};
+use super::{ContextBinding, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// This enum defines the statements of AxCut. It contains one variant for each construct which
 /// simply wraps the struct defining the corresponding construct.
@@ -76,10 +77,25 @@ impl FreeVars for Statement {
             Statement::Op(op) => op.free_vars(vars).into(),
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
-            Statement::Exit(Exit { ref var }) => {
-                vars.insert(var.clone());
-                self
-            }
+            Statement::Exit(exit) => exit.free_vars(vars).into(),
+        }
+    }
+}
+
+impl TypedFreeVars for Statement {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        match self {
+            Statement::Substitute(substitute) => substitute.typed_free_vars(vars),
+            Statement::Call(call) => call.typed_free_vars(vars),
+            Statement::Let(r#let) => r#let.typed_free_vars(vars),
+            Statement::Switch(switch) => switch.typed_free_vars(vars),
+            Statement::Create(create) => create.typed_free_vars(vars),
+            Statement::Invoke(invoke) => invoke.typed_free_vars(vars),
+            Statement::Literal(lit) => lit.typed_free_vars(vars),
+            Statement::Op(op) => op.typed_free_vars(vars),
+            Statement::PrintI64(print) => print.typed_free_vars(vars),
+            Statement::IfC(ifc) => ifc.typed_free_vars(vars),
+            Statement::Exit(exit) => exit.typed_free_vars(vars),
         }
     }
 }

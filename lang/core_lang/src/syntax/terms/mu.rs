@@ -152,7 +152,8 @@ impl<C: Chi> TypedFreeVars for Mu<C> {
 
 impl<C: Chi> TypedFreeVars for FsMu<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        // all binders in focused terms are unique, so we do no need a fresh set under binders
+        // all binders in focused terms are unique in each path through the program, so we do not
+        // need a fresh set under binders
         self.statement.typed_free_vars(vars);
         let chi = if self.prdcns.is_prd() {
             Chirality::Cns

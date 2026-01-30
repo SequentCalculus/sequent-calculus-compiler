@@ -5,12 +5,13 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Statement, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines printing an integer in AxCut. It consists of the information whether a
@@ -54,6 +55,17 @@ impl FreeVars for PrintI64 {
         vars.insert(self.var.clone());
 
         self
+    }
+}
+
+impl TypedFreeVars for PrintI64 {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Ext,
+            ty: Ty::I64,
+        });
+        self.next.typed_free_vars(vars);
     }
 }
 

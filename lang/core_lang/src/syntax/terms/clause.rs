@@ -137,7 +137,8 @@ impl<C: Chi> TypedFreeVars for Clause<C> {
 
 impl<C: Chi> TypedFreeVars for FsClause<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        // all binders in focused terms are unique, so we do not need a fresh set under binders
+        // all binders in focused terms are unique in each path through the program, so we do not
+        // need a fresh set under binders
         self.body.typed_free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(binding);

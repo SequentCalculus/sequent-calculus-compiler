@@ -7,8 +7,9 @@ use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, fresh_var};
 use crate::traits::substitution::Subst;
+use crate::traits::typed_free_vars::TypedFreeVars;
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the pattern matching on an xtor in AxCut. It consists of the variable to
@@ -51,6 +52,17 @@ impl FreeVars for Switch {
         vars.insert(self.var.clone());
 
         self
+    }
+}
+
+impl TypedFreeVars for Switch {
+    fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
+        self.clauses.typed_free_vars(vars);
+        vars.insert(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Prd,
+            ty: self.ty.clone(),
+        });
     }
 }
 
