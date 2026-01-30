@@ -1,15 +1,17 @@
 [package]
 name = "fun2core"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-fun = { path = "../fun" }
-printer = { path = "../printer" }
-core_lang = { path = "../core_lang" }
-codespan = { workspace = true }
+# External dependencies
+codespan  = { workspace = true }
+
+# Workspace members
+fun       = { workspace = true }
+printer   = { workspace = true }
+core_lang = { workspace = true }
 
 [dev-dependencies]
-fun = { path = "../fun", features = ["test-common"] }
+fun = { workspace = true, features = ["test-common"] }

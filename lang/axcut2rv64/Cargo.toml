@@ -1,13 +1,13 @@
 [package]
 name = "axcut2rv64"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-axcut2backend = { path = "../axcut2backend" }
+# Workspace members
+axcut         = { workspace = true }
+axcut2backend = { workspace = true }
 
 [dev-dependencies]
 goldenfile = { workspace = true }

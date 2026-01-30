@@ -1,10 +1,10 @@
 [package]
 name = "axcut2backend"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-printer = { path = "../printer" }
+# Workspace members
+axcut   = { workspace = true }
+printer = { workspace = true }

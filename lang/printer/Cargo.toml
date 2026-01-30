@@ -1,10 +1,8 @@
 [package]
 name = "printer"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
-
 
 [dependencies]
 pretty = { workspace = true }

@@ -1,23 +1,24 @@
 [package]
 name = "driver"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-axcut = { path = "../axcut" }
-axcut2aarch64 = { path = "../axcut2aarch64" }
-axcut2backend = { path = "../axcut2backend" }
-axcut2x86_64 = { path = "../axcut2x86_64" }
-axcut2rv64 = { path = "../axcut2rv64" }
-fun = { path = "../fun" }
-fun2core = { path = "../fun2core" }
-core_lang = { path = "../core_lang" }
-core2axcut = { path = "../core2axcut" }
-printer = { path = "../printer" }
+# Workspace members
+axcut         = { workspace = true }
+axcut2aarch64 = { workspace = true }
+axcut2backend = { workspace = true }
+axcut2x86_64  = { workspace = true }
+axcut2rv64    = { workspace = true }
+fun           = { workspace = true }
+fun2core      = { workspace = true }
+core_lang     = { workspace = true }
+core2axcut    = { workspace = true }
+printer       = { workspace = true }
 
+# External dependencies
 thiserror = { workspace = true }
-miette = { workspace = true, features = ["fancy"] }
-opener = { version = "0.7.2" }
-askama = { version = "0.12.1" }
+miette    = { workspace = true, features = ["fancy"] }
+opener    = { version = "0.7.2" }
+askama    = { version = "0.12.1" }

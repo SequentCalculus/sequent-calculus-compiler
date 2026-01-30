@@ -1,7 +1,6 @@
 [package]
 name = "fun"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
@@ -14,14 +13,13 @@ test-common = []
 
 [dependencies]
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
-# Deriving
-derivative = { workspace = true }
-# Source code locations
-codespan = { workspace = true }
-# Error messages
-thiserror = { workspace = true }
-miette = { workspace = true }
-printer = { path = "../printer" }
+derivative   = { workspace = true }
+codespan     = { workspace = true }
+thiserror    = { workspace = true }
+miette       = { workspace = true }
+
+# Workspace members
+printer = { workspace = true }
 
 [build-dependencies]
 lalrpop = "0.20.2"

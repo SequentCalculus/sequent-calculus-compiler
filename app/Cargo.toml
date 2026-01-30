@@ -1,7 +1,6 @@
 [package]
 name = "scc"
 
-# Inherited from workspace Cargo.toml
 version.workspace = true
 edition.workspace = true
 
@@ -10,17 +9,18 @@ name = "scc"
 path = "src/main.rs"
 
 [dependencies]
-# CLI
-clap = { version = "4", features = ["derive"] }
+# External dependencies
+clap          = { version = "4", features = ["derive"] }
 clap_complete = { version = "4.5.38" }
-termsize = "0.1"
-# Workspace dependencies
-driver = { path = "../lang/driver" }
-printer = { path = "../lang/printer" }
-# fancy error messages
-miette = { workspace = true, features = ["fancy"] }
-thiserror = { workspace = true }
+termsize      = { version = "0.1" }
+miette        = { workspace = true, features = ["fancy"] }
+thiserror     = { workspace = true }
+
+# Workspace members
+driver  = { workspace = true }
+printer = { workspace = true }
+
+
 
 [dev-dependencies]
-# For testing the binary
 assert_cmd = "2.0.14"
