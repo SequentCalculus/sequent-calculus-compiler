@@ -17,6 +17,10 @@ name = "testsuite"
 path = "src/main.rs"
 harness = false
 
+[[test]]
+name = "macros"
+path = "src/macros.rs"
+
 [dependencies]
 # External dependencies
 basic-toml = { version = "0.1.9" }
