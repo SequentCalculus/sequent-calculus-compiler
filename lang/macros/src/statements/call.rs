@@ -8,8 +8,8 @@ use quote::quote;
 
 pub fn unfocused_call(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Called Name", "Arguments"], true);
-    let name = expr_to_str(&args[0]);
-    let call_args = arguments(&args[1]);
+    let name = expr_to_str(&args[0], 0);
+    let call_args = arguments(&args[1], 1);
     let ty = &args[2];
     quote! {
         core_lang::syntax::statements::call::Call{
@@ -23,8 +23,8 @@ pub fn unfocused_call(input: TokenStream) -> TokenStream {
 
 pub fn fs_call(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Called Name", "Arguments"], false);
-    let name = expr_to_str(&args[0]);
-    let call_args = typing_context(&args[1]);
+    let name = expr_to_str(&args[0], 0);
+    let call_args = typing_context(&args[1], 1);
     quote! {
         core_lang::syntax::statements::call::FsCall{
             name: #name.to_string(),

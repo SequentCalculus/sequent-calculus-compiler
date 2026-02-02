@@ -4,7 +4,7 @@ use quote::quote;
 
 pub fn ty(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Type Name"], false);
-    let ty = expr_to_str(&args[0]);
+    let ty = expr_to_str(&args[0], 0);
     if ty == "int" {
         quote! {core_lang::syntax::types::Ty::I64}
     } else {

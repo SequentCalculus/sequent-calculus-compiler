@@ -5,7 +5,7 @@ use syn::Expr;
 
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Context Variable", "Context Chirality"], true);
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     let chi = &args[1];
     let ty = &args[2];
     quote! {
@@ -18,8 +18,8 @@ pub fn bind(input: TokenStream) -> TokenStream {
     .into()
 }
 
-pub fn typing_context(arg: &Expr) -> proc_macro2::TokenStream {
-    let args = expr_to_array(arg);
+pub fn typing_context(arg: &Expr, num_arg: usize) -> proc_macro2::TokenStream {
+    let args = expr_to_array(arg, num_arg);
     quote! {
         core_lang::syntax::context::TypingContext { bindings: ::std::vec::Vec::from([
             #(#args),*

@@ -16,6 +16,6 @@ pub fn exit(input: TokenStream) -> TokenStream {
 
 pub fn fs_exit(input: TokenStream) -> TokenStream {
     let args = parse_args(input, &["Exit Var"], false);
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     quote! { core_lang::syntax::statements::exit::FsExit { var: #var.to_string() } }.into()
 }

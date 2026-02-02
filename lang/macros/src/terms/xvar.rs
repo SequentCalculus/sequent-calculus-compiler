@@ -9,7 +9,7 @@ pub fn xvar(input: TokenStream, prdcns: Chirality) -> TokenStream {
         Chirality::Cns => quote! {core_lang::syntax::terms::Cns},
     };
     let args = parse_args(input, &["Variable Name"], true);
-    let var_name = expr_to_str(&args[0]);
+    let var_name = expr_to_str(&args[0], 0);
     let var_ty = &args[1];
     quote! {
         core_lang::syntax::terms::xvar::XVar{

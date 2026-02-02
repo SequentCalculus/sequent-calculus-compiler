@@ -22,8 +22,8 @@ where
     };
 
     let args = parse_args(input, &["Type Name", "Xtors"], false);
-    let name = expr_to_str(&args[0]);
-    let xtors = expr_to_array(&args[1]);
+    let name = expr_to_str(&args[0], 0);
+    let xtors = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::TypeDeclaration{
             dat: #dat,

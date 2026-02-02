@@ -11,7 +11,7 @@ use syn::Expr;
 pub fn xtor(
     input: TokenStream,
     prdcns: Chirality,
-    arg_fun: fn(&Expr) -> proc_macro2::TokenStream,
+    arg_fun: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> TokenStream {
     let (chi, xtor_desc) = match prdcns {
         Chirality::Prd => (quote! { core_lang::syntax::Prd}, "Ctor Name"),
@@ -20,8 +20,8 @@ pub fn xtor(
 
     let args = parse_args(input, &[xtor_desc, "Argument list"], true);
 
-    let xtor_name = expr_to_str(&args[0]);
-    let xtor_args = arg_fun(&args[1]);
+    let xtor_name = expr_to_str(&args[0], 0);
+    let xtor_args = arg_fun(&args[1], 1);
     let ty = &args[2];
     quote! {
         core_lang::syntax::terms::xtor::Xtor{

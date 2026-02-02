@@ -2,19 +2,19 @@ use proc_macro::TokenStream;
 use syn::{Expr, ExprArray, ExprLit, Lit};
 use syn::{Token, parse::Parser, parse_str, punctuated::Punctuated};
 
-pub fn expr_to_str(expr: &Expr) -> String {
+pub fn expr_to_str(expr: &Expr, num_arg: usize) -> String {
     match expr {
         Expr::Lit(ExprLit {
             lit: Lit::Str(s), ..
         }) => s.value(),
-        _ => panic!("Please provide string literal"),
+        _ => panic!("Please provide string literal (argument {num_arg})"),
     }
 }
 
-pub fn expr_to_array(expr: &Expr) -> Vec<Expr> {
+pub fn expr_to_array(expr: &Expr, num_arg: usize) -> Vec<Expr> {
     match expr {
         Expr::Array(ExprArray { elems, .. }) => elems.into_iter().cloned().collect(),
-        _ => panic!("Please provide an array expression"),
+        _ => panic!("Please provide an array expression (argument {num_arg})"),
     }
 }
 

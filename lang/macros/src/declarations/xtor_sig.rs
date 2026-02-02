@@ -21,8 +21,8 @@ where
         quote! {core_lang::syntax::declaration::Codata}
     };
     let args = parse_args(input, &["Xtor Name", "Xtor Args"], false);
-    let name = expr_to_str(&args[0]);
-    let xtor_args = expr_to_array(&args[1]);
+    let name = expr_to_str(&args[0], 0);
+    let xtor_args = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::XtorSig{
             xtor: #dat,

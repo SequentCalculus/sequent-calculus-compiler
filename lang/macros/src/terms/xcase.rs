@@ -9,7 +9,7 @@ pub fn xcase(input: TokenStream, prdcns: Chirality) -> TokenStream {
         Chirality::Cns => quote! {core_lang::syntax::Cns},
     };
     let args = parse_args(input, &["Case Clauses"], true);
-    let clauses = expr_to_array(&args[0]);
+    let clauses = expr_to_array(&args[0], 0);
     let ty = &args[1];
     quote! {
         core_lang::syntax::terms::xcase::XCase{

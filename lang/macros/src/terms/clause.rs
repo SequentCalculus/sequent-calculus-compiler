@@ -17,8 +17,8 @@ fn clause(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream 
         false,
     );
     let chi = &args[0];
-    let xtor = expr_to_str(&args[1]);
-    let xtor_args = expr_to_array(&args[2]);
+    let xtor = expr_to_str(&args[1], 1);
+    let xtor_args = expr_to_array(&args[2], 2);
     let body = &args[3];
 
     quote! {

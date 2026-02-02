@@ -13,7 +13,7 @@ pub fn xmu(
         Chirality::Cns => quote! { core_lang::syntax::Cns },
     };
     let args = parse_args(input, &["Bound Variable", "Bound Statement"], true);
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     let stmt = &args[1];
     let ty = &args[2];
     quote! {

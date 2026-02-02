@@ -46,7 +46,7 @@ fn unfocused_if(input: TokenStream, sort: IfSort) -> TokenStream {
     ifc(
         input,
         sort,
-        |exp| quote! {::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#exp))},
+        |exp, _| quote! {::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#exp))},
         quote! {core_lang::syntax::statements::Statement},
     )
 }
@@ -55,8 +55,8 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
     ifc(
         input,
         sort,
-        |exp| {
-            let var = expr_to_str(exp);
+        |exp, num_arg| {
+            let var = expr_to_str(exp, num_arg);
             quote! { #var.to_string() }
         },
         quote! {core_lang::syntax::statements::FsStatement},
@@ -66,7 +66,7 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
 fn ifc(
     input: TokenStream,
     sort: IfSort,
-    prod_ty: fn(&Expr) -> proc_macro2::TokenStream,
+    prod_ty: fn(&Expr, usize) -> proc_macro2::TokenStream,
     stmt_ty: proc_macro2::TokenStream,
 ) -> TokenStream {
     let sort = match sort {
@@ -99,7 +99,7 @@ fn ifc(
 
 fn parse_if_args(
     input: TokenStream,
-    prod_ty: fn(&Expr) -> proc_macro2::TokenStream,
+    prod_ty: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> Vec<proc_macro2::TokenStream> {
     let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
         .parse2(input.into())
@@ -107,11 +107,11 @@ fn parse_if_args(
         .into_iter()
         .collect::<Vec<Expr>>();
     let mut ind = 0;
-    let fst = prod_ty(&parsed[0]);
+    let fst = prod_ty(&parsed[0], 0);
     ind += 1;
 
     let snd = if parsed.len() == 4 {
-        let snd = prod_ty(&parsed[ind]);
+        let snd = prod_ty(&parsed[ind], ind);
         ind += 1;
         quote! { ::core::option::Option::Some(#snd) }
     } else {
