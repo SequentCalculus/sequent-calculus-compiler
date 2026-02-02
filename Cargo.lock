@@ -1534,8 +1534,10 @@ name = "testsuite"
 version = "0.1.0"
 dependencies = [
  "basic-toml",
+ "core_lang",
  "driver",
  "fun",
+ "macros",
  "printer",
  "serde",
 ]

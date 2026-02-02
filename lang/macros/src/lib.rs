@@ -6,7 +6,7 @@ use syn::{Expr, Token, parse_macro_input, punctuated::Punctuated};
 /// ```
 /// use macros::cut;
 /// use core_lang::syntax::{statements::Cut, terms::xvar::XVar,types::Ty};
-/// let cut1 = cut!(XVar::var("x",Ty::I64).into(),XVar::covar("a",Ty::I64).into(),Ty::I64);
+/// let cut1 = cut!(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
 /// let cut2 = Cut::new(XVar::var("x",Ty::I64),XVar::covar("a",Ty::I64),Ty::I64);
 /// assert_eq!(cut1,cut2)
 /// ```
@@ -18,8 +18,8 @@ pub fn cut(input: TokenStream) -> TokenStream {
     let prod = args.pop().expect("Please provide producer");
     quote! {
         core_lang::syntax::statements::Cut{
-            producer:#prod,
-            consumer:#cons,
+            producer: ::std::rc::Rc::new(#prod),
+            consumer: ::std::rc::Rc::new(#cons),
             ty:#ty
         }
     }
