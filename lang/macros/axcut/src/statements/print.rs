@@ -23,10 +23,10 @@ fn print(input: TokenStream, newline: bool) -> TokenStream {
         &[(2, parse_str("::std::option::Option::None").unwrap())],
     );
 
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     let next = &args[1];
     let free = quote_option(&args[2], |expr| {
-        let expr_arr = expr_to_array(expr)
+        let expr_arr = expr_to_array(expr, 2)
             .into_iter()
             .map(|expr| quote! { #expr.to_string()})
             .collect::<Vec<_>>();

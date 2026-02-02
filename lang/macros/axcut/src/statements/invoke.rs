@@ -14,10 +14,10 @@ pub fn invoke(input: TokenStream) -> TokenStream {
         ],
         &[(3, parse_str("axcut::syntax::types::Ty::I64").unwrap())],
     );
-    let var = expr_to_str(&args[0]);
-    let tag = expr_to_str(&args[1]);
+    let var = expr_to_str(&args[0], 0);
+    let tag = expr_to_str(&args[1], 1);
     let ty = &args[2];
-    let invoke_args = expr_to_array(&args[3]);
+    let invoke_args = expr_to_array(&args[3], 3);
     quote! {
         axcut::syntax::statements::invoke::Invoke{
             var: #var.to_string(),

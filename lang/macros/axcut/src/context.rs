@@ -16,7 +16,7 @@ pub fn bind(input: TokenStream) -> TokenStream {
             (2, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
         ],
     );
-    let bind_var = expr_to_str(&args[0]);
+    let bind_var = expr_to_str(&args[0], 0);
     let bind_chi = &args[1];
     let bind_ty = &args[2];
     quote! {

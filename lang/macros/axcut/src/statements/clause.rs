@@ -8,8 +8,8 @@ pub fn clause(input: TokenStream) -> TokenStream {
         ["Clause Xtor", "Clause Context", "Clause Body"],
         &[],
     );
-    let xtor = expr_to_str(&args[0]);
-    let ctx = expr_to_array(&args[1]);
+    let xtor = expr_to_str(&args[0], 0);
+    let ctx = expr_to_array(&args[1], 1);
     let body = &args[2];
     quote! {
         axcut::syntax::statements::clause::Clause{

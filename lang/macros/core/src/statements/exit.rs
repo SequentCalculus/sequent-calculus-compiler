@@ -1,4 +1,4 @@
-use macro_utils::parse_args;
+use macro_utils::{expr_to_str, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -20,7 +20,7 @@ pub fn exit(input: TokenStream) -> TokenStream {
 }
 
 pub fn fs_exit(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, &["Exit Var"], false);
+    let args = parse_args(input.into(), ["Exit Var"], &[]);
     let var = expr_to_str(&args[0], 0);
     quote! { core_lang::syntax::statements::exit::FsExit { var: #var.to_string() } }.into()
 }

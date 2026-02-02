@@ -34,12 +34,12 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
         ["Fst", "Snd", "Var", "Next", "Free Vars Next"],
         &[(4, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_str(&args[0]);
-    let snd = expr_to_str(&args[1]);
-    let var = expr_to_str(&args[2]);
+    let fst = expr_to_str(&args[0], 0);
+    let snd = expr_to_str(&args[1], 1);
+    let var = expr_to_str(&args[2], 2);
     let next = &args[3];
     let free_vars = quote_option(&args[4], |free| {
-        let free_arr = expr_to_array(free)
+        let free_arr = expr_to_array(free, 4)
             .into_iter()
             .map(|expr| quote! { #expr.to_string() })
             .collect::<Vec<_>>();

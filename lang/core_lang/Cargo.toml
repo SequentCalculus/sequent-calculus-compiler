@@ -17,4 +17,3 @@ printer = { workspace = true }
 
 [dev-dependencies]
 core_macros = { workspace = true }
-

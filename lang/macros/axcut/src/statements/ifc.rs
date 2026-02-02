@@ -42,7 +42,7 @@ fn ifc(input: TokenStream, sort: IfSort) -> TokenStream {
         ],
         &[(1, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_str(&args[0]);
+    let fst = expr_to_str(&args[0], 0);
     let snd = quote_option(&args[1], |expr| quote!(#expr.to_string()));
     let thenc = &args[2];
     let elsec = &args[3];

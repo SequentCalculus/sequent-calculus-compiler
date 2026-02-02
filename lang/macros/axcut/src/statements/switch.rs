@@ -12,11 +12,11 @@ pub fn switch(input: TokenStream) -> TokenStream {
             (3, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     let ty = &args[1];
-    let clauses = expr_to_array(&args[2]);
+    let clauses = expr_to_array(&args[2], 2);
     let free_vars = quote_option(&args[3], |expr| {
-        let free_arr = expr_to_array(expr)
+        let free_arr = expr_to_array(expr, 3)
             .into_iter()
             .map(|expr| quote! {#expr.to_string()})
             .collect::<Vec<_>>();

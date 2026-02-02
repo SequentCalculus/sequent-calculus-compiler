@@ -23,10 +23,10 @@ pub fn create(input: TokenStream) -> TokenStream {
         ],
     );
 
-    let var = expr_to_str(&args[0]);
+    let var = expr_to_str(&args[0], 0);
     let ty = &args[1];
     let context = quote_option(&args[2], |expr| {
-        let ctx_arr = expr_to_array(expr);
+        let ctx_arr = expr_to_array(expr, 2);
         quote! {
         axcut::syntax::context::TypingContext{
             bindings: ::std::vec::Vec::from([
@@ -34,9 +34,9 @@ pub fn create(input: TokenStream) -> TokenStream {
             ])
         }}
     });
-    let clauses = expr_to_array(&args[3]);
+    let clauses = expr_to_array(&args[3], 3);
     let free_vars_clauses = quote_option(&args[4], |expr| {
-        let free_arr = expr_to_array(expr)
+        let free_arr = expr_to_array(expr, 4)
             .into_iter()
             .map(|expr| quote! {#expr.to_string()})
             .collect::<Vec<_>>();
@@ -48,7 +48,7 @@ pub fn create(input: TokenStream) -> TokenStream {
     });
     let next = &args[5];
     let free_vars_next = quote_option(&args[6], |expr| {
-        let free_arr = expr_to_array(expr)
+        let free_arr = expr_to_array(expr, 6)
             .into_iter()
             .map(|expr| quote! {#expr.to_string()})
             .collect::<Vec<_>>();

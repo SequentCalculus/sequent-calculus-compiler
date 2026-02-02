@@ -10,10 +10,10 @@ pub fn lit(input: TokenStream) -> TokenStream {
         &[(3, parse_str("::std::option::Option::None").unwrap())],
     );
     let lit = &args[0];
-    let var = expr_to_str(&args[1]);
+    let var = expr_to_str(&args[1], 1);
     let next = &args[2];
     let free = quote_option(&args[3], |expr| {
-        let free_arr = expr_to_array(expr)
+        let free_arr = expr_to_array(expr, 3)
             .into_iter()
             .map(|expr| quote! {#expr.to_string()})
             .collect::<Vec<_>>();
