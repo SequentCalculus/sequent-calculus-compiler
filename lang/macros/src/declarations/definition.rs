@@ -1,4 +1,4 @@
-use crate::utils::{expr_to_array, expr_to_str, parse_args};
+use crate::utils::{expr_to_array, expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -10,13 +10,13 @@ pub fn fs_def(input: TokenStream) -> TokenStream {
     def(input, quote! {core_lang::syntax::statements::FsStatement})
 }
 
-fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
+fn def(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input,
         &["Def Name", "Def Args", "Def Body", "Def Used Vars"],
         false,
     );
-    let name = expr_to_str(&args[0], 0);
+    let name = expr_to_string(&args[0], 0);
     let def_args = expr_to_array(&args[1], 1);
     let def_body = &args[2];
     let def_used = expr_to_array(&args[3], 3)
@@ -31,7 +31,7 @@ fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
                     #(#def_args),*
                 ]),
             },
-            body: #stmt_ty::from(#def_body),
+            body: #statement_kind::from(#def_body),
             used_vars: std::collections::HashSet::from([#(#def_used),*])
         }
     }

@@ -1,4 +1,4 @@
-use crate::utils::expr_to_str;
+use crate::utils::expr_to_string;
 use core_lang::syntax::statements::ifc::IfSort;
 use proc_macro::TokenStream;
 use quote::quote;
@@ -56,7 +56,7 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
         input,
         sort,
         |exp, num_arg| {
-            let var = expr_to_str(exp, num_arg);
+            let var = expr_to_string(exp, num_arg);
             quote! { #var.to_string() }
         },
         quote! {core_lang::syntax::statements::FsStatement},
@@ -66,8 +66,8 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
 fn ifc(
     input: TokenStream,
     sort: IfSort,
-    prod_ty: fn(&Expr, usize) -> proc_macro2::TokenStream,
-    stmt_ty: proc_macro2::TokenStream,
+    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
+    statement_kind: proc_macro2::TokenStream,
 ) -> TokenStream {
     let sort = match sort {
         IfSort::Equal => quote! {core_lang::syntax::statements::ifc::IfSort::Equal},
@@ -79,7 +79,7 @@ fn ifc(
             quote! {core_lang::syntax::statements::ifc::IfSort::GreaterOrEqual}
         }
     };
-    let args = parse_if_args(input, prod_ty);
+    let args = parse_if_args(input, arg_converter);
     let fst = &args[0];
     let snd = &args[1];
     let thenc = &args[2];
@@ -90,8 +90,8 @@ fn ifc(
             sort: #sort,
             fst: #fst,
             snd: #snd,
-            thenc: ::std::rc::Rc::new(#stmt_ty::from(#thenc)),
-            elsec: ::std::rc::Rc::new(#stmt_ty::from(#elsec))
+            thenc: ::std::rc::Rc::new(#statement_kind::from(#thenc)),
+            elsec: ::std::rc::Rc::new(#statement_kind::from(#elsec))
         }
     }
     .into()
@@ -99,7 +99,7 @@ fn ifc(
 
 fn parse_if_args(
     input: TokenStream,
-    prod_ty: fn(&Expr, usize) -> proc_macro2::TokenStream,
+    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> Vec<proc_macro2::TokenStream> {
     let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
         .parse2(input.into())
@@ -107,11 +107,11 @@ fn parse_if_args(
         .into_iter()
         .collect::<Vec<Expr>>();
     let mut ind = 0;
-    let fst = prod_ty(&parsed[0], 0);
+    let fst = arg_converter(&parsed[0], 0);
     ind += 1;
 
     let snd = if parsed.len() == 4 {
-        let snd = prod_ty(&parsed[ind], ind);
+        let snd = arg_converter(&parsed[ind], ind);
         ind += 1;
         quote! { ::core::option::Option::Some(#snd) }
     } else {

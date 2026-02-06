@@ -3,8 +3,8 @@ use core_lang::syntax::Chirality;
 use proc_macro::TokenStream;
 use quote::quote;
 
-pub fn xcase(input: TokenStream, prdcns: Chirality) -> TokenStream {
-    let prdcns = match prdcns {
+pub fn xcase(input: TokenStream, chi: Chirality) -> TokenStream {
+    let prdcns = match chi {
         Chirality::Prd => quote! {core_lang::syntax::Prd},
         Chirality::Cns => quote! {core_lang::syntax::Cns},
     };
