@@ -7,8 +7,8 @@ use crate::{
 use core_lang::syntax::terms::Cns;
 use fun::syntax::types::OptTyped;
 
-/// This function translates [arguments in Fun](fun::syntax::arguments::Substitution) to
-/// [arguments in Core](core_lang::syntax::arguments::Substitution).
+/// This function translates [arguments in Fun](fun::syntax::arguments::Arguments) to
+/// [arguments in Core](core_lang::syntax::arguments::Arguments).
 ///
 /// # Panics
 ///

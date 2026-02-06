@@ -67,6 +67,7 @@ impl Compile for fun::syntax::terms::IfC {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
+    use macros::{covar, cut, ife, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -81,25 +82,16 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::IfC::ife(
-                core_lang::syntax::terms::Literal::new(3),
-                core_lang::syntax::terms::Literal::new(4),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(1),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(2),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-            ),
-            core_lang::syntax::types::Ty::I64,
+            ife!(
+                lit!(3),
+                lit!(4),
+                cut!(lit!(1), covar!("a0")),
+                cut!(lit!(2), covar!("a0"))
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -125,25 +117,16 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::IfC::ife(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(1),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-            ),
-            core_lang::syntax::types::Ty::I64,
+            ife!(
+                var!("x"),
+                var!("x"),
+                cut!(lit!(1), covar!("a0")),
+                cut!(var!("x"), covar!("a0"))
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -160,24 +143,15 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::IfC::ifz(
-                core_lang::syntax::terms::Literal::new(0),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(1),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(2),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-            ),
-            core_lang::syntax::types::Ty::I64,
+            ife!(
+                lit!(0),
+                cut!(lit!(1), covar!("a0")),
+                cut!(lit!(2), covar!("a0"))
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -203,24 +177,15 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::IfC::ifz(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::Literal::new(1),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-                core_lang::syntax::statements::Cut::new(
-                    core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::terms::XVar::covar("a0", core_lang::syntax::types::Ty::I64),
-                    core_lang::syntax::types::Ty::I64,
-                ),
-            ),
-            core_lang::syntax::types::Ty::I64,
+            ife!(
+                var!("x"),
+                cut!(lit!(1), covar!("a0")),
+                cut!(var!("x"), covar!("a0"))
+            )
         )
         .into();
         assert_eq!(result, expected)

@@ -140,39 +140,41 @@ impl<C: Chi> SubstVar for XVar<C> {
 #[cfg(test)]
 mod var_tests {
     use super::Subst;
-    use crate::syntax::*;
     use crate::test_common::example_subst;
+    extern crate self as core_lang;
+    use macros::{covar, var};
 
     // Substitution tests
 
     #[test]
     fn subst_var1() {
         let subst = example_subst();
-        let result = XVar::var("x", Ty::I64).subst_sim(&subst.0, &subst.1);
-        let expected = XVar::var("y", Ty::I64).into();
+        let result = var!("x").subst_sim(&subst.0, &subst.1);
+        let expected = var!("y").into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
         let subst = example_subst();
-        let result = XVar::var("z", Ty::I64).subst_sim(&subst.0, &subst.1);
-        let expected = XVar::var("z", Ty::I64).into();
+        let result = var!("z").subst_sim(&subst.0, &subst.1);
+        let expected = var!("z").into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
         let subst = example_subst();
-        let result = XVar::covar("a", Ty::I64).subst_sim(&subst.0, &subst.1);
-        let expected = XVar::covar("b", Ty::I64).into();
+        let result = covar!("a").subst_sim(&subst.0, &subst.1);
+        let expected = covar!("b").into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn subst_covar2() {
         let subst = example_subst();
-        let result = XVar::covar("c", Ty::I64).subst_sim(&subst.0, &subst.1);
-        let expected = XVar::covar("c", Ty::I64).into();
+        let result = covar!("c").subst_sim(&subst.0, &subst.1);
+        let expected = covar!("c").into();
         assert_eq!(result, expected)
     }
 }

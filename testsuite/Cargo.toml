@@ -23,6 +23,8 @@ basic-toml = { version = "0.1.9" }
 serde      = { version = "1.0.217" }
 
 # Workspace members
-driver  = { workspace = true }
-fun     = { workspace = true }
-printer = { workspace = true }
+driver    = { workspace = true }
+fun       = { workspace = true }
+printer   = { workspace = true }
+core_lang = { workspace = true }
+macros    = { workspace = true }

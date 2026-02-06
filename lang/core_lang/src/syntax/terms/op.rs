@@ -269,67 +269,33 @@ mod tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
-
-    use std::rc::Rc;
+    extern crate self as core_lang;
+    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
-        Op {
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("x", Ty::I64).into()),
-        }
-        .into()
+        prod!(var!("x"), var!("x")).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = Op {
-            fst: Rc::new(XVar::var("y", Ty::I64).into()),
-            op: BinOp::Prod,
-            snd: Rc::new(XVar::var("y", Ty::I64).into()),
-        }
-        .into();
+        let expected = prod!(var!("y"), var!("y")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = Cut::new(
-            Op {
-                fst: Rc::new(Literal::new(1).into()),
-                op: BinOp::Sum,
-                snd: Rc::new(Literal::new(2).into()),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
-        )
-        .focus(&mut Default::default());
-        let expected = FsCut::new(
-            Literal::new(1),
-            Mu::tilde_mu(
+        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a")).focus(&mut Default::default());
+        let expected = fs_cut!(
+            lit!(1),
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
-                    Literal::new(2),
-                    Mu::tilde_mu(
-                        "x1",
-                        FsCut::new(
-                            FsOp {
-                                fst: "x0".to_string(),
-                                op: BinOp::Sum,
-                                snd: "x1".to_string(),
-                            },
-                            XVar::covar("a", Ty::I64),
-                            Ty::I64,
-                        ),
-                        Ty::I64,
-                    ),
-                    Ty::I64,
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                fs_cut!(
+                    lit!(2),
+                    fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
+                )
+            )
         )
         .into();
 
@@ -338,26 +304,8 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = Cut::new(
-            Op {
-                fst: Rc::new(XVar::var("x", Ty::I64).into()),
-                op: BinOp::Prod,
-                snd: Rc::new(XVar::var("y", Ty::I64).into()),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
-        )
-        .focus(&mut Default::default());
-        let expected = FsCut::new(
-            FsOp {
-                fst: "x".to_string(),
-                op: BinOp::Prod,
-                snd: "y".to_string(),
-            },
-            XVar::covar("a", Ty::I64),
-            Ty::I64,
-        )
-        .into();
+        let result = cut!(prod!(var!("x"), var!("y")), covar!("a")).focus(&mut Default::default());
+        let expected = fs_cut!(fs_prod!("x", "y"), covar!("a")).into();
         assert_eq!(result, expected)
     }
 }

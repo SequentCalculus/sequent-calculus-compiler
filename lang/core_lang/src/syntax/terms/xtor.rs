@@ -210,12 +210,15 @@ mod xtor_tests {
     use super::Subst;
     use crate::syntax::*;
     use crate::test_common::example_subst;
+    extern crate self as core_lang;
+    use macros::{ctor, ty, var};
 
     fn example() -> Xtor<Prd> {
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("x", Ty::I64));
-        arguments.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
-        Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()))
+        ctor!(
+            "Cons",
+            [var!("x"), var!("xs", ty!("ListInt"))],
+            ty!("ListInt")
+        )
     }
 
     #[test]
@@ -227,10 +230,11 @@ mod xtor_tests {
     fn subst_const() {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("y", Ty::I64));
-        arguments.add_prod(XVar::var("xs", Ty::Decl("ListInt".to_string())));
-        let expected = Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()));
+        let expected = ctor!(
+            "Cons",
+            [var!("y"), var!("xs", ty!("ListInt"))],
+            ty!("ListInt")
+        );
         assert_eq!(result, expected)
     }
 }

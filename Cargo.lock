@@ -376,6 +376,7 @@ dependencies = [
 name = "core_lang"
 version = "0.1.0"
 dependencies = [
+ "macros",
  "printer",
 ]
 
@@ -549,6 +550,7 @@ dependencies = [
  "codespan",
  "core_lang",
  "fun",
+ "macros",
  "printer",
 ]
 
@@ -909,6 +911,16 @@ dependencies = [
  "serde_json",
  "serde_repr",
  "url",
+]
+
+[[package]]
+name = "macros"
+version = "0.1.0"
+dependencies = [
+ "core_lang",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]
@@ -1524,8 +1536,10 @@ name = "testsuite"
 version = "0.1.0"
 dependencies = [
  "basic-toml",
+ "core_lang",
  "driver",
  "fun",
+ "macros",
  "printer",
  "serde",
 ]

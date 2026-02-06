@@ -121,46 +121,21 @@ impl TypedFreeVars for FsCall {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::syntax::*;
     use crate::traits::*;
+    extern crate self as core_lang;
+    use macros::{bind, call, cns, covar, fs_call, prd, var};
 
     #[test]
     fn transform_call1() {
-        let result = Call {
-            name: "main".to_string(),
-            args: Arguments::default(),
-            ty: Ty::I64,
-        }
-        .focus(&mut Default::default());
-        let expected = FsCall {
-            name: "main".to_string(),
-            args: TypingContext::default(),
-        }
-        .into();
+        let result = call!("main", []).focus(&mut Default::default());
+        let expected = fs_call!("main", []).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_call2() {
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("x", Ty::I64));
-        arguments.add_cons(XVar::covar("a", Ty::I64));
-
-        let mut args = TypingContext::default();
-        args.add_var("x", Ty::I64);
-        args.add_covar("a", Ty::I64);
-
-        let result = Call {
-            name: "fun".to_string(),
-            args: arguments,
-            ty: Ty::I64,
-        }
-        .focus(&mut Default::default());
-        let expected = FsCall {
-            name: "fun".to_string(),
-            args,
-        }
-        .into();
+        let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
+        let expected = fs_call!("fun", [bind!("x", prd!()), bind!("a", cns!())]).into();
         assert_eq!(result, expected)
     }
 }

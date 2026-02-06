@@ -65,13 +65,12 @@ impl Compile for fun::syntax::terms::Constructor {
 
 #[cfg(test)]
 mod compile_tests {
+    use crate::compile::{Compile, CompileState};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-
-    use crate::compile::{Compile, CompileState};
-
+    use macros::{ctor, lit, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -95,22 +94,12 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(
-            &mut state,
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        );
+        let result = term_typed.compile(&mut state, ty!("List[i64]"));
 
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_prod(core_lang::syntax::terms::Literal::new(1));
-        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
-            "Nil",
-            core_lang::syntax::arguments::Arguments::default(),
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        ));
-        let expected = core_lang::syntax::terms::Xtor::ctor(
+        let expected = ctor!(
             "Cons",
-            arguments,
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
+            [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
+            ty!("List[i64]")
         )
         .into();
         assert_eq!(result, expected)

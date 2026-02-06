@@ -45,16 +45,11 @@ impl Compile for fun::syntax::terms::Destructor {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
-
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::{
-        terms::{Cns, Prd},
-        types::Ty,
-    };
-
+    use core_lang::syntax::terms::Prd;
+    use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
+    use macros::{bind, clause, cns, cocase, covar, cut, dtor, lit, mu, ty};
     use std::collections::{HashSet, VecDeque};
-    use std::rc::Rc;
 
     #[test]
     fn compile_fst() {
@@ -76,65 +71,29 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
-        let mut context1 = core_lang::syntax::TypingContext::default();
-        context1.add_covar("a1", Ty::I64);
-        let mut context2 = core_lang::syntax::TypingContext::default();
-        context2.add_covar("a2", Ty::I64);
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::types::Ty::I64,
-        ));
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a0",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::XCase {
-                    prdcns: Prd,
-                    clauses: vec![
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Prd,
-                            xtor: "fst".to_owned(),
-                            context: context1,
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::Literal::new(1),
-                                    core_lang::syntax::terms::XVar::covar(
-                                        "a1",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Prd,
-                            xtor: "snd".to_owned(),
-                            context: context2,
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::Literal::new(2),
-                                    core_lang::syntax::terms::XVar::covar(
-                                        "a2",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
+            cut!(
+                cocase!(
+                    [
+                        clause!(
+                            Prd,
+                            "fst",
+                            [bind!("a1", cns!())],
+                            cut!(lit!(1), covar!("a1"))
+                        ),
+                        clause!(
+                            Prd,
+                            "snd",
+                            [bind!("a2", cns!())],
+                            cut!(lit!(2), covar!("a2"))
+                        )
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-                },
-                core_lang::syntax::terms::Xtor {
-                    prdcns: Cns,
-                    id: "fst".to_owned(),
-                    args: arguments,
-                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-                },
-                core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-            ),
-            core_lang::syntax::types::Ty::I64,
+                    ty!("LPair[i64, i64]")
+                ),
+                dtor!("fst", [covar!("a0")], ty!("LPair[i64, i64]")),
+                ty!("LPair[i64, i64]")
+            )
         )
         .into();
         assert_eq!(result, expected)
@@ -158,68 +117,31 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let mut context1 = core_lang::syntax::TypingContext::default();
-        context1.add_covar("a1", Ty::I64);
-        let mut context2 = core_lang::syntax::TypingContext::default();
-        context2.add_covar("a2", Ty::I64);
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_cons(core_lang::syntax::terms::XVar::covar(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::types::Ty::I64,
-        ));
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a0",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::XCase {
-                    prdcns: Prd,
-                    clauses: vec![
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Prd,
-                            xtor: "fst".to_owned(),
-                            context: context1,
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::Literal::new(1),
-                                    core_lang::syntax::terms::XVar::covar(
-                                        "a1",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Prd,
-                            xtor: "snd".to_owned(),
-                            context: context2,
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::Literal::new(2),
-                                    core_lang::syntax::terms::XVar {
-                                        prdcns: Cns,
-                                        var: "a2".to_owned(),
-                                        ty: core_lang::syntax::types::Ty::I64,
-                                    },
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
+            cut!(
+                cocase!(
+                    [
+                        clause!(
+                            Prd,
+                            "fst",
+                            [bind!("a1", cns!())],
+                            cut!(lit!(1), covar!("a1"))
+                        ),
+                        clause!(
+                            Prd,
+                            "snd",
+                            [bind!("a2", cns!())],
+                            cut!(lit!(2), covar!("a2"))
+                        )
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-                },
-                core_lang::syntax::terms::Xtor {
-                    prdcns: Cns,
-                    id: "snd".to_owned(),
-                    args: arguments,
-                    ty: core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-                },
-                core_lang::syntax::types::Ty::Decl("LPair[i64, i64]".to_owned()),
-            ),
-            core_lang::syntax::types::Ty::I64,
+                    ty!("LPair[i64, i64]")
+                ),
+                dtor!("snd", [covar!("a0")], ty!("LPair[i64, i64]")),
+                ty!("LPair[i64, i64]")
+            )
         )
         .into();
         assert_eq!(result, expected)

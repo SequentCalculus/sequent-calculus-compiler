@@ -156,31 +156,24 @@ mod tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
-
-    use std::rc::Rc;
+    extern crate self as core_lang;
+    use macros::{bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var};
 
     #[test]
     fn focus_clause() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
-        let result = Clause {
-            prdcns: Prd,
-            xtor: "apply".to_string(),
-            context: ctx.clone(),
-            body: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let result = clause!(
+            Prd,
+            "apply",
+            [bind!("x", prd!()), bind!("a", cns!())],
+            cut!(var!("x"), covar!("a"))
+        )
         .focus(&mut Default::default());
-        let expected = Clause {
-            prdcns: Prd,
-            xtor: "apply".to_string(),
-            context: ctx,
-            body: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        };
+        let expected = fs_clause!(
+            Prd,
+            "apply",
+            [bind!("x", prd!()), bind!("a", cns!())],
+            fs_cut!(var!("x"), covar!("a"))
+        );
         assert_eq!(result, expected)
     }
 
@@ -188,97 +181,61 @@ mod tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
-        XCase {
-            prdcns: Prd,
-            clauses: vec![
-                Clause {
-                    prdcns: Prd,
-                    xtor: "fst".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Prd,
-                    xtor: "snd".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        cocase!(
+            [
+                clause!(
+                    Prd,
+                    "fst",
+                    [bind!("x", prd!()), bind!("a", cns!())],
+                    cut!(var!("x"), covar!("a"))
+                ),
+                clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
             ],
-            ty: Ty::Decl("LPairIntInt".to_string()),
-        }
+            ty!("LPairIntInt")
+        )
         .into()
     }
 
     fn example_case() -> XCase<Cns> {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
-        ctx.add_covar("a", Ty::I64);
-        XCase {
-            prdcns: Cns,
-            clauses: vec![
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Nil".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Cons".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        case!(
+            [
+                clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
+                clause!(
+                    Cns,
+                    "Cons",
+                    [
+                        bind!("x", prd!()),
+                        bind!("xs", prd!(), ty!("ListInt")),
+                        bind!("a", cns!())
+                    ],
+                    cut!(var!("x"), covar!("a"))
+                )
             ],
-            ty: Ty::Decl("ListInt".to_string()),
-        }
+            ty!("ListInt")
+        )
         .into()
     }
 
     #[test]
     fn subst_case() {
         let subst = example_subst();
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_var("xs", Ty::Decl("ListInt".to_owned()));
-        ctx.add_covar("a", Ty::I64);
         let result = example_case().subst_sim(&subst.0, &subst.1);
-        let expected = XCase {
-            prdcns: Cns,
-            clauses: vec![
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Nil".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Cns,
-                    xtor: "Cons".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        let expected = case!(
+            [
+                clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
+                clause!(
+                    Cns,
+                    "Cons",
+                    [
+                        bind!("x", prd!()),
+                        bind!("xs", prd!(), ty!("ListInt")),
+                        bind!("a", cns!())
+                    ],
+                    cut!(var!("x"), covar!("a"))
+                )
             ],
-            ty: Ty::Decl("ListInt".to_string()),
-        };
+            ty!("ListInt")
+        );
         assert_eq!(result, expected)
     }
 
@@ -289,30 +246,18 @@ mod tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
-        let expected = XCase {
-            prdcns: Prd,
-            clauses: vec![
-                Clause {
-                    prdcns: Prd,
-                    xtor: "fst".to_string(),
-                    context: ctx,
-                    body: Rc::new(
-                        Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
-                Clause {
-                    prdcns: Prd,
-                    xtor: "snd".to_string(),
-                    context: TypingContext::default(),
-                    body: Rc::new(
-                        Cut::new(XVar::var("y", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64)
-                            .into(),
-                    ),
-                },
+        let expected = cocase!(
+            [
+                clause!(
+                    Prd,
+                    "fst",
+                    [bind!("x", prd!()), bind!("a", cns!())],
+                    cut!(var!("x"), covar!("a"))
+                ),
+                clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))
             ],
-            ty: Ty::Decl("LPairIntInt".to_string()),
-        };
+            ty!("LPairIntInt")
+        );
         assert_eq!(result, expected)
     }
 }

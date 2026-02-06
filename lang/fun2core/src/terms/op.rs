@@ -64,10 +64,9 @@ impl Compile for fun::syntax::terms::Op {
 
 #[cfg(test)]
 mod compile_tests {
-    use fun::{parse_term, typing::check::Check};
-
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::types::Ty;
+    use fun::{parse_term, typing::check::Check};
+    use macros::{lit, prod, sub, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -82,13 +81,9 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, Ty::I64);
+        let result = term.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Op::sub(
-            core_lang::syntax::terms::Literal::new(2),
-            core_lang::syntax::terms::Literal::new(1),
-        )
-        .into();
+        let expected = sub!(lit!(2), lit!(1),).into();
         assert_eq!(result, expected);
     }
 
@@ -112,16 +107,9 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Op::prod(
-            core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-            core_lang::syntax::terms::Op::sub(
-                core_lang::syntax::terms::XVar::var("x", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::terms::Literal::new(1),
-            ),
-        )
-        .into();
+        let expected = prod!(var!("x"), sub!(var!("x"), lit!(1))).into();
         assert_eq!(result, expected);
     }
 }

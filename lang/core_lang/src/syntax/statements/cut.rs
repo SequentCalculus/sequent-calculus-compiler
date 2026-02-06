@@ -197,54 +197,47 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
+    use macros::{
+        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
+    };
+    extern crate self as core_lang;
 
     #[test]
     // this illustrates the problem
     fn transform_ctor() {
-        let result = {
-            let mut arguments = Arguments::default();
-            arguments.add_prod(Literal::new(1));
-            arguments.add_prod(Xtor::ctor(
-                "Nil",
-                Arguments::default(),
-                Ty::Decl("ListInt".to_string()),
-            ));
-            let cons = Xtor::ctor("Cons", arguments, Ty::Decl("ListInt".to_string()));
-            Cut::new(
-                cons,
-                XVar::covar("a", Ty::Decl("ListInt".to_string())),
-                Ty::Decl("ListInt".to_string()),
-            )
-        }
+        let result = cut!(
+            ctor!(
+                "Cons",
+                [lit!(1), ctor!("Nil", [], ty!("ListInt"))],
+                ty!("ListInt")
+            ),
+            covar!("a", ty!("ListInt")),
+            ty!("ListInt")
+        )
         .focus(&mut Default::default());
 
-        let mut args = TypingContext::default();
-        args.add_var("x0", Ty::I64);
-        args.add_var("x1", Ty::Decl("ListInt".to_string()));
-        let expected = FsCut::new(
-            Literal::new(1),
-            Mu::tilde_mu(
+        let expected = fs_cut!(
+            lit!(1),
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
-                    FsXtor::ctor(
-                        "Nil",
-                        TypingContext::default(),
-                        Ty::Decl("ListInt".to_string()),
-                    ),
-                    Mu::tilde_mu(
+                fs_cut!(
+                    fs_ctor!("Nil", [], ty!("ListInt")),
+                    fs_mutilde!(
                         "x1",
-                        FsCut::new(
-                            FsXtor::ctor("Cons", args, Ty::Decl("ListInt".to_string())),
-                            XVar::covar("a", Ty::Decl("ListInt".to_string())),
-                            Ty::Decl("ListInt".to_string()),
+                        fs_cut!(
+                            fs_ctor!(
+                                "Cons",
+                                [bind!("x0", prd!()), bind!("x1", prd!(), ty!("ListInt"))],
+                                ty!("ListInt")
+                            ),
+                            covar!("a", ty!("ListInt")),
+                            ty!("ListInt")
                         ),
-                        Ty::Decl("ListInt".to_string()),
+                        ty!("ListInt")
                     ),
-                    Ty::Decl("ListInt".to_string()),
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                    ty!("ListInt")
+                )
+            )
         )
         .into();
 
@@ -253,38 +246,29 @@ mod tests {
 
     #[test]
     fn transform_dtor() {
-        let mut arguments = Arguments::default();
-        arguments.add_prod(XVar::var("y", Ty::I64));
-        arguments.add_cons(XVar::covar("a", Ty::I64));
-        let result = {
-            let ap = Xtor::dtor("apply", arguments, Ty::Decl("Fun[i64, i64]".to_string()));
-            Cut::new(
-                XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
-                ap,
-                Ty::Decl("Fun[i64, i64]".to_string()),
-            )
-        }
+        let result = cut!(
+            var!("x", ty!("Fun[i64, i64]")),
+            dtor!("apply", [var!("y"), covar!("a")], ty!("Fun[i64, i64]")),
+            ty!("Fun[i64, i64]")
+        )
         .focus(&mut Default::default());
 
-        let mut args = TypingContext::default();
-        args.add_var("y", Ty::I64);
-        args.add_covar("a", Ty::I64);
-        let expected = {
-            let ap = FsXtor::dtor("apply", args, Ty::Decl("Fun[i64, i64]".to_string()));
-            FsCut::new(
-                XVar::var("x", Ty::Decl("Fun[i64, i64]".to_string())),
-                ap,
-                Ty::Decl("Fun[i64, i64]".to_string()),
-            )
-        }
+        let expected = fs_cut!(
+            var!("x", ty!("Fun[i64, i64]")),
+            fs_dtor!(
+                "apply",
+                [bind!("y", prd!()), bind!("a", cns!())],
+                ty!("Fun[i64, i64]")
+            ),
+            ty!("Fun[i64, i64]")
+        )
         .into();
         assert_eq!(result, expected);
     }
 
     #[test]
     fn transform_other() {
-        let result = Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-            .focus(&mut Default::default());
+        let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
         let expected =
             FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into();
         assert_eq!(result, expected);

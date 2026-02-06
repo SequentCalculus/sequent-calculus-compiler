@@ -69,46 +69,36 @@ impl<D: Print> Print for Prog<D> {
 #[cfg(test)]
 mod program_tests {
     use crate::syntax::*;
-    use std::collections::HashSet;
+    extern crate self as core_lang;
+    use macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::I64);
         ctx.add_covar("a", Ty::I64);
-        FsDef {
-            name: "cut".to_string(),
-            context: ctx,
-            body: FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
-        }
+        fs_def!(
+            "cut",
+            [bind!("x", prd!()), bind!("a", cns!())],
+            fs_cut!(var!("x"), covar!("a")),
+            ["a", "x"]
+        )
     }
 
     #[test]
     fn transform_prog2() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
-        let prog = Prog {
-            defs: vec![
-                Def {
-                    name: "cut".to_string(),
-                    context: ctx,
-                    body: Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64)
-                        .into(),
-                    used_vars: HashSet::from(["a".to_string(), "x".to_string()]),
-                }
-                .into(),
-            ],
-            data_types: vec![],
-            codata_types: vec![],
-        };
+        let prog = prog!(
+            [def!(
+                "cut",
+                [bind!("x", prd!()), bind!("a", cns!())],
+                cut!(var!("x"), covar!("a")),
+                ["a", "x"]
+            )],
+            [],
+            []
+        );
         let result = prog.focus();
 
-        let expected = FsProg {
-            defs: vec![example_def2_var()],
-            data_types: vec![],
-            codata_types: vec![],
-        };
+        let expected = prog!([example_def2_var()], [], []);
         assert_eq!(result, expected)
     }
 }

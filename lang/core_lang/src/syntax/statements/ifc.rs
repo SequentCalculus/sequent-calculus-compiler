@@ -289,127 +289,69 @@ impl Focusing for IfC {
 
 #[cfg(test)]
 mod transform_tests {
-    use crate::syntax::*;
     use crate::traits::*;
-    use std::rc::Rc;
+    use macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
+    extern crate self as core_lang;
 
     #[test]
     fn transform_ife1() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(Literal::new(2).into()),
-            snd: Some(Rc::new(Literal::new(1).into())),
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
-        }
+        let result = ife!(
+            lit!(2),
+            lit!(1),
+            cut!(lit!(1), covar!("a")),
+            exit!(var!("x"))
+        )
         .focus(&mut Default::default());
 
-        let expected = FsCut::new(
-            Literal::new(2),
-            Mu::tilde_mu(
+        let expected = fs_cut!(
+            lit!(2),
+            fs_mutilde!(
                 "x0",
-                FsCut::new(
-                    Literal::new(1),
-                    Mu::tilde_mu(
+                fs_cut!(
+                    lit!(1),
+                    fs_mutilde!(
                         "x1",
-                        FsIfC {
-                            sort: IfSort::Equal,
-                            fst: "x0".to_string(),
-                            snd: Some("x1".to_string()),
-                            thenc: Rc::new(
-                                FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64)
-                                    .into(),
-                            ),
-                            elsec: Rc::new(FsExit::exit("x").into()),
-                        },
-                        Ty::I64,
-                    ),
-                    Ty::I64,
-                ),
-                Ty::I64,
-            ),
-            Ty::I64,
+                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                    )
+                )
+            )
         )
         .into();
+
         assert_eq!(result, expected)
     }
     #[test]
     fn transform_ife2() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: Some(Rc::new(XVar::var("x", Ty::I64).into())),
-            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
+        let result = ife!(
+            var!("x"),
+            var!("x"),
+            exit!(var!("y")),
+            cut!(var!("x"), covar!("a"))
+        )
         .focus(&mut Default::default());
-        let expected = FsIfC {
-            sort: IfSort::Equal,
-            fst: "x".to_string(),
-            snd: Some("x".to_string()),
-            thenc: Rc::new(FsExit::exit("y").into()),
-            elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
-        .into();
+        let expected = fs_ife!("x", "x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz1() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(Literal::new(1).into()),
-            snd: None,
-            thenc: Rc::new(Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(Exit::exit(XVar::var("x", Ty::I64), Ty::I64).into()),
-        }
-        .focus(&mut Default::default());
-        let expected = FsCut::new(
-            Literal::new(1),
-            Mu::tilde_mu(
+        let result = ife!(lit!(1), cut!(lit!(1), covar!("a")), exit!(var!("x")))
+            .focus(&mut Default::default());
+        let expected = fs_cut!(
+            lit!(1),
+            fs_mutilde!(
                 "x0",
-                FsIfC {
-                    sort: IfSort::Equal,
-                    fst: "x0".to_string(),
-                    snd: None,
-                    thenc: Rc::new(
-                        FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64).into(),
-                    ),
-                    elsec: Rc::new(FsExit::exit("x").into()),
-                },
-                Ty::I64,
-            ),
-            Ty::I64,
+                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+            )
         )
         .into();
         assert_eq!(result, expected)
     }
     #[test]
     fn transform_ifz2() {
-        let result = IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::var("x", Ty::I64).into()),
-            snd: None,
-            thenc: Rc::new(Exit::exit(XVar::var("y", Ty::I64), Ty::I64).into()),
-            elsec: Rc::new(
-                Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
-        .focus(&mut Default::default());
-        let expected = FsIfC {
-            sort: IfSort::Equal,
-            fst: "x".to_string(),
-            snd: None,
-            thenc: Rc::new(FsExit::exit("y").into()),
-            elsec: Rc::new(
-                FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into(),
-            ),
-        }
-        .into();
+        let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
+            .focus(&mut Default::default());
+        let expected = fs_ife!("x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 }

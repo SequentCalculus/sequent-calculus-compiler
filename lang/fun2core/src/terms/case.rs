@@ -69,14 +69,14 @@ impl Compile for fun::syntax::terms::Case {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::terms::{Cns, Prd};
+    use core_lang::syntax as core_syntax;
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
+    use macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
-    use std::rc::Rc;
 
     #[test]
     fn compile_list() {
@@ -96,74 +96,33 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let mut context = core_lang::syntax::TypingContext::default();
-        context.add_var("x", core_lang::syntax::types::Ty::I64);
-        context.add_var(
-            "xs",
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        );
-        let mut arguments = core_lang::syntax::arguments::Arguments::default();
-        arguments.add_prod(core_lang::syntax::terms::Literal::new(1));
-        arguments.add_prod(core_lang::syntax::terms::Xtor::ctor(
-            "Nil",
-            core_lang::syntax::arguments::Arguments::default(),
-            core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-        ));
-        let expected = core_lang::syntax::terms::Mu::mu(
+        let expected = mu!(
             "a0",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::Xtor {
-                    prdcns: Prd,
-                    id: "Cons".to_owned(),
-                    args: arguments,
-                    ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-                },
-                core_lang::syntax::terms::XCase {
-                    prdcns: Cns,
-                    clauses: vec![
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Cns,
-                            xtor: "Nil".to_owned(),
-                            context: core_lang::syntax::TypingContext::default(),
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::Literal::new(0),
-                                    core_lang::syntax::terms::XVar::covar(
-                                        "a0",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
-                        core_lang::syntax::terms::Clause {
-                            prdcns: Cns,
-                            xtor: "Cons".to_owned(),
-                            context,
-                            body: Rc::new(
-                                core_lang::syntax::statements::Cut::new(
-                                    core_lang::syntax::terms::XVar::var(
-                                        "x",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::terms::XVar::covar(
-                                        "a0",
-                                        core_lang::syntax::types::Ty::I64,
-                                    ),
-                                    core_lang::syntax::types::Ty::I64,
-                                )
-                                .into(),
-                            ),
-                        },
+            cut!(
+                ctor!(
+                    "Cons",
+                    [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
+                    ty!("List[i64]")
+                ),
+                case!(
+                    [
+                        clause!(core_syntax::Cns, "Nil", [], cut!(lit!(0), covar!("a0"))),
+                        clause!(
+                            core_syntax::Cns,
+                            "Cons",
+                            [
+                                bind!("x", core_syntax::Chirality::Prd),
+                                bind!("xs", core_syntax::Chirality::Prd, ty!("List[i64]"))
+                            ],
+                            cut!(var!("x"), covar!("a0"))
+                        )
                     ],
-                    ty: core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-                },
-                core_lang::syntax::types::Ty::Decl("List[i64]".to_owned()),
-            ),
-            core_lang::syntax::types::Ty::I64,
+                    ty!("List[i64]")
+                ),
+                ty!("List[i64]")
+            )
         )
         .into();
         assert_eq!(result, expected);

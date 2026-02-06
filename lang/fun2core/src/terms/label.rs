@@ -74,7 +74,7 @@ impl Compile for fun::syntax::terms::Label {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use fun::{parse_term, typing::check::Check};
-
+    use macros::{covar, cut, lit, mu, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -95,18 +95,9 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::types::Ty::I64,
-            ),
-            core_lang::syntax::types::Ty::I64,
-        )
-        .into();
+        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 
@@ -128,18 +119,9 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = core_lang::syntax::terms::Mu::mu(
-            "a",
-            core_lang::syntax::statements::Cut::new(
-                core_lang::syntax::terms::Literal::new(1),
-                core_lang::syntax::terms::XVar::covar("a", core_lang::syntax::types::Ty::I64),
-                core_lang::syntax::types::Ty::I64,
-            ),
-            core_lang::syntax::types::Ty::I64,
-        )
-        .into();
+        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
         assert_eq!(result, expected)
     }
 }

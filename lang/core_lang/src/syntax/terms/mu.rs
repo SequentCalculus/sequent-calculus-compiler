@@ -256,48 +256,28 @@ impl Bind for Mu<Cns> {
 mod mu_tests {
     use super::{Bind, Focusing, Subst};
     use crate::{
-        syntax::{
-            FsStatement,
-            statements::{Cut, FsCut, FsExit},
-            terms::{Literal, Mu, XVar},
-            types::Ty,
-        },
+        syntax::{FsStatement, statements::FsExit},
         test_common::example_subst,
     };
+    extern crate self as core_lang;
+    use macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
 
     // Substitution tests
 
     #[test]
     fn subst_mu() {
         let subst = example_subst();
-        let result = Mu::mu(
-            "a",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        )
-        .subst_sim(&subst.0, &subst.1);
-        let expected = Mu::mu(
-            "a",
-            Cut::new(XVar::var("y", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let result = mu!("a", cut!(var!("x"), covar!("a"))).subst_sim(&subst.0, &subst.1);
+        let expected = mu!("a", cut!(var!("y"), covar!("a")));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
         let subst = example_subst();
-        let example = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mutilde!("x", cut!(var!("x"), covar!("a")));
         let result = example.subst_sim(&subst.0, &subst.1);
-        let expected = Mu::tilde_mu(
-            "x",
-            Cut::new(XVar::var("x", Ty::I64), XVar::covar("b", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let expected = mutilde!("x", cut!(var!("x"), covar!("b")));
         assert_eq!(result, expected)
     }
 
@@ -305,42 +285,21 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let example_var = Mu::mu(
-            "a",
-            FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mu!("a", cut!(lit!(1), covar!("a")));
+        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
 
     #[test]
     fn bind_mu() {
-        let example = Mu::mu(
-            "a",
-            Cut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
-        let example_var = Mu::mu(
-            "a",
-            FsCut::new(Literal::new(1), XVar::covar("a", Ty::I64), Ty::I64),
-            Ty::I64,
-        );
+        let example = mu!("a", cut!(lit!(1), covar!("a")));
+        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
         let result = example.clone().bind(
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
             &mut Default::default(),
         );
-        let expected = FsCut::new(
-            example_var,
-            Mu::tilde_mu("x0", FsStatement::Exit(FsExit::exit("x0")), Ty::I64),
-            Ty::I64,
-        )
-        .into();
+        let expected = fs_cut!(example_var, fs_mutilde!("x0", fs_exit!("x0"))).into();
         assert_eq!(result, expected)
     }
 }

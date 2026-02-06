@@ -13,6 +13,7 @@ members = [
     "lang/fun",
     "lang/fun2core",
     "lang/printer",
+    "lang/macros"
 ]
 default-members = ["app"]
 resolver = "3"
@@ -47,4 +48,5 @@ driver        = { version = "0.1.0", path = "./lang/driver" }
 fun           = { version = "0.1.0", path = "./lang/fun" }
 fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
 printer       = { version = "0.1.0", path = "./lang/printer" }
+macros        = { version = "0.1.0", path = "./lang/macros" }
 
