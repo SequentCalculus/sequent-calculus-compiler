@@ -10,7 +10,7 @@ pub fn fs_def(input: TokenStream) -> TokenStream {
     def(input, quote! {core_lang::syntax::statements::FsStatement})
 }
 
-fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
+fn def(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
         ["Def Name", "Def Args", "Def Body", "Def Used Vars"],
@@ -31,7 +31,7 @@ fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
                     #(#def_args),*
                 ]),
             },
-            body: #stmt_ty::from(#def_body),
+            body: #statement_kind::from(#def_body),
             used_vars: std::collections::HashSet::from([#(#def_used),*])
         }
     }

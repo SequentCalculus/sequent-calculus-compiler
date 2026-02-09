@@ -1,8 +1,8 @@
 use core_lang::syntax::statements::ifc::IfSort;
-use macro_utils::expr_to_string;
+use macro_utils::{expr_to_string, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Expr, Token, parse::Parser, punctuated::Punctuated};
+use syn::{Expr, parse_str};
 
 pub fn unfocused_ife(input: TokenStream) -> TokenStream {
     unfocused_if(input, IfSort::Equal)
@@ -79,12 +79,23 @@ fn ifc(
             quote! {core_lang::syntax::statements::ifc::IfSort::GreaterOrEqual}
         }
     };
-    let args = parse_if_args(input, arg_converter);
-    let fst = &args[0];
-    let snd = &args[1];
+    let args = parse_args(
+        input.into(),
+        [
+            "First Argument",
+            "Second Argument",
+            "Then Statement",
+            "Else Statement",
+        ],
+        &[(1, parse_str("::std::option::Option::None").unwrap())],
+    );
+    let fst = arg_converter(&args[0], 0);
+    let snd = quote_option(&args[1], |expr| {
+        let exp = arg_converter(expr, 1);
+        quote!(#exp)
+    });
     let thenc = &args[2];
     let elsec = &args[3];
-
     quote! {
         core_lang::syntax::statements::ifc::IfC{
             sort: #sort,
@@ -95,38 +106,4 @@ fn ifc(
         }
     }
     .into()
-}
-
-fn parse_if_args(
-    input: TokenStream,
-    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
-) -> Vec<proc_macro2::TokenStream> {
-    let parsed = Punctuated::<Expr, Token![,]>::parse_terminated
-        .parse2(input.into())
-        .expect("Macro arguments could not be parsed")
-        .into_iter()
-        .collect::<Vec<Expr>>();
-    let mut ind = 0;
-    let fst = arg_converter(&parsed[0], 0);
-    ind += 1;
-
-    let snd = if parsed.len() == 4 {
-        let snd = arg_converter(&parsed[ind], ind);
-        ind += 1;
-        quote! { ::core::option::Option::Some(#snd) }
-    } else {
-        quote! { ::core::option::Option::None }
-    };
-
-    let thenc = {
-        let thenc = &parsed[ind];
-        quote! {#thenc}
-    };
-    ind += 1;
-    let elsec = {
-        let elsec = &parsed[ind];
-        quote! {#elsec}
-    };
-
-    vec![fst, snd, thenc, elsec]
 }

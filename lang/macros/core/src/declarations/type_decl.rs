@@ -11,11 +11,8 @@ pub fn codata(input: TokenStream) -> TokenStream {
     type_decl(input, Codata)
 }
 
-fn type_decl<P>(input: TokenStream, dat: P) -> TokenStream
-where
-    P: Polarity,
-{
-    let dat = if dat.is_data() {
+fn type_decl<P: Polarity>(input: TokenStream, polarity: P) -> TokenStream {
+    let polarity = if polarity.is_data() {
         quote! { core_lang::syntax::declaration::Data }
     } else {
         quote! { core_lang::syntax::declaration::Codata }
@@ -26,7 +23,7 @@ where
     let xtors = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::TypeDeclaration{
-            dat: #dat,
+            dat: #polarity,
             name: #name.to_string(),
             xtors: ::std::vec::Vec::from([
                 #(#xtors),*

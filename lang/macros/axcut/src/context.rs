@@ -15,14 +15,14 @@ pub fn bind(input: TokenStream) -> TokenStream {
             (2, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
         ],
     );
-    let bind_var = expr_to_string(&args[0], 0);
-    let bind_chi = &args[1];
-    let bind_ty = &args[2];
+    let var = expr_to_string(&args[0], 0);
+    let chi = &args[1];
+    let ty = &args[2];
     quote! {
         axcut::syntax::context::ContextBinding{
-            var: #bind_var.to_string(),
-            chi: #bind_chi,
-            ty: #bind_ty
+            var: #var.to_string(),
+            chi: #chi,
+            ty: #ty
         }
     }
     .into()

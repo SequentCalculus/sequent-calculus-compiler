@@ -25,23 +25,23 @@ fn print(input: TokenStream, newline: bool) -> TokenStream {
 
     let var = expr_to_string(&args[0], 0);
     let next = &args[1];
-    let free = quote_option(&args[2], |expr| {
-        let expr_arr = expr_to_array(expr, 2)
+    let free_vars = quote_option(&args[2], |expr| {
+        let free_vars = expr_to_array(expr, 2)
             .into_iter()
             .map(|expr| quote! { #expr.to_string()})
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
-                #(#expr_arr),*
+                #(#free_vars),*
             ])
         }
     });
     quote! {
         axcut::syntax::statements::PrintI64{
-            newline:#newline,
-            var:#var.to_string(),
+            newline: #newline,
+            var: #var.to_string(),
             next: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#next)),
-            free_vars_next: #free
+            free_vars_next: #free_vars
         }
     }
     .into()

@@ -11,11 +11,8 @@ pub fn dtor_sig(input: TokenStream) -> TokenStream {
     xtor_sig(input, Codata)
 }
 
-fn xtor_sig<P>(input: TokenStream, dat: P) -> TokenStream
-where
-    P: Polarity,
-{
-    let dat = if dat.is_data() {
+fn xtor_sig<P: Polarity>(input: TokenStream, polarity: P) -> TokenStream {
+    let polarity = if polarity.is_data() {
         quote! {core_lang::syntax::declaration::Data}
     } else {
         quote! {core_lang::syntax::declaration::Codata}
@@ -25,7 +22,7 @@ where
     let xtor_args = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::XtorSig{
-            xtor: #dat,
+            xtor: #polarity,
             name: #name.to_string(),
             args: core_lang::syntax::context::TypingContext {
                 bindings: ::std::vec::Vec::from([

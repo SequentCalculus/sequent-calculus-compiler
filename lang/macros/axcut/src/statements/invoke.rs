@@ -27,7 +27,7 @@ pub fn invoke(input: TokenStream) -> TokenStream {
                     #(#invoke_args),*
                 ])
             },
-            ty:#ty
+            ty: #ty
         }
     }
     .into()

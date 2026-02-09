@@ -48,9 +48,9 @@ fn ifc(input: TokenStream, sort: IfSort) -> TokenStream {
     let elsec = &args[3];
     quote! {
         axcut::syntax::statements::ifc::IfC{
-            sort:#sort,
-            fst:#fst.to_string(),
-            snd:#snd,
+            sort: #sort,
+            fst: #fst.to_string(),
+            snd: #snd,
             thenc: ::std::rc::Rc::new(Statement::from(#thenc)),
             elsec: ::std::rc::Rc::new(Statement::from(#elsec))
         }

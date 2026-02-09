@@ -7,10 +7,10 @@ use syn::{Expr, parse_str};
 
 pub fn xtor(
     input: TokenStream,
-    prdcns: Chirality,
-    arg_fun: fn(&Expr, usize) -> proc_macro2::TokenStream,
+    chi: Chirality,
+    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> TokenStream {
-    let (chi, xtor_desc) = match prdcns {
+    let (chi, xtor_desc) = match chi {
         Chirality::Prd => (quote! { core_lang::syntax::Prd}, "Ctor Name"),
         Chirality::Cns => (quote! { core_lang::syntax::Cns}, "Dtor Name"),
     };
@@ -22,7 +22,7 @@ pub fn xtor(
     );
 
     let xtor_name = expr_to_string(&args[0], 0);
-    let xtor_args = arg_fun(&args[1], 1);
+    let xtor_args = arg_converter(&args[1], 1);
     let ty = &args[2];
     quote! {
         core_lang::syntax::terms::xtor::Xtor{
@@ -35,10 +35,10 @@ pub fn xtor(
     .into()
 }
 
-pub fn unfocused_xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
-    xtor(input, prdcns, arguments)
+pub fn unfocused_xtor(input: TokenStream, chi: Chirality) -> TokenStream {
+    xtor(input, chi, arguments)
 }
 
-pub fn fs_xtor(input: TokenStream, prdcns: Chirality) -> TokenStream {
-    xtor(input, prdcns, typing_context)
+pub fn fs_xtor(input: TokenStream, chi: Chirality) -> TokenStream {
+    xtor(input, chi, typing_context)
 }

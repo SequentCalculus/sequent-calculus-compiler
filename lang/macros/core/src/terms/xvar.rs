@@ -4,8 +4,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
 
-pub fn xvar(input: TokenStream, prdcns: Chirality) -> TokenStream {
-    let prdcns = match prdcns {
+pub fn xvar(input: TokenStream, chi: Chirality) -> TokenStream {
+    let prdcns = match chi {
         Chirality::Prd => quote! {core_lang::syntax::terms::Prd},
         Chirality::Cns => quote! {core_lang::syntax::terms::Cns},
     };

@@ -9,17 +9,17 @@ pub fn clause(input: TokenStream) -> TokenStream {
         &[],
     );
     let xtor = expr_to_string(&args[0], 0);
-    let ctx = expr_to_array(&args[1], 1);
+    let bindings = expr_to_array(&args[1], 1);
     let body = &args[2];
     quote! {
         axcut::syntax::statements::clause::Clause{
             xtor: #xtor.to_string(),
             context: axcut::syntax::context::TypingContext{
                 bindings: ::std::vec::Vec::from([
-                    #(#ctx),*
+                    #(#bindings),*
                 ])
             },
-            body: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#body))
+            body: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#body)),
         }
     }
     .into()

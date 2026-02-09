@@ -4,13 +4,13 @@ use quote::quote;
 
 pub fn ty_decl(input: TokenStream) -> TokenStream {
     let args = parse_args(input.into(), ["Type Name", "Type Xtors"], &[]);
-    let ty_name = expr_to_string(&args[0], 0);
-    let ty_xtors = expr_to_array(&args[1], 1);
+    let name = expr_to_string(&args[0], 0);
+    let xtors = expr_to_array(&args[1], 1);
     quote! {
         axcut::syntax::declaration::TypeDeclaration{
-            name: #ty_name.to_string(),
+            name: #name.to_string(),
             xtors: ::std::vec::Vec::from([
-                #(#ty_xtors),*
+                #(#xtors),*
             ])
         }
     }

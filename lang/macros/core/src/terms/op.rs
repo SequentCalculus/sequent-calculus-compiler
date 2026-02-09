@@ -56,7 +56,7 @@ fn fs_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 fn op(
     input: TokenStream,
     op: BinOp,
-    prod_fun: fn(&Expr, usize) -> proc_macro2::TokenStream,
+    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
 ) -> TokenStream {
     let args = parse_args(input.into(), ["First Operand", "Second Operand"], &[]);
     let op = match op {
@@ -66,8 +66,8 @@ fn op(
         BinOp::Sum => quote! {core_lang::syntax::terms::op::BinOp::Sum},
         BinOp::Sub => quote! {core_lang::syntax::terms::op::BinOp::Sub},
     };
-    let fst = prod_fun(&args[0], 0);
-    let snd = prod_fun(&args[1], 1);
+    let fst = arg_converter(&args[0], 0);
+    let snd = arg_converter(&args[1], 1);
     quote! {
         core_lang::syntax::terms::op::Op{
             fst: #fst,

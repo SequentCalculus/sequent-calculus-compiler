@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
 
-pub fn cut(input: TokenStream, term_ty: proc_macro2::TokenStream) -> TokenStream {
+pub fn cut(input: TokenStream, term_kind: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
         ["Producer", "Consumer", "Type"],
@@ -14,8 +14,8 @@ pub fn cut(input: TokenStream, term_ty: proc_macro2::TokenStream) -> TokenStream
     let ty = &args[2];
     quote! {
         core_lang::syntax::statements::Cut{
-            producer: ::std::rc::Rc::new(#term_ty::from(#prod)),
-            consumer: ::std::rc::Rc::new(#term_ty::from(#cons)),
+            producer: ::std::rc::Rc::new(#term_kind::from(#prod)),
+            consumer: ::std::rc::Rc::new(#term_kind::from(#cons)),
             ty:#ty
         }
     }

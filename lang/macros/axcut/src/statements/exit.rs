@@ -7,7 +7,7 @@ pub fn exit(input: TokenStream) -> TokenStream {
     let var = expr_to_string(&args[0], 0);
     quote! {
         axcut::syntax::statements::exit::Exit{
-            var:#var.to_string()
+            var: #var.to_string()
         }
     }
     .into()

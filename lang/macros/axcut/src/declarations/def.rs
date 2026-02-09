@@ -29,12 +29,12 @@ pub fn def(input: TokenStream) -> TokenStream {
         axcut::syntax::def::Def{
             name:#name.to_string(),
             context: axcut::syntax::context::TypingContext{
-                bindings:vec![
+                bindings: vec![
                     #(#def_args),*
                 ]
             },
             body: axcut::syntax::statements::Statement::from(#body),
-            used_vars:#used_vars
+            used_vars: #used_vars
         }
     }
     .into()

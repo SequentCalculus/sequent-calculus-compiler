@@ -10,7 +10,7 @@ pub fn fs_clause(input: TokenStream) -> TokenStream {
     clause(input, quote! {core_lang::syntax::statements::FsStatement })
 }
 
-fn clause(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
+fn clause(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
         ["Chirality", "Xtor Name", "Xtor Arguments", "Clause Body"],
@@ -30,7 +30,7 @@ fn clause(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream 
                     #(#xtor_args),*
                 ])
             },
-            body: ::std::rc::Rc::new(#stmt_ty::from(#body))
+            body: ::std::rc::Rc::new(#statement_kind::from(#body))
         }
     }
     .into()

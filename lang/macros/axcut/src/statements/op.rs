@@ -39,13 +39,13 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
     let var = expr_to_string(&args[2], 2);
     let next = &args[3];
     let free_vars = quote_option(&args[4], |free| {
-        let free_arr = expr_to_array(free, 4)
+        let free_vars = expr_to_array(free, 4)
             .into_iter()
             .map(|expr| quote! { #expr.to_string() })
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
-                #(#free_arr),*
+                #(#free_vars),*
             ])
         }
     });
@@ -57,7 +57,7 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
             snd: #snd.to_string(),
             var: #var.to_string(),
             next: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#next)),
-            free_vars_next:#free_vars,
+            free_vars_next: #free_vars,
         }
     }
     .into()
