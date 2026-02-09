@@ -1,7 +1,13 @@
 use proc_macro::TokenStream;
 use syn::{Expr, ExprArray, ExprLit, Lit};
-use syn::{Token, parse::Parser, parse_str, punctuated::Punctuated};
+use syn::{ExprTuple, Token, parse::Parser, parse_str, punctuated::Punctuated};
 
+pub fn expr_to_tuple(expr: &Expr) -> Vec<Expr> {
+    match expr {
+        Expr::Tuple(ExprTuple { elems, .. }) => elems.into_iter().cloned().collect(),
+        _ => panic!("Please provide a tuple expression"),
+    }
+}
 pub fn expr_to_string(expr: &Expr, number_of_args: usize) -> String {
     match expr {
         Expr::Lit(ExprLit {

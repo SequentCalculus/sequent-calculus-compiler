@@ -51,7 +51,13 @@ mod compile_tests {
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut {
@@ -74,7 +80,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::from(["fac".to_string()]),
             current_label: "fac",
@@ -82,7 +91,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a0", call!("fac", [lit!(3), covar!("a0")])).into();
+        let expected = mu!(("a", 0), call!("fac", [lit!(3), covar!("a", 0)])).into();
         assert_eq!(result, expected)
     }
 }

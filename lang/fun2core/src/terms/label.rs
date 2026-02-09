@@ -90,7 +90,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["a".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "a".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -98,7 +101,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 
@@ -114,7 +117,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["a".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "a".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -122,7 +128,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 }

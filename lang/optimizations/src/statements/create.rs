@@ -2,7 +2,7 @@ use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineSta
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{
     Var,
-    names::fresh_name,
+    names::fresh_var,
     statements::{Create, Statement},
 };
 use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
@@ -73,7 +73,7 @@ impl Rename for Create {
             .collect();
 
         if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_name(used_vars, &self.var);
+            let new_variable = fresh_var(used_vars, &self.var.name);
             let old_variable = self.var;
             self.var = new_variable;
 

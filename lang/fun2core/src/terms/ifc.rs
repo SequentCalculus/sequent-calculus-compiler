@@ -85,12 +85,12 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
                 lit!(3),
                 lit!(4),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(lit!(2), covar!("a", 0))
             )
         )
         .into();
@@ -101,7 +101,13 @@ mod compile_tests {
     fn compile_ife2() {
         let term = parse_term!("if x == x {1} else {x}");
         let mut context = fun::syntax::context::TypingContext::default();
-        context.add_var("x", fun::syntax::types::Ty::mk_i64());
+        context.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -111,7 +117,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -120,12 +129,12 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
-                var!("x"),
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!("x", 0),
+                var!("x", 0),
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(var!("x", 0), covar!("a", 0))
             )
         )
         .into();
@@ -146,11 +155,11 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
                 lit!(0),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(lit!(2), covar!("a", 0))
             )
         )
         .into();
@@ -161,7 +170,13 @@ mod compile_tests {
     fn compile_ifz2() {
         let term = parse_term!("if x == 0 {1} else {x}");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -171,7 +186,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -180,11 +198,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!("x", 0),
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(var!("x", 0), covar!("a", 0))
             )
         )
         .into();

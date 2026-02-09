@@ -91,7 +91,13 @@ mod compile_tests {
     fn compile_op2() {
         let term = parse_term!("x * (x - 1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -101,7 +107,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -109,7 +118,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = prod!(var!("x"), sub!(var!("x"), lit!(1))).into();
+        let expected = prod!(var!("x", 0), sub!(var!("x", 0), lit!(1))).into();
         assert_eq!(result, expected);
     }
 }

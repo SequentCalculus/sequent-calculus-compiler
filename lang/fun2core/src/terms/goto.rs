@@ -48,7 +48,13 @@ mod compile_tests {
     fn compile_goto_1() {
         let term = parse_term!("goto a (1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
+        ctx.add_covar(
+            fun::syntax::names::Var {
+                name: "a".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -64,7 +70,7 @@ mod compile_tests {
             lifted_statements: &mut VecDeque::default(),
         };
         let result = term_typed.compile(&mut state, ty!("int"));
-        let expected = mu!("a0", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 
@@ -72,7 +78,13 @@ mod compile_tests {
     fn compile_goto_2() {
         let term = parse_term!("label a { if x == 0 {goto a (0)} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -82,7 +94,16 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string(), "a".to_string()]),
+            used_vars: HashSet::from([
+                core_lang::syntax::names::Var {
+                    name: "x".to_string(),
+                    id: 0,
+                },
+                core_lang::syntax::names::Var {
+                    name: "a".to_string(),
+                    id: 0,
+                },
+            ]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -91,11 +112,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a",
+            ("a", 0),
             ife!(
-                var!("x"),
-                cut!(lit!(0), covar!("a")),
-                cut!(prod!(var!("x"), lit!(2)), covar!("a"))
+                var!("x", 0),
+                cut!(lit!(0), covar!("a", 0)),
+                cut!(prod!(var!("x", 0), lit!(2)), covar!("a", 0))
             )
         )
         .into();

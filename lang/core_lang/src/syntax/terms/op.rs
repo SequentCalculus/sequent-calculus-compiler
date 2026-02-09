@@ -273,27 +273,30 @@ mod tests {
     use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
-        prod!(var!("x"), var!("x")).into()
+        prod!(var!("x", 0), var!("x", 0)).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = prod!(var!("y"), var!("y")).into();
+        let expected = prod!(var!("y", 0), var!("y", 0)).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a")).focus(&mut Default::default());
+        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a", 0)).focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                ("x", 0),
                 fs_cut!(
                     lit!(2),
-                    fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
+                    fs_mutilde!(
+                        ("x", 1),
+                        fs_cut!(fs_sum!(("x", 0), ("x", 1)), covar!("a", 0))
+                    )
                 )
             )
         )
@@ -304,8 +307,9 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = cut!(prod!(var!("x"), var!("y")), covar!("a")).focus(&mut Default::default());
-        let expected = fs_cut!(fs_prod!("x", "y"), covar!("a")).into();
+        let result =
+            cut!(prod!(var!("x", 0), var!("y", 0)), covar!("a", 0)).focus(&mut Default::default());
+        let expected = fs_cut!(fs_prod!(("x", 0), ("y", 0)), covar!("a", 0)).into();
         assert_eq!(result, expected)
     }
 }

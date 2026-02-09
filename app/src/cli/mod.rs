@@ -42,7 +42,6 @@ pub fn exec() -> miette::Result<()> {
         Focus(args) => focus::exec(args, !cli.no_color),
         Fmt(args) => fmt::exec(args, !cli.no_color),
         Linearize(args) => linearize::exec(args, !cli.no_color),
-        Rewrite(args) => rewrite::exec(args, !cli.no_color),
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
@@ -85,6 +84,4 @@ enum Command {
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
-    /// Rewrite definitions of a file
-    Rewrite(rewrite::Args),
 }

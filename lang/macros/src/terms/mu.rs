@@ -1,4 +1,4 @@
-use crate::utils::{expr_to_string, parse_args};
+use crate::utils::{expr_to_string, expr_to_tuple, parse_args};
 use core_lang::syntax::context::Chirality;
 use proc_macro::TokenStream;
 use quote::quote;
@@ -12,20 +12,17 @@ pub fn xmu(
         Chirality::Prd => quote! { core_lang::syntax::Prd },
         Chirality::Cns => quote! { core_lang::syntax::Cns },
     };
-    let args = parse_args(
-        input,
-        &["Bound Variable", "Variable Id", "Bound Statement"],
-        true,
-    );
-    let var = expr_to_string(&args[0], 0);
-    let var_id = &args[1];
-    let stmt = &args[2];
-    let ty = &args[3];
+    let args = parse_args(input, &["Bound Variable", "Bound Statement"], true);
+    let var = expr_to_tuple(&args[0]);
+    let var_name = expr_to_string(&var[0], 0);
+    let var_id = &var[1];
+    let stmt = &args[1];
+    let ty = &args[2];
     quote! {
         core_lang::syntax::terms::mu::Mu{
             prdcns: #prdcns,
             variable: core_lang::syntax::names::Var {
-                name: #var.to_string(),
+                name: #var_name.to_string(),
                 id: #var_id
             },
             statement: ::std::rc::Rc::new(#statement_kind::from(#stmt)),

@@ -1,4 +1,4 @@
-use crate::utils::{expr_to_string, parse_args};
+use crate::utils::{expr_to_string, expr_to_tuple, parse_args};
 use core_lang::syntax::terms::op::BinOp;
 use proc_macro::TokenStream;
 use quote::quote;
@@ -46,9 +46,14 @@ fn unfocused_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 
 fn fs_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
     op(input, bin_op, |exp, num_arg| {
-        let var = expr_to_string(exp, num_arg);
+        let var = expr_to_tuple(exp);
+        let var_name = expr_to_string(&var[0], num_arg);
+        let var_id = &var[1];
         quote! {
-                #var.to_string()
+            core_lang::syntax::names::Var{
+                name: #var_name.to_string(),
+                id: #var_id
+            }
         }
     })
 }

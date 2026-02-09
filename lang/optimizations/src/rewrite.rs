@@ -103,7 +103,13 @@ impl RewriteState {
     ) -> (Name, Vec<usize>, Vec<ContextBinding>) {
         let name = fresh_name(
             &mut self.used_labels,
-            &("lift_".to_string() + &self.current_label + "_" + bound_var + "_" + &clause.xtor),
+            &("lift_".to_string()
+                + &self.current_label
+                + "_"
+                + &bound_var.name
+                + &bound_var.id.to_string()
+                + "_"
+                + &clause.xtor),
         );
 
         let mut free_vars = BTreeSet::new();
@@ -156,7 +162,13 @@ impl RewriteState {
 
         let name = fresh_name(
             &mut self.used_labels,
-            &("lift_".to_string() + label + "_" + &switch_info.switch.var + "_" + &clause.xtor),
+            &("lift_".to_string()
+                + label
+                + "_"
+                + &switch_info.switch.var.name
+                + &switch_info.switch.var.id.to_string()
+                + "_"
+                + &clause.xtor),
         );
 
         let mut free_vars = BTreeSet::new();

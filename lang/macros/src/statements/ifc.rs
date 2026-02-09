@@ -1,4 +1,4 @@
-use crate::utils::expr_to_string;
+use crate::utils::{expr_to_string, expr_to_tuple};
 use core_lang::syntax::statements::ifc::IfSort;
 use proc_macro::TokenStream;
 use quote::quote;
@@ -56,8 +56,13 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
         input,
         sort,
         |exp, num_arg| {
-            let var = expr_to_string(exp, num_arg);
-            quote! { #var.to_string() }
+            let var = expr_to_tuple(exp);
+            let var_name = expr_to_string(&var[0], num_arg);
+            let var_id = &var[1];
+            quote! { core_lang::syntax::names::Var {
+                name:#var_name.to_string(),
+                id:#var_id
+            } }
         },
         quote! {core_lang::syntax::statements::FsStatement},
     )

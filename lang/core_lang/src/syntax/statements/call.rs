@@ -134,8 +134,8 @@ mod transform_tests {
 
     #[test]
     fn transform_call2() {
-        let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
-        let expected = fs_call!("fun", [bind!("x", prd!()), bind!("a", cns!())]).into();
+        let result = call!("fun", [var!("x", 0), covar!("a", 0)],).focus(&mut Default::default());
+        let expected = fs_call!("fun", [bind!("x", 0, prd!()), bind!("a", 0, cns!())]).into();
         assert_eq!(result, expected)
     }
 }

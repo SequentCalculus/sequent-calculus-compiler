@@ -149,32 +149,32 @@ mod var_tests {
     #[test]
     fn subst_var1() {
         let subst = example_subst();
-        let result = var!("x").subst_sim(&subst.0, &subst.1);
-        let expected = var!("y").into();
+        let result = var!("x", 0).subst_sim(&subst.0, &subst.1);
+        let expected = var!("y", 0).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
         let subst = example_subst();
-        let result = var!("z").subst_sim(&subst.0, &subst.1);
-        let expected = var!("z").into();
+        let result = var!("z", 0).subst_sim(&subst.0, &subst.1);
+        let expected = var!("z", 0).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
         let subst = example_subst();
-        let result = covar!("a").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("b").into();
+        let result = covar!("a", 0).subst_sim(&subst.0, &subst.1);
+        let expected = covar!("b", 0).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar2() {
         let subst = example_subst();
-        let result = covar!("c").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("c").into();
+        let result = covar!("c", 0).subst_sim(&subst.0, &subst.1);
+        let expected = covar!("c", 0).into();
         assert_eq!(result, expected)
     }
 }

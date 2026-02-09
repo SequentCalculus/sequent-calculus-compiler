@@ -67,7 +67,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -76,10 +79,13 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 lit!(1),
-                mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
+                mutilde!(
+                    ("x", 0),
+                    cut!(prod!(var!("x", 0), var!("x", 0)), covar!("a", 0))
+                )
             )
         )
         .into();
@@ -90,7 +96,13 @@ mod compile_tests {
     fn compile_let2() {
         let term = parse_term!("let x : List[i64] = Cons(x,Nil); x");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var(
+            fun::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            },
+            fun::syntax::types::Ty::mk_i64(),
+        );
         let term_typed = term
             .check(
                 &mut symbol_table_list(),
@@ -103,7 +115,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([core_lang::syntax::names::Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -112,18 +127,18 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("List[i64]"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 ctor!(
                     "Cons",
-                    [var!("x"), ctor!("Nil", [], ty!("List[i64]"))],
+                    [var!("x", 0), ctor!("Nil", [], ty!("List[i64]"))],
                     ty!("List[i64]")
                 ),
                 mutilde!(
-                    "x",
+                    ("x", 0),
                     cut!(
-                        var!("x", ty!("List[i64]")),
-                        covar!("a0", ty!("List[i64]")),
+                        var!("x", 0, ty!("List[i64]")),
+                        covar!("a", 0, ty!("List[i64]")),
                         ty!("List[i64]")
                     ),
                     ty!("List[i64]")

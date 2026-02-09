@@ -72,26 +72,26 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", cns!())],
-                            cut!(lit!(1), covar!("a1"))
+                            [bind!("a", 1, cns!())],
+                            cut!(lit!(1), covar!("a", 1))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", cns!())],
-                            cut!(lit!(2), covar!("a2"))
+                            [bind!("a", 2, cns!())],
+                            cut!(lit!(2), covar!("a", 2))
                         )
                     ],
                     ty!("LPair[i64, i64]")
                 ),
-                dtor!("fst", [covar!("a0")], ty!("LPair[i64, i64]")),
+                dtor!("fst", [covar!("a", 0)], ty!("LPair[i64, i64]")),
                 ty!("LPair[i64, i64]")
             )
         )
@@ -120,26 +120,26 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
                             "fst",
-                            [bind!("a1", cns!())],
-                            cut!(lit!(1), covar!("a1"))
+                            [bind!("a", 1, cns!())],
+                            cut!(lit!(1), covar!("a", 1))
                         ),
                         clause!(
                             Prd,
                             "snd",
-                            [bind!("a2", cns!())],
-                            cut!(lit!(2), covar!("a2"))
+                            [bind!("a", 2, cns!())],
+                            cut!(lit!(2), covar!("a", 2))
                         )
                     ],
                     ty!("LPair[i64, i64]")
                 ),
-                dtor!("snd", [covar!("a0")], ty!("LPair[i64, i64]")),
+                dtor!("snd", [covar!("a", 0)], ty!("LPair[i64, i64]")),
                 ty!("LPair[i64, i64]")
             )
         )
