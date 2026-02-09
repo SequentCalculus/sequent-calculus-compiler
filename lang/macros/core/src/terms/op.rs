@@ -1,5 +1,5 @@
 use core_lang::syntax::terms::op::BinOp;
-use macro_utils::{expr_to_str, parse_args};
+use macro_utils::{expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::Expr;
@@ -46,7 +46,7 @@ fn unfocused_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 
 fn fs_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
     op(input, bin_op, |exp, num_arg| {
-        let var = expr_to_str(exp, num_arg);
+        let var = expr_to_string(exp, num_arg);
         quote! {
                 #var.to_string()
         }

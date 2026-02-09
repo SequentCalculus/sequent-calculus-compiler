@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_str, is_none, parse_args};
+use macro_utils::{expr_to_array, expr_to_string, is_none, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -9,7 +9,7 @@ pub fn def(input: TokenStream) -> TokenStream {
         ["Name", "Arguments", "Body", "Body Used Vars"],
         &[(3, parse_str("::std::option::Option::None").unwrap())],
     );
-    let name = expr_to_str(&args[0], 0);
+    let name = expr_to_string(&args[0], 0);
     let def_args = expr_to_array(&args[1], 1);
     let body = &args[2];
     let used_vars = if is_none(&args[3]) {

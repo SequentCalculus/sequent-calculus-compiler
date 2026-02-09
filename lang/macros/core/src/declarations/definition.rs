@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_str, parse_args};
+use macro_utils::{expr_to_array, expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -16,7 +16,7 @@ fn def(input: TokenStream, stmt_ty: proc_macro2::TokenStream) -> TokenStream {
         ["Def Name", "Def Args", "Def Body", "Def Used Vars"],
         &[],
     );
-    let name = expr_to_str(&args[0], 0);
+    let name = expr_to_string(&args[0], 0);
     let def_args = expr_to_array(&args[1], 1);
     let def_body = &args[2];
     let def_used = expr_to_array(&args[3], 3)

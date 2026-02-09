@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_str, parse_args, quote_option};
+use macro_utils::{expr_to_array, expr_to_string, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -19,9 +19,9 @@ pub fn letin(input: TokenStream) -> TokenStream {
             (5, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
-    let var = expr_to_str(&args[0], 0);
+    let var = expr_to_string(&args[0], 0);
     let ty = &args[1];
-    let tag = expr_to_str(&args[2], 2);
+    let tag = expr_to_string(&args[2], 2);
     let let_args = expr_to_array(&args[3], 3);
     let next = &args[4];
     let free_vars = quote_option(&args[5], |expr| {

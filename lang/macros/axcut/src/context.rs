@@ -1,5 +1,4 @@
-use macro_utils::expr_to_str;
-use macro_utils::parse_args;
+use macro_utils::{expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -16,7 +15,7 @@ pub fn bind(input: TokenStream) -> TokenStream {
             (2, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
         ],
     );
-    let bind_var = expr_to_str(&args[0], 0);
+    let bind_var = expr_to_string(&args[0], 0);
     let bind_chi = &args[1];
     let bind_ty = &args[2];
     quote! {

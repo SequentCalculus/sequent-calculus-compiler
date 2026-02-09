@@ -1,5 +1,5 @@
 use axcut::syntax::statements::op::BinOp;
-use macro_utils::{expr_to_array, expr_to_str};
+use macro_utils::{expr_to_array, expr_to_string};
 use macro_utils::{parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
@@ -34,9 +34,9 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
         ["Fst", "Snd", "Var", "Next", "Free Vars Next"],
         &[(4, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_str(&args[0], 0);
-    let snd = expr_to_str(&args[1], 1);
-    let var = expr_to_str(&args[2], 2);
+    let fst = expr_to_string(&args[0], 0);
+    let snd = expr_to_string(&args[1], 1);
+    let var = expr_to_string(&args[2], 2);
     let next = &args[3];
     let free_vars = quote_option(&args[4], |free| {
         let free_arr = expr_to_array(free, 4)

@@ -1,6 +1,6 @@
 use crate::{arguments::arguments, context::typing_context};
 use core_lang::syntax::Chirality;
-use macro_utils::{expr_to_str, parse_args};
+use macro_utils::{expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};
@@ -21,7 +21,7 @@ pub fn xtor(
         &[(2, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
 
-    let xtor_name = expr_to_str(&args[0], 0);
+    let xtor_name = expr_to_string(&args[0], 0);
     let xtor_args = arg_fun(&args[1], 1);
     let ty = &args[2];
     quote! {

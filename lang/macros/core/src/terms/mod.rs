@@ -15,8 +15,3 @@ pub use op::{
 pub use xcase::xcase;
 pub use xtor::{fs_xtor, unfocused_xtor};
 pub use xvar::xvar;
-
-pub use op::{
-    fs_div, fs_prod, fs_rem, fs_sub, fs_sum, unfocused_div, unfocused_prod, unfocused_rem,
-    unfocused_sub, unfocused_sum,
-};

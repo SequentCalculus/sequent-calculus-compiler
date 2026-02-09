@@ -1,5 +1,5 @@
 use core_lang::syntax::declaration::{Codata, Data, Polarity};
-use macro_utils::{expr_to_array, expr_to_str, parse_args};
+use macro_utils::{expr_to_array, expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -22,7 +22,7 @@ where
     };
 
     let args = parse_args(input.into(), ["Type Name", "Xtors"], &[]);
-    let name = expr_to_str(&args[0], 0);
+    let name = expr_to_string(&args[0], 0);
     let xtors = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::TypeDeclaration{

@@ -1,5 +1,5 @@
 use core_lang::syntax::declaration::{Codata, Data, Polarity};
-use macro_utils::{expr_to_array, expr_to_str, parse_args};
+use macro_utils::{expr_to_array, expr_to_string, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -21,7 +21,7 @@ where
         quote! {core_lang::syntax::declaration::Codata}
     };
     let args = parse_args(input.into(), ["Xtor Name", "Xtor Args"], &[]);
-    let name = expr_to_str(&args[0], 0);
+    let name = expr_to_string(&args[0], 0);
     let xtor_args = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::XtorSig{

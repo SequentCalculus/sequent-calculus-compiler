@@ -1,5 +1,4 @@
-use macro_utils::parse_args;
-use macro_utils::{expr_to_array, expr_to_str, quote_option};
+use macro_utils::{expr_to_array, expr_to_string, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -23,7 +22,7 @@ pub fn create(input: TokenStream) -> TokenStream {
         ],
     );
 
-    let var = expr_to_str(&args[0], 0);
+    let var = expr_to_string(&args[0], 0);
     let ty = &args[1];
     let context = quote_option(&args[2], |expr| {
         let ctx_arr = expr_to_array(expr, 2);
