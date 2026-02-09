@@ -23,7 +23,7 @@ impl Rewrite for Switch {
                 self.into()
             }
             Some((xtor, args)) => {
-                *state.new_changes = true;
+                state.new_changes = true;
 
                 let clause = self
                     .clauses

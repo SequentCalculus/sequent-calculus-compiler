@@ -96,9 +96,5 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
         state.defs = cleanup_inline_defs(std::mem::take(&mut state.defs));
     }
 
-<<<<<<< HEAD
-=======
     program.defs = state.defs;
->>>>>>> 8805f85 (Refactor, streamline, and fix bugs)
-    program
 }
