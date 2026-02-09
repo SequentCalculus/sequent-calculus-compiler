@@ -42,7 +42,7 @@ pub fn prd(_: TokenStream) -> TokenStream {
 // Terms
 
 ///Create a [`core_lang::syntax::terms::xvar::XVar`] with chirality
-///[`core_lang::syntax::terms::Prd`] and given type.
+///[`core_lang::syntax::terms::Prd`] and given id and type.
 ///If no type is provided, it will default to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn var(input: TokenStream) -> TokenStream {
@@ -50,7 +50,7 @@ pub fn var(input: TokenStream) -> TokenStream {
 }
 
 ///Create a [`core_lang::syntax::terms::xvar::XVar`] with chirality
-///[`core_lang::syntax::terms::Cns`] and given type.
+///[`core_lang::syntax::terms::Cns`] and given id and type.
 ///If no type is provided, it will default to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn covar(input: TokenStream) -> TokenStream {

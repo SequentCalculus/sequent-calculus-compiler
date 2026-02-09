@@ -13,7 +13,7 @@ impl Rewrite for Invoke {
         let Some((clause, position)) = state.get_create_clause(&self.var, &self.tag) else {
             return self.into();
         };
-        *state.new_changes = true;
+        state.new_changes = true;
 
         if matches!(
             *clause.body,
@@ -33,21 +33,6 @@ impl Rewrite for Invoke {
                 free_args.push(self.args.bindings[position].clone());
             }
 
-            // lift the body of the clause to the top level
-            let (label, free_vars) = state.lift_clause(clause, &self.var);
-
-            // we have to rewrite the create whose clause we have lifted to avoid duplication
-            args_clause.bindings.extend(free_vars.clone());
-            let create = state.create_bindings.get_mut(&self.var).unwrap();
-            create[position].body = Rc::new(
-                Call {
-                    label: label.clone(),
-                    args: args_clause,
-                }
-                .into(),
-            );
-
-            self.args.bindings.extend(free_vars);
             Call {
                 label,
                 args: free_args.into(),

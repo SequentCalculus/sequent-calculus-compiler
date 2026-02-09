@@ -1,5 +1,9 @@
-use crate::def::rewrite_def;
-use axcut::syntax::Prog;
+use crate::{
+    cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, DefInfo, Mark},
+    def::rewrite_def,
+    rewrite::RewriteState,
+};
+use axcut::syntax::{Def, Prog};
 use std::collections::{HashMap, HashSet};
 
 pub const MAX_RUNS: usize = usize::MAX;
@@ -76,9 +80,8 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     };
 
     let mut performed_runs = 0;
-    let mut new_changes = true;
-    while new_changes && performed_runs < MAX_RUNS {
-        new_changes = false;
+    while state.new_changes && performed_runs < MAX_RUNS {
+        state.new_changes = false;
         performed_runs += 1;
 
         // after rewriting the original `Def`s, we repeatedly rewrite all the lifted `Clause`s,
@@ -97,4 +100,5 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     }
 
     program.defs = state.defs;
+    program
 }

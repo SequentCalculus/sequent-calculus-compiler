@@ -2,7 +2,7 @@ use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineSta
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{
     Var,
-    names::fresh_var,
+    names::fresh_name,
     statements::{Create, Statement},
 };
 use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
@@ -31,7 +31,7 @@ impl Rewrite for Create {
         let mut free_vars = BTreeSet::new();
         self.next.typed_free_vars(&mut free_vars);
         if free_vars.iter().all(|binding| binding.var != self.var) {
-            *state.new_changes = true;
+            state.new_changes = true;
             Rc::unwrap_or_clone(self.next)
         } else {
             self.clauses = clauses;
@@ -73,7 +73,7 @@ impl Rename for Create {
             .collect();
 
         if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_var(used_vars, &self.var.name);
+            let new_variable = fresh_name(used_vars, &self.var);
             let old_variable = self.var;
             self.var = new_variable;
 

@@ -6,7 +6,7 @@ use axcut::syntax::{
 use axcut::traits::typed_free_vars::TypedFreeVars;
 
 use std::{
-    collections::{BTreeSet, HashMap, HashSet, VecDeque},
+    collections::{BTreeSet, HashMap, HashSet},
     rc::Rc,
 };
 
@@ -95,7 +95,7 @@ impl RewriteState {
         })
     }
 
-    pub fn lift_clause(
+    pub fn lift_create_clause(
         &mut self,
         clause: Clause,
         position: usize,
@@ -103,12 +103,7 @@ impl RewriteState {
     ) -> (Name, Vec<usize>, Vec<ContextBinding>) {
         let name = fresh_name(
             &mut self.used_labels,
-            &("lift_".to_string()
-                + &self.current_label
-                + "_"
-                + &bound_var.to_string()
-                + "_"
-                + &clause.xtor),
+            &("lift_".to_string() + &self.current_label + "_" + bound_var + "_" + &clause.xtor),
         );
 
         let mut free_vars = BTreeSet::new();
@@ -161,12 +156,7 @@ impl RewriteState {
 
         let name = fresh_name(
             &mut self.used_labels,
-            &("lift_".to_string()
-                + label
-                + "_"
-                + &switch_info.switch.var.to_string()
-                + "_"
-                + &clause.xtor),
+            &("lift_".to_string() + label + "_" + &switch_info.switch.var + "_" + &clause.xtor),
         );
 
         let mut free_vars = BTreeSet::new();
