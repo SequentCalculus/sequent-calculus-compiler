@@ -123,7 +123,7 @@ mod compile_tests {
         let expected = def!(
             "main",
             [bind!("a", cns!())],
-            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
+            cut!(lit!(1), mutilde!("x0", exit!(var!("x", 0)))),
             ["a", "x0"]
         );
 

@@ -4,13 +4,21 @@ use quote::quote;
 use syn::Expr;
 
 pub fn bind(input: TokenStream) -> TokenStream {
-    let args = parse_args(input, &["Context Variable", "Context Chirality"], true);
+    let args = parse_args(
+        input,
+        &["Context Variable", "Variable Id", "Context Chirality"],
+        true,
+    );
     let var = expr_to_string(&args[0], 0);
-    let chi = &args[1];
-    let ty = &args[2];
+    let var_id = &args[1];
+    let chi = &args[2];
+    let ty = &args[3];
     quote! {
         core_lang::syntax::context::ContextBinding{
-            var: #var.to_string(),
+            var: core_lang::syntax::names::Var {
+                name: #var.to_string(),
+                id: #var_id
+            },
             chi: #chi,
             ty: #ty
         }

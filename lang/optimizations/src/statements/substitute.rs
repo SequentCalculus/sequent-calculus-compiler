@@ -1,7 +1,7 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
-    syntax::{ContextBinding, Var, names::fresh_name, statements::Substitute},
+    syntax::{ContextBinding, Var, names::fresh_var, statements::Substitute},
     traits::substitution::Subst,
 };
 
@@ -38,7 +38,7 @@ impl Rename for Substitute {
 
         for (binding, old) in self.rearrange {
             if vars_to_rename.contains(&binding.var) {
-                let new_var: Var = fresh_name(used_vars, &binding.var);
+                let new_var: Var = fresh_var(used_vars, &binding.var.name);
                 new_rearrange.push((
                     ContextBinding {
                         var: new_var.clone(),

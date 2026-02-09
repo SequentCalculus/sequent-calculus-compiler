@@ -73,13 +73,10 @@ mod program_tests {
     use macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
         fs_def!(
             "cut",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a")),
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            fs_cut!(var!("x", 0), covar!("a", 0)),
             ["a", "x"]
         )
     }

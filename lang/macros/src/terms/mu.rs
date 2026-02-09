@@ -12,14 +12,22 @@ pub fn xmu(
         Chirality::Prd => quote! { core_lang::syntax::Prd },
         Chirality::Cns => quote! { core_lang::syntax::Cns },
     };
-    let args = parse_args(input, &["Bound Variable", "Bound Statement"], true);
+    let args = parse_args(
+        input,
+        &["Bound Variable", "Variable Id", "Bound Statement"],
+        true,
+    );
     let var = expr_to_string(&args[0], 0);
-    let stmt = &args[1];
-    let ty = &args[2];
+    let var_id = &args[1];
+    let stmt = &args[2];
+    let ty = &args[3];
     quote! {
         core_lang::syntax::terms::mu::Mu{
             prdcns: #prdcns,
-            variable: #var.to_string(),
+            variable: core_lang::syntax::names::Var {
+                name: #var.to_string(),
+                id: #var_id
+            },
             statement: ::std::rc::Rc::new(#statement_kind::from(#stmt)),
             ty: #ty
         }

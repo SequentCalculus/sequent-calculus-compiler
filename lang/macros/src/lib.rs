@@ -20,7 +20,8 @@ pub fn ty(input: TokenStream) -> TokenStream {
     types::ty(input)
 }
 
-///Create a [`core_lang::syntax::context::ContextBinding`] with given name, chirality and type.
+///Create a [`core_lang::syntax::context::ContextBinding`]
+///with given name, id, chirality and type.
 ///If no type is provided, it defaults to [`core_lang::syntax::types::Ty`]
 #[proc_macro]
 pub fn bind(input: TokenStream) -> TokenStream {
@@ -131,7 +132,7 @@ pub fn cocase(input: TokenStream) -> TokenStream {
 
 ///Create a [`core_lang::syntax::terms::mu::Mu`] with chirality
 ///[`core_lang::syntax::Prd`], that is, a mu-binding,
-///with given variable name, bound statement andtype
+///with given variable name, variable id, bound statement andtype
 ///If no type is provided, defaults to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn mu(input: TokenStream) -> TokenStream {
@@ -140,7 +141,7 @@ pub fn mu(input: TokenStream) -> TokenStream {
 
 ///Create a [`core_lang::syntax::terms::mu::Mu`] with chirality
 ///[`core_lang::syntax::Cns`], that is, a mu-tilde-binding
-///with given variable name, bound statement and type.
+///with given variable name, variable id, bound statement and type.
 ///If no type is provided, defaults to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn mutilde(input: TokenStream) -> TokenStream {
@@ -149,7 +150,7 @@ pub fn mutilde(input: TokenStream) -> TokenStream {
 
 ///Create a [`core_lang::syntax::terms::mu::FsMu`] with chirality
 ///[`core_lang::syntax::Prd`] that is, a focused mu binding
-/// with given variable name, bound statement and type.
+/// with given variable name, variable id, bound statement and type.
 /// If no type is provided, it defaults to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn fs_mu(input: TokenStream) -> TokenStream {
@@ -158,7 +159,7 @@ pub fn fs_mu(input: TokenStream) -> TokenStream {
 
 ///Create a [`core_lang::syntax::terms::mu::FsMu`] with chirality
 ///[`core_lang::syntax::Cns`] that is, a focused mu-tilde binding
-/// with given variable, bound statement and type.
+/// with given variable, variable id, bound statement and type.
 /// If no type is provided, it defaults to [`core_lang::syntax::types::Ty::I64`]
 #[proc_macro]
 pub fn fs_mutilde(input: TokenStream) -> TokenStream {
