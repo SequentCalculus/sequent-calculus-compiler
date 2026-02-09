@@ -9,7 +9,7 @@ pub(crate) mod types;
 
 ///Create a [`axcut::syntax::types::Ty`] from a string literal\
 ///`int` will create [`axcut::syntax::types::Ty::I64`] anything else will
-///create [`axcut::syntax::types::Type::Decl`]
+///create [`axcut::syntax::types::Ty::Decl`]
 #[proc_macro]
 pub fn ty(input: TokenStream) -> TokenStream {
     types::ty(input)
