@@ -19,17 +19,6 @@ pub struct Exit {
     pub ty: Ty,
 }
 
-impl Exit {
-    /// This function constructs an exit statement from given argument and type.
-    #[allow(clippy::self_named_constructors)]
-    pub fn exit<T: Into<Term<Prd>>>(arg: T, ty: Ty) -> Self {
-        Exit {
-            arg: Rc::new(arg.into()),
-            ty,
-        }
-    }
-}
-
 impl Typed for Exit {
     fn get_type(&self) -> Ty {
         self.ty.clone()

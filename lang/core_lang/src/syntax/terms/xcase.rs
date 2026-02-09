@@ -180,9 +180,6 @@ mod tests {
     }
 
     fn example_cocase() -> XCase<Prd> {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
         cocase!(
             [
                 clause!(
@@ -245,9 +242,6 @@ mod tests {
     fn subst_cocase() {
         let subst = example_subst();
         let result = example_cocase().subst_sim(&subst.0, &subst.1);
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
         let expected = cocase!(
             [
                 clause!(

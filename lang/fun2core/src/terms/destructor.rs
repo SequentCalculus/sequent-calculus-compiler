@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::Destructor {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state);
-        args.add_cons(cont);
+        args.entries.push(cont.into());
         // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core_lang::syntax::terms::Xtor {
             prdcns: Cns,

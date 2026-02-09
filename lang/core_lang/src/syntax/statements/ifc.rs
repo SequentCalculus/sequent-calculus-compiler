@@ -61,61 +61,6 @@ pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
 
 pub type FsIfC = IfC<Var, FsStatement>;
 
-impl IfC {
-    /// This function creates a conditional with `==` comparison for given operands and then- and
-    /// else-statements.
-    pub fn ife<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-        V: Into<Statement>,
-        W: Into<Statement>,
-    {
-        IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(fst.into()),
-            snd: Some(Rc::new(snd.into())),
-            thenc: Rc::new(thenc.into()),
-            elsec: Rc::new(elsec.into()),
-        }
-    }
-
-    /// This function creates a conditional with `<` comparison for given operands and then- and
-    /// else-statements.
-    pub fn ifl<T, U, V, W>(fst: T, snd: U, thenc: V, elsec: W) -> IfC
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-        V: Into<Statement>,
-        W: Into<Statement>,
-    {
-        IfC {
-            sort: IfSort::Less,
-            fst: Rc::new(fst.into()),
-            snd: Some(Rc::new(snd.into())),
-            thenc: Rc::new(thenc.into()),
-            elsec: Rc::new(elsec.into()),
-        }
-    }
-
-    /// This function creates a conditional with `== 0` comparison for given operands and then- and
-    /// else-statements.
-    pub fn ifz<T, V, W>(fst: T, thenc: V, elsec: W) -> IfC
-    where
-        T: Into<Term<Prd>>,
-        V: Into<Statement>,
-        W: Into<Statement>,
-    {
-        IfC {
-            sort: IfSort::Equal,
-            fst: Rc::new(fst.into()),
-            snd: None,
-            thenc: Rc::new(thenc.into()),
-            elsec: Rc::new(elsec.into()),
-        }
-    }
-}
-
 impl Typed for IfC {
     fn get_type(&self) -> Ty {
         self.thenc.get_type()

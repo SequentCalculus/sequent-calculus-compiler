@@ -26,21 +26,6 @@ pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
 
 pub type FsPrintI64 = PrintI64<Var, FsStatement>;
 
-impl PrintI64 {
-    /// This function creates a new print statement from an argument and a remaining statement.
-    pub fn new<T, U, V>(arg: T, next: U, newline: bool) -> PrintI64
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Statement>,
-    {
-        PrintI64 {
-            newline,
-            arg: Rc::new(arg.into()),
-            next: Rc::new(next.into()),
-        }
-    }
-}
-
 impl Typed for PrintI64 {
     fn get_type(&self) -> Ty {
         self.next.get_type()
