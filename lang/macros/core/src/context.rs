@@ -22,8 +22,8 @@ pub fn bind(input: TokenStream) -> TokenStream {
     .into()
 }
 
-pub fn typing_context(arg: &Expr, num_arg: usize) -> proc_macro2::TokenStream {
-    let args = expr_to_array(arg, num_arg);
+pub fn typing_context(arg: &Expr, number_of_args: usize) -> proc_macro2::TokenStream {
+    let args = expr_to_array(arg, number_of_args);
     quote! {
         core_lang::syntax::context::TypingContext { bindings: ::std::vec::Vec::from([
             #(#args),*
