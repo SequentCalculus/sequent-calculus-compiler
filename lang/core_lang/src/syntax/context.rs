@@ -67,24 +67,6 @@ pub struct TypingContext {
 }
 
 impl TypingContext {
-    /// This function adds a variable (producer) to the context.
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
-        self.bindings.push(ContextBinding {
-            var: var.to_owned(),
-            chi: Chirality::Prd,
-            ty,
-        });
-    }
-
-    /// This funciton adds a covariable (consumer) to the context.
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
-        self.bindings.push(ContextBinding {
-            var: covar.to_owned(),
-            chi: Chirality::Cns,
-            ty,
-        });
-    }
-
     /// This functions returns a set of the (co)variable names in the context.
     pub fn vars(&self) -> HashSet<Var> {
         self.bindings

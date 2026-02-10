@@ -28,30 +28,6 @@ pub struct Xtor<C: Chi, A = Arguments> {
 #[allow(type_alias_bounds)]
 pub type FsXtor<C: Chi> = Xtor<C, TypingContext>;
 
-impl<A> Xtor<Prd, A> {
-    /// This functions creates a constructor from a given name, arguments, and its type.
-    pub fn ctor(name: &str, args: A, ty: Ty) -> Self {
-        Xtor {
-            prdcns: Prd,
-            id: name.to_string(),
-            args,
-            ty,
-        }
-    }
-}
-
-impl<A> Xtor<Cns, A> {
-    /// This functions creates a destructor from a given name, arguments, and its type.
-    pub fn dtor(name: &str, args: A, ty: Ty) -> Self {
-        Xtor {
-            prdcns: Cns,
-            id: name.to_string(),
-            args,
-            ty,
-        }
-    }
-}
-
 impl<C: Chi, A> Typed for Xtor<C, A> {
     fn get_type(&self) -> Ty {
         self.ty.clone()

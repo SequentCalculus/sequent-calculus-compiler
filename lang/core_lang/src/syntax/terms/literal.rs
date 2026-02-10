@@ -14,13 +14,6 @@ pub struct Literal {
     pub lit: i64,
 }
 
-impl Literal {
-    /// This function creates a literal term from a given integer.
-    pub fn new(lit: i64) -> Self {
-        Literal { lit }
-    }
-}
-
 impl Typed for Literal {
     fn get_type(&self) -> Ty {
         Ty::I64

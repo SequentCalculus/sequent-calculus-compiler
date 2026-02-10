@@ -5,5 +5,5 @@ use quote::quote;
 pub fn lit(input: TokenStream) -> TokenStream {
     let args = parse_args(input.into(), ["Literal"], &[]);
     let lit = &args[0];
-    quote! {core_lang::syntax::terms::literal::Literal::new(#lit)}.into()
+    quote! {core_lang::syntax::terms::literal::Literal{ lit: #lit }}.into()
 }

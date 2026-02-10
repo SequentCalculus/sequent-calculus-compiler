@@ -1,7 +1,5 @@
 use core_lang::syntax::terms::*;
-use core_lang::syntax::*;
 
-use context::TypingContext;
 use printer::Print;
 
 use core_macros::{
@@ -10,9 +8,6 @@ use core_macros::{
 };
 
 fn main() {
-    let mut ctx = TypingContext::default();
-    ctx.add_var("x", Ty::I64);
-    ctx.add_covar("xs", Ty::Decl("ListInt".to_owned()));
     let ty_list = codata!(
         "ListInt",
         [
