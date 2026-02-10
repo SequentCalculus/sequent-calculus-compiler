@@ -6,7 +6,7 @@ use super::{Def, TypeDeclaration};
 
 /// This struct defines programs in AxCut. They consist of a list top-level functions and a list of
 /// user-declared types.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
     pub defs: Vec<Def>,
     pub types: Vec<TypeDeclaration>,

@@ -157,7 +157,9 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var};
+    use core_macros::{
+        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var,
+    };
 
     #[test]
     fn focus_clause() {
@@ -178,9 +180,6 @@ mod tests {
     }
 
     fn example_cocase() -> XCase<Prd> {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
         cocase!(
             [
                 clause!(
@@ -243,9 +242,6 @@ mod tests {
     fn subst_cocase() {
         let subst = example_subst();
         let result = example_cocase().subst_sim(&subst.0, &subst.1);
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::I64);
-        ctx.add_covar("a", Ty::I64);
         let expected = cocase!(
             [
                 clause!(

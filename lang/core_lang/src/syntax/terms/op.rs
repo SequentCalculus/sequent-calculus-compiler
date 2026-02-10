@@ -52,73 +52,6 @@ pub struct Op<P = Rc<Term<Prd>>> {
 
 pub type FsOp = Op<Var>;
 
-impl Op {
-    /// This functions creates a division from two producers.
-    pub fn div<T, U>(fst: T, snd: U) -> Op
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-    {
-        Op {
-            fst: Rc::new(fst.into()),
-            op: BinOp::Div,
-            snd: Rc::new(snd.into()),
-        }
-    }
-
-    /// This functions creates a multiplication from two producers.
-    pub fn prod<T, U>(fst: T, snd: U) -> Op
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-    {
-        Op {
-            fst: Rc::new(fst.into()),
-            op: BinOp::Prod,
-            snd: Rc::new(snd.into()),
-        }
-    }
-
-    /// This functions creates a modulo operation on two producers.
-    pub fn rem<T, U>(fst: T, snd: U) -> Op
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-    {
-        Op {
-            fst: Rc::new(fst.into()),
-            op: BinOp::Rem,
-            snd: Rc::new(snd.into()),
-        }
-    }
-
-    /// This functions creates a sum operations on two producers.
-    pub fn sum<T, U>(fst: T, snd: U) -> Op
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-    {
-        Op {
-            fst: Rc::new(fst.into()),
-            op: BinOp::Sum,
-            snd: Rc::new(snd.into()),
-        }
-    }
-
-    /// This functions creates a subtraction operation on two producers.
-    pub fn sub<T, U>(fst: T, snd: U) -> Op
-    where
-        T: Into<Term<Prd>>,
-        U: Into<Term<Prd>>,
-    {
-        Op {
-            fst: Rc::new(fst.into()),
-            op: BinOp::Sub,
-            snd: Rc::new(snd.into()),
-        }
-    }
-}
-
 impl Typed for Op {
     fn get_type(&self) -> Ty {
         Ty::I64
@@ -270,7 +203,7 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
+    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
         prod!(var!("x"), var!("x")).into()

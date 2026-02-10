@@ -73,8 +73,8 @@ impl Compile for fun::syntax::terms::Label {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{covar, cut, lit, mu, ty};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, lit, mu, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

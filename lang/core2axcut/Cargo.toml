@@ -13,6 +13,8 @@ categories.workspace   = true
 
 [dependencies]
 # Workspace members
-axcut     = { workspace = true }
-core_lang = { workspace = true }
-printer   = { workspace = true }
+axcut         = { workspace = true }
+core_lang     = { workspace = true }
+printer       = { workspace = true }
+core_macros   = { workspace = true }
+axcut_macros  = { workspace = true }

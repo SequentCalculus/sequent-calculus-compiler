@@ -21,11 +21,11 @@ impl Compile for fun::syntax::terms::Call {
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        let mut new_args = compile_subst(self.args, state);
-        new_args.add_cons(cont);
+        let mut args = compile_subst(self.args, state);
+        args.entries.push(cont.into());
         core_lang::syntax::statements::Call {
             name: self.name,
-            args: new_args,
+            args,
             ty: compile_ty(
                 &self
                     .ret_ty
@@ -39,12 +39,12 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{call, covar, lit, mu, ty};
     use fun::{
         parse_term,
         syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
-    use macros::{call, covar, lit, mu, ty};
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]

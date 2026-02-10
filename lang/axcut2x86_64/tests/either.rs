@@ -1,126 +1,58 @@
-use axcut::syntax::statements::*;
-use axcut::syntax::*;
 use axcut2backend::coder::compile;
 use axcut2x86_64::Backend;
 use axcut2x86_64::into_routine::into_x86_64_routine;
 use goldenfile::Mint;
 use printer::Print;
-use std::collections::HashSet;
 use std::io::prelude::*;
-use std::rc::Rc;
+
+use axcut_macros::{
+    bind, clause, def, exit, letin, lit, println_i64, prog, sum, switch, ty, ty_decl, xtor_sig,
+};
 
 #[test]
 fn test_either() {
-    let ty_either = TypeDeclaration {
-        name: "Either".to_string(),
-        xtors: vec![
-            XtorSig {
-                name: "Left".to_string(),
-                args: vec![ContextBinding {
-                    var: "x".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                }]
-                .into(),
-            },
-            XtorSig {
-                name: "Right".to_string(),
-                args: vec![ContextBinding {
-                    var: "y".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                }]
-                .into(),
-            },
+    let ty_either = ty_decl!(
+        "Either",
+        [
+            xtor_sig!("Left", [bind!("x")]),
+            xtor_sig!("Right", [bind!("y")]),
         ],
-    };
+    );
 
-    let main_body = Statement::Literal(Literal {
-        lit: 1,
-        var: "z".to_string(),
-        next: Rc::new(Statement::Literal(Literal {
-            lit: 9,
-            var: "x".to_string(),
-            next: Rc::new(Statement::Let(Let {
-                var: "p".to_string(),
-                ty: Ty::Decl("Either".to_string()),
-                tag: "Right".to_string(),
-                args: vec![ContextBinding {
-                    var: "x".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                }]
-                .into(),
-                next: Rc::new(Statement::Switch(Switch {
-                    var: "p".to_string(),
-                    ty: Ty::Decl("Either".to_string()),
-                    clauses: vec![
-                        Clause {
-                            xtor: "Left".to_string(),
-                            context: vec![ContextBinding {
-                                var: "a".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::I64,
-                            }]
-                            .into(),
-                            body: Rc::new(Statement::Literal(Literal {
-                                lit: -1,
-                                var: "err".to_string(),
-                                next: Rc::new(Statement::Exit(Exit {
-                                    var: "err".to_string(),
-                                })),
-                                free_vars_next: None,
-                            })),
-                        },
-                        Clause {
-                            xtor: "Right".to_string(),
-                            context: vec![ContextBinding {
-                                var: "b".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::I64,
-                            }]
-                            .into(),
-                            body: Rc::new(Statement::Op(Op {
-                                fst: "b".to_string(),
-                                op: BinOp::Sum,
-                                snd: "z".to_string(),
-                                var: "c".to_string(),
-                                next: Rc::new(Statement::PrintI64(PrintI64 {
-                                    newline: true,
-                                    var: "c".to_string(),
-                                    next: Rc::new(Statement::Literal(Literal {
-                                        lit: 0,
-                                        var: "ret".to_string(),
-                                        next: Rc::new(Statement::Exit(Exit {
-                                            var: "ret".to_string(),
-                                        })),
-                                        free_vars_next: None,
-                                    })),
-                                    free_vars_next: None,
-                                })),
-                                free_vars_next: None,
-                            })),
-                        },
-                    ],
-                    free_vars_clauses: None,
-                })),
-                free_vars_next: None,
-            })),
-            free_vars_next: None,
-        })),
-        free_vars_next: None,
-    });
-    let main = Def {
-        name: "main".to_string(),
-        context: Vec::new().into(),
-        body: main_body,
-        used_vars: HashSet::new(),
-    };
+    let main_body = lit!(
+        1,
+        "z",
+        lit!(
+            9,
+            "x",
+            letin!(
+                "p",
+                ty!("Either"),
+                "Right",
+                [bind!("x")],
+                switch!(
+                    "p",
+                    ty!("Either"),
+                    [
+                        clause!("Left", [bind!("a")], lit!(-1, "err", exit!("err"))),
+                        clause!(
+                            "Right",
+                            [bind!("b")],
+                            sum!(
+                                "b",
+                                "z",
+                                "c",
+                                println_i64!("c", lit!(0, "ret", exit!("ret")))
+                            )
+                        ),
+                    ]
+                )
+            )
+        )
+    );
+    let main = def!("main", [], main_body);
 
-    let program = Prog {
-        defs: vec![main],
-        types: vec![ty_either],
-    };
+    let program = prog!([main], [ty_either]);
 
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_x86_64_routine(assembly_prog);

@@ -71,11 +71,11 @@ impl Compile for fun::syntax::terms::New {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
+    use core_macros::{bind, clause, cns, cocase, codata, covar, cut, lit, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
     };
-    use macros::{bind, clause, cns, cocase, codata, covar, cut, lit, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

@@ -1,216 +1,99 @@
 use core_lang::syntax::terms::*;
-use core_lang::syntax::*;
 
-use context::TypingContext;
 use printer::Print;
 
-use std::{collections::HashSet, rc::Rc};
+use core_macros::{
+    bind, call, clause, cns, cocase, codata, covar, cut, def, dtor, dtor_sig, ife, lit, mu, prd,
+    prod, prog, ty, var,
+};
 
 fn main() {
-    let mut ctx = TypingContext::default();
-    ctx.add_var("x", Ty::I64);
-    ctx.add_covar("xs", Ty::Decl("ListInt".to_owned()));
-    let ty_list = CodataDeclaration {
-        dat: Codata,
-        name: "ListInt".to_string(),
-        xtors: vec![
-            DtorSig {
-                xtor: Codata,
-                name: "Nil".to_string(),
-                args: TypingContext::default(),
-            },
-            DtorSig {
-                xtor: Codata,
-                name: "Cons".to_string(),
-                args: ctx,
-            },
-        ],
-    };
-    let mut subst = Arguments::default();
-    subst.add_cons(terms::XVar::covar("l", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
-    let fmult = Def {
-        name: "fmult".to_string(),
-        context: TypingContext {
-            bindings: vec![
-                ContextBinding {
-                    var: "l".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::Decl("ListInt".to_string()),
-                },
-                ContextBinding {
-                    var: "a0".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::I64,
-                },
-            ],
-        },
-        body: Statement::Cut(statements::Cut::new(
-            Term::Mu(terms::Mu::mu(
+    let ty_list = codata!(
+        "ListInt",
+        [
+            dtor_sig!("Nil", []),
+            dtor_sig!(
+                "Cons",
+                [bind!("x", prd!()), bind!("xs", prd!(), ty!("ListInt"))]
+            ),
+        ]
+    );
+    let fmult = def!(
+        "fmult",
+        [bind!("l", cns!(), ty!("ListInt")), bind!("a0", cns!())],
+        cut!(
+            mu!(
                 "a",
-                Statement::Call(statements::Call {
-                    name: "mult".to_string(),
-                    args: subst,
-                    ty: Ty::Decl("Int".to_string()),
-                }),
-                Ty::I64,
-            )),
-            Term::XVar(terms::XVar::covar("a0", Ty::I64)),
-            Ty::I64,
-        )),
-        used_vars: HashSet::from(["l".to_string(), "a".to_string(), "a0".to_string()]),
-    };
+                call!(
+                    "mult",
+                    [covar!("l", ty!("ListInt")), covar!("a"), covar!("a")]
+                )
+            ),
+            covar!("a0")
+        ),
+        ["l", "a", "a0"]
+    );
 
-    let mut subst = Arguments::default();
-    subst.add_cons(terms::XVar::covar("xs", Ty::Decl("ListInt".to_string())));
-    subst.add_cons(terms::XVar::covar("a", Ty::Decl("Int".to_string())));
-    subst.add_cons(terms::XVar::covar("a1", Ty::Decl("Int".to_string())));
-
-    let mult = Def {
-        name: "mult".to_string(),
-        context: TypingContext {
-            bindings: vec![
-                ContextBinding {
-                    var: "l".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::Decl("ListInt".to_string()),
-                },
-                ContextBinding {
-                    var: "a".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::I64,
-                },
-                ContextBinding {
-                    var: "a0".to_string(),
-                    chi: Chirality::Cns,
-                    ty: Ty::I64,
-                },
-            ],
-        },
-        body: Statement::Cut(statements::Cut::new(
-            Term::XCase(terms::XCase {
-                prdcns: terms::Prd,
-                clauses: vec![
-                    Clause {
-                        prdcns: terms::Prd,
-                        xtor: "Nil".to_string(),
-                        context: TypingContext { bindings: vec![] },
-                        body: Rc::new(Statement::Cut(statements::Cut::new(
-                            Term::Literal(terms::Literal { lit: 1 }),
-                            Term::XVar(terms::XVar::covar("a0", Ty::I64)),
-                            Ty::I64,
-                        ))),
-                    },
-                    Clause {
-                        prdcns: terms::Prd,
-                        xtor: "Cons".to_string(),
-                        context: TypingContext {
-                            bindings: vec![
-                                ContextBinding {
-                                    var: "x".to_string(),
-                                    chi: Chirality::Prd,
-                                    ty: Ty::I64,
-                                },
-                                ContextBinding {
-                                    var: "xs".to_string(),
-                                    chi: Chirality::Cns,
-                                    ty: Ty::Decl("ListInt".to_string()),
-                                },
-                            ],
-                        },
-                        body: Rc::new(Statement::IfC(statements::IfC {
-                            sort: statements::IfSort::Equal,
-                            fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
-                            snd: None,
-                            thenc: Rc::new(Statement::Cut(statements::Cut::new(
-                                Term::Literal(terms::Literal { lit: 0 }),
-                                Term::XVar(terms::XVar::covar("a", Ty::I64)),
-                                Ty::I64,
-                            ))),
-                            elsec: Rc::new(Statement::Cut(statements::Cut::new(
-                                Term::Op(terms::Op {
-                                    fst: Rc::new(Term::XVar(terms::XVar::var("x", Ty::I64))),
-                                    op: BinOp::Prod,
-                                    snd: Rc::new(Term::Mu(terms::Mu::mu(
+    let mult = def!(
+        "mult",
+        [
+            bind!("l", cns!(), ty!("ListInt")),
+            bind!("a", cns!()),
+            bind!("a0", cns!()),
+        ],
+        cut!(
+            cocase!(
+                [
+                    clause!(Prd, "Nil", [], cut!(lit!(1), covar!("a0"))),
+                    clause!(
+                        Prd,
+                        "Cons",
+                        [bind!("x", prd!()), bind!("xs", cns!(), ty!("ListInt"))],
+                        ife!(
+                            var!("x"),
+                            cut!(lit!(0), covar!("a")),
+                            cut!(
+                                prod!(
+                                    var!("x"),
+                                    mu!(
                                         "a1",
-                                        Statement::Call(statements::Call {
-                                            name: "mult".to_string(),
-                                            args: subst,
-                                            ty: Ty::I64,
-                                        }),
-                                        Ty::I64,
-                                    ))),
-                                }),
-                                Term::XVar(terms::XVar::covar("a0", Ty::I64)),
-                                Ty::I64,
-                            ))),
-                        })),
-                    },
+                                        call!(
+                                            "mult",
+                                            [
+                                                covar!("xs", ty!("ListInt")),
+                                                covar!("a"),
+                                                covar!("a1")
+                                            ]
+                                        )
+                                    )
+                                ),
+                                covar!("a0")
+                            )
+                        )
+                    ),
                 ],
-                ty: Ty::Decl("ListInt".to_string()),
-            }),
-            Term::XVar(terms::XVar::covar("l", Ty::Decl("ListInt".to_string()))),
-            Ty::Decl("ListInt".to_string()),
-        )),
-        used_vars: HashSet::from([
-            "l".to_string(),
-            "a".to_string(),
-            "a0".to_string(),
-            "a1".to_string(),
-            "x".to_string(),
-            "xs".to_string(),
-        ]),
-    };
+                ty!("ListInt")
+            ),
+            covar!("l", ty!("ListInt")),
+            ty!("ListInt")
+        ),
+        ["l", "a", "a0", "a1", "x", "xs"]
+    );
 
-    let nil = terms::Xtor::dtor("Nil", Arguments::default(), Ty::Decl("ListInt".to_string()));
-    let mut subst = Arguments::default();
-    subst.add_prod(terms::Literal::new(3));
-    subst.add_cons(nil);
+    let nil = dtor!("Nil", [], ty!("ListInt"));
+    let cons1 = dtor!("Cons", [lit!(3), nil], ty!("ListInt"));
+    let cons2 = dtor!("Cons", [lit!(3), cons1], ty!("ListInt"));
+    let cons3 = dtor!("Cons", [lit!(0), cons2], ty!("ListInt"));
+    let cons4 = dtor!("Cons", [lit!(2), cons3], ty!("ListInt"));
 
-    let cons1 = terms::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
+    let main = def!(
+        "main",
+        [bind!("a0", cns!())],
+        call!("fmult", [cons4, covar!("a0")]),
+        ["a0"]
+    );
 
-    let mut subst = Arguments::default();
-    subst.add_prod(terms::Literal::new(3));
-    subst.add_cons(cons1);
-    let cons2 = terms::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
-
-    let mut subst = Arguments::default();
-    subst.add_prod(terms::Literal::new(0));
-    subst.add_cons(cons2);
-    let cons3 = terms::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
-
-    let mut subst = Arguments::default();
-    subst.add_prod(terms::Literal::new(2));
-    subst.add_cons(cons3);
-    let cons4 = terms::Xtor::dtor("Cons", subst, Ty::Decl("ListInt".to_string()));
-
-    let mut subst = Arguments::default();
-    subst.add_cons(cons4);
-    subst.add_cons(terms::XVar::covar("a0", Ty::I64));
-
-    let main = Def {
-        name: "main".to_string(),
-        context: TypingContext {
-            bindings: vec![ContextBinding {
-                var: "a0".to_string(),
-                chi: Chirality::Cns,
-                ty: Ty::I64,
-            }],
-        },
-        body: Statement::Call(statements::Call {
-            name: "fmult".to_string(),
-            args: subst,
-            ty: Ty::Decl("Int".to_string()),
-        }),
-        used_vars: HashSet::from(["a0".to_string()]),
-    };
-
-    let program = Prog {
-        defs: vec![main, mult, fmult],
-        data_types: vec![],
-        codata_types: vec![ty_list],
-    };
+    let program = prog!([main, mult, fmult], [], [ty_list]);
 
     println!("{}\n", program.print_to_string(None));
     let program = program.focus();

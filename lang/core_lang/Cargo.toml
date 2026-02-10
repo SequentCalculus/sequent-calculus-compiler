@@ -16,4 +16,4 @@ categories.workspace   = true
 printer = { workspace = true }
 
 [dev-dependencies]
-macros = { workspace = true }
+core_macros = { workspace = true }

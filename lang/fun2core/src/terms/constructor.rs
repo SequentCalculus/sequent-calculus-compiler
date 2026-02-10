@@ -66,11 +66,11 @@ impl Compile for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{ctor, lit, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-    use macros::{ctor, lit, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

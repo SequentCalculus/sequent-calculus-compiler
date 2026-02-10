@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::Destructor {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state);
-        args.add_cons(cont);
+        args.entries.push(cont.into());
         // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core_lang::syntax::terms::Xtor {
             prdcns: Cns,
@@ -47,8 +47,8 @@ impl Compile for fun::syntax::terms::Destructor {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::Prd;
+    use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, lit, mu, ty};
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
-    use macros::{bind, clause, cns, cocase, covar, cut, dtor, lit, mu, ty};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

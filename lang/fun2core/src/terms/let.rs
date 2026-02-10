@@ -50,8 +50,8 @@ impl Compile for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
-    use macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

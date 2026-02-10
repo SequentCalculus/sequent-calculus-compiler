@@ -11,7 +11,7 @@ use super::{Name, TypingContext};
 
 /// This struct defines an xtor which represents a constructor or destructor. It consists of a
 /// name (unique within its type) and a typing context defining its parameters.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XtorSig {
     pub name: Name,
     pub args: TypingContext,
@@ -35,7 +35,7 @@ impl Print for XtorSig {
 
 /// This struct defines a user-declared type. It consists of a name (unique in the program) and a
 /// list of xtors (constructors or destructors).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeDeclaration {
     pub name: Name,
     pub xtors: Vec<XtorSig>,

@@ -39,8 +39,8 @@ impl Compile for fun::syntax::terms::Goto {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_macros::{covar, cut, ife, lit, mu, prod, ty, var};
     use fun::{parse_term, typing::check::Check};
-    use macros::{covar, cut, ife, lit, mu, prod, ty, var};
     use std::collections::{HashSet, VecDeque};
 
     #[test]

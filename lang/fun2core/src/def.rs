@@ -12,6 +12,7 @@ use fun::{
 };
 
 use std::collections::{HashSet, VecDeque};
+use std::rc::Rc;
 
 /// This function translates a [top-level function in Fun](fun::syntax::declarations::Def) to a
 /// [top-level function in Core](core_lang::syntax::Def).
@@ -114,10 +115,10 @@ pub fn compile_main(
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
             &new_var,
-            core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit::exit(
-                core_lang::syntax::terms::XVar::var(&new_var, ty.clone()),
-                ty.clone(),
-            )),
+            core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit {
+                arg: Rc::new(core_lang::syntax::terms::XVar::var(&new_var, ty.clone()).into()),
+                ty: ty.clone(),
+            }),
             ty,
         )
         .into(),

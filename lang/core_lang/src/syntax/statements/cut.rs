@@ -197,7 +197,7 @@ impl Focusing for Cut {
 mod tests {
     use crate::syntax::*;
     use crate::traits::*;
-    use macros::{
+    use core_macros::{
         bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
     };
     extern crate self as core_lang;
@@ -269,8 +269,7 @@ mod tests {
     #[test]
     fn transform_other() {
         let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
-        let expected =
-            FsCut::new(XVar::var("x", Ty::I64), XVar::covar("a", Ty::I64), Ty::I64).into();
+        let expected = FsCut::new(var!("x"), covar!("a"), Ty::I64).into();
         assert_eq!(result, expected);
     }
 }

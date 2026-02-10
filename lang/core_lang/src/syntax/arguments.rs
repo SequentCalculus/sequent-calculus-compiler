@@ -88,18 +88,6 @@ pub struct Arguments {
     pub entries: Vec<Argument>,
 }
 
-impl Arguments {
-    /// This fucntion adds a producer term to the arguments.
-    pub fn add_prod<T: Into<Term<Prd>>>(&mut self, t: T) {
-        self.entries.push(t.into().into());
-    }
-
-    /// This function adds a consumer term to the arguments.
-    pub fn add_cons<T: Into<Term<Cns>>>(&mut self, t: T) {
-        self.entries.push(t.into().into());
-    }
-}
-
 impl Print for Arguments {
     fn print<'a>(
         &'a self,

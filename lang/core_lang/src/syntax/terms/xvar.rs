@@ -142,7 +142,7 @@ mod var_tests {
     use super::Subst;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use macros::{covar, var};
+    use core_macros::{covar, var};
 
     // Substitution tests
 

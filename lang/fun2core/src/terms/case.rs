@@ -70,11 +70,11 @@ impl Compile for fun::syntax::terms::Case {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
+    use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-    use macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
 
     use std::collections::{HashSet, VecDeque};
 

@@ -18,7 +18,7 @@ path = "src/main.rs"
 harness = false
 
 [dependencies]
-# External dependencies
+# Workspace dependencies
 basic-toml = { version = "0.1.9" }
 serde      = { version = "1.0.217" }
 
@@ -27,4 +27,4 @@ driver    = { workspace = true }
 fun       = { workspace = true }
 printer   = { workspace = true }
 core_lang = { workspace = true }
-macros    = { workspace = true }
+core_macros    = { workspace = true }
