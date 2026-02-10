@@ -382,7 +382,9 @@ name = "core2axcut"
 version = "0.1.0"
 dependencies = [
  "axcut",
+ "axcut_macros",
  "core_lang",
+ "core_macros",
  "printer",
 ]
 
