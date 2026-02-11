@@ -31,7 +31,11 @@ pub fn compile_def(
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
+    let mut used_vars = context
+        .vars()
+        .into_iter()
+        .map(|name| fun::syntax::names::Var { name, id: 0 })
+        .collect();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -68,7 +72,7 @@ pub fn compile_def(
         name: def.name,
         context,
         body,
-        used_vars,
+        used_vars: used_vars.into_iter().map(|var| var.name).collect(),
     });
 
     def_plus_lifted_statements
@@ -93,7 +97,11 @@ pub fn compile_main(
 ) -> VecDeque<core_lang::syntax::Def> {
     let context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
+    let mut used_vars = context
+        .vars()
+        .into_iter()
+        .map(|var| fun::syntax::names::Var { name: var, id: 0 })
+        .collect();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -130,7 +138,7 @@ pub fn compile_main(
         name: def.name,
         context,
         body,
-        used_vars,
+        used_vars: used_vars.into_iter().map(|var| var.name).collect(),
     });
 
     def_plus_lifted_statements

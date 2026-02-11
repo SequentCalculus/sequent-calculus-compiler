@@ -28,14 +28,14 @@ impl Compile for fun::syntax::terms::Label {
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
-            var: self.label.clone(),
+            var: self.label.name.clone(),
             ty: var_ty.clone(),
         }
         .into();
 
         core_lang::syntax::terms::Mu {
             prdcns: Prd,
-            variable: self.label,
+            variable: self.label.name,
             ty: var_ty,
             statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }

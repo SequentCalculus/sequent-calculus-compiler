@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::Goto {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
-                var: self.target,
+                var: self.target.name,
                 ty: compile_ty(
                     &self
                         .ty
@@ -47,7 +47,7 @@ mod compile_tests {
     fn compile_goto_1() {
         let term = parse_term!("goto a (1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
+        ctx.add_covar("a", 0, fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &mut Default::default(),
@@ -71,7 +71,7 @@ mod compile_tests {
     fn compile_goto_2() {
         let term = parse_term!("label a { if x == 0 {goto a (0)} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var("x", 0, fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &mut Default::default(),

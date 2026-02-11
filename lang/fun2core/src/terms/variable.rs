@@ -24,7 +24,7 @@ impl Compile for fun::syntax::terms::XVar {
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: self.var.name,
             ty: compile_ty(
                 &self
                     .ty
@@ -54,7 +54,7 @@ impl Compile for fun::syntax::terms::XVar {
         );
         let new_var: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: self.var.name,
             ty: ty.clone(),
         }
         .into();

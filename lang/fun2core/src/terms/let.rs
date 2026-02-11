@@ -26,7 +26,7 @@ impl Compile for fun::syntax::terms::Let {
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
-            variable: self.variable,
+            variable: self.variable.name,
             ty: ty.clone(),
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         }

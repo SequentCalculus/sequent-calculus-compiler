@@ -70,7 +70,7 @@ mod compile_tests {
 
     fn example_def1() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_covar("a", 0, Ty::mk_i64());
         Def {
             span: dummy_span(),
             name: "main".to_string(),
@@ -81,7 +81,7 @@ mod compile_tests {
     }
     fn example_def2() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var("x", 0, Ty::mk_i64());
         Def {
             span: dummy_span(),
             name: "id".to_string(),

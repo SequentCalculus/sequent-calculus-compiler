@@ -12,7 +12,7 @@ use core_lang::syntax::{
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::names::{Covar, Name, Var};
+use fun::syntax::names::{Name, Var};
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},
@@ -40,13 +40,33 @@ pub struct CompileState<'a> {
 
 impl CompileState<'_> {
     /// This function generates a fresh variable with base name `"x"`.
-    pub fn fresh_var(&mut self) -> Var {
-        fresh_var(&mut self.used_vars)
+    pub fn fresh_var(&mut self) -> core_lang::syntax::names::Var {
+        // temporary, will lose some ids from fun
+        let mut vars = self
+            .used_vars
+            .clone()
+            .into_iter()
+            .map(|var| var.name)
+            .collect();
+        let new_var = fresh_var(&mut vars);
+        self.used_vars = vars.into_iter().map(|name| Var { name, id: 0 }).collect();
+        new_var
     }
 
     /// This function generates a fresh covariable with base name `"a"`.
-    pub fn fresh_covar(&mut self) -> Covar {
-        fresh_covar(&mut self.used_vars)
+    pub fn fresh_covar(&mut self) -> core_lang::syntax::names::Var {
+        let mut vars = self
+            .used_vars
+            .clone()
+            .into_iter()
+            .map(|var| var.name)
+            .collect();
+        let new_var = fresh_covar(&mut vars);
+        self.used_vars = vars
+            .into_iter()
+            .map(|var| Var { name: var, id: 0 })
+            .collect();
+        new_var
     }
 }
 
@@ -175,7 +195,12 @@ pub fn share(
         name: name.clone(),
         context,
         body,
-        used_vars: state.used_vars.clone(),
+        used_vars: state
+            .used_vars
+            .clone()
+            .into_iter()
+            .map(|var| var.name)
+            .collect(),
     });
 
     Mu::tilde_mu::<core_lang::syntax::Statement>(
