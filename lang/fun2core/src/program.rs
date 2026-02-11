@@ -61,6 +61,7 @@ mod compile_tests {
     use fun::syntax::{
         Chirality,
         declarations::Def,
+        names::Var,
         program::CheckedProgram,
         terms::{Lit, XVar},
         types::Ty,
@@ -88,7 +89,10 @@ mod compile_tests {
             context: ctx,
             body: XVar {
                 span: dummy_span(),
-                var: "x".to_owned(),
+                var: Var {
+                    name: "x".to_owned(),
+                    id: 0,
+                },
                 ty: Some(Ty::mk_i64()),
                 chi: Some(Chirality::Prd),
             }

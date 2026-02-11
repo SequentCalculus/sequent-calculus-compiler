@@ -139,7 +139,13 @@ mod test {
                 name: "a".to_owned(),
                 id: 0,
             },
-            term: Rc::new(XVar::mk("x").into()),
+            term: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());

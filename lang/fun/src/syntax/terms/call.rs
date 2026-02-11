@@ -156,7 +156,15 @@ mod test {
         Call {
             span: dummy_span(),
             name: "foo".to_string(),
-            args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
+            args: vec![
+                Term::Lit(Lit::mk(2)).into(),
+                XVar::mk(Var {
+                    name: "a".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ]
+            .into(),
             ret_ty: None,
         }
     }

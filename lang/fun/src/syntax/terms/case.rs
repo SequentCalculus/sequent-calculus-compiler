@@ -180,8 +180,14 @@ mod test {
     #[test]
     fn check_case_list() {
         let mut ctx_case_names = NameContext::default();
-        ctx_case_names.bindings.push("x".to_string());
-        ctx_case_names.bindings.push("xs".to_string());
+        ctx_case_names.bindings.push(Var {
+            name: "x".to_string(),
+            id: 0,
+        });
+        ctx_case_names.bindings.push(Var {
+            name: "xs".to_string(),
+            id: 0,
+        });
         let mut ctx_case = TypingContext::default();
         ctx_case.add_var("x", 0, Ty::mk_i64());
         ctx_case.add_var(
@@ -213,10 +219,20 @@ mod test {
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names.clone(),
                     context: TypingContext::default(),
-                    body: XVar::mk("x").into(),
+                    body: XVar::mk(Var {
+                        name: "x".to_string(),
+                        id: 0,
+                    })
+                    .into(),
                 },
             ],
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: None,
         }
@@ -272,8 +288,14 @@ mod test {
     #[test]
     fn check_case_fail() {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push("x".to_string());
-        ctx_names.bindings.push("y".to_string());
+        ctx_names.bindings.push(Var {
+            name: "x".to_string(),
+            id: 0,
+        });
+        ctx_names.bindings.push(Var {
+            name: "y".to_string(),
+            id: 0,
+        });
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: dummy_span(),
@@ -283,7 +305,11 @@ mod test {
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
-                body: XVar::mk("x").into(),
+                body: XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
             }],
             scrutinee: Rc::new(Lit::mk(1).into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
@@ -296,7 +322,13 @@ mod test {
     fn example_empty() -> Case {
         Case {
             span: dummy_span(),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             type_args: TypeArgs::default(),
             clauses: vec![],
             ty: None,
@@ -305,11 +337,23 @@ mod test {
 
     fn example_tup() -> Case {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push("x".to_string());
-        ctx_names.bindings.push("y".to_string());
+        ctx_names.bindings.push(Var {
+            name: "x".to_string(),
+            id: 0,
+        });
+        ctx_names.bindings.push(Var {
+            name: "y".to_string(),
+            id: 0,
+        });
         Case {
             span: dummy_span(),
-            scrutinee: Rc::new(XVar::mk("x").into()),
+            scrutinee: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             clauses: vec![Clause {
                 span: dummy_span(),

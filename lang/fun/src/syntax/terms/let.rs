@@ -122,7 +122,13 @@ mod test {
             },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(XVar::mk("x").into()),
+            in_term: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             ty: None,
         }
         .check(
@@ -170,7 +176,14 @@ mod test {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()].into(),
+                    args: vec![
+                        XVar::mk(Var {
+                            name: "x".to_string(),
+                            id: 0,
+                        })
+                        .into(),
+                    ]
+                    .into(),
                     ty: None,
                 }
                 .into(),

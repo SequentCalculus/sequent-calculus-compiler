@@ -192,12 +192,28 @@ mod test {
     #[test]
     fn check_ife_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            "x",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let result = IfC {
             span: dummy_span(),
             sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
-            snd: Some(Rc::new(XVar::mk("x").into())),
+            fst: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
+            snd: Some(Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            )),
             thenc: Rc::new(Lit::mk(1).into()),
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
@@ -267,11 +283,21 @@ mod test {
     #[test]
     fn check_ifz_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            "x",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let result = IfC {
             span: dummy_span(),
             sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
+            fst: Rc::new(
+                XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ),
             snd: None,
             thenc: Rc::new(Lit::mk(1).into()),
             elsec: Rc::new(Lit::mk(2).into()),

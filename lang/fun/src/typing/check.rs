@@ -146,6 +146,7 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
+            names::Var,
             program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
@@ -250,12 +251,18 @@ mod check_tests {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: "x".to_owned(),
+                        var: Var {
+                            name: "x".to_owned(),
+                            id: 0,
+                        },
                         chi: Prd,
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: "xs".to_owned(),
+                        var: Var {
+                            name: "xs".to_owned(),
+                            id: 0,
+                        },
                         chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     },
@@ -290,28 +297,52 @@ mod check_tests {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: "c".to_owned(),
+                        var: Var {
+                            name: "c".to_owned(),
+                            id: 0,
+                        },
                         chi: Cns,
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: "d".to_owned(),
+                        var: Var {
+                            name: "d".to_owned(),
+                            id: 0,
+                        },
                         chi: Cns,
                         ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
                 ],
             },
-            vec![XVar::mk("c").into(), XVar::mk("d").into()].into(),
+            vec![
+                XVar::mk(Var {
+                    name: "c".to_string(),
+                    id: 0,
+                })
+                .into(),
+                XVar::mk(Var {
+                    name: "d".to_string(),
+                    id: 0,
+                })
+                .into(),
+            ]
+            .into(),
             &TypingContext {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: "a".to_owned(),
+                        var: Var {
+                            name: "a".to_owned(),
+                            id: 0,
+                        },
                         chi: Cns,
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: "b".to_owned(),
+                        var: Var {
+                            name: "b".to_owned(),
+                            id: 0,
+                        },
                         chi: Cns,
                         ty: Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
                     },
@@ -322,7 +353,10 @@ mod check_tests {
         let expected = vec![
             XVar {
                 span: dummy_span(),
-                var: "c".to_owned(),
+                var: Var {
+                    name: "c".to_owned(),
+                    id: 0,
+                },
                 ty: Some(Ty::mk_i64()),
                 chi: Some(Cns),
             }
@@ -330,6 +364,10 @@ mod check_tests {
             XVar {
                 span: dummy_span(),
                 var: "d".to_owned(),
+                var: Var {
+                    name: "d".to_owned(),
+                    id: 0,
+                },
                 ty: Some(Ty::mk_decl(
                     "Fun",
                     TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),

@@ -42,7 +42,7 @@ mod compile_tests {
     use core_macros::{call, covar, lit, mu, ty};
     use fun::{
         parse_term,
-        syntax::context::TypingContext,
+        syntax::{context::TypingContext, names::Var},
         typing::{check::Check, symbol_table::SymbolTable},
     };
     use std::collections::{HashMap, HashSet, VecDeque};
@@ -51,7 +51,7 @@ mod compile_tests {
     fn compile_fac() {
         let term = parse_term!("fac(3)");
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var("x", 0, fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &mut {
@@ -74,7 +74,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::from(["fac".to_string()]),
             current_label: "fac",

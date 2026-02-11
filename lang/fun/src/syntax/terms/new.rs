@@ -223,11 +223,17 @@ mod test {
     #[test]
     fn check_fun() {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push("x".to_string());
-        ctx_names.bindings.push("a".to_string());
+        ctx_names.bindings.push(Var {
+            name: "x".to_string(),
+            id: 0,
+        });
+        ctx_names.bindings.push(Var {
+            name: "a".to_string(),
+            id: 0,
+        });
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var("x", 0, Ty::mk_i64());
+        ctx.add_covar("a", 0, Ty::mk_i64());
         let mut symbol_table = symbol_table_fun();
         let result = New {
             span: dummy_span(),
@@ -237,7 +243,11 @@ mod test {
                 xtor: "apply".to_owned(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
-                body: XVar::mk("x").into(),
+                body: XVar::mk(Var {
+                    name: "x".to_string(),
+                    id: 0,
+                })
+                .into(),
             }],
             ty: None,
         }
@@ -257,7 +267,10 @@ mod test {
                 context: ctx,
                 body: XVar {
                     span: dummy_span(),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Prd),
                 }

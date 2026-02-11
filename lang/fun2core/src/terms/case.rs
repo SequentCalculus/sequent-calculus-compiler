@@ -72,7 +72,9 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
+        parse_term,
+        syntax::{context::TypingContext, names::Var},
+        test_common::symbol_table_list,
         typing::check::Check,
     };
 
@@ -90,7 +92,16 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
+            used_vars: HashSet::from([
+                Var {
+                    name: "x".to_string(),
+                    id: 0,
+                },
+                Var {
+                    name: "xs".to_string(),
+                    id: 0,
+                },
+            ]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",

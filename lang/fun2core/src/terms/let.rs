@@ -51,7 +51,9 @@ impl Compile for fun::syntax::terms::Let {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
-    use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
+    use fun::{
+        parse_term, syntax::names::Var, test_common::symbol_table_list, typing::check::Check,
+    };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -66,7 +68,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -89,7 +94,7 @@ mod compile_tests {
     fn compile_let2() {
         let term = parse_term!("let x : List[i64] = Cons(x,Nil); x");
         let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
+        ctx.add_var("x", 0, fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
                 &mut symbol_table_list(),
@@ -102,7 +107,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",

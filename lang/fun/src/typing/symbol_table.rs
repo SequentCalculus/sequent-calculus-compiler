@@ -320,6 +320,7 @@ mod symbol_table_tests {
     use crate::{
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
+            names::Var,
             program::Program,
             types::{Ty, TypeArgs},
             util::dummy_span,
@@ -350,7 +351,10 @@ mod symbol_table_tests {
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
-                        var: "l".to_owned(),
+                        var: Var {
+                            name: "l".to_owned(),
+                            id: 0,
+                        },
                         chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
@@ -388,7 +392,10 @@ mod symbol_table_tests {
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
-                        var: "l".to_owned(),
+                        var: Var {
+                            name: "l".to_owned(),
+                            id: 0,
+                        },
                         chi: Prd,
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
