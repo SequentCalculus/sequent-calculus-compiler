@@ -108,7 +108,7 @@ impl Subst for Term<Prd> {
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -125,7 +125,7 @@ impl Subst for Term<Cns> {
     fn subst_sim(
         self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),

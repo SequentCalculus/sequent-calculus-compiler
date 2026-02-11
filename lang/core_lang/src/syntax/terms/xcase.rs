@@ -62,7 +62,7 @@ impl<C: Chi> Subst for XCase<C> {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
         self
@@ -112,13 +112,13 @@ impl Bind for XCase<Prd> {
     // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        let new_var = fresh_var(used_vars);
+        let new_var = fresh_var(used_vars, "x");
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
-        let cns = Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone());
+        let cns = Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
@@ -126,13 +126,13 @@ impl Bind for XCase<Cns> {
     // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        let new_covar = fresh_covar(used_vars);
+        let new_covar = fresh_var(used_vars, "a");
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
-        let prd = Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone());
+        let prd = Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }

@@ -125,7 +125,7 @@ impl Subst for IfC {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);

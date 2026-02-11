@@ -106,7 +106,7 @@ impl Subst for Op {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -171,7 +171,7 @@ impl Bind for Op {
                 |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
                     Rc::unwrap_or_clone(self.snd).bind(
                         Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
-                            let new_var = fresh_var(used_vars);
+                            let new_var = fresh_var(used_vars, "x");
                             let new_binding = ContextBinding {
                                 var: new_var.clone(),
                                 chi: Chirality::Prd,
@@ -183,7 +183,7 @@ impl Bind for Op {
                                     op: self.op,
                                     snd: binding_snd.var,
                                 },
-                                Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+                                Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
                                 Ty::I64,
                             )
                             .into()

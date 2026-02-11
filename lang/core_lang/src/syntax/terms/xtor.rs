@@ -81,7 +81,7 @@ impl<C: Chi> Subst for Xtor<C> {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Self::Target {
         self.args = self.args.subst_sim(prod_subst, cons_subst);
         self
@@ -128,7 +128,7 @@ impl Bind for Xtor<Prd> {
         bind_many(
             self.args.into(),
             Box::new(|bindings, used_vars: &mut HashSet<Var>| {
-                let new_var = fresh_var(used_vars);
+                let new_var = fresh_var(used_vars, "x");
                 let new_binding = ContextBinding {
                     var: new_var.clone(),
                     chi: Chirality::Prd,
@@ -141,7 +141,7 @@ impl Bind for Xtor<Prd> {
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
-                    Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone()),
                     self.ty,
                 )
                 .into()
@@ -156,14 +156,14 @@ impl Bind for Xtor<Cns> {
         bind_many(
             self.args.into(),
             Box::new(|bindings, used_vars: &mut HashSet<Var>| {
-                let new_covar = fresh_covar(used_vars);
+                let new_covar = fresh_var(used_vars, "x");
                 let new_binding = ContextBinding {
                     var: new_covar.clone(),
                     chi: Chirality::Cns,
                     ty: self.ty.clone(),
                 };
                 FsCut::new(
-                    Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,

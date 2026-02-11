@@ -33,10 +33,10 @@ pub type FsMu<C: Chi> = Mu<C, FsStatement>;
 impl<S> Mu<Prd, S> {
     /// This function creates a mu-abstraction from a given covariable, body, and type.
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<S>>(covar: &str, stmt: T, ty: Ty) -> Self {
+    pub fn mu<T: Into<S>>(covar: Var, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Prd,
-            variable: covar.to_string(),
+            variable: covar,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -44,10 +44,10 @@ impl<S> Mu<Prd, S> {
 }
 impl<S> Mu<Cns, S> {
     /// This function creates a mu-tilde-abstraction from a given variable, body, and type.
-    pub fn tilde_mu<T: Into<S>>(var: &str, stmt: T, ty: Ty) -> Self {
+    pub fn tilde_mu<T: Into<S>>(var: Var, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
-            variable: var.to_string(),
+            variable: var,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -100,10 +100,10 @@ impl<C: Chi> Subst for Mu<C> {
     fn subst_sim(
         mut self,
         prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        cons_subst: &[(Var, Term<Cns>)],
     ) -> Mu<C> {
         let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Var, Term<Cns>)> = Vec::new();
         for subst in prod_subst {
             if subst.0 != self.variable {
                 prod_subst_reduced.push(subst.clone());
@@ -171,7 +171,7 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 impl<C: Chi> Uniquify for Mu<C> {
     fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<C> {
         if seen_vars.contains(&self.variable) {
-            let new_variable = fresh_name(used_vars, &self.variable);
+            let new_variable = fresh_var(used_vars, &self.variable.name);
             seen_vars.insert(new_variable.clone());
             let old_variable = self.variable;
             self.variable = new_variable;
@@ -181,7 +181,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                     .statement
                     .subst_covar(
                         old_variable,
-                        XVar::covar(&self.variable, self.ty.clone()).into(),
+                        XVar::covar(self.variable.clone(), self.ty.clone()).into(),
                     )
                     .uniquify(seen_vars, used_vars);
             } else {
@@ -189,7 +189,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                     .statement
                     .subst_var(
                         old_variable,
-                        XVar::var(&self.variable, self.ty.clone()).into(),
+                        XVar::var(self.variable.clone(), self.ty.clone()).into(),
                     )
                     .uniquify(seen_vars, used_vars);
             }
@@ -219,7 +219,7 @@ impl Bind for Mu<Prd> {
     // bind(μa.s)[k] = ⟨ μa.focus(s) | ~μx.k(x) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        let new_var = fresh_var(used_vars);
+        let new_var = fresh_var(used_vars, "x");
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
@@ -227,7 +227,7 @@ impl Bind for Mu<Prd> {
         };
         FsCut::new(
             self.focus(used_vars),
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
+            Mu::tilde_mu(new_var, k(new_binding, used_vars), ty.clone()),
             ty,
         )
         .into()
@@ -237,14 +237,14 @@ impl Bind for Mu<Cns> {
     // bind(~μx.s)[k] = ⟨ μa.k(a) | ~μx.focus(s) ⟩
     fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
         let ty = self.ty.clone();
-        let new_covar = fresh_covar(used_vars);
+        let new_covar = fresh_var(used_vars, "a");
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
         FsCut::new(
-            Mu::mu(&new_covar, k(new_binding, used_vars), ty.clone()),
+            Mu::mu(new_covar, k(new_binding, used_vars), ty.clone()),
             self.focus(used_vars),
             ty,
         )
