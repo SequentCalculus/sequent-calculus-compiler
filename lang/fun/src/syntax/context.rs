@@ -150,7 +150,7 @@ impl TypingContext {
     }
 
     /// This function looks up the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Covar, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Var, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_covar {
@@ -167,18 +167,24 @@ impl TypingContext {
     }
 
     /// This function adds a variable (producer) to the context.
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
+    pub fn add_var(&mut self, var: &str, id: usize, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: var.to_owned(),
+            var: Var {
+                name: var.to_owned(),
+                id,
+            },
             chi: Chirality::Prd,
             ty,
         });
     }
 
     /// This funciton adds a covariable (consumer) to the context.
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+    pub fn add_covar(&mut self, covar: &str, id: usize, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: covar.to_owned(),
+            var: Var {
+                name: covar.to_owned(),
+                id,
+            },
             chi: Chirality::Cns,
             ty,
         });
@@ -224,7 +230,7 @@ pub struct NameContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Option<SourceSpan>,
     /// The named bindings
-    pub bindings: Vec<Name>,
+    pub bindings: Vec<Var>,
 }
 
 impl NameContext {
@@ -259,9 +265,9 @@ impl NameContext {
             span: self.span,
             bindings: Vec::new(),
         };
-        for (name, binding) in self.bindings.iter().zip(expected.bindings.iter()) {
+        for (var, binding) in self.bindings.iter().zip(expected.bindings.iter()) {
             context_with_types.bindings.push(ContextBinding {
-                var: name.clone(),
+                var: var.clone(),
                 ..binding.clone()
             });
         }
@@ -298,19 +304,22 @@ pub struct TypeContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Option<SourceSpan>,
     /// The type bindings
-    pub bindings: Vec<Name>,
+    pub bindings: Vec<TypeVar>,
 }
 
 impl TypeContext {
     /// This function checks that no variable in the type context is duplicated.
     /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut params: HashSet<Var> = HashSet::new();
+        let mut params: HashSet<TypeVar> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {
                     span: self.span.to_miette(),
-                    param: binding.clone(),
+                    param: Var {
+                        name: binding.clone(),
+                        id: 0,
+                    },
                     name: binding_site.to_string(),
                 });
             }
@@ -358,6 +367,7 @@ mod tests {
     use crate::{
         syntax::{
             context::TypingContext,
+            names::Var,
             types::{Ty, TypeArgs},
             util::dummy_span,
         },
@@ -370,17 +380,21 @@ mod tests {
     /// `x: i64, y: List[i64], a: cns i64`
     fn example_context() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_var("y", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        ctx.add_covar("a", Ty::mk_i64());
+        ctx.add_var("x", 0, Ty::mk_i64());
+        ctx.add_var(
+            "y",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
+        ctx.add_covar("a", 0, Ty::mk_i64());
         ctx
     }
 
     fn example_context_dup() -> TypingContext {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        ctx.add_covar("a", Ty::mk_i64());
-        ctx.add_var("x", Ty::mk_i64());
+        ctx.add_var("x", 0, Ty::mk_i64());
+        ctx.add_covar("a", 0, Ty::mk_i64());
+        ctx.add_var("x", 0, Ty::mk_i64());
         ctx
     }
 
@@ -431,7 +445,13 @@ mod tests {
     fn var_lookup() {
         assert!(
             example_context()
-                .lookup_var(&"x".to_owned(), &dummy_span())
+                .lookup_var(
+                    &Var {
+                        name: "x".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_ok()
         )
     }
@@ -441,6 +461,13 @@ mod tests {
         assert!(
             example_context()
                 .lookup_var(&"z".to_owned(), &dummy_span())
+                .lookup_var(
+                    &Var {
+                        name: "z".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_err()
         )
     }
@@ -449,7 +476,13 @@ mod tests {
     fn covar_lookup() {
         assert!(
             example_context()
-                .lookup_covar(&"a".to_owned(), &dummy_span())
+                .lookup_covar(
+                    &Var {
+                        name: "a".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_ok()
         )
     }
@@ -458,7 +491,13 @@ mod tests {
     fn covar_lookup_fail() {
         assert!(
             example_context()
-                .lookup_covar(&"b".to_owned(), &dummy_span())
+                .lookup_covar(
+                    &Var {
+                        name: "b".to_owned(),
+                        id: 0
+                    },
+                    &Span::default().to_miette()
+                )
                 .is_err()
         )
     }

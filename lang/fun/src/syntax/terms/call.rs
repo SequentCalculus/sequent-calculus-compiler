@@ -94,7 +94,11 @@ mod test {
     fn check_mult() {
         let mut symbol_table = symbol_table_list();
         let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            "l",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         symbol_table
             .defs
             .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));

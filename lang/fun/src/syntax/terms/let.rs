@@ -84,7 +84,7 @@ impl Check for Let {
         self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
 
         let mut new_context = context.clone();
-        new_context.add_var(&self.variable, self.var_ty.clone());
+        new_context.add_var(&self.variable.name, self.variable.id, self.var_ty.clone());
         self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
 
         self.ty = Some(expected.clone());
@@ -116,7 +116,10 @@ mod test {
     fn check_let1() {
         let result = Let {
             span: dummy_span(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(XVar::mk("x").into()),
@@ -130,14 +133,20 @@ mod test {
         .unwrap();
         let expected = Let {
             span: dummy_span(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 XVar {
                     span: dummy_span(),
                     ty: Some(Ty::mk_i64()),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     chi: Some(Prd),
                 }
                 .into(),
@@ -151,7 +160,10 @@ mod test {
         let mut symbol_table = symbol_table_list();
         let result = Let {
             span: dummy_span(),
-            variable: "x".to_owned(),
+            variable: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
@@ -176,7 +188,10 @@ mod test {
     fn example() -> Let {
         Let {
             span: dummy_span(),
-            variable: "x".to_string(),
+            variable: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),

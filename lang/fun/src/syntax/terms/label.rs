@@ -26,7 +26,7 @@ pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
     /// The covariable to which the continuation is bound
-    pub label: Covar,
+    pub label: Var,
     /// The body in which the continuation is in scope
     pub term: Rc<Term>,
     /// The (inferred) type of the term
@@ -44,7 +44,7 @@ impl Print for Label {
         alloc
             .keyword(LABEL)
             .append(alloc.space())
-            .append(self.label.clone())
+            .append(self.label.print(cfg, alloc))
             .append(alloc.space())
             .append(
                 alloc
@@ -71,7 +71,7 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
-        new_context.add_covar(&self.label, expected.clone());
+        new_context.add_covar(&self.label.name, self.label.id, expected.clone());
         self.term = self.term.check(symbol_table, &new_context, expected)?;
 
         self.ty = Some(expected.clone());
@@ -101,7 +101,10 @@ mod test {
     fn check_label() {
         let result = Label {
             span: dummy_span(),
-            label: "a".to_owned(),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             ty: None,
             term: Rc::new(Lit::mk(1).into()),
         }
@@ -113,7 +116,10 @@ mod test {
         .unwrap();
         let expected = Label {
             span: dummy_span(),
-            label: "a".to_owned(),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             ty: Some(Ty::mk_i64()),
             term: Rc::new(Lit::mk(1).into()),
         };
@@ -122,10 +128,17 @@ mod test {
     #[test]
     fn check_label_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            "x",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let result = Label {
             span: dummy_span(),
-            label: "a".to_owned(),
+            label: Var {
+                name: "a".to_owned(),
+                id: 0,
+            },
             term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
@@ -136,7 +149,10 @@ mod test {
     fn example() -> Label {
         Label {
             span: dummy_span(),
-            label: "x".to_string(),
+            label: Var {
+                name: "x".to_string(),
+                id: 0,
+            },
             term: Rc::new(Term::Lit(Lit::mk(2))),
             ty: None,
         }

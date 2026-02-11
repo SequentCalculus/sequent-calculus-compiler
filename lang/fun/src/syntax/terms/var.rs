@@ -27,12 +27,10 @@ pub struct XVar {
 impl XVar {
     /// This function returns a (co)variable from a given string, without chirality and type
     /// information.
-    pub fn mk(var: &str) -> Self {
-        use crate::syntax::util::dummy_span;
-
+    pub fn mk(var: Var) -> Self {
         XVar {
             span: dummy_span(),
-            var: var.to_string(),
+            var: var.clone(),
             ty: None,
             chi: None,
         }
@@ -93,13 +91,19 @@ mod test {
     #[test]
     fn check_var() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x")
-            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-            .unwrap();
+        ctx.add_var("x", 0, Ty::mk_i64());
+        let result = XVar::mk(Var {
+            name: "x".to_string(),
+            id: 0,
+        })
+        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
+        .unwrap();
         let expected = XVar {
             span: dummy_span(),
-            var: "x".to_owned(),
+            var: Var {
+                name: "x".to_owned(),
+                id: 0,
+            },
             ty: Some(Ty::mk_i64()),
             chi: Some(Prd),
         };
@@ -108,8 +112,12 @@ mod test {
     #[test]
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x").check(
+        ctx.add_var("x", 0, Ty::mk_i64());
+        let result = XVar::mk(Var {
+            name: "x".to_string(),
+            id: 0,
+        })
+        .check(
             &mut SymbolTable::default(),
             &ctx,
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),

@@ -183,10 +183,18 @@ mod test {
         ctx_case_names.bindings.push("x".to_string());
         ctx_case_names.bindings.push("xs".to_string());
         let mut ctx_case = TypingContext::default();
-        ctx_case.add_var("x", Ty::mk_i64());
-        ctx_case.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx_case.add_var("x", 0, Ty::mk_i64());
+        ctx_case.add_var(
+            "xs",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        ctx.add_var(
+            "x",
+            0,
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+        );
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
             span: dummy_span(),
@@ -233,7 +241,10 @@ mod test {
                     context: ctx_case,
                     body: XVar {
                         span: dummy_span(),
-                        var: "x".to_owned(),
+                        var: Var {
+                            name: "x".to_owned(),
+                            id: 0,
+                        },
                         ty: Some(Ty::mk_i64()),
                         chi: Some(Prd),
                     }
@@ -243,7 +254,10 @@ mod test {
             scrutinee: Rc::new(
                 XVar {
                     span: dummy_span(),
-                    var: "x".to_owned(),
+                    var: Var {
+                        name: "x".to_owned(),
+                        id: 0,
+                    },
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                     chi: Some(Prd),
                 }
