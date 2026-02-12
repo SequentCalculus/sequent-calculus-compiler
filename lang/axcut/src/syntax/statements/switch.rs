@@ -116,7 +116,7 @@ impl Linearizing for Switch {
         } else {
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
             if new_context.vars_set().contains(&self.var) {
-                self.var = fresh_var(used_vars, &self.var);
+                self.var = fresh_var(used_vars, &self.var.name);
             }
 
             // ... via an explicit substitution

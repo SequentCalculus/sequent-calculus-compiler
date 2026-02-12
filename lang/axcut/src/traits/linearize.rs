@@ -11,11 +11,12 @@ use std::rc::Rc;
 /// - `base_name` is the base name for the generated variable to which a number is appended that
 ///   makes it fresh.
 pub fn fresh_var(used_vars: &mut HashSet<Var>, base_name: &str) -> Var {
-    let mut n = 0;
-    let mut new_var: Var = format!("{base_name}{n}");
+    let mut new_var: Var = Var {
+        name: base_name.to_string(),
+        id: 0,
+    };
     while used_vars.contains(&new_var) {
-        n += 1;
-        new_var = format!("{base_name}{n}");
+        new_var.id += 1;
     }
     used_vars.insert(new_var.clone());
     new_var
