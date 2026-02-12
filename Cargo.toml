@@ -49,6 +49,8 @@ driver        = { version = "0.1.0", path = "./lang/driver" }
 fun           = { version = "0.1.0", path = "./lang/fun" }
 fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
 printer       = { version = "0.1.0", path = "./lang/printer" }
+# Workspace members which are dev-dependencies
+# They don't have a version because of https://github.com/rust-lang/cargo/issues/4242
 core_macros   = { path = "./lang/macros/core", package = "scc-core-macros" }
 axcut_macros  = { path = "./lang/macros/axcut" }
 macro_utils   = { path = "./lang/macros/utils", package = "scc-macro-utils" }
