@@ -28,14 +28,20 @@ impl Compile for fun::syntax::terms::Label {
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
-            var: self.label.clone(),
+            var: core_lang::syntax::names::Var {
+                name: self.label.clone(),
+                id: 0,
+            },
             ty: var_ty.clone(),
         }
         .into();
 
         core_lang::syntax::terms::Mu {
             prdcns: Prd,
-            variable: self.label,
+            variable: core_lang::syntax::names::Var {
+                name: self.label,
+                id: 0,
+            },
             ty: var_ty,
             statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }
@@ -97,7 +103,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 
@@ -121,7 +127,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 }

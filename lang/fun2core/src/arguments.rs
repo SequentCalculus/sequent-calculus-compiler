@@ -30,7 +30,7 @@ pub fn compile_subst(
                 }) => core_lang::syntax::arguments::Argument::Consumer(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
-                        var,
+                        var: core_lang::syntax::names::Var { name: var, id: 0 },
                         ty: compile_ty(&ty.expect("Types should be annotated before translation")),
                     }
                     .into(),

@@ -7,12 +7,13 @@
 use core_lang::syntax::{
     CodataDeclaration, Def, Ty,
     context::Chirality,
-    fresh_covar, fresh_name, fresh_var,
+    fresh_name, fresh_var,
+    names::Var,
     statements::Cut,
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::names::{Covar, Name, Var};
+use fun::syntax::names::Name;
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},
@@ -41,12 +42,12 @@ pub struct CompileState<'a> {
 impl CompileState<'_> {
     /// This function generates a fresh variable with base name `"x"`.
     pub fn fresh_var(&mut self) -> Var {
-        fresh_var(&mut self.used_vars)
+        fresh_var(&mut self.used_vars, "x")
     }
 
     /// This function generates a fresh covariable with base name `"a"`.
-    pub fn fresh_covar(&mut self) -> Covar {
-        fresh_covar(&mut self.used_vars)
+    pub fn fresh_covar(&mut self) -> Var {
+        fresh_var(&mut self.used_vars, "a")
     }
 }
 
@@ -131,7 +132,7 @@ pub fn share(
         let var = state.fresh_var();
         let ty = cont.get_type();
         let body = Cut::new(
-            core_lang::syntax::terms::XVar::var(&var, ty.clone()),
+            core_lang::syntax::terms::XVar::var(var.clone(), ty.clone()),
             cont,
             ty.clone(),
         )
@@ -154,12 +155,12 @@ pub fn share(
         .map(|binding| match binding.chi {
             Chirality::Prd => {
                 let term: core_lang::syntax::terms::Term<Prd> =
-                    core_lang::syntax::terms::XVar::var(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::var(binding.var, binding.ty).into();
                 term.into()
             }
             Chirality::Cns => {
                 let term: core_lang::syntax::terms::Term<Cns> =
-                    core_lang::syntax::terms::XVar::covar(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::covar(binding.var, binding.ty).into();
                 term.into()
             }
         })
@@ -179,7 +180,7 @@ pub fn share(
     });
 
     Mu::tilde_mu::<core_lang::syntax::Statement>(
-        &var,
+        var,
         core_lang::syntax::statements::Call {
             name,
             args,

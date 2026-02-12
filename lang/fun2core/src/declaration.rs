@@ -2,7 +2,7 @@
 //! declarations.
 
 use crate::{context::compile_context, types::compile_ty};
-use core_lang::syntax::fresh_covar;
+use core_lang::syntax::names::fresh_var;
 
 /// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
 /// [constructors in Core](core_lang::syntax::declaration::XtorSig).
@@ -23,7 +23,7 @@ pub fn compile_dtor(
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let mut new_args = compile_context(dtor.args);
 
-    let new_covar = fresh_covar(&mut new_args.vars().into_iter().collect());
+    let new_covar = fresh_var(&mut new_args.vars().into_iter().collect(), "x");
 
     new_args
         .bindings

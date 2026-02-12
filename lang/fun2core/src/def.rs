@@ -31,8 +31,14 @@ pub fn compile_def(
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
-    def.body.used_binders(&mut used_vars);
+    let mut used_vars_fun = HashSet::new();
+    def.body.used_binders(&mut used_vars_fun);
+
+    let mut used_vars: HashSet<core_lang::syntax::names::Var> = used_vars_fun
+        .into_iter()
+        .map(|var| core_lang::syntax::names::Var { name: var, id: 0 })
+        .collect();
+    used_vars.extend(context.vars());
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
@@ -51,7 +57,7 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::terms::XVar::covar(&new_covar, ty).into(),
+        core_lang::syntax::terms::XVar::covar(new_covar.clone(), ty).into(),
         &mut state,
     );
 
@@ -93,8 +99,14 @@ pub fn compile_main(
 ) -> VecDeque<core_lang::syntax::Def> {
     let context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
-    def.body.used_binders(&mut used_vars);
+    let mut used_vars_fun = HashSet::new();
+    def.body.used_binders(&mut used_vars_fun);
+
+    let mut used_vars: HashSet<core_lang::syntax::names::Var> = used_vars_fun
+        .into_iter()
+        .map(|var| core_lang::syntax::names::Var { name: var, id: 0 })
+        .collect();
+    used_vars.extend(context.vars());
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
@@ -114,9 +126,9 @@ pub fn compile_main(
 
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
-            &new_var,
+            new_var.clone(),
             core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit {
-                arg: Rc::new(core_lang::syntax::terms::XVar::var(&new_var, ty.clone()).into()),
+                arg: Rc::new(core_lang::syntax::terms::XVar::var(new_var, ty.clone()).into()),
                 ty: ty.clone(),
             }),
             ty,

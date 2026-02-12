@@ -21,7 +21,10 @@ pub fn compile_context(
             .bindings
             .into_iter()
             .map(|binding| core_lang::syntax::context::ContextBinding {
-                var: binding.var,
+                var: core_lang::syntax::names::Var {
+                    name: binding.var,
+                    id: 0,
+                },
                 chi: compile_chi(&binding.chi),
                 ty: compile_ty(&binding.ty),
             })

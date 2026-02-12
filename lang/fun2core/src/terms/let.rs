@@ -26,7 +26,10 @@ impl Compile for fun::syntax::terms::Let {
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
-            variable: self.variable,
+            variable: core_lang::syntax::names::Var {
+                name: self.variable,
+                id: 0,
+            },
             ty: ty.clone(),
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         }
@@ -75,10 +78,13 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 lit!(1),
-                mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
+                mutilde!(
+                    ("x", 0),
+                    cut!(prod!(var!("x", 0), var!("x", 0)), covar!("a", 0))
+                )
             )
         )
         .into();
@@ -111,18 +117,18 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("List[i64]"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 ctor!(
                     "Cons",
-                    [var!("x"), ctor!("Nil", [], ty!("List[i64]"))],
+                    [var!("x", 0), ctor!("Nil", [], ty!("List[i64]"))],
                     ty!("List[i64]")
                 ),
                 mutilde!(
-                    "x",
+                    ("x", 1),
                     cut!(
-                        var!("x", ty!("List[i64]")),
-                        covar!("a0", ty!("List[i64]")),
+                        var!("x", 1, ty!("List[i64]")),
+                        covar!("a", 0, ty!("List[i64]")),
                         ty!("List[i64]")
                     ),
                     ty!("List[i64]")

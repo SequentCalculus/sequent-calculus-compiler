@@ -23,7 +23,10 @@ impl Compile for fun::syntax::terms::Goto {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
-                var: self.target,
+                var: core_lang::syntax::names::Var {
+                    name: self.target,
+                    id: 0,
+                },
                 ty: compile_ty(
                     &self
                         .ty
@@ -63,7 +66,7 @@ mod compile_tests {
             lifted_statements: &mut VecDeque::default(),
         };
         let result = term_typed.compile(&mut state, ty!("int"));
-        let expected = mu!("a0", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(("a", 0), cut!(lit!(1), covar!("a", 0))).into();
         assert_eq!(result, expected)
     }
 
@@ -90,11 +93,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a",
+            ("a", 0),
             ife!(
-                var!("x"),
-                cut!(lit!(0), covar!("a")),
-                cut!(prod!(var!("x"), lit!(2)), covar!("a"))
+                var!("x", 0),
+                cut!(lit!(0), covar!("a", 0)),
+                cut!(prod!(var!("x", 0), lit!(2)), covar!("a", 0))
             )
         )
         .into();

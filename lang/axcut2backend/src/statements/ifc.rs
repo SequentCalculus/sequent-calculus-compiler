@@ -30,8 +30,8 @@ impl CodeStatement for IfC {
     {
         use axcut::syntax::statements::ifc::IfSort;
         let snd = match self.snd {
-            None => ZERO,
-            Some(ref snd) => snd,
+            None => ZERO.to_string(),
+            Some(ref snd) => snd.to_string(),
         };
         let comment = match self.sort {
             IfSort::Equal => format!("{IF} {} {EQQ} {snd} \\{{ ... \\}}", self.fst),
