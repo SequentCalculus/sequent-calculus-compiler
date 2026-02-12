@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use codespan::Span;
 use miette::SourceSpan;
 use printer::Print;
 
@@ -63,7 +62,7 @@ impl SymbolTable {
                     .any(|xtor| xtor.clone() + &type_args.print_to_string(None) == *dtor)
             {
                 let ty = Ty::Decl {
-                    span: Span::default(),
+                    span: None,
                     name: name.replace(&type_args.print_to_string(None), ""),
                     type_args: type_args.clone(),
                 };
@@ -71,7 +70,7 @@ impl SymbolTable {
             }
         }
         Err(Error::Undefined {
-            span: *span,
+            span: Some(*span),
             name: dtor.clone(),
         })
     }
@@ -89,7 +88,7 @@ impl SymbolTable {
         for (name, (pol, _type_params, xtors)) in &self.type_templates {
             if pol == &Polarity::Codata && xtors.contains(dtor) {
                 let ty = Ty::Decl {
-                    span: Span::default(),
+                    span: None,
                     name: name.to_string(),
                     type_args: type_args.clone(),
                 };
@@ -117,7 +116,7 @@ impl SymbolTable {
                     .any(|xtor| xtor.clone() + &type_args.print_to_string(None) == *ctor)
             {
                 let ty = Ty::Decl {
-                    span: Span::default(),
+                    span: None,
                     name: name.replace(&type_args.print_to_string(None), ""),
                     type_args: type_args.clone(),
                 };
@@ -125,7 +124,7 @@ impl SymbolTable {
             }
         }
         Err(Error::Undefined {
-            span: *span,
+            span: Some(*span),
             name: ctor.clone(),
         })
     }
@@ -143,7 +142,7 @@ impl SymbolTable {
         for (name, (pol, _type_params, xtors)) in &self.type_templates {
             if pol == &Polarity::Data && xtors.contains(ctor) {
                 let ty = Ty::Decl {
-                    span: Span::default(),
+                    span: None,
                     name: name.to_string(),
                     type_args: type_args.clone(),
                 };
@@ -225,7 +224,7 @@ impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.defs.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
-                span: self.span.to_miette(),
+                span: Some(self.span),
                 name: self.name.clone(),
             });
         }
@@ -319,18 +318,17 @@ impl BuildSymbolTable for DtorSig {
 mod symbol_table_tests {
     use super::{BuildSymbolTable, SymbolTable};
     use crate::{
-        parser::util::ToMiette,
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
             program::Program,
             types::{Ty, TypeArgs},
+            util::dummy_span,
         },
         test_common::{
             codata_stream, data_list, def_mult, symbol_table_list, symbol_table_list_template,
             symbol_table_lpair, symbol_table_stream_template,
         },
     };
-    use codespan::Span;
 
     #[test]
     fn build_module() {
@@ -350,7 +348,7 @@ mod symbol_table_tests {
             "mult".to_owned(),
             (
                 TypingContext {
-                    span: Span::default(),
+                    span: None,
                     bindings: vec![ContextBinding {
                         var: "l".to_owned(),
                         chi: Prd,
@@ -388,7 +386,7 @@ mod symbol_table_tests {
             "mult".to_owned(),
             (
                 TypingContext {
-                    span: Span::default(),
+                    span: None,
                     bindings: vec![ContextBinding {
                         var: "l".to_owned(),
                         chi: Prd,
@@ -405,7 +403,7 @@ mod symbol_table_tests {
     fn dtor_lookup() {
         let symbol_table = symbol_table_lpair();
         let result = symbol_table
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"fst[i64, i64]".to_owned())
+            .lookup_ty_for_dtor(&dummy_span(), &"fst[i64, i64]".to_owned())
             .unwrap();
         let expected = Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]));
         assert_eq!(result, expected)
@@ -413,8 +411,8 @@ mod symbol_table_tests {
 
     #[test]
     fn dtor_lookup_fail() {
-        let result = SymbolTable::default()
-            .lookup_ty_for_dtor(&Span::default().to_miette(), &"snd[i64, i64]".to_owned());
+        let result =
+            SymbolTable::default().lookup_ty_for_dtor(&dummy_span(), &"snd[i64, i64]".to_owned());
         assert!(result.is_err())
     }
 
@@ -422,7 +420,7 @@ mod symbol_table_tests {
     fn ctor_lookup() {
         let symbol_table = symbol_table_list();
         let result = symbol_table
-            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil[i64]".to_owned())
+            .lookup_ty_for_ctor(&dummy_span(), &"Nil[i64]".to_owned())
             .unwrap();
         let expected = (
             Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
@@ -433,8 +431,7 @@ mod symbol_table_tests {
 
     #[test]
     fn ctor_lookup_fail() {
-        let result = SymbolTable::default()
-            .lookup_ty_for_ctor(&Span::default().to_miette(), &"Nil".to_owned());
+        let result = SymbolTable::default().lookup_ty_for_ctor(&dummy_span(), &"Nil".to_owned());
         assert!(result.is_err())
     }
 }

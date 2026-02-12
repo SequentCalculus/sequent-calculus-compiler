@@ -1,7 +1,7 @@
 //! This module defines let-bindings of a term in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{COLON, EQ, LET, SEMI};
 use printer::*;
 
@@ -25,7 +25,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Let {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The bound variable
     pub variable: Var,
     /// The (annotated) type of the bound term
@@ -80,7 +80,7 @@ impl Check for Let {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.var_ty.check(&self.span, symbol_table)?;
+        self.var_ty.check(&Some(self.span), symbol_table)?;
         self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
 
         let mut new_context = context.clone();
@@ -102,10 +102,10 @@ impl UsedBinders for Let {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -115,7 +115,7 @@ mod test {
     #[test]
     fn check_let1() {
         let result = Let {
-            span: Span::default(),
+            span: dummy_span(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
@@ -129,13 +129,13 @@ mod test {
         )
         .unwrap();
         let expected = Let {
-            span: Span::default(),
+            span: dummy_span(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     ty: Some(Ty::mk_i64()),
                     var: "x".to_owned(),
                     chi: Some(Prd),
@@ -150,13 +150,13 @@ mod test {
     fn check_let_fail() {
         let mut symbol_table = symbol_table_list();
         let result = Let {
-            span: Span::default(),
+            span: dummy_span(),
             variable: "x".to_owned(),
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![XVar::mk("x").into()].into(),
                     ty: None,
@@ -175,7 +175,7 @@ mod test {
 
     fn example() -> Let {
         Let {
-            span: Span::default(),
+            span: dummy_span(),
             variable: "x".to_string(),
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),

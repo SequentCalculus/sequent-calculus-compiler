@@ -20,7 +20,7 @@ harness = false
 [dependencies]
 # Workspace dependencies
 basic-toml = { version = "0.1.9" }
-serde      = { version = "1.0.217" }
+serde      = { version = "1.0.217", features = ["derive"]}
 
 # Workspace members
 driver    = { workspace = true }

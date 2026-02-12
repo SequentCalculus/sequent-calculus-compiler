@@ -1,10 +1,9 @@
 //! This module defines the call of a top-level function in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -21,7 +20,7 @@ use std::collections::HashSet;
 pub struct Call {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The name of the top-level function being called
     pub name: Name,
     /// The arguments
@@ -62,19 +61,13 @@ impl Check for Call {
                 let (types, ret_ty) = signature.clone();
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
 
-                self.args = check_args(
-                    &self.span.to_miette(),
-                    symbol_table,
-                    context,
-                    self.args,
-                    &types,
-                )?;
+                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
                 self.ret_ty = Some(expected.clone());
                 Ok(self)
             }
             None => Err(Error::Undefined {
-                span: self.span.to_miette(),
+                span: None,
                 name: self.name.clone(),
             }),
         }
@@ -89,10 +82,10 @@ impl UsedBinders for Call {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -116,7 +109,7 @@ mod test {
     #[test]
     fn check_call_fail() {
         let result = Call {
-            span: Span::default(),
+            span: dummy_span(),
             name: "main".to_owned(),
             args: vec![].into(),
             ret_ty: None,
@@ -124,7 +117,7 @@ mod test {
         .check(
             &mut SymbolTable::default(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
             &Ty::mk_i64(),
@@ -134,7 +127,7 @@ mod test {
 
     fn example_simple() -> Call {
         Call {
-            span: Span::default(),
+            span: dummy_span(),
             name: "foo".to_string(),
             args: vec![].into(),
             ret_ty: None,
@@ -157,7 +150,7 @@ mod test {
 
     fn example_extended() -> Call {
         Call {
-            span: Span::default(),
+            span: dummy_span(),
             name: "foo".to_string(),
             args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,

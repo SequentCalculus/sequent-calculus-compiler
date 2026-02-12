@@ -1,12 +1,11 @@
 //! This module defines the control operator for invoking a captured continuation/program context
 //! in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::GOTO;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -25,7 +24,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Goto {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The covariable for the continuation
     pub target: Covar,
     /// The argument
@@ -76,7 +75,7 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target, &self.span.to_miette())?;
+        let cont_type = context.lookup_covar(&self.target, &self.span)?;
         self.term = self.term.check(symbol_table, context, &cont_type)?;
 
         self.ty = Some(expected.clone());
@@ -92,10 +91,10 @@ impl UsedBinders for Goto {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::*;
 
@@ -106,7 +105,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
         let result = Goto {
-            span: Span::default(),
+            span: dummy_span(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
@@ -114,7 +113,7 @@ mod test {
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Goto {
-            span: Span::default(),
+            span: dummy_span(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: Some(Ty::mk_i64()),
@@ -125,7 +124,7 @@ mod test {
     #[test]
     fn check_goto_fail() {
         let result = Goto {
-            span: Span::default(),
+            span: dummy_span(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
@@ -140,7 +139,7 @@ mod test {
 
     fn example() -> Goto {
         Goto {
-            span: Span::default(),
+            span: dummy_span(),
             target: "x".to_string(),
             term: Rc::new(Term::Lit(Lit::mk(2))),
             ty: None,

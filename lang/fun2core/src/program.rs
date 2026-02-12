@@ -57,7 +57,6 @@ mod compile_tests {
         def::{compile_def, compile_main},
         program::compile_prog,
     };
-    use codespan::Span;
     use core_macros::{bind, cns, covar, cut, def, exit, lit, mutilde, prd, var};
     use fun::syntax::{
         Chirality,
@@ -65,6 +64,7 @@ mod compile_tests {
         program::CheckedProgram,
         terms::{Lit, XVar},
         types::Ty,
+        util::dummy_span,
     };
     use std::collections::HashSet;
 
@@ -72,7 +72,7 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
         Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "main".to_string(),
             context: ctx,
             body: Lit::mk(1).into(),
@@ -83,11 +83,11 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "id".to_string(),
             context: ctx,
             body: XVar {
-                span: Span::default(),
+                span: dummy_span(),
                 var: "x".to_owned(),
                 ty: Some(Ty::mk_i64()),
                 chi: Some(Chirality::Prd),

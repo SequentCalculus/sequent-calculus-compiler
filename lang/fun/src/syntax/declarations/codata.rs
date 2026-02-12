@@ -1,7 +1,7 @@
 //! This module contains the declaration of codata type templates.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{CODATA, COLON, COMMA};
 use printer::*;
 
@@ -23,7 +23,7 @@ use crate::typing::*;
 pub struct DtorSig {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The dstructor name
     pub name: Name,
     /// The argument context
@@ -40,7 +40,7 @@ impl DtorSig {
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         self.args.check_template(symbol_table, type_params)?;
         self.cont_ty
-            .check_template(&self.span, symbol_table, type_params)?;
+            .check_template(self.span, symbol_table, type_params)?;
         Ok(())
     }
 }
@@ -76,7 +76,7 @@ impl Print for DtorSig {
 pub struct Codata {
     #[derivative(PartialEq = "ignore")]
     /// The source location
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The codata type name
     pub name: Name,
     /// The type parameters

@@ -45,8 +45,6 @@ macro_rules! parse_term {
 mod parser_tests {
     use std::rc::Rc;
 
-    use codespan::Span;
-
     use super::*;
     use crate::{
         syntax::{
@@ -54,6 +52,7 @@ mod parser_tests {
             program::Program,
             terms::{Lit, Paren, Term, XVar},
             types::Ty,
+            util::dummy_span,
         },
         test_common::{codata_stream, data_list, def_mult},
     };
@@ -62,7 +61,7 @@ mod parser_tests {
     fn parse_parens() {
         let parser = fun::TermParser::new();
         let expected = Paren {
-            span: Span::default(),
+            span: dummy_span(),
             inner: Rc::new(Term::Lit(Lit::mk(22))),
         }
         .into();

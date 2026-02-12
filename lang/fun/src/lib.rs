@@ -8,6 +8,8 @@ pub mod typing;
 /// Some infrastructure for unit tests.
 #[cfg(feature = "test-common")]
 pub mod test_common {
+    use crate::syntax::util::dummy_span;
+
     use super::{
         syntax::{
             context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
@@ -17,7 +19,6 @@ pub mod test_common {
         },
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
     use std::rc::Rc;
 
     fn context_cons(type_param: &str) -> TypingContext {
@@ -49,17 +50,17 @@ pub mod test_common {
 
     pub fn data_list() -> Data {
         Data {
-            span: Span::default(),
+            span: None,
             name: "List".to_owned(),
             type_params: TypeContext::mk(&vec!["A"]),
             ctors: vec![
                 CtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "Nil".to_owned(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "Cons".to_owned(),
                     args: context_cons("A"),
                 },
@@ -69,17 +70,17 @@ pub mod test_common {
 
     pub fn data_list_i64() -> Data {
         Data {
-            span: Span::default(),
+            span: None,
             name: "List[i64]".to_owned(),
             type_params: TypeContext::default(),
             ctors: vec![
                 CtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "Nil".to_owned(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "Cons".to_owned(),
                     args: context_cons_i64(),
                 },
@@ -141,18 +142,18 @@ pub mod test_common {
 
     pub fn codata_stream() -> Codata {
         Codata {
-            span: Span::default(),
+            span: None,
             name: "Stream".to_owned(),
             type_params: TypeContext::mk(&vec!["A"]),
             dtors: vec![
                 DtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "head".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "tail".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl(
@@ -259,11 +260,11 @@ pub mod test_common {
 
     pub fn codata_fun() -> Codata {
         Codata {
-            span: Span::default(),
+            span: None,
             name: "Fun".to_owned(),
             type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![DtorSig {
-                span: Span::default(),
+                span: None,
                 name: "apply".to_owned(),
                 args: context_ap("A", "B"),
                 cont_ty: Ty::mk_decl("B", TypeArgs::default()),
@@ -319,18 +320,18 @@ pub mod test_common {
 
     pub fn codta_lpair() -> Codata {
         Codata {
-            span: Span::default(),
+            span: None,
             name: "LPair".to_owned(),
             type_params: TypeContext::mk(&vec!["A", "B"]),
             dtors: vec![
                 DtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "fst".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
-                    span: Span::default(),
+                    span: None,
                     name: "snd".to_owned(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("B", TypeArgs::default()),
@@ -390,16 +391,16 @@ pub mod test_common {
 
     pub fn def_mult() -> Def {
         Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "mult".to_owned(),
             context: context_mult(),
             body: Case {
-                span: Span::default(),
+                span: dummy_span(),
                 scrutinee: Rc::new(XVar::mk("l").into()),
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 clauses: vec![
                     Clause {
-                        span: Span::default(),
+                        span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
@@ -407,18 +408,18 @@ pub mod test_common {
                         body: Lit::mk(1).into(),
                     },
                     Clause {
-                        span: Span::default(),
+                        span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
                         body: Op {
-                            span: Span::default(),
+                            span: dummy_span(),
                             fst: Rc::new(XVar::mk("x").into()),
                             op: BinOp::Prod,
                             snd: Rc::new(
                                 Call {
-                                    span: Span::default(),
+                                    span: dummy_span(),
                                     name: "mult".to_owned(),
                                     args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
@@ -438,15 +439,15 @@ pub mod test_common {
 
     pub fn def_mult_typed() -> Def {
         Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "mult".to_owned(),
             context: context_mult(),
             ret_ty: Ty::mk_i64(),
             body: Case {
-                span: Span::default(),
+                span: dummy_span(),
                 scrutinee: Rc::new(
                     XVar {
-                        span: Span::default(),
+                        span: dummy_span(),
                         var: "l".to_owned(),
                         ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                         chi: Some(Prd),
@@ -456,7 +457,7 @@ pub mod test_common {
                 type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
                 clauses: vec![
                     Clause {
-                        span: Span::default(),
+                        span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
                         context_names: NameContext::default(),
@@ -464,16 +465,16 @@ pub mod test_common {
                         body: Lit::mk(1).into(),
                     },
                     Clause {
-                        span: Span::default(),
+                        span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
                         body: Op {
-                            span: Span::default(),
+                            span: dummy_span(),
                             fst: Rc::new(
                                 XVar {
-                                    span: Span::default(),
+                                    span: dummy_span(),
                                     var: "x".to_owned(),
                                     ty: Some(Ty::mk_i64()),
                                     chi: Some(Prd),
@@ -483,11 +484,11 @@ pub mod test_common {
                             op: BinOp::Prod,
                             snd: Rc::new(
                                 Call {
-                                    span: Span::default(),
+                                    span: dummy_span(),
                                     name: "mult".to_owned(),
                                     args: vec![
                                         XVar {
-                                            span: Span::default(),
+                                            span: dummy_span(),
                                             var: "xs".to_owned(),
                                             ty: Some(Ty::mk_decl(
                                                 "List",

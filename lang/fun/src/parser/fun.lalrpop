@@ -106,11 +106,11 @@ Binding: ContextBinding = {
 }
 
 pub OptContext: TypingContext = {
-    <l: @L> <bindings: OptParenthesizedList<Binding>> <r: @R> => TypingContext { span: span(l, r), bindings, },
+    <l: @L> <bindings: OptParenthesizedList<Binding>> <r: @R> => TypingContext { span: Some(span(l, r)), bindings, },
 }
 
 pub OptNameContext: NameContext = {
-    <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: span(l, r), bindings, },
+    <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: Some(span(l, r)), bindings, },
 }
 
 //
@@ -118,7 +118,7 @@ pub OptNameContext: NameContext = {
 //
 
 I64: Ty = {
-    <l: @L> "i64" <r: @R> => Ty::I64 { span: span(l, r), },
+    <l: @L> "i64" <r: @R> => Ty::I64 { span: Some(span(l, r)), },
 }
 
 TypeName: String = {
@@ -126,12 +126,12 @@ TypeName: String = {
 }
 
 OptTypeArgs: TypeArgs = {
-    <l: @L> <args: OptBracketedList<Ty>> <r: @R> => TypeArgs { span: span(l, r), args, },
+    <l: @L> <args: OptBracketedList<Ty>> <r: @R> => TypeArgs { span: Some(span(l, r)), args, },
 }
 
 TyDecl: Ty = {
     <l: @L> <name: TypeName> <type_args: OptTypeArgs> <r: @R> =>
-        Ty::Decl { span: span(l, r), name, type_args },
+        Ty::Decl { span: Some(span(l, r)), name, type_args },
 }
 
 pub Ty: Ty = {
@@ -401,7 +401,7 @@ pub Term: Term = {
 Ctor: CtorSig = {
     <l: @L> <name: CtorName> <lc: @L> <args: OptContext> <r: @R> =>
         CtorSig{
-            span: span(l, r),
+            span: Some(span(l, r)),
             name,
             args,
         }
@@ -410,7 +410,7 @@ Ctor: CtorSig = {
 Dtor: DtorSig = {
     <l: @L> <name: DtorName> <lc: @L> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
-            span: span(l, r),
+            span: Some(span(l, r)),
             name,
             args,
             cont_ty,
@@ -429,13 +429,13 @@ Def: Def = {
 }
 
 pub OptTypeContext: TypeContext = {
-    <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: span(l, r), bindings, },
+    <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: Some(span(l, r)), bindings, },
 }
 
 Data: Data = {
     <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
         Data {
-            span: span(l, r),
+            span: Some(span(l, r)),
             name,
             type_params,
             ctors,
@@ -445,7 +445,7 @@ Data: Data = {
 Codata: Codata = {
     <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
         Codata {
-            span: span(l, r),
+            span: Some(span(l, r)),
             name,
             type_params,
             dtors,

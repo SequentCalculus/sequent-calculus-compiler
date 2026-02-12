@@ -1,7 +1,7 @@
 //! This module defines types in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::I64;
 use printer::*;
 
@@ -21,13 +21,13 @@ pub enum Ty {
     /// Signed 64-bit integer.
     I64 {
         #[derivative(PartialEq = "ignore")]
-        span: Span,
+        span: Option<SourceSpan>,
     },
     /// Monomorphic instance of user-declared (data or codata) type template, or the name of a type
     /// parameter.
     Decl {
         #[derivative(PartialEq = "ignore")]
-        span: Span,
+        span: Option<SourceSpan>,
         /// For an instance this is the name of the template corresponding to this instance, for a
         /// type parameter it is just its name.
         name: Name,
@@ -41,7 +41,11 @@ impl Ty {
     /// This function checks the well-formedness of a type during typechecking. For a user-declared
     /// type it creates a monomorphic instance of the corresponding template if necessary. The type
     /// must not be a type parameter.
-    pub fn check(&self, span: &Span, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+    pub fn check(
+        &self,
+        span: &Option<SourceSpan>,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<(), Error> {
         match self {
             Ty::I64 { .. } => Ok(()),
             Ty::Decl {
@@ -77,7 +81,7 @@ impl Ty {
     /// - `type_params` is the list of type parameters of the template.
     pub fn check_template(
         &self,
-        span: &Span,
+        span: Option<SourceSpan>,
         symbol_table: &SymbolTable,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
@@ -90,7 +94,7 @@ impl Ty {
                         Ok(())
                     } else {
                         Err(Error::Undefined {
-                            span: span.to_miette(),
+                            span,
                             name: name.clone(),
                         })
                     }
@@ -101,9 +105,7 @@ impl Ty {
 
     /// This function creates an i64 type with no defined source location.
     pub fn mk_i64() -> Self {
-        Ty::I64 {
-            span: Span::default(),
-        }
+        Ty::I64 { span: None }
     }
 
     /// This function creates a monomorphic user-defined type with no source location.
@@ -111,7 +113,7 @@ impl Ty {
     /// - `type_args` are the type arguments for the type parameters of the corresponding template.
     pub fn mk_decl(name: &str, type_args: TypeArgs) -> Self {
         Ty::Decl {
-            span: Span::default(),
+            span: None,
             name: name.to_string(),
             type_args,
         }
@@ -170,7 +172,7 @@ impl Ty {
 /// data List[i64] { Nil, Cons(x: i64, xs: List[i64]) }
 /// ```
 fn create_instance(
-    span: Span,
+    span: Option<SourceSpan>,
     instance_name: String,
     type_args: &TypeArgs,
     pol: Polarity,
@@ -203,7 +205,7 @@ fn create_instance(
             for (base_name, full_name) in &xtor_names {
                 let Some(args_template) = symbol_table.ctor_templates.get(base_name) else {
                     return Err(Error::Undefined {
-                        span: span.to_miette(),
+                        span,
                         name: base_name.clone(),
                     });
                 };
@@ -263,7 +265,7 @@ impl Print for Ty {
 pub struct TypeArgs {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The type arguments
     pub args: Vec<Ty>,
 }
@@ -294,10 +296,7 @@ impl TypeArgs {
     /// This function creates type arguments with undefined source location from a given list of
     /// monomorphic types.
     pub fn mk(args: Vec<Ty>) -> Self {
-        TypeArgs {
-            span: Span::default(),
-            args,
-        }
+        TypeArgs { span: None, args }
     }
 }
 

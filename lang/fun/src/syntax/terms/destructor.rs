@@ -1,11 +1,10 @@
 //! This module defines invoking destructors of codata types.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::DOT;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -24,7 +23,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Destructor {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The term the destructor is invoked on
     pub scrutinee: Rc<Term>,
     /// The destructor name
@@ -90,7 +89,7 @@ impl Check for Destructor {
     ) -> Result<Self, Error> {
         // the name of the constructor in the symbol table for the instantiated data type
         let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
-        let ty = match symbol_table.lookup_ty_for_dtor(&self.span.to_miette(), &dtor_name) {
+        let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
             Ok(ty) => ty,
             // if there is no instance yet, we create an instance from the template
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
@@ -102,13 +101,7 @@ impl Check for Destructor {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
 
-                self.args = check_args(
-                    &self.span.to_miette(),
-                    symbol_table,
-                    context,
-                    self.args,
-                    &types,
-                )?;
+                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
 
@@ -116,7 +109,7 @@ impl Check for Destructor {
                 Ok(self)
             }
             None => Err(Error::Undefined {
-                span: self.span.to_miette(),
+                span: Some(self.span),
                 name: self.id.clone(),
             }),
         }
@@ -132,10 +125,10 @@ impl UsedBinders for Destructor {
 
 #[cfg(test)]
 mod destructor_tests {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -151,7 +144,7 @@ mod destructor_tests {
         );
         let mut symbol_table = symbol_table_lpair();
         let result = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![].into(),
@@ -161,13 +154,13 @@ mod destructor_tests {
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "fst".to_owned(),
             args: vec![].into(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             scrutinee: Rc::new(
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl(
                         "LPair",
@@ -192,7 +185,7 @@ mod destructor_tests {
         ctx.add_covar("a", Ty::mk_i64());
         let mut symbol_table = symbol_table_fun_template();
         let result = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
@@ -202,13 +195,13 @@ mod destructor_tests {
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "apply".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![
                 Lit::mk(1).into(),
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "a".to_owned(),
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Cns),
@@ -218,7 +211,7 @@ mod destructor_tests {
             .into(),
             scrutinee: Rc::new(
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl(
                         "Fun",
@@ -238,7 +231,7 @@ mod destructor_tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             args: vec![].into(),
@@ -252,7 +245,7 @@ mod destructor_tests {
     /// "x.head"
     fn example_1() -> Destructor {
         Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             scrutinee: Rc::new(XVar::mk("x").into()),
@@ -264,7 +257,7 @@ mod destructor_tests {
     /// "x.head.head"
     fn example_2() -> Destructor {
         Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             scrutinee: Rc::new(example_1().into()),
@@ -292,7 +285,7 @@ mod destructor_tests {
     #[test]
     fn display_3() {
         let dest = Destructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             scrutinee: Rc::new(XVar::mk("x").into()),

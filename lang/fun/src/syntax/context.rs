@@ -1,6 +1,5 @@
 //! This module defines typing contexts in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::tokens::{CNS, COLON};
@@ -78,7 +77,7 @@ impl OptTyped for ContextBinding {
 pub struct TypingContext {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The context bindings
     pub bindings: Vec<ContextBinding>,
 }
@@ -104,7 +103,7 @@ impl TypingContext {
         for binding in &self.bindings {
             binding
                 .ty
-                .check_template(&self.span, symbol_table, type_params)?;
+                .check_template(self.span, symbol_table, type_params)?;
         }
         Ok(())
     }
@@ -223,7 +222,7 @@ impl Print for TypingContext {
 pub struct NameContext {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The named bindings
     pub bindings: Vec<Name>,
 }
@@ -297,7 +296,7 @@ impl Print for NameContext {
 pub struct TypeContext {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The type bindings
     pub bindings: Vec<Name>,
 }
@@ -323,7 +322,7 @@ impl TypeContext {
     /// This function constructs a type context with empty source location from a list of strings.
     pub fn mk(params: &[&str]) -> TypeContext {
         TypeContext {
-            span: Span::default(),
+            span: None,
             bindings: params.iter().map(ToString::to_string).collect(),
         }
     }
@@ -357,15 +356,14 @@ impl Print for TypeContext {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::util::ToMiette,
         syntax::{
             context::TypingContext,
             types::{Ty, TypeArgs},
+            util::dummy_span,
         },
         test_common::symbol_table_list,
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
     use printer::Print;
 
     /// The context:
@@ -433,7 +431,7 @@ mod tests {
     fn var_lookup() {
         assert!(
             example_context()
-                .lookup_var(&"x".to_owned(), &Span::default().to_miette())
+                .lookup_var(&"x".to_owned(), &dummy_span())
                 .is_ok()
         )
     }
@@ -442,7 +440,7 @@ mod tests {
     fn var_lookup_fail() {
         assert!(
             example_context()
-                .lookup_var(&"z".to_owned(), &Span::default().to_miette())
+                .lookup_var(&"z".to_owned(), &dummy_span())
                 .is_err()
         )
     }
@@ -451,7 +449,7 @@ mod tests {
     fn covar_lookup() {
         assert!(
             example_context()
-                .lookup_covar(&"a".to_owned(), &Span::default().to_miette())
+                .lookup_covar(&"a".to_owned(), &dummy_span())
                 .is_ok()
         )
     }
@@ -460,7 +458,7 @@ mod tests {
     fn covar_lookup_fail() {
         assert!(
             example_context()
-                .lookup_covar(&"b".to_owned(), &Span::default().to_miette())
+                .lookup_covar(&"b".to_owned(), &dummy_span())
                 .is_err()
         )
     }

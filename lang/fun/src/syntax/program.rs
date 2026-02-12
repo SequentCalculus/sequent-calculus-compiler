@@ -1,6 +1,5 @@
 //! This module defines programs in Core.
 
-use codespan::Span;
 use printer::*;
 use std::collections::HashSet;
 
@@ -75,7 +74,7 @@ impl Program {
                                 })
                                 .clone();
                             CtorSig {
-                                span: Span::default(),
+                                span: None,
                                 // keep base name for xtor in all instances
                                 name: base_name,
                                 args,
@@ -83,7 +82,7 @@ impl Program {
                         })
                         .collect();
                     let declaration = Data {
-                        span: Span::default(),
+                        span: None,
                         name,
                         type_params: TypeContext::default(),
                         ctors,
@@ -103,7 +102,7 @@ impl Program {
                                 })
                                 .clone();
                             DtorSig {
-                                span: Span::default(),
+                                span: None,
                                 // keep base name for xtor in all instances
                                 name: base_name,
                                 args,
@@ -112,7 +111,7 @@ impl Program {
                         })
                         .collect();
                     let declaration = Codata {
-                        span: Span::default(),
+                        span: None,
                         name,
                         type_params: TypeContext::default(),
                         dtors,
@@ -178,7 +177,6 @@ impl Print for Program {
 
 #[cfg(test)]
 mod program_tests {
-    use codespan::Span;
     use printer::Print;
 
     use crate::{
@@ -189,6 +187,7 @@ mod program_tests {
             program::Program,
             terms::{Lit, Term},
             types::Ty,
+            util::dummy_span,
         },
     };
     use std::collections::HashSet;
@@ -201,7 +200,7 @@ mod program_tests {
         Program {
             declarations: vec![
                 Def {
-                    span: Span::default(),
+                    span: dummy_span(),
                     name: "x".to_string(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
@@ -254,7 +253,7 @@ mod program_tests {
         Program {
             declarations: vec![
                 Def {
-                    span: Span::default(),
+                    span: dummy_span(),
                     name: "f".to_string(),
                     context: ctx,
                     body: Term::Lit(Lit::mk(4)),
@@ -288,7 +287,7 @@ mod program_tests {
 
     fn example_two() -> Program {
         let d1 = Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "f".to_string(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
@@ -296,7 +295,7 @@ mod program_tests {
         };
 
         let d2 = Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "g".to_string(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),

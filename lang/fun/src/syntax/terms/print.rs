@@ -1,7 +1,7 @@
 //! This module defines printing an integer in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
 
@@ -22,7 +22,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct PrintI64 {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// Whether to print a newline after the value
     pub newline: bool,
     /// The term for the integer to be printed

@@ -12,9 +12,6 @@ repository.workspace   = true
 categories.workspace   = true
 
 [dependencies]
-# External dependencies
-codespan  = { workspace = true }
-
 # Workspace members
 fun       = { workspace = true }
 printer   = { workspace = true }
