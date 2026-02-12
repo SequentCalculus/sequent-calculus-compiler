@@ -1,255 +1,146 @@
 use axcut::syntax::statements::*;
-use axcut::syntax::*;
 use printer::Print;
 
-use std::collections::HashSet;
-use std::rc::Rc;
+use axcut_macros::{
+    bind, clause, def, exit, letin, lit, prd, prog, sum, switch, ty, ty_decl, xtor_sig,
+};
 
 fn main() {
-    let ty_box = TypeDeclaration {
-        name: "Box".to_string(),
-        xtors: vec![XtorSig {
-            name: "B".to_string(),
-            args: vec![ContextBinding {
-                var: "b".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            }]
-            .into(),
-        }]
-        .into(),
-    };
-    let ty_box_box = TypeDeclaration {
-        name: "BoxBox".to_string(),
-        xtors: vec![XtorSig {
-            name: "BB".to_string(),
-            args: vec![ContextBinding {
-                var: "bb".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("Box".to_string()),
-            }]
-            .into(),
-        }]
-        .into(),
-    };
+    let ty_box = ty_decl!("Box", [xtor_sig!("B", [bind!("b", 0)])]);
+    let ty_box_box = ty_decl!(
+        "BoxBox",
+        [xtor_sig!("BB", [bind!("bb", 0, prd!(), ty!("Box"))])]
+    );
 
-    let main_body_switch_switch = Statement::Switch(Switch {
-        var: "a2".to_string(),
-        ty: Ty::Decl("Box".to_string()),
-        clauses: vec![Clause {
-            xtor: "B".to_string(),
-            context: vec![ContextBinding {
-                var: "y2".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            }]
-            .into(),
-            body: Rc::new(Statement::Switch(Switch {
-                var: "a1".to_string(),
-                ty: Ty::Decl("Box".to_string()),
-                clauses: vec![Clause {
-                    xtor: "B".to_string(),
-                    context: vec![ContextBinding {
-                        var: "y1".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    }]
-                    .into(),
-                    body: Rc::new(Statement::Op(Op {
-                        fst: "y1".to_string(),
-                        op: BinOp::Sum,
-                        snd: "y2".to_string(),
-                        var: "res".to_string(),
-                        next: Rc::new(Statement::Exit(Exit {
-                            var: "res".to_string(),
-                        })),
-                        free_vars_next: None,
-                    })),
-                }],
-                free_vars_clauses: None,
-            })),
-        }],
-        free_vars_clauses: None,
-    });
-    let main_body_switch = Statement::Switch(Switch {
-        var: "bb".to_string(),
-        ty: Ty::Decl("BoxBox".to_string()),
-        clauses: vec![Clause {
-            xtor: "BB".to_string(),
-            context: vec![ContextBinding {
-                var: "b1".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("Box".to_string()),
-            }]
-            .into(),
-            body: Rc::new(Statement::Switch(Switch {
-                var: "b1".to_string(),
-                ty: Ty::Decl("Box".to_string()),
-                clauses: vec![Clause {
-                    xtor: "B".to_string(),
-                    context: vec![ContextBinding {
-                        var: "x1".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    }]
-                    .into(),
-                    body: Rc::new(Statement::Let(Let {
-                        var: "d1".to_string(),
-                        ty: Ty::Decl("Box".to_string()),
-                        tag: "B".to_string(),
-                        args: vec![ContextBinding {
-                            var: "x1".to_string(),
-                            chi: Chirality::Ext,
-                            ty: Ty::I64,
-                        }]
-                        .into(),
-                        next: Rc::new(Statement::Let(Let {
-                            var: "dd1".to_string(),
-                            ty: Ty::Decl("BoxBox".to_string()),
-                            tag: "BB".to_string(),
-                            args: vec![ContextBinding {
-                                var: "d1".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("Box".to_string()),
-                            }]
-                            .into(),
-                            next: Rc::new(Statement::Literal(Literal {
-                                lit: 4,
-                                var: "y".to_string(),
-                                next: Rc::new(Statement::Let(Let {
-                                    var: "a1".to_string(),
-                                    ty: Ty::Decl("Box".to_string()),
-                                    tag: "B".to_string(),
-                                    args: vec![ContextBinding {
-                                        var: "y".to_string(),
-                                        chi: Chirality::Ext,
-                                        ty: Ty::I64,
-                                    }]
-                                    .into(),
-                                    next: Rc::new(Statement::Switch(Switch {
-                                        var: "bb".to_string(),
-                                        ty: Ty::Decl("BoxBox".to_string()),
-                                        clauses: vec![Clause {
-                                            xtor: "BB".to_string(),
-                                            context: vec![ContextBinding {
-                                                var: "b2".to_string(),
-                                                chi: Chirality::Prd,
-                                                ty: Ty::Decl("Box".to_string()),
-                                            }]
-                                            .into(),
-                                            body: Rc::new(Statement::Switch(Switch {
-                                                var: "b2".to_string(),
-                                                ty: Ty::Decl("Box".to_string()),
-                                                clauses: vec![Clause {
-                                                    xtor: "B".to_string(),
-                                                    context: vec![ContextBinding {
-                                                        var: "x2".to_string(),
-                                                        chi: Chirality::Ext,
-                                                        ty: Ty::I64,
-                                                    }]
-                                                    .into(),
-                                                    body: Rc::new(Statement::Let(Let {
-                                                        var: "a2".to_string(),
-                                                        ty: Ty::Decl("Box".to_string()),
-                                                        tag: "B".to_string(),
-                                                        args: vec![ContextBinding {
-                                                            var: "x2".to_string(),
-                                                            chi: Chirality::Ext,
-                                                            ty: Ty::I64,
-                                                        }]
-                                                        .into(),
-                                                        next: Rc::new(main_body_switch_switch),
-                                                        free_vars_next: None,
-                                                    })),
-                                                }],
-                                                free_vars_clauses: None,
-                                            })),
-                                        }],
-                                        free_vars_clauses: None,
-                                    })),
-                                    free_vars_next: None,
-                                })),
-                                free_vars_next: None,
-                            })),
-                            free_vars_next: None,
-                        })),
-                        free_vars_next: None,
-                    })),
-                }],
-                free_vars_clauses: None,
-            })),
-        }],
-        free_vars_clauses: None,
-    });
-    let main_body = Statement::Literal(Literal {
-        lit: 3,
-        var: "f1".to_string(),
-        next: Rc::new(Statement::Literal(Literal {
-            lit: 3,
-            var: "f2".to_string(),
-            next: Rc::new(Statement::Literal(Literal {
-                lit: 3,
-                var: "x".to_string(),
-                next: Rc::new(Statement::Let(Let {
-                    var: "b".to_string(),
-                    ty: Ty::Decl("Box".to_string()),
-                    tag: "B".to_string(),
-                    args: vec![ContextBinding {
-                        var: "x".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    }]
-                    .into(),
-                    next: Rc::new(Statement::Let(Let {
-                        var: "bb".to_string(),
-                        ty: Ty::Decl("BoxBox".to_string()),
-                        tag: "BB".to_string(),
-                        args: vec![ContextBinding {
-                            var: "b".to_string(),
-                            chi: Chirality::Prd,
-                            ty: Ty::Decl("Box".to_string()),
-                        }]
-                        .into(),
-                        next: Rc::new(main_body_switch),
-                        free_vars_next: None,
-                    })),
-                    free_vars_next: None,
-                })),
-                free_vars_next: None,
-            })),
-            free_vars_next: None,
-        })),
-        free_vars_next: None,
-    });
-    let main = Def {
-        name: "main".to_string(),
-        context: Vec::new().into(),
-        body: main_body,
-        used_vars: HashSet::from([
-            "bb".to_string(),
-            "a2".to_string(),
-            "f1".to_string(),
-            "b1".to_string(),
-            "b".to_string(),
-            "b2".to_string(),
-            "y1".to_string(),
-            "a1".to_string(),
-            "y".to_string(),
-            "res".to_string(),
-            "dd1".to_string(),
-            "x1".to_string(),
-            "x2".to_string(),
-            "d1".to_string(),
-            "x".to_string(),
-            "f2".to_string(),
-            "y2".to_string(),
-        ]),
-    };
+    let main_body_switch_switch = Statement::Switch(switch!(
+        ("a", 2),
+        ty!("Box"),
+        [clause!(
+            "B",
+            [bind!("y", 2)],
+            switch!(
+                ("a", 1),
+                ty!("Box"),
+                [clause!(
+                    "B",
+                    [bind!("y", 1)],
+                    sum!(("y", 1), ("y", 2), ("res", 0), exit!(("res", 0)))
+                )]
+            )
+        )]
+    ));
+    let main_body_switch = switch!(
+        ("bb", 0),
+        ty!("BoxBox"),
+        [clause!(
+            "BB",
+            [bind!("b", 1, prd!(), ty!("Box"))],
+            switch!(
+                ("b", 1),
+                ty!("Box"),
+                [clause!(
+                    "B",
+                    [bind!("x", 1)],
+                    letin!(
+                        ("d", 1),
+                        ty!("Box"),
+                        "B",
+                        [bind!("x", 1)],
+                        letin!(
+                            ("dd", 1),
+                            ty!("BoxBox"),
+                            "BB",
+                            [bind!("d", 1, prd!(), ty!("Box"))],
+                            lit!(
+                                4,
+                                ("y", 0),
+                                letin!(
+                                    ("a", 1),
+                                    ty!("Box"),
+                                    "B",
+                                    [bind!("y", 0)],
+                                    switch!(
+                                        ("bb", 0),
+                                        ty!("BoxBox"),
+                                        [clause!(
+                                            "BB",
+                                            [bind!("b", 2, prd!(), ty!("Box"))],
+                                            switch!(
+                                                ("b", 2),
+                                                ty!("Box"),
+                                                [clause!(
+                                                    "B",
+                                                    [bind!("x", 2)],
+                                                    letin!(
+                                                        ("a", 2),
+                                                        ty!("Box"),
+                                                        "B",
+                                                        [bind!("x", 2)],
+                                                        main_body_switch_switch
+                                                    )
+                                                )]
+                                            )
+                                        )]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )]
+            )
+        )]
+    );
+    let main_body = lit!(
+        3,
+        ("f", 1),
+        lit!(
+            3,
+            ("f", 2),
+            lit!(
+                3,
+                ("x", 0),
+                letin!(
+                    ("b", 0),
+                    ty!("Box"),
+                    "B",
+                    [bind!("x", 0)],
+                    letin!(
+                        ("bb", 0),
+                        ty!("BoxBox"),
+                        "BB",
+                        [bind!("b", 1, prd!(), ty!("Box"))],
+                        main_body_switch
+                    )
+                )
+            )
+        )
+    );
+    let main = def!(
+        "main",
+        [],
+        main_body,
+        [
+            ("bb", 0),
+            ("a", 2),
+            ("f", 1),
+            ("b", 1),
+            ("b", 0),
+            ("b", 2),
+            ("y", 1),
+            ("a", 1),
+            ("y", 0),
+            ("res", 0),
+            ("dd", 1),
+            ("x", 1),
+            ("x", 2),
+            ("d", 1),
+            ("x", 0),
+            ("f", 2),
+            ("y", 2)
+        ]
+    );
 
-    let program = Prog {
-        defs: vec![main],
-        types: vec![ty_box, ty_box_box],
-    };
+    let program = prog!([main], [ty_box, ty_box_box]);
 
     println!("{}", program.linearize().print_to_string(None))
 }

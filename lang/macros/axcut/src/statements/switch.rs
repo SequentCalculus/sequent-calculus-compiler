@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args, quote_option};
+use macro_utils::{expr_to_array, expr_to_string, expr_to_tuple, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -12,7 +12,9 @@ pub fn switch(input: TokenStream) -> TokenStream {
             (3, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
-    let var = expr_to_string(&args[0], 0);
+    let var = expr_to_tuple(&args[0]);
+    let var_name = expr_to_string(&var[0], 0);
+    let var_id = &var[1];
     let ty = &args[1];
     let clauses = expr_to_array(&args[2], 2);
     let free_vars = quote_option(&args[3], |expr| {
@@ -24,7 +26,10 @@ pub fn switch(input: TokenStream) -> TokenStream {
     });
     quote! {
         axcut::syntax::statements::switch::Switch{
-            var: #var.to_string(),
+            var: axcut::syntax::names::Var {
+                name:#var_name.to_string(),
+                id:#var_id
+            },
             ty: #ty,
             clauses: ::std::vec::Vec::from([ #(#clauses),* ]),
             free_vars_clauses: #free_vars

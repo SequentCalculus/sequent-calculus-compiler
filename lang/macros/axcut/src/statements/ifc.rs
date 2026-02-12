@@ -1,5 +1,5 @@
 use axcut::syntax::statements::ifc::IfSort;
-use macro_utils::{expr_to_string, parse_args, quote_option};
+use macro_utils::{expr_to_string, expr_to_tuple, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -42,14 +42,29 @@ fn ifc(input: TokenStream, sort: IfSort) -> TokenStream {
         ],
         &[(1, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_string(&args[0], 0);
-    let snd = quote_option(&args[1], |expr| quote!(#expr.to_string()));
+    let fst = expr_to_tuple(&args[0]);
+    let fst_name = expr_to_string(&fst[0], 0);
+    let fst_id = &fst[1];
+    let snd = quote_option(&args[1], |expr| {
+        let var = expr_to_tuple(expr);
+        let var_name = expr_to_string(&var[0], 1);
+        let var_id = &var[1];
+        quote! {
+            axcut::syntax::names::Var{
+                name:#var_name.to_string(),
+                id:#var_id
+            }
+        }
+    });
     let thenc = &args[2];
     let elsec = &args[3];
     quote! {
         axcut::syntax::statements::ifc::IfC{
             sort: #sort,
-            fst: #fst.to_string(),
+            fst: axcut::syntax::names::Var{
+                name:#fst_name.to_string(),
+                id:#fst_id
+            },
             snd: #snd,
             thenc: ::std::rc::Rc::new(Statement::from(#thenc)),
             elsec: ::std::rc::Rc::new(Statement::from(#elsec))

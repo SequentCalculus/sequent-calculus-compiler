@@ -1,385 +1,175 @@
 use axcut::syntax::statements::*;
-use axcut::syntax::*;
 use printer::Print;
 
-use std::collections::HashSet;
-use std::rc::Rc;
+use axcut_macros::{
+    bind, call, clause, cns, create, def, exit, ife, invoke, letin, lit, prd, prog, sum, switch,
+    ty, ty_decl, xtor_sig,
+};
 
 fn main() {
-    let ty_list = TypeDeclaration {
-        name: "List".to_string(),
-        xtors: vec![
-            XtorSig {
-                name: "Nil".to_string(),
-                args: vec![].into(),
-            },
-            XtorSig {
-                name: "Cons".to_string(),
-                args: vec![
-                    ContextBinding {
-                        var: "xs".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                    ContextBinding {
-                        var: "x".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    },
-                ]
-                .into(),
-            },
+    let ty_list = ty_decl!(
+        "List",
+        [
+            xtor_sig!("Nil", []),
+            xtor_sig!("Cons", [bind!("xs", 0, prd!(), ty!("List")), bind!("x", 0)]),
         ],
-    };
+    );
 
-    let ty_cont_list = TypeDeclaration {
-        name: "ContList".to_string(),
-        xtors: vec![XtorSig {
-            name: "Retl".to_string(),
-            args: vec![ContextBinding {
-                var: "kl".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("List".to_string()),
-            }]
-            .into(),
-        }],
-    };
+    let ty_cont_list = ty_decl!(
+        "ContList",
+        [xtor_sig!("Retl", [bind!("kl", 0, prd!(), ty!("List"))])]
+    );
 
-    let ty_cont_int = TypeDeclaration {
-        name: "ContInt".to_string(),
-        xtors: vec![XtorSig {
-            name: "Reti".to_string(),
-            args: vec![ContextBinding {
-                var: "ki".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            }]
-            .into(),
-        }],
-    };
+    let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki", 0)])]);
 
-    let main_body = Statement::Create(Create {
-        var: "t".to_string(),
-        ty: Ty::Decl("ContInt".to_string()),
-        context: None,
-        clauses: vec![Clause {
-            xtor: "Reti".to_string(),
-            context: vec![ContextBinding {
-                var: "r".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            }]
-            .into(),
-            body: Rc::new(Statement::Exit(Exit {
-                var: "r".to_string(),
-            })),
-        }],
-        free_vars_clauses: None,
-        next: Rc::new(Statement::Create(Create {
-            var: "k".to_string(),
-            ty: Ty::Decl("ContList".to_string()),
-            context: None,
-            clauses: vec![Clause {
-                xtor: "Retl".to_string(),
-                context: vec![ContextBinding {
-                    var: "as".to_string(),
-                    chi: Chirality::Prd,
-                    ty: Ty::Decl("List".to_string()),
-                }]
-                .into(),
-                body: Rc::new(Statement::Call(Call {
-                    label: "sum".to_string(),
-                    args: vec![
-                        ContextBinding {
-                            var: "t".to_string(),
-                            chi: Chirality::Cns,
-                            ty: Ty::Decl("ContInt".to_string()),
-                        },
-                        ContextBinding {
-                            var: "as".to_string(),
-                            chi: Chirality::Prd,
-                            ty: Ty::Decl("List".to_string()),
-                        },
+    let main_body = create!(
+        ("t", 0),
+        ty!("ContInt"),
+        [clause!("Reti", [bind!("r", 0)], exit!(("r", 0)))],
+        create!(
+            ("k", 0),
+            ty!("ContList"),
+            [clause!(
+                "Retl",
+                [bind!("as", 0, prd!(), ty!("List"))],
+                call!(
+                    "sum",
+                    [
+                        bind!("t", 0, cns!(), ty!("ContInt")),
+                        bind!("as", 0, prd!(), ty!("List")),
                     ]
-                    .into(),
-                })),
-            }],
-            free_vars_clauses: None,
-            next: Rc::new(Statement::Let(Let {
-                var: "zs".to_string(),
-                ty: Ty::Decl("List".to_string()),
-                tag: "Nil".to_string(),
-                args: vec![].into(),
-                next: Rc::new(Statement::Literal(Literal {
-                    lit: 3,
-                    var: "n".to_string(),
-                    next: Rc::new(Statement::Call(Call {
-                        label: "range".to_string(),
-                        args: vec![
-                            ContextBinding {
-                                var: "k".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContList".to_string()),
-                            },
-                            ContextBinding {
-                                var: "zs".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                            ContextBinding {
-                                var: "n".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::I64,
-                            },
+                )
+            )],
+            letin!(
+                ("zs", 0),
+                ty!("List"),
+                "Nil",
+                [],
+                lit!(
+                    3,
+                    ("n", 0),
+                    call!(
+                        "range",
+                        [
+                            bind!("k", 0, cns!(), ty!("ContList")),
+                            bind!("zs", 0, prd!(), ty!("List")),
+                            bind!("n", 0),
                         ]
-                        .into(),
-                    })),
-                    free_vars_next: None,
-                })),
-                free_vars_next: None,
-            })),
-            free_vars_next: None,
-        })),
-        free_vars_next: None,
-    });
-    let main = Def {
-        name: "main".to_string(),
-        context: Vec::new().into(),
-        body: main_body,
-        used_vars: HashSet::from([
-            "t".to_string(),
-            "zs".to_string(),
-            "n".to_string(),
-            "k".to_string(),
-            "as".to_string(),
-            "r".to_string(),
-        ]),
-    };
+                    )
+                )
+            )
+        )
+    );
+    let main = def!(
+        "main",
+        [],
+        main_body,
+        [("t", 0), ("zs", 0), ("n", 0), ("k", 0), ("as", 0), ("r", 0)]
+    );
 
-    let range_body = Statement::IfC(IfC {
-        sort: ifc::IfSort::Equal,
-        fst: "i".to_string(),
-        snd: None,
-        thenc: Rc::new(Statement::Invoke(Invoke {
-            var: "k".to_string(),
-            tag: "Retl".to_string(),
-            ty: Ty::Decl("ContList".to_string()),
-            args: vec![ContextBinding {
-                var: "xs".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("List".to_string()),
-            }]
-            .into(),
-        })),
-        elsec: Rc::new(Statement::Let(Let {
-            var: "ys".to_string(),
-            ty: Ty::Decl("List".to_string()),
-            tag: "Cons".to_string(),
-            args: vec![
-                ContextBinding {
-                    var: "xs".to_string(),
-                    chi: Chirality::Prd,
-                    ty: Ty::Decl("List".to_string()),
-                },
-                ContextBinding {
-                    var: "i".to_string(),
-                    chi: Chirality::Ext,
-                    ty: Ty::I64,
-                },
-            ]
-            .into(),
-            next: Rc::new(Statement::Literal(Literal {
-                lit: -1,
-                var: "o".to_string(),
-                next: Rc::new(Statement::Op(Op {
-                    fst: "i".to_string(),
-                    op: BinOp::Sum,
-                    snd: "o".to_string(),
-                    var: "j".to_string(),
-                    next: Rc::new(Statement::Call(Call {
-                        label: "range".to_string(),
-                        args: vec![
-                            ContextBinding {
-                                var: "k".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContList".to_string()),
-                            },
-                            ContextBinding {
-                                var: "ys".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_owned()),
-                            },
-                            ContextBinding {
-                                var: "j".to_string(),
-                                chi: Chirality::Ext,
-                                ty: Ty::I64,
-                            },
+    let range_body = ife!(
+        ("i", 0),
+        invoke!(
+            ("k", 0),
+            "Retl",
+            ty!("ContList"),
+            [bind!("xs", 0, prd!(), ty!("List"))]
+        ),
+        letin!(
+            ("ys", 0),
+            ty!("List"),
+            "Cons",
+            [bind!("xs", 0, prd!(), ty!("List")), bind!("i", 0)],
+            lit!(
+                -1,
+                ("o", 0),
+                sum!(
+                    ("i", 0),
+                    ("o", 0),
+                    ("j", 0),
+                    call!(
+                        "range",
+                        [
+                            bind!("k", 0, cns!(), ty!("ContList")),
+                            bind!("ys", 0, prd!(), ty!("List")),
+                            bind!("j", 0),
                         ]
-                        .into(),
-                    })),
-                    free_vars_next: None,
-                })),
-                free_vars_next: None,
-            })),
-            free_vars_next: None,
-        })),
-    });
-    let range = Def {
-        name: "range".to_string(),
-        context: vec![
-            ContextBinding {
-                var: "k".to_string(),
-                chi: Chirality::Cns,
-                ty: Ty::Decl("ContList".to_string()),
-            },
-            ContextBinding {
-                var: "xs".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("List".to_string()),
-            },
-            ContextBinding {
-                var: "i".to_string(),
-                chi: Chirality::Ext,
-                ty: Ty::I64,
-            },
-        ]
-        .into(),
-        body: range_body,
-        used_vars: HashSet::from([
-            "k".to_string(),
-            "xs".to_string(),
-            "i".to_string(),
-            "j".to_string(),
-            "o".to_string(),
-            "ys".to_string(),
-        ]),
-    };
-
-    let sum_body = Statement::Switch(Switch {
-        var: "xs".to_string(),
-        ty: Ty::Decl("List".to_string()),
-        clauses: vec![
-            Clause {
-                xtor: "Nil".to_string(),
-                context: vec![].into(),
-                body: Rc::new(Statement::Literal(Literal {
-                    lit: 0,
-                    var: "z".to_string(),
-                    next: Rc::new(Statement::Invoke(Invoke {
-                        var: "k".to_string(),
-                        tag: "Reti".to_string(),
-                        ty: Ty::Decl("ContInt".to_string()),
-                        args: vec![ContextBinding {
-                            var: "z".to_string(),
-                            chi: Chirality::Ext,
-                            ty: Ty::I64,
-                        }]
-                        .into(),
-                    })),
-                    free_vars_next: None,
-                })),
-            },
-            Clause {
-                xtor: "Cons".to_string(),
-                context: vec![
-                    ContextBinding {
-                        var: "ys".to_string(),
-                        chi: Chirality::Prd,
-                        ty: Ty::Decl("List".to_string()),
-                    },
-                    ContextBinding {
-                        var: "y".to_string(),
-                        chi: Chirality::Ext,
-                        ty: Ty::I64,
-                    },
-                ]
-                .into(),
-                body: Rc::new(Statement::Create(Create {
-                    var: "j".to_string(),
-                    ty: Ty::Decl("ContInt".to_string()),
-                    context: None,
-                    clauses: vec![Clause {
-                        xtor: "Reti".to_string(),
-                        context: vec![ContextBinding {
-                            var: "r".to_string(),
-                            chi: Chirality::Ext,
-                            ty: Ty::I64,
-                        }]
-                        .into(),
-                        body: Rc::new(Statement::Op(Op {
-                            fst: "y".to_string(),
-                            op: BinOp::Sum,
-                            snd: "r".to_string(),
-                            var: "s".to_string(),
-                            next: Rc::new(Statement::Invoke(Invoke {
-                                var: "k".to_string(),
-                                tag: "Reti".to_string(),
-                                ty: Ty::Decl("ContInt".to_string()),
-                                args: vec![ContextBinding {
-                                    var: "s".to_string(),
-                                    chi: Chirality::Ext,
-                                    ty: Ty::I64,
-                                }]
-                                .into(),
-                            })),
-                            free_vars_next: None,
-                        })),
-                    }],
-                    free_vars_clauses: None,
-                    next: Rc::new(Statement::Call(Call {
-                        label: "sum".to_string(),
-                        args: vec![
-                            ContextBinding {
-                                var: "j".to_string(),
-                                chi: Chirality::Cns,
-                                ty: Ty::Decl("ContInt".to_string()),
-                            },
-                            ContextBinding {
-                                var: "ys".to_string(),
-                                chi: Chirality::Prd,
-                                ty: Ty::Decl("List".to_string()),
-                            },
-                        ]
-                        .into(),
-                    })),
-                    free_vars_next: None,
-                })),
-            },
+                    )
+                )
+            )
+        )
+    );
+    let range = def!(
+        "range",
+        [
+            bind!("k", 0, cns!(), ty!("ContList")),
+            bind!("xs", 0, prd!(), ty!("List")),
+            bind!("i", 0),
         ],
-        free_vars_clauses: None,
-    });
-    let sum = Def {
-        name: "sum".to_string(),
-        context: vec![
-            ContextBinding {
-                var: "k".to_string(),
-                chi: Chirality::Cns,
-                ty: Ty::Decl("ContList".to_string()),
-            },
-            ContextBinding {
-                var: "xs".to_string(),
-                chi: Chirality::Prd,
-                ty: Ty::Decl("List".to_string()),
-            },
-        ]
-        .into(),
-        body: sum_body,
-        used_vars: HashSet::from([
-            "ys".to_string(),
-            "xs".to_string(),
-            "y".to_string(),
-            "j".to_string(),
-            "s".to_string(),
-            "r".to_string(),
-            "k".to_string(),
-            "z".to_string(),
-        ]),
-    };
+        range_body,
+        [("k", 0), ("xs", 0), ("i", 0), ("j", 0), ("o", 0), ("ys", 0)]
+    );
 
-    let program = Prog {
-        defs: vec![main, range, sum],
-        types: vec![ty_list, ty_cont_list, ty_cont_int],
-    };
+    let sum_body = switch!(
+        ("xs", 0),
+        ty!("List"),
+        [
+            clause!(
+                "Nil",
+                [],
+                lit!(
+                    0,
+                    ("z", 0),
+                    invoke!(("k", 0), "Reti", ty!("ContInt"), [bind!("z", 0)])
+                )
+            ),
+            clause!(
+                "Cons",
+                [bind!("ys", 0, prd!(), ty!("List")), bind!("y", 0)],
+                create!(
+                    ("j", 0),
+                    ty!("ContInt"),
+                    [clause!(
+                        "Reti",
+                        [bind!("r", 0)],
+                        sum!(
+                            ("y", 0),
+                            ("r", 0),
+                            ("s", 0),
+                            invoke!(("k", 0), "Reti", ty!("ContInt"), [bind!("s", 0)])
+                        )
+                    )],
+                    call!(
+                        "sum",
+                        [
+                            bind!("j", 0, cns!(), ty!("ContInt")),
+                            bind!("ys", 0, prd!(), ty!("List")),
+                        ]
+                    )
+                )
+            ),
+        ]
+    );
+    let sum = def!(
+        "sum",
+        [
+            bind!("k", 0, cns!(), ty!("ContList")),
+            bind!("xs", 0, prd!(), ty!("List")),
+        ],
+        sum_body,
+        [
+            ("ys", 0),
+            ("xs", 0),
+            ("y", 0),
+            ("j", 0),
+            ("s", 0),
+            ("r", 0),
+            ("k", 0),
+            ("z", 0)
+        ]
+    );
+
+    let program = prog!([main, range, sum], [ty_list, ty_cont_list, ty_cont_int]);
 
     println!("{}", program.linearize().print_to_string(None))
 }

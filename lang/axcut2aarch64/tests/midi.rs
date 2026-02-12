@@ -17,54 +17,54 @@ fn test_midi() {
         "List",
         [
             xtor_sig!("Nil", []),
-            xtor_sig!("Cons", [bind!("xs", prd!(), ty!("List")), bind!("x")])
+            xtor_sig!("Cons", [bind!("xs", 0, prd!(), ty!("List")), bind!("x", 0)])
         ]
     );
 
     let ty_cont_list = ty_decl!(
         "ContList",
-        [xtor_sig!("Retl", [bind!("kl", prd!(), ty!("List"))])]
+        [xtor_sig!("Retl", [bind!("kl", 0, prd!(), ty!("List"))])]
     );
 
-    let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki")]),]);
+    let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki", 0)]),]);
 
     let main_body = create!(
-        "t",
+        ("t", 0),
         ty!("ContInt"),
         [],
         [clause!(
             "Reti",
-            [bind!("r")],
-            println_i64!("r", lit!(0, "ret", exit!("ret")))
+            [bind!("r", 0)],
+            println_i64!(("r", 0), lit!(0, ("ret", 0), exit!(("ret", 0))))
         )],
         create!(
-            "k",
+            ("k", 0),
             ty!("ContList"),
-            [bind!("t", cns!(), ty!("ContInt"))],
+            [bind!("t", 0, cns!(), ty!("ContInt"))],
             [clause!(
                 "Retl",
-                [bind!("as", prd!(), ty!("List"))],
+                [bind!("as", 0, prd!(), ty!("List"))],
                 substitute!(
                     [
-                        (bind!("t", cns!(), ty!("ContInt")), "t"),
-                        (bind!("as", prd!(), ty!("List")), "as"),
+                        (bind!("t", 0, cns!(), ty!("ContInt")), ("t", 0)),
+                        (bind!("as", 0, prd!(), ty!("List")), ("as", 0)),
                     ],
                     call!("sum", [])
                 )
             )],
             letin!(
-                "zs",
+                ("zs", 0),
                 ty!("List"),
                 "Nil",
                 [],
                 lit!(
                     3,
-                    "n",
+                    ("n", 0),
                     substitute!(
                         [
-                            (bind!("k", cns!(), ty!("ContInt")), "k"),
-                            (bind!("zs", prd!(), ty!("List")), "zs"),
-                            (bind!("n"), "n",),
+                            (bind!("k", 0, cns!(), ty!("ContInt")), ("k", 0)),
+                            (bind!("zs", 0, prd!(), ty!("List")), ("zs", 0)),
+                            (bind!("n", 0), ("n", 0)),
                         ],
                         call!("range", [])
                     )
@@ -75,38 +75,38 @@ fn test_midi() {
     let main = def!("main", [], main_body);
 
     let range_body = ife!(
-        "i",
+        ("i", 0),
         substitute!(
             [
-                (bind!("xs", prd!(), ty!("List")), "xs"),
-                (bind!("k", cns!(), ty!("ContList")), "k"),
+                (bind!("xs", 0, prd!(), ty!("List")), ("xs", 0)),
+                (bind!("k", 0, cns!(), ty!("ContList")), ("k", 0)),
             ],
-            invoke!("k", "Retl", ty!("ContList"), [])
+            invoke!(("k", 0), "Retl", ty!("ContList"), [])
         ),
         substitute!(
             [
-                (bind!("n"), "i"),
-                (bind!("k", cns!(), ty!("ContList")), "k"),
-                (bind!("xs", prd!(), ty!("List")), "xs"),
-                (bind!("i"), "i"),
+                (bind!("n", 0), ("i", 0)),
+                (bind!("k", 0, cns!(), ty!("ContList")), ("k", 0)),
+                (bind!("xs", 0, prd!(), ty!("List")), ("xs", 0)),
+                (bind!("i", 0), ("i", 0)),
             ],
             letin!(
-                "ys",
+                ("ys", 0),
                 ty!("List"),
                 "Cons",
-                [bind!("xs", prd!(), ty!("List")), bind!("i")],
+                [bind!("xs", 0, prd!(), ty!("List")), bind!("i", 0)],
                 lit!(
                     -1,
-                    "o",
+                    ("o", 0),
                     sum!(
-                        "n",
-                        "o",
-                        "j",
+                        ("n", 0),
+                        ("o", 0),
+                        ("j", 0),
                         substitute!(
                             [
-                                (bind!("k", cns!(), ty!("ContList")), "k"),
-                                (bind!("ys", prd!(), ty!("List")), "ys"),
-                                (bind!("j"), "j"),
+                                (bind!("k", 0, cns!(), ty!("ContList")), ("k", 0)),
+                                (bind!("ys", 0, prd!(), ty!("List")), ("ys", 0)),
+                                (bind!("j", 0), ("j", 0)),
                             ],
                             call!("range", [])
                         )
@@ -118,15 +118,15 @@ fn test_midi() {
     let range = def!(
         "range",
         [
-            bind!("k", cns!(), ty!("ContList")),
-            bind!("xs", prd!(), ty!("List")),
-            bind!("i"),
+            bind!("k", 0, cns!(), ty!("ContList")),
+            bind!("xs", 0, prd!(), ty!("List")),
+            bind!("i", 0),
         ],
         range_body
     );
 
     let sum_body = switch!(
-        "xs",
+        ("xs", 0),
         ty!("List"),
         [
             clause!(
@@ -134,46 +134,49 @@ fn test_midi() {
                 [],
                 lit!(
                     0,
-                    "z",
+                    ("z", 0),
                     substitute!(
-                        [(bind!("z"), "z"), (bind!("k", cns!(), ty!("ContInt")), "k")],
-                        invoke!("k", "Reti", ty!("ContInt"), [])
+                        [
+                            (bind!("z", 0), ("z", 0)),
+                            (bind!("k", 0, cns!(), ty!("ContInt")), ("k", 0))
+                        ],
+                        invoke!(("k", 0), "Reti", ty!("ContInt"), [])
                     )
                 )
             ),
             clause!(
                 "Cons",
-                [bind!("ys", prd!(), ty!("List")), bind!("y")],
+                [bind!("ys", 0, prd!(), ty!("List")), bind!("y", 0)],
                 substitute!(
                     [
-                        (bind!("ys", prd!(), ty!("List")), "ys"),
-                        (bind!("k", cns!(), ty!("ContInt")), "k"),
-                        (bind!("y"), "y"),
+                        (bind!("ys", 0, prd!(), ty!("List")), ("ys", 0)),
+                        (bind!("k", 0, cns!(), ty!("ContInt")), ("k", 0)),
+                        (bind!("y", 0), ("y", 0)),
                     ],
                     create!(
-                        "j",
+                        ("j", 0),
                         ty!("ContInt"),
-                        [bind!("k", cns!(), ty!("ContInt")), bind!("y")],
+                        [bind!("k", 0, cns!(), ty!("ContInt")), bind!("y", 0)],
                         [clause!(
                             "Reti",
-                            [bind!("r")],
+                            [bind!("r", 0)],
                             sum!(
-                                "y",
-                                "r",
-                                "s",
+                                ("y", 0),
+                                ("r", 0),
+                                ("s", 0),
                                 substitute!(
                                     [
-                                        (bind!("s"), "s"),
-                                        (bind!("k", cns!(), ty!("ContInt")), "k",),
+                                        (bind!("s", 0), ("s", 0)),
+                                        (bind!("k", 0, cns!(), ty!("ContInt")), ("k", 0)),
                                     ],
-                                    invoke!("k", "Reti", ty!("ContInt"), [])
+                                    invoke!(("k", 0), "Reti", ty!("ContInt"), [])
                                 )
                             )
                         )],
                         substitute!(
                             [
-                                (bind!("j", cns!(), ty!("ContInt")), "j"),
-                                (bind!("ys", prd!(), ty!("List")), "ys"),
+                                (bind!("j", 0, cns!(), ty!("ContInt")), ("j", 0)),
+                                (bind!("ys", 0, prd!(), ty!("List")), ("ys", 0)),
                             ],
                             call!("sum", [])
                         )
@@ -185,8 +188,8 @@ fn test_midi() {
     let sum = def!(
         "sum",
         [
-            bind!("k", cns!(), ty!("ContList")),
-            bind!("xs", prd!(), ty!("List"))
+            bind!("k", 0, cns!(), ty!("ContList")),
+            bind!("xs", 0, prd!(), ty!("List"))
         ],
         sum_body
     );

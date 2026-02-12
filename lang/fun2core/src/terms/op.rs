@@ -65,6 +65,7 @@ impl Compile for fun::syntax::terms::Op {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax::names::Var;
     use core_macros::{lit, prod, sub, ty, var};
     use fun::{parse_term, typing::check::Check};
 
@@ -101,7 +102,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -109,7 +113,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = prod!(var!("x"), sub!(var!("x"), lit!(1))).into();
+        let expected = prod!(var!("x", 0), sub!(var!("x", 0), lit!(1))).into();
         assert_eq!(result, expected);
     }
 }

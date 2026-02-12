@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, is_none, parse_args};
+use macro_utils::{expr_to_array, expr_to_string, expr_to_tuple, is_none, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -17,7 +17,17 @@ pub fn def(input: TokenStream) -> TokenStream {
     } else {
         let used_arr = expr_to_array(&args[3], 3)
             .into_iter()
-            .map(|expr| quote! {#expr.to_string()})
+            .map(|expr| {
+                let var = expr_to_tuple(&expr);
+                let var_name = expr_to_string(&var[0], 3);
+                let var_id = &var[1];
+                quote! {
+                    axcut::syntax::names::Var{
+                        name: #var_name.to_string(),
+                        id:#var_id
+                    }
+                }
+            })
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([

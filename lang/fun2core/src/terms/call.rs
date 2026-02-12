@@ -39,6 +39,7 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax::names::Var;
     use core_macros::{call, covar, lit, mu, ty};
     use fun::{
         parse_term,
@@ -74,7 +75,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::from(["fac".to_string()]),
             current_label: "fac",
@@ -82,7 +86,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a0", call!("fac", [lit!(3), covar!("a0")])).into();
+        let expected = mu!(("a", 0), call!("fac", [lit!(3), covar!("a", 0)])).into();
         assert_eq!(result, expected)
     }
 }

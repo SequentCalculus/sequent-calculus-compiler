@@ -10,29 +10,33 @@ use axcut_macros::{def, exit, lit, prod, prog, sub, sum};
 fn test_arith() {
     let main_body = lit!(
         1,
-        "a",
+        ("a", 0),
         lit!(
             3,
-            "b",
+            ("b", 0),
             sub!(
-                "a",
-                "b",
-                "c",
+                ("a", 0),
+                ("b", 0),
+                ("c", 0),
                 lit!(
                     8,
-                    "d",
+                    ("d", 0),
                     lit!(
                         -1,
-                        "e",
+                        ("e", 0),
                         prod!(
-                            "e",
-                            "d",
-                            "f",
+                            ("e", 0),
+                            ("d", 0),
+                            ("f", 0),
                             sum!(
-                                "f",
-                                "c",
-                                "g",
-                                lit!(-6, "h", prod!("h", "g", "i", exit!("i")))
+                                ("f", 0),
+                                ("c", 0),
+                                ("g", 0),
+                                lit!(
+                                    -6,
+                                    ("h", 0),
+                                    prod!(("h", 0), ("g", 0), ("i", 0), exit!(("i", 0)))
+                                )
                             )
                         )
                     )

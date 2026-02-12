@@ -122,9 +122,9 @@ mod compile_tests {
         );
         let expected = def!(
             "main",
-            [bind!("a", cns!())],
-            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
-            ["a", "x0"]
+            [bind!("a", 0, cns!())],
+            cut!(lit!(1), mutilde!(("x", 0), exit!(var!("x", 0)))),
+            [("a", 0), ("x", 0)]
         );
 
         assert_eq!(result[0].name, expected.name);
@@ -137,9 +137,9 @@ mod compile_tests {
         let result = compile_def(example_def2(), &[], &mut HashSet::from(["id".to_string()]));
         let expected = def!(
             "id",
-            [bind!("x", prd!()), bind!("a0", cns!())],
-            cut!(var!("x"), covar!("a0")),
-            ["x", "a0"]
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            cut!(var!("x", 0), covar!("a", 0)),
+            [("x", 0), ("a", 0)]
         );
         assert_eq!(result[0].name, expected.name);
         assert_eq!(result[0].context, expected.context);
@@ -160,15 +160,15 @@ mod compile_tests {
         assert_eq!(result.defs.len(), 2);
         let expected1 = def!(
             "main",
-            [bind!("a", cns!())],
-            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
-            ["a", "x0"]
+            [bind!("a", 0, cns!())],
+            cut!(lit!(1), mutilde!(("x", 0), exit!(var!("x", 0)))),
+            [("a", 0), ("x", 0)]
         );
         let expected2 = def!(
             "id",
-            [bind!("x", prd!()), bind!("a0", cns!())],
-            cut!(var!("x"), covar!("a0")),
-            ["x", "a0"]
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            cut!(var!("x", 0), covar!("a", 0)),
+            [("x", 0), ("a", 0)]
         );
 
         let def1 = &result.defs[0];

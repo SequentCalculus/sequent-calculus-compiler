@@ -66,6 +66,7 @@ impl Compile for fun::syntax::terms::IfC {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax::names::Var;
     use core_macros::{covar, cut, ife, lit, mu, ty, var};
     use fun::{parse_term, typing::check::Check};
 
@@ -85,12 +86,12 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
                 lit!(3),
                 lit!(4),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(lit!(2), covar!("a", 0))
             )
         )
         .into();
@@ -111,7 +112,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -120,12 +124,12 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
-                var!("x"),
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!("x", 0),
+                var!("x", 0),
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(var!("x", 0), covar!("a", 0))
             )
         )
         .into();
@@ -146,11 +150,11 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
                 lit!(0),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(lit!(2), covar!("a", 0))
             )
         )
         .into();
@@ -171,7 +175,10 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string()]),
+            used_vars: HashSet::from([Var {
+                name: "x".to_string(),
+                id: 0,
+            }]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -180,11 +187,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             ife!(
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!("x", 0),
+                cut!(lit!(1), covar!("a", 0)),
+                cut!(var!("x", 0), covar!("a", 0))
             )
         )
         .into();

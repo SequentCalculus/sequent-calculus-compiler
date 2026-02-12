@@ -69,8 +69,8 @@ impl Compile for fun::syntax::terms::Case {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
-    use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
+    use core_lang::syntax::{Cns, names::Var};
+    use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, prd, ty, var};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -90,7 +90,16 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
+            used_vars: HashSet::from([
+                Var {
+                    name: "x".to_string(),
+                    id: 0,
+                },
+                Var {
+                    name: "xs".to_string(),
+                    id: 0,
+                },
+            ]),
             codata_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
@@ -99,7 +108,7 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            ("a", 0),
             cut!(
                 ctor!(
                     "Cons",
@@ -108,15 +117,15 @@ mod compile_tests {
                 ),
                 case!(
                     [
-                        clause!(core_syntax::Cns, "Nil", [], cut!(lit!(0), covar!("a0"))),
+                        clause!(Cns, "Nil", [], cut!(lit!(0), covar!("a", 0))),
                         clause!(
-                            core_syntax::Cns,
+                            Cns,
                             "Cons",
                             [
-                                bind!("x", core_syntax::Chirality::Prd),
-                                bind!("xs", core_syntax::Chirality::Prd, ty!("List[i64]"))
+                                bind!("x", 0, prd!()),
+                                bind!("xs", 0, prd!(), ty!("List[i64]"))
                             ],
-                            cut!(var!("x"), covar!("a0"))
+                            cut!(var!("x", 0), covar!("a", 0))
                         )
                     ],
                     ty!("List[i64]")

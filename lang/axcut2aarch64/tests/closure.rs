@@ -11,54 +11,57 @@ use axcut_macros::{
 };
 #[test]
 fn test_closure() {
-    let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
+    let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r", 0)])],);
     let ty_func = ty_decl!(
         "Fun",
         [xtor_sig!(
             "apply",
-            [bind!("x"), bind!("k", cns!(), ty!("Cont"))]
+            [bind!("x", 0), bind!("k", 0, cns!(), ty!("Cont"))]
         )],
     );
 
     let main_body = lit!(
         9,
-        "a",
+        ("a", 0),
         create!(
-            "f",
+            ("f", 0),
             ty!("Fun"),
-            [bind!("a")],
+            [bind!("a", 0)],
             [clause!(
                 "apply",
-                [bind!("x"), bind!("k", cns!(), ty!("Cont"))],
+                [bind!("x", 0), bind!("k", 0, cns!(), ty!("Cont"))],
                 sum!(
-                    "a",
-                    "x",
-                    "b",
+                    ("a", 0),
+                    ("x", 0),
+                    ("b", 0),
                     substitute!(
-                        [(bind!("b"), "b"), (bind!("k", cns!(), ty!("Cont")), "k")],
-                        invoke!("k", "Ret", ty!("Cont"), []),
+                        [
+                            (bind!("b", 0), ("b", 0)),
+                            (bind!("k", 0, cns!(), ty!("Cont")), ("k", 0))
+                        ],
+                        invoke!(("k", 0), "Ret", ty!("Cont"), []),
                     )
                 )
             )],
             create!(
-                "k",
+                ("k", 0),
                 ty!("Cont"),
                 [],
                 [clause!(
                     "Ret",
-                    [bind!("r")],
-                    println_i64!("r", lit!(0, "ret", exit!("ret"))),
+                    [bind!("r", 0)],
+                    println_i64!(("r", 0), lit!(0, ("ret", 0), exit!(("ret", 0)))),
                 ),],
                 lit!(
                     1,
-                    "y",
+                    ("y", 0),
                     substitute!(
                         [
-                            (bind!("y"), "y"),
-                            (bind!("k", cns!(), ty!("Cont")), "k"),
-                            (bind!("f", prd!(), ty!("Fun")), "f"),
+                            (bind!("y", 0), ("y", 0)),
+                            (bind!("k", 0, cns!(), ty!("Cont")), ("k", 0)),
+                            (bind!("f", 0, prd!(), ty!("Fun")), ("f", 0)),
                         ],
-                        invoke!("f", "apply", ty!("Fun"), [])
+                        invoke!(("f", 0), "apply", ty!("Fun"), [])
                     )
                 ),
             ),

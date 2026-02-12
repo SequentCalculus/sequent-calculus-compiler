@@ -14,70 +14,80 @@ fn main() {
             dtor_sig!("Nil", []),
             dtor_sig!(
                 "Cons",
-                [bind!("x", prd!()), bind!("xs", prd!(), ty!("ListInt"))]
+                [
+                    bind!("x", 0, prd!()),
+                    bind!("xs", 0, prd!(), ty!("ListInt"))
+                ]
             ),
         ]
     );
     let fmult = def!(
         "fmult",
-        [bind!("l", cns!(), ty!("ListInt")), bind!("a0", cns!())],
+        [bind!("l", 0, cns!(), ty!("ListInt")), bind!("a", 0, cns!())],
         cut!(
             mu!(
-                "a",
+                ("a", 1),
                 call!(
                     "mult",
-                    [covar!("l", ty!("ListInt")), covar!("a"), covar!("a")]
+                    [
+                        covar!("l", 0, ty!("ListInt")),
+                        covar!("a", 1),
+                        covar!("a", 1)
+                    ]
                 )
             ),
-            covar!("a0")
+            covar!("a", 0)
         ),
-        ["l", "a", "a0"]
+        [("l", 0), ("a", 1), ("a", 0)]
     );
 
     let mult = def!(
         "mult",
         [
-            bind!("l", cns!(), ty!("ListInt")),
-            bind!("a", cns!()),
-            bind!("a0", cns!()),
+            bind!("l", 0, cns!(), ty!("ListInt")),
+            bind!("a", 2, cns!()),
+            bind!("a", 0, cns!()),
         ],
         cut!(
             cocase!(
                 [
-                    clause!(Prd, "Nil", [], cut!(lit!(1), covar!("a0"))),
+                    clause!(Prd, "Nil", [], cut!(lit!(1), covar!("a", 0))),
                     clause!(
                         Prd,
                         "Cons",
-                        [bind!("x", prd!()), bind!("xs", cns!(), ty!("ListInt"))],
+                        [
+                            bind!("x", 0, prd!()),
+                            bind!("xs", 0, cns!(), ty!("ListInt"))
+                        ],
                         ife!(
-                            var!("x"),
-                            cut!(lit!(0), covar!("a")),
+                            var!("x", 0),
+                            cut!(lit!(0), covar!("a", 2)),
                             cut!(
                                 prod!(
-                                    var!("x"),
+                                    var!("x", 0),
                                     mu!(
-                                        "a1",
+                                        ("a", 1),
                                         call!(
                                             "mult",
                                             [
-                                                covar!("xs", ty!("ListInt")),
-                                                covar!("a"),
-                                                covar!("a1")
+                                                covar!("xs", 0, ty!("ListInt")),
+                                                covar!("a", 2),
+                                                covar!("a", 1)
                                             ]
                                         )
                                     )
                                 ),
-                                covar!("a0")
+                                covar!("a", 0)
                             )
                         )
                     ),
                 ],
                 ty!("ListInt")
             ),
-            covar!("l", ty!("ListInt")),
+            covar!("l", 0, ty!("ListInt")),
             ty!("ListInt")
         ),
-        ["l", "a", "a0", "a1", "x", "xs"]
+        [("l", 0), ("a", 2), ("a", 0), ("a", 1), ("x", 0), ("xs", 0)]
     );
 
     let nil = dtor!("Nil", [], ty!("ListInt"));
@@ -88,9 +98,9 @@ fn main() {
 
     let main = def!(
         "main",
-        [bind!("a0", cns!())],
-        call!("fmult", [cons4, covar!("a0")]),
-        ["a0"]
+        [bind!("a", 0, cns!())],
+        call!("fmult", [cons4, covar!("a", 0)]),
+        [("a", 0)]
     );
 
     let program = prog!([main, mult, fmult], [], [ty_list]);

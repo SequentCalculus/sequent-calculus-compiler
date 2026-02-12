@@ -14,3 +14,6 @@ categories.workspace   = true
 [dependencies]
 # Workspace members
 printer = { workspace = true }
+
+[dev-dependencies]
+axcut_macros = { workspace = true }

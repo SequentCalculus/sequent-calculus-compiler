@@ -22,7 +22,7 @@ fn def(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStr
     let def_used = expr_to_array(&args[3], 3)
         .iter()
         .map(|arg| {
-            let var = expr_to_tuple(&arg);
+            let var = expr_to_tuple(arg);
             let var_name = expr_to_string(&var[0], 3);
             let var_id = &var[1];
             quote! {

@@ -14,35 +14,39 @@ fn test_either() {
     let ty_either = ty_decl!(
         "Either",
         [
-            xtor_sig!("Left", [bind!("x")]),
-            xtor_sig!("Right", [bind!("y")]),
+            xtor_sig!("Left", [bind!("x", 0)]),
+            xtor_sig!("Right", [bind!("y", 0)]),
         ],
     );
 
     let main_body = lit!(
         1,
-        "z",
+        ("z", 0),
         lit!(
             9,
-            "x",
+            ("x", 0),
             letin!(
-                "p",
+                ("p", 0),
                 ty!("Either"),
                 "Right",
-                [bind!("x")],
+                [bind!("x", 0)],
                 switch!(
-                    "p",
+                    ("p", 0),
                     ty!("Either"),
                     [
-                        clause!("Left", [bind!("a")], lit!(-1, "err", exit!("err"))),
+                        clause!(
+                            "Left",
+                            [bind!("a", 0)],
+                            lit!(-1, ("err", 0), exit!(("err", 0)))
+                        ),
                         clause!(
                             "Right",
-                            [bind!("b")],
+                            [bind!("b", 0)],
                             sum!(
-                                "b",
-                                "z",
-                                "c",
-                                println_i64!("c", lit!(0, "ret", exit!("ret")))
+                                ("b", 0),
+                                ("z", 0),
+                                ("c", 0),
+                                println_i64!(("c", 0), lit!(0, ("ret", 0), exit!(("ret", 0))))
                             )
                         ),
                     ]

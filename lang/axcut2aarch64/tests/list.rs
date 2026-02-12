@@ -15,48 +15,51 @@ fn test_list() {
         "List",
         [
             xtor_sig!("Nil", []),
-            xtor_sig!("Cons", [bind!("xs", prd!(), ty!("List")), bind!("x")]),
+            xtor_sig!("Cons", [bind!("xs", 0, prd!(), ty!("List")), bind!("x", 0)]),
         ],
     );
 
     let main_body = letin!(
-        "ws",
+        ("ws", 0),
         ty!("List"),
         "Nil",
         [],
         lit!(
             5,
-            "z",
+            ("z", 0),
             letin!(
-                "zs",
+                ("zs", 0),
                 ty!("List"),
                 "Cons",
-                [bind!("z"), bind!("ws", prd!(), ty!("List"))],
+                [bind!("z", 0), bind!("ws", 0, prd!(), ty!("List"))],
                 lit!(
                     7,
-                    "y",
+                    ("y", 0),
                     letin!(
-                        "ys",
+                        ("ys", 0),
                         ty!("List"),
                         "Cons",
-                        [bind!("y"), bind!("zs", prd!(), ty!("List"))],
+                        [bind!("y", 0), bind!("zs", 0, prd!(), ty!("List"))],
                         lit!(
                             9,
-                            "x",
+                            ("x", 0),
                             letin!(
-                                "xs",
+                                ("xs", 0),
                                 ty!("List"),
                                 "Cons",
-                                [bind!("x"), bind!("ys", prd!(), ty!("List"))],
+                                [bind!("x", 0), bind!("ys", 0, prd!(), ty!("List"))],
                                 switch!(
-                                    "xs",
+                                    ("xs", 0),
                                     ty!("List"),
                                     [
-                                        clause!("Nil", [], lit!(-1, "err", exit!("err"))),
+                                        clause!("Nil", [], lit!(-1, ("err", 0), exit!(("err", 0)))),
                                         clause!(
                                             "Cons",
-                                            [bind!("as", prd!(), ty!("List")), bind!("a"),],
-                                            println_i64!("a", lit!(0, "ret", exit!("ret")))
+                                            [bind!("as", 0, prd!(), ty!("List")), bind!("a", 0)],
+                                            println_i64!(
+                                                ("a", 0),
+                                                lit!(0, ("ret", 0), exit!(("ret", 0)))
+                                            )
                                         ),
                                     ]
                                 )

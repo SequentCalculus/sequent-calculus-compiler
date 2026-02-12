@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_string, parse_args};
+use macro_utils::{expr_to_string, expr_to_tuple, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -6,21 +6,25 @@ use syn::parse_str;
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        ["Variable", "Chirality", "Type"],
+        ["Variable", "Variable Id", "Chirality", "Type"],
         &[
             (
-                1,
+                2,
                 parse_str("axcut::syntax::context::Chirality::Ext").unwrap(),
             ),
-            (2, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
+            (3, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
         ],
     );
-    let var = expr_to_string(&args[0], 0);
-    let chi = &args[1];
-    let ty = &args[2];
+    let var_name = expr_to_string(&args[0], 0);
+    let var_id = &args[1];
+    let chi = &args[2];
+    let ty = &args[3];
     quote! {
         axcut::syntax::context::ContextBinding{
-            var: #var.to_string(),
+            var: axcut::syntax::names::Var {
+                name: #var_name.to_string(),
+                id: #var_id
+            },
             chi: #chi,
             ty: #ty
         }

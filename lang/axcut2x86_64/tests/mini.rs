@@ -12,16 +12,16 @@ fn test_mini() {
     let main_body = call!("l", []);
     let main = def!("main", [], main_body);
 
-    let l_body = lit!(1, "x", lit!(9, "y", call!("j", [])));
+    let l_body = lit!(1, ("x", 0), lit!(9, ("y", 0), call!("j", [])));
     let l = def!("l", [], l_body);
 
     let j_body = sum!(
-        "x",
-        "y",
-        "z",
-        println_i64!("z", lit!(0, "ret", exit!("ret")))
+        ("x", 0),
+        ("y", 0),
+        ("z", 0),
+        println_i64!(("z", 0), lit!(0, ("ret", 0), exit!(("ret", 0))))
     );
-    let j = def!("j", [bind!("y"), bind!("x")], j_body);
+    let j = def!("j", [bind!("y", 0), bind!("x", 0)], j_body);
 
     let program = prog!([main, l, j], []);
 

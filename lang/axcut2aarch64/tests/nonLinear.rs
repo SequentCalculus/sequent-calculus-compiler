@@ -12,31 +12,34 @@ use axcut_macros::{
 
 #[test]
 fn test_non_linear() {
-    let ty_box = ty_decl!("Box", [xtor_sig!("B", [bind!("b")])]);
+    let ty_box = ty_decl!("Box", [xtor_sig!("B", [bind!("b", 0)])]);
     let ty_box_box = ty_decl!(
         "BoxBox",
-        [xtor_sig!("BB", [bind!("bb", prd!(), ty!("Box"))])]
+        [xtor_sig!("BB", [bind!("bb", 0, prd!(), ty!("Box"))])]
     );
 
     let main_body_switch_switch = switch!(
-        "a2",
+        ("a", 2),
         ty!("Box"),
         [clause!(
             "B",
-            [bind!("x2")],
+            [bind!("x", 2)],
             substitute!(
-                [(bind!("x2"), "x2"), (bind!("a1", prd!(), ty!("Box")), "a1"),],
+                [
+                    (bind!("x", 2), ("x", 2)),
+                    (bind!("a", 1, prd!(), ty!("Box")), ("a", 1)),
+                ],
                 switch!(
-                    "a1",
+                    ("a", 1),
                     ty!("Box"),
                     [clause!(
                         "B",
-                        [bind!("x1")],
+                        [bind!("x", 1)],
                         sum!(
-                            "x1",
-                            "x2",
-                            "res",
-                            println_i64!("res", lit!(0, "ret", exit!("ret")))
+                            ("x", 1),
+                            ("x", 2),
+                            ("res", 0),
+                            println_i64!(("res", 0), lit!(0, ("ret", 0), exit!(("ret", 0))))
                         )
                     )]
                 )
@@ -45,59 +48,59 @@ fn test_non_linear() {
     );
 
     let main_body_switch = switch!(
-        "bb1",
+        ("bb", 1),
         ty!("BoxBox"),
         [clause!(
             "BB",
-            [bind!("b1", prd!(), ty!("Box"))],
+            [bind!("b", 1, prd!(), ty!("Box"))],
             switch!(
-                "b1",
+                ("b", 1),
                 ty!("Box"),
                 [clause!(
                     "B",
-                    [bind!("x1")],
+                    [bind!("x", 1)],
                     letin!(
-                        "d1",
+                        ("d", 1),
                         ty!("Box"),
                         "B",
-                        [bind!("x1")],
+                        [bind!("x", 1)],
                         letin!(
-                            "dd1",
+                            ("dd", 1),
                             ty!("BoxBox"),
                             "BB",
-                            [bind!("d1", prd!(), ty!("Box"))],
+                            [bind!("d", 1, prd!(), ty!("Box"))],
                             substitute!(
-                                [(bind!("bb2", prd!(), ty!("BoxBox")), "bb2",)],
+                                [(bind!("bb", 2, prd!(), ty!("BoxBox")), ("bb", 2))],
                                 lit!(
                                     4,
-                                    "y",
+                                    ("y", 0),
                                     letin!(
-                                        "a1",
+                                        ("a", 1),
                                         ty!("Box"),
                                         "B",
-                                        [bind!("y")],
+                                        [bind!("y", 0)],
                                         substitute!(
                                             [
-                                                (bind!("a1", prd!(), ty!("Box")), "a1"),
-                                                (bind!("bb2", prd!(), ty!("BoxBox")), "bb2"),
+                                                (bind!("a", 1, prd!(), ty!("Box")), ("a", 1)),
+                                                (bind!("bb", 2, prd!(), ty!("BoxBox")), ("bb", 2)),
                                             ],
                                             switch!(
-                                                "bb2",
+                                                ("bb", 2),
                                                 ty!("BoxBox"),
                                                 [clause!(
                                                     "BB",
-                                                    [bind!("b2", prd!(), ty!("Box"))],
+                                                    [bind!("b", 2, prd!(), ty!("Box"))],
                                                     switch!(
-                                                        "b2",
+                                                        ("b", 2),
                                                         ty!("Box"),
                                                         [clause!(
                                                             "B",
-                                                            [bind!("x2")],
+                                                            [bind!("x", 2)],
                                                             letin!(
-                                                                "a2",
+                                                                ("a", 2),
                                                                 ty!("Box"),
                                                                 "B",
-                                                                [bind!("x2")],
+                                                                [bind!("x", 2)],
                                                                 main_body_switch_switch
                                                             )
                                                         )]
@@ -117,50 +120,59 @@ fn test_non_linear() {
 
     let main_body = lit!(
         3,
-        "f1",
+        ("f", 1),
         lit!(
             3,
-            "f2",
+            ("f", 2),
             lit!(
                 3,
-                "f3",
+                ("f", 3),
                 lit!(
                     3,
-                    "f4",
+                    ("f", 4),
                     lit!(
                         3,
-                        "f5",
+                        ("f", 5),
                         lit!(
                             3,
-                            "f6",
+                            ("f", 6),
                             lit!(
                                 3,
-                                "f7",
+                                ("f", 7),
                                 lit!(
                                     3,
-                                    "x",
+                                    ("x", 0),
                                     letin!(
-                                        "b",
+                                        ("b", 0),
                                         ty!("Box"),
                                         "B",
-                                        [bind!("x")],
+                                        [bind!("x", 0)],
                                         letin!(
-                                            "bb",
+                                            ("bb", 0),
                                             ty!("BoxBox"),
                                             "BB",
-                                            [bind!("b", prd!(), ty!("Box"))],
+                                            [bind!("b", 0, prd!(), ty!("Box"))],
                                             substitute!(
                                                 [
-                                                    (bind!("f1"), "f1"),
-                                                    (bind!("f2"), "f2"),
-                                                    (bind!("f3"), "f3"),
-                                                    (bind!("f5"), "f5"),
-                                                    (bind!("f6"), "f6"),
-                                                    (bind!("f7"), "f7"),
-                                                    (bind!("f4"), "f4"),
-                                                    (bind!("bb3", prd!(), ty!("BoxBox")), "bb",),
-                                                    (bind!("bb2", prd!(), ty!("BoxBox")), "bb",),
-                                                    (bind!("bb1", prd!(), ty!("BoxBox")), "bb",),
+                                                    (bind!("f", 1), ("f", 1)),
+                                                    (bind!("f", 2), ("f", 2)),
+                                                    (bind!("f", 3), ("f", 3)),
+                                                    (bind!("f", 5), ("f", 5)),
+                                                    (bind!("f", 6), ("f", 6)),
+                                                    (bind!("f", 7), ("f", 7)),
+                                                    (bind!("f", 4), ("f", 4)),
+                                                    (
+                                                        bind!("bb", 3, prd!(), ty!("BoxBox")),
+                                                        ("bb", 0)
+                                                    ),
+                                                    (
+                                                        bind!("bb", 2, prd!(), ty!("BoxBox")),
+                                                        ("bb", 0)
+                                                    ),
+                                                    (
+                                                        bind!("bb", 1, prd!(), ty!("BoxBox")),
+                                                        ("bb", 0)
+                                                    ),
                                                 ],
                                                 main_body_switch
                                             )

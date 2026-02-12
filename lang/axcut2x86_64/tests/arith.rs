@@ -11,36 +11,39 @@ use axcut_macros::{def, exit, lit, println_i64, prod, prog, sub, sum};
 fn test_arith() {
     let main_body = lit!(
         1,
-        "a",
+        ("a", 0),
         lit!(
             3,
-            "b",
+            ("b", 0),
             sub!(
-                "a",
-                "b",
-                "c",
+                ("a", 0),
+                ("b", 0),
+                ("c", 0),
                 lit!(
                     8,
-                    "d",
+                    ("d", 0),
                     lit!(
                         -1,
-                        "e",
+                        ("e", 0),
                         prod!(
-                            "e",
-                            "d",
-                            "f",
+                            ("e", 0),
+                            ("d", 0),
+                            ("f", 0),
                             sum!(
-                                "f",
-                                "c",
-                                "g",
+                                ("f", 0),
+                                ("c", 0),
+                                ("g", 0),
                                 lit!(
                                     -6,
-                                    "h",
+                                    ("h", 0),
                                     prod!(
-                                        "h",
-                                        "g",
-                                        "i",
-                                        println_i64!("i", lit!(0, "ret", exit!("ret")))
+                                        ("h", 0),
+                                        ("g", 0),
+                                        ("i", 0),
+                                        println_i64!(
+                                            ("i", 0),
+                                            lit!(0, ("ret", 0), exit!(("ret", 0)))
+                                        )
                                     )
                                 )
                             )

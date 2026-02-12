@@ -7,8 +7,15 @@ pub fn substitute(input: TokenStream) -> TokenStream {
     let rearrange = expr_to_array(&args[0], 0).into_iter().map(|expr| {
         let tuple_elems = expr_to_tuple(&expr);
         let binding = &tuple_elems[0];
-        let var = expr_to_string(&tuple_elems[1], 1);
-        quote! { (#binding,#var.to_string()) }
+        let var = expr_to_tuple(&tuple_elems[1]);
+        let var_name = expr_to_string(&var[0], 0);
+        let var_id = &var[1];
+        quote! {
+            (#binding,axcut::syntax::names::Var{
+                name:#var_name.to_string(),
+                id:#var_id
+            })
+        }
     });
     let next = &args[1];
     quote! {
