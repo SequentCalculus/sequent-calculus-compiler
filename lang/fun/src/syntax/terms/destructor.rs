@@ -5,7 +5,6 @@ use miette::SourceSpan;
 use printer::tokens::DOT;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -90,7 +89,7 @@ impl Check for Destructor {
     ) -> Result<Self, Error> {
         // the name of the constructor in the symbol table for the instantiated data type
         let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
-        let ty = match symbol_table.lookup_ty_for_dtor(&self.span.to_miette(), &dtor_name) {
+        let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
             Ok(ty) => ty,
             // if there is no instance yet, we create an instance from the template
             Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
@@ -102,13 +101,7 @@ impl Check for Destructor {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
 
-                self.args = check_args(
-                    &self.span.to_miette(),
-                    symbol_table,
-                    context,
-                    self.args,
-                    &types,
-                )?;
+                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
 
@@ -116,7 +109,7 @@ impl Check for Destructor {
                 Ok(self)
             }
             None => Err(Error::Undefined {
-                span: Some(self.span.to_miette()),
+                span: Some(self.span),
                 name: self.id.clone(),
             }),
         }
@@ -132,7 +125,6 @@ impl UsedBinders for Destructor {
 
 #[cfg(test)]
 mod destructor_tests {
-    use miette::SourceSpan;
     use printer::Print;
 
     use crate::parser::fun;

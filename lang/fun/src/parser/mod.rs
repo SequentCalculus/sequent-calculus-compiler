@@ -45,8 +45,6 @@ macro_rules! parse_term {
 mod parser_tests {
     use std::rc::Rc;
 
-    use miette::SourceSpan;
-
     use super::*;
     use crate::{
         syntax::{

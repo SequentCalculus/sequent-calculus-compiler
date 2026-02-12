@@ -356,7 +356,6 @@ impl Print for TypeContext {
 #[cfg(test)]
 mod tests {
     use crate::{
-        parser::util::ToMiette,
         syntax::{
             context::TypingContext,
             types::{Ty, TypeArgs},
@@ -365,7 +364,6 @@ mod tests {
         test_common::symbol_table_list,
         typing::symbol_table::SymbolTable,
     };
-    use miette::SourceSpan;
     use printer::Print;
 
     /// The context:
@@ -433,7 +431,7 @@ mod tests {
     fn var_lookup() {
         assert!(
             example_context()
-                .lookup_var(&"x".to_owned(), &dummy_span().to_miette())
+                .lookup_var(&"x".to_owned(), &dummy_span())
                 .is_ok()
         )
     }
@@ -442,7 +440,7 @@ mod tests {
     fn var_lookup_fail() {
         assert!(
             example_context()
-                .lookup_var(&"z".to_owned(), &dummy_span().to_miette())
+                .lookup_var(&"z".to_owned(), &dummy_span())
                 .is_err()
         )
     }
@@ -451,7 +449,7 @@ mod tests {
     fn covar_lookup() {
         assert!(
             example_context()
-                .lookup_covar(&"a".to_owned(), &dummy_span().to_miette())
+                .lookup_covar(&"a".to_owned(), &dummy_span())
                 .is_ok()
         )
     }
@@ -460,7 +458,7 @@ mod tests {
     fn covar_lookup_fail() {
         assert!(
             example_context()
-                .lookup_covar(&"b".to_owned(), &dummy_span().to_miette())
+                .lookup_covar(&"b".to_owned(), &dummy_span())
                 .is_err()
         )
     }

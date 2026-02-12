@@ -4,7 +4,6 @@ use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -62,13 +61,7 @@ impl Check for Call {
                 let (types, ret_ty) = signature.clone();
                 check_equality(&self.span, symbol_table, expected, &ret_ty)?;
 
-                self.args = check_args(
-                    &self.span.to_miette(),
-                    symbol_table,
-                    context,
-                    self.args,
-                    &types,
-                )?;
+                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
                 self.ret_ty = Some(expected.clone());
                 Ok(self)

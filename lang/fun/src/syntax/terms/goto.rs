@@ -6,7 +6,6 @@ use miette::SourceSpan;
 use printer::tokens::GOTO;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -76,7 +75,7 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target, &self.span.to_miette())?;
+        let cont_type = context.lookup_covar(&self.target, &self.span)?;
         self.term = self.term.check(symbol_table, context, &cont_type)?;
 
         self.ty = Some(expected.clone());
@@ -92,7 +91,6 @@ impl UsedBinders for Goto {
 
 #[cfg(test)]
 mod test {
-    use miette::SourceSpan;
     use printer::Print;
 
     use crate::parser::fun;

@@ -5,7 +5,6 @@ use miette::SourceSpan;
 use printer::tokens::{CASE, DOT};
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -88,7 +87,7 @@ impl Check for Case {
             Some(clause) => {
                 // the name of the constructor in the symbol table for the instantiated data type
                 let ctor_name = clause.xtor.clone() + &self.type_args.print_to_string(None);
-                match symbol_table.lookup_ty_for_ctor(&self.span.to_miette(), &ctor_name) {
+                match symbol_table.lookup_ty_for_ctor(&self.span, &ctor_name) {
                     Ok(ty) => ty,
                     Err(_) => {
                         // if there is no instance yet, we create on from the template
@@ -97,9 +96,7 @@ impl Check for Case {
                 }
             }
             None => {
-                return Err(Error::EmptyMatch {
-                    span: self.span.to_miette(),
-                });
+                return Err(Error::EmptyMatch { span: self.span });
             }
         };
 
@@ -116,14 +113,14 @@ impl Check for Case {
                 self.clauses.swap_remove(position)
             } else {
                 return Err(Error::MissingCtorInCase {
-                    span: self.span.to_miette(),
+                    span: self.span,
                     ctor,
                 });
             };
             match symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
-                        span: Some(self.span.to_miette()),
+                        span: Some(self.span),
                         name: ctor_name.clone(),
                     });
                 }
@@ -145,7 +142,7 @@ impl Check for Case {
 
         if !self.clauses.is_empty() {
             return Err(Error::UnexpectedCtorsInCase {
-                span: self.span.to_miette(),
+                span: self.span,
                 ctors: self
                     .clauses
                     .iter()
@@ -170,7 +167,6 @@ impl UsedBinders for Case {
 
 #[cfg(test)]
 mod test {
-    use miette::SourceSpan;
     use printer::*;
 
     use crate::parser::fun;

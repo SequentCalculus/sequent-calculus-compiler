@@ -224,7 +224,7 @@ impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if symbol_table.defs.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
-                span: Some(self.span.to_miette()),
+                span: Some(self.span),
                 name: self.name.clone(),
             });
         }

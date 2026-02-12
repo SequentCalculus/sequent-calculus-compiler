@@ -5,17 +5,14 @@ use std::rc::Rc;
 use miette::SourceSpan;
 use printer::Print;
 
-use crate::{
-    parser::util::ToMiette,
-    syntax::{
-        arguments::Arguments,
-        context::{
-            Chirality::{Cns, Prd},
-            TypingContext,
-        },
-        terms::Term,
-        types::Ty,
+use crate::syntax::{
+    arguments::Arguments,
+    context::{
+        Chirality::{Cns, Prd},
+        TypingContext,
     },
+    terms::Term,
+    types::Ty,
 };
 
 use super::{errors::Error, symbol_table::SymbolTable};
@@ -92,12 +89,11 @@ pub fn check_args(
                 Term::XVar(mut variable) => {
                     if variable.chi == Some(Prd) {
                         return Err(Error::ExpectedCovariableGotTerm {
-                            span: variable.span.to_miette(),
+                            span: variable.span,
                         });
                     }
 
-                    let found_ty =
-                        context.lookup_covar(&variable.var, &variable.span.to_miette())?;
+                    let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
                     if let Some(ty) = variable.ty {
                         check_equality(&variable.span, symbol_table, &ty, &found_ty)?;
                     };

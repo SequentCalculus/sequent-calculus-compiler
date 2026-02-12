@@ -101,7 +101,6 @@ impl UsedBinders for Op {
 
 #[cfg(test)]
 mod test {
-    use miette::SourceSpan;
     use printer::Print;
 
     use crate::parser::fun;

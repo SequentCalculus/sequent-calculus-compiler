@@ -4,7 +4,6 @@ use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::typing::*;
 
@@ -69,12 +68,10 @@ impl Check for XVar {
         // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
-            return Err(Error::ExpectedTermGotCovariable {
-                span: self.span.to_miette(),
-            });
+            return Err(Error::ExpectedTermGotCovariable { span: self.span });
         }
 
-        let found_ty = context.lookup_var(&self.var, &self.span.to_miette())?;
+        let found_ty = context.lookup_var(&self.var, &self.span)?;
         if let Some(ty) = self.ty {
             check_equality(&self.span, symbol_table, &ty, &found_ty)?;
         };
@@ -89,8 +86,6 @@ impl Check for XVar {
 
 #[cfg(test)]
 mod test {
-    use miette::SourceSpan;
-
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::*;

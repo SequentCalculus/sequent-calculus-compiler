@@ -5,7 +5,6 @@ use miette::SourceSpan;
 use printer::tokens::NEW;
 use printer::*;
 
-use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -62,9 +61,7 @@ impl Check for New {
     ) -> Result<Self, Error> {
         let (name, type_args) = match expected {
             Ty::I64 { .. } => {
-                return Err(Error::ExpectedI64ForNew {
-                    span: self.span.to_miette(),
-                });
+                return Err(Error::ExpectedI64ForNew { span: self.span });
             }
             Ty::Decl {
                 name, type_args, ..
@@ -78,13 +75,13 @@ impl Check for New {
             Some((Polarity::Codata, _type_args, dtors)) => dtors.clone(),
             Some((Polarity::Data, _, _)) => {
                 return Err(Error::ExpectedDataForNew {
-                    span: self.span.to_miette(),
+                    span: self.span,
                     data: type_name,
                 });
             }
             None => {
                 return Err(Error::Undefined {
-                    span: Some(self.span.to_miette()),
+                    span: Some(self.span),
                     name: type_name,
                 });
             }
@@ -100,14 +97,14 @@ impl Check for New {
                 self.clauses.swap_remove(position)
             } else {
                 return Err(Error::MissingDtorInNew {
-                    span: self.span.to_miette(),
+                    span: self.span,
                     dtor: dtor.clone(),
                 });
             };
             match symbol_table.dtors.get(&dtor_name) {
                 None => {
                     return Err(Error::Undefined {
-                        span: Some(self.span.to_miette()),
+                        span: Some(self.span),
                         name: dtor_name.clone(),
                     });
                 }
@@ -132,7 +129,7 @@ impl Check for New {
 
         if !self.clauses.is_empty() {
             return Err(Error::UnexpectedDtorsInNew {
-                span: self.span.to_miette(),
+                span: self.span,
                 dtors: self
                     .clauses
                     .iter()
