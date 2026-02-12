@@ -19,4 +19,4 @@ printer       = { workspace = true }
 
 [dev-dependencies]
 goldenfile = { workspace = true }
-axcut_macros = { path = "../macros/axcut" }
+axcut_macros = { workspace = true }

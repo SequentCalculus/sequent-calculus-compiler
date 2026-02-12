@@ -49,6 +49,6 @@ driver        = { version = "0.1.0", path = "./lang/driver" }
 fun           = { version = "0.1.0", path = "./lang/fun" }
 fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
 printer       = { version = "0.1.0", path = "./lang/printer" }
-core_macros   = { version = "0.1.0", path = "./lang/macros/core", package = "scc-core-macros" }
-axcut_macros  = { version = "0.1.0", path = "./lang/macros/axcut" }
-macro_utils   = { version = "0.1.0", path = "./lang/macros/utils", package = "scc-macro-utils" }
+core_macros   = { path = "./lang/macros/core", package = "scc-core-macros" }
+axcut_macros  = { path = "./lang/macros/axcut" }
+macro_utils   = { path = "./lang/macros/utils", package = "scc-macro-utils" }
