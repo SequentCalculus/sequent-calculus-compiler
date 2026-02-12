@@ -296,9 +296,9 @@ mod transform_tests {
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                ("x", 1),
+                ("x", 0),
                 fs_ife!(
-                    ("x", 1),
+                    ("x", 0),
                     fs_cut!(lit!(1), covar!("a", 0)),
                     fs_exit!(("x", 0))
                 )

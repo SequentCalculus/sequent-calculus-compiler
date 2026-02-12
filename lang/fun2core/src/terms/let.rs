@@ -132,9 +132,9 @@ mod compile_tests {
                     ty!("List[i64]")
                 ),
                 mutilde!(
-                    ("x", 1),
+                    ("x", 0),
                     cut!(
-                        var!("x", 1, ty!("List[i64]")),
+                        var!("x", 0, ty!("List[i64]")),
                         covar!("a", 0, ty!("List[i64]")),
                         ty!("List[i64]")
                     ),
