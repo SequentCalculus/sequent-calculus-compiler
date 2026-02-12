@@ -1,5 +1,5 @@
 [package]
-name        = "core_lang"
+name        = "scc-core-lang"
 description = "The Core intermediate representation"
 
 version.workspace      = true

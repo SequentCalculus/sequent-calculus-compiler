@@ -1,5 +1,5 @@
 [package]
-name = "core_macros"
+name        = "scc-core-macros"
 description = "Macros for Core"
 
 version.workspace      = true

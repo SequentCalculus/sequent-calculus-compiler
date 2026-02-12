@@ -1,5 +1,5 @@
 [package]
-name = "axcut_macros"
+name        = "axcut_macros"
 description = "Macros for AxCut"
 
 version.workspace      = true

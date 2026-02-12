@@ -1,5 +1,5 @@
 [package]
-name = "macro_utils"
+name        = "scc-macro-utils"
 description = "Utilities for working with macros"
 
 version.workspace      = true
