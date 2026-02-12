@@ -243,20 +243,25 @@ mod transform_tests {
         let result = ife!(
             lit!(2),
             lit!(1),
-            cut!(lit!(1), covar!("a")),
-            exit!(var!("x"))
+            cut!(lit!(1), covar!("a", 0)),
+            exit!(var!("x", 0))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
             lit!(2),
             fs_mutilde!(
-                "x0",
+                ("x", 0),
                 fs_cut!(
                     lit!(1),
                     fs_mutilde!(
-                        "x1",
-                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                        ("x", 1),
+                        fs_ife!(
+                            ("x", 0),
+                            ("x", 1),
+                            fs_cut!(lit!(1), covar!("a", 0)),
+                            fs_exit!(("x", 0))
+                        )
                     )
                 )
             )
@@ -268,25 +273,35 @@ mod transform_tests {
     #[test]
     fn transform_ife2() {
         let result = ife!(
-            var!("x"),
-            var!("x"),
-            exit!(var!("y")),
-            cut!(var!("x"), covar!("a"))
+            var!("x", 0),
+            var!("x", 0),
+            exit!(var!("y", 0)),
+            cut!(var!("x", 0), covar!("a", 0))
         )
         .focus(&mut Default::default());
-        let expected = fs_ife!("x", "x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let expected = fs_ife!(
+            ("x", 0),
+            ("x", 0),
+            fs_exit!(("y", 0)),
+            fs_cut!(var!("x", 0), covar!("a", 0))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz1() {
-        let result = ife!(lit!(1), cut!(lit!(1), covar!("a")), exit!(var!("x")))
+        let result = ife!(lit!(1), cut!(lit!(1), covar!("a", 0)), exit!(var!("x", 0)))
             .focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
-                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                ("x", 1),
+                fs_ife!(
+                    ("x", 1),
+                    fs_cut!(lit!(1), covar!("a", 0)),
+                    fs_exit!(("x", 0))
+                )
             )
         )
         .into();
@@ -294,9 +309,18 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
-            .focus(&mut Default::default());
-        let expected = fs_ife!("x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let result = ife!(
+            var!("x", 0),
+            exit!(var!("y", 0)),
+            cut!(var!("x", 0), covar!("a", 0))
+        )
+        .focus(&mut Default::default());
+        let expected = fs_ife!(
+            ("x", 0),
+            fs_exit!(("y", 0)),
+            fs_cut!(var!("x", 0), covar!("a", 0))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 }

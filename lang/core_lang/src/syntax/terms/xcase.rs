@@ -166,15 +166,15 @@ mod tests {
         let result = clause!(
             Prd,
             "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            cut!(var!("x"), covar!("a"))
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            cut!(var!("x", 0), covar!("a", 0))
         )
         .focus(&mut Default::default());
         let expected = fs_clause!(
             Prd,
             "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a"))
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            fs_cut!(var!("x", 0), covar!("a", 0))
         );
         assert_eq!(result, expected)
     }
@@ -185,10 +185,10 @@ mod tests {
                 clause!(
                     Prd,
                     "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+                    cut!(var!("x", 0), covar!("a", 0))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
+                clause!(Prd, "snd", [], cut!(var!("x", 0), covar!("a", 0)))
             ],
             ty!("LPairIntInt")
         )
@@ -198,16 +198,16 @@ mod tests {
     fn example_case() -> XCase<Cns> {
         case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
+                clause!(Cns, "Nil", [], cut!(var!("x", 0), covar!("a", 0))),
                 clause!(
                     Cns,
                     "Cons",
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!("x", 0, prd!()),
+                        bind!("xs", 0, prd!(), ty!("ListInt")),
+                        bind!("a", 0, cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!("x", 0), covar!("a", 0))
                 )
             ],
             ty!("ListInt")
@@ -221,16 +221,16 @@ mod tests {
         let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
+                clause!(Cns, "Nil", [], cut!(var!("y", 0), covar!("b", 0))),
                 clause!(
                     Cns,
                     "Cons",
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!("x", 0, prd!()),
+                        bind!("xs", 0, prd!(), ty!("ListInt")),
+                        bind!("a", 0, cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!("x", 0), covar!("a", 0))
                 )
             ],
             ty!("ListInt")
@@ -247,10 +247,10 @@ mod tests {
                 clause!(
                     Prd,
                     "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+                    cut!(var!("x", 0), covar!("a", 0))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))
+                clause!(Prd, "snd", [], cut!(var!("y", 0), covar!("b", 0)))
             ],
             ty!("LPairIntInt")
         );

@@ -267,17 +267,18 @@ mod mu_tests {
     #[test]
     fn subst_mu() {
         let subst = example_subst();
-        let result = mu!("a", cut!(var!("x"), covar!("a"))).subst_sim(&subst.0, &subst.1);
-        let expected = mu!("a", cut!(var!("y"), covar!("a")));
+        let result =
+            mu!(("a", 0), cut!(var!("x", 0), covar!("a", 0))).subst_sim(&subst.0, &subst.1);
+        let expected = mu!(("a", 0), cut!(var!("y", 0), covar!("a", 0)));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
         let subst = example_subst();
-        let example = mutilde!("x", cut!(var!("x"), covar!("a")));
+        let example = mutilde!(("x", 0), cut!(var!("x", 0), covar!("a", 0)));
         let result = example.subst_sim(&subst.0, &subst.1);
-        let expected = mutilde!("x", cut!(var!("x"), covar!("b")));
+        let expected = mutilde!(("x", 0), cut!(var!("x", 0), covar!("b", 0)));
         assert_eq!(result, expected)
     }
 
@@ -285,21 +286,21 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(("a", 0), cut!(lit!(1), covar!("a", 0)));
+        let example_var = fs_mu!(("a", 0), fs_cut!(lit!(1), covar!("a", 0)));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
 
     #[test]
     fn bind_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(("a", 0), cut!(lit!(1), covar!("a", 0)));
+        let example_var = fs_mu!(("a", 0), fs_cut!(lit!(1), covar!("a", 0)));
         let result = example.clone().bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(example_var, fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(example_var, fs_mutilde!(("x", 0), fs_exit!(("x", 0)))).into();
         assert_eq!(result, expected)
     }
 }

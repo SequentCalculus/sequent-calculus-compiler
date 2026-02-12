@@ -175,27 +175,27 @@ mod test {
     use core_macros::{call, covar, cut, ife, ty, var};
 
     fn example_cut() -> Statement {
-        cut!(var!("x"), covar!("a"), ty!("int")).into()
+        cut!(var!("x", 0), covar!("a", 0), ty!("int")).into()
     }
 
     fn example_ifz() -> Statement {
         ife!(
-            var!("x"),
-            cut!(var!("x"), covar!("a"), ty!("int")),
-            cut!(var!("x"), covar!("a"), ty!("int"))
+            var!("x", 0),
+            cut!(var!("x", 0), covar!("a", 0), ty!("int")),
+            cut!(var!("x", 0), covar!("a", 0), ty!("int"))
         )
         .into()
     }
 
     fn example_call() -> Statement {
-        call!("main", [var!("x"), covar!("a")]).into()
+        call!("main", [var!("x", 0), covar!("a", 0)]).into()
     }
 
     #[test]
     fn subst_cut() {
         let subst = example_subst();
         let result = example_cut().subst_sim(&subst.0, &subst.1);
-        let expected = cut!(var!("y"), covar!("b")).into();
+        let expected = cut!(var!("y", 0), covar!("b", 0)).into();
         assert_eq!(result, expected)
     }
 
@@ -204,9 +204,9 @@ mod test {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = ife!(
-            var!("y"),
-            cut!(var!("y"), covar!("b"),),
-            cut!(var!("y"), covar!("b"))
+            var!("y", 0),
+            cut!(var!("y", 0), covar!("b", 0),),
+            cut!(var!("y", 0), covar!("b", 0))
         )
         .into();
         assert_eq!(result, expected)
@@ -216,7 +216,7 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let expected = call!("main", [var!("y"), covar!("b")]).into();
+        let expected = call!("main", [var!("y", 0), covar!("b", 0)]).into();
         assert_eq!(result, expected)
     }
 }

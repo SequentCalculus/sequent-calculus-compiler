@@ -192,14 +192,14 @@ mod xtor_tests {
     fn example() -> Xtor<Prd> {
         ctor!(
             "Cons",
-            [var!("x"), var!("xs", ty!("ListInt"))],
+            [var!("x", 0), var!("xs", 0, ty!("ListInt"))],
             ty!("ListInt")
         )
     }
 
     #[test]
     fn display_const() {
-        assert_eq!(example().print_to_string(None), "Cons(x, xs)")
+        assert_eq!(example().print_to_string(None), "Cons(x0, xs0)")
     }
 
     #[test]
@@ -208,7 +208,7 @@ mod xtor_tests {
         let result = example().subst_sim(&subst.0, &subst.1);
         let expected = ctor!(
             "Cons",
-            [var!("y"), var!("xs", ty!("ListInt"))],
+            [var!("y", 0), var!("xs", 0, ty!("ListInt"))],
             ty!("ListInt")
         );
         assert_eq!(result, expected)

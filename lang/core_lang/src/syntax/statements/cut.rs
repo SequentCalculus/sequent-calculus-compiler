@@ -211,7 +211,7 @@ mod tests {
                 [lit!(1), ctor!("Nil", [], ty!("ListInt"))],
                 ty!("ListInt")
             ),
-            covar!("a", ty!("ListInt")),
+            covar!("a", 0, ty!("ListInt")),
             ty!("ListInt")
         )
         .focus(&mut Default::default());
@@ -219,18 +219,18 @@ mod tests {
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                ("x", 0),
                 fs_cut!(
                     fs_ctor!("Nil", [], ty!("ListInt")),
                     fs_mutilde!(
-                        "x1",
+                        ("x", 1),
                         fs_cut!(
                             fs_ctor!(
                                 "Cons",
-                                [bind!("x0", prd!()), bind!("x1", prd!(), ty!("ListInt"))],
+                                [bind!("x", 0, prd!()), bind!("x", 1, prd!(), ty!("ListInt"))],
                                 ty!("ListInt")
                             ),
-                            covar!("a", ty!("ListInt")),
+                            covar!("a", 0, ty!("ListInt")),
                             ty!("ListInt")
                         ),
                         ty!("ListInt")
@@ -247,17 +247,21 @@ mod tests {
     #[test]
     fn transform_dtor() {
         let result = cut!(
-            var!("x", ty!("Fun[i64, i64]")),
-            dtor!("apply", [var!("y"), covar!("a")], ty!("Fun[i64, i64]")),
+            var!("x", 0, ty!("Fun[i64, i64]")),
+            dtor!(
+                "apply",
+                [var!("y", 0), covar!("a", 0)],
+                ty!("Fun[i64, i64]")
+            ),
             ty!("Fun[i64, i64]")
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
-            var!("x", ty!("Fun[i64, i64]")),
+            var!("x", 0, ty!("Fun[i64, i64]")),
             fs_dtor!(
                 "apply",
-                [bind!("y", prd!()), bind!("a", cns!())],
+                [bind!("y", 0, prd!()), bind!("a", 0, cns!())],
                 ty!("Fun[i64, i64]")
             ),
             ty!("Fun[i64, i64]")
@@ -268,8 +272,8 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
-        let expected = FsCut::new(var!("x"), covar!("a"), Ty::I64).into();
+        let result = cut!(var!("x", 0), covar!("a", 0)).focus(&mut Default::default());
+        let expected = FsCut::new(var!("x", 0), covar!("a", 0), Ty::I64).into();
         assert_eq!(result, expected);
     }
 }

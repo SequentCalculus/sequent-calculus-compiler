@@ -55,9 +55,6 @@ impl SubstVar for Var {
 
 impl Print for Var {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.name
-            .print(cfg, alloc)
-            .append("_")
-            .append(self.id.to_string())
+        self.name.print(cfg, alloc).append(self.id.to_string())
     }
 }

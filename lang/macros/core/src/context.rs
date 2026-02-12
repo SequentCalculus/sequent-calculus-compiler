@@ -6,15 +6,24 @@ use syn::{Expr, parse_str};
 pub fn bind(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        ["Context Variable", "Context Chirality", "Type"],
-        &[(2, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
+        [
+            "Context Variable",
+            "Variable Id",
+            "Context Chirality",
+            "Type",
+        ],
+        &[(3, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
-    let var = expr_to_string(&args[0], 0);
-    let chi = &args[1];
-    let ty = &args[2];
+    let var_name = expr_to_string(&args[0], 0);
+    let var_id = &args[1];
+    let chi = &args[2];
+    let ty = &args[3];
     quote! {
         core_lang::syntax::context::ContextBinding{
-            var: #var.to_string(),
+            var: core_lang::syntax::names::Var{
+                name:#var_name.to_string(),
+                id:#var_id
+            },
             chi: #chi,
             ty: #ty
         }

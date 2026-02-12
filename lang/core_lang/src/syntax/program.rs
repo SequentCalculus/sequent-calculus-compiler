@@ -75,9 +75,9 @@ mod program_tests {
     fn example_def2_var() -> FsDef {
         fs_def!(
             "cut",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a")),
-            ["a", "x"]
+            [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+            fs_cut!(var!("x", 0), covar!("a", 0)),
+            [("a", 0), ("x", 0)]
         )
     }
 
@@ -86,9 +86,9 @@ mod program_tests {
         let prog = prog!(
             [def!(
                 "cut",
-                [bind!("x", prd!()), bind!("a", cns!())],
-                cut!(var!("x"), covar!("a")),
-                ["a", "x"]
+                [bind!("x", 0, prd!()), bind!("a", 0, cns!())],
+                cut!(var!("x", 0), covar!("a", 0)),
+                [("a", 0), ("x", 0)]
             )],
             [],
             []
