@@ -1,7 +1,7 @@
 //! This module defines constructor terms of data types.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::*;
 
 use crate::parser::util::ToMiette;
@@ -22,7 +22,7 @@ use std::collections::HashSet;
 pub struct Constructor {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The constructor name
     pub id: Name,
     /// The arguments of the constructor
@@ -93,7 +93,7 @@ impl Check for Constructor {
                 Ok(self)
             }
             None => Err(Error::Undefined {
-                span: self.span.to_miette(),
+                span: Some(self.span.to_miette()),
                 name: self.id.clone(),
             }),
         }
@@ -108,10 +108,10 @@ impl UsedBinders for Constructor {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -119,7 +119,7 @@ mod test {
     #[test]
     fn check_nil() {
         let result = Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Nil".to_owned(),
             args: vec![].into(),
             ty: None,
@@ -131,7 +131,7 @@ mod test {
         )
         .unwrap();
         let expected = Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Nil".to_owned(),
             args: vec![].into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
@@ -144,12 +144,12 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         let result = Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Cons".to_owned(),
             args: vec![
                 XVar::mk("x").into(),
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![].into(),
                     ty: None,
@@ -166,18 +166,18 @@ mod test {
         )
         .unwrap();
         let expected = Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Cons".to_owned(),
             args: vec![
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Prd),
                 }
                 .into(),
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![].into(),
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
@@ -193,18 +193,18 @@ mod test {
     #[test]
     fn check_ctor_fail() {
         let result = Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Cons".to_owned(),
             args: vec![
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![].into(),
                     ty: None,
                 }
                 .into(),
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![].into(),
                     ty: None,
@@ -217,7 +217,7 @@ mod test {
         .check(
             &mut symbol_table_list(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
@@ -227,7 +227,7 @@ mod test {
 
     fn example_nil() -> Constructor {
         Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Nil".to_owned(),
             args: vec![].into(),
             ty: None,
@@ -236,7 +236,7 @@ mod test {
 
     fn example_tup() -> Constructor {
         Constructor {
-            span: Span::default(),
+            span: dummy_span(),
             id: "Tup".to_owned(),
             args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()].into(),
             ty: None,

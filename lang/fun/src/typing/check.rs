@@ -2,7 +2,6 @@
 
 use std::rc::Rc;
 
-use codespan::Span;
 use miette::SourceSpan;
 use printer::Print;
 
@@ -125,16 +124,16 @@ pub fn check_args(
 /// This function checks equality of two monomorphic types. It also checks the well-formedness of the two
 /// types, which creates instances if needed. The two types hence must not be type parameters.
 pub fn check_equality(
-    span: &Span,
+    span: &SourceSpan,
     symbol_table: &mut SymbolTable,
     expected: &Ty,
     got: &Ty,
 ) -> Result<(), Error> {
-    expected.check(span, symbol_table)?;
-    got.check(span, symbol_table)?;
+    expected.check(&Some(*span), symbol_table)?;
+    got.check(&Some(*span), symbol_table)?;
     if expected != got {
         return Err(Error::Mismatch {
-            span: span.to_miette(),
+            span: *span,
             expected: expected.print_to_string(None),
             got: got.print_to_string(None),
         });
@@ -146,7 +145,6 @@ pub fn check_equality(
 mod check_tests {
     use super::{check_args, check_equality};
     use crate::{
-        parser::util::ToMiette,
         syntax::{
             context::{
                 Chirality::{Cns, Prd},
@@ -155,6 +153,7 @@ mod check_tests {
             program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
+            util::dummy_span,
         },
         test_common::{
             codata_stream, data_list, data_list_i64, def_mult, def_mult_typed, symbol_table_fun,
@@ -162,7 +161,6 @@ mod check_tests {
         },
         typing::symbol_table::SymbolTable,
     };
-    use codespan::Span;
 
     #[test]
     fn module_check() {
@@ -186,29 +184,29 @@ mod check_tests {
 
     #[test]
     fn ty_check_int() {
-        let result = Ty::mk_i64().check(&Span::default(), &mut SymbolTable::default());
+        let result = Ty::mk_i64().check(&None, &mut SymbolTable::default());
         assert!(result.is_ok())
     }
 
     #[test]
     fn ty_check_decl() {
         let mut symbol_table = symbol_table_list();
-        let result = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
-            .check(&Span::default(), &mut symbol_table);
+        let result =
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])).check(&None, &mut symbol_table);
         assert!(result.is_ok())
     }
 
     #[test]
     fn ty_check_fail() {
         let result = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
-            .check(&Span::default(), &mut SymbolTable::default());
+            .check(&None, &mut SymbolTable::default());
         assert!(result.is_err())
     }
 
     #[test]
     fn equality_check() {
         let result = check_equality(
-            &Span::default(),
+            &dummy_span(),
             &mut SymbolTable::default(),
             &Ty::mk_i64(),
             &Ty::mk_i64(),
@@ -219,7 +217,7 @@ mod check_tests {
     #[test]
     fn equality_check_fail() {
         let result = check_equality(
-            &Span::default(),
+            &dummy_span(),
             &mut SymbolTable::default(),
             &Ty::mk_i64(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
@@ -231,20 +229,20 @@ mod check_tests {
     fn check_arg_list() {
         let mut symbol_table = symbol_table_list();
         let result = check_args(
-            &Span::default().to_miette(),
+            &dummy_span(),
             &mut symbol_table,
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
             vec![
                 Lit {
-                    span: Span::default(),
+                    span: dummy_span(),
                     lit: 1,
                 }
                 .into(),
                 Constructor {
-                    span: Span::default(),
+                    span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![].into(),
                     ty: None,
@@ -253,7 +251,7 @@ mod check_tests {
             ]
             .into(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![
                     ContextBinding {
                         var: "x".to_owned(),
@@ -271,12 +269,12 @@ mod check_tests {
         .unwrap();
         let expected = vec![
             Lit {
-                span: Span::default(),
+                span: dummy_span(),
                 lit: 1,
             }
             .into(),
             Constructor {
-                span: Span::default(),
+                span: dummy_span(),
                 id: "Nil".to_owned(),
                 args: vec![].into(),
                 ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
@@ -290,10 +288,10 @@ mod check_tests {
     #[test]
     fn check_arg_covar() {
         let result = check_args(
-            &Span::default().to_miette(),
+            &dummy_span(),
             &mut symbol_table_fun(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![
                     ContextBinding {
                         var: "c".to_owned(),
@@ -309,7 +307,7 @@ mod check_tests {
             },
             vec![XVar::mk("c").into(), XVar::mk("d").into()].into(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![
                     ContextBinding {
                         var: "a".to_owned(),
@@ -327,14 +325,14 @@ mod check_tests {
         .unwrap();
         let expected = vec![
             XVar {
-                span: Span::default(),
+                span: dummy_span(),
                 var: "c".to_owned(),
                 ty: Some(Ty::mk_i64()),
                 chi: Some(Cns),
             }
             .into(),
             XVar {
-                span: Span::default(),
+                span: dummy_span(),
                 var: "d".to_owned(),
                 ty: Some(Ty::mk_decl(
                     "Fun",
@@ -351,22 +349,22 @@ mod check_tests {
     #[test]
     fn check_fail() {
         let result = check_args(
-            &Span::default().to_miette(),
+            &dummy_span(),
             &mut SymbolTable::default(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
             vec![
                 Lit {
-                    span: Span::default(),
+                    span: dummy_span(),
                     lit: 1,
                 }
                 .into(),
             ]
             .into(),
             &TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
         );

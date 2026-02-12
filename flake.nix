@@ -28,10 +28,6 @@
                 src = ./.;
                 cargoDeps = rustPlatform.importCargoLock {
                   lockFile = ./Cargo.lock;
-                  outputHashes = {
-                    "codespan-0.11.1" =
-                      "sha256-Wq99v77bqSGIOK/iyv+x/EG1563XSeaTDW5K2X3kSXU=";
-                  };
                 };
                 postFixup = ''
                   mv $out/bin/scc $out/bin/scc-unwrapped

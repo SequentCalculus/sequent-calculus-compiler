@@ -1,7 +1,7 @@
 //! This module contains the declaration of data type templates.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{COMMA, DATA};
 use printer::*;
 
@@ -23,7 +23,7 @@ use crate::typing::*;
 pub struct CtorSig {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The constructor name
     pub name: Name,
     /// The argument context
@@ -67,7 +67,7 @@ impl Print for CtorSig {
 pub struct Data {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: Option<SourceSpan>,
     /// The data type name
     pub name: Name,
     /// The type paramenters

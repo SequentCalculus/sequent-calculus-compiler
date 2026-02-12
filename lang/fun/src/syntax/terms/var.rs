@@ -1,7 +1,7 @@
 //! This module defines variables and covariables in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::*;
 
 use crate::parser::util::ToMiette;
@@ -16,7 +16,7 @@ use crate::typing::*;
 pub struct XVar {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The name of the (co)variable
     pub var: Var,
     /// The (inferred) type
@@ -29,8 +29,10 @@ impl XVar {
     /// This function returns a (co)variable from a given string, without chirality and type
     /// information.
     pub fn mk(var: &str) -> Self {
+        use crate::syntax::util::dummy_span;
+
         XVar {
-            span: Span::default(),
+            span: dummy_span(),
             var: var.to_string(),
             ty: None,
             chi: None,
@@ -87,8 +89,9 @@ impl Check for XVar {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
+    use miette::SourceSpan;
 
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::*;
 
@@ -100,7 +103,7 @@ mod test {
             .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = XVar {
-            span: Span::default(),
+            span: dummy_span(),
             var: "x".to_owned(),
             ty: Some(Ty::mk_i64()),
             chi: Some(Prd),

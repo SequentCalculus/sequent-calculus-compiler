@@ -1,7 +1,7 @@
 //! This module defines the conditionals comparing two integers in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::*;
 
@@ -55,7 +55,7 @@ impl Print for IfSort {
 pub struct IfC {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The comparison operation
     pub sort: IfSort,
     /// The first term of the comparison
@@ -151,10 +151,11 @@ impl UsedBinders for IfC {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
+    use miette::SourceSpan;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::*;
 
@@ -163,7 +164,7 @@ mod test {
     #[test]
     fn check_ife() {
         let result = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
             snd: Some(Rc::new(Lit::mk(1).into())),
@@ -178,7 +179,7 @@ mod test {
         )
         .unwrap();
         let expected = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
             snd: Some(Rc::new(Lit::mk(1).into())),
@@ -194,7 +195,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(XVar::mk("x").into()),
             snd: Some(Rc::new(XVar::mk("x").into())),
@@ -208,7 +209,7 @@ mod test {
 
     fn example() -> IfC {
         IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Term::Lit(Lit::mk(1))),
             snd: Some(Rc::new(Term::Lit(Lit::mk(1)))),
@@ -238,7 +239,7 @@ mod test {
     #[test]
     fn check_ifz() {
         let result = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(1).into()),
             snd: None,
@@ -253,7 +254,7 @@ mod test {
         )
         .unwrap();
         let expected = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(1).into()),
             snd: None,
@@ -269,7 +270,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let result = IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(XVar::mk("x").into()),
             snd: None,
@@ -283,7 +284,7 @@ mod test {
 
     fn example_zero() -> IfC {
         IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Term::Lit(Lit::mk(0))),
             snd: None,
@@ -295,7 +296,7 @@ mod test {
 
     fn example_zero_not() -> IfC {
         IfC {
-            span: Span::default(),
+            span: dummy_span(),
             sort: IfSort::NotEqual,
             fst: Rc::new(Term::Lit(Lit::mk(1))),
             snd: None,

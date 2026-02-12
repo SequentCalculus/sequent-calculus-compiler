@@ -1,7 +1,7 @@
 //! This module defines a copattern match of a codata type in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::NEW;
 use printer::*;
 
@@ -25,7 +25,7 @@ use std::collections::HashSet;
 pub struct New {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The list of clauses
     pub clauses: Vec<Clause>,
     /// The (inferred) type of the term
@@ -84,7 +84,7 @@ impl Check for New {
             }
             None => {
                 return Err(Error::Undefined {
-                    span: self.span.to_miette(),
+                    span: Some(self.span.to_miette()),
                     name: type_name,
                 });
             }
@@ -107,7 +107,7 @@ impl Check for New {
             match symbol_table.dtors.get(&dtor_name) {
                 None => {
                     return Err(Error::Undefined {
-                        span: self.span.to_miette(),
+                        span: Some(self.span.to_miette()),
                         name: dtor_name.clone(),
                     });
                 }
@@ -156,10 +156,10 @@ impl UsedBinders for New {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -168,10 +168,10 @@ mod test {
     fn check_lpair() {
         let mut symbol_table = symbol_table_lpair();
         let result = New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
                     context_names: NameContext::default(),
@@ -179,7 +179,7 @@ mod test {
                     body: Lit::mk(1).into(),
                 },
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
                     context_names: NameContext::default(),
@@ -196,10 +196,10 @@ mod test {
         )
         .unwrap();
         let expected = New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
                     context_names: NameContext::default(),
@@ -207,7 +207,7 @@ mod test {
                     body: Lit::mk(1).into(),
                 },
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
                     context_names: NameContext::default(),
@@ -233,9 +233,9 @@ mod test {
         ctx.add_covar("a", Ty::mk_i64());
         let mut symbol_table = symbol_table_fun();
         let result = New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![Clause {
-                span: Span::default(),
+                span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
                 context_names: ctx_names.clone(),
@@ -251,15 +251,15 @@ mod test {
         )
         .unwrap();
         let expected = New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![Clause {
-                span: Span::default(),
+                span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
                 context_names: ctx_names,
                 context: ctx,
                 body: XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_i64()),
                     chi: Some(Prd),
@@ -278,9 +278,9 @@ mod test {
     fn check_new_fail() {
         let mut symbol_table = symbol_table_fun();
         let result = New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![Clause {
-                span: Span::default(),
+                span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
                 context_names: NameContext::default(),
@@ -299,7 +299,7 @@ mod test {
 
     fn example_empty() -> New {
         New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![],
             ty: None,
         }
@@ -307,10 +307,10 @@ mod test {
 
     fn example_stream() -> New {
         New {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "head".to_owned(),
                     context_names: NameContext::default(),
@@ -318,7 +318,7 @@ mod test {
                     body: Term::Lit(Lit::mk(2)),
                 },
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "tail".to_owned(),
                     context_names: NameContext::default(),

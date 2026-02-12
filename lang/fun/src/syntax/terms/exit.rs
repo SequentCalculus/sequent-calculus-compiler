@@ -1,7 +1,7 @@
 //! This module defines the exit statement in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::EXIT;
 use printer::*;
 
@@ -18,7 +18,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Exit {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The exit code
     pub arg: Rc<Term>,
     /// The (inferred) type of the term

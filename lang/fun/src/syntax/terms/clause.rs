@@ -1,8 +1,8 @@
 //! This module defines a clause in a [match](crate::syntax::terms::Case) or a
 //! [comatch](crate::syntax::terms::New) in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
@@ -26,7 +26,7 @@ use std::collections::HashSet;
 pub struct Clause {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// Whether we have a clause of a match or comatch
     pub pol: Polarity,
     /// The name of the xtor

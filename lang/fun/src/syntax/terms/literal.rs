@@ -1,7 +1,7 @@
 //! This module defines integer literals in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
@@ -13,7 +13,7 @@ use crate::typing::*;
 pub struct Lit {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The integer value
     pub lit: i64,
 }
@@ -21,8 +21,10 @@ pub struct Lit {
 impl Lit {
     /// This function creates a literal term from a given integer.
     pub fn mk(lit: i64) -> Self {
+        use crate::syntax::util::dummy_span;
+
         Lit {
-            span: Span::default(),
+            span: dummy_span(),
             lit,
         }
     }

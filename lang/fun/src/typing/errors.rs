@@ -18,7 +18,7 @@ pub enum Error {
     DefinedMultipleTimes {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The name that was defined multiple times
         name: Name,
     },
@@ -28,7 +28,7 @@ pub enum Error {
     Undefined {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The undefined name
         name: Name,
     },
@@ -134,7 +134,7 @@ pub enum Error {
     WrongNumberOfBinders {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The expected number of arguments
         expected: usize,
         /// The found number of arguments
@@ -188,7 +188,7 @@ pub enum Error {
     VarBoundMultipleTimes {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The variable that was bound multiple times
         var: Var,
         /// The definition in which the variable was used
@@ -200,7 +200,7 @@ pub enum Error {
     CovarBoundMultipleTimes {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The covariable that was bound multiple times
         covar: Covar,
         /// The definition in which the covariable was used
@@ -212,7 +212,7 @@ pub enum Error {
     TypeParameterBoundMultipleTimes {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The type parameter that was bound multiple times
         param: Name,
         /// The definition in which the type parameter was used
@@ -234,7 +234,7 @@ pub enum Error {
     WrongNumberOfTypeArguments {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The expected number of arguments
         expected: usize,
         /// The actual number of arguments
@@ -246,7 +246,7 @@ pub enum Error {
     UndefinedWrongTypeArguments {
         /// The source location
         #[label]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
         /// The undefined name
         name: Name,
         /// The provided type arguments

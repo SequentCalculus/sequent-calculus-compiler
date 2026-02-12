@@ -1,7 +1,7 @@
 //! This module defines a pattern match of a data type in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{CASE, DOT};
 use printer::*;
 
@@ -27,7 +27,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Case {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The term to be matched on
     pub scrutinee: Rc<Term>,
     /// The type arguments instantiating the type parameters of the type
@@ -123,7 +123,7 @@ impl Check for Case {
             match symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
-                        span: self.span.to_miette(),
+                        span: Some(self.span.to_miette()),
                         name: ctor_name.clone(),
                     });
                 }
@@ -170,10 +170,11 @@ impl UsedBinders for Case {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
+    use miette::SourceSpan;
     use printer::*;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::*;
@@ -192,10 +193,10 @@ mod test {
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
@@ -203,7 +204,7 @@ mod test {
                     body: Lit::mk(1).into(),
                 },
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names.clone(),
@@ -218,10 +219,10 @@ mod test {
         .check(&mut symbol_table, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Case {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
                     context_names: NameContext::default(),
@@ -229,13 +230,13 @@ mod test {
                     body: Lit::mk(1).into(),
                 },
                 Clause {
-                    span: Span::default(),
+                    span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names,
                     context: ctx_case,
                     body: XVar {
-                        span: Span::default(),
+                        span: dummy_span(),
                         var: "x".to_owned(),
                         ty: Some(Ty::mk_i64()),
                         chi: Some(Prd),
@@ -245,7 +246,7 @@ mod test {
             ],
             scrutinee: Rc::new(
                 XVar {
-                    span: Span::default(),
+                    span: dummy_span(),
                     var: "x".to_owned(),
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                     chi: Some(Prd),
@@ -265,9 +266,9 @@ mod test {
         ctx_names.bindings.push("y".to_string());
         let mut symbol_table = symbol_table_list_template();
         let result = Case {
-            span: Span::default(),
+            span: dummy_span(),
             clauses: vec![Clause {
-                span: Span::default(),
+                span: dummy_span(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
@@ -284,7 +285,7 @@ mod test {
 
     fn example_empty() -> Case {
         Case {
-            span: Span::default(),
+            span: dummy_span(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::default(),
             clauses: vec![],
@@ -297,11 +298,11 @@ mod test {
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("y".to_string());
         Case {
-            span: Span::default(),
+            span: dummy_span(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             clauses: vec![Clause {
-                span: Span::default(),
+                span: dummy_span(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,

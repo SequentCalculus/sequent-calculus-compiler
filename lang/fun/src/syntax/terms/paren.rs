@@ -1,7 +1,7 @@
 //! This module defines parenthesized terms.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
@@ -16,7 +16,7 @@ use std::{collections::HashSet, rc::Rc};
 pub struct Paren {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The inner term
     pub inner: Rc<Term>,
 }
@@ -24,8 +24,10 @@ pub struct Paren {
 impl Paren {
     /// This function creates a parenthesized term from a given term.
     pub fn mk<T: Into<Term>>(tm: T) -> Self {
+        use crate::syntax::util::dummy_span;
+
         Paren {
-            span: Span::default(),
+            span: dummy_span(),
             inner: Rc::new(tm.into()),
         }
     }

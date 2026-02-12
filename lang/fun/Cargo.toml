@@ -21,7 +21,6 @@ test-common = []
 [dependencies]
 lalrpop-util = { version = "0.20.2", features = ["lexer"] }
 derivative   = { workspace = true }
-codespan     = { workspace = true }
 thiserror    = { workspace = true }
 miette       = { workspace = true }
 

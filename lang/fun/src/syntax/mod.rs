@@ -7,6 +7,7 @@ pub mod names;
 pub mod program;
 pub mod terms;
 pub mod types;
+pub mod util;
 
 pub use arguments::Arguments;
 pub use context::{

@@ -1,7 +1,7 @@
 //! This module contains the definition of top-level functions.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{COLON, DEF};
 use printer::*;
 
@@ -23,7 +23,7 @@ use crate::typing::*;
 pub struct Def {
     /// The Source Location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The name of the definition
     pub name: Name,
     /// The parameters
@@ -41,7 +41,7 @@ impl Def {
     pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
         self.context.check(symbol_table)?;
-        self.ret_ty.check(&self.span, symbol_table)?;
+        self.ret_ty.check(&Some(self.span), symbol_table)?;
 
         self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
 
@@ -80,7 +80,6 @@ impl From<Def> for Declaration {
 
 #[cfg(test)]
 mod def_tests {
-    use codespan::Span;
     use printer::Print;
 
     use crate::{
@@ -90,6 +89,7 @@ mod def_tests {
             program::Program,
             terms::{Lit, Term},
             types::Ty,
+            util::dummy_span,
         },
         test_common::{data_list, def_mult, def_mult_typed},
         typing::symbol_table::{BuildSymbolTable, SymbolTable},
@@ -100,10 +100,10 @@ mod def_tests {
     /// A definition with no arguments.
     fn simple_def() -> Def {
         Def {
-            span: Span::default(),
+            span: dummy_span(),
             name: "x".to_string(),
             context: TypingContext {
-                span: Span::default(),
+                span: None,
                 bindings: vec![],
             },
             body: Term::Lit(Lit::mk(4)),

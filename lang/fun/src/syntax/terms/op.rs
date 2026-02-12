@@ -1,7 +1,7 @@
 //! This module defines arithmetic binary operations in Fun.
 
-use codespan::Span;
 use derivative::Derivative;
+use miette::SourceSpan;
 use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::*;
 
@@ -45,7 +45,7 @@ impl Print for BinOp {
 pub struct Op {
     /// The source location
     #[derivative(PartialEq = "ignore")]
-    pub span: Span,
+    pub span: SourceSpan,
     /// The first operand
     pub fst: Rc<Term>,
     /// The kind of operation
@@ -101,10 +101,11 @@ impl UsedBinders for Op {
 
 #[cfg(test)]
 mod test {
-    use codespan::Span;
+    use miette::SourceSpan;
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::*;
 
@@ -113,7 +114,7 @@ mod test {
     #[test]
     fn check_op() {
         let result = Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Lit::mk(1).into()),
             op: BinOp::Sum,
             snd: Rc::new(Lit::mk(2).into()),
@@ -125,7 +126,7 @@ mod test {
         )
         .unwrap();
         let expected = Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Lit::mk(1).into()),
             op: BinOp::Sum,
             snd: Rc::new(Lit::mk(2).into()),
@@ -136,7 +137,7 @@ mod test {
     #[test]
     fn check_op_fail() {
         let result = Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Lit::mk(2).into()),
             op: BinOp::Sub,
             snd: Rc::new(Lit::mk(2).into()),
@@ -151,7 +152,7 @@ mod test {
 
     fn example_prod() -> Op {
         Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Prod,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -171,7 +172,7 @@ mod test {
 
     fn example_sum() -> Op {
         Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sum,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -191,7 +192,7 @@ mod test {
 
     fn example_sub() -> Op {
         Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(Term::Lit(Lit::mk(2))),
             op: BinOp::Sub,
             snd: Rc::new(Term::Lit(Lit::mk(4))),
@@ -212,10 +213,10 @@ mod test {
     /// (2 * 3) * 4
     fn example_parens() -> Op {
         Op {
-            span: Span::default(),
+            span: dummy_span(),
             fst: Rc::new(
                 Paren::mk(Op {
-                    span: Span::default(),
+                    span: dummy_span(),
                     fst: Rc::new(Term::Lit(Lit::mk(2))),
                     op: BinOp::Prod,
                     snd: Rc::new(Term::Lit(Lit::mk(3))),
