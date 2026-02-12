@@ -38,4 +38,4 @@ package-quick:
 
 .PHONY: package
 package:
-	@cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
+	@cargo package --workspace --exclude testsuite --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros
