@@ -31,3 +31,11 @@ coverage: vendor
 .PHONY: update-expected
 update-expected: vendor
 	UPDATE_GOLDENFILES=1 cargo test --workspace
+
+.PHONY: package-quick
+package-quick:
+	@cargo package --workspace --no-verify --exclude testsuite
+
+.PHONY: package
+package:
+	@cargo package --workspace --exclude polarity-bench --exclude test-runner --exclude polarity-lang-lsp-wasm
