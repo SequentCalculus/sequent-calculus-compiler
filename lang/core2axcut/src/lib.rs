@@ -18,3 +18,10 @@ pub mod program;
 pub mod shrinking;
 pub mod statements;
 pub mod types;
+
+pub fn shrink_var(var: core_lang::syntax::names::Var) -> axcut::syntax::names::Var {
+    axcut::syntax::names::Var {
+        name: var.name,
+        id: var.id,
+    }
+}

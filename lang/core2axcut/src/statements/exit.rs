@@ -2,12 +2,17 @@
 
 use core_lang::syntax::statements::FsExit;
 
-use crate::shrinking::{Shrinking, ShrinkingState};
+use crate::{
+    shrink_var,
+    shrinking::{Shrinking, ShrinkingState},
+};
 
 impl Shrinking for FsExit {
     type Target = axcut::syntax::Statement;
 
     fn shrink(self, _state: &mut ShrinkingState) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::Exit(axcut::syntax::statements::Exit { var: self.var })
+        axcut::syntax::Statement::Exit(axcut::syntax::statements::Exit {
+            var: shrink_var(self.var),
+        })
     }
 }

@@ -3,7 +3,7 @@
 use core_lang::syntax::Ty;
 use core_lang::syntax::declaration::{CodataDeclaration, cont_int};
 
-use crate::types::shrink_ty;
+use crate::{shrink_var, types::shrink_ty};
 
 /// This function translates a context binding in [Core](core_lang) to one in [AxCut](axcut). It
 /// essentially consists of mapping producers of data types and consumers of codata types to the
@@ -20,13 +20,13 @@ pub fn shrink_binding(
     if binding.ty == Ty::I64 {
         if binding.chi == core_lang::syntax::context::Chirality::Cns {
             axcut::syntax::ContextBinding {
-                var: binding.var,
+                var: shrink_var(binding.var),
                 chi: axcut::syntax::Chirality::Cns,
                 ty: axcut::syntax::Ty::Decl(cont_int().name),
             }
         } else {
             axcut::syntax::ContextBinding {
-                var: binding.var,
+                var: shrink_var(binding.var),
                 chi: axcut::syntax::Chirality::Ext,
                 ty: axcut::syntax::Ty::I64,
             }
@@ -37,13 +37,13 @@ pub fn shrink_binding(
             && binding.chi == core_lang::syntax::context::Chirality::Cns
     {
         axcut::syntax::ContextBinding {
-            var: binding.var,
+            var: shrink_var(binding.var),
             chi: axcut::syntax::Chirality::Prd,
             ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
-            var: binding.var,
+            var: shrink_var(binding.var),
             chi: axcut::syntax::Chirality::Cns,
             ty: shrink_ty(binding.ty),
         }
