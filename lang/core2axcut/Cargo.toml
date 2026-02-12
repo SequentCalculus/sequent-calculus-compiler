@@ -17,4 +17,6 @@ axcut         = { workspace = true }
 core_lang     = { workspace = true }
 printer       = { workspace = true }
 core_macros   = { workspace = true }
+
+[dev-dependencies]
 axcut_macros  = { workspace = true }
