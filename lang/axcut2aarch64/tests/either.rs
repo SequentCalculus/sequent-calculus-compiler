@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_either() {
-    let program = axcut2backend::examples::either_print();
+    let program = examples::either_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 

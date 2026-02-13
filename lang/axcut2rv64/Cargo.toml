@@ -19,3 +19,4 @@ axcut2backend = { workspace = true }
 [dev-dependencies]
 goldenfile   = { workspace = true }
 axcut_macros = { workspace = true }
+examples = { workspace = true }

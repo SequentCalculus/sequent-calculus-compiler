@@ -15,4 +15,3 @@ categories.workspace   = true
 # Workspace members
 axcut   = { workspace = true }
 printer = { workspace = true }
-axcut_macros = { workspace = true }

@@ -171,6 +171,7 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_macros",
+ "examples",
  "goldenfile",
  "scc-printer",
 ]
@@ -180,7 +181,6 @@ name = "axcut2backend"
 version = "0.1.0"
 dependencies = [
  "axcut",
- "axcut_macros",
  "scc-printer",
 ]
 
@@ -191,6 +191,7 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_macros",
+ "examples",
  "goldenfile",
 ]
 
@@ -201,6 +202,7 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_macros",
+ "examples",
  "goldenfile",
  "scc-printer",
 ]
@@ -490,6 +492,15 @@ checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "examples"
+version = "0.1.0"
+dependencies = [
+ "axcut",
+ "axcut_macros",
+ "scc-printer",
 ]
 
 [[package]]

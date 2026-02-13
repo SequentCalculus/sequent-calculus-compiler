@@ -1,6 +1,6 @@
 [package]
-name        = "axcut2aarch64"
-description = "Translating AxCut to aarch64 instructions"
+name        = "examples"
+description = "Examples for Axcut Syntax"
 
 version.workspace      = true
 edition.workspace      = true
@@ -13,11 +13,6 @@ categories.workspace   = true
 
 [dependencies]
 # Workspace members
-axcut         = { workspace = true }
-axcut2backend = { workspace = true }
-printer       = { workspace = true }
-
-[dev-dependencies]
-goldenfile   = { workspace = true }
+axcut = { workspace = true }
+printer = { workspace = true }
 axcut_macros = { workspace = true }
-examples  = { workspace = true }

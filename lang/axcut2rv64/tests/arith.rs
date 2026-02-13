@@ -6,7 +6,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_arith() {
-    let program = axcut2backend::examples::arith_exit();
+    let program = examples::arith_exit();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembly_prog);
 

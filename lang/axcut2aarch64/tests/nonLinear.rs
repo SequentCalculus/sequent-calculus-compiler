@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_non_linear() {
-    let program = axcut2backend::examples::non_linear_print();
+    let program = examples::non_linear_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 
