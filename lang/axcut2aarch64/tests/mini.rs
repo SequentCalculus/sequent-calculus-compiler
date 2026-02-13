@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_mini() {
-    let program = examples::mini_print();
+    let program = axcut2backend::examples::mini_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 

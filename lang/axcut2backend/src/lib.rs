@@ -32,6 +32,7 @@
 pub mod code;
 pub mod coder;
 pub mod config;
+pub mod examples;
 pub mod fresh_labels;
 pub mod memory;
 pub mod parallel_moves;

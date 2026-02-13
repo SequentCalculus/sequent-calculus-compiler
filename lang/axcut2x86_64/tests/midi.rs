@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_midi() {
-    let program = examples::midi_print();
+    let program = axcut2backend::examples::midi_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_x86_64_routine(assembly_prog);
 

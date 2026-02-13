@@ -2,7 +2,6 @@
 members = [
     "app",
     "testsuite",
-    "lang/examples",
     "lang/axcut",
     "lang/axcut2aarch64",
     "lang/axcut2backend",
@@ -57,7 +56,6 @@ driver        = { version = "0.1.0", path = "./lang/driver" }
 fun           = { version = "0.1.0", path = "./lang/fun" }
 fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
 printer       = { version = "0.1.0", path = "./lang/printer", package = "scc-printer" }
-examples      = { version = "0.1.0", path = "./lang/examples" }
 # Workspace members which are dev-dependencies
 # They don't have a version because of https://github.com/rust-lang/cargo/issues/4242
 core_macros   = { path = "./lang/macros/core", package = "scc-core-macros" }

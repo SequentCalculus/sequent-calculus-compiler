@@ -6,7 +6,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_mini() {
-    let program = examples::mini_exit();
+    let program = axcut2backend::examples::mini_exit();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembly_prog);
 
