@@ -19,7 +19,7 @@ categories.workspace   = true
 test-common = []
 
 [dependencies]
-lalrpop-util = { version = "0.20.2", features = ["lexer"] }
+lalrpop-util = { workspace = true, features = ["lexer"] }
 derivative   = { workspace = true }
 thiserror    = { workspace = true }
 miette       = { workspace = true }
@@ -28,4 +28,4 @@ miette       = { workspace = true }
 printer = { workspace = true }
 
 [build-dependencies]
-lalrpop = "0.20.2"
+lalrpop = { workspace = true }

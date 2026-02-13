@@ -36,6 +36,13 @@ thiserror    = { version = "1" }
 miette       = { version = "5" }
 pretty       = { version = "0.11", features = ["termcolor"] }
 goldenfile   = { version = "1.7.3" }
+opener       = { version = "0.7.2" }
+askama       = { version = "0.12.1" }
+lalrpop-util = { version = "0.20.2" }
+lalrpop      = { version = "0.20.2" }
+quote        = { version = "1.0" }
+proc-macro2  = { version = "1.0" }
+syn          = { version = "2.0" }
 
 # Workspace members
 axcut         = { version = "0.1.0", path = "./lang/axcut" }

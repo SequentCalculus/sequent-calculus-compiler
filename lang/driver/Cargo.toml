@@ -27,5 +27,5 @@ printer       = { workspace = true }
 # External dependencies
 thiserror = { workspace = true }
 miette    = { workspace = true, features = ["fancy"] }
-opener    = { version = "0.7.2" }
-askama    = { version = "0.12.1" }
+opener    = { workspace = true }
+askama    = { workspace = true }
