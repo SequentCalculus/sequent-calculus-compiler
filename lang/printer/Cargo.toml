@@ -1,5 +1,5 @@
 [package]
-name        = "printer"
+name        = "scc-printer"
 description = "Utilities for prettyprinting code"
 
 version.workspace      = true

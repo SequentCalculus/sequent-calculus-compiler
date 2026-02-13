@@ -11,6 +11,8 @@ homepage.workspace     = true
 repository.workspace   = true
 categories.workspace   = true
 
+include = ["/infrastructure", "/src", "/templates", "askama.toml"]
+
 [dependencies]
 # Workspace members
 axcut         = { workspace = true }
@@ -27,5 +29,5 @@ printer       = { workspace = true }
 # External dependencies
 thiserror = { workspace = true }
 miette    = { workspace = true, features = ["fancy"] }
-opener    = { version = "0.7.2" }
-askama    = { version = "0.12.1" }
+opener    = { workspace = true }
+askama    = { workspace = true }

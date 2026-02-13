@@ -1,5 +1,6 @@
 [package]
 name = "scc"
+description = "Sequent Calculus Compiler"
 
 version.workspace      = true
 edition.workspace      = true

@@ -1,16 +1,24 @@
 [package]
-name = "axcut_macros"
+name        = "axcut_macros"
+description = "Macros for AxCut"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [lib]
-proc-macro=true
+proc-macro = true
 
 [dependencies]
-macro_utils = { path="../utils" }
-axcut = { path="../../axcut"}
-quote = "1.0"
-proc-macro2 = "1.0"
-syn = { version= "2.0", features =["full"] }
+quote       = { workspace = true }
+proc-macro2 = { workspace = true }
+syn         = { workspace = true, features =["full"] }
+
+# Workspace members
+macro_utils = { workspace = true }
+axcut       = { workspace = true }

@@ -31,3 +31,11 @@ coverage: vendor
 .PHONY: update-expected
 update-expected: vendor
 	UPDATE_GOLDENFILES=1 cargo test --workspace
+
+.PHONY: package-quick
+package-quick:
+	@cargo package --workspace --no-verify --exclude testsuite --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros
+
+.PHONY: package
+package:
+	@cargo package --workspace --exclude testsuite --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros

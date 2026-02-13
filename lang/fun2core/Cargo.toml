@@ -18,5 +18,5 @@ printer   = { workspace = true }
 core_lang = { workspace = true }
 
 [dev-dependencies]
-fun = { workspace = true, features = ["test-common"] }
+fun         = { workspace = true, features = ["test-common"] }
 core_macros = { workspace = true }

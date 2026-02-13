@@ -388,7 +388,7 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
 }
 
 /// This constant contains the template of the C driver.
-pub const C_DRIVER_TEMPLATE: &str = include_str!("../../../infrastructure/driver-template.c");
+pub const C_DRIVER_TEMPLATE: &str = include_str!("../infrastructure/driver-template.c");
 
 /// This function generates the correct version of the C driver from the
 /// [template](C_DRIVER_TEMPLATE). It is parametrized by the number of arguments of the program and
@@ -441,7 +441,7 @@ pub fn generate_c_driver(number_of_arguments: usize, heap_size: Option<usize>) -
 }
 
 /// This constant contains the code of the IO runtime.
-pub const IO_RUNTIME: &[u8] = include_bytes!("../../../infrastructure/io.c");
+pub const IO_RUNTIME: &[u8] = include_bytes!("../infrastructure/io.c");
 
 /// This function generates the puts the IO runtime into the correct place.
 pub fn generate_io_runtime() -> PathBuf {

@@ -1,11 +1,17 @@
 [package]
-name = "macro_utils"
+name        = "scc-macro-utils"
+description = "Utilities for working with macros"
 
-# Inherited from workspace Cargo.toml
-version.workspace = true
-edition.workspace = true
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+authors.workspace      = true
+license.workspace      = true
+homepage.workspace     = true
+repository.workspace   = true
+categories.workspace   = true
 
 [dependencies]
-quote = "1.0"
-proc-macro2 = "1.0"
-syn = { version= "2.0", features =["full"] }
+quote       = { workspace = true }
+proc-macro2 = { workspace = true }
+syn         = { workspace = true, features =["full"] }

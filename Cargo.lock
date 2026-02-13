@@ -161,7 +161,7 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 name = "axcut"
 version = "0.1.0"
 dependencies = [
- "printer",
+ "scc-printer",
 ]
 
 [[package]]
@@ -172,7 +172,7 @@ dependencies = [
  "axcut2backend",
  "axcut_macros",
  "goldenfile",
- "printer",
+ "scc-printer",
 ]
 
 [[package]]
@@ -180,7 +180,7 @@ name = "axcut2backend"
 version = "0.1.0"
 dependencies = [
  "axcut",
- "printer",
+ "scc-printer",
 ]
 
 [[package]]
@@ -201,7 +201,7 @@ dependencies = [
  "axcut2backend",
  "axcut_macros",
  "goldenfile",
- "printer",
+ "scc-printer",
 ]
 
 [[package]]
@@ -209,9 +209,9 @@ name = "axcut_macros"
 version = "0.1.0"
 dependencies = [
  "axcut",
- "macro_utils",
  "proc-macro2",
  "quote",
+ "scc-macro-utils",
  "syn 2.0.98",
 ]
 
@@ -368,28 +368,9 @@ version = "0.1.0"
 dependencies = [
  "axcut",
  "axcut_macros",
- "core_lang",
- "core_macros",
- "printer",
-]
-
-[[package]]
-name = "core_lang"
-version = "0.1.0"
-dependencies = [
- "core_macros",
- "printer",
-]
-
-[[package]]
-name = "core_macros"
-version = "0.1.0"
-dependencies = [
- "core_lang",
- "macro_utils",
- "proc-macro2",
- "quote",
- "syn 2.0.98",
+ "scc-core-lang",
+ "scc-core-macros",
+ "scc-printer",
 ]
 
 [[package]]
@@ -464,12 +445,12 @@ dependencies = [
  "axcut2rv64",
  "axcut2x86_64",
  "core2axcut",
- "core_lang",
  "fun",
  "fun2core",
  "miette",
  "opener",
- "printer",
+ "scc-core-lang",
+ "scc-printer",
  "thiserror",
 ]
 
@@ -530,7 +511,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "miette",
- "printer",
+ "scc-printer",
  "thiserror",
 ]
 
@@ -538,10 +519,10 @@ dependencies = [
 name = "fun2core"
 version = "0.1.0"
 dependencies = [
- "core_lang",
- "core_macros",
  "fun",
- "printer",
+ "scc-core-lang",
+ "scc-core-macros",
+ "scc-printer",
 ]
 
 [[package]]
@@ -738,15 +719,6 @@ name = "log"
 version = "0.4.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
-
-[[package]]
-name = "macro_utils"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
-]
 
 [[package]]
 name = "memchr"
@@ -991,13 +963,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "printer"
-version = "0.1.0"
-dependencies = [
- "pretty",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1107,9 +1072,44 @@ dependencies = [
  "clap_complete",
  "driver",
  "miette",
- "printer",
+ "scc-printer",
  "termsize",
  "thiserror",
+]
+
+[[package]]
+name = "scc-core-lang"
+version = "0.1.0"
+dependencies = [
+ "scc-core-macros",
+ "scc-printer",
+]
+
+[[package]]
+name = "scc-core-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "scc-core-lang",
+ "scc-macro-utils",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "scc-macro-utils"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "scc-printer"
+version = "0.1.0"
+dependencies = [
+ "pretty",
 ]
 
 [[package]]
@@ -1315,11 +1315,11 @@ name = "testsuite"
 version = "0.1.0"
 dependencies = [
  "basic-toml",
- "core_lang",
- "core_macros",
  "driver",
  "fun",
- "printer",
+ "scc-core-lang",
+ "scc-core-macros",
+ "scc-printer",
  "serde",
 ]
 

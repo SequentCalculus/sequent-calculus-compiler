@@ -18,5 +18,5 @@ axcut2backend = { workspace = true }
 printer       = { workspace = true }
 
 [dev-dependencies]
-goldenfile = { workspace = true }
-axcut_macros = { path = "../macros/axcut" }
+goldenfile   = { workspace = true }
+axcut_macros = { workspace = true }
