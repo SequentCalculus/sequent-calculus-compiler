@@ -170,7 +170,7 @@ version = "0.1.0"
 dependencies = [
  "axcut",
  "axcut2backend",
- "axcut_macros",
+ "axcut_examples",
  "goldenfile",
  "scc-printer",
 ]
@@ -189,7 +189,7 @@ version = "0.1.0"
 dependencies = [
  "axcut",
  "axcut2backend",
- "axcut_macros",
+ "axcut_examples",
  "goldenfile",
 ]
 
@@ -199,8 +199,17 @@ version = "0.1.0"
 dependencies = [
  "axcut",
  "axcut2backend",
- "axcut_macros",
+ "axcut_examples",
  "goldenfile",
+ "scc-printer",
+]
+
+[[package]]
+name = "axcut_examples"
+version = "0.1.0"
+dependencies = [
+ "axcut",
+ "axcut_macros",
  "scc-printer",
 ]
 

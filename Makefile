@@ -34,8 +34,8 @@ update-expected: vendor
 
 .PHONY: package-quick
 package-quick:
-	@cargo package --workspace --no-verify --exclude testsuite --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros
+	@cargo package --workspace --no-verify --exclude testsuite --exclude axcut_examples --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros
 
 .PHONY: package
 package:
-	@cargo package --workspace --exclude testsuite --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros
+	@cargo package --workspace --exclude testsuite --exclude axcut_examples --exclude scc-macro-utils --exclude scc-core-macros --exclude axcut_macros

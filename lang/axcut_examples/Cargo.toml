@@ -1,6 +1,6 @@
 [package]
-name        = "axcut2rv64"
-description = "Translating AxCut to 64-Bit Risc-V instructions"
+name        = "axcut_examples"
+description = "Examples in Axcut"
 
 version.workspace      = true
 edition.workspace      = true
@@ -13,9 +13,6 @@ categories.workspace   = true
 
 [dependencies]
 # Workspace members
-axcut         = { workspace = true }
-axcut2backend = { workspace = true }
-
-[dev-dependencies]
-axcut_examples  = { workspace = true }
-goldenfile      = { workspace = true }
+axcut        = { workspace = true }
+axcut_macros = { workspace = true }
+printer      = { workspace = true }

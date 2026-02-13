@@ -3,6 +3,7 @@ members = [
     "app",
     "testsuite",
     "lang/axcut",
+    "lang/axcut_examples",
     "lang/axcut2aarch64",
     "lang/axcut2backend",
     "lang/axcut2rv64",
@@ -45,19 +46,20 @@ proc-macro2  = { version = "1.0" }
 syn          = { version = "2.0" }
 
 # Workspace members
-axcut         = { version = "0.1.0", path = "./lang/axcut" }
-axcut2aarch64 = { version = "0.1.0", path = "./lang/axcut2aarch64" }
-axcut2backend = { version = "0.1.0", path = "./lang/axcut2backend" }
-axcut2rv64    = { version = "0.1.0", path = "./lang/axcut2rv64" }
-axcut2x86_64  = { version = "0.1.0", path = "./lang/axcut2x86_64" }
-core_lang     = { version = "0.1.0", path = "./lang/core_lang", package = "scc-core-lang" }
-core2axcut    = { version = "0.1.0", path = "./lang/core2axcut" }
-driver        = { version = "0.1.0", path = "./lang/driver" }
-fun           = { version = "0.1.0", path = "./lang/fun" }
-fun2core      = { version = "0.1.0", path = "./lang/fun2core" }
-printer       = { version = "0.1.0", path = "./lang/printer", package = "scc-printer" }
+axcut          = { version = "0.1.0", path = "./lang/axcut" }
+axcut2aarch64  = { version = "0.1.0", path = "./lang/axcut2aarch64" }
+axcut2backend  = { version = "0.1.0", path = "./lang/axcut2backend" }
+axcut2rv64     = { version = "0.1.0", path = "./lang/axcut2rv64" }
+axcut2x86_64   = { version = "0.1.0", path = "./lang/axcut2x86_64" }
+core_lang      = { version = "0.1.0", path = "./lang/core_lang", package = "scc-core-lang" }
+core2axcut     = { version = "0.1.0", path = "./lang/core2axcut" }
+driver         = { version = "0.1.0", path = "./lang/driver" }
+fun            = { version = "0.1.0", path = "./lang/fun" }
+fun2core       = { version = "0.1.0", path = "./lang/fun2core" }
+printer        = { version = "0.1.0", path = "./lang/printer", package = "scc-printer" }
 # Workspace members which are dev-dependencies
 # They don't have a version because of https://github.com/rust-lang/cargo/issues/4242
-core_macros   = { path = "./lang/macros/core", package = "scc-core-macros" }
-axcut_macros  = { path = "./lang/macros/axcut" }
-macro_utils   = { path = "./lang/macros/utils", package = "scc-macro-utils" }
+axcut_examples = { path = "./lang/axcut_examples" }
+core_macros    = { path = "./lang/macros/core", package = "scc-core-macros" }
+axcut_macros   = { path = "./lang/macros/axcut" }
+macro_utils    = { path = "./lang/macros/utils", package = "scc-macro-utils" }
