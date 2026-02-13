@@ -51,8 +51,8 @@ fn ifc(input: TokenStream, sort: IfSort) -> TokenStream {
             sort: #sort,
             fst: #fst.to_string(),
             snd: #snd,
-            thenc: ::std::rc::Rc::new(Statement::from(#thenc)),
-            elsec: ::std::rc::Rc::new(Statement::from(#elsec))
+            thenc: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#thenc)),
+            elsec: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#elsec))
         }
     }
     .into()
