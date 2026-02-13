@@ -11,7 +11,7 @@ homepage.workspace     = true
 repository.workspace   = true
 categories.workspace   = true
 
-include = ["../../infrastructure"]
+include = ["../../infrastructure", "/src", "/templates"]
 
 [dependencies]
 # Workspace members
