@@ -61,5 +61,5 @@ examples      = { version = "0.1.0", path = "./lang/examples" }
 # Workspace members which are dev-dependencies
 # They don't have a version because of https://github.com/rust-lang/cargo/issues/4242
 core_macros   = { path = "./lang/macros/core", package = "scc-core-macros" }
-axcut_macros  = { path = "./lang/macros/axcut", package = "scc-axcut_macros" }
+axcut_macros  = { path = "./lang/macros/axcut" }
 macro_utils   = { path = "./lang/macros/utils", package = "scc-macro-utils" }
