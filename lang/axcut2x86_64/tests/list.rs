@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_list() {
-    let program = examples::list_print();
+    let program = axcut_examples::list_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_x86_64_routine(assembly_prog);
 

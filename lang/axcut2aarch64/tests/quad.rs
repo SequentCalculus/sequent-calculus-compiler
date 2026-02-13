@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_quad() {
-    let program = examples::quad_print();
+    let program = axcut_examples::quad_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 

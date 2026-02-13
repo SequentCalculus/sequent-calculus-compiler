@@ -18,6 +18,6 @@ axcut2backend = { workspace = true }
 printer       = { workspace = true }
 
 [dev-dependencies]
-goldenfile   = { workspace = true }
-axcut_macros = { workspace = true }
-examples  = { workspace = true }
+axcut_macros    = { workspace = true }
+axcut_examples  = { workspace = true }
+goldenfile      = { workspace = true }

@@ -7,7 +7,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_closure() {
-    let program = examples::closure_print();
+    let program = axcut_examples::closure_print();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 

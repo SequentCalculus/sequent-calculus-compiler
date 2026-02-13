@@ -6,7 +6,7 @@ use std::io::prelude::*;
 
 #[test]
 fn test_list() {
-    let program = examples::list_exit();
+    let program = axcut_examples::list_exit();
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_rv64_routine(assembly_prog);
 

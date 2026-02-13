@@ -1,6 +1,6 @@
 [package]
-name        = "examples"
-description = "Examples for Axcut Syntax"
+name        = "axcut_examples"
+description = "Examples in Axcut"
 
 version.workspace      = true
 edition.workspace      = true
@@ -13,6 +13,6 @@ categories.workspace   = true
 
 [dependencies]
 # Workspace members
-axcut = { workspace = true }
-printer = { workspace = true }
+axcut        = { workspace = true }
 axcut_macros = { workspace = true }
+printer      = { workspace = true }
