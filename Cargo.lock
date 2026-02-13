@@ -500,7 +500,7 @@ version = "0.1.0"
 dependencies = [
  "axcut",
  "axcut_macros",
- "printer",
+ "scc-printer",
 ]
 
 [[package]]
