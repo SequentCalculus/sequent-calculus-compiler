@@ -171,7 +171,6 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_examples",
- "axcut_macros",
  "goldenfile",
  "scc-printer",
 ]
@@ -191,7 +190,6 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_examples",
- "axcut_macros",
  "goldenfile",
 ]
 
@@ -202,7 +200,6 @@ dependencies = [
  "axcut",
  "axcut2backend",
  "axcut_examples",
- "axcut_macros",
  "goldenfile",
  "scc-printer",
 ]
