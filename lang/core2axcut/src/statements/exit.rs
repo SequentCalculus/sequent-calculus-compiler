@@ -8,6 +8,6 @@ impl Shrinking for FsExit {
     type Target = axcut::syntax::Statement;
 
     fn shrink(self, _state: &mut ShrinkingState) -> axcut::syntax::Statement {
-        axcut::syntax::Statement::Exit(axcut::syntax::statements::Exit { var: self.var })
+        axcut::syntax::Statement::Exit(axcut::syntax::statements::Exit { var: self.var.name })
     }
 }

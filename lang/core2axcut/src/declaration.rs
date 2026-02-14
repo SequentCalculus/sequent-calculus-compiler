@@ -13,7 +13,7 @@ pub fn shrink_xtor<P: Polarity>(
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
-        name: xtor.name,
+        name: xtor.name.name,
         args: shrink_context(xtor.args, codata_types),
     }
 }
@@ -27,7 +27,7 @@ pub fn shrink_declaration<P: Polarity>(
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypeDeclaration {
     axcut::syntax::TypeDeclaration {
-        name: declaration.name,
+        name: declaration.name.name,
         xtors: declaration
             .xtors
             .into_iter()

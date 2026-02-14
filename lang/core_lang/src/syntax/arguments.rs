@@ -41,8 +41,8 @@ impl Subst for Argument {
     type Target = Argument;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Argument::Producer(prod) => Argument::Producer(prod.subst_sim(prod_subst, cons_subst)),
@@ -65,7 +65,7 @@ impl TypedFreeVars for Argument {
 }
 
 impl Uniquify for Argument {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Argument {
+    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Argument {
         match self {
             Argument::Producer(term) => Argument::Producer(term.uniquify(seen_vars, used_vars)),
             Argument::Consumer(term) => Argument::Consumer(term.uniquify(seen_vars, used_vars)),
@@ -74,7 +74,7 @@ impl Uniquify for Argument {
 }
 
 impl Bind for Argument {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match self {
             Argument::Producer(prd) => prd.bind(k, used_vars),
             Argument::Consumer(cns) => cns.bind(k, used_vars),
@@ -121,8 +121,8 @@ impl Subst for Arguments {
     type Target = Arguments;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.entries = self.entries.subst_sim(prod_subst, cons_subst);
         self
@@ -136,7 +136,11 @@ impl TypedFreeVars for Arguments {
 }
 
 impl Uniquify for Arguments {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Arguments {
+    fn uniquify(
+        mut self,
+        seen_vars: &mut HashSet<Ident>,
+        used_vars: &mut HashSet<Ident>,
+    ) -> Arguments {
         self.entries = self.entries.uniquify(seen_vars, used_vars);
         self
     }

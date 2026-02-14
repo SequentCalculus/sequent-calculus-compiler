@@ -11,7 +11,7 @@ impl<T: Chi> Shrinking for Clause<T, FsStatement> {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::statements::Clause {
         axcut::syntax::statements::Clause {
-            xtor: self.xtor,
+            xtor: self.xtor.name,
             context: shrink_context(self.context, state.codata),
             body: self.body.shrink(state),
         }

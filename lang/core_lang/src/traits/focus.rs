@@ -3,7 +3,7 @@
 //! module also defines a helper trait [Bind] with a method that is used during focusing to avoid
 //! administrative redexes.
 
-use crate::syntax::{ContextBinding, FsStatement, Var, arguments::Argument};
+use crate::syntax::{ContextBinding, FsStatement, Ident, arguments::Argument};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -25,19 +25,19 @@ pub trait Focusing {
     /// place.
     /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
     ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target;
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target;
 }
 
 impl<T: Focusing + Clone> Focusing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).focus(used_vars))
     }
 }
 
 impl<T: Focusing> Focusing for Vec<T> {
     type Target = Vec<T::Target>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         self.into_iter().map(|x| x.focus(used_vars)).collect()
     }
 }
@@ -47,11 +47,11 @@ impl<T: Focusing> Focusing for Vec<T> {
 /// continuation is applied to a (co)variable, it returns the focused statement with the
 /// (co)variable in the place of the term that was lifted. The continuation also expects the set of
 /// names used in the program, which is used for to generate fresh names.
-pub type Continuation = Box<dyn FnOnce(ContextBinding, &mut HashSet<Var>) -> FsStatement>;
+pub type Continuation = Box<dyn FnOnce(ContextBinding, &mut HashSet<Ident>) -> FsStatement>;
 /// This is a type alias for a meta-level continuation similar to [Continuation], but it abstracts
 /// over many (co)variables at once.
 pub type ContinuationVec =
-    Box<dyn FnOnce(VecDeque<ContextBinding>, &mut HashSet<Var>) -> FsStatement>;
+    Box<dyn FnOnce(VecDeque<ContextBinding>, &mut HashSet<Ident>) -> FsStatement>;
 
 /// This trait defines a method used during [focusing](Focusing) to avoid administrative redexes.
 pub trait Bind: Sized {
@@ -63,7 +63,7 @@ pub trait Bind: Sized {
     ///   lifted.
     /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
     ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement;
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement;
 }
 
 /// This function is used during [focusing](Focusing) to avoid administrative redexes. It is
@@ -76,7 +76,7 @@ pub trait Bind: Sized {
 pub fn bind_many(
     mut args: VecDeque<Argument>,
     k: ContinuationVec,
-    used_vars: &mut HashSet<Var>,
+    used_vars: &mut HashSet<Ident>,
 ) -> FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), used_vars),

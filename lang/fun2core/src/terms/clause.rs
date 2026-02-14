@@ -7,6 +7,7 @@ use crate::{
 };
 use core_lang::syntax::{
     Chirality, ContextBinding, Statement,
+    names::Ident,
     terms::{Cns, Prd},
 };
 use fun::syntax::types::OptTyped;
@@ -22,7 +23,7 @@ pub fn compile_clause(
 ) -> core_lang::syntax::terms::Clause<Cns, Statement> {
     core_lang::syntax::terms::Clause {
         prdcns: Cns,
-        xtor: clause.xtor,
+        xtor: Ident::new_with_zero(&clause.xtor),
         context: compile_context(clause.context),
         body: Rc::new(clause.body.compile_with_cont(cont, state)),
     }
@@ -46,20 +47,20 @@ pub fn compile_coclause(
     let mut new_context = compile_context(clause.context);
     let new_covar = state.fresh_covar();
     new_context.bindings.push(ContextBinding {
-        var: new_covar.clone(),
+        var: Ident::new_with_zero(&new_covar),
         chi: Chirality::Cns,
         ty: ty.clone(),
     });
 
     core_lang::syntax::terms::Clause {
         prdcns: Prd,
-        xtor: clause.xtor,
+        xtor: Ident::new_with_zero(&clause.xtor),
         context: new_context,
         body: Rc::new(
             clause.body.compile_with_cont(
                 core_lang::syntax::terms::XVar {
                     prdcns: Cns,
-                    var: new_covar,
+                    var: Ident::new_with_zero(&new_covar),
                     ty,
                 }
                 .into(),

@@ -63,8 +63,8 @@ impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
@@ -89,7 +89,7 @@ impl TypedFreeVars for Statement {
 }
 
 impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Statement {
         match self {
             Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
             Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
@@ -102,7 +102,7 @@ impl Uniquify for Statement {
 
 impl Focusing for Statement {
     type Target = FsStatement;
-    fn focus(self: Statement, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self: Statement, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match self {
             Statement::Cut(cut) => cut.focus(used_vars),
             Statement::IfC(ifc) => ifc.focus(used_vars),
@@ -143,7 +143,7 @@ impl Print for FsStatement {
 
 impl SubstVar for FsStatement {
     type Target = FsStatement;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsStatement {
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),

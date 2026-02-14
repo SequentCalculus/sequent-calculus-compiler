@@ -6,6 +6,7 @@ use crate::{
 };
 use core_lang::syntax::{
     Ty,
+    names::Ident,
     terms::{Cns, Prd},
 };
 
@@ -28,14 +29,14 @@ impl Compile for fun::syntax::terms::Label {
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
-            var: self.label.clone(),
+            var: Ident::new_with_zero(&self.label),
             ty: var_ty.clone(),
         }
         .into();
 
         core_lang::syntax::terms::Mu {
             prdcns: Prd,
-            variable: self.label,
+            variable: Ident::new_with_zero(&self.label),
             ty: var_ty,
             statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }

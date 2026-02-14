@@ -4,7 +4,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 
 use std::rc::Rc;
 
@@ -26,7 +26,7 @@ impl Compile for fun::syntax::terms::Let {
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
-            variable: self.variable,
+            variable: Ident::new_with_zero(&self.variable),
             ty: ty.clone(),
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         }

@@ -4,7 +4,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 
 impl Compile for fun::syntax::terms::Goto {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::Goto {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
-                var: self.target,
+                var: Ident::new_with_zero(&self.target),
                 ty: compile_ty(
                     &self
                         .ty

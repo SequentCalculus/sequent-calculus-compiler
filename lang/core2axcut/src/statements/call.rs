@@ -12,7 +12,7 @@ impl Shrinking for FsCall {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::Call(axcut::syntax::statements::Call {
-            label: self.name,
+            label: self.name.name,
             args: shrink_context(self.args, state.codata),
         })
     }

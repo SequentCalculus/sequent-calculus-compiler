@@ -20,7 +20,7 @@ pub struct Clause<C: Chi, S = Statement> {
     /// Whether we have a clause of a match or comatch
     pub prdcns: C,
     /// The name of the xtor
-    pub xtor: Name,
+    pub xtor: Ident,
     /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
     /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
@@ -39,9 +39,9 @@ impl<C: Chi, S: Print> Print for Clause<C, S> {
         };
 
         let xtor = if self.prdcns.is_prd() {
-            alloc.dtor(&self.xtor)
+            alloc.dtor(&self.xtor.print_to_string(Some(cfg)))
         } else {
-            alloc.ctor(&self.xtor)
+            alloc.ctor(&self.xtor.print_to_string(Some(cfg)))
         };
         xtor.append(context.group())
             .append(alloc.space())
@@ -90,11 +90,11 @@ impl<C: Chi> Subst for Clause<C> {
     type Target = Clause<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Clause<C> {
-        let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Ident, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Ident, Term<Cns>)> = Vec::new();
 
         for subst in prod_subst {
             if !self.context.vars().contains(&subst.0) {
@@ -116,7 +116,7 @@ impl<C: Chi> Subst for Clause<C> {
 
 impl<C: Chi> SubstVar for FsClause<C> {
     type Target = FsClause<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsClause<C> {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsClause<C> {
         self.body = self.body.subst_sim(subst);
         self
     }
@@ -147,14 +147,18 @@ impl<C: Chi> TypedFreeVars for FsClause<C> {
 }
 
 impl<C: Chi> Uniquify for Clause<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Clause<C> {
+    fn uniquify(
+        mut self,
+        seen_vars: &mut HashSet<Ident>,
+        used_vars: &mut HashSet<Ident>,
+    ) -> Clause<C> {
         let mut new_context = TypingContext::default();
-        let mut var_subst: Vec<(Var, Term<Prd>)> = Vec::new();
-        let mut covar_subst: Vec<(Covar, Term<Cns>)> = Vec::new();
+        let mut var_subst: Vec<(Ident, Term<Prd>)> = Vec::new();
+        let mut covar_subst: Vec<(Ident, Term<Cns>)> = Vec::new();
 
         for binding in self.context.bindings {
             if seen_vars.contains(&binding.var) {
-                let new_var: Var = fresh_name(used_vars, &binding.var);
+                let new_var: Ident = fresh_name(used_vars, &binding.var.name);
                 seen_vars.insert(new_var.clone());
                 new_context.bindings.push(ContextBinding {
                     var: new_var.clone(),
@@ -206,7 +210,7 @@ impl<C: Chi> Uniquify for Clause<C> {
 impl<C: Chi> Focusing for Clause<C> {
     type Target = FsClause<C>;
     // focus(X_i(x_{i,j}) => s_i ) = X_i(x_{i,j}) => focus(s_i)
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsClause<C> {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsClause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
