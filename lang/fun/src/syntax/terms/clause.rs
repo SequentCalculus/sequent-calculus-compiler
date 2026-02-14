@@ -95,7 +95,7 @@ pub fn print_clauses<'a>(
 }
 
 impl UsedBinders for Clause {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         for binding in &self.context_names.bindings {
             used.insert(binding.clone());
         }

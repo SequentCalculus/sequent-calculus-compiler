@@ -74,7 +74,7 @@ impl Compile for fun::syntax::terms::Label {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, lit, mu, ty};
-    use fun::{parse_term, syntax::names::Var, typing::check::Check};
+    use fun::{parse_term, syntax::names::Ident, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -89,7 +89,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "a".to_string(),
                 id: 0,
             }]),
@@ -116,7 +116,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "a".to_string(),
                 id: 0,
             }]),

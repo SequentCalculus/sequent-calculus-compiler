@@ -141,7 +141,7 @@ impl Check for IfC {
 }
 
 impl UsedBinders for IfC {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
         self.thenc.used_binders(used);
@@ -201,14 +201,14 @@ mod test {
             span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
                 .into(),
             ),
             snd: Some(Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -292,7 +292,7 @@ mod test {
             span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })

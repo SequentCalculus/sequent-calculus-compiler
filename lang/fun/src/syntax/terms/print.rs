@@ -86,7 +86,7 @@ impl Check for PrintI64 {
 }
 
 impl UsedBinders for PrintI64 {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.arg.used_binders(used);
         self.next.used_binders(used);
     }

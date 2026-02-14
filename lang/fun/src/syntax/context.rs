@@ -38,7 +38,7 @@ impl Print for Chirality {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContextBinding {
     /// The bound variable or covariable
-    pub var: Var,
+    pub var: Ident,
     /// Whether the binding is for a producer or consumer (i.e., a variable or covariable)
     pub chi: Chirality,
     /// The type of the binding
@@ -111,7 +111,7 @@ impl TypingContext {
     /// This function checks that no variable in the typing context is duplicated.
     /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut vars: HashSet<Var> = HashSet::new();
+        let mut vars: HashSet<Ident> = HashSet::new();
         for binding in &self.bindings {
             if vars.contains(&binding.var) {
                 if binding.chi == Chirality::Prd {
@@ -133,7 +133,7 @@ impl TypingContext {
     }
 
     /// This function looks up the type of a variable in the context.
-    pub fn lookup_var(&self, searched_var: &Var, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_var(&self, searched_var: &Ident, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_var {
@@ -150,7 +150,7 @@ impl TypingContext {
     }
 
     /// This function looks up the type of a covariable in the context.
-    pub fn lookup_covar(&self, searched_covar: &Var, span: &SourceSpan) -> Result<Ty, Error> {
+    pub fn lookup_covar(&self, searched_covar: &Ident, span: &SourceSpan) -> Result<Ty, Error> {
         // Due to variable shadowing we have to traverse from right to left.
         for binding in self.bindings.iter().rev() {
             if binding.var == *searched_covar {
@@ -169,7 +169,7 @@ impl TypingContext {
     /// This function adds a variable (producer) to the context.
     pub fn add_var(&mut self, var: &str, id: usize, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: Var {
+            var: Ident {
                 name: var.to_owned(),
                 id,
             },
@@ -181,7 +181,7 @@ impl TypingContext {
     /// This funciton adds a covariable (consumer) to the context.
     pub fn add_covar(&mut self, covar: &str, id: usize, ty: Ty) {
         self.bindings.push(ContextBinding {
-            var: Var {
+            var: Ident {
                 name: covar.to_owned(),
                 id,
             },
@@ -230,14 +230,14 @@ pub struct NameContext {
     #[derivative(PartialEq = "ignore")]
     pub span: Option<SourceSpan>,
     /// The named bindings
-    pub bindings: Vec<Var>,
+    pub bindings: Vec<Ident>,
 }
 
 impl NameContext {
     /// This function checks that no variable in the name context is duplicated.
     /// - `binding_site` is the name of the definition where the check was triggered.
     pub fn no_dups(&self, binding_site: &str) -> Result<(), Error> {
-        let mut params: HashSet<Var> = HashSet::new();
+        let mut params: HashSet<Ident> = HashSet::new();
         for binding in &self.bindings {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {
@@ -316,7 +316,7 @@ impl TypeContext {
             if params.contains(binding) {
                 return Err(Error::TypeParameterBoundMultipleTimes {
                     span: self.span.to_miette(),
-                    param: Var {
+                    param: Ident {
                         name: binding.clone(),
                         id: 0,
                     },
@@ -368,7 +368,7 @@ mod tests {
         parser::util::ToMiette,
         syntax::{
             context::TypingContext,
-            names::Var,
+            names::Ident,
             types::{Ty, TypeArgs},
             util::dummy_span,
         },
@@ -447,7 +447,7 @@ mod tests {
         assert!(
             example_context()
                 .lookup_var(
-                    &Var {
+                    &Ident {
                         name: "x".to_owned(),
                         id: 0
                     },
@@ -462,7 +462,7 @@ mod tests {
         assert!(
             example_context()
                 .lookup_var(
-                    &Var {
+                    &Ident {
                         name: "z".to_owned(),
                         id: 0
                     },
@@ -477,7 +477,7 @@ mod tests {
         assert!(
             example_context()
                 .lookup_covar(
-                    &Var {
+                    &Ident {
                         name: "a".to_owned(),
                         id: 0
                     },
@@ -492,7 +492,7 @@ mod tests {
         assert!(
             example_context()
                 .lookup_covar(
-                    &Var {
+                    &Ident {
                         name: "b".to_owned(),
                         id: 0
                     },

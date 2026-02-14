@@ -320,7 +320,7 @@ mod symbol_table_tests {
     use crate::{
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
-            names::Var,
+            names::Ident,
             program::Program,
             types::{Ty, TypeArgs},
             util::dummy_span,
@@ -351,7 +351,7 @@ mod symbol_table_tests {
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "l".to_owned(),
                             id: 0,
                         },
@@ -392,7 +392,7 @@ mod symbol_table_tests {
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "l".to_owned(),
                             id: 0,
                         },

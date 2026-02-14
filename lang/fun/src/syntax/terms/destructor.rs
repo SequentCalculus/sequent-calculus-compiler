@@ -117,7 +117,7 @@ impl Check for Destructor {
 }
 
 impl UsedBinders for Destructor {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.scrutinee.used_binders(used);
         self.args.entries.used_binders(used);
     }
@@ -150,7 +150,7 @@ mod destructor_tests {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![].into(),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -168,7 +168,7 @@ mod destructor_tests {
             scrutinee: Rc::new(
                 XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },
@@ -201,7 +201,7 @@ mod destructor_tests {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             args: vec![
                 Lit::mk(1).into(),
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "a".to_string(),
                     id: 0,
                 })
@@ -209,7 +209,7 @@ mod destructor_tests {
             ]
             .into(),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -227,7 +227,7 @@ mod destructor_tests {
                 Lit::mk(1).into(),
                 XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "a".to_owned(),
                         id: 0,
                     },
@@ -240,7 +240,7 @@ mod destructor_tests {
             scrutinee: Rc::new(
                 XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },
@@ -271,7 +271,7 @@ mod destructor_tests {
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             args: vec![].into(),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -290,7 +290,7 @@ mod destructor_tests {
             id: "head".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -336,19 +336,19 @@ mod destructor_tests {
             id: "fst".to_owned(),
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
                 .into(),
             ),
             args: vec![
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "y".to_string(),
                     id: 0,
                 })
                 .into(),
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "z".to_string(),
                     id: 0,
                 })

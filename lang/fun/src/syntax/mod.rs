@@ -14,6 +14,6 @@ pub use context::{
     Chirality, Chirality::Cns, Chirality::Prd, NameContext, TypeContext, TypingContext,
 };
 pub use declarations::*;
-pub use names::{Name, TypeVar, Var};
+pub use names::{Ident, Name, TypeVar};
 pub use terms::*;
 pub use types::{OptTyped, Ty, TypeArgs};

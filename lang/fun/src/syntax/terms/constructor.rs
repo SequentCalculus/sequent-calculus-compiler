@@ -95,7 +95,7 @@ impl Check for Constructor {
 }
 
 impl UsedBinders for Constructor {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.args.entries.used_binders(used);
     }
 }
@@ -141,7 +141,7 @@ mod test {
             span: dummy_span(),
             id: "Cons".to_owned(),
             args: vec![
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -169,7 +169,7 @@ mod test {
             args: vec![
                 XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },

@@ -67,7 +67,7 @@ impl Compile for fun::syntax::terms::IfC {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, ife, lit, mu, ty, var};
-    use fun::{parse_term, syntax::names::Var, typing::check::Check};
+    use fun::{parse_term, syntax::names::Ident, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -111,7 +111,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "x".to_string(),
                 id: 0,
             }]),
@@ -174,7 +174,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "x".to_string(),
                 id: 0,
             }]),

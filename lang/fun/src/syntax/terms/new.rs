@@ -146,7 +146,7 @@ impl Check for New {
 }
 
 impl UsedBinders for New {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.clauses.used_binders(used);
     }
 }
@@ -223,11 +223,11 @@ mod test {
     #[test]
     fn check_fun() {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "x".to_string(),
             id: 0,
         });
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "a".to_string(),
             id: 0,
         });
@@ -243,7 +243,7 @@ mod test {
                 xtor: "apply".to_owned(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
-                body: XVar::mk(Var {
+                body: XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -267,7 +267,7 @@ mod test {
                 context: ctx,
                 body: XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },

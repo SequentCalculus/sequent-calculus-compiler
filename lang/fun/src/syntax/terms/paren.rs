@@ -69,7 +69,7 @@ impl Check for Paren {
 }
 
 impl UsedBinders for Paren {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.inner.used_binders(used);
     }
 }

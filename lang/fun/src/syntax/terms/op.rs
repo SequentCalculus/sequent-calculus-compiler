@@ -93,7 +93,7 @@ impl Check for Op {
 }
 
 impl UsedBinders for Op {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.fst.used_binders(used);
         self.snd.used_binders(used);
     }

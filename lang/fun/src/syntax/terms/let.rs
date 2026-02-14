@@ -27,7 +27,7 @@ pub struct Let {
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
     /// The bound variable
-    pub variable: Var,
+    pub variable: Ident,
     /// The (annotated) type of the bound term
     pub var_ty: Ty,
     /// The bound term
@@ -93,7 +93,7 @@ impl Check for Let {
 }
 
 impl UsedBinders for Let {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         used.insert(self.variable.clone());
         self.bound_term.used_binders(used);
         self.in_term.used_binders(used);
@@ -116,14 +116,14 @@ mod test {
     fn check_let1() {
         let result = Let {
             span: dummy_span(),
-            variable: Var {
+            variable: Ident {
                 name: "x".to_owned(),
                 id: 0,
             },
             var_ty: Ty::mk_i64(),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -139,7 +139,7 @@ mod test {
         .unwrap();
         let expected = Let {
             span: dummy_span(),
-            variable: Var {
+            variable: Ident {
                 name: "x".to_owned(),
                 id: 0,
             },
@@ -149,7 +149,7 @@ mod test {
                 XVar {
                     span: dummy_span(),
                     ty: Some(Ty::mk_i64()),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },
@@ -166,7 +166,7 @@ mod test {
         let mut symbol_table = symbol_table_list();
         let result = Let {
             span: dummy_span(),
-            variable: Var {
+            variable: Ident {
                 name: "x".to_owned(),
                 id: 0,
             },
@@ -177,7 +177,7 @@ mod test {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
                     args: vec![
-                        XVar::mk(Var {
+                        XVar::mk(Ident {
                             name: "x".to_string(),
                             id: 0,
                         })
@@ -201,7 +201,7 @@ mod test {
     fn example() -> Let {
         Let {
             span: dummy_span(),
-            variable: Var {
+            variable: Ident {
                 name: "x".to_string(),
                 id: 0,
             },

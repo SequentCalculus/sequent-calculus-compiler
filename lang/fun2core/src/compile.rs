@@ -12,7 +12,7 @@ use core_lang::syntax::{
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::names::{Name, Var};
+use fun::syntax::names::{Ident, Name};
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},
@@ -27,7 +27,7 @@ use std::{
 /// current function that have been lifted to the top-level.
 pub struct CompileState<'a> {
     /// The names used in the top-level definition
-    pub used_vars: HashSet<Var>,
+    pub used_vars: HashSet<Ident>,
     /// The codata types in the program
     pub codata_types: &'a [CodataDeclaration],
     /// The labels for top-level functions used in the program
@@ -49,7 +49,7 @@ impl CompileState<'_> {
             .map(|var| var.name)
             .collect();
         let new_var = fresh_var(&mut vars);
-        self.used_vars = vars.into_iter().map(|name| Var { name, id: 0 }).collect();
+        self.used_vars = vars.into_iter().map(|name| Ident { name, id: 0 }).collect();
         new_var
     }
 
@@ -64,7 +64,7 @@ impl CompileState<'_> {
         let new_var = fresh_covar(&mut vars);
         self.used_vars = vars
             .into_iter()
-            .map(|var| Var { name: var, id: 0 })
+            .map(|var| Ident { name: var, id: 0 })
             .collect();
         new_var
     }

@@ -73,7 +73,7 @@ mod compile_tests {
     use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, names::Var},
+        syntax::{context::TypingContext, names::Ident},
         test_common::symbol_table_list,
         typing::check::Check,
     };
@@ -93,11 +93,11 @@ mod compile_tests {
 
         let mut state = CompileState {
             used_vars: HashSet::from([
-                Var {
+                Ident {
                     name: "x".to_string(),
                     id: 0,
                 },
-                Var {
+                Ident {
                     name: "xs".to_string(),
                     id: 0,
                 },

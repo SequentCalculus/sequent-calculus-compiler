@@ -18,7 +18,7 @@ pub struct XVar {
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
     /// The name of the (co)variable
-    pub var: Var,
+    pub var: Ident,
     /// The (inferred) type
     pub ty: Option<Ty>,
     /// The chirality, i.e, whether this is a variable or covariable
@@ -28,7 +28,7 @@ pub struct XVar {
 impl XVar {
     /// This function returns a (co)variable from a given string, without chirality and type
     /// information.
-    pub fn mk(var: Var) -> Self {
+    pub fn mk(var: Ident) -> Self {
         XVar {
             span: dummy_span(),
             var: var.clone(),
@@ -93,7 +93,7 @@ mod test {
     fn check_var() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", 0, Ty::mk_i64());
-        let result = XVar::mk(Var {
+        let result = XVar::mk(Ident {
             name: "x".to_string(),
             id: 0,
         })
@@ -101,7 +101,7 @@ mod test {
         .unwrap();
         let expected = XVar {
             span: dummy_span(),
-            var: Var {
+            var: Ident {
                 name: "x".to_owned(),
                 id: 0,
             },
@@ -114,7 +114,7 @@ mod test {
     fn check_var_fail() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", 0, Ty::mk_i64());
-        let result = XVar::mk(Var {
+        let result = XVar::mk(Ident {
             name: "x".to_string(),
             id: 0,
         })

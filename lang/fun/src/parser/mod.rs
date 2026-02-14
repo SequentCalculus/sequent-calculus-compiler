@@ -49,7 +49,7 @@ mod parser_tests {
     use crate::{
         syntax::{
             context::TypingContext,
-            names::Var,
+            names::Ident,
             program::Program,
             terms::{Lit, Paren, Term, XVar},
             types::Ty,
@@ -79,7 +79,7 @@ mod parser_tests {
     #[test]
     fn parse_var() {
         let parser = fun::TermParser::new();
-        let expected = XVar::mk(Var {
+        let expected = XVar::mk(Ident {
             name: "x".to_string(),
             id: 0,
         })

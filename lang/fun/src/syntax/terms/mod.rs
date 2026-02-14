@@ -37,7 +37,7 @@ pub use var::*;
 use printer::Print;
 
 use crate::{
-    syntax::names::Var,
+    syntax::names::Ident,
     traits::used_binders::UsedBinders,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
@@ -167,7 +167,7 @@ impl Check for Term {
 }
 
 impl UsedBinders for Term {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         match self {
             Term::XVar(_) | Term::Lit(_) => {}
             Term::Op(op) => op.used_binders(used),

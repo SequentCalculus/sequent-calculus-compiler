@@ -40,7 +40,7 @@ impl Compile for fun::syntax::terms::Goto {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, ife, lit, mu, prod, ty, var};
-    use fun::{parse_term, syntax::names::Var, typing::check::Check};
+    use fun::{parse_term, syntax::names::Ident, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -82,11 +82,11 @@ mod compile_tests {
 
         let mut state = CompileState {
             used_vars: HashSet::from([
-                Var {
+                Ident {
                     name: "x".to_string(),
                     id: 0,
                 },
-                Var {
+                Ident {
                     name: "a".to_string(),
                     id: 0,
                 },

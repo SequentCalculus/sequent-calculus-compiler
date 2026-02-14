@@ -93,18 +93,18 @@ Name: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
-Var: Var = {
-    <name:Name> "_" <id:Num> => Var{name,id: id as usize},
-    <name:Name> <id:Num> => Var{name,id: id as usize},
-    <name:Name> => Var{name,id:0},
+Ident: Ident = {
+    <name:Name> "_" <id:Num> => Ident {name,id: id as usize},
+    <name:Name> <id:Num> => Ident {name,id: id as usize},
+    <name:Name> => Ident {name,id:0},
 }
 
 ContextVar: ContextBinding = {
-    <var: Var> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
+    <var: Ident> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
 }
 
 ContextCovar: ContextBinding = {
-    <var: Var> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
+    <var: Ident> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
 }
 
 Binding: ContextBinding = {
@@ -116,7 +116,7 @@ pub OptContext: TypingContext = {
 }
 
 pub OptNameContext: NameContext = {
-    <l: @L> <bindings: OptParenthesizedList<Var>> <r: @R> => NameContext { span: Some(span(l, r)), bindings, },
+    <l: @L> <bindings: OptParenthesizedList<Ident>> <r: @R> => NameContext { span: Some(span(l, r)), bindings, },
 }
 
 //
@@ -154,7 +154,7 @@ Num: i64 = {
 }
 
 XVar: XVar = {
-    <l: @L> <var: Var> <r: @R> => XVar { span: span(l, r), var, ty: None, chi: None, },
+    <l: @L> <var: Ident> <r: @R> => XVar { span: span(l, r), var, ty: None, chi: None, },
 }
 
 CtorName: String = {
@@ -192,12 +192,12 @@ Call: Term = {
 }
 
 Label: Label = {
-    <l: @L> "label" <label: Var> <term: Braces<Term>> <r: @R> =>
+    <l: @L> "label" <label: Ident> <term: Braces<Term>> <r: @R> =>
       Label { span: span(l, r), label, term: Rc::new(term), ty: None, },
 }
 
 Goto: Goto = {
-    <l: @L> "goto" <target: Var> <term: Parens<Term>> <r: @R> =>
+    <l: @L> "goto" <target: Ident> <term: Parens<Term>> <r: @R> =>
       Goto { span: span(l, r), target, term: Rc::new(term), ty: None, },
 }
 
@@ -307,7 +307,7 @@ PrintLnI64: PrintI64 = {
 }
 
 Let: Let = {
-    <l: @L> "let" <variable: Var> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
+    <l: @L> "let" <variable: Ident> ":" <ty: Ty> "=" <t1: Term3> ";" <t2: Term> <r: @R> =>
       Let { span: span(l, r), variable, var_ty: ty, bound_term: Rc::new(t1), in_term: Rc::new(t2), ty: None, },
 }
 

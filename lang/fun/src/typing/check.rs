@@ -146,7 +146,7 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            names::Var,
+            names::Ident,
             program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
@@ -251,7 +251,7 @@ mod check_tests {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "x".to_owned(),
                             id: 0,
                         },
@@ -259,7 +259,7 @@ mod check_tests {
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "xs".to_owned(),
                             id: 0,
                         },
@@ -297,7 +297,7 @@ mod check_tests {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "c".to_owned(),
                             id: 0,
                         },
@@ -305,7 +305,7 @@ mod check_tests {
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "d".to_owned(),
                             id: 0,
                         },
@@ -315,12 +315,12 @@ mod check_tests {
                 ],
             },
             vec![
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "c".to_string(),
                     id: 0,
                 })
                 .into(),
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "d".to_string(),
                     id: 0,
                 })
@@ -331,7 +331,7 @@ mod check_tests {
                 span: None,
                 bindings: vec![
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "a".to_owned(),
                             id: 0,
                         },
@@ -339,7 +339,7 @@ mod check_tests {
                         ty: Ty::mk_i64(),
                     },
                     ContextBinding {
-                        var: Var {
+                        var: Ident {
                             name: "b".to_owned(),
                             id: 0,
                         },
@@ -353,7 +353,7 @@ mod check_tests {
         let expected = vec![
             XVar {
                 span: dummy_span(),
-                var: Var {
+                var: Ident {
                     name: "c".to_owned(),
                     id: 0,
                 },
@@ -363,7 +363,7 @@ mod check_tests {
             .into(),
             XVar {
                 span: dummy_span(),
-                var: Var {
+                var: Ident {
                     name: "d".to_owned(),
                     id: 0,
                 },

@@ -159,7 +159,7 @@ impl Check for Case {
 }
 
 impl UsedBinders for Case {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.scrutinee.used_binders(used);
         self.clauses.used_binders(used);
     }
@@ -180,11 +180,11 @@ mod test {
     #[test]
     fn check_case_list() {
         let mut ctx_case_names = NameContext::default();
-        ctx_case_names.bindings.push(Var {
+        ctx_case_names.bindings.push(Ident {
             name: "x".to_string(),
             id: 0,
         });
-        ctx_case_names.bindings.push(Var {
+        ctx_case_names.bindings.push(Ident {
             name: "xs".to_string(),
             id: 0,
         });
@@ -219,7 +219,7 @@ mod test {
                     xtor: "Cons".to_owned(),
                     context_names: ctx_case_names.clone(),
                     context: TypingContext::default(),
-                    body: XVar::mk(Var {
+                    body: XVar::mk(Ident {
                         name: "x".to_string(),
                         id: 0,
                     })
@@ -227,7 +227,7 @@ mod test {
                 },
             ],
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -257,7 +257,7 @@ mod test {
                     context: ctx_case,
                     body: XVar {
                         span: dummy_span(),
-                        var: Var {
+                        var: Ident {
                             name: "x".to_owned(),
                             id: 0,
                         },
@@ -270,7 +270,7 @@ mod test {
             scrutinee: Rc::new(
                 XVar {
                     span: dummy_span(),
-                    var: Var {
+                    var: Ident {
                         name: "x".to_owned(),
                         id: 0,
                     },
@@ -288,11 +288,11 @@ mod test {
     #[test]
     fn check_case_fail() {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "x".to_string(),
             id: 0,
         });
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "y".to_string(),
             id: 0,
         });
@@ -305,7 +305,7 @@ mod test {
                 xtor: "Tup".to_owned(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
-                body: XVar::mk(Var {
+                body: XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -323,7 +323,7 @@ mod test {
         Case {
             span: dummy_span(),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -337,18 +337,18 @@ mod test {
 
     fn example_tup() -> Case {
         let mut ctx_names = NameContext::default();
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "x".to_string(),
             id: 0,
         });
-        ctx_names.bindings.push(Var {
+        ctx_names.bindings.push(Ident {
             name: "y".to_string(),
             id: 0,
         });
         Case {
             span: dummy_span(),
             scrutinee: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })

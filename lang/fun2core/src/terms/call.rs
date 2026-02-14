@@ -42,7 +42,7 @@ mod compile_tests {
     use core_macros::{call, covar, lit, mu, ty};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, names::Var},
+        syntax::{context::TypingContext, names::Ident},
         typing::{check::Check, symbol_table::SymbolTable},
     };
     use std::collections::{HashMap, HashSet, VecDeque};
@@ -74,7 +74,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "x".to_string(),
                 id: 0,
             }]),

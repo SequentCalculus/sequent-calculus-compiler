@@ -26,7 +26,7 @@ pub struct Goto {
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
     /// The covariable for the continuation
-    pub target: Var,
+    pub target: Ident,
     /// The argument
     pub term: Rc<Term>,
     /// The (inferred) type of the term
@@ -84,7 +84,7 @@ impl Check for Goto {
 }
 
 impl UsedBinders for Goto {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.term.used_binders(used);
     }
 }
@@ -106,7 +106,7 @@ mod test {
         ctx.add_covar("a", 0, Ty::mk_i64());
         let result = Goto {
             span: dummy_span(),
-            target: Var {
+            target: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
@@ -117,7 +117,7 @@ mod test {
         .unwrap();
         let expected = Goto {
             span: dummy_span(),
-            target: Var {
+            target: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
@@ -131,7 +131,7 @@ mod test {
     fn check_goto_fail() {
         let result = Goto {
             span: dummy_span(),
-            target: Var {
+            target: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
@@ -149,7 +149,7 @@ mod test {
     fn example() -> Goto {
         Goto {
             span: dummy_span(),
-            target: Var {
+            target: Ident {
                 name: "x".to_string(),
                 id: 0,
             },

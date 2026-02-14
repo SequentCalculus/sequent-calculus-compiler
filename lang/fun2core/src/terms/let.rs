@@ -52,7 +52,7 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
     use fun::{
-        parse_term, syntax::names::Var, test_common::symbol_table_list, typing::check::Check,
+        parse_term, syntax::names::Ident, test_common::symbol_table_list, typing::check::Check,
     };
     use std::collections::{HashSet, VecDeque};
 
@@ -68,7 +68,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "x".to_string(),
                 id: 0,
             }]),
@@ -107,7 +107,7 @@ mod compile_tests {
             .unwrap();
 
         let mut state = CompileState {
-            used_vars: HashSet::from([Var {
+            used_vars: HashSet::from([Ident {
                 name: "x".to_string(),
                 id: 0,
             }]),

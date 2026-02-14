@@ -34,7 +34,7 @@ pub fn compile_def(
     let mut used_vars = context
         .vars()
         .into_iter()
-        .map(|name| fun::syntax::names::Var { name, id: 0 })
+        .map(|name| fun::syntax::names::Ident { name, id: 0 })
         .collect();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
@@ -100,7 +100,7 @@ pub fn compile_main(
     let mut used_vars = context
         .vars()
         .into_iter()
-        .map(|var| fun::syntax::names::Var { name: var, id: 0 })
+        .map(|var| fun::syntax::names::Ident { name: var, id: 0 })
         .collect();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them

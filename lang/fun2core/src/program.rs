@@ -61,7 +61,7 @@ mod compile_tests {
     use fun::syntax::{
         Chirality,
         declarations::Def,
-        names::Var,
+        names::Ident,
         program::CheckedProgram,
         terms::{Lit, XVar},
         types::Ty,
@@ -89,7 +89,7 @@ mod compile_tests {
             context: ctx,
             body: XVar {
                 span: dummy_span(),
-                var: Var {
+                var: Ident {
                     name: "x".to_owned(),
                     id: 0,
                 },

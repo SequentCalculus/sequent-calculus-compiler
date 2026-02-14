@@ -75,7 +75,7 @@ impl Check for Call {
 }
 
 impl UsedBinders for Call {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         self.args.entries.used_binders(used);
     }
 }
@@ -158,7 +158,7 @@ mod test {
             name: "foo".to_string(),
             args: vec![
                 Term::Lit(Lit::mk(2)).into(),
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "a".to_string(),
                     id: 0,
                 })

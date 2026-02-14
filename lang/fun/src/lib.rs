@@ -14,7 +14,7 @@ pub mod test_common {
         syntax::{
             context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
-            names::Var,
+            names::Ident,
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
         },
@@ -38,11 +38,11 @@ pub mod test_common {
 
     fn context_cons_i64_names() -> NameContext {
         let mut ctx_cons_names = NameContext::default();
-        ctx_cons_names.bindings.push(Var {
+        ctx_cons_names.bindings.push(Ident {
             name: "x".to_string(),
             id: 0,
         });
-        ctx_cons_names.bindings.push(Var {
+        ctx_cons_names.bindings.push(Ident {
             name: "xs".to_string(),
             id: 0,
         });
@@ -413,7 +413,7 @@ pub mod test_common {
             body: Case {
                 span: dummy_span(),
                 scrutinee: Rc::new(
-                    XVar::mk(Var {
+                    XVar::mk(Ident {
                         name: "l".to_string(),
                         id: 0,
                     })
@@ -438,7 +438,7 @@ pub mod test_common {
                         body: Op {
                             span: dummy_span(),
                             fst: Rc::new(
-                                XVar::mk(Var {
+                                XVar::mk(Ident {
                                     name: "x".to_string(),
                                     id: 0,
                                 })
@@ -450,7 +450,7 @@ pub mod test_common {
                                     span: dummy_span(),
                                     name: "mult".to_owned(),
                                     args: vec![
-                                        XVar::mk(Var {
+                                        XVar::mk(Ident {
                                             name: "xs".to_string(),
                                             id: 0,
                                         })
@@ -483,7 +483,7 @@ pub mod test_common {
                 scrutinee: Rc::new(
                     XVar {
                         span: dummy_span(),
-                        var: Var {
+                        var: Ident {
                             name: "l".to_owned(),
                             id: 0,
                         },
@@ -513,7 +513,7 @@ pub mod test_common {
                             fst: Rc::new(
                                 XVar {
                                     span: dummy_span(),
-                                    var: Var {
+                                    var: Ident {
                                         name: "x".to_owned(),
                                         id: 0,
                                     },
@@ -530,7 +530,7 @@ pub mod test_common {
                                     args: vec![
                                         XVar {
                                             span: dummy_span(),
-                                            var: Var {
+                                            var: Ident {
                                                 name: "xs".to_owned(),
                                                 id: 0,
                                             },

@@ -4,16 +4,16 @@ use std::fmt;
 
 /// Type of variables and covariables
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Var {
+pub struct Ident {
     /// Identifier
     pub name: String,
     /// Index
     pub id: usize,
 }
 
-impl Var {
+impl Ident {
     pub fn fresh(name: &str, used: &[Self]) -> Self {
-        let mut new_var = Var {
+        let mut new_var = Ident {
             name: name.to_string(),
             id: 0,
         };
@@ -30,13 +30,13 @@ pub type Name = String;
 /// Type alias for type variables
 pub type TypeVar = String;
 
-impl Print for Var {
+impl Print for Ident {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name.print(cfg, alloc).append(self.id.to_string())
     }
 }
 
-impl fmt::Display for Var {
+impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}", self.name, self.id)
     }

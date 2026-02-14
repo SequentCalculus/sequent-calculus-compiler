@@ -26,7 +26,7 @@ pub struct Label {
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
     /// The covariable to which the continuation is bound
-    pub label: Var,
+    pub label: Ident,
     /// The body in which the continuation is in scope
     pub term: Rc<Term>,
     /// The (inferred) type of the term
@@ -80,7 +80,7 @@ impl Check for Label {
 }
 
 impl UsedBinders for Label {
-    fn used_binders(&self, used: &mut HashSet<Var>) {
+    fn used_binders(&self, used: &mut HashSet<Ident>) {
         used.insert(self.label.clone());
         self.term.used_binders(used);
     }
@@ -101,7 +101,7 @@ mod test {
     fn check_label() {
         let result = Label {
             span: dummy_span(),
-            label: Var {
+            label: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
@@ -116,7 +116,7 @@ mod test {
         .unwrap();
         let expected = Label {
             span: dummy_span(),
-            label: Var {
+            label: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
@@ -135,12 +135,12 @@ mod test {
         );
         let result = Label {
             span: dummy_span(),
-            label: Var {
+            label: Ident {
                 name: "a".to_owned(),
                 id: 0,
             },
             term: Rc::new(
-                XVar::mk(Var {
+                XVar::mk(Ident {
                     name: "x".to_string(),
                     id: 0,
                 })
@@ -155,7 +155,7 @@ mod test {
     fn example() -> Label {
         Label {
             span: dummy_span(),
-            label: Var {
+            label: Ident {
                 name: "x".to_string(),
                 id: 0,
             },
