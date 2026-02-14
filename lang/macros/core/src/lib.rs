@@ -5,11 +5,19 @@ use quote::quote;
 pub(crate) mod arguments;
 pub(crate) mod context;
 pub(crate) mod declarations;
+pub(crate) mod names;
 pub(crate) mod prog;
 pub(crate) mod statements;
 pub(crate) mod terms;
 pub(crate) mod types;
 use terms::{fs_xtor, unfocused_xtor, xcase, xvar};
+
+/// Create a [`core_lang::syntax::names::Ident`] with given string literal and id.
+/// If no id is provided, it defaults to `0`
+#[proc_macro]
+pub fn id(input: TokenStream) -> TokenStream {
+    names::id(input)
+}
 
 /// Create a [`core_lang::syntax::types::Ty`] from a string literal.
 /// `int` will create [`core_lang::syntax::types::Ty::I64`] anything else will create

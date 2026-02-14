@@ -39,7 +39,7 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{call, covar, lit, mu, ty};
+    use core_macros::{call, covar, id, lit, mu, ty};
     use fun::{
         parse_term,
         syntax::context::TypingContext,
@@ -82,7 +82,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a0", call!("fac", [lit!(3), covar!("a0")])).into();
+        let expected = mu!(id!("a"), call!(id!("fac"), [lit!(3), covar!(id!("a"))])).into();
         assert_eq!(result, expected)
     }
 }

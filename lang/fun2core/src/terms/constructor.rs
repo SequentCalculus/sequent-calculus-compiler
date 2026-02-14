@@ -67,7 +67,7 @@ impl Compile for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{ctor, lit, ty};
+    use core_macros::{ctor, id, lit, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -95,12 +95,12 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("List[i64]"));
+        let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
 
         let expected = ctor!(
-            "Cons",
-            [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
-            ty!("List[i64]")
+            id!("Cons"),
+            [lit!(1), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
+            ty!(id!("List[i64]"))
         )
         .into();
         assert_eq!(result, expected)

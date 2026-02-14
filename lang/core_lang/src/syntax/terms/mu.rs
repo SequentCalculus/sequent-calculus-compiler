@@ -260,24 +260,25 @@ mod mu_tests {
         test_common::example_subst,
     };
     extern crate self as core_lang;
-    use core_macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
+    use core_macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, id, lit, mu, mutilde, var};
 
     // Substitution tests
 
     #[test]
     fn subst_mu() {
         let subst = example_subst();
-        let result = mu!("a", cut!(var!("x"), covar!("a"))).subst_sim(&subst.0, &subst.1);
-        let expected = mu!("a", cut!(var!("y"), covar!("a")));
+        let result =
+            mu!(id!("a"), cut!(var!(id!("x")), covar!(id!("a")))).subst_sim(&subst.0, &subst.1);
+        let expected = mu!(id!("a"), cut!(var!(id!("y")), covar!(id!("a"))));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
         let subst = example_subst();
-        let example = mutilde!("x", cut!(var!("x"), covar!("a")));
+        let example = mutilde!(id!("x"), cut!(var!(id!("x")), covar!(id!("a"))));
         let result = example.subst_sim(&subst.0, &subst.1);
-        let expected = mutilde!("x", cut!(var!("x"), covar!("b")));
+        let expected = mutilde!(id!("x"), cut!(var!(id!("x")), covar!(id!("b"))));
         assert_eq!(result, expected)
     }
 
@@ -285,21 +286,21 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(id!("a"), cut!(lit!(1), covar!(id!("a"))));
+        let example_var = fs_mu!(id!("a"), fs_cut!(lit!(1), covar!(id!("a"))));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
 
     #[test]
     fn bind_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(id!("a"), cut!(lit!(1), covar!(id!("a"))));
+        let example_var = fs_mu!(id!("a"), fs_cut!(lit!(1), covar!(id!("a"))));
         let result = example.clone().bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(example_var, fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(example_var, fs_mutilde!(id!("x"), fs_exit!(id!("x")))).into();
         assert_eq!(result, expected)
     }
 }

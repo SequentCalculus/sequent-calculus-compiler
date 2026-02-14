@@ -195,13 +195,13 @@ mod xtor_tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use core_macros::{ctor, ty, var};
+    use core_macros::{ctor, id, ty, var};
 
     fn example() -> Xtor<Prd> {
         ctor!(
-            "Cons",
-            [var!("x"), var!("xs", ty!("ListInt"))],
-            ty!("ListInt")
+            id!("Cons"),
+            [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
+            ty!(id!("ListInt"))
         )
     }
 
@@ -215,9 +215,9 @@ mod xtor_tests {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
         let expected = ctor!(
-            "Cons",
-            [var!("y"), var!("xs", ty!("ListInt"))],
-            ty!("ListInt")
+            id!("Cons"),
+            [var!(id!("y")), var!(id!("xs"), ty!(id!("ListInt")))],
+            ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
     }

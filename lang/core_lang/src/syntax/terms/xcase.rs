@@ -162,23 +162,23 @@ mod tests {
     use crate::traits::*;
     extern crate self as core_lang;
     use core_macros::{
-        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var,
+        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, id, prd, ty, var,
     };
 
     #[test]
     fn focus_clause() {
         let result = clause!(
             Prd,
-            "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            cut!(var!("x"), covar!("a"))
+            id!("apply"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .focus(&mut Default::default());
         let expected = fs_clause!(
             Prd,
-            "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a"))
+            id!("apply"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
         );
         assert_eq!(result, expected)
     }
@@ -188,13 +188,13 @@ mod tests {
             [
                 clause!(
                     Prd,
-                    "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    id!("fst"),
+                    [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
+                clause!(Prd, id!("snd"), [], cut!(var!(id!("x")), covar!(id!("a"))))
             ],
-            ty!("LPairIntInt")
+            ty!(id!("LPairIntInt"))
         )
         .into()
     }
@@ -202,19 +202,19 @@ mod tests {
     fn example_case() -> XCase<Cns> {
         case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
+                clause!(Cns, id!("Nil"), [], cut!(var!(id!("x")), covar!(id!("a")))),
                 clause!(
                     Cns,
-                    "Cons",
+                    id!("Cons"),
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
+                        bind!(id!("a"), cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 )
             ],
-            ty!("ListInt")
+            ty!(id!("ListInt"))
         )
         .into()
     }
@@ -225,19 +225,19 @@ mod tests {
         let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
+                clause!(Cns, id!("Nil"), [], cut!(var!(id!("y")), covar!(id!("b")))),
                 clause!(
                     Cns,
-                    "Cons",
+                    id!("Cons"),
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
+                        bind!(id!("a"), cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 )
             ],
-            ty!("ListInt")
+            ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
     }
@@ -250,13 +250,13 @@ mod tests {
             [
                 clause!(
                     Prd,
-                    "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    id!("fst"),
+                    [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))
+                clause!(Prd, id!("snd"), [], cut!(var!(id!("y")), covar!(id!("b"))))
             ],
-            ty!("LPairIntInt")
+            ty!(id!("LPairIntInt"))
         );
         assert_eq!(result, expected)
     }

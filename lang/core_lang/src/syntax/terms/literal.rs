@@ -61,27 +61,27 @@ mod lit_tests {
     use crate::syntax::*;
     use crate::traits::*;
 
-    use core_macros::{fs_cut, fs_exit, fs_mutilde, lit};
+    use core_macros::{fs_cut, fs_exit, fs_mutilde, id, lit};
     extern crate self as core_lang;
     // Focusing tests
 
     #[test]
     fn bind_lit1() {
         let result = lit!(1).bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(1), fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(lit!(1), fs_mutilde!(id!("x"), fs_exit!(id!("x")))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_lit2() {
         let result = lit!(2).bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(2), fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(lit!(2), fs_mutilde!(id!("x"), fs_exit!(id!("x")))).into();
         assert_eq!(result, expected)
     }
 }

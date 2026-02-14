@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt};
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Ident {
     pub name: String,
-    id: usize,
+    pub id: usize,
 }
 
 impl Ident {

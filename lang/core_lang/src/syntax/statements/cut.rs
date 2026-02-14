@@ -198,7 +198,8 @@ mod tests {
     use crate::syntax::*;
     use crate::traits::*;
     use core_macros::{
-        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
+        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, id, lit, prd, ty,
+        var,
     };
     extern crate self as core_lang;
 
@@ -207,35 +208,38 @@ mod tests {
     fn transform_ctor() {
         let result = cut!(
             ctor!(
-                "Cons",
-                [lit!(1), ctor!("Nil", [], ty!("ListInt"))],
-                ty!("ListInt")
+                id!("Cons"),
+                [lit!(1), ctor!(id!("Nil"), [], ty!(id!("ListInt")))],
+                ty!(id!("ListInt"))
             ),
-            covar!("a", ty!("ListInt")),
-            ty!("ListInt")
+            covar!(id!("a"), ty!(id!("ListInt"))),
+            ty!(id!("ListInt"))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                id!("x", 1),
                 fs_cut!(
-                    fs_ctor!("Nil", [], ty!("ListInt")),
+                    fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
                     fs_mutilde!(
-                        "x1",
+                        id!("x", 2),
                         fs_cut!(
                             fs_ctor!(
-                                "Cons",
-                                [bind!("x0", prd!()), bind!("x1", prd!(), ty!("ListInt"))],
-                                ty!("ListInt")
+                                id!("Cons"),
+                                [
+                                    bind!(id!("x", 1), prd!()),
+                                    bind!(id!("x", 2), prd!(), ty!(id!("ListInt")))
+                                ],
+                                ty!(id!("ListInt"))
                             ),
-                            covar!("a", ty!("ListInt")),
-                            ty!("ListInt")
+                            covar!(id!("a"), ty!(id!("ListInt"))),
+                            ty!(id!("ListInt"))
                         ),
-                        ty!("ListInt")
+                        ty!(id!("ListInt"))
                     ),
-                    ty!("ListInt")
+                    ty!(id!("ListInt"))
                 )
             )
         )
@@ -247,20 +251,24 @@ mod tests {
     #[test]
     fn transform_dtor() {
         let result = cut!(
-            var!("x", ty!("Fun[i64, i64]")),
-            dtor!("apply", [var!("y"), covar!("a")], ty!("Fun[i64, i64]")),
-            ty!("Fun[i64, i64]")
+            var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
+            dtor!(
+                id!("apply"),
+                [var!(id!("y")), covar!(id!("a"))],
+                ty!(id!("Fun[i64, i64]"))
+            ),
+            ty!(id!("Fun[i64, i64]"))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
-            var!("x", ty!("Fun[i64, i64]")),
+            var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             fs_dtor!(
-                "apply",
-                [bind!("y", prd!()), bind!("a", cns!())],
-                ty!("Fun[i64, i64]")
+                id!("apply"),
+                [bind!(id!("y"), prd!()), bind!(id!("a"), cns!())],
+                ty!(id!("Fun[i64, i64]"))
             ),
-            ty!("Fun[i64, i64]")
+            ty!(id!("Fun[i64, i64]"))
         )
         .into();
         assert_eq!(result, expected);
@@ -268,8 +276,8 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
-        let expected = FsCut::new(var!("x"), covar!("a"), Ty::I64).into();
+        let result = cut!(var!(id!("x")), covar!(id!("a"))).focus(&mut Default::default());
+        let expected = FsCut::new(var!(id!("x")), covar!(id!("a")), Ty::I64).into();
         assert_eq!(result, expected);
     }
 }

@@ -70,14 +70,14 @@ impl<D: Print> Print for Prog<D> {
 mod program_tests {
     use crate::syntax::*;
     extern crate self as core_lang;
-    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
+    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, id, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         fs_def!(
-            "cut",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a")),
-            ["a", "x"]
+            id!("cut"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+            fs_cut!(var!(id!("x")), covar!(id!("a"))),
+            [id!("a"), id!("x")]
         )
     }
 
@@ -85,10 +85,10 @@ mod program_tests {
     fn transform_prog2() {
         let prog = prog!(
             [def!(
-                "cut",
-                [bind!("x", prd!()), bind!("a", cns!())],
-                cut!(var!("x"), covar!("a")),
-                ["a", "x"]
+                id!("cut"),
+                [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                cut!(var!(id!("x")), covar!(id!("a"))),
+                [id!("a"), id!("x")]
             )],
             [],
             []
