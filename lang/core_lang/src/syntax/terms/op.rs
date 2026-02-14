@@ -50,7 +50,7 @@ pub struct Op<P = Rc<Term<Prd>>> {
     pub snd: P,
 }
 
-pub type FsOp = Op<Var>;
+pub type FsOp = Op<Ident>;
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
@@ -105,8 +105,8 @@ impl Subst for Op {
     type Target = Op;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -117,7 +117,7 @@ impl Subst for Op {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -148,7 +148,7 @@ impl TypedFreeVars for FsOp {
 }
 
 impl Uniquify for Op {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
+    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Op {
         self.fst = self.fst.uniquify(seen_vars, used_vars);
         self.snd = self.snd.uniquify(seen_vars, used_vars);
 
@@ -158,19 +158,19 @@ impl Uniquify for Op {
 
 impl Focusing for Op {
     type Target = FsTerm<Prd>;
-    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, _: &mut HashSet<Ident>) -> Self::Target {
         panic!("Arithmetic operators should always be focused in cuts directly");
     }
 }
 
 impl Bind for Op {
     // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
-                |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| {
                     Rc::unwrap_or_clone(self.snd).bind(
-                        Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                        Box::new(|binding_snd, used_vars: &mut HashSet<Ident>| {
                             let new_var = fresh_var(used_vars);
                             let new_binding = ContextBinding {
                                 var: new_var.clone(),
@@ -183,7 +183,7 @@ impl Bind for Op {
                                     op: self.op,
                                     snd: binding_snd.var,
                                 },
-                                Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+                                Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
                                 Ty::I64,
                             )
                             .into()

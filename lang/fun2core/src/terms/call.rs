@@ -5,7 +5,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 
 impl Compile for fun::syntax::terms::Call {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -24,7 +24,7 @@ impl Compile for fun::syntax::terms::Call {
         let mut args = compile_subst(self.args, state);
         args.entries.push(cont.into());
         core_lang::syntax::statements::Call {
-            name: self.name,
+            name: Ident::new_with_zero(&self.name),
             args,
             ty: compile_ty(
                 &self

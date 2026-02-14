@@ -12,7 +12,7 @@ pub mod test_common {
     extern crate self as core_lang;
     use core_macros::{covar, var};
 
-    pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {
+    pub fn example_subst() -> (Vec<(Ident, Term<Prd>)>, Vec<(Ident, Term<Cns>)>) {
         let prod_subst = vec![("x".to_string(), var!("y").into())];
         let cons_subst = vec![("a".to_string(), covar!("b").into())];
         (prod_subst, cons_subst)

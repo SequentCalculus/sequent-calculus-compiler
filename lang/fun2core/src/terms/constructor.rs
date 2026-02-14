@@ -7,6 +7,7 @@ use crate::{
 };
 use core_lang::syntax::{
     Ty,
+    names::Ident,
     terms::{Cns, Prd},
 };
 
@@ -24,7 +25,7 @@ impl Compile for fun::syntax::terms::Constructor {
     fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
-            id: self.id,
+            id: Ident::new_with_zero(&self.id),
             args: compile_subst(self.args, state),
             ty: compile_ty(
                 &self

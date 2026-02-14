@@ -79,8 +79,8 @@ impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.producer = self.producer.subst_sim(prod_subst, cons_subst);
         self.consumer = self.consumer.subst_sim(prod_subst, cons_subst);
@@ -90,7 +90,7 @@ impl Subst for Cut {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsCut {
         self.producer = self.producer.subst_sim(subst);
         self.consumer = self.consumer.subst_sim(subst);
         self
@@ -109,7 +109,7 @@ where
 }
 
 impl Uniquify for Cut {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
+    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Cut {
         self.producer = self.producer.uniquify(seen_vars, used_vars);
         self.consumer = self.consumer.uniquify(seen_vars, used_vars);
         self
@@ -118,7 +118,7 @@ impl Uniquify for Cut {
 
 impl Focusing for Cut {
     type Target = FsStatement;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -126,7 +126,7 @@ impl Focusing for Cut {
             // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
@@ -144,7 +144,7 @@ impl Focusing for Cut {
             // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
                     FsCut::new(
                         producer.focus(used_vars),
                         FsXtor {
@@ -162,9 +162,9 @@ impl Focusing for Cut {
             // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
                 Box::new(
-                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| {
                         Rc::unwrap_or_clone(op.snd).bind(
-                            Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                            Box::new(|binding_snd, used_vars: &mut HashSet<Ident>| {
                                 FsCut::new(
                                     FsOp {
                                         fst: binding_fst.var,

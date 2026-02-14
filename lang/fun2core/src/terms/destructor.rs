@@ -5,7 +5,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 use fun::syntax::types::OptTyped;
 
 impl Compile for fun::syntax::terms::Destructor {
@@ -27,7 +27,7 @@ impl Compile for fun::syntax::terms::Destructor {
         // new continuation: D(〚t_1〛, ..., c)
         let new_cont = core_lang::syntax::terms::Xtor {
             prdcns: Cns,
-            id: self.id,
+            id: Ident::new_with_zero(&self.id),
             args,
             ty: compile_ty(
                 &self

@@ -61,8 +61,8 @@ impl<C: Chi> Subst for XCase<C> {
     type Target = XCase<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
         self
@@ -76,7 +76,11 @@ impl<C: Chi> TypedFreeVars for XCase<C> {
 }
 
 impl<C: Chi> Uniquify for XCase<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> XCase<C> {
+    fn uniquify(
+        mut self,
+        seen_vars: &mut HashSet<Ident>,
+        used_vars: &mut HashSet<Ident>,
+    ) -> XCase<C> {
         let seen_vars_clone = seen_vars.clone();
         let used_vars_clone = used_vars.clone();
         self.clauses = self
@@ -99,7 +103,7 @@ impl<C: Chi> Uniquify for XCase<C> {
 impl<C: Chi> Focusing for XCase<C> {
     type Target = FsXCase<C>;
     // focus(cocase {cases}) = cocase { focus(cases) } AND focus(case {cases}) = case { focus(cases) }
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.focus(used_vars),
@@ -110,7 +114,7 @@ impl<C: Chi> Focusing for XCase<C> {
 
 impl Bind for XCase<Prd> {
     // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {
@@ -118,13 +122,13 @@ impl Bind for XCase<Prd> {
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
-        let cns = Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone());
+        let cns = Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
 impl Bind for XCase<Cns> {
     // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
         let new_binding = ContextBinding {
@@ -132,14 +136,14 @@ impl Bind for XCase<Cns> {
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
-        let prd = Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone());
+        let prd = Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }
 
 impl<C: Chi> SubstVar for FsXCase<C> {
     type Target = FsXCase<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
         self.clauses = self.clauses.subst_sim(subst);
         self
     }

@@ -107,8 +107,8 @@ impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -124,8 +124,8 @@ impl Subst for Term<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -151,7 +151,7 @@ impl<C: Chi> TypedFreeVars for Term<C> {
 }
 
 impl<C: Chi> Uniquify for Term<C> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<C> {
+    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Term<C> {
         match self {
             Term::Op(op) => op.uniquify(seen_vars, used_vars).into(),
             Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
@@ -164,7 +164,7 @@ impl<C: Chi> Uniquify for Term<C> {
 
 impl Focusing for Term<Prd> {
     type Target = FsTerm<Prd>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
@@ -177,7 +177,7 @@ impl Focusing for Term<Prd> {
 }
 impl Focusing for Term<Cns> {
     type Target = FsTerm<Cns>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
@@ -189,7 +189,7 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match self {
             Term::XVar(var) => var.bind(k, used_vars),
             Term::Literal(lit) => lit.bind(k, used_vars),
@@ -201,7 +201,7 @@ impl Bind for Term<Prd> {
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, used_vars),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
@@ -245,7 +245,7 @@ impl<C: Chi> Print for FsTerm<C> {
 
 impl<C: Chi> SubstVar for FsTerm<C> {
     type Target = FsTerm<C>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
             FsTerm::Literal(ref _lit) => self,

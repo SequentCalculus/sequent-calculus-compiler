@@ -1,6 +1,6 @@
 //! This module defines the translation of top-level functions.
 
-use core_lang::syntax::Name;
+use core_lang::syntax::Ident;
 use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
 use core_lang::syntax::def::FsDef;
 
@@ -20,7 +20,7 @@ pub fn shrink_def(
     mut def: FsDef,
     data_types: &[DataDeclaration],
     codata_types: &[CodataDeclaration],
-    used_labels: &mut HashSet<Name>,
+    used_labels: &mut HashSet<Ident>,
 ) -> VecDeque<axcut::syntax::Def> {
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -30,15 +30,15 @@ pub fn shrink_def(
         data: data_types,
         codata: codata_types,
         used_labels,
-        current_label: &def.name,
+        current_label: &def.name.name,
         lifted_statements: &mut def_plus_lifted_statements,
     });
 
     def_plus_lifted_statements.push_front(axcut::syntax::Def {
-        name: def.name,
+        name: def.name.name,
         context: shrink_context(def.context, codata_types),
         body,
-        used_vars: def.used_vars,
+        used_vars: def.used_vars.into_iter().map(|var| var.name).collect(),
     });
 
     def_plus_lifted_statements

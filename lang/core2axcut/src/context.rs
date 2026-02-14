@@ -20,13 +20,13 @@ pub fn shrink_binding(
     if binding.ty == Ty::I64 {
         if binding.chi == core_lang::syntax::context::Chirality::Cns {
             axcut::syntax::ContextBinding {
-                var: binding.var,
+                var: binding.var.name,
                 chi: axcut::syntax::Chirality::Cns,
-                ty: axcut::syntax::Ty::Decl(cont_int().name),
+                ty: axcut::syntax::Ty::Decl(cont_int().name.name),
             }
         } else {
             axcut::syntax::ContextBinding {
-                var: binding.var,
+                var: binding.var.name,
                 chi: axcut::syntax::Chirality::Ext,
                 ty: axcut::syntax::Ty::I64,
             }
@@ -37,13 +37,13 @@ pub fn shrink_binding(
             && binding.chi == core_lang::syntax::context::Chirality::Cns
     {
         axcut::syntax::ContextBinding {
-            var: binding.var,
+            var: binding.var.name,
             chi: axcut::syntax::Chirality::Prd,
             ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
-            var: binding.var,
+            var: binding.var.name,
             chi: axcut::syntax::Chirality::Cns,
             ty: shrink_ty(binding.ty),
         }

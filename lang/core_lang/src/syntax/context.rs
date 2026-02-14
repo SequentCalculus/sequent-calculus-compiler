@@ -34,7 +34,7 @@ impl Print for Chirality {
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     /// The bound variable
-    pub var: Var,
+    pub var: Ident,
     /// The chirality, i.e. producer or consumer
     pub chi: Chirality,
     /// The type of the binding
@@ -54,7 +54,7 @@ impl Print for ContextBinding {
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -68,7 +68,7 @@ pub struct TypingContext {
 
 impl TypingContext {
     /// This functions returns a set of the (co)variable names in the context.
-    pub fn vars(&self) -> HashSet<Var> {
+    pub fn vars(&self) -> HashSet<Ident> {
         self.bindings
             .iter()
             .map(|binding| binding.var.clone())
@@ -76,7 +76,7 @@ impl TypingContext {
     }
 
     /// This functions returns a list of (co)variable names in the context in the correct order.
-    pub fn vec_vars(&self) -> Vec<Var> {
+    pub fn vec_vars(&self) -> Vec<Ident> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             vars.push(binding.var.clone());
@@ -114,7 +114,7 @@ impl Print for TypingContext {
 
 impl SubstVar for TypingContext {
     type Target = TypingContext;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }

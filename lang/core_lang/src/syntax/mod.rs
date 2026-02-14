@@ -19,7 +19,7 @@ pub use arguments::{
 pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration, DtorSig};
 pub use def::{Def, FsDef};
-pub use names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
+pub use names::{Ident, fresh_covar, fresh_name, fresh_var};
 pub use program::{FsProg, Prog};
 pub use statements::{
     Call, Cut, Exit, FsCall, FsCut, FsExit, FsIfC, FsStatement, IfC, IfSort, Statement,

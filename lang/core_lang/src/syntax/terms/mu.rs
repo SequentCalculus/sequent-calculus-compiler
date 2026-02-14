@@ -20,7 +20,7 @@ pub struct Mu<C: Chi, S = Statement> {
     /// Whether we have a mu- or mu-tilde-abstraction
     pub prdcns: C,
     /// The bound (co)variable
-    pub variable: Var,
+    pub variable: Ident,
     /// The body statement, either unfocused ([`Statement`]) or focused ([`FsStatement`])
     pub statement: Rc<S>,
     /// The type
@@ -33,10 +33,10 @@ pub type FsMu<C: Chi> = Mu<C, FsStatement>;
 impl<S> Mu<Prd, S> {
     /// This function creates a mu-abstraction from a given covariable, body, and type.
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<S>>(covar: &str, stmt: T, ty: Ty) -> Self {
+    pub fn mu<T: Into<S>>(covar: Ident, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Prd,
-            variable: covar.to_string(),
+            variable: covar,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -44,10 +44,10 @@ impl<S> Mu<Prd, S> {
 }
 impl<S> Mu<Cns, S> {
     /// This function creates a mu-tilde-abstraction from a given variable, body, and type.
-    pub fn tilde_mu<T: Into<S>>(var: &str, stmt: T, ty: Ty) -> Self {
+    pub fn tilde_mu<T: Into<S>>(var: Ident, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
-            variable: var.to_string(),
+            variable: var,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -99,11 +99,11 @@ impl<C: Chi> Subst for Mu<C> {
     type Target = Mu<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Mu<C> {
-        let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Ident, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Ident, Term<Cns>)> = Vec::new();
         for subst in prod_subst {
             if subst.0 != self.variable {
                 prod_subst_reduced.push(subst.clone());
@@ -124,7 +124,7 @@ impl<C: Chi> Subst for Mu<C> {
 
 impl<C: Chi> SubstVar for FsMu<C> {
     type Target = FsMu<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsMu<C> {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsMu<C> {
         self.statement = self.statement.subst_sim(subst);
         self
     }
@@ -169,9 +169,9 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 }
 
 impl<C: Chi> Uniquify for Mu<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<C> {
+    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Mu<C> {
         if seen_vars.contains(&self.variable) {
-            let new_variable = fresh_name(used_vars, &self.variable);
+            let new_variable = fresh_name(used_vars, &self.variable.name);
             seen_vars.insert(new_variable.clone());
             let old_variable = self.variable;
             self.variable = new_variable;
@@ -181,7 +181,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                     .statement
                     .subst_covar(
                         old_variable,
-                        XVar::covar(&self.variable, self.ty.clone()).into(),
+                        XVar::covar(self.variable.clone(), self.ty.clone()).into(),
                     )
                     .uniquify(seen_vars, used_vars);
             } else {
@@ -189,7 +189,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                     .statement
                     .subst_var(
                         old_variable,
-                        XVar::var(&self.variable, self.ty.clone()).into(),
+                        XVar::var(self.variable.clone(), self.ty.clone()).into(),
                     )
                     .uniquify(seen_vars, used_vars);
             }
@@ -205,7 +205,7 @@ impl<C: Chi> Uniquify for Mu<C> {
 impl<C: Chi> Focusing for Mu<C> {
     type Target = FsMu<C>;
     // focus(μa.s) = μa.focus(s) AND focus(~μx.s) = ~μx.focus(s)
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         Mu {
             prdcns: self.prdcns,
             variable: self.variable,
@@ -217,7 +217,7 @@ impl<C: Chi> Focusing for Mu<C> {
 
 impl Bind for Mu<Prd> {
     // bind(μa.s)[k] = ⟨ μa.focus(s) | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {
@@ -227,7 +227,7 @@ impl Bind for Mu<Prd> {
         };
         FsCut::new(
             self.focus(used_vars),
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
+            Mu::tilde_mu(new_var, k(new_binding, used_vars), ty.clone()),
             ty,
         )
         .into()
@@ -235,7 +235,7 @@ impl Bind for Mu<Prd> {
 }
 impl Bind for Mu<Cns> {
     // bind(~μx.s)[k] = ⟨ μa.k(a) | ~μx.focus(s) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
         let new_binding = ContextBinding {
@@ -244,7 +244,7 @@ impl Bind for Mu<Cns> {
             ty: ty.clone(),
         };
         FsCut::new(
-            Mu::mu(&new_covar, k(new_binding, used_vars), ty.clone()),
+            Mu::mu(new_covar, k(new_binding, used_vars), ty.clone()),
             self.focus(used_vars),
             ty,
         )

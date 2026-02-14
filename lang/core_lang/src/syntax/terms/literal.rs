@@ -40,7 +40,7 @@ impl From<Literal> for FsTerm<Prd> {
 
 impl Bind for Literal {
     // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {
             var: new_var.clone(),
@@ -49,7 +49,7 @@ impl Bind for Literal {
         };
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+            Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
             Ty::I64,
         )
         .into()
