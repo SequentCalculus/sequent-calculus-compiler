@@ -203,30 +203,33 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
+    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, id, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
-        prod!(var!("x"), var!("x")).into()
+        prod!(var!(id!("x")), var!(id!("x"))).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = prod!(var!("y"), var!("y")).into();
+        let expected = prod!(var!(id!("y")), var!(id!("y"))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a")).focus(&mut Default::default());
+        let result = cut!(sum!(lit!(1), lit!(2)), covar!(id!("a"))).focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                id!("x"),
                 fs_cut!(
                     lit!(2),
-                    fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
+                    fs_mutilde!(
+                        id!("x", 1),
+                        fs_cut!(fs_sum!(id!("x"), id!("x", 1)), covar!(id!("a")))
+                    )
                 )
             )
         )
@@ -237,8 +240,9 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = cut!(prod!(var!("x"), var!("y")), covar!("a")).focus(&mut Default::default());
-        let expected = fs_cut!(fs_prod!("x", "y"), covar!("a")).into();
+        let result = cut!(prod!(var!(id!("x")), var!(id!("y"))), covar!(id!("a")))
+            .focus(&mut Default::default());
+        let expected = fs_cut!(fs_prod!(id!("x"), id!("y")), covar!(id!("a"))).into();
         assert_eq!(result, expected)
     }
 }

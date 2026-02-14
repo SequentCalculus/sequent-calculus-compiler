@@ -39,7 +39,7 @@ impl Compile for fun::syntax::terms::Goto {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, cut, ife, lit, mu, prod, ty, var};
+    use core_macros::{covar, cut, id, ife, lit, mu, prod, ty, var};
     use fun::{parse_term, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
@@ -63,7 +63,7 @@ mod compile_tests {
             lifted_statements: &mut VecDeque::default(),
         };
         let result = term_typed.compile(&mut state, ty!("int"));
-        let expected = mu!("a0", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(id!("a", 1), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 
@@ -90,11 +90,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a",
+            id!("a"),
             ife!(
-                var!("x"),
-                cut!(lit!(0), covar!("a")),
-                cut!(prod!(var!("x"), lit!(2)), covar!("a"))
+                var!(id!("x")),
+                cut!(lit!(0), covar!(id!("a"))),
+                cut!(prod!(var!(id!("x")), lit!(2)), covar!(id!("a")))
             )
         )
         .into();

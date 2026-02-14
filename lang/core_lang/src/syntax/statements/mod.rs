@@ -172,30 +172,30 @@ mod test {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{call, covar, cut, ife, ty, var};
+    use core_macros::{call, covar, cut, id, ife, ty, var};
 
     fn example_cut() -> Statement {
-        cut!(var!("x"), covar!("a"), ty!("int")).into()
+        cut!(var!(id!("x")), covar!(id!("a"))).into()
     }
 
     fn example_ifz() -> Statement {
         ife!(
-            var!("x"),
-            cut!(var!("x"), covar!("a"), ty!("int")),
-            cut!(var!("x"), covar!("a"), ty!("int"))
+            var!(id!("x")),
+            cut!(var!(id!("x")), covar!(id!("a"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .into()
     }
 
     fn example_call() -> Statement {
-        call!("main", [var!("x"), covar!("a")]).into()
+        call!(id!("main"), [var!(id!("x")), covar!(id!("a"))]).into()
     }
 
     #[test]
     fn subst_cut() {
         let subst = example_subst();
         let result = example_cut().subst_sim(&subst.0, &subst.1);
-        let expected = cut!(var!("y"), covar!("b")).into();
+        let expected = cut!(var!(id!("y")), covar!(id!("b"))).into();
         assert_eq!(result, expected)
     }
 
@@ -204,9 +204,9 @@ mod test {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = ife!(
-            var!("y"),
-            cut!(var!("y"), covar!("b"),),
-            cut!(var!("y"), covar!("b"))
+            var!(id!("y")),
+            cut!(var!(id!("y")), covar!(id!("b"))),
+            cut!(var!(id!("y")), covar!(id!("b")))
         )
         .into();
         assert_eq!(result, expected)
@@ -216,7 +216,7 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let expected = call!("main", [var!("y"), covar!("b")]).into();
+        let expected = call!(id!("main"), [var!(id!("y")), covar!(id!("b"))]).into();
         assert_eq!(result, expected)
     }
 }

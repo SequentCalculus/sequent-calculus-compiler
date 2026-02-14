@@ -235,7 +235,7 @@ impl Focusing for IfC {
 #[cfg(test)]
 mod transform_tests {
     use crate::traits::*;
-    use core_macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
+    use core_macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, id, ife, lit, var};
     extern crate self as core_lang;
 
     #[test]
@@ -243,20 +243,25 @@ mod transform_tests {
         let result = ife!(
             lit!(2),
             lit!(1),
-            cut!(lit!(1), covar!("a")),
-            exit!(var!("x"))
+            cut!(lit!(1), covar!(id!("a"))),
+            exit!(var!(id!("x")))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
             lit!(2),
             fs_mutilde!(
-                "x0",
+                id!("x", 1),
                 fs_cut!(
                     lit!(1),
                     fs_mutilde!(
-                        "x1",
-                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                        id!("x", 2),
+                        fs_ife!(
+                            id!("x", 1),
+                            id!("x", 2),
+                            fs_cut!(lit!(1), covar!(id!("a"))),
+                            fs_exit!(id!("x"))
+                        )
                     )
                 )
             )
@@ -268,25 +273,39 @@ mod transform_tests {
     #[test]
     fn transform_ife2() {
         let result = ife!(
-            var!("x"),
-            var!("x"),
-            exit!(var!("y")),
-            cut!(var!("x"), covar!("a"))
+            var!(id!("x")),
+            var!(id!("x")),
+            exit!(var!(id!("y"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .focus(&mut Default::default());
-        let expected = fs_ife!("x", "x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let expected = fs_ife!(
+            id!("x"),
+            id!("x"),
+            fs_exit!(id!("y")),
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz1() {
-        let result = ife!(lit!(1), cut!(lit!(1), covar!("a")), exit!(var!("x")))
-            .focus(&mut Default::default());
+        let result = ife!(
+            lit!(1),
+            cut!(lit!(1), covar!(id!("a"))),
+            exit!(var!(id!("x")))
+        )
+        .focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
-                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                id!("x", 1),
+                fs_ife!(
+                    id!("x", 1),
+                    fs_cut!(lit!(1), covar!(id!("a"))),
+                    fs_exit!(id!("x"))
+                )
             )
         )
         .into();
@@ -294,9 +313,18 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
-            .focus(&mut Default::default());
-        let expected = fs_ife!("x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let result = ife!(
+            var!(id!("x")),
+            exit!(var!(id!("y"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .focus(&mut Default::default());
+        let expected = fs_ife!(
+            id!("x"),
+            fs_exit!(id!("y")),
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 }

@@ -74,7 +74,7 @@ impl Compile for fun::syntax::terms::Label {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, cut, lit, mu, ty};
+    use core_macros::{covar, cut, id, lit, mu, ty};
     use fun::{parse_term, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
@@ -98,7 +98,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 
@@ -122,7 +122,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 }

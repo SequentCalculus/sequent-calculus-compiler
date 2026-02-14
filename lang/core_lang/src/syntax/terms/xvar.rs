@@ -142,39 +142,39 @@ mod var_tests {
     use super::Subst;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use core_macros::{covar, var};
+    use core_macros::{covar, id, var};
 
     // Substitution tests
 
     #[test]
     fn subst_var1() {
         let subst = example_subst();
-        let result = var!("x").subst_sim(&subst.0, &subst.1);
-        let expected = var!("y").into();
+        let result = var!(id!("x")).subst_sim(&subst.0, &subst.1);
+        let expected = var!(id!("y")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
         let subst = example_subst();
-        let result = var!("z").subst_sim(&subst.0, &subst.1);
-        let expected = var!("z").into();
+        let result = var!(id!("z")).subst_sim(&subst.0, &subst.1);
+        let expected = var!(id!("z")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
         let subst = example_subst();
-        let result = covar!("a").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("b").into();
+        let result = covar!(id!("a")).subst_sim(&subst.0, &subst.1);
+        let expected = covar!(id!("b")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar2() {
         let subst = example_subst();
-        let result = covar!("c").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("c").into();
+        let result = covar!(id!("c")).subst_sim(&subst.0, &subst.1);
+        let expected = covar!(id!("c")).into();
         assert_eq!(result, expected)
     }
 }

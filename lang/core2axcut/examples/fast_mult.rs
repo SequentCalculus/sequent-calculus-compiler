@@ -3,91 +3,115 @@ use core_lang::syntax::terms::*;
 use printer::Print;
 
 use core_macros::{
-    bind, call, case, clause, cns, covar, ctor, ctor_sig, cut, data, def, ife, lit, mu, prd, prod,
-    prog, ty, var,
+    bind, call, case, clause, cns, covar, ctor, ctor_sig, cut, data, def, id, ife, lit, mu, prd,
+    prod, prog, ty, var,
 };
 
 fn main() {
     let ty_list = data!(
-        "ListInt",
+        id!("ListInt"),
         [
-            ctor_sig!("Nil", []),
+            ctor_sig!(id!("Nil"), []),
             ctor_sig!(
-                "Cons",
-                [bind!("x", prd!()), bind!("xs", prd!(), ty!("ListInt"))]
+                id!("Cons"),
+                [
+                    bind!(id!("x"), prd!()),
+                    bind!(id!("xs"), prd!(), ty!(id!("ListInt")))
+                ]
             ),
         ]
     );
 
     let fmult = def!(
-        "fmult",
-        [bind!("l", prd!(), ty!("ListInt")), bind!("a0", cns!())],
+        id!("fmult"),
+        [
+            bind!(id!("l"), prd!(), ty!(id!("ListInt"))),
+            bind!(id!("a"), cns!())
+        ],
         cut!(
             mu!(
-                "a",
+                id!("a", 1),
                 call!(
-                    "mult",
-                    [var!("l", ty!("ListInt")), covar!("a"), covar!("a")]
+                    id!("mult"),
+                    [
+                        var!(id!("l"), ty!(id!("ListInt"))),
+                        covar!(id!("a", 1)),
+                        covar!(id!("a", 1))
+                    ]
                 )
             ),
-            covar!("a0")
+            covar!(id!("a"))
         ),
-        ["l", "a", "a0"]
+        [id!("l"), id!("a"), id!("a", 1)]
     );
 
     let mult = def!(
-        "mult",
+        id!("mult"),
         [
-            bind!("l", prd!(), ty!("ListInt")),
-            bind!("a", cns!()),
-            bind!("a0", cns!()),
+            bind!(id!("l"), prd!(), ty!(id!("ListInt"))),
+            bind!(id!("a", 2), cns!()),
+            bind!(id!("a"), cns!()),
         ],
         cut!(
-            var!("l", ty!("ListInt")),
+            var!(id!("l"), ty!(id!("ListInt"))),
             case!(
                 [
-                    clause!(Cns, "Nil", [], cut!(lit!(1), covar!("a0"))),
+                    clause!(Cns, id!("Nil"), [], cut!(lit!(1), covar!(id!("a")))),
                     clause!(
                         Cns,
-                        "Cons",
-                        [bind!("x", prd!()), bind!("xs", prd!(), ty!("ListInt"))],
+                        id!("Cons"),
+                        [
+                            bind!(id!("x"), prd!()),
+                            bind!(id!("xs"), prd!(), ty!(id!("ListInt")))
+                        ],
                         ife!(
-                            var!("x"),
-                            cut!(lit!(0), covar!("a")),
+                            var!(id!("x")),
+                            cut!(lit!(0), covar!(id!("a", 2))),
                             cut!(
                                 prod!(
-                                    var!("x"),
+                                    var!(id!("x")),
                                     mu!(
-                                        "a1",
+                                        id!("a", 1),
                                         call!(
-                                            "mult",
-                                            [var!("xs", ty!("ListInt")), covar!("a"), covar!("a1")]
+                                            id!("mult"),
+                                            [
+                                                var!(id!("xs"), ty!(id!("ListInt"))),
+                                                covar!(id!("a", 2)),
+                                                covar!(id!("a", 1))
+                                            ]
                                         )
                                     )
                                 ),
-                                covar!("a0")
+                                covar!(id!("a"))
                             )
                         )
                     ),
                 ],
-                ty!("ListInt")
+                ty!(id!("ListInt"))
             ),
-            ty!("ListInt")
+            ty!(id!("ListInt"))
         ),
-        ["l", "a", "a0", "a1", "x", "xs"]
+        [
+            id!("l"),
+            id!("a"),
+            id!("a", 1),
+            id!("a", 2),
+            id!("x"),
+            id!("xs")
+        ]
     );
 
-    let nil = ctor!("Nil", [], ty!("ListInt"));
-    let cons1 = ctor!("Cons", [lit!(3), nil], ty!("ListInt"));
-    let cons2 = ctor!("Cons", [lit!(3), cons1]);
-    let cons3 = ctor!("Cons", [lit!(0), cons2]);
-    let cons4 = ctor!("Cons", [lit!(2), cons3]);
+    let nil = ctor!(id!("Nil"), [], ty!(id!("ListInt")));
+    let cons1 = ctor!(id!("Cons"), [lit!(3), nil], ty!(id!("ListInt")));
+    let cons2 = ctor!(id!("Cons"), [lit!(3), cons1]);
+    let cons3 = ctor!(id!("Cons"), [lit!(0), cons2]);
+    let cons4 = ctor!(id!("Cons"), [lit!(2), cons3]);
 
     let main = def!(
-        "main",
-        [bind!("a0", cns!())],
-        call!("fmult", [cons4, covar!("a0")]),
-        ["a0"]
+        id!("main"),
+        [bind!(id!("a"), cns!())],
+        call!(id!("fmult"), [cons4, covar!(id!("a"))]),
+        [id!("a")]
     );
 
     let program = prog!([main, mult, fmult], [ty_list], []);
