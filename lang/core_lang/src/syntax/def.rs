@@ -17,13 +17,13 @@ use std::collections::HashSet;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def<S = Statement> {
     /// The name of the definition
-    pub name: Name,
+    pub name: Ident,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
     pub body: S,
     /// Variable names used in the top-level function
-    pub used_vars: HashSet<Var>,
+    pub used_vars: HashSet<Ident>,
 }
 
 pub type FsDef = Def<FsStatement>;

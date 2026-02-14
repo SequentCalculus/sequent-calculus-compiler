@@ -29,8 +29,8 @@ impl Shrinking for FsIfC {
                     axcut::syntax::statements::ifc::IfSort::GreaterOrEqual
                 }
             },
-            fst: self.fst,
-            snd: self.snd,
+            fst: self.fst.name,
+            snd: self.snd.map(|var| var.name),
             thenc: self.thenc.shrink(state),
             elsec: self.elsec.shrink(state),
         })

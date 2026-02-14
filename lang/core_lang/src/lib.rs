@@ -10,11 +10,11 @@ pub mod traits;
 pub mod test_common {
     use crate::syntax::*;
     extern crate self as core_lang;
-    use core_macros::{covar, var};
+    use core_macros::{covar, id, var};
 
-    pub fn example_subst() -> (Vec<(Var, Term<Prd>)>, Vec<(Covar, Term<Cns>)>) {
-        let prod_subst = vec![("x".to_string(), var!("y").into())];
-        let cons_subst = vec![("a".to_string(), covar!("b").into())];
+    pub fn example_subst() -> (Vec<(Ident, Term<Prd>)>, Vec<(Ident, Term<Cns>)>) {
+        let prod_subst = vec![(id!("x"), var!(id!("y")).into())];
+        let cons_subst = vec![(id!("a"), covar!(id!("b")).into())];
         (prod_subst, cons_subst)
     }
 }

@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args};
+use macro_utils::{expr_to_array, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -16,16 +16,16 @@ fn def(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStr
         ["Def Name", "Def Args", "Def Body", "Def Used Vars"],
         &[],
     );
-    let name = expr_to_string(&args[0], 0);
+    let name = &args[0];
     let def_args = expr_to_array(&args[1], 1);
     let def_body = &args[2];
     let def_used = expr_to_array(&args[3], 3)
         .iter()
-        .map(|arg| quote! { #arg.to_string() })
+        .map(|arg| quote! { #arg })
         .collect::<Vec<_>>();
     quote! {
         core_lang::syntax::def::Def{
-            name: #name.to_string(),
+            name: #name,
             context: core_lang::syntax::context::TypingContext{
                 bindings: ::std::vec::Vec::from([
                     #(#def_args),*

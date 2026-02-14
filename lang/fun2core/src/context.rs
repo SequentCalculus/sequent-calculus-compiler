@@ -1,6 +1,7 @@
 //! This module defines the trivial translation of typing contexts.
 
 use crate::types::compile_ty;
+use core_lang::syntax::names::Ident;
 
 /// This function converts [chirality in Fun](fun::syntax::context::Chirality) to
 /// [chirality in Core](core_lang::syntax::context::Chirality).
@@ -21,7 +22,7 @@ pub fn compile_context(
             .bindings
             .into_iter()
             .map(|binding| core_lang::syntax::context::ContextBinding {
-                var: binding.var,
+                var: Ident::new_with_zero(&binding.var),
                 chi: compile_chi(&binding.chi),
                 ty: compile_ty(&binding.ty),
             })

@@ -3,7 +3,7 @@
 //! [`SubstVar`] provides a method for substituting a list of (co)variables by other (co)variables.
 
 use crate::syntax::{
-    Covar, Var,
+    Ident,
     terms::{Cns, Prd, Term},
 };
 
@@ -23,21 +23,21 @@ pub trait Subst: Clone {
     /// - `cons_subst` is the list of consumer substitutions to perform
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target;
 
     /// This method substitutes a variable by a producer. It assumes that all (co)variables in the
     /// producer to be substituted are fresh for the target term or statement substituted into, so
     /// care is only needed for shadowing, but not to avoid captures.
-    fn subst_var(self, var: Var, prod: Term<Prd>) -> Self::Target {
+    fn subst_var(self, var: Ident, prod: Term<Prd>) -> Self::Target {
         self.subst_sim(&[(var, prod)], &[])
     }
 
     /// This method substitutes a covariable by a consumer. It assumes that all (co)variables in the
     /// consumer to be substituted are fresh for the target term or statement substituted into, so
     /// care is only needed for shadowing, but not to avoid captures.
-    fn subst_covar(self, covar: Covar, cons: Term<Cns>) -> Self::Target {
+    fn subst_covar(self, covar: Ident, cons: Term<Cns>) -> Self::Target {
         self.subst_sim(&[], &[(covar, cons)])
     }
 }
@@ -46,8 +46,8 @@ impl<T: Subst> Subst for Rc<T> {
     type Target = Rc<T::Target>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).subst_sim(prod_subst, cons_subst))
     }
@@ -57,8 +57,8 @@ impl<T: Subst> Subst for Option<T> {
     type Target = Option<T::Target>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Option<T::Target> {
         self.map(|t| t.subst_sim(prod_subst, cons_subst))
     }
@@ -68,8 +68,8 @@ impl<T: Subst> Subst for Vec<T> {
     type Target = Vec<T::Target>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Vec<T::Target> {
         self.into_iter()
             .map(|element| element.subst_sim(prod_subst, cons_subst))
@@ -89,26 +89,26 @@ pub trait SubstVar: Clone {
     /// - `subst` is the list of substitutions to perform. Each substitution is represented by a
     ///   pair with the first component being the old (co)variable substituted by the new
     ///   (co)variable in the second component.
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target;
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self::Target;
 }
 
 impl<T: SubstVar> SubstVar for Rc<T> {
     type Target = Rc<T::Target>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).subst_sim(subst))
     }
 }
 
 impl<T: SubstVar> SubstVar for Option<T> {
     type Target = Option<T::Target>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Option<T::Target> {
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Option<T::Target> {
         self.map(|t| t.subst_sim(subst))
     }
 }
 
 impl<T: SubstVar> SubstVar for Vec<T> {
     type Target = Vec<T::Target>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Vec<T::Target> {
+    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Vec<T::Target> {
         self.into_iter()
             .map(|element| element.subst_sim(subst))
             .collect()

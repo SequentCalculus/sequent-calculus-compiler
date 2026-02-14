@@ -1,7 +1,7 @@
 //! This module defines the translation of cuts.
 
 use core_lang::syntax::{
-    Name, Ty, TypingContext, Var,
+    Ident, Ty, TypingContext,
     declaration::{cont_int, lookup_type_declaration},
     fresh_name, fresh_var,
     statements::{FsCut, FsStatement},
@@ -23,8 +23,8 @@ use std::rc::Rc;
 /// - `statement` is the body of the (tilde-)mu.
 /// - `state` is the state of the whole translation.
 fn shrink_renaming(
-    var: Var,
-    var_mu: Var,
+    var: Ident,
+    var_mu: Ident,
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
@@ -43,8 +43,8 @@ fn shrink_renaming(
 ///
 /// A panic is caused if no clause for the xtor is in the (co)match.
 fn shrink_known_cuts<T: Chi + std::fmt::Debug>(
-    id: &Name,
-    args: Vec<Var>,
+    id: &Ident,
+    args: Vec<Ident>,
     clauses: &[Clause<T, FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
@@ -52,7 +52,7 @@ fn shrink_known_cuts<T: Chi + std::fmt::Debug>(
         None => panic!("Xtor {id} not found in clauses {clauses:?}"),
         Some(clause) => (clause.body.clone(), &clause.context),
     };
-    let subst: Vec<(Var, Var)> = context.vec_vars().into_iter().zip(args).collect();
+    let subst: Vec<(Ident, Ident)> = context.vec_vars().into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
         .subst_sim(subst.as_slice())
         .shrink(state)
@@ -64,20 +64,20 @@ fn shrink_known_cuts<T: Chi + std::fmt::Debug>(
 /// - `ty` is the type of the variable and the covariable.
 /// - `state` is the state of the whole translation.
 fn shrink_unknown_cuts(
-    var_prd: Var,
-    var_cns: Var,
+    var_prd: Ident,
+    var_cns: Ident,
     ty: Ty,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         // for integers the type of the covariable becomes the continuation type ...
         Ty::I64 => axcut::syntax::statements::Invoke {
-            var: var_cns,
+            var: var_cns.name,
             // ... so we wrap the variable into a continuation xtor
-            tag: cont_int().xtors[0].name.clone(),
-            ty: axcut::syntax::Ty::Decl(cont_int().name),
+            tag: cont_int().xtors[0].name.name.clone(),
+            ty: axcut::syntax::Ty::Decl(cont_int().name.name),
             args: vec![axcut::syntax::ContextBinding {
-                var: var_prd,
+                var: var_prd.name,
                 chi: axcut::syntax::Chirality::Ext,
                 ty: axcut::syntax::Ty::I64,
             }]
@@ -122,19 +122,19 @@ fn shrink_unknown_cuts(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: fresh_name(state.used_vars, &binding.var),
+                            var: fresh_name(state.used_vars, &binding.var).name,
                             ..binding
                         })
                         .collect::<Vec<_>>()
                         .into();
                     axcut::syntax::statements::Clause {
-                        xtor: xtor.clone(),
+                        xtor: xtor.name.clone(),
                         context: env.clone(),
                         body: Rc::new(
                             // we invoke the method of each clause on the expanded (co)variable
                             axcut::syntax::statements::Invoke {
-                                var: var_expand.clone(),
-                                tag: xtor,
+                                var: var_expand.name.clone(),
+                                tag: xtor.name,
                                 ty: translated_ty.clone(),
                                 args: env,
                             }
@@ -146,7 +146,7 @@ fn shrink_unknown_cuts(
 
             // we match on the unexpanded (co)variable
             axcut::syntax::statements::Switch {
-                var: var_keep,
+                var: var_keep.name,
                 ty: translated_ty,
                 clauses,
                 free_vars_clauses: None,
@@ -181,13 +181,24 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
 
     // we collect all lifted statements for the current top-level function
     state.lifted_statements.push_front(axcut::syntax::Def {
-        name: label.clone(),
+        name: label.name.clone(),
         context,
         body,
-        used_vars: state.used_vars.clone(),
+        used_vars: state
+            .used_vars
+            .clone()
+            .into_iter()
+            .map(|var| var.name)
+            .collect(),
     });
 
-    Rc::new(axcut::syntax::statements::Call { label, args }.into())
+    Rc::new(
+        axcut::syntax::statements::Call {
+            label: label.name,
+            args,
+        }
+        .into(),
+    )
 }
 
 /// This function function eliminates the cut of a mu- and a tilde-mu-binding, i.e., critical
@@ -199,9 +210,9 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
 /// - `ty` is the type of the mu- and the tilde-mu-binding.
 /// - `state` is the state of the whole translation.
 fn shrink_critical_pairs(
-    var_prd: Var,
+    var_prd: Ident,
     statement_prd: Rc<FsStatement>,
-    var_cns: Var,
+    var_cns: Ident,
     statement_cns: Rc<FsStatement>,
     ty: Ty,
     state: &mut ShrinkingState,
@@ -209,14 +220,14 @@ fn shrink_critical_pairs(
     match ty.clone() {
         // for integers the type of the bound covariable becomes the continuation type ...
         Ty::I64 => axcut::syntax::statements::Create {
-            var: var_prd,
-            ty: axcut::syntax::Ty::Decl(cont_int().name),
+            var: var_prd.name,
+            ty: axcut::syntax::Ty::Decl(cont_int().name.name),
             // ... so we turn the tilde-mu-binding into a continuation clsoure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
-                xtor: cont_int().xtors[0].name.clone(),
+                xtor: cont_int().xtors[0].name.name.clone(),
                 context: vec![axcut::syntax::ContextBinding {
-                    var: var_cns,
+                    var: var_cns.name,
                     chi: axcut::syntax::Chirality::Ext,
                     ty: axcut::syntax::Ty::I64,
                 }]
@@ -294,20 +305,20 @@ fn shrink_critical_pairs(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: fresh_name(state.used_vars, &binding.var),
+                            var: fresh_name(state.used_vars, &binding.var).name,
                             ..binding
                         })
                         .collect::<Vec<_>>()
                         .into();
                     axcut::syntax::statements::Clause {
-                        xtor: xtor.clone(),
+                        xtor: xtor.name.clone(),
                         context: env.clone(),
                         body: Rc::new(
                             // we bind the xtor of each clause with the expanded binding
                             axcut::syntax::statements::Let {
-                                var: var_expand.clone(),
+                                var: var_expand.name.clone(),
                                 ty: translated_ty.clone(),
-                                tag: xtor,
+                                tag: xtor.name,
                                 args: env,
                                 next: shrunk_statement_expand.clone(),
                                 free_vars_next: None,
@@ -320,8 +331,8 @@ fn shrink_critical_pairs(
 
             // we bind the created closure with the unexpanded binding
             axcut::syntax::statements::Create {
-                var: var_keep,
-                ty: axcut::syntax::Ty::Decl(name),
+                var: var_keep.name,
+                ty: axcut::syntax::Ty::Decl(name.name),
                 context: None,
                 clauses,
                 free_vars_clauses: None,
@@ -340,13 +351,13 @@ fn shrink_critical_pairs(
 /// - `state` is the state of the whole translation.
 fn shrink_literal_mu(
     lit: i64,
-    var: Var,
+    var: Ident,
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     axcut::syntax::statements::Literal {
         lit,
-        var,
+        var: var.name,
         next: statement.shrink(state),
         free_vars_next: None,
     }
@@ -359,22 +370,22 @@ fn shrink_literal_mu(
 /// - `used_vars` are the variable names used in the top-level function we are currently in.
 fn shrink_literal_var(
     lit: i64,
-    var: Var,
-    used_vars: &mut HashSet<Var>,
+    var: Ident,
+    used_vars: &mut HashSet<Ident>,
 ) -> axcut::syntax::Statement {
     // we bind the literal to a fresh variable ...
     let fresh_var = fresh_var(used_vars);
     axcut::syntax::statements::Literal {
         lit,
-        var: fresh_var.clone(),
+        var: fresh_var.name.clone(),
         next: Rc::new(
             axcut::syntax::statements::Invoke {
-                var,
+                var: var.name,
                 // ... and wrap it into a continuation xtor
-                tag: cont_int().xtors[0].name.clone(),
-                ty: axcut::syntax::Ty::Decl(cont_int().name),
+                tag: cont_int().xtors[0].name.name.clone(),
+                ty: axcut::syntax::Ty::Decl(cont_int().name.name),
                 args: vec![axcut::syntax::ContextBinding {
-                    var: fresh_var,
+                    var: fresh_var.name,
                     chi: axcut::syntax::Chirality::Ext,
                     ty: axcut::syntax::Ty::I64,
                 }]
@@ -407,18 +418,18 @@ pub fn shrink_binop(op: &core_lang::syntax::BinOp) -> axcut::syntax::BinOp {
 /// - `statement` is the body of the tilde-mu.
 /// - `state` is the state of the whole translation.
 fn shrink_op_mu(
-    fst: Var,
+    fst: Ident,
     op: &core_lang::syntax::BinOp,
-    snd: Var,
-    var: Var,
+    snd: Ident,
+    var: Ident,
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
     axcut::syntax::statements::Op {
-        fst,
+        fst: fst.name,
         op: shrink_binop(op),
-        snd,
-        var,
+        snd: snd.name,
+        var: var.name,
         next: statement.shrink(state),
         free_vars_next: None,
     }
@@ -432,27 +443,27 @@ fn shrink_op_mu(
 /// - `var` is the covariable.
 /// - `used_vars` are the variable names used in the top-level function we are currently in.
 fn shrink_op_var(
-    fst: Var,
+    fst: Ident,
     op: &core_lang::syntax::BinOp,
-    snd: Var,
-    var: Var,
-    used_vars: &mut HashSet<Var>,
+    snd: Ident,
+    var: Ident,
+    used_vars: &mut HashSet<Ident>,
 ) -> axcut::syntax::Statement {
     // we bind the result of the arithmetic operation to a fresh variable ...
     let fresh_var = fresh_var(used_vars);
     axcut::syntax::statements::Op {
-        fst,
+        fst: fst.name,
         op: shrink_binop(op),
-        snd,
-        var: fresh_var.clone(),
+        snd: snd.name,
+        var: fresh_var.name.clone(),
         next: Rc::new(
             axcut::syntax::statements::Invoke {
-                var,
+                var: var.name,
                 // ... and wrap it into a continuation xtor
-                tag: cont_int().xtors[0].name.clone(),
-                ty: axcut::syntax::Ty::Decl(cont_int().name),
+                tag: cont_int().xtors[0].name.name.clone(),
+                ty: axcut::syntax::Ty::Decl(cont_int().name.name),
                 args: vec![axcut::syntax::ContextBinding {
-                    var: fresh_var,
+                    var: fresh_var.name,
                     chi: axcut::syntax::Chirality::Ext,
                     ty: axcut::syntax::Ty::I64,
                 }]
@@ -632,9 +643,9 @@ impl Shrinking for FsCut {
                     ty: _,
                 }),
             ) => axcut::syntax::statements::Let {
-                var: variable,
+                var: variable.name,
                 ty: shrink_ty(self.ty),
-                tag: id,
+                tag: id.name,
                 args: shrink_context(args, state.codata),
                 next: statement.shrink(state),
                 free_vars_next: None,
@@ -668,8 +679,8 @@ impl Shrinking for FsCut {
                     ty: _,
                 }),
             ) => axcut::syntax::statements::Invoke {
-                var,
-                tag: id,
+                var: var.name,
+                tag: id.name,
                 ty: shrink_ty(self.ty),
                 args: shrink_context(args, state.codata),
             }
@@ -688,7 +699,7 @@ impl Shrinking for FsCut {
                     ..
                 }),
             ) => axcut::syntax::statements::Switch {
-                var,
+                var: var.name,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
@@ -706,7 +717,7 @@ impl Shrinking for FsCut {
                     ty: _,
                 }),
             ) => axcut::syntax::statements::Switch {
-                var,
+                var: var.name,
                 ty: shrink_ty(self.ty),
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
@@ -727,7 +738,7 @@ impl Shrinking for FsCut {
                     ..
                 }),
             ) => axcut::syntax::statements::Create {
-                var: variable,
+                var: variable.name,
                 ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),
@@ -749,7 +760,7 @@ impl Shrinking for FsCut {
                     ..
                 }),
             ) => axcut::syntax::statements::Create {
-                var: variable,
+                var: variable.name,
                 ty: shrink_ty(self.ty),
                 context: None,
                 clauses: clauses.shrink(state),

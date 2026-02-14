@@ -15,27 +15,27 @@ pub struct XVar<C: Chi> {
     /// Whether we have a variable or covariable
     pub prdcns: C,
     /// The name of the (co)variable
-    pub var: Var,
+    pub var: Ident,
     /// The type
     pub ty: Ty,
 }
 
 impl XVar<Prd> {
     /// This function creates a variable with the given name and type.
-    pub fn var(name: &str, ty: Ty) -> Self {
+    pub fn var(name: Ident, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
-            var: name.to_string(),
+            var: name,
             ty,
         }
     }
 }
 impl XVar<Cns> {
     /// This function creates a covariable with the given name and type.
-    pub fn covar(name: &str, ty: Ty) -> Self {
+    pub fn covar(name: Ident, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,
-            var: name.to_string(),
+            var: name,
             ty,
         }
     }
@@ -69,8 +69,8 @@ impl Subst for XVar<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        _cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        _cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         match prod_subst.iter().find(|(var, _)| *var == self.var) {
             None => self.into(),
@@ -82,8 +82,8 @@ impl Subst for XVar<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
         self,
-        _prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        _prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         match cons_subst.iter().find(|(covar, _)| *covar == self.var) {
             None => self.into(),
@@ -108,7 +108,7 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
 }
 
 impl<C: Chi> Bind for XVar<C> {
-    fn bind(self, k: Continuation, used_var: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_var: &mut HashSet<Ident>) -> FsStatement {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
         } else {
@@ -126,7 +126,7 @@ impl<C: Chi> Bind for XVar<C> {
 
 impl<C: Chi> SubstVar for XVar<C> {
     type Target = XVar<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> XVar<C> {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> XVar<C> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {
@@ -142,39 +142,39 @@ mod var_tests {
     use super::Subst;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use core_macros::{covar, var};
+    use core_macros::{covar, id, var};
 
     // Substitution tests
 
     #[test]
     fn subst_var1() {
         let subst = example_subst();
-        let result = var!("x").subst_sim(&subst.0, &subst.1);
-        let expected = var!("y").into();
+        let result = var!(id!("x")).subst_sim(&subst.0, &subst.1);
+        let expected = var!(id!("y")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_var2() {
         let subst = example_subst();
-        let result = var!("z").subst_sim(&subst.0, &subst.1);
-        let expected = var!("z").into();
+        let result = var!(id!("z")).subst_sim(&subst.0, &subst.1);
+        let expected = var!(id!("z")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar1() {
         let subst = example_subst();
-        let result = covar!("a").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("b").into();
+        let result = covar!(id!("a")).subst_sim(&subst.0, &subst.1);
+        let expected = covar!(id!("b")).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_covar2() {
         let subst = example_subst();
-        let result = covar!("c").subst_sim(&subst.0, &subst.1);
-        let expected = covar!("c").into();
+        let result = covar!(id!("c")).subst_sim(&subst.0, &subst.1);
+        let expected = covar!(id!("c")).into();
         assert_eq!(result, expected)
     }
 }
