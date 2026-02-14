@@ -160,7 +160,7 @@ mod test {
 
     #[test]
     fn display() {
-        assert_eq!(example().print_to_string(Default::default()), "goto x (2)")
+        assert_eq!(example().print_to_string(Default::default()), "goto x0 (2)")
     }
 
     #[test]

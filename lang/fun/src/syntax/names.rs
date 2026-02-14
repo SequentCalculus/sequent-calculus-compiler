@@ -32,15 +32,12 @@ pub type TypeVar = String;
 
 impl Print for Var {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.name
-            .print(cfg, alloc)
-            .append("_")
-            .append(self.id.to_string())
+        self.name.print(cfg, alloc).append(self.id.to_string())
     }
 }
 
 impl fmt::Display for Var {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}_{}", self.name, self.id)
+        write!(f, "{}{}", self.name, self.id)
     }
 }

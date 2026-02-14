@@ -317,7 +317,7 @@ mod destructor_tests {
     fn display_1() {
         assert_eq!(
             example_1().print_to_string(Default::default()),
-            "x.head[i64]"
+            "x0.head[i64]"
         )
     }
 
@@ -325,7 +325,7 @@ mod destructor_tests {
     fn display_2() {
         assert_eq!(
             example_2().print_to_string(Default::default()),
-            "x.head[i64]\n    .head[i64]"
+            "x0.head[i64]\n    .head[i64]"
         )
     }
 
@@ -358,7 +358,7 @@ mod destructor_tests {
             ty: None,
         };
         let result = dest.print_to_string(Default::default());
-        let expected = "x.fst[i64, i64](y, z)".to_owned();
+        let expected = "x0.fst[i64, i64](y0, z0)".to_owned();
         assert_eq!(result, expected)
     }
 

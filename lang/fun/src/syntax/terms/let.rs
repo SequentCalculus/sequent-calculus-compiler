@@ -216,7 +216,7 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "let x: i64 = 2;\n4"
+            "let x0: i64 = 2;\n4"
         )
     }
 

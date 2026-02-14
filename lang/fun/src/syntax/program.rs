@@ -268,7 +268,7 @@ mod program_tests {
     fn display_args() {
         assert_eq!(
             example_args().print_to_string(Default::default()),
-            "def f(x: i64, a: cns i64): i64 {\n    4\n}".to_string(),
+            "def f(x0: i64, a0: cns i64): i64 {\n    4\n}".to_string(),
         )
     }
 

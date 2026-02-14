@@ -174,7 +174,7 @@ mod test {
     fn display() {
         assert_eq!(
             example().print_to_string(Default::default()),
-            "label x { 2 }"
+            "label x0 { 2 }"
         )
     }
 }

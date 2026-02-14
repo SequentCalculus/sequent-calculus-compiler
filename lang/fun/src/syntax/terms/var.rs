@@ -4,6 +4,7 @@ use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
+use crate::syntax::util::dummy_span;
 use crate::syntax::*;
 use crate::typing::*;
 

@@ -365,6 +365,7 @@ impl Print for TypeContext {
 #[cfg(test)]
 mod tests {
     use crate::{
+        parser::util::ToMiette,
         syntax::{
             context::TypingContext,
             names::Var,
@@ -406,7 +407,7 @@ mod tests {
     fn print_context() {
         assert_eq!(
             example_context().print_to_string(None),
-            "x: i64, y: List[i64], a: cns i64"
+            "x0: i64, y0: List[i64], a0: cns i64"
         )
     }
 
@@ -450,7 +451,7 @@ mod tests {
                         name: "x".to_owned(),
                         id: 0
                     },
-                    &Span::default().to_miette()
+                    &dummy_span().to_miette()
                 )
                 .is_ok()
         )
@@ -460,13 +461,12 @@ mod tests {
     fn var_lookup_fail() {
         assert!(
             example_context()
-                .lookup_var(&"z".to_owned(), &dummy_span())
                 .lookup_var(
                     &Var {
                         name: "z".to_owned(),
                         id: 0
                     },
-                    &Span::default().to_miette()
+                    &dummy_span().to_miette()
                 )
                 .is_err()
         )
@@ -481,7 +481,7 @@ mod tests {
                         name: "a".to_owned(),
                         id: 0
                     },
-                    &Span::default().to_miette()
+                    &dummy_span().to_miette()
                 )
                 .is_ok()
         )
@@ -496,7 +496,7 @@ mod tests {
                         name: "b".to_owned(),
                         id: 0
                     },
-                    &Span::default().to_miette()
+                    &dummy_span().to_miette()
                 )
                 .is_err()
         )

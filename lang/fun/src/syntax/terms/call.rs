@@ -173,7 +173,7 @@ mod test {
     fn display_extended() {
         assert_eq!(
             example_extended().print_to_string(Default::default()),
-            "foo(2, a)"
+            "foo(2, a0)"
         )
     }
 

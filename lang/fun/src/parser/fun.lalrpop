@@ -116,7 +116,7 @@ pub OptContext: TypingContext = {
 }
 
 pub OptNameContext: NameContext = {
-    <l: @L> <bindings: OptParenthesizedList<Name>> <r: @R> => NameContext { span: Some(span(l, r)), bindings, },
+    <l: @L> <bindings: OptParenthesizedList<Var>> <r: @R> => NameContext { span: Some(span(l, r)), bindings, },
 }
 
 //

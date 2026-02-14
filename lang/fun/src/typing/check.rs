@@ -363,7 +363,6 @@ mod check_tests {
             .into(),
             XVar {
                 span: dummy_span(),
-                var: "d".to_owned(),
                 var: Var {
                     name: "d".to_owned(),
                     id: 0,

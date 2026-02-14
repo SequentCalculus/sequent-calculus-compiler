@@ -371,7 +371,7 @@ mod test {
     fn display_empty() {
         assert_eq!(
             example_empty().print_to_string(Default::default()),
-            "x.case { }"
+            "x0.case { }"
         )
     }
 
@@ -385,7 +385,7 @@ mod test {
     fn display_tup() {
         assert_eq!(
             example_tup().print_to_string(Default::default()),
-            "x.case[i64, i64] { Tup(x, y) => 2 }"
+            "x0.case[i64, i64] { Tup(x0, y0) => 2 }"
         )
     }
 

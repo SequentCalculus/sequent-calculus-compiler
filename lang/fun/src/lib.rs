@@ -436,11 +436,7 @@ pub mod test_common {
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
                         body: Op {
-<<<<<<< HEAD
                             span: dummy_span(),
-                            fst: Rc::new(XVar::mk("x").into()),
-=======
-                            span: Span::default(),
                             fst: Rc::new(
                                 XVar::mk(Var {
                                     name: "x".to_string(),
@@ -448,7 +444,6 @@ pub mod test_common {
                                 })
                                 .into(),
                             ),
->>>>>>> e4688eb (fixed fun test syntax)
                             op: BinOp::Prod,
                             snd: Rc::new(
                                 Call {
@@ -488,7 +483,6 @@ pub mod test_common {
                 scrutinee: Rc::new(
                     XVar {
                         span: dummy_span(),
-                        var: "l".to_owned(),
                         var: Var {
                             name: "l".to_owned(),
                             id: 0,
@@ -518,16 +512,11 @@ pub mod test_common {
                             span: dummy_span(),
                             fst: Rc::new(
                                 XVar {
-<<<<<<< HEAD
                                     span: dummy_span(),
-                                    var: "x".to_owned(),
-=======
-                                    span: Span::default(),
                                     var: Var {
                                         name: "x".to_owned(),
                                         id: 0,
                                     },
->>>>>>> e4688eb (fixed fun test syntax)
                                     ty: Some(Ty::mk_i64()),
                                     chi: Some(Prd),
                                 }
@@ -540,16 +529,11 @@ pub mod test_common {
                                     name: "mult".to_owned(),
                                     args: vec![
                                         XVar {
-<<<<<<< HEAD
                                             span: dummy_span(),
-                                            var: "xs".to_owned(),
-=======
-                                            span: Span::default(),
                                             var: Var {
                                                 name: "xs".to_owned(),
                                                 id: 0,
                                             },
->>>>>>> e4688eb (fixed fun test syntax)
                                             ty: Some(Ty::mk_decl(
                                                 "List",
                                                 TypeArgs::mk(vec![Ty::mk_i64()]),
