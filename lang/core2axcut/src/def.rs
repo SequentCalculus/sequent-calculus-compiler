@@ -5,6 +5,7 @@ use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
 use core_lang::syntax::def::FsDef;
 
 use crate::context::shrink_context;
+use crate::shrink_ident;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
 use std::collections::{HashSet, VecDeque};
@@ -35,10 +36,14 @@ pub fn shrink_def(
     });
 
     def_plus_lifted_statements.push_front(axcut::syntax::Def {
-        name: def.name.name,
+        name: shrink_ident(def.name),
         context: shrink_context(def.context, codata_types),
         body,
-        used_vars: def.used_vars.into_iter().map(|var| var.name).collect(),
+        used_vars: def
+            .used_vars
+            .into_iter()
+            .map(|var| shrink_ident(var))
+            .collect(),
     });
 
     def_plus_lifted_statements

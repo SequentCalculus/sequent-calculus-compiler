@@ -4,6 +4,7 @@ use core_lang::syntax::FsStatement;
 use core_lang::syntax::terms::{Chi, Clause};
 
 use crate::context::shrink_context;
+use crate::shrink_ident;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
 impl<T: Chi> Shrinking for Clause<T, FsStatement> {
@@ -11,7 +12,7 @@ impl<T: Chi> Shrinking for Clause<T, FsStatement> {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::statements::Clause {
         axcut::syntax::statements::Clause {
-            xtor: self.xtor.name,
+            xtor: shrink_ident(self.xtor),
             context: shrink_context(self.context, state.codata),
             body: self.body.shrink(state),
         }

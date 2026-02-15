@@ -18,3 +18,10 @@ pub mod program;
 pub mod shrinking;
 pub mod statements;
 pub mod types;
+
+pub fn shrink_ident(ident: core_lang::syntax::names::Ident) -> axcut::syntax::names::Ident {
+    axcut::syntax::names::Ident {
+        name: ident.name,
+        id: ident.id,
+    }
+}
