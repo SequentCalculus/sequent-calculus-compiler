@@ -10,7 +10,7 @@ use crate::{
     parallel_moves::{ParallelMoves, parallel_moves},
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
+use axcut::syntax::{Chirality, ContextBinding, Ident, TypingContext};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::Hash;
@@ -21,9 +21,9 @@ use std::hash::Hash;
 /// - `rearrange` is the list of pairs.
 /// - `context` is the given context.
 pub fn transpose(
-    rearrange: &[(ContextBinding, Var)],
+    rearrange: &[(ContextBinding, Ident)],
     context: &TypingContext,
-) -> BTreeMap<ContextBinding, Vec<Var>> {
+) -> BTreeMap<ContextBinding, Vec<Ident>> {
     let mut target_map = BTreeMap::new();
     for binding in &context.bindings {
         let targets = rearrange
@@ -43,7 +43,7 @@ pub fn transpose(
 /// - `new_context` is the resulting context.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
-    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+    target_map: &BTreeMap<ContextBinding, Vec<Ident>>,
     context: &TypingContext,
     new_context: &TypingContext,
     instructions: &mut Vec<Code>,
@@ -55,7 +55,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     /// This function transforms a mapping of variables to a corresponding mapping of temporaries.
     fn connections<Backend, Temporary: Ord, Immediate>(
-        target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+        target_map: &BTreeMap<ContextBinding, Vec<Ident>>,
         context: &TypingContext,
         new_context: &TypingContext,
     ) -> BTreeMap<Temporary, BTreeSet<Temporary>>
@@ -105,7 +105,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 /// - `context` is the old context.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
-    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+    target_map: &BTreeMap<ContextBinding, Vec<Ident>>,
     context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) where
@@ -116,7 +116,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
 {
     #[allow(clippy::cast_possible_wrap)]
     fn update_reference_count<Backend, Code, Temporary, Immediate>(
-        variable: &Var,
+        variable: &Ident,
         context: &TypingContext,
         new_count: usize,
         instructions: &mut Vec<Code>,
