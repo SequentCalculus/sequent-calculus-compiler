@@ -3,7 +3,7 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
+use crate::syntax::{ContextBinding, Ident, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -20,7 +20,7 @@ use std::{
 /// function anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
-    pub label: Name,
+    pub label: Ident,
     pub args: TypingContext,
 }
 
@@ -43,7 +43,7 @@ impl From<Call> for Statement {
 }
 
 impl FreeVars for Call {
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<Ident>) -> Self {
         vars.extend(self.args.vars());
         self
     }
@@ -56,7 +56,7 @@ impl TypedFreeVars for Call {
 }
 
 impl Subst for Call {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Call {
         self.args = self.args.subst_sim(subst);
         self
     }
@@ -64,7 +64,7 @@ impl Subst for Call {
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
         let args = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the top-level function

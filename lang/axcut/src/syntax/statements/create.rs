@@ -5,7 +5,7 @@ use printer::tokens::{COLON, COMMA, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
 
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -22,14 +22,14 @@ use std::rc::Rc;
 /// statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Create {
-    pub var: Var,
+    pub var: Ident,
     pub ty: Ty,
     /// Closure environment
     pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Var>>,
+    pub free_vars_clauses: Option<HashSet<Ident>>,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Var>>,
+    pub free_vars_next: Option<HashSet<Ident>>,
 }
 
 impl Print for Create {
@@ -78,7 +78,7 @@ impl From<Create> for Statement {
 }
 
 impl FreeVars for Create {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
@@ -106,7 +106,7 @@ impl TypedFreeVars for Create {
 }
 
 impl Subst for Create {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Create {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Create {
         self.context = self.context.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
@@ -122,7 +122,11 @@ impl Linearizing for Create {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses and the remaining statement are not annotated.
-    fn linearize(mut self, mut context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(
+        mut self,
+        mut context: TypingContext,
+        used_vars: &mut HashSet<Ident>,
+    ) -> Statement {
         let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
         let free_vars_next = std::mem::take(&mut self.free_vars_next)
@@ -204,7 +208,7 @@ impl Linearizing for Create {
 
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
-            let substitution_next: Vec<(Var, Var)> = context_next
+            let substitution_next: Vec<(Ident, Ident)> = context_next
                 .into_iter_vars()
                 .zip(context_next_freshened.vars())
                 .collect();

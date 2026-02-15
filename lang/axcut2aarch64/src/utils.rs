@@ -5,7 +5,7 @@ use super::config::{
     REGISTER_NUM, RESERVED, RESERVED_SPILLS, Register, SPILL_NUM, Spill, Temporary,
 };
 
-use axcut::syntax::{TypingContext, Var};
+use axcut::syntax::{Ident, TypingContext};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
 fn temporary_from_position(position: usize) -> Temporary {
@@ -26,9 +26,9 @@ impl Utils<Temporary> for Backend {
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
-        variable: &Var,
+        variable: &Ident,
     ) -> Temporary {
-        fn get_position(context: &TypingContext, variable: &Var) -> usize {
+        fn get_position(context: &TypingContext, variable: &Ident) -> usize {
             context
                 .bindings
                 .iter()

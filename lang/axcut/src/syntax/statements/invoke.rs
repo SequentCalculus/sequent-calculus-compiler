@@ -3,7 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -18,8 +18,8 @@ use std::rc::Rc;
 /// then has to exactly fit the signature of the method anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Invoke {
-    pub var: Var,
-    pub tag: Name,
+    pub var: Ident,
+    pub tag: Ident,
     pub ty: Ty,
     pub args: TypingContext,
 }
@@ -53,7 +53,7 @@ impl From<Invoke> for Statement {
 }
 
 impl FreeVars for Invoke {
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<Ident>) -> Self {
         vars.extend(self.args.vars());
         vars.insert(self.var.clone());
         self
@@ -72,7 +72,7 @@ impl TypedFreeVars for Invoke {
 }
 
 impl Subst for Invoke {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Invoke {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
         self.args = self.args.subst_sim(subst);
         self
@@ -81,7 +81,7 @@ impl Subst for Invoke {
 
 impl Linearizing for Invoke {
     type Target = Statement;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
         let args: TypingContext = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the method ...

@@ -3,7 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::{Linearizing, fresh_var};
 use crate::traits::substitution::Subst;
@@ -17,10 +17,10 @@ use std::rc::Rc;
 /// Moreover, the free variables of the clauses can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
-    pub var: Var,
+    pub var: Ident,
     pub ty: Ty,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Var>>,
+    pub free_vars_clauses: Option<HashSet<Ident>>,
 }
 
 impl Print for Switch {
@@ -45,7 +45,7 @@ impl From<Switch> for Statement {
 }
 
 impl FreeVars for Switch {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
         self.clauses = self.clauses.free_vars(vars);
         self.free_vars_clauses = Some(vars.clone());
 
@@ -67,7 +67,7 @@ impl TypedFreeVars for Switch {
 }
 
 impl Subst for Switch {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Switch {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Switch {
         self.var = self.var.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
@@ -81,7 +81,7 @@ impl Linearizing for Switch {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
 
@@ -116,7 +116,7 @@ impl Linearizing for Switch {
         } else {
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
             if new_context.vars_set().contains(&self.var) {
-                self.var = fresh_var(used_vars, &self.var);
+                self.var = fresh_var(used_vars, &self.var.name);
             }
 
             // ... via an explicit substitution

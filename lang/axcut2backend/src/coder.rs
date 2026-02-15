@@ -5,7 +5,7 @@ use crate::{
     code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves,
     statements::CodeStatement, utils::Utils,
 };
-use axcut::syntax::{Name, Prog};
+use axcut::syntax::{Ident, Prog};
 
 use printer::{DocAllocator, Print};
 
@@ -43,7 +43,7 @@ where
 /// - `names` is the list of labels
 fn assemble<Backend, Code, Temporary, Immediate>(
     instructions: Vec<Vec<Code>>,
-    names: Vec<Name>,
+    names: Vec<Ident>,
 ) -> Vec<Code>
 where
     Backend: Config<Temporary, Immediate>
@@ -100,7 +100,7 @@ where
         + ParallelMoves<Code, Temporary>
         + Utils<Temporary>,
 {
-    let names: Vec<Name> = program.defs.iter().map(|def| def.name.clone()).collect();
+    let names: Vec<Ident> = program.defs.iter().map(|def| def.name.clone()).collect();
 
     let number_of_arguments = program.defs[0].context.bindings.len();
     AssemblyProg {

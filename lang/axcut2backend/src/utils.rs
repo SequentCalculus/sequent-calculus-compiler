@@ -7,7 +7,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     statements::CodeStatement,
 };
-use axcut::syntax::{TypeDeclaration, TypingContext, Var, statements::Clause};
+use axcut::syntax::{Ident, TypeDeclaration, TypingContext, statements::Clause};
 
 use std::hash::Hash;
 
@@ -25,7 +25,7 @@ pub trait Utils<Temporary> {
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
-        variable: &Var,
+        variable: &Ident,
     ) -> Temporary;
     /// This method calculates the next free temporaries for a variable after a given typing
     /// context.

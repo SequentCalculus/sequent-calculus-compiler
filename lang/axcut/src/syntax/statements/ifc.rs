@@ -5,7 +5,7 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -54,8 +54,8 @@ impl Print for IfSort {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
     pub sort: IfSort,
-    pub fst: Var,
-    pub snd: Option<Var>,
+    pub fst: Ident,
+    pub snd: Option<Ident>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
@@ -108,7 +108,7 @@ impl From<IfC> for Statement {
 }
 
 impl FreeVars for IfC {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
         self.thenc = self.thenc.free_vars(vars);
 
         let mut vars_elsec = HashSet::new();
@@ -144,7 +144,7 @@ impl TypedFreeVars for IfC {
 }
 
 impl Subst for IfC {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> IfC {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> IfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -157,7 +157,7 @@ impl Subst for IfC {
 
 impl Linearizing for IfC {
     type Target = IfC;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> IfC {
+    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> IfC {
         // we do not insert an explicit substitution, as there are no new bindings and there will
         // be an explicit substitution in each branch
         self.thenc = self.thenc.linearize(context.clone(), used_vars);
