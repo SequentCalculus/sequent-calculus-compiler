@@ -220,17 +220,17 @@ mod tests {
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                id!("x", 1),
+                id!("x", 0),
                 fs_cut!(
                     fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
                     fs_mutilde!(
-                        id!("x", 2),
+                        id!("x", 1),
                         fs_cut!(
                             fs_ctor!(
                                 id!("Cons"),
                                 [
-                                    bind!(id!("x", 1), prd!()),
-                                    bind!(id!("x", 2), prd!(), ty!(id!("ListInt")))
+                                    bind!(id!("x", 0), prd!()),
+                                    bind!(id!("x", 1), prd!(), ty!(id!("ListInt")))
                                 ],
                                 ty!(id!("ListInt"))
                             ),

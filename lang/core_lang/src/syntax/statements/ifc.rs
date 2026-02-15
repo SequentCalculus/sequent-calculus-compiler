@@ -251,14 +251,14 @@ mod transform_tests {
         let expected = fs_cut!(
             lit!(2),
             fs_mutilde!(
-                id!("x", 1),
+                id!("x"),
                 fs_cut!(
                     lit!(1),
                     fs_mutilde!(
-                        id!("x", 2),
+                        id!("x", 1),
                         fs_ife!(
+                            id!("x"),
                             id!("x", 1),
-                            id!("x", 2),
                             fs_cut!(lit!(1), covar!(id!("a"))),
                             fs_exit!(id!("x"))
                         )
@@ -300,9 +300,9 @@ mod transform_tests {
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                id!("x", 1),
+                id!("x"),
                 fs_ife!(
-                    id!("x", 1),
+                    id!("x"),
                     fs_cut!(lit!(1), covar!(id!("a"))),
                     fs_exit!(id!("x"))
                 )

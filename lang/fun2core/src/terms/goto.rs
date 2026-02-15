@@ -63,7 +63,7 @@ mod compile_tests {
             lifted_statements: &mut VecDeque::default(),
         };
         let result = term_typed.compile(&mut state, ty!("int"));
-        let expected = mu!(id!("a", 1), cut!(lit!(1), covar!(id!("a")))).into();
+        let expected = mu!(id!("a0"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 

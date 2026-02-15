@@ -111,14 +111,14 @@ mod compile_tests {
                 clause!(
                     core_syntax::Prd,
                     id!("fst"),
-                    [bind!(id!("a"), cns!()),],
-                    cut!(lit!(1), covar!(id!("a")))
+                    [bind!(id!("a0"), cns!()),],
+                    cut!(lit!(1), covar!(id!("a0")))
                 ),
                 clause!(
                     core_syntax::Prd,
                     id!("snd"),
-                    [bind!(id!("a", 1), cns!())],
-                    cut!(lit!(2), covar!(id!("a", 1)))
+                    [bind!(id!("a1"), cns!())],
+                    cut!(lit!(2), covar!(id!("a1")))
                 )
             ],
             ty!(id!("LPair[i64, i64]"))

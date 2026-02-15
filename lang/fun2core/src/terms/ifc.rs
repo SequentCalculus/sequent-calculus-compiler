@@ -85,12 +85,12 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             ife!(
                 lit!(3),
                 lit!(4),
-                cut!(lit!(1), covar!(id!("a"))),
-                cut!(lit!(2), covar!(id!("a")))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(lit!(2), covar!(id!("a0")))
             )
         )
         .into();
@@ -120,12 +120,12 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             ife!(
                 var!(id!("x")),
                 var!(id!("x")),
-                cut!(lit!(1), covar!(id!("a"))),
-                cut!(var!(id!("x")), covar!(id!("a")))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(var!(id!("x")), covar!(id!("a0")))
             )
         )
         .into();
@@ -146,11 +146,11 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             ife!(
                 lit!(0),
-                cut!(lit!(1), covar!(id!("a"))),
-                cut!(lit!(2), covar!(id!("a")))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(lit!(2), covar!(id!("a0")))
             )
         )
         .into();
@@ -180,11 +180,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             ife!(
                 var!(id!("x")),
-                cut!(lit!(1), covar!(id!("a"))),
-                cut!(var!(id!("x")), covar!(id!("a")))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(var!(id!("x")), covar!(id!("a0")))
             )
         )
         .into();
