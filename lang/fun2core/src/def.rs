@@ -71,7 +71,7 @@ pub fn compile_def(
         body,
         used_vars: used_vars
             .iter()
-            .map(|var| Ident::new_with_zero(&var))
+            .map(|var| Ident::new_with_zero(var))
             .collect(),
     });
 
@@ -139,7 +139,7 @@ pub fn compile_main(
         body,
         used_vars: used_vars
             .iter()
-            .map(|var| Ident::new_with_zero(&var))
+            .map(|var| Ident::new_with_zero(var))
             .collect(),
     });
 
