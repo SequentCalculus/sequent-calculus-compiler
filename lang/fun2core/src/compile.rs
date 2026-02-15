@@ -178,7 +178,7 @@ pub fn share(
         used_vars: state
             .used_vars
             .iter()
-            .map(|id| Ident::new_with_zero(&id))
+            .map(|id| Ident::new_with_zero(id))
             .collect(),
     });
 
