@@ -2,7 +2,7 @@
 
 use core_lang::syntax::declaration::{CodataDeclaration, Polarity};
 
-use crate::context::shrink_context;
+use crate::{context::shrink_context, shrink_ident};
 
 /// This function translates an xtor, i.e., a constructor or destructor, in [Core](core_lang) to
 /// one in [AxCut](axcut). It essentially consists of translating the parameters.
@@ -13,7 +13,7 @@ pub fn shrink_xtor<P: Polarity>(
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::XtorSig {
     axcut::syntax::XtorSig {
-        name: xtor.name.name,
+        name: shrink_ident(xtor.name),
         args: shrink_context(xtor.args, codata_types),
     }
 }
@@ -27,7 +27,7 @@ pub fn shrink_declaration<P: Polarity>(
     codata_types: &[CodataDeclaration],
 ) -> axcut::syntax::TypeDeclaration {
     axcut::syntax::TypeDeclaration {
-        name: declaration.name.name,
+        name: shrink_ident(declaration.name),
         xtors: declaration
             .xtors
             .into_iter()
