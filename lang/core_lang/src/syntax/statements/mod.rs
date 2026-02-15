@@ -172,7 +172,7 @@ mod test {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{call, covar, cut, id, ife, ty, var};
+    use core_macros::{call, covar, cut, id, ife, var};
 
     fn example_cut() -> Statement {
         cut!(var!(id!("x")), covar!(id!("a"))).into()

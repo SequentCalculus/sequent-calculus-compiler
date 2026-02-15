@@ -99,7 +99,7 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             cut!(
                 ctor!(
                     id!("Cons"),
@@ -112,7 +112,7 @@ mod compile_tests {
                             core_syntax::Cns,
                             id!("Nil"),
                             [],
-                            cut!(lit!(0), covar!(id!("a")))
+                            cut!(lit!(0), covar!(id!("a0")))
                         ),
                         clause!(
                             core_syntax::Cns,
@@ -125,7 +125,7 @@ mod compile_tests {
                                     ty!(id!("List[i64]"))
                                 )
                             ],
-                            cut!(var!(id!("x")), covar!(id!("a")))
+                            cut!(var!(id!("x")), covar!(id!("a0")))
                         )
                     ],
                     ty!(id!("List[i64]"))

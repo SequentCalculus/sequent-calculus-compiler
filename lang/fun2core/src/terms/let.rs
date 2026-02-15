@@ -75,12 +75,12 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             cut!(
                 lit!(1),
                 mutilde!(
                     id!("x"),
-                    cut!(prod!(var!(id!("x")), var!(id!("x"))), covar!(id!("a")))
+                    cut!(prod!(var!(id!("x")), var!(id!("x"))), covar!(id!("a0")))
                 )
             )
         )
@@ -114,7 +114,7 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             cut!(
                 ctor!(
                     id!("Cons"),
@@ -125,7 +125,7 @@ mod compile_tests {
                     id!("x"),
                     cut!(
                         var!(id!("x"), ty!(id!("List[i64]"))),
-                        covar!(id!("a"), ty!(id!("List[i64]"))),
+                        covar!(id!("a0"), ty!(id!("List[i64]"))),
                         ty!(id!("List[i64]"))
                     ),
                     ty!(id!("List[i64]"))

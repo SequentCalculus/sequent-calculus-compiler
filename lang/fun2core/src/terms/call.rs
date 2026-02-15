@@ -82,7 +82,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!(id!("a"), call!(id!("fac"), [lit!(3), covar!(id!("a"))])).into();
+        let expected = mu!(id!("a0"), call!(id!("fac"), [lit!(3), covar!(id!("a0"))])).into();
         assert_eq!(result, expected)
     }
 }

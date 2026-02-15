@@ -72,26 +72,26 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
                             id!("fst"),
-                            [bind!(id!("a", 1), cns!())],
-                            cut!(lit!(1), covar!(id!("a", 1)))
+                            [bind!(id!("a1"), cns!())],
+                            cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
                             id!("snd"),
-                            [bind!(id!("a", 2), cns!())],
-                            cut!(lit!(2), covar!(id!("a", 2)))
+                            [bind!(id!("a2"), cns!())],
+                            cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
                     ty!(id!("LPair[i64, i64]"))
                 ),
-                dtor!(id!("fst"), [covar!(id!("a"))], ty!(id!("LPair[i64, i64]"))),
+                dtor!(id!("fst"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
                 ty!(id!("LPair[i64, i64]"))
             )
         )
@@ -120,26 +120,26 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            id!("a"),
+            id!("a0"),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
                             id!("fst"),
-                            [bind!(id!("a", 1), cns!())],
-                            cut!(lit!(1), covar!(id!("a", 1)))
+                            [bind!(id!("a1"), cns!())],
+                            cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
                             id!("snd"),
-                            [bind!(id!("a", 2), cns!())],
-                            cut!(lit!(2), covar!(id!("a", 2)))
+                            [bind!(id!("a2"), cns!())],
+                            cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
                     ty!(id!("LPair[i64, i64]"))
                 ),
-                dtor!(id!("snd"), [covar!(id!("a"))], ty!(id!("LPair[i64, i64]"))),
+                dtor!(id!("snd"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
                 ty!(id!("LPair[i64, i64]"))
             )
         )
