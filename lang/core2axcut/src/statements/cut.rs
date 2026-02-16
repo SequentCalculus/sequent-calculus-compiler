@@ -189,7 +189,7 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
             .used_vars
             .clone()
             .into_iter()
-            .map(|var| shrink_ident(var))
+            .map(shrink_ident)
             .collect(),
     });
 

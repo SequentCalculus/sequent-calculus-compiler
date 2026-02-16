@@ -31,7 +31,7 @@ impl Shrinking for FsIfC {
                 }
             },
             fst: shrink_ident(self.fst),
-            snd: self.snd.map(|var| shrink_ident(var)),
+            snd: self.snd.map(shrink_ident),
             thenc: self.thenc.shrink(state),
             elsec: self.elsec.shrink(state),
         })

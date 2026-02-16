@@ -39,11 +39,7 @@ pub fn shrink_def(
         name: shrink_ident(def.name),
         context: shrink_context(def.context, codata_types),
         body,
-        used_vars: def
-            .used_vars
-            .into_iter()
-            .map(|var| shrink_ident(var))
-            .collect(),
+        used_vars: def.used_vars.into_iter().map(shrink_ident).collect(),
     });
 
     def_plus_lifted_statements
