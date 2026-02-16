@@ -1,108 +1,114 @@
 use axcut_macros::{
-    bind, call, clause, cns, create, def, exit, ife, invoke, letin, lit, prd, println_i64, prog,
-    substitute, sum, switch, ty, ty_decl, xtor_sig,
+    bind, call, clause, cns, create, def, exit, id, ife, invoke, letin, lit, prd, println_i64,
+    prog, substitute, sum, switch, ty, ty_decl, xtor_sig,
 };
 pub fn midi_print() -> axcut::syntax::Prog {
-    midi(println_i64!("r", lit!(0, "ret", exit!("ret"))).into())
+    midi(println_i64!(id!("r"), lit!(0, id!("ret"), exit!(id!("ret")))).into())
 }
 
 pub fn midi_exit() -> axcut::syntax::Prog {
-    midi(exit!("r").into())
+    midi(exit!(id!("r")).into())
 }
 
 pub fn midi(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     let ty_list = ty_decl!(
-        "List",
+        id!("List"),
         [
-            xtor_sig!("Nil", []),
-            xtor_sig!("Cons", [bind!("xs", prd!(), ty!("List")), bind!("x")])
+            xtor_sig!(id!("Nil"), []),
+            xtor_sig!(
+                id!("Cons"),
+                [bind!(id!("xs"), prd!(), ty!(id!("List"))), bind!(id!("x"))]
+            )
         ]
     );
 
     let ty_cont_list = ty_decl!(
-        "ContList",
-        [xtor_sig!("Retl", [bind!("kl", prd!(), ty!("List"))])]
+        id!("ContList"),
+        [xtor_sig!(
+            id!("Retl"),
+            [bind!(id!("kl"), prd!(), ty!(id!("List")))]
+        )]
     );
 
-    let ty_cont_int = ty_decl!("ContInt", [xtor_sig!("Reti", [bind!("ki")])]);
+    let ty_cont_int = ty_decl!(id!("ContInt"), [xtor_sig!(id!("Reti"), [bind!(id!("ki"))])]);
 
     let main_body = create!(
-        "t",
-        ty!("ContInt"),
+        id!("t"),
+        ty!(id!("ContInt")),
         [],
-        [clause!("Reti", [bind!("r")], exit_stmt)],
+        [clause!(id!("Reti"), [bind!(id!("r"))], exit_stmt)],
         create!(
-            "k",
-            ty!("ContList"),
-            [bind!("t", cns!(), ty!("ContInt"))],
+            id!("k"),
+            ty!(id!("ContList")),
+            [bind!(id!("t"), cns!(), ty!(id!("ContInt")))],
             [clause!(
-                "Retl",
-                [bind!("as", prd!(), ty!("List"))],
+                id!("Retl"),
+                [bind!(id!("as"), prd!(), ty!(id!("List")))],
                 substitute!(
                     [
-                        (bind!("t", cns!(), ty!("ContInt")), "t"),
-                        (bind!("as", prd!(), ty!("List")), "as"),
+                        (bind!(id!("t"), cns!(), ty!(id!("ContInt"))), id!("t")),
+                        (bind!(id!("as"), prd!(), ty!(id!("List"))), id!("as")),
                     ],
-                    call!("sum", [])
+                    call!(id!("sum"), [])
                 )
             )],
             letin!(
-                "zs",
-                ty!("List"),
-                "Nil",
+                id!("zs"),
+                ty!(id!("List")),
+                id!("Nil"),
                 [],
                 lit!(
                     3,
-                    "n",
+                    id!("n"),
                     substitute!(
                         [
-                            (bind!("k", cns!(), ty!("ContInt")), "k"),
-                            (bind!("zs", prd!(), ty!("List")), "zs"),
-                            (bind!("n"), "n"),
+                            (bind!(id!("k"), cns!(), ty!(id!("ContInt"))), id!("k")),
+                            (bind!(id!("zs"), prd!(), ty!(id!("List"))), id!("zs")),
+                            (bind!(id!("n")), id!("n")),
                         ],
-                        call!("range", [])
+                        call!(id!("range"), [])
                     )
                 )
             )
         )
     );
-    let main = def!("main", [], main_body);
+    let main = def!(id!("main"), [], main_body);
 
     let range_body = ife!(
-        "i",
+        id!("i"),
         substitute!(
             [
-                (bind!("xs", prd!(), ty!("List")), "xs"),
-                (bind!("k", cns!(), ty!("ContList")), "k")
+                (bind!(id!("xs"), prd!(), ty!(id!("List"))), id!("xs")),
+                (bind!(id!("k"), cns!(), ty!(id!("ContList"))), id!("k"))
             ],
-            invoke!("k", "Retl", ty!("ContList"), [])
+            invoke!(id!("k"), id!("Retl"), ty!(id!("ContList")), [])
         ),
         substitute!(
             [
-                (bind!("n"), "i"),
-                (bind!("k", cns!(), ty!("ContList")), "k"),
-                (bind!("xs", prd!(), ty!("List")), "xs"),
-                (bind!("i"), "i"),
+                (bind!(id!("n")), id!("i")),
+                (bind!(id!("k"), cns!(), ty!(id!("ContList"))), id!("k")),
+                (bind!(id!("xs"), prd!(), ty!(id!("List"))), id!("xs")),
+                (bind!(id!("i")), id!("i")),
             ],
             letin!(
-                "ys",
-                ty!("List"),
-                "Cons",
-                [bind!("xs", prd!(), ty!("List")), bind!("i")],
+                id!("ys"),
+                ty!(id!("List")),
+                id!("Cons"),
+                [bind!(id!("xs"), prd!(), ty!(id!("List"))), bind!(id!("i"))],
                 lit!(
                     -1,
-                    "o",
+                    id!("o"),
                     sum!(
-                        "n",
-                        "o",
-                        "j",
+                        id!("n"),
+                        id!("o"),
+                        id!("j"),
                         substitute!(
                             [
-                                (bind!("k", cns!(), ty!("ContList")), "k"),
-                                (bind!("ys", prd!(), ty!("List")), "ys"),
-                                (bind!("j"), "j")
+                                (bind!(id!("k"), cns!(), ty!(id!("ContList"))), id!("k")),
+                                (bind!(id!("ys"), prd!(), ty!(id!("List"))), id!("ys")),
+                                (bind!(id!("j")), id!("j"))
                             ],
-                            call!("range", [])
+                            call!(id!("range"), [])
                         )
                     )
                 )
@@ -110,63 +116,72 @@ pub fn midi(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
         )
     );
     let range = def!(
-        "range",
+        id!("range"),
         [
-            bind!("k", cns!(), ty!("ContList")),
-            bind!("xs", prd!(), ty!("List")),
-            bind!("i")
+            bind!(id!("k"), cns!(), ty!(id!("ContList"))),
+            bind!(id!("xs"), prd!(), ty!(id!("List"))),
+            bind!(id!("i"))
         ],
         range_body
     );
 
     let sum_body = switch!(
-        "xs",
-        ty!("List"),
+        id!("xs"),
+        ty!(id!("List")),
         [
             clause!(
-                "Nil",
+                id!("Nil"),
                 [],
                 lit!(
                     0,
-                    "z",
+                    id!("z"),
                     substitute!(
-                        [(bind!("z"), "z"), (bind!("k", cns!(), ty!("ContInt")), "k")],
-                        invoke!("k", "Reti", ty!("ContInt"), [])
+                        [
+                            (bind!(id!("z")), id!("z")),
+                            (bind!(id!("k"), cns!(), ty!(id!("ContInt"))), id!("k"))
+                        ],
+                        invoke!(id!("k"), id!("Reti"), ty!(id!("ContInt")), [])
                     )
                 )
             ),
             clause!(
-                "Cons",
-                [bind!("ys", prd!(), ty!("List")), bind!("y")],
+                id!("Cons"),
+                [bind!(id!("ys"), prd!(), ty!(id!("List"))), bind!(id!("y"))],
                 substitute!(
                     [
-                        (bind!("ys", prd!(), ty!("List")), "ys"),
-                        (bind!("k", cns!(), ty!("ContInt")), "k"),
-                        (bind!("y"), "y")
+                        (bind!(id!("ys"), prd!(), ty!(id!("List"))), id!("ys")),
+                        (bind!(id!("k"), cns!(), ty!(id!("ContInt"))), id!("k")),
+                        (bind!(id!("y")), id!("y"))
                     ],
                     create!(
-                        "j",
-                        ty!("ContInt"),
-                        [bind!("k", cns!(), ty!("ContInt")), bind!("y")],
+                        id!("j"),
+                        ty!(id!("ContInt")),
+                        [
+                            bind!(id!("k"), cns!(), ty!(id!("ContInt"))),
+                            bind!(id!("y"))
+                        ],
                         [clause!(
-                            "Reti",
-                            [bind!("r")],
+                            id!("Reti"),
+                            [bind!(id!("r"))],
                             sum!(
-                                "y",
-                                "r",
-                                "s",
+                                id!("y"),
+                                id!("r"),
+                                id!("s"),
                                 substitute!(
-                                    [(bind!("s"), "s"), (bind!("k", cns!(), ty!("ContInt")), "k")],
-                                    invoke!("k", "Reti", ty!("ContInt"), [])
+                                    [
+                                        (bind!(id!("s")), id!("s")),
+                                        (bind!(id!("k"), cns!(), ty!(id!("ContInt"))), id!("k"))
+                                    ],
+                                    invoke!(id!("k"), id!("Reti"), ty!(id!("ContInt")), [])
                                 )
                             )
                         )],
                         substitute!(
                             [
-                                (bind!("j", cns!(), ty!("ContInt")), "j"),
-                                (bind!("ys", prd!(), ty!("List")), "ys")
+                                (bind!(id!("j"), cns!(), ty!(id!("ContInt"))), id!("j")),
+                                (bind!(id!("ys"), prd!(), ty!(id!("List"))), id!("ys"))
                             ],
-                            call!("sum", [])
+                            call!(id!("sum"), [])
                         )
                     )
                 )
@@ -174,10 +189,10 @@ pub fn midi(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
         ]
     );
     let sum = def!(
-        "sum",
+        id!("sum"),
         [
-            bind!("k", cns!(), ty!("ContList")),
-            bind!("xs", prd!(), ty!("List"))
+            bind!(id!("k"), cns!(), ty!(id!("ContList"))),
+            bind!(id!("xs"), prd!(), ty!(id!("List")))
         ],
         sum_body
     );

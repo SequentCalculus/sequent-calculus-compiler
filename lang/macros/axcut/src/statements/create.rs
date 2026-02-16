@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args, quote_option};
+use macro_utils::{expr_to_array, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -22,7 +22,7 @@ pub fn create(input: TokenStream) -> TokenStream {
         ],
     );
 
-    let var = expr_to_string(&args[0], 0);
+    let var = &args[0];
     let ty = &args[1];
     let context = quote_option(&args[2], |expr| {
         let bindings = expr_to_array(expr, 2);
@@ -37,7 +37,7 @@ pub fn create(input: TokenStream) -> TokenStream {
     let free_vars_clauses = quote_option(&args[4], |expr| {
         let free_vars_clauses = expr_to_array(expr, 4)
             .into_iter()
-            .map(|expr| quote! {#expr.to_string()})
+            .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
@@ -49,7 +49,7 @@ pub fn create(input: TokenStream) -> TokenStream {
     let free_vars_next = quote_option(&args[6], |expr| {
         let free_vars_next = expr_to_array(expr, 6)
             .into_iter()
-            .map(|expr| quote! {#expr.to_string()})
+            .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
@@ -60,7 +60,7 @@ pub fn create(input: TokenStream) -> TokenStream {
 
     quote! {
         axcut::syntax::statements::create::Create{
-            var: #var.to_string(),
+            var: #var,
             ty: #ty,
             context: #context,
             clauses: std::vec::Vec::from([

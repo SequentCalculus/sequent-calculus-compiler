@@ -1,5 +1,5 @@
 use axcut::syntax::statements::ifc::IfSort;
-use macro_utils::{expr_to_string, parse_args, quote_option};
+use macro_utils::{parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -42,14 +42,14 @@ fn ifc(input: TokenStream, sort: IfSort) -> TokenStream {
         ],
         &[(1, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_string(&args[0], 0);
-    let snd = quote_option(&args[1], |expr| quote!(#expr.to_string()));
+    let fst = &args[0];
+    let snd = quote_option(&args[1], |expr| quote!(#expr));
     let thenc = &args[2];
     let elsec = &args[3];
     quote! {
         axcut::syntax::statements::ifc::IfC{
             sort: #sort,
-            fst: #fst.to_string(),
+            fst: #fst,
             snd: #snd,
             thenc: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#thenc)),
             elsec: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#elsec))

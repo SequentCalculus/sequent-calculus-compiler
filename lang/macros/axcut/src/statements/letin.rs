@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args, quote_option};
+use macro_utils::{expr_to_array, parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -19,15 +19,15 @@ pub fn letin(input: TokenStream) -> TokenStream {
             (5, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
-    let var = expr_to_string(&args[0], 0);
+    let var = &args[0];
     let ty = &args[1];
-    let tag = expr_to_string(&args[2], 2);
+    let tag = &args[2];
     let let_args = expr_to_array(&args[3], 3);
     let next = &args[4];
     let free_vars = quote_option(&args[5], |expr| {
         let free_vars = expr_to_array(expr, 5)
             .into_iter()
-            .map(|expr| quote! {#expr.to_string()})
+            .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([ #(#free_vars),* ])
@@ -36,9 +36,9 @@ pub fn letin(input: TokenStream) -> TokenStream {
 
     quote! {
         axcut::syntax::statements::r#let::Let{
-            var: #var.to_string(),
+            var: #var,
             ty: #ty,
-            tag: #tag.to_string(),
+            tag: #tag,
             args: axcut::syntax::context::TypingContext{
                 bindings: vec![
                     #(#let_args),*
