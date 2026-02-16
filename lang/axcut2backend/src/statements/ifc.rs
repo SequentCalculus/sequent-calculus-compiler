@@ -31,7 +31,7 @@ impl CodeStatement for IfC {
         use axcut::syntax::statements::ifc::IfSort;
         let snd = match self.snd {
             None => ZERO,
-            Some(ref snd) => snd,
+            Some(ref snd) => &snd.to_string(),
         };
         let comment = match self.sort {
             IfSort::Equal => format!("{IF} {} {EQQ} {snd} \\{{ ... \\}}", self.fst),

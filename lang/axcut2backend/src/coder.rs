@@ -55,7 +55,7 @@ where
     let mut flattened_instructions =
         Vec::with_capacity(instructions.len() + instructions.iter().map(Vec::len).sum::<usize>());
     for (mut is, name) in instructions.into_iter().zip(names) {
-        flattened_instructions.push(Backend::label(name + "_"));
+        flattened_instructions.push(Backend::label(name.to_string() + "_"));
         flattened_instructions.append(&mut is);
     }
     flattened_instructions
