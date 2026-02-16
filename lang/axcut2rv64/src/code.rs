@@ -3,7 +3,7 @@
 use super::Backend;
 use super::config::{Immediate, Register, TEMP, ZERO};
 
-use axcut::syntax::{ContextBinding, Ident};
+use axcut::syntax::ContextBinding;
 use axcut2backend::code::Instructions;
 
 use std::fmt;
@@ -75,7 +75,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
         Code::COMMENT(msg)
     }
 
-    fn label(name: Ident) -> Code {
+    fn label(name: String) -> Code {
         Code::LAB(name)
     }
 
@@ -83,18 +83,18 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::JALR(ZERO, temporary, 0));
     }
 
-    fn jump_label(name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JAL(ZERO, name));
     }
 
-    fn jump_label_fixed(name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_fixed(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JAL(ZERO, name));
     }
 
     fn jump_label_if_equal(
         fst: Register,
         snd: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BEQ(fst, snd, name));
@@ -103,20 +103,25 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn jump_label_if_not_equal(
         fst: Register,
         snd: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BNE(fst, snd, name));
     }
 
-    fn jump_label_if_less(fst: Register, snd: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_if_less(
+        fst: Register,
+        snd: Register,
+        name: String,
+        instructions: &mut Vec<Code>,
+    ) {
         instructions.push(Code::BLT(fst, snd, name));
     }
 
     fn jump_label_if_less_or_equal(
         fst: Register,
         snd: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BLE(fst, snd, name));
@@ -125,7 +130,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn jump_label_if_greater(
         fst: Register,
         snd: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BGT(fst, snd, name));
@@ -134,39 +139,39 @@ impl Instructions<Code, Register, Immediate> for Backend {
     fn jump_label_if_greater_or_equal(
         fst: Register,
         snd: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BGE(fst, snd, name));
     }
 
-    fn jump_label_if_zero(temporary: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_if_zero(temporary: Register, name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::BEQ(temporary, ZERO, name));
     }
 
-    fn jump_label_if_not_zero(temporary: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_if_not_zero(temporary: Register, name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::BNE(temporary, ZERO, name));
     }
 
-    fn jump_label_if_less_zero(temporary: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_if_less_zero(temporary: Register, name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::BLT(temporary, ZERO, name));
     }
 
     fn jump_label_if_less_or_equal_zero(
         temporary: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BLE(temporary, ZERO, name));
     }
 
-    fn jump_label_if_greater_zero(temporary: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn jump_label_if_greater_zero(temporary: Register, name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::BGT(temporary, ZERO, name));
     }
 
     fn jump_label_if_greater_or_equal_zero(
         temporary: Register,
-        name: Ident,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         instructions.push(Code::BGE(temporary, ZERO, name));
@@ -176,7 +181,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
         instructions.push(Code::LI(temporary, immediate));
     }
 
-    fn load_label(temporary: Register, name: Ident, instructions: &mut Vec<Code>) {
+    fn load_label(temporary: Register, name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::LA(temporary, name));
     }
 
