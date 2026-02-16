@@ -1,48 +1,63 @@
 use axcut_macros::{
-    bind, clause, def, exit, letin, lit, println_i64, prog, sum, switch, ty, ty_decl, xtor_sig,
+    bind, clause, def, exit, id, letin, lit, println_i64, prog, sum, switch, ty, ty_decl, xtor_sig,
 };
 
 pub fn quad_exit() -> axcut::syntax::Prog {
-    quad(exit!("e").into())
+    quad(exit!(id!("e")).into())
 }
 
 pub fn quad_print() -> axcut::syntax::Prog {
-    quad(println_i64!("e", lit!(0, "ret", exit!("ret"))).into())
+    quad(println_i64!(id!("e"), lit!(0, id!("ret"), exit!(id!("ret")))).into())
 }
 
 pub fn quad(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     let ty_quad = ty_decl!(
-        "Quad",
+        id!("Quad"),
         [xtor_sig!(
-            "Q",
-            [bind!("d"), bind!("c"), bind!("b"), bind!("a")]
+            id!("Q"),
+            [
+                bind!(id!("d")),
+                bind!(id!("c")),
+                bind!(id!("b")),
+                bind!(id!("a"))
+            ]
         )]
     );
 
     let main_body = lit!(
         8,
-        "z",
+        id!("z"),
         lit!(
             6,
-            "y",
+            id!("y"),
             lit!(
                 4,
-                "x",
+                id!("x"),
                 lit!(
                     2,
-                    "w",
+                    id!("w"),
                     letin!(
-                        "q",
-                        ty!("Quad"),
-                        "Q",
-                        [bind!("z"), bind!("y"), bind!("x"), bind!("w")],
+                        id!("q"),
+                        ty!(id!("Quad")),
+                        id!("Q"),
+                        [
+                            bind!(id!("z")),
+                            bind!(id!("y")),
+                            bind!(id!("x")),
+                            bind!(id!("w"))
+                        ],
                         switch!(
-                            "q",
-                            ty!("Quad"),
+                            id!("q"),
+                            ty!(id!("Quad")),
                             [clause!(
-                                "Q",
-                                [bind!("d"), bind!("c"), bind!("b"), bind!("a")],
-                                lit!(7, "z", sum!("d", "z", "e", exit_stmt))
+                                id!("Q"),
+                                [
+                                    bind!(id!("d")),
+                                    bind!(id!("c")),
+                                    bind!(id!("b")),
+                                    bind!(id!("a"))
+                                ],
+                                lit!(7, id!("z"), sum!(id!("d"), id!("z"), id!("e"), exit_stmt))
                             )]
                         )
                     )
@@ -50,6 +65,6 @@ pub fn quad(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
             )
         )
     );
-    let main = def!("main", [], main_body);
+    let main = def!(id!("main"), [], main_body);
     prog!([main], [ty_quad])
 }

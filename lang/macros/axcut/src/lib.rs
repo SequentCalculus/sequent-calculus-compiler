@@ -3,9 +3,17 @@ use quote::quote;
 
 pub(crate) mod context;
 pub(crate) mod declarations;
+pub(crate) mod names;
 pub(crate) mod program;
 pub(crate) mod statements;
 pub(crate) mod types;
+
+/// Create a [`axcut::syntax::names::Ident`] from string literal and id.
+/// If no id is provided, it defaults to `0`
+#[proc_macro]
+pub fn id(input: TokenStream) -> TokenStream {
+    names::id(input)
+}
 
 /// Create a [`axcut::syntax::types::Ty`] from a string literal. `int` will create
 /// [`axcut::syntax::types::Ty::I64`] anything else will create [`axcut::syntax::types::Ty::Decl`].
