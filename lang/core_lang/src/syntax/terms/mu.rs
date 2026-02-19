@@ -171,7 +171,7 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 impl<C: Chi> Uniquify for Mu<C> {
     fn uniquify(mut self, state: &mut UniquifyState) -> Mu<C> {
         if state.seen_vars.contains(&self.variable) {
-            let new_variable = state.next_var();
+            let new_variable = state.next_var(&self.variable.name);
             let old_variable = self.variable;
             self.variable = new_variable;
 

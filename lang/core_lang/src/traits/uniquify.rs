@@ -30,9 +30,9 @@ impl UniquifyState {
         (res, seen_clone)
     }
 
-    pub fn next_var(&mut self) -> Ident {
+    pub fn next_var(&mut self, base_name: &str) -> Ident {
         let new_var = Ident {
-            name: "x".to_string(),
+            name: base_name.to_string(),
             id: self.next_id,
         };
         self.next_id += 1;
