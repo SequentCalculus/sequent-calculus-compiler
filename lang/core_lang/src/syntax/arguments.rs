@@ -65,10 +65,10 @@ impl TypedFreeVars for Argument {
 }
 
 impl Uniquify for Argument {
-    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Argument {
+    fn uniquify(self, state: &mut UniquifyState) -> Argument {
         match self {
-            Argument::Producer(term) => Argument::Producer(term.uniquify(seen_vars, used_vars)),
-            Argument::Consumer(term) => Argument::Consumer(term.uniquify(seen_vars, used_vars)),
+            Argument::Producer(term) => Argument::Producer(term.uniquify(state)),
+            Argument::Consumer(term) => Argument::Consumer(term.uniquify(state)),
         }
     }
 }
@@ -136,12 +136,8 @@ impl TypedFreeVars for Arguments {
 }
 
 impl Uniquify for Arguments {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> Arguments {
-        self.entries = self.entries.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Arguments {
+        self.entries = self.entries.uniquify(state);
         self
     }
 }

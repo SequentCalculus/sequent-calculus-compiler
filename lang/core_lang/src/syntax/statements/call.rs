@@ -58,8 +58,8 @@ impl TypedFreeVars for Call {
 }
 
 impl Uniquify for Call {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Call {
-        self.args = self.args.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Call {
+        self.args = self.args.uniquify(state);
         self
     }
 }

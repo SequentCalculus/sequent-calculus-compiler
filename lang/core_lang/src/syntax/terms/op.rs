@@ -148,9 +148,9 @@ impl TypedFreeVars for FsOp {
 }
 
 impl Uniquify for Op {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Op {
-        self.fst = self.fst.uniquify(seen_vars, used_vars);
-        self.snd = self.snd.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Op {
+        self.fst = self.fst.uniquify(state);
+        self.snd = self.snd.uniquify(state);
 
         self
     }

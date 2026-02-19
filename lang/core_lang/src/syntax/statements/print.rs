@@ -109,13 +109,9 @@ impl TypedFreeVars for FsPrintI64 {
 }
 
 impl Uniquify for PrintI64 {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> PrintI64 {
-        self.arg = self.arg.uniquify(seen_vars, used_vars);
-        self.next = self.next.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> PrintI64 {
+        self.arg = self.arg.uniquify(state);
+        self.next = self.next.uniquify(state);
         self
     }
 }

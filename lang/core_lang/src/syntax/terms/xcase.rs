@@ -76,23 +76,14 @@ impl<C: Chi> TypedFreeVars for XCase<C> {
 }
 
 impl<C: Chi> Uniquify for XCase<C> {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> XCase<C> {
-        let seen_vars_clone = seen_vars.clone();
-        let used_vars_clone = used_vars.clone();
+    fn uniquify(mut self, state: &mut UniquifyState) -> XCase<C> {
         self.clauses = self
             .clauses
             .into_iter()
             .map(|clause| {
-                let mut seen_vars_clause = seen_vars_clone.clone();
-                let mut used_vars_clause = used_vars_clone.clone();
-                let clause = clause.uniquify(&mut seen_vars_clause, &mut used_vars_clause);
-                seen_vars.extend(seen_vars_clause);
-                used_vars.extend(used_vars_clause);
-                clause
+                let (clause_unique, new_seen) = state.uniquify_restore(clause);
+                state.seen_vars.extend(new_seen);
+                clause_unique
             })
             .collect();
 

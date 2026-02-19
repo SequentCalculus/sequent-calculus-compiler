@@ -169,10 +169,9 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 }
 
 impl<C: Chi> Uniquify for Mu<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Mu<C> {
-        if seen_vars.contains(&self.variable) {
-            let new_variable = fresh_name(used_vars, &self.variable.name);
-            seen_vars.insert(new_variable.clone());
+    fn uniquify(mut self, state: &mut UniquifyState) -> Mu<C> {
+        if state.seen_vars.contains(&self.variable) {
+            let new_variable = state.next_var();
             let old_variable = self.variable;
             self.variable = new_variable;
 
@@ -183,7 +182,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                         old_variable,
                         XVar::covar(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(seen_vars, used_vars);
+                    .uniquify(state);
             } else {
                 self.statement = self
                     .statement
@@ -191,11 +190,11 @@ impl<C: Chi> Uniquify for Mu<C> {
                         old_variable,
                         XVar::var(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(seen_vars, used_vars);
+                    .uniquify(state);
             }
         } else {
-            seen_vars.insert(self.variable.clone());
-            self.statement = self.statement.uniquify(seen_vars, used_vars);
+            state.seen_vars.insert(self.variable.clone());
+            self.statement = self.statement.uniquify(state);
         }
 
         self

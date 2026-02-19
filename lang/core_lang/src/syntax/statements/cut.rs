@@ -109,9 +109,9 @@ where
 }
 
 impl Uniquify for Cut {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Cut {
-        self.producer = self.producer.uniquify(seen_vars, used_vars);
-        self.consumer = self.consumer.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Cut {
+        self.producer = self.producer.uniquify(state);
+        self.consumer = self.consumer.uniquify(state);
         self
     }
 }
