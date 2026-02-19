@@ -3,7 +3,7 @@ use super::{end_to_end_tests::EndToEndTest, errors::Error, load_tests::AllTests}
 use fun::parser::fun::ProgParser;
 use printer::Print;
 
-use std::fmt;
+use std::{collections::HashSet, fmt};
 
 pub enum TestType {
     Parse,
@@ -31,12 +31,14 @@ impl TestResult {
         println!("Ran {} tests", results.len());
         let mut num_success = 0;
         let mut num_fail = 0;
+        let mut failures = HashSet::new();
         for result in results {
             println!("\t{}", result);
             if result.fail_msg.is_none() {
                 num_success += 1
             } else {
-                num_fail += 1
+                num_fail += 1;
+                failures.insert(result.name);
             }
         }
         println!(
@@ -46,7 +48,10 @@ impl TestResult {
         if num_fail == 0 {
             Ok(())
         } else {
-            Err(Error::TestFailure { num_fail })
+            Err(Error::TestFailure {
+                num_fail,
+                failures: failures.into_iter().collect(),
+            })
         }
     }
 }
