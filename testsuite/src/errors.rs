@@ -21,6 +21,7 @@ pub enum Error {
     },
     TestFailure {
         num_fail: usize,
+        failures: Vec<String>,
     },
     TomlParse {
         path: PathBuf,
@@ -82,7 +83,13 @@ impl fmt::Display for Error {
             Error::WorkingDir { tried, msg } => {
                 write!(f, "Could not {tried} working dir:\n\t{msg}")
             }
-            Error::TestFailure { num_fail } => write!(f, "{num_fail} tests have failed"),
+            Error::TestFailure { num_fail, failures } => {
+                write!(
+                    f,
+                    "{num_fail} tests have failed\nFailures: {}",
+                    failures.join(", ")
+                )
+            }
             Error::TomlParse { path, msg } => {
                 write!(f, "Could not parse toml of {path:?}\n\t{msg}")
             }

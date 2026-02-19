@@ -15,16 +15,28 @@ fn setup() -> Result<(), Error> {
     Ok(())
 }
 
-fn main() -> Result<(), Error> {
-    setup()?;
+fn lift_err<T>(res: Result<T, Error>, step: &str) -> T {
+    match res {
+        Ok(t) => t,
+        Err(err) => {
+            eprintln!("Error while {step}:\n\n{err}");
+            std::process::exit(1);
+        }
+    }
+}
 
-    let tests = load_all()?;
+fn main() {
+    lift_err(setup(), "setting up harness");
+    let tests = lift_err(load_all(), "loading tests");
 
     println!("Running Fun tests");
     let fun_results = fun_tests::run_tests(&tests);
-    TestResult::report(fun_results)?;
+    lift_err(TestResult::report(fun_results), "running Fun tests");
 
     println!("Running end-to-end tests");
     let compile_results = end_to_end_tests::run_tests(&tests.end_to_end_tests);
-    TestResult::report(compile_results)
+    lift_err(
+        TestResult::report(compile_results),
+        "running end-to-end tests",
+    );
 }
