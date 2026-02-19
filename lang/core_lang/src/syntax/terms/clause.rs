@@ -154,7 +154,7 @@ impl<C: Chi> Uniquify for Clause<C> {
 
         for binding in self.context.bindings {
             if state.seen_vars.contains(&binding.var) {
-                let new_var = state.next_var();
+                let new_var = state.next_var(&binding.var.name);
                 new_context.bindings.push(ContextBinding {
                     var: new_var.clone(),
                     chi: binding.chi.clone(),
