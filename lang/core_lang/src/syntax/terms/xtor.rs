@@ -113,12 +113,8 @@ impl<C: Chi> TypedFreeVars for FsXtor<C> {
 }
 
 impl<C: Chi> Uniquify for Xtor<C> {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> Xtor<C> {
-        self.args = self.args.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Xtor<C> {
+        self.args = self.args.uniquify(state);
         self
     }
 }

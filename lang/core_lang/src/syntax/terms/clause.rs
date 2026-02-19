@@ -147,19 +147,14 @@ impl<C: Chi> TypedFreeVars for FsClause<C> {
 }
 
 impl<C: Chi> Uniquify for Clause<C> {
-    fn uniquify(
-        mut self,
-        seen_vars: &mut HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> Clause<C> {
+    fn uniquify(mut self, state: &mut UniquifyState) -> Clause<C> {
         let mut new_context = TypingContext::default();
         let mut var_subst: Vec<(Ident, Term<Prd>)> = Vec::new();
         let mut covar_subst: Vec<(Ident, Term<Cns>)> = Vec::new();
 
         for binding in self.context.bindings {
-            if seen_vars.contains(&binding.var) {
-                let new_var: Ident = fresh_name(used_vars, &binding.var.name);
-                seen_vars.insert(new_var.clone());
+            if state.seen_vars.contains(&binding.var) {
+                let new_var = state.next_var();
                 new_context.bindings.push(ContextBinding {
                     var: new_var.clone(),
                     chi: binding.chi.clone(),
@@ -188,7 +183,7 @@ impl<C: Chi> Uniquify for Clause<C> {
                     ));
                 }
             } else {
-                seen_vars.insert(binding.var.clone());
+                state.seen_vars.insert(binding.var.clone());
                 new_context.bindings.push(binding);
             }
         }
@@ -196,11 +191,11 @@ impl<C: Chi> Uniquify for Clause<C> {
         self.context = new_context;
 
         self.body = if var_subst.is_empty() && covar_subst.is_empty() {
-            self.body.uniquify(seen_vars, used_vars)
+            self.body.uniquify(state)
         } else {
             self.body
                 .subst_sim(&var_subst, &covar_subst)
-                .uniquify(seen_vars, used_vars)
+                .uniquify(state)
         };
 
         self

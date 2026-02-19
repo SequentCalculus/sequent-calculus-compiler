@@ -151,12 +151,12 @@ impl<C: Chi> TypedFreeVars for Term<C> {
 }
 
 impl<C: Chi> Uniquify for Term<C> {
-    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Term<C> {
+    fn uniquify(self, state: &mut UniquifyState) -> Term<C> {
         match self {
-            Term::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
-            Term::Xtor(xtor) => xtor.uniquify(seen_vars, used_vars).into(),
-            Term::XCase(xcase) => xcase.uniquify(seen_vars, used_vars).into(),
+            Term::Op(op) => op.uniquify(state).into(),
+            Term::Mu(mu) => mu.uniquify(state).into(),
+            Term::Xtor(xtor) => xtor.uniquify(state).into(),
+            Term::XCase(xcase) => xcase.uniquify(state).into(),
             _ => self,
         }
     }

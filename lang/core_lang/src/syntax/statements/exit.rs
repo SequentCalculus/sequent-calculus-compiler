@@ -60,8 +60,8 @@ impl TypedFreeVars for Exit {
 }
 
 impl Uniquify for Exit {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Exit {
-        self.arg = self.arg.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Exit {
+        self.arg = self.arg.uniquify(state);
 
         self
     }

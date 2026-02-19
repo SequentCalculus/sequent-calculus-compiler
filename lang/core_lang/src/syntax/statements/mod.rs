@@ -89,13 +89,13 @@ impl TypedFreeVars for Statement {
 }
 
 impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn uniquify(self, state: &mut UniquifyState) -> Statement {
         match self {
-            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
-            Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
-            Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Exit(exit) => exit.uniquify(seen_vars, used_vars).into(),
+            Statement::Cut(cut) => cut.uniquify(state).into(),
+            Statement::IfC(ifc) => ifc.uniquify(state).into(),
+            Statement::PrintI64(print) => print.uniquify(state).into(),
+            Statement::Call(call) => call.uniquify(state).into(),
+            Statement::Exit(exit) => exit.uniquify(state).into(),
         }
     }
 }

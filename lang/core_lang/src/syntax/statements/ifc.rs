@@ -179,19 +179,13 @@ impl TypedFreeVars for FsIfC {
 }
 
 impl Uniquify for IfC {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Ident>, used_vars: &mut HashSet<Ident>) -> IfC {
-        self.fst = self.fst.uniquify(seen_vars, used_vars);
-        self.snd = self.snd.uniquify(seen_vars, used_vars);
-
-        let mut seen_vars_thenc = seen_vars.clone();
-        let mut used_vars_thenc = used_vars.clone();
-        self.thenc = self
-            .thenc
-            .uniquify(&mut seen_vars_thenc, &mut used_vars_thenc);
-        self.elsec = self.elsec.uniquify(seen_vars, used_vars);
-        seen_vars.extend(seen_vars_thenc);
-        used_vars.extend(used_vars_thenc);
-
+    fn uniquify(mut self, state: &mut UniquifyState) -> IfC {
+        self.fst = self.fst.uniquify(state);
+        self.snd = self.snd.uniquify(state);
+        let (then_unique, then_seen) = state.uniquify_restore(self.thenc);
+        self.thenc = then_unique;
+        self.elsec = self.elsec.uniquify(state);
+        state.seen_vars.extend(then_seen);
         self
     }
 }
