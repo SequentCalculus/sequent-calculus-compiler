@@ -13,6 +13,7 @@ mod gen_completions;
 mod linearize;
 mod shrink;
 mod texify;
+#[cfg(debug_assertions)]
 mod uniquify;
 
 /// This function prints a given `printable` object to stdout. The `colored` flag controls whether
@@ -39,6 +40,7 @@ pub fn exec() -> miette::Result<()> {
         Clean(args) => clean::exec(args),
         Codegen(args) => codegen::exec(args),
         Compile(args) => compile::exec(args, !cli.no_color),
+        #[cfg(debug_assertions)]
         Uniquify(args) => uniquify::exec(args, !cli.no_color),
         Focus(args) => focus::exec(args, !cli.no_color),
         Fmt(args) => fmt::exec(args, !cli.no_color),
@@ -73,6 +75,7 @@ enum Command {
     /// Compile a file to Core
     Compile(compile::Args),
     /// Uniquify a file compiled to Core
+    #[cfg(debug_assertions)]
     Uniquify(uniquify::Args),
     /// Focus the definitions of a file
     Focus(focus::Args),
