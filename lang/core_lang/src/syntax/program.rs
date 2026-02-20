@@ -40,6 +40,20 @@ impl Prog {
             codata_types: self.codata_types,
         }
     }
+
+    pub fn uniquify(mut self) -> Self {
+        self.defs = self
+            .defs
+            .into_iter()
+            .map(|mut def| {
+                def.body = def
+                    .body
+                    .uniquify(&mut def.context.vars(), &mut def.used_vars);
+                def
+            })
+            .collect();
+        self
+    }
 }
 
 impl<D: Print> Print for Prog<D> {

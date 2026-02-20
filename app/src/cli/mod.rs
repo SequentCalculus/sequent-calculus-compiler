@@ -13,6 +13,7 @@ mod gen_completions;
 mod linearize;
 mod shrink;
 mod texify;
+mod uniquify;
 
 /// This function prints a given `printable` object to stdout. The `colored` flag controls whether
 /// the result of printing is colorful.
@@ -38,6 +39,7 @@ pub fn exec() -> miette::Result<()> {
         Clean(args) => clean::exec(args),
         Codegen(args) => codegen::exec(args),
         Compile(args) => compile::exec(args, !cli.no_color),
+        Uniquify(args) => uniquify::exec(args, !cli.no_color),
         Focus(args) => focus::exec(args, !cli.no_color),
         Fmt(args) => fmt::exec(args, !cli.no_color),
         Linearize(args) => linearize::exec(args, !cli.no_color),
@@ -60,6 +62,8 @@ struct Cli {
 /// This enum encodes the commands the compiler can execute.
 #[derive(Subcommand)]
 enum Command {
+    /// Format a Fun source code file
+    Fmt(fmt::Args),
     /// Typecheck a file
     Check(check::Args),
     /// Delete all intermediate files
@@ -68,8 +72,8 @@ enum Command {
     Codegen(codegen::Args),
     /// Compile a file to Core
     Compile(compile::Args),
-    /// Format a Fun source code file
-    Fmt(fmt::Args),
+    /// Uniquify a file compiled to Core
+    Uniquify(uniquify::Args),
     /// Focus the definitions of a file
     Focus(focus::Args),
     /// Linearize the definitions of a file
