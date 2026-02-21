@@ -7,7 +7,7 @@ use printer::{
     util::BracesExt,
 };
 
-use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
+use crate::syntax::{ContextBinding, Ident, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -19,13 +19,13 @@ use std::rc::Rc;
 /// corresponding xtor, the context it binds, and the body.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Clause {
-    pub xtor: Name,
+    pub xtor: Ident,
     pub context: TypingContext,
     pub body: Rc<Statement>,
 }
 
 impl FreeVars for Clause {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
         self.body = self.body.free_vars(vars);
         for binding in &self.context.bindings {
             vars.remove(&binding.var);
@@ -44,7 +44,7 @@ impl TypedFreeVars for Clause {
 }
 
 impl Subst for Clause {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Clause {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Clause {
         self.body = self.body.subst_sim(subst);
         self
     }
@@ -63,7 +63,7 @@ impl Print for Clause {
         };
 
         alloc
-            .ctor(&self.xtor)
+            .ctor(&self.xtor.print_to_string(Some(cfg)))
             .append(context.group())
             .append(alloc.space())
             .append(FAT_ARROW)

@@ -4,7 +4,7 @@ use printer::theme::ThemeExt;
 use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
-use super::{Ty, Var};
+use super::{Ident, Ty};
 use crate::traits::{linearize::fresh_var, substitution::Subst};
 
 use std::collections::HashSet;
@@ -42,7 +42,7 @@ impl Print for Chirality {
 /// and its [`Ty`]pe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
-    pub var: Var,
+    pub var: Ident,
     pub chi: Chirality,
     pub ty: Ty,
 }
@@ -63,7 +63,7 @@ impl Print for ContextBinding {
 }
 
 impl Subst for ContextBinding {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -77,7 +77,7 @@ pub struct TypingContext {
 
 impl TypingContext {
     /// This function returns the list of variables in a typing context.
-    pub fn vars(&self) -> Vec<Var> {
+    pub fn vars(&self) -> Vec<Ident> {
         self.bindings
             .iter()
             .map(|binding| &binding.var)
@@ -86,7 +86,7 @@ impl TypingContext {
     }
 
     /// This function returns the list of variables in a typing context.
-    pub fn vars_set(&self) -> HashSet<Var> {
+    pub fn vars_set(&self) -> HashSet<Ident> {
         self.bindings
             .iter()
             .map(|binding| &binding.var)
@@ -96,7 +96,7 @@ impl TypingContext {
 
     /// This function returns an iterator over the variables in a typing context, consuming the
     /// context.
-    pub fn into_iter_vars(self) -> impl Iterator<Item = Var> {
+    pub fn into_iter_vars(self) -> impl Iterator<Item = Ident> {
         self.bindings.into_iter().map(|binding| binding.var)
     }
 
@@ -108,15 +108,15 @@ impl TypingContext {
     ///   fresh name.
     pub fn freshen(
         &self,
-        mut clashes: HashSet<Var>,
-        used_vars: &mut HashSet<Var>,
+        mut clashes: HashSet<Ident>,
+        used_vars: &mut HashSet<Ident>,
     ) -> TypingContext {
         let mut new_bindings = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             if clashes.contains(&binding.var) {
                 // if the variable has occurred already we pick a fresh one
                 new_bindings.push(ContextBinding {
-                    var: fresh_var(used_vars, &binding.var),
+                    var: fresh_var(used_vars, &binding.var.name),
                     ty: binding.ty.clone(),
                     chi: binding.chi.clone(),
                 });
@@ -134,7 +134,7 @@ impl TypingContext {
     /// at the end to positions of variables that are not retained.
     /// - `context` is the context from which to keep bindings.
     /// - `set` is the set of variables for which to keep bindings.
-    pub fn filter_by_set(&self, set: &HashSet<Var>) -> TypingContext {
+    pub fn filter_by_set(&self, set: &HashSet<Ident>) -> TypingContext {
         let mut new_context = self.bindings.to_owned();
         for (pos, binding) in self.bindings.iter().enumerate() {
             // if we are beyond the length of the new context, we must have moved all variables from
@@ -199,7 +199,7 @@ impl From<Vec<ContextBinding>> for TypingContext {
 }
 
 impl Subst for TypingContext {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }

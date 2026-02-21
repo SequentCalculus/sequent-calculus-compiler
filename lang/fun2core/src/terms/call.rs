@@ -5,7 +5,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 
 impl Compile for fun::syntax::terms::Call {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -24,7 +24,7 @@ impl Compile for fun::syntax::terms::Call {
         let mut args = compile_subst(self.args, state);
         args.entries.push(cont.into());
         core_lang::syntax::statements::Call {
-            name: self.name,
+            name: Ident::new_with_zero(&self.name),
             args,
             ty: compile_ty(
                 &self
@@ -39,7 +39,7 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{call, covar, lit, mu, ty};
+    use core_macros::{call, covar, id, lit, mu, ty};
     use fun::{
         parse_term,
         syntax::context::TypingContext,
@@ -82,7 +82,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a0", call!("fac", [lit!(3), covar!("a0")])).into();
+        let expected = mu!(id!("a0"), call!(id!("fac"), [lit!(3), covar!(id!("a0"))])).into();
         assert_eq!(result, expected)
     }
 }

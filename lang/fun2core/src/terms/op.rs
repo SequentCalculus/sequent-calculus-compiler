@@ -65,7 +65,7 @@ impl Compile for fun::syntax::terms::Op {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{lit, prod, sub, ty, var};
+    use core_macros::{id, lit, prod, sub, ty, var};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -109,7 +109,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = prod!(var!("x"), sub!(var!("x"), lit!(1))).into();
+        let expected = prod!(var!(id!("x")), sub!(var!(id!("x")), lit!(1))).into();
         assert_eq!(result, expected);
     }
 }

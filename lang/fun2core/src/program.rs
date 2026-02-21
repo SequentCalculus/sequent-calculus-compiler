@@ -5,6 +5,7 @@ use crate::{
     declaration::{compile_ctor, compile_dtor},
     def::{compile_def, compile_main},
 };
+use core_lang::syntax::names::Ident;
 
 use std::collections::VecDeque;
 
@@ -17,14 +18,14 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     for data in prog.data_types {
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Data,
-            name: data.name,
+            name: Ident::new_with_zero(&data.name),
             xtors: data.ctors.into_iter().map(compile_ctor).collect(),
         });
     }
     for codata in prog.codata_types {
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
-            name: codata.name,
+            name: Ident::new_with_zero(&codata.name),
             xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
         });
     }
@@ -57,7 +58,7 @@ mod compile_tests {
         def::{compile_def, compile_main},
         program::compile_prog,
     };
-    use core_macros::{bind, cns, covar, cut, def, exit, lit, mutilde, prd, var};
+    use core_macros::{bind, cns, covar, cut, def, exit, id, lit, mutilde, prd, var};
     use fun::syntax::{
         Chirality,
         declarations::Def,
@@ -121,10 +122,10 @@ mod compile_tests {
             &mut HashSet::from(["main".to_string()]),
         );
         let expected = def!(
-            "main",
-            [bind!("a", cns!())],
-            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
-            ["a", "x0"]
+            id!("main"),
+            [bind!(id!("a"), cns!())],
+            cut!(lit!(1), mutilde!(id!("x0"), exit!(var!(id!("x0"))))),
+            [id!("a"), id!("x0")]
         );
 
         assert_eq!(result[0].name, expected.name);
@@ -136,10 +137,10 @@ mod compile_tests {
     fn compile_def2() {
         let result = compile_def(example_def2(), &[], &mut HashSet::from(["id".to_string()]));
         let expected = def!(
-            "id",
-            [bind!("x", prd!()), bind!("a0", cns!())],
-            cut!(var!("x"), covar!("a0")),
-            ["x", "a0"]
+            id!("id"),
+            [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
+            cut!(var!(id!("x")), covar!(id!("a0"))),
+            [id!("x"), id!("a0")]
         );
         assert_eq!(result[0].name, expected.name);
         assert_eq!(result[0].context, expected.context);
@@ -159,16 +160,16 @@ mod compile_tests {
         let result = compile_prog(example_prog2());
         assert_eq!(result.defs.len(), 2);
         let expected1 = def!(
-            "main",
-            [bind!("a", cns!())],
-            cut!(lit!(1), mutilde!("x0", exit!(var!("x0")))),
-            ["a", "x0"]
+            id!("main"),
+            [bind!(id!("a"), cns!())],
+            cut!(lit!(1), mutilde!(id!("x0"), exit!(var!(id!("x0"))))),
+            [id!("a"), id!("x0")]
         );
         let expected2 = def!(
-            "id",
-            [bind!("x", prd!()), bind!("a0", cns!())],
-            cut!(var!("x"), covar!("a0")),
-            ["x", "a0"]
+            id!("id"),
+            [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
+            cut!(var!(id!("x")), covar!(id!("a0"))),
+            [id!("x"), id!("a0")]
         );
 
         let def1 = &result.defs[0];

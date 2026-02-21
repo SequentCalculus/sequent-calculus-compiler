@@ -6,7 +6,7 @@ use super::config::{
     Register, STACK, Spill, TEMP, Temporary, address, arg, stack_offset,
 };
 
-use axcut::syntax::{Chirality, ContextBinding, Name};
+use axcut::syntax::{Chirality, ContextBinding};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
@@ -813,7 +813,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         Code::COMMENT(msg)
     }
 
-    fn label(name: Name) -> Code {
+    fn label(name: String) -> Code {
         Code::LAB(name)
     }
 
@@ -827,18 +827,18 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn jump_label(name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
     }
 
-    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_fixed(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPLN(name));
     }
 
     fn jump_label_if_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -848,7 +848,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_not_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -858,7 +858,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_less(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -868,7 +868,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_less_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -878,7 +878,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_greater(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -888,45 +888,49 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_greater_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
         instructions.push(Code::JGEL(name));
     }
 
-    fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JEL(name));
     }
 
-    fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_not_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JNEL(name));
     }
 
-    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_less_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JLL(name));
     }
 
     fn jump_label_if_less_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JLEL(name));
     }
 
-    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_greater_zero(
+        temporary: Temporary,
+        name: String,
+        instructions: &mut Vec<Code>,
+    ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JGL(name));
     }
 
     fn jump_label_if_greater_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare_immediate(temporary, 0.into(), instructions);
@@ -942,7 +946,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn load_label(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::LEAL(register, name)),
             Temporary::Spill(position) => {

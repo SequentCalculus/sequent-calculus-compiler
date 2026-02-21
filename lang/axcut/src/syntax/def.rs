@@ -1,6 +1,6 @@
 //! This module defines top-level functions in AxCut.
 
-use super::{Name, Statement, TypingContext, Var};
+use super::{Ident, Statement, TypingContext};
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
 
 use crate::traits::free_vars::FreeVars;
@@ -13,11 +13,11 @@ use std::collections::HashSet;
 /// is annotated with the list of all variable names used in the top-level function.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
-    pub name: Name,
+    pub name: Ident,
     pub context: TypingContext,
     pub body: Statement,
     /// Variable names used in the top-level function.
-    pub used_vars: HashSet<Var>,
+    pub used_vars: HashSet<Ident>,
 }
 
 impl Def {

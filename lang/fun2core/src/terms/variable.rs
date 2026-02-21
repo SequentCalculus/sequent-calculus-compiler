@@ -3,6 +3,7 @@
 use crate::{compile::Compile, types::compile_ty};
 use core_lang::syntax::{
     Ty,
+    names::Ident,
     terms::{Cns, Prd},
 };
 
@@ -24,7 +25,7 @@ impl Compile for fun::syntax::terms::XVar {
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: Ident::new_with_zero(&self.var),
             ty: compile_ty(
                 &self
                     .ty
@@ -54,7 +55,7 @@ impl Compile for fun::syntax::terms::XVar {
         );
         let new_var: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::XVar {
             prdcns: Prd,
-            var: self.var,
+            var: Ident::new_with_zero(&self.var),
             ty: ty.clone(),
         }
         .into();

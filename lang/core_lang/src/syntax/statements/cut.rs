@@ -79,8 +79,8 @@ impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.producer = self.producer.subst_sim(prod_subst, cons_subst);
         self.consumer = self.consumer.subst_sim(prod_subst, cons_subst);
@@ -90,7 +90,7 @@ impl Subst for Cut {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCut {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsCut {
         self.producer = self.producer.subst_sim(subst);
         self.consumer = self.consumer.subst_sim(subst);
         self
@@ -109,16 +109,16 @@ where
 }
 
 impl Uniquify for Cut {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Cut {
-        self.producer = self.producer.uniquify(seen_vars, used_vars);
-        self.consumer = self.consumer.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Cut {
+        self.producer = self.producer.uniquify(state);
+        self.consumer = self.consumer.uniquify(state);
         self
     }
 }
 
 impl Focusing for Cut {
     type Target = FsStatement;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -126,7 +126,7 @@ impl Focusing for Cut {
             // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
@@ -144,7 +144,7 @@ impl Focusing for Cut {
             // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Var>| {
+                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
                     FsCut::new(
                         producer.focus(used_vars),
                         FsXtor {
@@ -162,9 +162,9 @@ impl Focusing for Cut {
             // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
                 Box::new(
-                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
+                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| {
                         Rc::unwrap_or_clone(op.snd).bind(
-                            Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
+                            Box::new(|binding_snd, used_vars: &mut HashSet<Ident>| {
                                 FsCut::new(
                                     FsOp {
                                         fst: binding_fst.var,
@@ -198,7 +198,8 @@ mod tests {
     use crate::syntax::*;
     use crate::traits::*;
     use core_macros::{
-        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, lit, prd, ty, var,
+        bind, cns, covar, ctor, cut, dtor, fs_ctor, fs_cut, fs_dtor, fs_mutilde, id, lit, prd, ty,
+        var,
     };
     extern crate self as core_lang;
 
@@ -207,35 +208,38 @@ mod tests {
     fn transform_ctor() {
         let result = cut!(
             ctor!(
-                "Cons",
-                [lit!(1), ctor!("Nil", [], ty!("ListInt"))],
-                ty!("ListInt")
+                id!("Cons"),
+                [lit!(1), ctor!(id!("Nil"), [], ty!(id!("ListInt")))],
+                ty!(id!("ListInt"))
             ),
-            covar!("a", ty!("ListInt")),
-            ty!("ListInt")
+            covar!(id!("a"), ty!(id!("ListInt"))),
+            ty!(id!("ListInt"))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                id!("x", 0),
                 fs_cut!(
-                    fs_ctor!("Nil", [], ty!("ListInt")),
+                    fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
                     fs_mutilde!(
-                        "x1",
+                        id!("x", 1),
                         fs_cut!(
                             fs_ctor!(
-                                "Cons",
-                                [bind!("x0", prd!()), bind!("x1", prd!(), ty!("ListInt"))],
-                                ty!("ListInt")
+                                id!("Cons"),
+                                [
+                                    bind!(id!("x", 0), prd!()),
+                                    bind!(id!("x", 1), prd!(), ty!(id!("ListInt")))
+                                ],
+                                ty!(id!("ListInt"))
                             ),
-                            covar!("a", ty!("ListInt")),
-                            ty!("ListInt")
+                            covar!(id!("a"), ty!(id!("ListInt"))),
+                            ty!(id!("ListInt"))
                         ),
-                        ty!("ListInt")
+                        ty!(id!("ListInt"))
                     ),
-                    ty!("ListInt")
+                    ty!(id!("ListInt"))
                 )
             )
         )
@@ -247,20 +251,24 @@ mod tests {
     #[test]
     fn transform_dtor() {
         let result = cut!(
-            var!("x", ty!("Fun[i64, i64]")),
-            dtor!("apply", [var!("y"), covar!("a")], ty!("Fun[i64, i64]")),
-            ty!("Fun[i64, i64]")
+            var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
+            dtor!(
+                id!("apply"),
+                [var!(id!("y")), covar!(id!("a"))],
+                ty!(id!("Fun[i64, i64]"))
+            ),
+            ty!(id!("Fun[i64, i64]"))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
-            var!("x", ty!("Fun[i64, i64]")),
+            var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             fs_dtor!(
-                "apply",
-                [bind!("y", prd!()), bind!("a", cns!())],
-                ty!("Fun[i64, i64]")
+                id!("apply"),
+                [bind!(id!("y"), prd!()), bind!(id!("a"), cns!())],
+                ty!(id!("Fun[i64, i64]"))
             ),
-            ty!("Fun[i64, i64]")
+            ty!(id!("Fun[i64, i64]"))
         )
         .into();
         assert_eq!(result, expected);
@@ -268,8 +276,8 @@ mod tests {
 
     #[test]
     fn transform_other() {
-        let result = cut!(var!("x"), covar!("a")).focus(&mut Default::default());
-        let expected = FsCut::new(var!("x"), covar!("a"), Ty::I64).into();
+        let result = cut!(var!(id!("x")), covar!(id!("a"))).focus(&mut Default::default());
+        let expected = FsCut::new(var!(id!("x")), covar!(id!("a")), Ty::I64).into();
         assert_eq!(result, expected);
     }
 }

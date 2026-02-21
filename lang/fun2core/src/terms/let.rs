@@ -4,7 +4,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{names::Ident, terms::Cns};
 
 use std::rc::Rc;
 
@@ -26,7 +26,7 @@ impl Compile for fun::syntax::terms::Let {
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
-            variable: self.variable,
+            variable: Ident::new_with_zero(&self.variable),
             ty: ty.clone(),
             statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
         }
@@ -50,7 +50,7 @@ impl Compile for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, ctor, cut, lit, mu, mutilde, prod, ty, var};
+    use core_macros::{covar, ctor, cut, id, lit, mu, mutilde, prod, ty, var};
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
@@ -75,10 +75,13 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             cut!(
                 lit!(1),
-                mutilde!("x", cut!(prod!(var!("x"), var!("x")), covar!("a0")))
+                mutilde!(
+                    id!("x"),
+                    cut!(prod!(var!(id!("x")), var!(id!("x"))), covar!(id!("a0")))
+                )
             )
         )
         .into();
@@ -108,28 +111,28 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("List[i64]"));
+        let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             cut!(
                 ctor!(
-                    "Cons",
-                    [var!("x"), ctor!("Nil", [], ty!("List[i64]"))],
-                    ty!("List[i64]")
+                    id!("Cons"),
+                    [var!(id!("x")), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
+                    ty!(id!("List[i64]"))
                 ),
                 mutilde!(
-                    "x",
+                    id!("x"),
                     cut!(
-                        var!("x", ty!("List[i64]")),
-                        covar!("a0", ty!("List[i64]")),
-                        ty!("List[i64]")
+                        var!(id!("x"), ty!(id!("List[i64]"))),
+                        covar!(id!("a0"), ty!(id!("List[i64]"))),
+                        ty!(id!("List[i64]"))
                     ),
-                    ty!("List[i64]")
+                    ty!(id!("List[i64]"))
                 ),
-                ty!("List[i64]")
+                ty!(id!("List[i64]"))
             ),
-            ty!("List[i64]")
+            ty!(id!("List[i64]"))
         )
         .into();
 

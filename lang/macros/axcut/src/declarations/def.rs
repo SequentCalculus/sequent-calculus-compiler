@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, is_none, parse_args};
+use macro_utils::{expr_to_array, is_none, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -9,7 +9,7 @@ pub fn def(input: TokenStream) -> TokenStream {
         ["Name", "Arguments", "Body", "Body Used Vars"],
         &[(3, parse_str("::std::option::Option::None").unwrap())],
     );
-    let name = expr_to_string(&args[0], 0);
+    let name = &args[0];
     let def_args = expr_to_array(&args[1], 1);
     let body = &args[2];
     let used_vars = if is_none(&args[3]) {
@@ -17,7 +17,7 @@ pub fn def(input: TokenStream) -> TokenStream {
     } else {
         let used_arr = expr_to_array(&args[3], 3)
             .into_iter()
-            .map(|expr| quote! {#expr.to_string()})
+            .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
@@ -27,7 +27,7 @@ pub fn def(input: TokenStream) -> TokenStream {
     };
     quote! {
         axcut::syntax::def::Def{
-            name:#name.to_string(),
+            name:#name,
             context: axcut::syntax::context::TypingContext{
                 bindings: vec![
                     #(#def_args),*

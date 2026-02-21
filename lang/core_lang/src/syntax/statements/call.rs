@@ -12,7 +12,7 @@ use std::collections::{BTreeSet, HashSet};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     /// The name of the top-level function being called
-    pub name: Name,
+    pub name: Ident,
     /// The arguments
     pub args: Arguments,
     /// The type (which is the return type of the definition)
@@ -43,8 +43,8 @@ impl Subst for Call {
     type Target = Call;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.args = self.args.subst_sim(prod_subst, cons_subst);
         self
@@ -58,8 +58,8 @@ impl TypedFreeVars for Call {
 }
 
 impl Uniquify for Call {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Call {
-        self.args = self.args.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, state: &mut UniquifyState) -> Call {
+        self.args = self.args.uniquify(state);
         self
     }
 }
@@ -67,10 +67,10 @@ impl Uniquify for Call {
 impl Focusing for Call {
     type Target = FsStatement;
     // focus(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, _: &mut HashSet<Var>| {
+            Box::new(|bindings, _: &mut HashSet<Ident>| {
                 FsCall {
                     name: self.name,
                     args: bindings.into(),
@@ -86,7 +86,7 @@ impl Focusing for Call {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
     /// The name of the top-level function being called
-    pub name: Name,
+    pub name: Ident,
     /// The arguments (only (co)variables here)
     pub args: TypingContext,
 }
@@ -107,7 +107,7 @@ impl From<FsCall> for FsStatement {
 
 impl SubstVar for FsCall {
     type Target = FsCall;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsCall {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsCall {
         self.args = self.args.subst_sim(subst);
         self
     }
@@ -123,19 +123,24 @@ impl TypedFreeVars for FsCall {
 mod transform_tests {
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{bind, call, cns, covar, fs_call, prd, var};
+    use core_macros::{bind, call, cns, covar, fs_call, id, prd, var};
 
     #[test]
     fn transform_call1() {
-        let result = call!("main", []).focus(&mut Default::default());
-        let expected = fs_call!("main", []).into();
+        let result = call!(id!("main"), []).focus(&mut Default::default());
+        let expected = fs_call!(id!("main"), []).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_call2() {
-        let result = call!("fun", [var!("x"), covar!("a")],).focus(&mut Default::default());
-        let expected = fs_call!("fun", [bind!("x", prd!()), bind!("a", cns!())]).into();
+        let result =
+            call!(id!("fun"), [var!(id!("x")), covar!(id!("a"))],).focus(&mut Default::default());
+        let expected = fs_call!(
+            id!("fun"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())]
+        )
+        .into();
         assert_eq!(result, expected)
     }
 }

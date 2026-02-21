@@ -70,7 +70,7 @@ impl Compile for fun::syntax::terms::Case {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
-    use core_macros::{bind, case, clause, covar, ctor, cut, lit, mu, ty, var};
+    use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -99,29 +99,38 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             cut!(
                 ctor!(
-                    "Cons",
-                    [lit!(1), ctor!("Nil", [], ty!("List[i64]"))],
-                    ty!("List[i64]")
+                    id!("Cons"),
+                    [lit!(1), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
+                    ty!(id!("List[i64]"))
                 ),
                 case!(
                     [
-                        clause!(core_syntax::Cns, "Nil", [], cut!(lit!(0), covar!("a0"))),
                         clause!(
                             core_syntax::Cns,
-                            "Cons",
+                            id!("Nil"),
+                            [],
+                            cut!(lit!(0), covar!(id!("a0")))
+                        ),
+                        clause!(
+                            core_syntax::Cns,
+                            id!("Cons"),
                             [
-                                bind!("x", core_syntax::Chirality::Prd),
-                                bind!("xs", core_syntax::Chirality::Prd, ty!("List[i64]"))
+                                bind!(id!("x"), core_syntax::Chirality::Prd),
+                                bind!(
+                                    id!("xs"),
+                                    core_syntax::Chirality::Prd,
+                                    ty!(id!("List[i64]"))
+                                )
                             ],
-                            cut!(var!("x"), covar!("a0"))
+                            cut!(var!(id!("x")), covar!(id!("a0")))
                         )
                     ],
-                    ty!("List[i64]")
+                    ty!(id!("List[i64]"))
                 ),
-                ty!("List[i64]")
+                ty!(id!("List[i64]"))
             )
         )
         .into();

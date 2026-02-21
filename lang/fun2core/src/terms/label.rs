@@ -6,6 +6,7 @@ use crate::{
 };
 use core_lang::syntax::{
     Ty,
+    names::Ident,
     terms::{Cns, Prd},
 };
 
@@ -28,14 +29,14 @@ impl Compile for fun::syntax::terms::Label {
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
-            var: self.label.clone(),
+            var: Ident::new_with_zero(&self.label),
             ty: var_ty.clone(),
         }
         .into();
 
         core_lang::syntax::terms::Mu {
             prdcns: Prd,
-            variable: self.label,
+            variable: Ident::new_with_zero(&self.label),
             ty: var_ty,
             statement: Rc::new(self.term.compile_with_cont(cont, state)),
         }
@@ -73,7 +74,7 @@ impl Compile for fun::syntax::terms::Label {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, cut, lit, mu, ty};
+    use core_macros::{covar, cut, id, lit, mu, ty};
     use fun::{parse_term, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
@@ -97,7 +98,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 
@@ -121,7 +122,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = mu!("a", cut!(lit!(1), covar!("a"))).into();
+        let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
 }

@@ -59,7 +59,7 @@ pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
     pub elsec: Rc<S>,
 }
 
-pub type FsIfC = IfC<Var, FsStatement>;
+pub type FsIfC = IfC<Ident, FsStatement>;
 
 impl Typed for IfC {
     fn get_type(&self) -> Ty {
@@ -124,8 +124,8 @@ impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -139,7 +139,7 @@ impl Subst for IfC {
 
 impl SubstVar for FsIfC {
     type Target = FsIfC;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsIfC {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsIfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -179,19 +179,13 @@ impl TypedFreeVars for FsIfC {
 }
 
 impl Uniquify for IfC {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> IfC {
-        self.fst = self.fst.uniquify(seen_vars, used_vars);
-        self.snd = self.snd.uniquify(seen_vars, used_vars);
-
-        let mut seen_vars_thenc = seen_vars.clone();
-        let mut used_vars_thenc = used_vars.clone();
-        self.thenc = self
-            .thenc
-            .uniquify(&mut seen_vars_thenc, &mut used_vars_thenc);
-        self.elsec = self.elsec.uniquify(seen_vars, used_vars);
-        seen_vars.extend(seen_vars_thenc);
-        used_vars.extend(used_vars_thenc);
-
+    fn uniquify(mut self, state: &mut UniquifyState) -> IfC {
+        self.fst = self.fst.uniquify(state);
+        self.snd = self.snd.uniquify(state);
+        let (then_unique, then_seen) = state.uniquify_restore(self.thenc);
+        self.thenc = then_unique;
+        self.elsec = self.elsec.uniquify(state);
+        state.seen_vars.extend(then_seen);
         self
     }
 }
@@ -200,10 +194,10 @@ impl Focusing for IfC {
     type Target = FsStatement;
     // focus(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, focus(s_1), focus(s_2))]] OR
     // focus(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, focus(s_1), focus(s_2))]
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
-                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| match self.snd {
+                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| match self.snd {
                     None => FsIfC {
                         sort: self.sort,
                         fst: binding_fst.var,
@@ -213,7 +207,7 @@ impl Focusing for IfC {
                     }
                     .into(),
                     Some(snd) => Rc::unwrap_or_clone(snd).bind(
-                        Box::new(move |binding_snd, used_vars: &mut HashSet<Var>| {
+                        Box::new(move |binding_snd, used_vars: &mut HashSet<Ident>| {
                             FsIfC {
                                 sort: self.sort,
                                 fst: binding_fst.var,
@@ -235,7 +229,7 @@ impl Focusing for IfC {
 #[cfg(test)]
 mod transform_tests {
     use crate::traits::*;
-    use core_macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, ife, lit, var};
+    use core_macros::{covar, cut, exit, fs_cut, fs_exit, fs_ife, fs_mutilde, id, ife, lit, var};
     extern crate self as core_lang;
 
     #[test]
@@ -243,20 +237,25 @@ mod transform_tests {
         let result = ife!(
             lit!(2),
             lit!(1),
-            cut!(lit!(1), covar!("a")),
-            exit!(var!("x"))
+            cut!(lit!(1), covar!(id!("a"))),
+            exit!(var!(id!("x")))
         )
         .focus(&mut Default::default());
 
         let expected = fs_cut!(
             lit!(2),
             fs_mutilde!(
-                "x0",
+                id!("x"),
                 fs_cut!(
                     lit!(1),
                     fs_mutilde!(
-                        "x1",
-                        fs_ife!("x0", "x1", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                        id!("x", 1),
+                        fs_ife!(
+                            id!("x"),
+                            id!("x", 1),
+                            fs_cut!(lit!(1), covar!(id!("a"))),
+                            fs_exit!(id!("x"))
+                        )
                     )
                 )
             )
@@ -268,25 +267,39 @@ mod transform_tests {
     #[test]
     fn transform_ife2() {
         let result = ife!(
-            var!("x"),
-            var!("x"),
-            exit!(var!("y")),
-            cut!(var!("x"), covar!("a"))
+            var!(id!("x")),
+            var!(id!("x")),
+            exit!(var!(id!("y"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .focus(&mut Default::default());
-        let expected = fs_ife!("x", "x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let expected = fs_ife!(
+            id!("x"),
+            id!("x"),
+            fs_exit!(id!("y")),
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_ifz1() {
-        let result = ife!(lit!(1), cut!(lit!(1), covar!("a")), exit!(var!("x")))
-            .focus(&mut Default::default());
+        let result = ife!(
+            lit!(1),
+            cut!(lit!(1), covar!(id!("a"))),
+            exit!(var!(id!("x")))
+        )
+        .focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
-                fs_ife!("x0", fs_cut!(lit!(1), covar!("a")), fs_exit!("x"))
+                id!("x"),
+                fs_ife!(
+                    id!("x"),
+                    fs_cut!(lit!(1), covar!(id!("a"))),
+                    fs_exit!(id!("x"))
+                )
             )
         )
         .into();
@@ -294,9 +307,18 @@ mod transform_tests {
     }
     #[test]
     fn transform_ifz2() {
-        let result = ife!(var!("x"), exit!(var!("y")), cut!(var!("x"), covar!("a")))
-            .focus(&mut Default::default());
-        let expected = fs_ife!("x", fs_exit!("y"), fs_cut!(var!("x"), covar!("a"))).into();
+        let result = ife!(
+            var!(id!("x")),
+            exit!(var!(id!("y"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .focus(&mut Default::default());
+        let expected = fs_ife!(
+            id!("x"),
+            fs_exit!(id!("y")),
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
+        )
+        .into();
         assert_eq!(result, expected)
     }
 }

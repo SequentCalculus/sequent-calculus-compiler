@@ -61,8 +61,8 @@ impl<C: Chi> Subst for XCase<C> {
     type Target = XCase<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Ident, Term<Prd>)],
+        cons_subst: &[(Ident, Term<Cns>)],
     ) -> Self::Target {
         self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
         self
@@ -76,19 +76,14 @@ impl<C: Chi> TypedFreeVars for XCase<C> {
 }
 
 impl<C: Chi> Uniquify for XCase<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> XCase<C> {
-        let seen_vars_clone = seen_vars.clone();
-        let used_vars_clone = used_vars.clone();
+    fn uniquify(mut self, state: &mut UniquifyState) -> XCase<C> {
         self.clauses = self
             .clauses
             .into_iter()
             .map(|clause| {
-                let mut seen_vars_clause = seen_vars_clone.clone();
-                let mut used_vars_clause = used_vars_clone.clone();
-                let clause = clause.uniquify(&mut seen_vars_clause, &mut used_vars_clause);
-                seen_vars.extend(seen_vars_clause);
-                used_vars.extend(used_vars_clause);
-                clause
+                let (clause_unique, new_seen) = state.uniquify_restore(clause);
+                state.seen_vars.extend(new_seen);
+                clause_unique
             })
             .collect();
 
@@ -99,7 +94,7 @@ impl<C: Chi> Uniquify for XCase<C> {
 impl<C: Chi> Focusing for XCase<C> {
     type Target = FsXCase<C>;
     // focus(cocase {cases}) = cocase { focus(cases) } AND focus(case {cases}) = case { focus(cases) }
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.focus(used_vars),
@@ -110,7 +105,7 @@ impl<C: Chi> Focusing for XCase<C> {
 
 impl Bind for XCase<Prd> {
     // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(used_vars);
         let new_binding = ContextBinding {
@@ -118,13 +113,13 @@ impl Bind for XCase<Prd> {
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
-        let cns = Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone());
+        let cns = Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(self.focus(used_vars), cns, ty).into()
     }
 }
 impl Bind for XCase<Cns> {
     // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(used_vars);
         let new_binding = ContextBinding {
@@ -132,14 +127,14 @@ impl Bind for XCase<Cns> {
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
-        let prd = Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone());
+        let prd = Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone());
         FsCut::new(prd, self.focus(used_vars), ty).into()
     }
 }
 
 impl<C: Chi> SubstVar for FsXCase<C> {
     type Target = FsXCase<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
         self.clauses = self.clauses.subst_sim(subst);
         self
     }
@@ -158,23 +153,23 @@ mod tests {
     use crate::traits::*;
     extern crate self as core_lang;
     use core_macros::{
-        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, prd, ty, var,
+        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, id, prd, ty, var,
     };
 
     #[test]
     fn focus_clause() {
         let result = clause!(
             Prd,
-            "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            cut!(var!("x"), covar!("a"))
+            id!("apply"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .focus(&mut Default::default());
         let expected = fs_clause!(
             Prd,
-            "apply",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a"))
+            id!("apply"),
+            [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+            fs_cut!(var!(id!("x")), covar!(id!("a")))
         );
         assert_eq!(result, expected)
     }
@@ -184,13 +179,13 @@ mod tests {
             [
                 clause!(
                     Prd,
-                    "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    id!("fst"),
+                    [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("x"), covar!("a")))
+                clause!(Prd, id!("snd"), [], cut!(var!(id!("x")), covar!(id!("a"))))
             ],
-            ty!("LPairIntInt")
+            ty!(id!("LPairIntInt"))
         )
         .into()
     }
@@ -198,19 +193,19 @@ mod tests {
     fn example_case() -> XCase<Cns> {
         case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("x"), covar!("a"))),
+                clause!(Cns, id!("Nil"), [], cut!(var!(id!("x")), covar!(id!("a")))),
                 clause!(
                     Cns,
-                    "Cons",
+                    id!("Cons"),
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
+                        bind!(id!("a"), cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 )
             ],
-            ty!("ListInt")
+            ty!(id!("ListInt"))
         )
         .into()
     }
@@ -221,19 +216,19 @@ mod tests {
         let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = case!(
             [
-                clause!(Cns, "Nil", [], cut!(var!("y"), covar!("b"))),
+                clause!(Cns, id!("Nil"), [], cut!(var!(id!("y")), covar!(id!("b")))),
                 clause!(
                     Cns,
-                    "Cons",
+                    id!("Cons"),
                     [
-                        bind!("x", prd!()),
-                        bind!("xs", prd!(), ty!("ListInt")),
-                        bind!("a", cns!())
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
+                        bind!(id!("a"), cns!())
                     ],
-                    cut!(var!("x"), covar!("a"))
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 )
             ],
-            ty!("ListInt")
+            ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
     }
@@ -246,13 +241,13 @@ mod tests {
             [
                 clause!(
                     Prd,
-                    "fst",
-                    [bind!("x", prd!()), bind!("a", cns!())],
-                    cut!(var!("x"), covar!("a"))
+                    id!("fst"),
+                    [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                    cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, "snd", [], cut!(var!("y"), covar!("b")))
+                clause!(Prd, id!("snd"), [], cut!(var!(id!("y")), covar!(id!("b"))))
             ],
-            ty!("LPairIntInt")
+            ty!(id!("LPairIntInt"))
         );
         assert_eq!(result, expected)
     }

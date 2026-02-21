@@ -67,8 +67,8 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                let label = call.label.clone() + "_";
-                let comment = call.label + "(...)";
+                let label = call.label.to_string() + "_";
+                let comment = call.label.to_string() + "(...)";
                 instructions.push(Backend::comment(comment));
 
                 Backend::jump_label(label, instructions);

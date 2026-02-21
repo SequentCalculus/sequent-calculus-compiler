@@ -1,8 +1,8 @@
 //! This module defines a trait for the translation from the focused version of [Core](core_lang)
 //! into the non-linearized version of [AxCut](axcut).
 
+use core_lang::syntax::Ident;
 use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
-use core_lang::syntax::{Name, Var};
 
 use std::collections::{HashSet, VecDeque};
 use std::rc::Rc;
@@ -15,10 +15,10 @@ use std::rc::Rc;
 /// top-level definitions containing statements within the current function that have been lifted
 /// to the top-level.
 pub struct ShrinkingState<'a> {
-    pub used_vars: &'a mut HashSet<Var>,
+    pub used_vars: &'a mut HashSet<Ident>,
     pub data: &'a [DataDeclaration],
     pub codata: &'a [CodataDeclaration],
-    pub used_labels: &'a mut HashSet<Name>,
+    pub used_labels: &'a mut HashSet<Ident>,
     pub current_label: &'a str,
     pub lifted_statements: &'a mut VecDeque<axcut::syntax::Def>,
 }

@@ -7,12 +7,12 @@
 use core_lang::syntax::{
     CodataDeclaration, Def, Ty,
     context::Chirality,
-    fresh_covar, fresh_name, fresh_var,
+    names::Ident,
     statements::Cut,
     terms::{Cns, Mu, Prd},
 };
 use core_lang::traits::{Typed, TypedFreeVars};
-use fun::syntax::names::{Covar, Name, Var};
+use fun::syntax::names::{Covar, Name, Var, fresh_covar, fresh_ident, fresh_var};
 
 use std::{
     collections::{BTreeSet, HashSet, VecDeque},
@@ -86,7 +86,7 @@ pub trait Compile: Sized {
         let new_statement = self.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
-                var: new_covar.clone(),
+                var: Ident::new_with_zero(&new_covar),
                 ty: ty.clone(),
             }
             .into(),
@@ -94,7 +94,7 @@ pub trait Compile: Sized {
         );
         Mu {
             prdcns: Prd,
-            variable: new_covar,
+            variable: Ident::new_with_zero(&new_covar),
             ty,
             statement: Rc::new(new_statement),
         }
@@ -131,13 +131,13 @@ pub fn share(
         let var = state.fresh_var();
         let ty = cont.get_type();
         let body = Cut::new(
-            core_lang::syntax::terms::XVar::var(&var, ty.clone()),
+            core_lang::syntax::terms::XVar::var(Ident::new_with_zero(&var), ty.clone()),
             cont,
             ty.clone(),
         )
         .into();
 
-        (var, ty, body)
+        (Ident::new_with_zero(&var), ty, body)
     };
 
     // the free variables of the shared statement ...
@@ -154,34 +154,38 @@ pub fn share(
         .map(|binding| match binding.chi {
             Chirality::Prd => {
                 let term: core_lang::syntax::terms::Term<Prd> =
-                    core_lang::syntax::terms::XVar::var(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::var(binding.var, binding.ty).into();
                 term.into()
             }
             Chirality::Cns => {
                 let term: core_lang::syntax::terms::Term<Cns> =
-                    core_lang::syntax::terms::XVar::covar(&binding.var, binding.ty).into();
+                    core_lang::syntax::terms::XVar::covar(binding.var, binding.ty).into();
                 term.into()
             }
         })
         .collect();
     let args = core_lang::syntax::arguments::Arguments { entries: bindings };
 
-    let name = fresh_name(
+    let name = fresh_ident(
         state.used_labels,
         &("share_".to_string() + state.current_label + "_"),
     );
 
     state.lifted_statements.push_front(core_lang::syntax::Def {
-        name: name.clone(),
+        name: Ident::new_with_zero(&name),
         context,
         body,
-        used_vars: state.used_vars.clone(),
+        used_vars: state
+            .used_vars
+            .iter()
+            .map(|id| Ident::new_with_zero(id))
+            .collect(),
     });
 
     Mu::tilde_mu::<core_lang::syntax::Statement>(
-        &var,
+        var,
         core_lang::syntax::statements::Call {
-            name,
+            name: Ident::new_with_zero(&name),
             args,
             ty: ty.clone(),
         }
