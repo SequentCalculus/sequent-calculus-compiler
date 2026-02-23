@@ -93,6 +93,12 @@ pub const CODATA: &str = "codata";
 /// The keyword `type`
 pub const TYPE: &str = "type";
 
+/// The keyword 'exports'
+pub const EXPORTS: &str = "exports";
+
+/// The keyword 'import'
+pub const IMPORT: &str = "import";
+
 /// The keyword `def`
 pub const DEF: &str = "def";
 

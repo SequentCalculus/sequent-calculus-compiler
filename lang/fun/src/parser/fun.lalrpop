@@ -37,6 +37,7 @@ match {
     "print_i64", "println_i64",
     "let", "case", "new",
     "def", "data", "codata",
+    "import","exports","public def",
     // Types
     "i64",
     // Comments and whitespace
@@ -425,7 +426,25 @@ Def: Def = {
             context,
             body,
             ret_ty,
-        }
+        },
+    <l: @L> "public def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+        Def {
+            span: span(l, r),
+            name,
+            context,
+            body,
+            ret_ty,
+        },
+}
+
+Exports: Exports = {
+    <l: @L> "exports" <name: Name> <r: @R> => 
+        Exports { span: span(l, r), name,},
+}
+
+Import: Import = {
+    <l: @L> "import" <name: Name> <r: @R> =>
+        Import {span: span(l, r), name,},
 }
 
 pub OptTypeContext: TypeContext = {
@@ -453,6 +472,8 @@ Codata: Codata = {
 }
 
 Declaration: Declaration = {
+    <exports: Exports> => exports.into(),
+    <import: Import> => import.into(),
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()

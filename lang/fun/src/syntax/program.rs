@@ -39,6 +39,12 @@ impl Program {
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
+                Declaration::Exports(exports) => {
+                    exports.check(&symbol_table)?;
+                }
+                Declaration::Import(import) => {
+                    import.check(&symbol_table)?;
+                }
                 Declaration::Data(data) => {
                     data.check(&symbol_table)?;
                 }
