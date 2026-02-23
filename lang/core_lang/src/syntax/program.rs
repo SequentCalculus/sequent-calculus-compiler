@@ -48,7 +48,7 @@ impl Prog {
             .map(|mut def| {
                 def.body = def
                     .body
-                    .uniquify(&mut def.context.vars(), &mut def.used_vars);
+                    .uniquify(&mut UniquifyState::new(def.context.vars()));
                 def
             })
             .collect();
