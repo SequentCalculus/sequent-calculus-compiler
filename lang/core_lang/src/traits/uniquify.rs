@@ -8,15 +8,14 @@ use std::rc::Rc;
 
 pub struct UniquifyState {
     pub seen_vars: HashSet<Ident>,
-    next_id: usize,
+    pub next_id: usize,
 }
 
 impl UniquifyState {
-    pub fn new(seen: HashSet<Ident>) -> Self {
-        let max_used = seen.iter().map(|ident| ident.id).max().unwrap_or(0);
+    pub fn new(seen: HashSet<Ident>, max_id: usize) -> Self {
         Self {
             seen_vars: seen,
-            next_id: max_used + 1,
+            next_id: max_id + 1,
         }
     }
 

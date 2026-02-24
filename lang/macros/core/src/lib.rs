@@ -429,7 +429,8 @@ pub fn dtor_sig(input: TokenStream) -> TokenStream {
 }
 
 /// Create a [`core_lang::syntax::program::Prog`] with given lists of definitions, data
-/// declarations, and codata declarations
+/// declarations, codata declarations and max used identifier id
+/// If no identifier id is given, it defaults to 0
 #[proc_macro]
 pub fn prog(input: TokenStream) -> TokenStream {
     prog::prog(input)

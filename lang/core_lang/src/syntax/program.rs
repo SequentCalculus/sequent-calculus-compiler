@@ -17,6 +17,8 @@ pub struct Prog<D = Def> {
     pub data_types: Vec<DataDeclaration>,
     /// The codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
+    /// Highest id used for [`crate::syntax::names::Ident`]s in the Program
+    pub max_id: usize,
 }
 
 pub type FsProg = Prog<FsDef>;
@@ -25,33 +27,39 @@ impl Prog {
     /// This function applies the focusing transformation to a program. As a preprocessing step it
     /// makes all binders in each path through a top-level function unique.
     pub fn focus(self) -> FsProg {
+        let mut max_id = self.max_id;
+        let mut new_defs = Vec::with_capacity(self.defs.len());
+        for mut def in self.defs {
+            let mut state = UniquifyState::new(def.context.vars(), max_id);
+            def.body = def.body.uniquify(&mut state);
+            new_defs.push(def.focus());
+            max_id = state.next_id - 1;
+        }
         FsProg {
-            defs: self
-                .defs
-                .into_iter()
-                .map(|mut def| {
-                    def.body = def
-                        .body
-                        .uniquify(&mut UniquifyState::new(def.context.vars()));
-                    def.focus()
-                })
-                .collect(),
+            defs: new_defs,
             data_types: self.data_types,
             codata_types: self.codata_types,
+            max_id,
         }
     }
 
     pub fn uniquify(mut self) -> Self {
-        self.defs = self
-            .defs
-            .into_iter()
-            .map(|mut def| {
-                def.body = def
-                    .body
-                    .uniquify(&mut UniquifyState::new(def.context.vars()));
-                def
-            })
-            .collect();
+        let mut max_id = self.max_id;
+        for def in self.defs.iter_mut() {
+            let mut state = UniquifyState::new(def.context.vars(), max_id);
+            let placeholder = Call {
+                name: Ident {
+                    name: "placeholder".to_string(),
+                    id: 0,
+                },
+                args: Arguments::default(),
+                ty: Ty::I64,
+            };
+            let body = std::mem::replace(&mut def.body, placeholder.into());
+            def.body = body.uniquify(&mut state);
+            max_id = state.next_id - 1;
+        }
+        self.max_id = max_id;
         self
     }
 }

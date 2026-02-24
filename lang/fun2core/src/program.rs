@@ -49,6 +49,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         defs: defs_translated.into(),
         data_types,
         codata_types,
+        max_id: 0,
     }
 }
 
