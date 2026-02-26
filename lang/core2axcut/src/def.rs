@@ -18,16 +18,17 @@ use std::collections::{HashSet, VecDeque};
 /// - `used_labels` is the set of labels of top-level functions in the corresponding
 ///   [Core](core_lang) program.
 pub fn shrink_def(
-    mut def: FsDef,
+    def: FsDef,
     data_types: &[DataDeclaration],
     codata_types: &[CodataDeclaration],
     used_labels: &mut HashSet<Ident>,
+    max_id: &mut usize,
 ) -> VecDeque<axcut::syntax::Def> {
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
 
     let body = def.body.shrink(&mut ShrinkingState {
-        used_vars: &mut def.used_vars,
+        max_id,
         data: data_types,
         codata: codata_types,
         used_labels,

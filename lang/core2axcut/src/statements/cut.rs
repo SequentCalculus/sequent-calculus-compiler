@@ -3,7 +3,7 @@
 use core_lang::syntax::{
     Ident, Ty, TypingContext,
     declaration::{cont_int, lookup_type_declaration},
-    fresh_name, fresh_var,
+    fresh_ident, fresh_var,
     statements::{FsCut, FsStatement},
     terms::*,
 };
@@ -14,7 +14,7 @@ use crate::shrink_ident;
 use crate::shrinking::{Shrinking, ShrinkingState};
 use crate::types::shrink_ty;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This function function eliminates the cut of a (co)variable and a (tilde-)mu-binding by
@@ -123,7 +123,7 @@ fn shrink_unknown_cuts(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: shrink_ident(fresh_name(state.used_vars, &binding.var.name)),
+                            var: shrink_ident(fresh_ident(state.max_id, &binding.var.name)),
                             ..binding
                         })
                         .collect::<Vec<_>>()
@@ -174,8 +174,8 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
     // ... and the arguments of the call to it
     let args = context.clone();
 
-    let label = fresh_name(
-        state.used_labels,
+    let label = fresh_ident(
+        state.max_id,
         &("lift_".to_string() + state.current_label + "_"),
     );
     let body = statement.shrink(state);
@@ -306,7 +306,7 @@ fn shrink_critical_pairs(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: shrink_ident(fresh_name(state.used_vars, &binding.var.name)),
+                            var: shrink_ident(fresh_ident(state.used_vars, &binding.var.name)),
                             ..binding
                         })
                         .collect::<Vec<_>>()
@@ -369,13 +369,9 @@ fn shrink_literal_mu(
 /// - `lit` is the integer literal.
 /// - `var` is the covariable.
 /// - `used_vars` are the variable names used in the top-level function we are currently in.
-fn shrink_literal_var(
-    lit: i64,
-    var: Ident,
-    used_vars: &mut HashSet<Ident>,
-) -> axcut::syntax::Statement {
+fn shrink_literal_var(lit: i64, var: Ident, max_id: &mut usize) -> axcut::syntax::Statement {
     // we bind the literal to a fresh variable ...
-    let fresh_var = fresh_var(used_vars);
+    let fresh_var = fresh_var(max_id);
     axcut::syntax::statements::Literal {
         lit,
         var: shrink_ident(fresh_var.clone()),
@@ -448,10 +444,10 @@ fn shrink_op_var(
     op: &core_lang::syntax::BinOp,
     snd: Ident,
     var: Ident,
-    used_vars: &mut HashSet<Ident>,
+    max_id: &mut usize,
 ) -> axcut::syntax::Statement {
     // we bind the result of the arithmetic operation to a fresh variable ...
-    let fresh_var = fresh_var(used_vars);
+    let fresh_var = fresh_var(max_id);
     axcut::syntax::statements::Op {
         fst: shrink_ident(fst),
         op: shrink_binop(op),

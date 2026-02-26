@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 pub mod clause;
 pub mod literal;
@@ -164,50 +164,50 @@ impl<C: Chi> Uniquify for Term<C> {
 
 impl Focusing for Term<Prd> {
     type Target = FsTerm<Prd>;
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
+    fn focus(self, max_id: &mut usize) -> Self::Target {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
-            Term::Op(op) => op.focus(used_vars),
-            Term::Mu(mu) => mu.focus(used_vars).into(),
-            Term::Xtor(xtor) => xtor.focus(used_vars),
-            Term::XCase(xcase) => xcase.focus(used_vars).into(),
+            Term::Op(op) => op.focus(max_id),
+            Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Xtor(xtor) => xtor.focus(max_id),
+            Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
     }
 }
 impl Focusing for Term<Cns> {
     type Target = FsTerm<Cns>;
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
+    fn focus(self, max_id: &mut usize) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
-            Term::Mu(mu) => mu.focus(used_vars).into(),
-            Term::Xtor(xtor) => xtor.focus(used_vars),
-            Term::XCase(xcase) => xcase.focus(used_vars).into(),
+            Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Xtor(xtor) => xtor.focus(max_id),
+            Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
     }
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         match self {
-            Term::XVar(var) => var.bind(k, used_vars),
-            Term::Literal(lit) => lit.bind(k, used_vars),
-            Term::Op(op) => op.bind(k, used_vars),
-            Term::Mu(mu) => mu.bind(k, used_vars),
-            Term::Xtor(xtor) => xtor.bind(k, used_vars),
-            Term::XCase(xcase) => xcase.bind(k, used_vars),
+            Term::XVar(var) => var.bind(k, max_id),
+            Term::Literal(lit) => lit.bind(k, max_id),
+            Term::Op(op) => op.bind(k, max_id),
+            Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Xtor(xtor) => xtor.bind(k, max_id),
+            Term::XCase(xcase) => xcase.bind(k, max_id),
         }
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         match self {
-            Term::XVar(covar) => covar.bind(k, used_vars),
+            Term::XVar(covar) => covar.bind(k, max_id),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
-            Term::Mu(mu) => mu.bind(k, used_vars),
-            Term::Xtor(xtor) => xtor.bind(k, used_vars),
-            Term::XCase(xcase) => xcase.bind(k, used_vars),
+            Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Xtor(xtor) => xtor.bind(k, max_id),
+            Term::XCase(xcase) => xcase.bind(k, max_id),
         }
     }
 }

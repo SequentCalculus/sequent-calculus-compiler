@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 /// This struct defines variables and covariables. It consists of the information that determines
 /// whether it is a variable (if `C` is instantiated with [`Prd`]) or a covariable (if `C` is
@@ -108,7 +108,7 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
 }
 
 impl<C: Chi> Bind for XVar<C> {
-    fn bind(self, k: Continuation, used_var: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
         } else {
@@ -120,7 +120,7 @@ impl<C: Chi> Bind for XVar<C> {
             ty: self.ty,
         };
 
-        k(binding, used_var)
+        k(binding, max_id)
     }
 }
 

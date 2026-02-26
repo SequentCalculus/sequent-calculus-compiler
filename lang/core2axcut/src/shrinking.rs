@@ -15,7 +15,7 @@ use std::rc::Rc;
 /// top-level definitions containing statements within the current function that have been lifted
 /// to the top-level.
 pub struct ShrinkingState<'a> {
-    pub used_vars: &'a mut HashSet<Ident>,
+    pub max_id: &'a mut usize,
     pub data: &'a [DataDeclaration],
     pub codata: &'a [CodataDeclaration],
     pub used_labels: &'a mut HashSet<Ident>,

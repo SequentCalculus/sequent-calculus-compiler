@@ -3,7 +3,7 @@
 use crate::traits::*;
 use printer::*;
 
-use std::{collections::HashSet, fmt};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Ident {
@@ -20,31 +20,48 @@ impl Ident {
     }
 }
 
+pub fn fresh_ident(max_id: &mut usize, base_name: &str) -> Ident {
+    let new_ident = Ident {
+        name: base_name.to_string(),
+        id: *max_id + 1,
+    };
+    *max_id += 1;
+    new_ident
+}
+
+pub fn fresh_var(max_id: &mut usize) -> Ident {
+    fresh_ident(max_id, "x")
+}
+
+pub fn fresh_covar(max_id: &mut usize) -> Ident {
+    fresh_ident(max_id, "a")
+}
+
 /// This function generates a fresh name with respect to a given set of names.
 /// - `used_vars` is the set of names for which to generate a fresh one.
 /// - `base_name` is the base name for the generated name to which a number is appended that makes
 ///   it fresh.
-pub fn fresh_name(used_names: &mut HashSet<Ident>, base_name: &str) -> Ident {
-    let mut new_name: Ident = Ident {
-        name: base_name.to_string(),
-        id: 0,
-    };
-    while used_names.contains(&new_name) {
-        new_name.id += 1;
-    }
-    used_names.insert(new_name.clone());
-    new_name
-}
+//pub fn fresh_name(used_names: &mut HashSet<Ident>, base_name: &str) -> Ident {
+//    let mut new_name: Ident = Ident {
+//        name: base_name.to_string(),
+//        id: 0,
+//    };
+//    while used_names.contains(&new_name) {
+//        new_name.id += 1;
+//    }
+//    used_names.insert(new_name.clone());
+//    new_name
+//}
 
 /// This function generates a fresh variable with base name `"x"`.
-pub fn fresh_var(used_vars: &mut HashSet<Ident>) -> Ident {
-    fresh_name(used_vars, "x")
-}
+//pub fn fresh_var(used_vars: &mut HashSet<Ident>) -> Ident {
+//    fresh_name(used_vars, "x")
+//}
 
 /// This function generates a fresh covariable with base name `"a"`.
-pub fn fresh_covar(used_covars: &mut HashSet<Ident>) -> Ident {
-    fresh_name(used_covars, "a")
-}
+//pub fn fresh_covar(used_covars: &mut HashSet<Ident>) -> Ident {
+//    fresh_name(used_covars, "a")
+//}
 
 impl SubstVar for Ident {
     type Target = Ident;

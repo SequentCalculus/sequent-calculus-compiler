@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 /// This struct defines pattern and copattern matches in Core. It consists of the information that
 /// determines whether it is a match (if `C` is instantiated with [`Cns`]) or a comatch
@@ -94,10 +94,10 @@ impl<C: Chi> Uniquify for XCase<C> {
 impl<C: Chi> Focusing for XCase<C> {
     type Target = FsXCase<C>;
     // focus(cocase {cases}) = cocase { focus(cases) } AND focus(case {cases}) = case { focus(cases) }
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> Self::Target {
+    fn focus(self, max_id: &mut usize) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
-            clauses: self.clauses.focus(used_vars),
+            clauses: self.clauses.focus(max_id),
             ty: self.ty,
         }
     }
@@ -105,30 +105,30 @@ impl<C: Chi> Focusing for XCase<C> {
 
 impl Bind for XCase<Prd> {
     // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         let ty = self.ty.clone();
-        let new_var = fresh_var(used_vars);
+        let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
-        let cns = Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone());
-        FsCut::new(self.focus(used_vars), cns, ty).into()
+        let cns = Mu::tilde_mu(new_var, k(new_binding, max_id), self.ty.clone());
+        FsCut::new(self.focus(max_id), cns, ty).into()
     }
 }
 impl Bind for XCase<Cns> {
     // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         let ty = self.ty.clone();
-        let new_covar = fresh_covar(used_vars);
+        let new_covar = fresh_covar(max_id);
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
-        let prd = Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone());
-        FsCut::new(prd, self.focus(used_vars), ty).into()
+        let prd = Mu::mu(new_covar, k(new_binding, max_id), self.ty.clone());
+        FsCut::new(prd, self.focus(max_id), ty).into()
     }
 }
 

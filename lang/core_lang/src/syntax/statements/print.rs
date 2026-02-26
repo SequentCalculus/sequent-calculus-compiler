@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This struct defines printing an integer in Core. It consists of the information whether a
@@ -119,19 +119,17 @@ impl Uniquify for PrintI64 {
 impl Focusing for PrintI64 {
     type Target = FsStatement;
     // focus(println_i64(p); s) = bind(p)[λa.println_i64(a); focus(s)]
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn focus(self, max_id: &mut usize) -> FsStatement {
         Rc::unwrap_or_clone(self.arg).bind(
-            Box::new(
-                move |binding: ContextBinding, used_vars: &mut HashSet<Ident>| {
-                    FsPrintI64 {
-                        newline: self.newline,
-                        arg: binding.var,
-                        next: self.next.focus(used_vars),
-                    }
-                    .into()
-                },
-            ),
-            used_vars,
+            Box::new(move |binding: ContextBinding, max_id: &mut usize| {
+                FsPrintI64 {
+                    newline: self.newline,
+                    arg: binding.var,
+                    next: self.next.focus(max_id),
+                }
+                .into()
+            }),
+            max_id,
         )
     }
 }

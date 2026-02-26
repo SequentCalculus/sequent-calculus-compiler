@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeSet, VecDeque};
 
 /// A single argument that can be either a producer or a consumer.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -74,10 +74,10 @@ impl Uniquify for Argument {
 }
 
 impl Bind for Argument {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         match self {
-            Argument::Producer(prd) => prd.bind(k, used_vars),
-            Argument::Consumer(cns) => cns.bind(k, used_vars),
+            Argument::Producer(prd) => prd.bind(k, max_id),
+            Argument::Consumer(cns) => cns.bind(k, max_id),
         }
     }
 }

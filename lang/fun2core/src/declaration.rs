@@ -2,7 +2,8 @@
 //! declarations.
 
 use crate::{context::compile_context, types::compile_ty};
-use core_lang::syntax::{fresh_covar, names::Ident};
+use core_lang::syntax::names::Ident;
+use fun::syntax::fresh_covar;
 
 /// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
 /// [constructors in Core](core_lang::syntax::declaration::XtorSig).
@@ -21,14 +22,13 @@ pub fn compile_ctor(
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
+    let new_covar = fresh_covar(&mut dtor.args.vars());
     let mut new_args = compile_context(dtor.args);
-
-    let new_covar = fresh_covar(&mut new_args.vars().into_iter().collect());
 
     new_args
         .bindings
         .push(core_lang::syntax::context::ContextBinding {
-            var: new_covar,
+            var: core_lang::syntax::names::Ident::new_with_zero(&new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(&dtor.cont_ty),
         });

@@ -30,11 +30,11 @@ pub type FsDef = Def<FsStatement>;
 
 impl Def {
     /// This function applies the [`Focusing`] transformation to the body of the top-level function.
-    pub fn focus(mut self) -> FsDef {
+    pub fn focus(self, max_id: &mut usize) -> FsDef {
         FsDef {
             name: self.name,
             context: self.context,
-            body: self.body.focus(&mut self.used_vars),
+            body: self.body.focus(max_id),
             used_vars: self.used_vars,
         }
     }

@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 /// This struct defines the call of a top-level function in Core. It consists of the name of the
 /// top-level function to call, the arguments, and the type.
@@ -67,17 +67,17 @@ impl Uniquify for Call {
 impl Focusing for Call {
     type Target = FsStatement;
     // focus(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn focus(self, max_id: &mut usize) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, _: &mut HashSet<Ident>| {
+            Box::new(|bindings, _: &mut usize| {
                 FsCall {
                     name: self.name,
                     args: bindings.into(),
                 }
                 .into()
             }),
-            used_vars,
+            max_id,
         )
     }
 }

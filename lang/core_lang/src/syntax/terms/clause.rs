@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This struct defines a clause in a match or a comatch in Core. It consists of the information
@@ -205,12 +205,12 @@ impl<C: Chi> Uniquify for Clause<C> {
 impl<C: Chi> Focusing for Clause<C> {
     type Target = FsClause<C>;
     // focus(X_i(x_{i,j}) => s_i ) = X_i(x_{i,j}) => focus(s_i)
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsClause<C> {
+    fn focus(self, max_id: &mut usize) -> FsClause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
             context: self.context,
-            body: self.body.focus(used_vars),
+            body: self.body.focus(max_id),
         }
     }
 }

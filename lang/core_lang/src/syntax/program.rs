@@ -32,8 +32,8 @@ impl Prog {
         for mut def in self.defs {
             let mut state = UniquifyState::new(def.context.vars(), max_id);
             def.body = def.body.uniquify(&mut state);
-            new_defs.push(def.focus());
             max_id = state.next_id - 1;
+            new_defs.push(def.focus(&mut max_id));
         }
         FsProg {
             defs: new_defs,

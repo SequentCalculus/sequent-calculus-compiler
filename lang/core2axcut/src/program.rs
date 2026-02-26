@@ -40,6 +40,7 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
     // to generate fresh labels in some places
     let mut used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
 
+    let mut max_id = program.max_id;
     axcut::syntax::Prog {
         defs: program
             .defs
@@ -50,6 +51,7 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
                     &program.data_types,
                     &program.codata_types,
                     &mut used_labels,
+                    &mut max_id,
                 )
             })
             .collect(),

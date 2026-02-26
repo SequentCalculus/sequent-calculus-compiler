@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `C` is instantiated with [`Prd`]) or a destructor
@@ -121,18 +121,18 @@ impl<C: Chi> Uniquify for Xtor<C> {
 
 impl<C: Chi> Focusing for Xtor<C> {
     type Target = FsTerm<C>;
-    fn focus(self, _: &mut HashSet<Ident>) -> Self::Target {
+    fn focus(self, _: &mut usize) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
 }
 
 impl Bind for Xtor<Prd> {
     // bind(C(t_i))[k] = bind(t_i)[λas.⟨ C(as) | ~μx.k(x) ⟩]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
-                let new_var = fresh_var(used_vars);
+            Box::new(|bindings, max_id: &mut usize| {
+                let new_var = fresh_var(max_id);
                 let new_binding = ContextBinding {
                     var: new_var.clone(),
                     chi: Chirality::Prd,
@@ -145,29 +145,29 @@ impl Bind for Xtor<Prd> {
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
-                    Mu::tilde_mu(new_var, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::tilde_mu(new_var, k(new_binding, max_id), self.ty.clone()),
                     self.ty,
                 )
                 .into()
             }),
-            used_vars,
+            max_id,
         )
     }
 }
 impl Bind for Xtor<Cns> {
     // bind(D(t_i))[k] = bind(t_i)[λas.⟨ μa.k(a) | D(as) ⟩]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
-                let new_covar = fresh_covar(used_vars);
+            Box::new(|bindings, max_id: &mut usize| {
+                let new_covar = fresh_covar(max_id);
                 let new_binding = ContextBinding {
                     var: new_covar.clone(),
                     chi: Chirality::Cns,
                     ty: self.ty.clone(),
                 };
                 FsCut::new(
-                    Mu::mu(new_covar, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::mu(new_covar, k(new_binding, max_id), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         id: self.id,
@@ -178,7 +178,7 @@ impl Bind for Xtor<Cns> {
                 )
                 .into()
             }),
-            used_vars,
+            max_id,
         )
     }
 }

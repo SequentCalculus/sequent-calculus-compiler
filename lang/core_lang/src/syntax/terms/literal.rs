@@ -5,8 +5,6 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::HashSet;
-
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -40,8 +38,8 @@ impl From<Literal> for FsTerm<Prd> {
 
 impl Bind for Literal {
     // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
-        let new_var = fresh_var(used_vars);
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+        let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
@@ -49,7 +47,7 @@ impl Bind for Literal {
         };
         FsCut::new(
             self,
-            Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
+            Mu::tilde_mu(new_var, k(new_binding, max_id), Ty::I64),
             Ty::I64,
         )
         .into()

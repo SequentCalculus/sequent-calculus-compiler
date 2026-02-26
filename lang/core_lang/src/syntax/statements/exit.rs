@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This struct defines the exit statement in Core. It consists of a term for the exit code and the
@@ -70,11 +70,11 @@ impl Uniquify for Exit {
 impl Focusing for Exit {
     type Target = FsStatement;
     // focus(exit p) = bind(p)[λa.exit a]
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
-        let cont = Box::new(Box::new(
-            |binding: ContextBinding, _: &mut HashSet<Ident>| FsExit { var: binding.var }.into(),
-        ));
-        Rc::unwrap_or_clone(self.arg).bind(cont, used_vars)
+    fn focus(self, max_id: &mut usize) -> FsStatement {
+        let cont = Box::new(Box::new(|binding: ContextBinding, _: &mut usize| {
+            FsExit { var: binding.var }.into()
+        }));
+        Rc::unwrap_or_clone(self.arg).bind(cont, max_id)
     }
 }
 

@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This structs defines cuts between a producer and consumer term in Core. It consists of the
@@ -118,7 +118,7 @@ impl Uniquify for Cut {
 
 impl Focusing for Cut {
     type Target = FsStatement;
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn focus(self, max_id: &mut usize) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -126,7 +126,7 @@ impl Focusing for Cut {
             // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
+                Box::new(|bindings, max_id: &mut usize| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
@@ -134,19 +134,19 @@ impl Focusing for Cut {
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
-                        consumer.focus(used_vars),
+                        consumer.focus(max_id),
                         self.ty,
                     )
                     .into()
                 }),
-                used_vars,
+                max_id,
             ),
             // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|bindings, used_vars: &mut HashSet<Ident>| {
+                Box::new(|bindings, max_id: &mut usize| {
                     FsCut::new(
-                        producer.focus(used_vars),
+                        producer.focus(max_id),
                         FsXtor {
                             prdcns: destructor.prdcns,
                             id: destructor.id,
@@ -157,36 +157,34 @@ impl Focusing for Cut {
                     )
                     .into()
                 }),
-                used_vars,
+                max_id,
             ),
             // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
-                Box::new(
-                    |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| {
-                        Rc::unwrap_or_clone(op.snd).bind(
-                            Box::new(|binding_snd, used_vars: &mut HashSet<Ident>| {
-                                FsCut::new(
-                                    FsOp {
-                                        fst: binding_fst.var,
-                                        op: op.op,
-                                        snd: binding_snd.var,
-                                    },
-                                    consumer.focus(used_vars),
-                                    self.ty,
-                                )
-                                .into()
-                            }),
-                            used_vars,
-                        )
-                    },
-                ),
-                used_vars,
+                Box::new(|binding_fst: ContextBinding, max_id: &mut usize| {
+                    Rc::unwrap_or_clone(op.snd).bind(
+                        Box::new(|binding_snd, max_id: &mut usize| {
+                            FsCut::new(
+                                FsOp {
+                                    fst: binding_fst.var,
+                                    op: op.op,
+                                    snd: binding_snd.var,
+                                },
+                                consumer.focus(max_id),
+                                self.ty,
+                            )
+                            .into()
+                        }),
+                        max_id,
+                    )
+                }),
+                max_id,
             ),
             // N(⟨p | c⟩) = ⟨N(p) | N(c)⟩
             (producer, consumer) => FsCut {
                 ty: self.ty,
-                producer: Rc::new(producer.focus(used_vars)),
-                consumer: Rc::new(consumer.focus(used_vars)),
+                producer: Rc::new(producer.focus(max_id)),
+                consumer: Rc::new(consumer.focus(max_id)),
             }
             .into(),
         }

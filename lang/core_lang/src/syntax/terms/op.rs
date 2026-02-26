@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -158,41 +158,39 @@ impl Uniquify for Op {
 
 impl Focusing for Op {
     type Target = FsTerm<Prd>;
-    fn focus(self, _: &mut HashSet<Ident>) -> Self::Target {
+    fn focus(self, _: &mut usize) -> Self::Target {
         panic!("Arithmetic operators should always be focused in cuts directly");
     }
 }
 
 impl Bind for Op {
     // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
-            Box::new(
-                |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| {
-                    Rc::unwrap_or_clone(self.snd).bind(
-                        Box::new(|binding_snd, used_vars: &mut HashSet<Ident>| {
-                            let new_var = fresh_var(used_vars);
-                            let new_binding = ContextBinding {
-                                var: new_var.clone(),
-                                chi: Chirality::Prd,
-                                ty: Ty::I64,
-                            };
-                            FsCut::new(
-                                FsOp {
-                                    fst: binding_fst.var,
-                                    op: self.op,
-                                    snd: binding_snd.var,
-                                },
-                                Mu::tilde_mu(new_var, k(new_binding, used_vars), Ty::I64),
-                                Ty::I64,
-                            )
-                            .into()
-                        }),
-                        used_vars,
-                    )
-                },
-            ),
-            used_vars,
+            Box::new(|binding_fst: ContextBinding, max_id: &mut usize| {
+                Rc::unwrap_or_clone(self.snd).bind(
+                    Box::new(|binding_snd, max_id: &mut usize| {
+                        let new_var = fresh_var(max_id);
+                        let new_binding = ContextBinding {
+                            var: new_var.clone(),
+                            chi: Chirality::Prd,
+                            ty: Ty::I64,
+                        };
+                        FsCut::new(
+                            FsOp {
+                                fst: binding_fst.var,
+                                op: self.op,
+                                snd: binding_snd.var,
+                            },
+                            Mu::tilde_mu(new_var, k(new_binding, max_id), Ty::I64),
+                            Ty::I64,
+                        )
+                        .into()
+                    }),
+                    max_id,
+                )
+            }),
+            max_id,
         )
     }
 }

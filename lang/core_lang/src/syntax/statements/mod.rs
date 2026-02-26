@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 pub mod call;
 pub mod cut;
@@ -102,13 +102,13 @@ impl Uniquify for Statement {
 
 impl Focusing for Statement {
     type Target = FsStatement;
-    fn focus(self: Statement, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn focus(self: Statement, max_id: &mut usize) -> FsStatement {
         match self {
-            Statement::Cut(cut) => cut.focus(used_vars),
-            Statement::IfC(ifc) => ifc.focus(used_vars),
-            Statement::PrintI64(print) => print.focus(used_vars),
-            Statement::Call(call) => call.focus(used_vars),
-            Statement::Exit(exit) => exit.focus(used_vars),
+            Statement::Cut(cut) => cut.focus(max_id),
+            Statement::IfC(ifc) => ifc.focus(max_id),
+            Statement::PrintI64(print) => print.focus(max_id),
+            Statement::Call(call) => call.focus(max_id),
+            Statement::Exit(exit) => exit.focus(max_id),
         }
     }
 }

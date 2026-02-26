@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This enum encodes the comparison operation used.
@@ -194,34 +194,34 @@ impl Focusing for IfC {
     type Target = FsStatement;
     // focus(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, focus(s_1), focus(s_2))]] OR
     // focus(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, focus(s_1), focus(s_2))]
-    fn focus(self, used_vars: &mut HashSet<Ident>) -> FsStatement {
+    fn focus(self, max_id: &mut usize) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
-                move |binding_fst: ContextBinding, used_vars: &mut HashSet<Ident>| match self.snd {
+                move |binding_fst: ContextBinding, max_id: &mut usize| match self.snd {
                     None => FsIfC {
                         sort: self.sort,
                         fst: binding_fst.var,
                         snd: None,
-                        thenc: self.thenc.focus(used_vars),
-                        elsec: self.elsec.focus(used_vars),
+                        thenc: self.thenc.focus(max_id),
+                        elsec: self.elsec.focus(max_id),
                     }
                     .into(),
                     Some(snd) => Rc::unwrap_or_clone(snd).bind(
-                        Box::new(move |binding_snd, used_vars: &mut HashSet<Ident>| {
+                        Box::new(move |binding_snd, max_id: &mut usize| {
                             FsIfC {
                                 sort: self.sort,
                                 fst: binding_fst.var,
                                 snd: Some(binding_snd.var),
-                                thenc: self.thenc.focus(used_vars),
-                                elsec: self.elsec.focus(used_vars),
+                                thenc: self.thenc.focus(max_id),
+                                elsec: self.elsec.focus(max_id),
                             }
                             .into()
                         }),
-                        used_vars,
+                        max_id,
                     ),
                 },
             ),
-            used_vars,
+            max_id,
         )
     }
 }
