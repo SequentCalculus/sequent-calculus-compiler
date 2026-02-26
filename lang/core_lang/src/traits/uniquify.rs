@@ -46,7 +46,6 @@ pub trait Uniquify {
     /// This method makes all binders in every path through a term or statement unique by renaming
     /// them if needed.
     /// - `seen_vars` is the set of names we have already seen in the path we are currently in.
-    /// - `used_vars` is the set of names used in the whole top-level definition being uniquified.
     ///   It is threaded through the uniquification to facilitate generation of fresh
     ///   (co)variables.
     fn uniquify(self, state: &mut UniquifyState) -> Self;

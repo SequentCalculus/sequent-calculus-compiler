@@ -122,11 +122,7 @@ impl Linearizing for Create {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses and the remaining statement are not annotated.
-    fn linearize(
-        mut self,
-        mut context: TypingContext,
-        used_vars: &mut HashSet<Ident>,
-    ) -> Statement {
+    fn linearize(mut self, mut context: TypingContext, max_id: &mut usize) -> Statement {
         let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
         let free_vars_next = std::mem::take(&mut self.free_vars_next)
@@ -158,7 +154,7 @@ impl Linearizing for Create {
                 extended_context
                     .bindings
                     .extend(context_clauses.bindings.clone());
-                clause.body = clause.body.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, max_id);
                 clause
             })
             .collect();
@@ -184,13 +180,13 @@ impl Linearizing for Create {
             // ... and linearize the remaining statement with the additional binding for the
             // closure
             context_next.bindings.push(new_binding);
-            self.next = self.next.linearize(context_next, used_vars);
+            self.next = self.next.linearize(context_next, max_id);
 
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
             let mut context_next_freshened =
-                context_next.freshen(context_clauses.vars_set(), used_vars);
+                context_next.freshen(context_clauses.vars_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = context_next_freshened.clone();
@@ -216,7 +212,7 @@ impl Linearizing for Create {
 
             // linearize the remaining statement with the additional binding for the closure
             context_next_freshened.bindings.push(new_binding);
-            self.next = self.next.linearize(context_next_freshened, used_vars);
+            self.next = self.next.linearize(context_next_freshened, max_id);
 
             Substitute {
                 rearrange,

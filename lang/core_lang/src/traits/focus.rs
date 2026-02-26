@@ -23,8 +23,8 @@ pub trait Focusing {
     /// This method peforms the focusing transformation on a term or statement. To do so, it lifts
     /// all non-variable terms out of argument positions, names them and puts the names in their
     /// place.
-    /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
-    ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
+    /// `max_id` is the highest used id for identifiers
+    /// It is threaded through the focusing to facilitate generation of fresh (co)variables.
     fn focus(self, max_id: &mut usize) -> Self::Target;
 }
 
@@ -60,7 +60,7 @@ pub trait Bind: Sized {
     /// lifted. It eventually yields the focused statement.
     /// - `continuation` is the continuation containing the statement from which the term has been
     ///   lifted.
-    /// - `used_vars` is the set of variables used in the whole top-level definition being focused.
+    /// - `max_id` is the highest used id for identifiers in the program
     ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
     fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement;
 }
@@ -70,7 +70,7 @@ pub trait Bind: Sized {
 /// - `args` is the list of lifted terms.
 /// - `continuation` is the continuation containing the statement from which the terms have been
 ///   lifted.
-/// - `used_vars` is the set of variables used in the whole top-level definition being focused.
+/// - `max_id` is the highest used id used for identifiers in the program.
 ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
 pub fn bind_many(
     mut args: VecDeque<Argument>,
@@ -83,9 +83,9 @@ pub fn bind_many(
             Box::new(|binding, max_id| {
                 bind_many(
                     args,
-                    Box::new(|mut bindings, used_vars| {
+                    Box::new(|mut bindings, max_id| {
                         bindings.push_front(binding);
-                        k(bindings, used_vars)
+                        k(bindings, max_id)
                     }),
                     max_id,
                 )
@@ -93,14 +93,14 @@ pub fn bind_many(
             max_id,
         ),
         Some(Argument::Consumer(cns)) => cns.bind(
-            Box::new(|binding, used_vars| {
+            Box::new(|binding, max_id| {
                 bind_many(
                     args,
-                    Box::new(|mut bindings, used_vars| {
+                    Box::new(|mut bindings, max_id| {
                         bindings.push_front(binding);
-                        k(bindings, used_vars)
+                        k(bindings, max_id)
                     }),
-                    used_vars,
+                    max_id,
                 )
             }),
             max_id,

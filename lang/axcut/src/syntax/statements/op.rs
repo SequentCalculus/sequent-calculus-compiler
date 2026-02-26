@@ -137,7 +137,7 @@ impl Linearizing for Op {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the input variables are not consumed, so we have to keep them
@@ -156,7 +156,7 @@ impl Linearizing for Op {
         new_context.bindings.push(new_binding);
 
         // linearize the remaining statement
-        self.next = self.next.linearize(new_context, used_vars);
+        self.next = self.next.linearize(new_context, max_id);
 
         if context == context_rearrange {
             // if the context is exactly right already, we do not have to do anything

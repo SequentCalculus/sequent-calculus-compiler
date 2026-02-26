@@ -111,7 +111,7 @@ impl Linearizing for Let {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
 
@@ -133,11 +133,11 @@ impl Linearizing for Let {
             // if the context is exactly right already, we simply linearize the remaining statement
             // with the additional binding for the xtor
             new_context.bindings.push(new_binding);
-            self.next = self.next.linearize(new_context, used_vars);
+            self.next = self.next.linearize(new_context, max_id);
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args = self.args.freshen(new_context.vars_set(), used_vars);
+            self.args = self.args.freshen(new_context.vars_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
@@ -147,7 +147,7 @@ impl Linearizing for Let {
 
             // linearize the remaining statement with the additional binding for the xtor
             new_context.bindings.push(new_binding);
-            self.next = self.next.linearize(new_context, used_vars);
+            self.next = self.next.linearize(new_context, max_id);
 
             let rearrange = context_rearrange_freshened
                 .bindings

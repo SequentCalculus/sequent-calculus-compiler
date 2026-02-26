@@ -3,9 +3,11 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
+use crate::syntax::{
+    Chirality, ContextBinding, Ident, Statement, Ty, TypingContext, names::fresh_ident,
+};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, fresh_var};
+use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -81,7 +83,7 @@ impl Linearizing for Switch {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
 
@@ -105,7 +107,7 @@ impl Linearizing for Switch {
                 extended_context
                     .bindings
                     .extend(clause.context.bindings.clone());
-                clause.body = clause.body.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, max_id);
                 clause
             })
             .collect();
@@ -116,7 +118,7 @@ impl Linearizing for Switch {
         } else {
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
             if new_context.vars_set().contains(&self.var) {
-                self.var = fresh_var(used_vars, &self.var.name);
+                self.var = fresh_ident(max_id, &self.var.name);
             }
 
             // ... via an explicit substitution

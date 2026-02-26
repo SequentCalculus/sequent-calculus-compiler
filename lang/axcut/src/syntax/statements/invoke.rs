@@ -81,7 +81,7 @@ impl Subst for Invoke {
 
 impl Linearizing for Invoke {
     type Target = Statement;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
         let args: TypingContext = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the method ...
@@ -99,7 +99,7 @@ impl Linearizing for Invoke {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), used_vars);
+            let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), max_id);
             freshened_context.bindings.push(closure_binding);
 
             let rearrange = freshened_context

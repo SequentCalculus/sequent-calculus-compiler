@@ -127,20 +127,20 @@ impl Linearizing for Statement {
     ///
     /// A panic is caused if this method is called on a statement that contains an explicit
     /// substitution.
-    fn linearize(self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(self, context: TypingContext, max_id: &mut usize) -> Statement {
         match self {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")
             }
-            Statement::Call(call) => call.linearize(context, used_vars),
-            Statement::Let(r#let) => r#let.linearize(context, used_vars),
-            Statement::Switch(switch) => switch.linearize(context, used_vars),
-            Statement::Create(create) => create.linearize(context, used_vars),
-            Statement::Invoke(invoke) => invoke.linearize(context, used_vars),
-            Statement::Literal(lit) => lit.linearize(context, used_vars),
-            Statement::Op(op) => op.linearize(context, used_vars),
-            Statement::PrintI64(print) => print.linearize(context, used_vars),
-            Statement::IfC(ifc) => ifc.linearize(context, used_vars).into(),
+            Statement::Call(call) => call.linearize(context, max_id),
+            Statement::Let(r#let) => r#let.linearize(context, max_id),
+            Statement::Switch(switch) => switch.linearize(context, max_id),
+            Statement::Create(create) => create.linearize(context, max_id),
+            Statement::Invoke(invoke) => invoke.linearize(context, max_id),
+            Statement::Literal(lit) => lit.linearize(context, max_id),
+            Statement::Op(op) => op.linearize(context, max_id),
+            Statement::PrintI64(print) => print.linearize(context, max_id),
+            Statement::IfC(ifc) => ifc.linearize(context, max_id).into(),
             Statement::Exit(ref _exit) => self,
         }
     }

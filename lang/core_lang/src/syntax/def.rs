@@ -6,8 +6,6 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::HashSet;
-
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), a typing context defining the parameters, and the body statement. It
 /// is annotated with the list of all variable names used in the top-level function. The type
@@ -22,8 +20,6 @@ pub struct Def<S = Statement> {
     pub context: TypingContext,
     /// The body statement
     pub body: S,
-    /// Variable names used in the top-level function
-    pub used_vars: HashSet<Ident>,
 }
 
 pub type FsDef = Def<FsStatement>;
@@ -35,7 +31,6 @@ impl Def {
             name: self.name,
             context: self.context,
             body: self.body.focus(max_id),
-            used_vars: self.used_vars,
         }
     }
 }

@@ -5,7 +5,7 @@ use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
 use super::{Ident, Ty};
-use crate::traits::{linearize::fresh_var, substitution::Subst};
+use crate::{syntax::names::fresh_ident, traits::substitution::Subst};
 
 use std::collections::HashSet;
 
@@ -104,19 +104,14 @@ impl TypingContext {
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the
     ///   context.
-    /// - `used_vars` is the set of variable names already used somwhere, i.e., which cannot be used as
-    ///   fresh name.
-    pub fn freshen(
-        &self,
-        mut clashes: HashSet<Ident>,
-        used_vars: &mut HashSet<Ident>,
-    ) -> TypingContext {
+    /// - `max_id` is the highest used id for identifiers
+    pub fn freshen(&self, mut clashes: HashSet<Ident>, max_id: &mut usize) -> TypingContext {
         let mut new_bindings = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             if clashes.contains(&binding.var) {
                 // if the variable has occurred already we pick a fresh one
                 new_bindings.push(ContextBinding {
-                    var: fresh_var(used_vars, &binding.var.name),
+                    var: fresh_ident(max_id, &binding.var.name),
                     ty: binding.ty.clone(),
                     chi: binding.chi.clone(),
                 });

@@ -10,13 +10,20 @@ use super::{Def, TypeDeclaration};
 pub struct Prog {
     pub defs: Vec<Def>,
     pub types: Vec<TypeDeclaration>,
+    pub max_id: usize,
 }
 
 impl Prog {
     /// This function applies the linearization procedure to the whole program, which means to all
     /// top-level functions.
     pub fn linearize(mut self) -> Prog {
-        self.defs = self.defs.into_iter().map(Def::linearize).collect();
+        let mut max_id = self.max_id;
+        self.defs = self
+            .defs
+            .into_iter()
+            .map(|def| def.linearize(&mut max_id))
+            .collect();
+        self.max_id = max_id;
         self
     }
 }

@@ -64,7 +64,7 @@ impl Subst for Call {
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
         let args = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the top-level function
@@ -73,7 +73,7 @@ impl Linearizing for Call {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = args.freshen(HashSet::new(), used_vars);
+            let freshened_context = args.freshen(HashSet::new(), max_id);
             let rearrange = freshened_context
                 .bindings
                 .into_iter()

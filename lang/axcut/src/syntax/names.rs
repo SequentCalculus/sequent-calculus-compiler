@@ -4,10 +4,23 @@ use crate::traits::substitution::Subst;
 use printer::*;
 use std::fmt;
 
+/// Identifier used in the program
+/// ids are globally unique
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Ident {
+    /// base name of the ident
     pub name: String,
+    /// unique id
     pub id: usize,
+}
+
+pub fn fresh_ident(max_id: &mut usize, base_name: &str) -> Ident {
+    let id = Ident {
+        name: base_name.to_string(),
+        id: *max_id + 1,
+    };
+    *max_id += 1;
+    id
 }
 
 impl Subst for Ident {

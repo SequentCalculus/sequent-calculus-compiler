@@ -16,20 +16,16 @@ pub struct Def {
     pub name: Ident,
     pub context: TypingContext,
     pub body: Statement,
-    /// Variable names used in the top-level function.
-    pub used_vars: HashSet<Ident>,
 }
 
 impl Def {
     /// This function applies the linearization procedure to the body of the top-level function.
-    pub fn linearize(mut self) -> Def {
+    pub fn linearize(mut self, max_id: &mut usize) -> Def {
         // we only call this function to annotate the free variables for all substatements which
         // helps us to avoid computing free variables repeatedly
         self.body = self.body.free_vars(&mut HashSet::new());
         // the variables in the context of the body are the parameters of the top-level function
-        self.body = self
-            .body
-            .linearize(self.context.clone(), &mut self.used_vars);
+        self.body = self.body.linearize(self.context.clone(), max_id);
         self
     }
 }

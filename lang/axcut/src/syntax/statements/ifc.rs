@@ -157,11 +157,11 @@ impl Subst for IfC {
 
 impl Linearizing for IfC {
     type Target = IfC;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Ident>) -> IfC {
+    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> IfC {
         // we do not insert an explicit substitution, as there are no new bindings and there will
         // be an explicit substitution in each branch
-        self.thenc = self.thenc.linearize(context.clone(), used_vars);
-        self.elsec = self.elsec.linearize(context, used_vars);
+        self.thenc = self.thenc.linearize(context.clone(), max_id);
+        self.elsec = self.elsec.linearize(context, max_id);
 
         self
     }
