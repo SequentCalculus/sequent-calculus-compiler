@@ -18,7 +18,7 @@ pub trait Linearizing {
     ///   linearized. It is threaded through the linearization to facilitate generation of fresh
     ///   variables.
     /// - `max_id` is the highest used id for identifiers. It is incremented whenever a new
-    ///    identifier is created
+    ///   identifier is created
     fn linearize(self, context: TypingContext, max_id: &mut usize) -> Self::Target;
 }
 

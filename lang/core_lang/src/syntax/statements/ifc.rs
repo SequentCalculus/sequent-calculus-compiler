@@ -44,7 +44,7 @@ impl Print for IfSort {
 /// then-branch and else-branch, and after typechecking also of the inferred type. The type
 /// parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
 /// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
-/// (if `P` and `C` is instantiated with [`Var`] and [`FsStatement`]).
+/// (if `P` and `C` is instantiated with [`Ident`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
     /// The comparison operation

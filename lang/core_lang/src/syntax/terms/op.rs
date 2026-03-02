@@ -39,7 +39,7 @@ impl Print for BinOp {
 /// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
 /// kind of the binary operator. The type parameter `P` determines whether this is the unfocused
 /// variant (if `P` is instantiated with [`Term<Prd>`], which is the default) or the focused
-/// variant (if `P` is instantiated with [`Var`]).
+/// variant (if `P` is instantiated with [`Ident`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op<P = Rc<Term<Prd>>> {
     /// The first operand

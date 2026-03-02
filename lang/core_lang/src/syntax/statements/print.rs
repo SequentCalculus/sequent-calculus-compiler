@@ -13,7 +13,7 @@ use std::rc::Rc;
 /// newline should be printed, the term for the integer to print, and the remaining statement. The
 /// type parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
 /// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
-/// (if `P` and `C` is instantiated with [`Var`] and [`FsStatement`]).
+/// (if `P` and `C` is instantiated with [`Ident`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
     /// Whether to print a newline after the value
