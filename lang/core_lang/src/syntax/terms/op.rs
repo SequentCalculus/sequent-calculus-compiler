@@ -221,12 +221,12 @@ mod tests {
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                id!("x"),
+                id!("x", 1),
                 fs_cut!(
                     lit!(2),
                     fs_mutilde!(
-                        id!("x", 1),
-                        fs_cut!(fs_sum!(id!("x"), id!("x", 1)), covar!(id!("a")))
+                        id!("x", 2),
+                        fs_cut!(fs_sum!(id!("x", 1), id!("x", 2)), covar!(id!("a")))
                     )
                 )
             )

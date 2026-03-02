@@ -99,7 +99,6 @@ mod program_tests {
             id!("cut"),
             [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
             fs_cut!(var!(id!("x")), covar!(id!("a"))),
-            [id!("a"), id!("x")]
         )
     }
 
@@ -110,7 +109,6 @@ mod program_tests {
                 id!("cut"),
                 [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
                 cut!(var!(id!("x")), covar!(id!("a"))),
-                [id!("a"), id!("x")]
             )],
             [],
             []

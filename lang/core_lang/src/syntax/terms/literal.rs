@@ -69,7 +69,7 @@ mod lit_tests {
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(1), fs_mutilde!(id!("x"), fs_exit!(id!("x")))).into();
+        let expected = fs_cut!(lit!(1), fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
     }
 
@@ -79,7 +79,7 @@ mod lit_tests {
             Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(2), fs_mutilde!(id!("x"), fs_exit!(id!("x")))).into();
+        let expected = fs_cut!(lit!(2), fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
     }
 }

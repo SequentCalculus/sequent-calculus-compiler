@@ -185,12 +185,6 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
         name: shrink_ident(label.clone()),
         context,
         body,
-        used_vars: state
-            .used_vars
-            .clone()
-            .into_iter()
-            .map(shrink_ident)
-            .collect(),
     });
 
     Rc::new(
@@ -306,7 +300,7 @@ fn shrink_critical_pairs(
                         .bindings
                         .into_iter()
                         .map(|binding| axcut::syntax::ContextBinding {
-                            var: shrink_ident(fresh_ident(state.used_vars, &binding.var.name)),
+                            var: shrink_ident(fresh_ident(state.max_id, &binding.var.name)),
                             ..binding
                         })
                         .collect::<Vec<_>>()
@@ -590,7 +584,7 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-            ) => shrink_literal_var(lit, var, state.used_vars),
+            ) => shrink_literal_var(lit, var, state.max_id),
 
             (
                 FsTerm::Op(FsOp { fst, op, snd }),
@@ -609,7 +603,7 @@ impl Shrinking for FsCut {
                     var,
                     ty: _,
                 }),
-            ) => shrink_op_var(fst, &op, snd, var, state.used_vars),
+            ) => shrink_op_var(fst, &op, snd, var, state.max_id),
 
             // Let
             (

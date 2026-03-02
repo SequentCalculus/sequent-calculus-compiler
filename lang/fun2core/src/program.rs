@@ -126,7 +126,6 @@ mod compile_tests {
             id!("main"),
             [bind!(id!("a"), cns!())],
             cut!(lit!(1), mutilde!(id!("x0"), exit!(var!(id!("x0"))))),
-            [id!("a"), id!("x0")]
         );
 
         assert_eq!(result[0].name, expected.name);
@@ -141,7 +140,6 @@ mod compile_tests {
             id!("id"),
             [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
             cut!(var!(id!("x")), covar!(id!("a0"))),
-            [id!("x"), id!("a0")]
         );
         assert_eq!(result[0].name, expected.name);
         assert_eq!(result[0].context, expected.context);
@@ -164,13 +162,11 @@ mod compile_tests {
             id!("main"),
             [bind!(id!("a"), cns!())],
             cut!(lit!(1), mutilde!(id!("x0"), exit!(var!(id!("x0"))))),
-            [id!("a"), id!("x0")]
         );
         let expected2 = def!(
             id!("id"),
             [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
             cut!(var!(id!("x")), covar!(id!("a0"))),
-            [id!("x"), id!("a0")]
         );
 
         let def1 = &result.defs[0];

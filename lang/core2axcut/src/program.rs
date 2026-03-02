@@ -69,5 +69,6 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
                 .collect(),
         ]
         .concat(),
+        max_id,
     }
 }

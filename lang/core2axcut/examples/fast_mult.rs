@@ -42,7 +42,6 @@ fn main() {
             ),
             covar!(id!("a"))
         ),
-        [id!("l"), id!("a"), id!("a", 1)]
     );
 
     let mult = def!(
@@ -91,14 +90,6 @@ fn main() {
             ),
             ty!(id!("ListInt"))
         ),
-        [
-            id!("l"),
-            id!("a"),
-            id!("a", 1),
-            id!("a", 2),
-            id!("x"),
-            id!("xs")
-        ]
     );
 
     let nil = ctor!(id!("Nil"), [], ty!(id!("ListInt")));
@@ -111,7 +102,6 @@ fn main() {
         id!("main"),
         [bind!(id!("a"), cns!())],
         call!(id!("fmult"), [cons4, covar!(id!("a"))]),
-        [id!("a")]
     );
 
     let program = prog!([main, mult, fmult], [ty_list], []);

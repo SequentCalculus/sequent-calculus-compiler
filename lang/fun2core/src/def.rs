@@ -64,15 +64,10 @@ pub fn compile_def(
             ty: compile_ty(&def.ret_ty),
         });
 
-    let used_vars = state.used_vars;
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
         name: Ident::new_with_zero(&def.name),
         context,
         body,
-        used_vars: used_vars
-            .iter()
-            .map(|var| Ident::new_with_zero(var))
-            .collect(),
     });
 
     def_plus_lifted_statements
@@ -132,15 +127,10 @@ pub fn compile_main(
         &mut state,
     );
 
-    let used_vars = state.used_vars;
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
         name: Ident::new_with_zero(&def.name),
         context,
         body,
-        used_vars: used_vars
-            .iter()
-            .map(|var| Ident::new_with_zero(var))
-            .collect(),
     });
 
     def_plus_lifted_statements

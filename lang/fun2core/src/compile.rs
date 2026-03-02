@@ -175,11 +175,6 @@ pub fn share(
         name: Ident::new_with_zero(&name),
         context,
         body,
-        used_vars: state
-            .used_vars
-            .iter()
-            .map(|id| Ident::new_with_zero(id))
-            .collect(),
     });
 
     Mu::tilde_mu::<core_lang::syntax::Statement>(
