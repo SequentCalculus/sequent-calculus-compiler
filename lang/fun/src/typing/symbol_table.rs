@@ -7,7 +7,7 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    declarations::{Codata, CtorSig, Data, Declaration, Def, Exports, Import, DtorSig, Polarity},
+    declarations::{Codata, CtorSig, Data, Declaration, Def, Module, Import, DtorSig, Polarity},
     names::Name,
     program::Program,
     types::{Ty, TypeArgs},
@@ -28,7 +28,7 @@ use crate::parser::util::ToMiette;
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
     /// Keeps track of all files to export
-    pub exports: HashMap<Name, Name>,
+    pub module: HashMap<Name, Name>,
     /// Keeps track of all modules to import
     pub import: HashMap<Name, Name>,
     /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
@@ -217,7 +217,7 @@ impl BuildSymbolTable for Program {
 impl BuildSymbolTable for Declaration {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         match self {
-            Declaration::Exports(exports) => exports.build(symbol_table),
+            Declaration::Module(module) => module.build(symbol_table),
             Declaration::Import(import) => import.build(symbol_table),
             Declaration::Def(def) => def.build(symbol_table),
             Declaration::Data(data) => data.build(symbol_table),
@@ -226,9 +226,9 @@ impl BuildSymbolTable for Declaration {
     }
 }
 
-impl BuildSymbolTable for Exports {
+impl BuildSymbolTable for Module {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        symbol_table.exports.insert(
+        symbol_table.module.insert(
             self.name.clone(),
             self.name.clone(),
         );

@@ -37,7 +37,7 @@ match {
     "print_i64", "println_i64",
     "let", "case", "new",
     "def", "data", "codata",
-    "import","exports","public def",
+    "import","module","public def",
     // Types
     "i64",
     // Comments and whitespace
@@ -437,9 +437,9 @@ Def: Def = {
         },
 }
 
-Exports: Exports = {
-    <l: @L> "exports" <name: Name> <r: @R> => 
-        Exports { span: span(l, r), name,},
+Module: Module = {
+    <l: @L> "module" <name: Name> <r: @R> => 
+        Module { span: span(l, r), name,},
 }
 
 Import: Import = {
@@ -472,7 +472,7 @@ Codata: Codata = {
 }
 
 Declaration: Declaration = {
-    <exports: Exports> => exports.into(),
+    <module: Module> => module.into(),
     <import: Import> => import.into(),
     <def: Def> => def.into(),
     <data: Data> => data.into(),

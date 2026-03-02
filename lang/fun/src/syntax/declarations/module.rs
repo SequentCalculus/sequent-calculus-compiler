@@ -1,19 +1,19 @@
-//! This module defines exports for modules in Fun.
+//! This module defines Module for modules in Fun.
 
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::tokens::EXPORTS;
+use printer::tokens::MODULE;
 use printer::*;
 
 
 use crate::syntax::*;
 use crate::typing::*;
 
-/// This struct defines the exports statement in Fun. It consists of a term for the file/folder
+/// This struct defines the Module statement in Fun. It consists of a term for the file/folder
 /// which is part of the module.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Exports {
+pub struct Module {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
@@ -21,23 +21,23 @@ pub struct Exports {
     pub name: Name,
 }
 
-impl Exports {
-    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Exports, Error>{
+impl Module {
+    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Module, Error>{
         Ok(self)
     }
 }
 
-impl Print for Exports {
+impl Print for Module {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
-            .keyword(EXPORTS)
+            .keyword(MODULE)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
     }
 }
 
-impl From<Exports> for Declaration {
-    fn from(value: Exports) -> Self {
-        Declaration::Exports(value)
+impl From<Module> for Declaration {
+    fn from(value: Module) -> Self {
+        Declaration::Module(value)
     }
 }

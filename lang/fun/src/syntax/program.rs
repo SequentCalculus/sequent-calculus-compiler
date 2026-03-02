@@ -35,12 +35,15 @@ impl Program {
     /// This function typechecks a module, creating a checked module with monomorphic type
     /// instances, with given symbol table.
     fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
+        
+        
+        
         let mut defs = Vec::new();
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
-                Declaration::Exports(exports) => {
-                    exports.check(&symbol_table)?;
+                Declaration::Module(module) => {
+                    module.check(&symbol_table)?;
                 }
                 Declaration::Import(import) => {
                     import.check(&symbol_table)?;
