@@ -78,6 +78,12 @@ impl From<Def> for Declaration {
     }
 }
 
+impl From<PDef> for Def {
+    fn from(pdef: PDef) -> Self {
+        Def{span: pdef.span, name: pdef.name, context: pdef.context, ret_ty: pdef.ret_ty, body: pdef.body}
+    } 
+}
+
 #[cfg(test)]
 mod def_tests {
     use printer::Print;
