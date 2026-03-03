@@ -83,9 +83,11 @@ impl Driver {
         if let Some(res) = self.sources.get(path) {
             return Ok(res.clone());
         }
-
+        //revert expect when error handling is implemented
         let content =
-            fs::read_to_string(path.clone()).expect("Should have been able to read the file");
+            fs::read_to_string(path.clone()).expect(path.to_str().expect("Err 2"));
+        //let content =
+        //    fs::read_to_string(path.clone()).expect("Should have been able to read the file");
         self.sources.insert(path.clone(), content.clone());
         Ok(content)
     }
@@ -112,6 +114,7 @@ impl Driver {
         let mut search_path = path.clone();
         let parsed = self.parsed(path)?;
         //TODO: add handling for files not in same directory and in subfolders
+        //TODO: add comprehensive error for files not found
         let mut imports = Vec::<Program>::new();
         let mut modules = Vec::<Program>::new();
         let mut other_declaration = Vec::<Declaration>::new();
@@ -121,12 +124,14 @@ impl Driver {
                 Declaration::Import (import) => {
                     let mut subdrv = Driver::new();
                     search_path.push(import.name);
+                    search_path.set_extension("sc");
                     imports.push(subdrv.parsed(&search_path)?);
                     search_path.pop();
                 }
                 Declaration::Module (module)=> {
                     let mut subdrv = Driver::new();
                     search_path.push(module.name);
+                    search_path.set_extension("sc");
                     modules.push(subdrv.parsed(&search_path)?);
                     search_path.pop();
                 }
@@ -147,8 +152,9 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let parsed = self.parsed(path)?;
-        let checked = parsed.check().map_err(DriverError::TypeError)?;
+        //let parsed = self.parsed(path)?;
+        let loaded = self.loaded(path)?;
+        let checked = loaded.check().map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -355,7 +361,8 @@ impl Driver {
         cfg: &PrintCfg,
         fontsize: &str,
     ) -> Result<(), DriverError> {
-        let parsed = self.parsed(path)?;
+        //let parsed = self.parsed(path)?;
+        let loaded = self.loaded(path)?;
 
         Paths::create_pdf_dir();
 
@@ -368,7 +375,7 @@ impl Driver {
 
         stream.write_all(latex_start(fontsize).as_bytes()).unwrap();
 
-        parsed
+        loaded
             .print_latex(cfg, &mut stream)
             .expect("Failed to print to stdout");
         println!();
