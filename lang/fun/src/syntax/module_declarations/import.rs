@@ -1,19 +1,19 @@
-//! This module defines Module for modules in Fun.
+//! This module defines import for modules in Fun.
 
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::tokens::MODULE;
+use printer::tokens::IMPORT;
 use printer::*;
 
 
 use crate::syntax::*;
 use crate::typing::*;
 
-/// This struct defines the Module statement in Fun. It consists of a term for the file/folder
+/// This struct defines the import statement in Fun. It consists of a term for the file/folder
 /// which is part of the module.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
-pub struct Module {
+pub struct Import {
     /// The source location
     #[derivative(PartialEq = "ignore")]
     pub span: SourceSpan,
@@ -21,23 +21,23 @@ pub struct Module {
     pub name: Name,
 }
 
-impl Module {
-    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Module, Error>{
+impl Import {
+    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Import, Error>{
         Ok(self)
     }
 }
 
-impl Print for Module {
+impl Print for Import {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         alloc
-            .keyword(MODULE)
+            .keyword(IMPORT)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
     }
 }
 
-impl From<Module> for Declaration {
-    fn from(value: Module) -> Self {
-        Declaration::Module(value)
+impl From<Import> for ModuleDeclaration {
+    fn from(value: Import) -> Self {
+        ModuleDeclaration::Import(value)
     }
 }
