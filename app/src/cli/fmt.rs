@@ -40,9 +40,10 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mut drv = Driver::new();
-    let parsed = drv.parsed(&cmd.filepath);
-    let parsed = match parsed {
-        Ok(parsed) => parsed,
+    //let parsed = drv.parsed(&cmd.filepath);
+    let loaded = drv.loaded(&cmd.filepath);
+    let loaded = match loaded {
+        Ok(loaded) => loaded,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),
     };
 
@@ -58,11 +59,11 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     };
 
     if colored {
-        parsed
+        loaded
             .print_colored(&cfg, &mut stream)
             .expect("Failed to print to stdout");
     } else {
-        parsed
+        loaded
             .print_io(&cfg, &mut stream)
             .expect("Failed to print to stdout");
     }

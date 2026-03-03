@@ -38,7 +38,7 @@ pub struct CheckedProgram {
     pub pdefs: Vec<PDef>,
 }
 
-impl Program {
+impl ModuleProgram {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
     pub fn check(self) -> Result<CheckedProgram, Error> {
@@ -55,7 +55,7 @@ impl Program {
         let mut defs = Vec::new();
         let mut pdefs = Vec::new();
         // we check the well-formedness of type declarations first
-        for decl in self.declarations {
+        for decl in self.other_declaration {
             match decl {
                 Declaration::Module(module) => {
                     module.check(&symbol_table)?;
@@ -165,7 +165,7 @@ impl Program {
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for declaration in &self.declarations {
+        for declaration in &self.other_declaration {
             if let Declaration::Data(data) = declaration {
                 names.insert(data.name.clone());
             }
@@ -178,7 +178,7 @@ impl Program {
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for declaration in &self.declarations {
+        for declaration in &self.other_declaration {
             if let Declaration::Codata(codata) = declaration {
                 names.insert(codata.name.clone());
             }
@@ -187,7 +187,7 @@ impl Program {
     }
 }
 
-impl Print for Program {
+impl Print for ModuleProgram {
     fn print<'a>(
         &'a self,
         cfg: &printer::PrintCfg,
@@ -202,7 +202,7 @@ impl Print for Program {
             alloc.line().append(alloc.line())
         };
 
-        let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
+        let declarations = self.other_declaration.iter().map(|decl| decl.print(cfg, alloc));
 
         alloc.intersperse(declarations, sep)
     }

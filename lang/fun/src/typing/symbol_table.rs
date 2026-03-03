@@ -9,7 +9,7 @@ use crate::syntax::{
     context::{TypeContext, TypingContext},
     declarations::{Codata, CtorSig, Data, Declaration, Def, PDef, Module, Import, DtorSig, Polarity},
     names::Name,
-    program::Program,
+    program::ModuleProgram,
     types::{Ty, TypeArgs},
 };
 
@@ -192,7 +192,7 @@ impl SymbolTable {
 }
 
 /// This function builds a symbol table for a [program](Program).
-pub fn build_symbol_table(module: &Program) -> Result<SymbolTable, Error> {
+pub fn build_symbol_table(module: &ModuleProgram) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table)?;
     symbol_table.check_type_params()?;
@@ -205,9 +205,9 @@ pub trait BuildSymbolTable {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error>;
 }
 
-impl BuildSymbolTable for Program {
+impl BuildSymbolTable for ModuleProgram {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        for declaration in &self.declarations {
+        for declaration in &self.other_declaration {
             declaration.build(symbol_table)?;
         }
         Ok(())
