@@ -15,7 +15,8 @@ use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
-    syntax::program::{CheckedProgram, Program},
+    syntax::program::{CheckedProgram, Program, ModuleProgram},
+    syntax::declarations::*,
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
@@ -39,6 +40,8 @@ pub struct Driver {
     sources: HashMap<PathBuf, String>,
     /// Parsed but not typechecked
     parsed: HashMap<PathBuf, Program>,
+    /// Modules/submodules loaded, not typechecked
+    loaded: HashMap<PathBuf, ModuleProgram>,
     /// Typechecked
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
@@ -65,6 +68,7 @@ impl Driver {
         Driver {
             sources: HashMap::new(),
             parsed: HashMap::new(),
+            loaded: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
             focused: HashMap::new(),
@@ -98,6 +102,43 @@ impl Driver {
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
+
+    /// This function loads the specified modules and submodules of the given file
+    pub fn loaded(&mut self, path: &PathBuf) -> Result<ModuleProgram, DriverError> {
+        // Check for a cache hit
+        if let Some(res) = self.loaded.get(path) {
+            return Ok(res.clone());
+        }
+        let mut search_path = path.clone();
+        let parsed = self.parsed(path)?;
+        //TODO: add handling for files not in same directory and in subfolders
+        let mut imports = Vec::<Program>::new();
+        let mut modules = Vec::<Program>::new();
+        let mut other_declaration = Vec::<Declaration>::new();
+        search_path.pop();
+        for decl in parsed.declarations {
+            match decl {
+                Declaration::Import (import) => {
+                    let mut subdrv = Driver::new();
+                    search_path.push(import.name);
+                    imports.push(subdrv.parsed(&search_path)?);
+                    search_path.pop();
+                }
+                Declaration::Module (module)=> {
+                    let mut subdrv = Driver::new();
+                    search_path.push(module.name);
+                    modules.push(subdrv.parsed(&search_path)?);
+                    search_path.pop();
+                }
+                _ => {
+                    other_declaration.push(decl);
+                }
+            }
+        }
+        Ok(ModuleProgram{imports, modules, other_declaration})
+
+    }
+
 
     /// This function returns the typechecked source code of the given file.
     pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {

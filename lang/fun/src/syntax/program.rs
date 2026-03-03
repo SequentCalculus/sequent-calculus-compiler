@@ -12,6 +12,18 @@ pub struct Program {
     pub declarations: Vec<Declaration>,
 }
 
+/// This struct defines a program consiting of mulitple files/submodules
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModuleProgram {
+    /// The imports found in the file
+    pub imports: Vec<Program>,
+    /// The submodule declared in the file
+    pub modules: Vec<Program>,
+    /// The public top-level functions in the file
+    pub other_declaration: Vec<Declaration>,
+}
+
+
 /// This struct defines a typechecked module created from a [`Program`] by checking each contained
 /// [`Declaration`]. The checked module only contans monomorphic instances of data and codata types.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,6 +34,8 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
+    /// Checked public top-level function
+    pub pdefs: Vec<PDef>,
 }
 
 impl Program {
@@ -39,6 +53,7 @@ impl Program {
         
         
         let mut defs = Vec::new();
+        let mut pdefs = Vec::new();
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
@@ -54,6 +69,9 @@ impl Program {
                 Declaration::Codata(codata) => {
                     codata.check(&symbol_table)?;
                 }
+                Declaration::PDef(pdef) => {
+                    pdefs.push(pdef);
+                }
                 Declaration::Def(def) => {
                     defs.push(def);
                 }
@@ -63,6 +81,11 @@ impl Program {
         let defs = defs
             .into_iter()
             .map(|def| def.check(&mut symbol_table))
+            .collect::<Result<_, Error>>()?;
+
+        let pdefs = pdefs
+            .into_iter()
+            .map(|pdef| pdef.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
         // collect all instances of type templates from the symbol table
@@ -131,6 +154,7 @@ impl Program {
         }
 
         Ok(CheckedProgram {
+            pdefs,
             defs,
             data_types,
             codata_types,
