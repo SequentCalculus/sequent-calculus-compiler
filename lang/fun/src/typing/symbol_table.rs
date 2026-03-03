@@ -7,7 +7,7 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    declarations::{Codata, CtorSig, Data, Declaration, Def, Module, Import, DtorSig, Polarity},
+    declarations::{Codata, CtorSig, Data, Declaration, Def, PDef, Module, Import, DtorSig, Polarity},
     names::Name,
     program::Program,
     types::{Ty, TypeArgs},
@@ -219,6 +219,7 @@ impl BuildSymbolTable for Declaration {
         match self {
             Declaration::Module(module) => module.build(symbol_table),
             Declaration::Import(import) => import.build(symbol_table),
+            Declaration::PDef(pdef) => pdef.build(symbol_table),
             Declaration::Def(def) => def.build(symbol_table),
             Declaration::Data(data) => data.build(symbol_table),
             Declaration::Codata(codata) => codata.build(symbol_table),
@@ -241,6 +242,22 @@ impl BuildSymbolTable for Import {
         symbol_table.import.insert(
             self.name.clone(),
             self.name.clone(),
+        );
+        Ok(())
+    }
+}
+
+impl BuildSymbolTable for PDef {
+    fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        if symbol_table.defs.contains_key(&self.name) {
+            return Err(Error::DefinedMultipleTimes {
+                span: Some(self.span),
+                name: self.name.clone(),
+            });
+        }
+        symbol_table.defs.insert(
+            self.name.clone(),
+            (self.context.clone(), self.ret_ty.clone()),
         );
         Ok(())
     }

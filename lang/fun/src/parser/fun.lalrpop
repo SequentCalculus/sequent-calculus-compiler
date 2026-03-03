@@ -427,8 +427,11 @@ Def: Def = {
             body,
             ret_ty,
         },
+    
+}
+PDef: PDef = {
     <l: @L> "public def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
-        Def {
+        PDef {
             span: span(l, r),
             name,
             context,
@@ -436,6 +439,7 @@ Def: Def = {
             ret_ty,
         },
 }
+
 
 Module: Module = {
     <l: @L> "module" <name: Name> <r: @R> => 

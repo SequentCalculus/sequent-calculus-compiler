@@ -102,6 +102,9 @@ pub const IMPORT: &str = "import";
 /// The keyword `def`
 pub const DEF: &str = "def";
 
+///The keyword 'public def'
+pub const PDEF: &str = "public def";
+
 /// The keyword `let`
 pub const LET: &str = "let";
 
