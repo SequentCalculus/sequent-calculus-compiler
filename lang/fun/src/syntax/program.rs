@@ -9,6 +9,7 @@ use crate::typing::*;
 /// This struct defines a module consisting of a list of [`Declaration`]s.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
+    pub module_declarations: Vec<ModuleDeclaration>,
     pub declarations: Vec<Declaration>,
 }
 
@@ -16,11 +17,13 @@ pub struct Program {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ModuleProgram {
     /// The imports found in the file
-    pub imports: Vec<Program>,
+    pub imports: Vec<ModuleProgram>,
     /// The submodule declared in the file
-    pub modules: Vec<Program>,
+    pub modules: Vec<ModuleProgram>,
     /// The public top-level functions in the file
-    pub other_declaration: Vec<Declaration>,
+    pub declarations: Vec<Declaration>,
+    /// The name of the module
+    pub name: String,
 }
 
 
@@ -42,7 +45,7 @@ impl ModuleProgram {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
     pub fn check(self) -> Result<CheckedProgram, Error> {
-        let symbol_table = build_symbol_table(&self)?;
+        let symbol_table = build_symbol_table(&self, (true, &self.name))?;
         self.check_with_table(symbol_table)
     }
 
@@ -55,14 +58,8 @@ impl ModuleProgram {
         let mut defs = Vec::new();
         let mut pdefs = Vec::new();
         // we check the well-formedness of type declarations first
-        for decl in self.other_declaration {
+        for decl in self.declarations {
             match decl {
-                Declaration::Module(module) => {
-                    module.check(&symbol_table)?;
-                }
-                Declaration::Import(import) => {
-                    import.check(&symbol_table)?;
-                }
                 Declaration::Data(data) => {
                     data.check(&symbol_table)?;
                 }
@@ -165,7 +162,7 @@ impl ModuleProgram {
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for declaration in &self.other_declaration {
+        for declaration in &self.declarations {
             if let Declaration::Data(data) = declaration {
                 names.insert(data.name.clone());
             }
@@ -178,7 +175,7 @@ impl ModuleProgram {
     pub fn codata_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
 
-        for declaration in &self.other_declaration {
+        for declaration in &self.declarations {
             if let Declaration::Codata(codata) = declaration {
                 names.insert(codata.name.clone());
             }
@@ -202,7 +199,7 @@ impl Print for ModuleProgram {
             alloc.line().append(alloc.line())
         };
 
-        let declarations = self.other_declaration.iter().map(|decl| decl.print(cfg, alloc));
+        let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
 
         alloc.intersperse(declarations, sep)
     }

@@ -16,7 +16,7 @@ use fun::{
     self,
     parser::parse_module,
     syntax::program::{CheckedProgram, Program, ModuleProgram},
-    syntax::declarations::*,
+    syntax::module_declarations::*,
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
@@ -115,32 +115,33 @@ impl Driver {
         let parsed = self.parsed(path)?;
         //TODO: add handling for files not in same directory and in subfolders
         //TODO: add comprehensive error for files not found
-        let mut imports = Vec::<Program>::new();
-        let mut modules = Vec::<Program>::new();
-        let mut other_declaration = Vec::<Declaration>::new();
+        let mut imports = Vec::<ModuleProgram>::new();
+        let mut modules = Vec::<ModuleProgram>::new();
         search_path.pop();
-        for decl in parsed.declarations {
+        for decl in parsed.module_declarations {
             match decl {
-                Declaration::Import (import) => {
+                ModuleDeclaration::Import (import) => {
                     let mut subdrv = Driver::new();
                     search_path.push(import.name);
                     search_path.set_extension("sc");
-                    imports.push(subdrv.parsed(&search_path)?);
+                    imports.push(subdrv.loaded(&search_path)?);
                     search_path.pop();
                 }
-                Declaration::Module (module)=> {
+                ModuleDeclaration::Module (module)=> {
                     let mut subdrv = Driver::new();
                     search_path.push(module.name);
                     search_path.set_extension("sc");
-                    modules.push(subdrv.parsed(&search_path)?);
+                    modules.push(subdrv.loaded(&search_path)?);
                     search_path.pop();
-                }
-                _ => {
-                    other_declaration.push(decl);
                 }
             }
         }
-        Ok(ModuleProgram{imports, modules, other_declaration})
+        Ok(ModuleProgram{
+            imports,
+            modules,
+            declarations: parsed.declarations,
+            name: path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string()
+        })
 
     }
 
