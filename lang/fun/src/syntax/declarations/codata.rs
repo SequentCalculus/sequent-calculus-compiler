@@ -2,7 +2,7 @@
 
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::tokens::{CODATA, COLON, COMMA};
+use printer::tokens::{CODATA, COLON, COMMA, PCODATA};
 use printer::*;
 
 use crate::syntax::*;
@@ -83,6 +83,8 @@ pub struct Codata {
     pub type_params: TypeContext,
     /// The list of destructors
     pub dtors: Vec<DtorSig>,
+    /// The flag, whether it is public
+    pub is_public: bool,
 }
 
 impl Codata {
@@ -104,13 +106,22 @@ impl From<Codata> for Declaration {
 
 impl Print for Codata {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let head = alloc
+        let head = if self.is_public {
+            alloc
+            .keyword(PCODATA)
+            .append(alloc.space())
+            .append(alloc.typ(&self.name))
+            .append(self.type_params.print(cfg, alloc))
+            .append(alloc.space())
+        }
+        else {
+            alloc
             .keyword(CODATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
             .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space());
-
+            .append(alloc.space())
+        };
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.dtors.is_empty() {
             alloc.space()

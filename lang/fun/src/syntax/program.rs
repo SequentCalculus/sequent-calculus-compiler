@@ -37,16 +37,42 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
-    /// Checked public top-level function
-    pub pdefs: Vec<PDef>,
+    /// The name of the module
+    pub name: String,
 }
 
 impl ModuleProgram {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
     pub fn check(self) -> Result<CheckedProgram, Error> {
+        let imports = self.imports.clone();
+        let mut checked_imports = Vec::<CheckedProgram>::new();
+        for import in imports {
+            let import_symbol_table = build_symbol_table(&import, (true, &import.name))?;
+            checked_imports.push(import.check_with_table(import_symbol_table)?);
+        }
+        let modules = self.modules.clone();
+        let mut checked_modules = Vec::<CheckedProgram>::new();
+        for module in modules {
+            let module_symbol_table = build_symbol_table(&module, (true, &module.name))?;
+            checked_modules.push(module.check_with_table(module_symbol_table)?);
+        }
         let symbol_table = build_symbol_table(&self, (true, &self.name))?;
-        self.check_with_table(symbol_table)
+        let mut checked = self.check_with_table(symbol_table)?;
+
+        for import in checked_imports {
+            for def in import.defs {
+                checked.defs.push(Def{span: def.span, name: import.name.clone() + "::" + &def.name, context: def.context, ret_ty: def.ret_ty, body: def.body, is_public: def.is_public})
+            }
+        }
+
+        for module in checked_modules {
+            for def in module.defs {
+                checked.defs.push(Def{span: def.span, name: module.name.clone() + "::" + &def.name, context: def.context, ret_ty: def.ret_ty, body: def.body, is_public: def.is_public})
+            }
+        }
+
+        Ok(checked)
     }
 
     /// This function typechecks a module, creating a checked module with monomorphic type
@@ -56,7 +82,6 @@ impl ModuleProgram {
         
         
         let mut defs = Vec::new();
-        let mut pdefs = Vec::new();
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
@@ -65,9 +90,6 @@ impl ModuleProgram {
                 }
                 Declaration::Codata(codata) => {
                     codata.check(&symbol_table)?;
-                }
-                Declaration::PDef(pdef) => {
-                    pdefs.push(pdef);
                 }
                 Declaration::Def(def) => {
                     defs.push(def);
@@ -78,11 +100,6 @@ impl ModuleProgram {
         let defs = defs
             .into_iter()
             .map(|def| def.check(&mut symbol_table))
-            .collect::<Result<_, Error>>()?;
-
-        let pdefs = pdefs
-            .into_iter()
-            .map(|pdef| pdef.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
         // collect all instances of type templates from the symbol table
@@ -115,6 +132,7 @@ impl ModuleProgram {
                         name,
                         type_params: TypeContext::default(),
                         ctors,
+                        is_public: false
                     };
                     data_types.push(declaration);
                 }
@@ -144,6 +162,7 @@ impl ModuleProgram {
                         name,
                         type_params: TypeContext::default(),
                         dtors,
+                        is_public: false,
                     };
                     codata_types.push(declaration);
                 }
@@ -151,10 +170,10 @@ impl ModuleProgram {
         }
 
         Ok(CheckedProgram {
-            pdefs,
             defs,
             data_types,
             codata_types,
+            name: self.name,
         })
     }
 
@@ -199,8 +218,12 @@ impl Print for ModuleProgram {
             alloc.line().append(alloc.line())
         };
 
+        let imports = self.imports.iter().map(|imp| imp.print(cfg, alloc));
+        let modules = self.modules.iter().map(|modu| modu.print(cfg, alloc));
         let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
 
+        alloc.intersperse(imports, sep.clone());
+        alloc.intersperse(modules, sep.clone());
         alloc.intersperse(declarations, sep)
     }
 }

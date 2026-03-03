@@ -2,7 +2,7 @@
 
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::tokens::{COLON, DEF};
+use printer::tokens::{COLON, DEF, PDEF};
 use printer::*;
 
 use crate::syntax::*;
@@ -32,6 +32,7 @@ pub struct Def {
     pub ret_ty: Ty,
     /// The body term
     pub body: Term,
+    pub is_public: bool,
 }
 
 impl Def {
@@ -51,7 +52,19 @@ impl Def {
 
 impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let head = alloc
+        let head = if self.is_public {
+            alloc
+            .keyword(PDEF)
+            .append(alloc.space())
+            .append(self.name.print(cfg, alloc))
+            .append(self.context.print(cfg, alloc).parens())
+            .append(COLON)
+            .append(alloc.space())
+            .append(self.ret_ty.print(cfg, alloc))
+            .append(alloc.space())
+        }
+        else {
+            alloc
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
@@ -59,7 +72,8 @@ impl Print for Def {
             .append(COLON)
             .append(alloc.space())
             .append(self.ret_ty.print(cfg, alloc))
-            .append(alloc.space());
+            .append(alloc.space())
+        };
 
         let body = alloc
             .hardline()
@@ -78,11 +92,6 @@ impl From<Def> for Declaration {
     }
 }
 
-impl From<PDef> for Def {
-    fn from(pdef: PDef) -> Self {
-        Def{span: pdef.span, name: pdef.name, context: pdef.context, ret_ty: pdef.ret_ty, body: pdef.body}
-    } 
-}
 
 #[cfg(test)]
 mod def_tests {

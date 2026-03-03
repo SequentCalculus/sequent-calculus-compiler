@@ -7,7 +7,7 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    declarations::{Codata, CtorSig, Data, Declaration, Def, PDef, DtorSig, Polarity},
+    declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
     names::Name,
     program::ModuleProgram,
     types::{Ty, TypeArgs},
@@ -219,7 +219,6 @@ impl BuildSymbolTable for ModuleProgram {
 impl BuildSymbolTable for Declaration {
     fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
         match self {
-            Declaration::PDef(pdef) => pdef.build(symbol_table, include_private),
             Declaration::Def(def) => def.build(symbol_table, include_private),
             Declaration::Data(data) => data.build(symbol_table, include_private),
             Declaration::Codata(codata) => codata.build(symbol_table, include_private),
@@ -227,68 +226,59 @@ impl BuildSymbolTable for Declaration {
     }
 }
 
-impl BuildSymbolTable for PDef {
-    fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
-        let mod_name = if include_private.0 {
-                &self.name
-            }
-            else {
-                &(include_private.1.to_owned() + "::" + &self.name.clone())
-            };
-        if symbol_table.defs.contains_key(mod_name) {
-                    return Err(Error::DefinedMultipleTimes {
-                        span: Some(self.span),
-                        name: mod_name.to_string(),
-                    });
-        }
-        symbol_table.defs.insert(
-            mod_name.to_string(),
-            (self.context.clone(), self.ret_ty.clone()),
-        );
-        //println!("{}", mod_name);
-        Ok(())
-    }
-}
-
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
-        if include_private.0 {
-            if symbol_table.defs.contains_key(&self.name) {
+        let mod_name = if include_private.0 {
+            &self.name
+        }
+        else if self.is_public {
+            &(include_private.1.to_owned() + "::" + &self.name.clone())
+        }
+        else {
+            return Ok(())
+        };
+        if symbol_table.defs.contains_key(mod_name) {
                 return Err(Error::DefinedMultipleTimes {
                     span: Some(self.span),
-                    name: self.name.clone(),
+                    name: mod_name.to_string(),
                 });
             }
             symbol_table.defs.insert(
-                self.name.clone(),
+                mod_name.to_string(),
                 (self.context.clone(), self.ret_ty.clone()),
             );
-        }        
         Ok(())
     }
 }
 
 impl BuildSymbolTable for Data {
     fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
-        if include_private.0 {
-            if symbol_table.type_templates.contains_key(&self.name) {
-                return Err(Error::DefinedMultipleTimes {
-                    span: self.span.to_miette(),
-                    name: self.name.clone(),
-                });
-            }
-            symbol_table.type_templates.insert(
-                self.name.clone(),
-                (
-                    Polarity::Data,
-                    self.type_params.clone(),
-                    self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
-                ),
-            );
+        let mod_name = if include_private.0 {
+            &self.name
+        }
+        else if self.is_public {
+            &(include_private.1.to_owned() + "::" + &self.name.clone())
+        }
+        else {
+            return Ok(())
+        };
+        if symbol_table.type_templates.contains_key(mod_name) {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span.to_miette(),
+                name: mod_name.to_string(),
+            });
+        }
+        symbol_table.type_templates.insert(
+            mod_name.to_string(),
+            (
+                Polarity::Data,
+                self.type_params.clone(),
+                self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
+            ),
+        );
 
-            for ctor in &self.ctors {
-                ctor.build(symbol_table, include_private)?;
-            }
+        for ctor in &self.ctors {
+            ctor.build(symbol_table, include_private)?;
         }
         Ok(())
     }
@@ -311,15 +301,23 @@ impl BuildSymbolTable for CtorSig {
 
 impl BuildSymbolTable for Codata {
     fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
-        if include_private.0 {
-            if symbol_table.type_templates.contains_key(&self.name) {
+        let mod_name = if include_private.0 {
+            &self.name
+        }
+        else if self.is_public {
+            &(include_private.1.to_owned() + "::" + &self.name.clone())
+        }
+        else {
+            return Ok(())
+        };
+        if symbol_table.type_templates.contains_key(mod_name) {
                 return Err(Error::DefinedMultipleTimes {
                     span: self.span.to_miette(),
-                    name: self.name.clone(),
+                    name: mod_name.to_string(),
                 });
             }
             symbol_table.type_templates.insert(
-                self.name.clone(),
+                mod_name.to_string(),
                 (
                     Polarity::Codata,
                     self.type_params.clone(),
@@ -330,7 +328,6 @@ impl BuildSymbolTable for Codata {
             for dtor in &self.dtors {
                 dtor.build(symbol_table, include_private)?;
             }
-        }
         Ok(())
     }
 }

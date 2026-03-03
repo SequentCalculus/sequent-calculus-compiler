@@ -6,13 +6,11 @@ use printer::*;
 pub mod codata;
 pub mod data;
 pub mod def;
-pub mod pdef;
+
 
 pub use codata::*;
 pub use data::*;
 pub use def::*;
-pub use pdef::*;
-
 /// This enum encodes whether a user-declared type is a data or codata type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Polarity {
@@ -28,7 +26,6 @@ pub enum Polarity {
 pub enum Declaration {
     Data(Data),
     Codata(Codata),
-    PDef(PDef),
     Def(Def),
 }
 
@@ -36,7 +33,6 @@ impl Print for Declaration {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Declaration::Def(def) => def.print(cfg, alloc),
-            Declaration::PDef(pdef) => pdef.print(cfg, alloc),
             Declaration::Data(data) => data.print(cfg, alloc),
             Declaration::Codata(codata) => codata.print(cfg, alloc),
         }

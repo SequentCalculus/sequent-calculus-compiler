@@ -87,8 +87,14 @@ pub const GTE: &str = ">=";
 /// The keyword `data`
 pub const DATA: &str = "data";
 
+/// The keyword 'public data'
+pub const PDATA: &str = "public data";
+
 /// The keyword `codata`
 pub const CODATA: &str = "codata";
+
+/// The keyword 'public codata
+pub const PCODATA: &str = "public codata";
 
 /// The keyword `type`
 pub const TYPE: &str = "type";

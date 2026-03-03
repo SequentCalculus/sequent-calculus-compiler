@@ -2,7 +2,7 @@
 
 use derivative::Derivative;
 use miette::SourceSpan;
-use printer::tokens::{COMMA, DATA};
+use printer::tokens::{COMMA, DATA, PDATA};
 use printer::*;
 
 use crate::syntax::*;
@@ -74,6 +74,8 @@ pub struct Data {
     pub type_params: TypeContext,
     /// The constructors
     pub ctors: Vec<CtorSig>,
+    /// A flag, whether is is public or not
+    pub is_public: bool,
 }
 
 impl Data {
@@ -95,13 +97,22 @@ impl From<Data> for Declaration {
 
 impl Print for Data {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let head = alloc
+        let head = if self.is_public {
+            alloc
+            .keyword(PDATA)
+            .append(alloc.space())
+            .append(alloc.typ(&self.name))
+            .append(self.type_params.print(cfg, alloc))
+            .append(alloc.space())
+        }
+        else {
+            alloc
             .keyword(DATA)
             .append(alloc.space())
             .append(alloc.typ(&self.name))
             .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space());
-
+            .append(alloc.space())
+        };
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.ctors.is_empty() {
             alloc.space()

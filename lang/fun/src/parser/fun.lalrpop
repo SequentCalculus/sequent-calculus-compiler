@@ -38,7 +38,7 @@ match {
     "print_i64", "println_i64",
     "let", "case", "new",
     "def", "data", "codata",
-    "import","module","public def",
+    "import","module","public def","public data","public codata",
     // Types
     "i64",
     // Comments and whitespace
@@ -434,20 +434,18 @@ Def: Def = {
             context,
             body,
             ret_ty,
+            is_public: false,
         },
-    
-}
-PDef: PDef = {
     <l: @L> "public def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
-        PDef {
+        Def {
             span: span(l, r),
             name,
             context,
             body,
             ret_ty,
-        },
+            is_public: true,
+        },   
 }
-
 
 Module: Module = {
     <l: @L> "module" <name: Name> <r: @R> => 
@@ -470,8 +468,18 @@ Data: Data = {
             name,
             type_params,
             ctors,
+            is_public: false,
+        },
+    <l: @L> "public data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
+        Data {
+            span: Some(span(l, r)),
+            name,
+            type_params,
+            ctors,
+            is_public: true,
         }
 }
+
 
 Codata: Codata = {
     <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
@@ -480,11 +488,19 @@ Codata: Codata = {
             name,
             type_params,
             dtors,
+            is_public: false,
+        },
+        <l: @L> "public codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
+        Codata {
+            span: Some(span(l, r)),
+            name,
+            type_params,
+            dtors,
+            is_public: true,
         }
 }
 
 Declaration: Declaration = {
-    <pdef: PDef> => pdef.into(),
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
