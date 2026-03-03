@@ -21,7 +21,7 @@ grammar;
 
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".",
+    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".","::",
     "=", "==", "!=", "<", "<=", ">", ">=",
     r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"0\s*<", r"<=\s*0", r"0\s*<=", r">\s*0", r"0\s*>", r">=\s*0", r"0\s*>=",
     // BinOps/Negation
@@ -160,6 +160,11 @@ DtorName: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
+ModCall: String = {
+    <name: Name> "::" <id: Name> => name + "::" + &id,
+    <name: Name> "::" <rest: ModCall> => name + "::" + &rest,
+}
+
 //
 // Arguments
 //
@@ -184,6 +189,8 @@ Lit: Lit = {
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
       Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+    <l: @L> <v: ModCall> <args: Arguments> <r: @R> => 
+      Call {span: span(l, r), name: v, args, ret_ty: None,} .into(),
 }
 
 Label: Label = {
@@ -478,6 +485,7 @@ Codata: Codata = {
 Declaration: Declaration = {
     <module: Module> => module.into(),
     <import: Import> => import.into(),
+    <pdef: PDef> => pdef.into(),
     <def: Def> => def.into(),
     <data: Data> => data.into(),
     <codata: Codata> => codata.into()
