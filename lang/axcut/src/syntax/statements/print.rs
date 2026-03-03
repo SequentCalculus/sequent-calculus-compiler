@@ -5,7 +5,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, Ident, Statement, Ty, TypingContext};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -20,9 +20,9 @@ use std::rc::Rc;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64 {
     pub newline: bool,
-    pub var: Ident,
+    pub var: Identifier,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Ident>>,
+    pub free_vars_next: Option<HashSet<Identifier>>,
 }
 
 impl Print for PrintI64 {
@@ -48,7 +48,7 @@ impl From<PrintI64> for Statement {
 }
 
 impl FreeVars for PrintI64 {
-    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
@@ -70,7 +70,7 @@ impl TypedFreeVars for PrintI64 {
 }
 
 impl Subst for PrintI64 {
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> PrintI64 {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> PrintI64 {
         self.var = self.var.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
@@ -84,7 +84,7 @@ impl Linearizing for PrintI64 {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: TypingContext, max_id: &mut usize) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the variables is not consumed, so we have to keep it

@@ -79,8 +79,8 @@ impl Subst for Cut {
     type Target = Cut;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.producer = self.producer.subst_sim(prod_subst, cons_subst);
         self.consumer = self.consumer.subst_sim(prod_subst, cons_subst);
@@ -90,7 +90,7 @@ impl Subst for Cut {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsCut {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsCut {
         self.producer = self.producer.subst_sim(subst);
         self.consumer = self.consumer.subst_sim(subst);
         self
@@ -118,7 +118,7 @@ impl Uniquify for Cut {
 
 impl Focusing for Cut {
     type Target = FsStatement;
-    fn focus(self, max_id: &mut usize) -> FsStatement {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
         match (
             Rc::unwrap_or_clone(self.producer),
             Rc::unwrap_or_clone(self.consumer),
@@ -126,11 +126,11 @@ impl Focusing for Cut {
             // focus(⟨K(t_i) | c⟩) = bind(t_i)[λas.⟨K(as) | focus(c)⟩]
             (Term::Xtor(constructor), consumer) => bind_many(
                 constructor.args.into(),
-                Box::new(|bindings, max_id: &mut usize| {
+                Box::new(|bindings, max_id: &mut ID| {
                     FsCut::new(
                         FsXtor {
                             prdcns: constructor.prdcns,
-                            id: constructor.id,
+                            name: constructor.name,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -144,12 +144,12 @@ impl Focusing for Cut {
             // focus(⟨p | D(t_i)⟩) = bind(t_i)[λas⟨ focus(p) | D(as)⟩]
             (producer, Term::Xtor(destructor)) => bind_many(
                 destructor.args.into(),
-                Box::new(|bindings, max_id: &mut usize| {
+                Box::new(|bindings, max_id: &mut ID| {
                     FsCut::new(
                         producer.focus(max_id),
                         FsXtor {
                             prdcns: destructor.prdcns,
-                            id: destructor.id,
+                            name: destructor.name,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -161,9 +161,9 @@ impl Focusing for Cut {
             ),
             // focus(⟨ +(p_1, p_2) | c⟩) = bind(p_1)[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | focus(c)⟩]]
             (Term::Op(op), consumer) => Rc::unwrap_or_clone(op.fst).bind(
-                Box::new(|binding_fst: ContextBinding, max_id: &mut usize| {
+                Box::new(|binding_fst: ContextBinding, max_id: &mut ID| {
                     Rc::unwrap_or_clone(op.snd).bind(
-                        Box::new(|binding_snd, max_id: &mut usize| {
+                        Box::new(|binding_snd, max_id: &mut ID| {
                             FsCut::new(
                                 FsOp {
                                     fst: binding_fst.var,

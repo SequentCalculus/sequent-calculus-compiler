@@ -61,8 +61,8 @@ impl<C: Chi> Subst for XCase<C> {
     type Target = XCase<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.clauses = self.clauses.subst_sim(prod_subst, cons_subst);
         self
@@ -94,7 +94,7 @@ impl<C: Chi> Uniquify for XCase<C> {
 impl<C: Chi> Focusing for XCase<C> {
     type Target = FsXCase<C>;
     // focus(cocase {cases}) = cocase { focus(cases) } AND focus(case {cases}) = case { focus(cases) }
-    fn focus(self, max_id: &mut usize) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         XCase {
             prdcns: self.prdcns,
             clauses: self.clauses.focus(max_id),
@@ -105,7 +105,7 @@ impl<C: Chi> Focusing for XCase<C> {
 
 impl Bind for XCase<Prd> {
     // bind(new { cases }[k] = ⟨ new { focus(cases) } | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let ty = self.ty.clone();
         let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
@@ -119,7 +119,7 @@ impl Bind for XCase<Prd> {
 }
 impl Bind for XCase<Cns> {
     // bind(case { cases }[k] = ⟨ μa.k(a) } | case { focus(cases) ⟩
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let ty = self.ty.clone();
         let new_covar = fresh_covar(max_id);
         let new_binding = ContextBinding {
@@ -134,7 +134,7 @@ impl Bind for XCase<Cns> {
 
 impl<C: Chi> SubstVar for FsXCase<C> {
     type Target = FsXCase<C>;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
         self.clauses = self.clauses.subst_sim(subst);
         self
     }

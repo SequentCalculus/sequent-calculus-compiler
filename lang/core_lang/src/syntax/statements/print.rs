@@ -13,7 +13,7 @@ use std::rc::Rc;
 /// newline should be printed, the term for the integer to print, and the remaining statement. The
 /// type parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
 /// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
-/// (if `P` and `C` is instantiated with [`Ident`] and [`FsStatement`]).
+/// (if `P` and `C` is instantiated with [`Identifier`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
     /// Whether to print a newline after the value
@@ -24,7 +24,7 @@ pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
     pub next: Rc<S>,
 }
 
-pub type FsPrintI64 = PrintI64<Ident, FsStatement>;
+pub type FsPrintI64 = PrintI64<Identifier, FsStatement>;
 
 impl Typed for PrintI64 {
     fn get_type(&self) -> Ty {
@@ -72,8 +72,8 @@ impl Subst for PrintI64 {
     type Target = PrintI64;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
         self.next = self.next.subst_sim(prod_subst, cons_subst);
@@ -83,7 +83,7 @@ impl Subst for PrintI64 {
 
 impl SubstVar for FsPrintI64 {
     type Target = FsPrintI64;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsPrintI64 {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsPrintI64 {
         self.arg = self.arg.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self
@@ -119,9 +119,9 @@ impl Uniquify for PrintI64 {
 impl Focusing for PrintI64 {
     type Target = FsStatement;
     // focus(println_i64(p); s) = bind(p)[λa.println_i64(a); focus(s)]
-    fn focus(self, max_id: &mut usize) -> FsStatement {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
         Rc::unwrap_or_clone(self.arg).bind(
-            Box::new(move |binding: ContextBinding, max_id: &mut usize| {
+            Box::new(move |binding: ContextBinding, max_id: &mut ID| {
                 FsPrintI64 {
                     newline: self.newline,
                     arg: binding.var,

@@ -6,7 +6,7 @@ use syn::parse_str;
 pub fn prog(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        ["Definitions", "Type Declarations", "Max Used Id"],
+        ["Definitions", "Type Declarations", "Max Used Identifier Id"],
         &[(2, parse_str("0").unwrap())],
     );
     let defs = expr_to_array(&args[0], 0);
@@ -16,7 +16,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
         axcut::syntax::program::Prog{
             defs: ::std::vec::Vec::from([#(#defs),*]),
             types: ::std::vec::Vec::from([#(#types),*]),
-            max_id:#max_id
+            max_id: #max_id
         }
     }
     .into()

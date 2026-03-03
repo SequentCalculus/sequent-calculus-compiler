@@ -5,7 +5,7 @@ use crate::{
     context::compile_context,
     types::compile_ty,
 };
-use core_lang::syntax::{CodataDeclaration, names::Ident};
+use core_lang::syntax::{CodataDeclaration, names::Identifier};
 use fun::{
     syntax::{names::Name, types::OptTyped},
     traits::used_binders::UsedBinders,
@@ -52,20 +52,20 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::terms::XVar::covar(Ident::new_with_zero(&new_covar), ty).into(),
+        core_lang::syntax::terms::XVar::covar(Identifier::new(new_covar.clone()), ty).into(),
         &mut state,
     );
 
     context
         .bindings
         .push(core_lang::syntax::context::ContextBinding {
-            var: Ident::new_with_zero(&new_covar),
+            var: Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(&def.ret_ty),
         });
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
-        name: Ident::new_with_zero(&def.name),
+        name: Identifier::new(def.name),
         context,
         body,
     });
@@ -113,10 +113,10 @@ pub fn compile_main(
 
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
-            Ident::new_with_zero(&new_var),
+            Identifier::new(new_var.clone()),
             core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit {
                 arg: Rc::new(
-                    core_lang::syntax::terms::XVar::var(Ident::new_with_zero(&new_var), ty.clone())
+                    core_lang::syntax::terms::XVar::var(Identifier::new(new_var), ty.clone())
                         .into(),
                 ),
                 ty: ty.clone(),
@@ -128,7 +128,7 @@ pub fn compile_main(
     );
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
-        name: Ident::new_with_zero(&def.name),
+        name: Identifier::new(def.name),
         context,
         body,
     });

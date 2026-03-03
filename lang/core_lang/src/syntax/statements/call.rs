@@ -12,7 +12,7 @@ use std::collections::BTreeSet;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     /// The name of the top-level function being called
-    pub name: Ident,
+    pub name: Identifier,
     /// The arguments
     pub args: Arguments,
     /// The type (which is the return type of the definition)
@@ -43,8 +43,8 @@ impl Subst for Call {
     type Target = Call;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.args = self.args.subst_sim(prod_subst, cons_subst);
         self
@@ -67,10 +67,10 @@ impl Uniquify for Call {
 impl Focusing for Call {
     type Target = FsStatement;
     // focus(f(t_i)) = bind(t_i)[λas.f(as)]
-    fn focus(self, max_id: &mut usize) -> FsStatement {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, _: &mut usize| {
+            Box::new(|bindings, _: &mut ID| {
                 FsCall {
                     name: self.name,
                     args: bindings.into(),
@@ -86,7 +86,7 @@ impl Focusing for Call {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsCall {
     /// The name of the top-level function being called
-    pub name: Ident,
+    pub name: Identifier,
     /// The arguments (only (co)variables here)
     pub args: TypingContext,
 }
@@ -107,7 +107,7 @@ impl From<FsCall> for FsStatement {
 
 impl SubstVar for FsCall {
     type Target = FsCall;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsCall {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsCall {
         self.args = self.args.subst_sim(subst);
         self
     }

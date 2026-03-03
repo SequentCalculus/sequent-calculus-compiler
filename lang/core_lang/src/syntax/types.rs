@@ -11,7 +11,7 @@ pub enum Ty {
     /// Signed 64-Bit integer.
     I64,
     /// User-declared data or codata type.
-    Decl(Ident),
+    Decl(Identifier),
 }
 
 impl Ty {

@@ -23,14 +23,14 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
         assert!(
             typ.name != cont_int.name,
             "{} cannot be used as a type name",
-            cont_int.name
+            cont_int.name.name
         );
     }
     for typ in &program.codata_types {
         assert!(
             typ.name != cont_int.name,
             "{} cannot be used as a type name",
-            cont_int.name
+            cont_int.name.name
         );
     }
     // add the type for integer continuations to the program

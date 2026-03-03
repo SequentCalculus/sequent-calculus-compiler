@@ -9,7 +9,7 @@ pub fn def(input: TokenStream) -> TokenStream {
     let body = &args[2];
     quote! {
         axcut::syntax::def::Def{
-            name:#name,
+            name: #name,
             context: axcut::syntax::context::TypingContext{
                 bindings: vec![
                     #(#def_args),*

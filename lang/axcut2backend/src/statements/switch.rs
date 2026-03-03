@@ -29,7 +29,7 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var);
+        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!(

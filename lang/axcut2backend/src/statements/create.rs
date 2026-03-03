@@ -33,7 +33,7 @@ impl CodeStatement for Create {
     {
         let comment = format!(
             "{CREATE} {}: {} = ({})\\{{ ... \\}};",
-            self.var,
+            self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.context
                 .as_ref()

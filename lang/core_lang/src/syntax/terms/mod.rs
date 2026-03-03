@@ -107,8 +107,8 @@ impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
         self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -124,8 +124,8 @@ impl Subst for Term<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
         self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -164,7 +164,7 @@ impl<C: Chi> Uniquify for Term<C> {
 
 impl Focusing for Term<Prd> {
     type Target = FsTerm<Prd>;
-    fn focus(self, max_id: &mut usize) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
@@ -177,7 +177,7 @@ impl Focusing for Term<Prd> {
 }
 impl Focusing for Term<Cns> {
     type Target = FsTerm<Cns>;
-    fn focus(self, max_id: &mut usize) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
@@ -189,7 +189,7 @@ impl Focusing for Term<Cns> {
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
             Term::XVar(var) => var.bind(k, max_id),
             Term::Literal(lit) => lit.bind(k, max_id),
@@ -201,7 +201,7 @@ impl Bind for Term<Prd> {
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
             Term::XVar(covar) => covar.bind(k, max_id),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
@@ -245,7 +245,7 @@ impl<C: Chi> Print for FsTerm<C> {
 
 impl<C: Chi> SubstVar for FsTerm<C> {
     type Target = FsTerm<C>;
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self::Target {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
             FsTerm::Literal(ref _lit) => self,

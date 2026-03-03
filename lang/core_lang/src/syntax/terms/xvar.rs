@@ -15,14 +15,14 @@ pub struct XVar<C: Chi> {
     /// Whether we have a variable or covariable
     pub prdcns: C,
     /// The name of the (co)variable
-    pub var: Ident,
+    pub var: Identifier,
     /// The type
     pub ty: Ty,
 }
 
 impl XVar<Prd> {
     /// This function creates a variable with the given name and type.
-    pub fn var(name: Ident, ty: Ty) -> Self {
+    pub fn var(name: Identifier, ty: Ty) -> Self {
         XVar {
             prdcns: Prd,
             var: name,
@@ -32,7 +32,7 @@ impl XVar<Prd> {
 }
 impl XVar<Cns> {
     /// This function creates a covariable with the given name and type.
-    pub fn covar(name: Ident, ty: Ty) -> Self {
+    pub fn covar(name: Identifier, ty: Ty) -> Self {
         XVar {
             prdcns: Cns,
             var: name,
@@ -69,8 +69,8 @@ impl Subst for XVar<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
         self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        _cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        _cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match prod_subst.iter().find(|(var, _)| *var == self.var) {
             None => self.into(),
@@ -82,8 +82,8 @@ impl Subst for XVar<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
         self,
-        _prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        _prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match cons_subst.iter().find(|(covar, _)| *covar == self.var) {
             None => self.into(),
@@ -108,7 +108,7 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
 }
 
 impl<C: Chi> Bind for XVar<C> {
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let chi = if self.prdcns.is_prd() {
             Chirality::Prd
         } else {
@@ -126,7 +126,7 @@ impl<C: Chi> Bind for XVar<C> {
 
 impl<C: Chi> SubstVar for XVar<C> {
     type Target = XVar<C>;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> XVar<C> {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> XVar<C> {
         match subst.iter().find(|(old, _)| *old == self.var) {
             None => self,
             Some((_, new)) => {

@@ -28,7 +28,7 @@ pub use switch::Switch;
 
 use printer::Print;
 
-use super::{ContextBinding, Ident, TypingContext};
+use super::{ContextBinding, ID, Identifier, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -65,7 +65,7 @@ pub enum Statement {
 }
 
 impl FreeVars for Statement {
-    fn free_vars(self, vars: &mut HashSet<Ident>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<Identifier>) -> Self {
         match self {
             Statement::Substitute(substitute) => substitute.free_vars(vars).into(),
             Statement::Call(call) => call.free_vars(vars).into(),
@@ -101,7 +101,7 @@ impl TypedFreeVars for Statement {
 }
 
 impl Subst for Statement {
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Statement {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Statement {
         match self {
             Statement::Substitute(substitute) => substitute.subst_sim(subst).into(),
             Statement::Call(call) => call.subst_sim(subst).into(),
@@ -127,7 +127,7 @@ impl Linearizing for Statement {
     ///
     /// A panic is caused if this method is called on a statement that contains an explicit
     /// substitution.
-    fn linearize(self, context: TypingContext, max_id: &mut usize) -> Statement {
+    fn linearize(self, context: TypingContext, max_id: &mut ID) -> Statement {
         match self {
             Statement::Substitute(_) => {
                 panic!("Linearization should only be done on terms without explicit substitutions")

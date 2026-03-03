@@ -1,25 +1,25 @@
 //! This module defines a trait for making all binders in every path through a term or statement
 //! unique.
 
-use crate::syntax::Ident;
+use crate::syntax::{ID, Identifier};
 use std::collections::HashSet;
 use std::mem::swap;
 use std::rc::Rc;
 
 pub struct UniquifyState {
-    pub seen_vars: HashSet<Ident>,
-    pub next_id: usize,
+    pub seen_vars: HashSet<Identifier>,
+    pub next_id: ID,
 }
 
 impl UniquifyState {
-    pub fn new(seen: HashSet<Ident>, max_id: usize) -> Self {
+    pub fn new(seen: HashSet<Identifier>, max_id: ID) -> Self {
         Self {
             seen_vars: seen,
             next_id: max_id + 1,
         }
     }
 
-    pub fn uniquify_restore<T>(&mut self, t: T) -> (T, HashSet<Ident>)
+    pub fn uniquify_restore<T>(&mut self, t: T) -> (T, HashSet<Identifier>)
     where
         T: Uniquify,
     {
@@ -29,8 +29,8 @@ impl UniquifyState {
         (res, seen_clone)
     }
 
-    pub fn next_var(&mut self, base_name: &str) -> Ident {
-        let new_var = Ident {
+    pub fn next_var(&mut self, base_name: &str) -> Identifier {
+        let new_var = Identifier {
             name: base_name.to_string(),
             id: self.next_id,
         };

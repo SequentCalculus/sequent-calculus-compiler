@@ -4,8 +4,8 @@ use printer::theme::ThemeExt;
 use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
-use super::{Ident, Ty};
-use crate::{syntax::names::fresh_ident, traits::substitution::Subst};
+use super::{ID, Identifier, Ty};
+use crate::{syntax::names::fresh_identifier, traits::substitution::Subst};
 
 use std::collections::HashSet;
 
@@ -42,7 +42,7 @@ impl Print for Chirality {
 /// and its [`Ty`]pe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
-    pub var: Ident,
+    pub var: Identifier,
     pub chi: Chirality,
     pub ty: Ty,
 }
@@ -63,7 +63,7 @@ impl Print for ContextBinding {
 }
 
 impl Subst for ContextBinding {
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -77,7 +77,7 @@ pub struct TypingContext {
 
 impl TypingContext {
     /// This function returns the list of variables in a typing context.
-    pub fn vars(&self) -> Vec<Ident> {
+    pub fn vars(&self) -> Vec<Identifier> {
         self.bindings
             .iter()
             .map(|binding| &binding.var)
@@ -86,7 +86,7 @@ impl TypingContext {
     }
 
     /// This function returns the list of variables in a typing context.
-    pub fn vars_set(&self) -> HashSet<Ident> {
+    pub fn vars_set(&self) -> HashSet<Identifier> {
         self.bindings
             .iter()
             .map(|binding| &binding.var)
@@ -96,7 +96,7 @@ impl TypingContext {
 
     /// This function returns an iterator over the variables in a typing context, consuming the
     /// context.
-    pub fn into_iter_vars(self) -> impl Iterator<Item = Ident> {
+    pub fn into_iter_vars(self) -> impl Iterator<Item = Identifier> {
         self.bindings.into_iter().map(|binding| binding.var)
     }
 
@@ -104,14 +104,14 @@ impl TypingContext {
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the
     ///   context.
-    /// - `max_id` is the highest used id for identifiers
-    pub fn freshen(&self, mut clashes: HashSet<Ident>, max_id: &mut usize) -> TypingContext {
+    /// - `max_id` is the highest id used for [`Identifier`]s.
+    pub fn freshen(&self, mut clashes: HashSet<Identifier>, max_id: &mut ID) -> TypingContext {
         let mut new_bindings = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             if clashes.contains(&binding.var) {
                 // if the variable has occurred already we pick a fresh one
                 new_bindings.push(ContextBinding {
-                    var: fresh_ident(max_id, &binding.var.name),
+                    var: fresh_identifier(max_id, &binding.var.name),
                     ty: binding.ty.clone(),
                     chi: binding.chi.clone(),
                 });
@@ -129,7 +129,7 @@ impl TypingContext {
     /// at the end to positions of variables that are not retained.
     /// - `context` is the context from which to keep bindings.
     /// - `set` is the set of variables for which to keep bindings.
-    pub fn filter_by_set(&self, set: &HashSet<Ident>) -> TypingContext {
+    pub fn filter_by_set(&self, set: &HashSet<Identifier>) -> TypingContext {
         let mut new_context = self.bindings.to_owned();
         for (pos, binding) in self.bindings.iter().enumerate() {
             // if we are beyond the length of the new context, we must have moved all variables from
@@ -194,7 +194,7 @@ impl From<Vec<ContextBinding>> for TypingContext {
 }
 
 impl Subst for TypingContext {
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }

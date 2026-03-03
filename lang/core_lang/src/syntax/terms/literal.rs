@@ -38,7 +38,7 @@ impl From<Literal> for FsTerm<Prd> {
 
 impl Bind for Literal {
     // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
             var: new_var.clone(),

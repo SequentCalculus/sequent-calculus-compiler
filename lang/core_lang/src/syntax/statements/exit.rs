@@ -44,8 +44,8 @@ impl Subst for Exit {
     type Target = Exit;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
 
@@ -70,8 +70,8 @@ impl Uniquify for Exit {
 impl Focusing for Exit {
     type Target = FsStatement;
     // focus(exit p) = bind(p)[λa.exit a]
-    fn focus(self, max_id: &mut usize) -> FsStatement {
-        let cont = Box::new(Box::new(|binding: ContextBinding, _: &mut usize| {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
+        let cont = Box::new(Box::new(|binding: ContextBinding, _: &mut ID| {
             FsExit { var: binding.var }.into()
         }));
         Rc::unwrap_or_clone(self.arg).bind(cont, max_id)
@@ -82,13 +82,13 @@ impl Focusing for Exit {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FsExit {
     /// The exit code (always a variable here)
-    pub var: Ident,
+    pub var: Identifier,
 }
 
 impl FsExit {
     /// This fcuntion constructs an exit statement from a given variable.
     #[allow(clippy::self_named_constructors)]
-    pub fn exit(var: Ident) -> Self {
+    pub fn exit(var: Identifier) -> Self {
         FsExit { var }
     }
 }
@@ -110,7 +110,7 @@ impl From<FsExit> for FsStatement {
 
 impl SubstVar for FsExit {
     type Target = FsExit;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
         self.var = self.var.subst_sim(subst);
 
         self

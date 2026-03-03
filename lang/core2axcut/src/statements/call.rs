@@ -4,7 +4,7 @@ use core_lang::syntax::statements::FsCall;
 
 use crate::{
     context::shrink_context,
-    shrink_ident,
+    names::shrink_identifier,
     shrinking::{Shrinking, ShrinkingState},
 };
 
@@ -13,7 +13,7 @@ impl Shrinking for FsCall {
 
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::Call(axcut::syntax::statements::Call {
-            label: shrink_ident(self.name),
+            label: shrink_identifier(self.name),
             args: shrink_context(self.args, state.codata),
         })
     }

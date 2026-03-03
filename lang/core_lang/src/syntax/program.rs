@@ -17,8 +17,8 @@ pub struct Prog<D = Def> {
     pub data_types: Vec<DataDeclaration>,
     /// The codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
-    /// Highest id used for [`crate::syntax::names::Ident`]s in the Program
-    pub max_id: usize,
+    /// Highest id used for [`Identifier`]s in the Program
+    pub max_id: ID,
 }
 
 pub type FsProg = Prog<FsDef>;
@@ -48,7 +48,7 @@ impl Prog {
         for def in self.defs.iter_mut() {
             let mut state = UniquifyState::new(def.context.vars(), max_id);
             let placeholder = Call {
-                name: Ident {
+                name: Identifier {
                     name: "placeholder".to_string(),
                     id: 0,
                 },

@@ -3,7 +3,7 @@
 use core_lang::syntax::statements::FsPrintI64;
 
 use crate::{
-    shrink_ident,
+    names::shrink_identifier,
     shrinking::{Shrinking, ShrinkingState},
 };
 
@@ -13,7 +13,7 @@ impl Shrinking for FsPrintI64 {
     fn shrink(self, state: &mut ShrinkingState) -> axcut::syntax::Statement {
         axcut::syntax::Statement::PrintI64(axcut::syntax::statements::PrintI64 {
             newline: self.newline,
-            var: shrink_ident(self.arg),
+            var: shrink_identifier(self.arg),
             next: self.next.shrink(state),
             free_vars_next: None,
         })

@@ -44,7 +44,7 @@ impl Print for IfSort {
 /// then-branch and else-branch, and after typechecking also of the inferred type. The type
 /// parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
 /// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
-/// (if `P` and `C` is instantiated with [`Ident`] and [`FsStatement`]).
+/// (if `P` and `C` is instantiated with [`Identifier`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
     /// The comparison operation
@@ -59,7 +59,7 @@ pub struct IfC<P = Rc<Term<Prd>>, S = Statement> {
     pub elsec: Rc<S>,
 }
 
-pub type FsIfC = IfC<Ident, FsStatement>;
+pub type FsIfC = IfC<Identifier, FsStatement>;
 
 impl Typed for IfC {
     fn get_type(&self) -> Ty {
@@ -124,8 +124,8 @@ impl Subst for IfC {
     type Target = IfC;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -139,7 +139,7 @@ impl Subst for IfC {
 
 impl SubstVar for FsIfC {
     type Target = FsIfC;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsIfC {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsIfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -194,10 +194,10 @@ impl Focusing for IfC {
     type Target = FsStatement;
     // focus(ifc(p_1, p_2, s_1, s_2)) = bind(p_1)[λa1.bind(p_1)[λa2.ifc(a_1, a_2, focus(s_1), focus(s_2))]] OR
     // focus(ifz(p, s_1, s_2)) = bind(p)[λa.ifz(a, focus(s_1), focus(s_2))]
-    fn focus(self, max_id: &mut usize) -> FsStatement {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
             Box::new(
-                move |binding_fst: ContextBinding, max_id: &mut usize| match self.snd {
+                move |binding_fst: ContextBinding, max_id: &mut ID| match self.snd {
                     None => FsIfC {
                         sort: self.sort,
                         fst: binding_fst.var,
@@ -207,7 +207,7 @@ impl Focusing for IfC {
                     }
                     .into(),
                     Some(snd) => Rc::unwrap_or_clone(snd).bind(
-                        Box::new(move |binding_snd, max_id: &mut usize| {
+                        Box::new(move |binding_snd, max_id: &mut ID| {
                             FsIfC {
                                 sort: self.sort,
                                 fst: binding_fst.var,

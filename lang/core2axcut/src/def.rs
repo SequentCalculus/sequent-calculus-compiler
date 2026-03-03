@@ -1,11 +1,11 @@
 //! This module defines the translation of top-level functions.
 
-use core_lang::syntax::Ident;
 use core_lang::syntax::declaration::{CodataDeclaration, DataDeclaration};
 use core_lang::syntax::def::FsDef;
+use core_lang::syntax::{ID, Identifier};
 
 use crate::context::shrink_context;
-use crate::shrink_ident;
+use crate::names::shrink_identifier;
 use crate::shrinking::{Shrinking, ShrinkingState};
 
 use std::collections::{HashSet, VecDeque};
@@ -21,8 +21,8 @@ pub fn shrink_def(
     def: FsDef,
     data_types: &[DataDeclaration],
     codata_types: &[CodataDeclaration],
-    used_labels: &mut HashSet<Ident>,
-    max_id: &mut usize,
+    used_labels: &mut HashSet<Identifier>,
+    max_id: &mut ID,
 ) -> VecDeque<axcut::syntax::Def> {
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -37,7 +37,7 @@ pub fn shrink_def(
     });
 
     def_plus_lifted_statements.push_front(axcut::syntax::Def {
-        name: shrink_ident(def.name),
+        name: shrink_identifier(def.name),
         context: shrink_context(def.context, codata_types),
         body,
     });

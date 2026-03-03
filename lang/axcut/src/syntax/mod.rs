@@ -16,7 +16,7 @@ pub mod types;
 pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{TypeDeclaration, XtorSig};
 pub use def::Def;
-pub use names::Ident;
+pub use names::{ID, Identifier};
 pub use program::Prog;
 pub use statements::{BinOp, Statement};
 pub use types::Ty;

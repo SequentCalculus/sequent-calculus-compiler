@@ -12,9 +12,9 @@ pub fn id(input: TokenStream) -> TokenStream {
     let name = expr_to_string(&args[0], 0);
     let id = &args[1];
     quote! {
-        core_lang::syntax::names::Ident{
-            name:#name.to_string(),
-            id:#id
+        core_lang::syntax::names::Identifier{
+            name: #name.to_string(),
+            id: #id
         }
     }
     .into()

@@ -8,8 +8,8 @@ pub(crate) mod program;
 pub(crate) mod statements;
 pub(crate) mod types;
 
-/// Create a [`axcut::syntax::names::Ident`] from string literal and id.
-/// If no id is provided, it defaults to `0`
+/// Create a [`axcut::syntax::names::Identifier`] with given string literal and id.
+/// If no id is provided, it defaults to `0`.
 #[proc_macro]
 pub fn id(input: TokenStream) -> TokenStream {
     names::id(input)

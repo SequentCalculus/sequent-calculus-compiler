@@ -27,7 +27,7 @@ pub fn xtor(
     quote! {
         core_lang::syntax::terms::xtor::Xtor{
             prdcns: #chi,
-            id: #xtor_name,
+            name: #xtor_name,
             args: #xtor_args,
             ty: #ty
         }

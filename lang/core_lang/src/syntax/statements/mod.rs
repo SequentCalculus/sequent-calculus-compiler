@@ -63,8 +63,8 @@ impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
         self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
@@ -102,7 +102,7 @@ impl Uniquify for Statement {
 
 impl Focusing for Statement {
     type Target = FsStatement;
-    fn focus(self: Statement, max_id: &mut usize) -> FsStatement {
+    fn focus(self: Statement, max_id: &mut ID) -> FsStatement {
         match self {
             Statement::Cut(cut) => cut.focus(max_id),
             Statement::IfC(ifc) => ifc.focus(max_id),
@@ -143,7 +143,7 @@ impl Print for FsStatement {
 
 impl SubstVar for FsStatement {
     type Target = FsStatement;
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> FsStatement {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),

@@ -5,6 +5,9 @@
 //
 //
 
+/// The symbol `_`
+pub const UNDERSCORE: &str = "_";
+
 /// The symbol `=>`
 pub const FAT_ARROW: &str = "=>";
 

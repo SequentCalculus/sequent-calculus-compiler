@@ -4,7 +4,7 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{ContextBinding, Ident, Statement};
+use crate::syntax::{ContextBinding, Identifier, Statement};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -17,7 +17,7 @@ use std::rc::Rc;
 /// statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
-    pub rearrange: Vec<(ContextBinding, Ident)>,
+    pub rearrange: Vec<(ContextBinding, Identifier)>,
     pub next: Rc<Statement>,
 }
 
@@ -57,7 +57,7 @@ impl From<Substitute> for Statement {
 }
 
 impl FreeVars for Substitute {
-    fn free_vars(mut self, vars: &mut HashSet<Ident>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
         self.next = self.next.free_vars(vars);
 
         for (new, old) in &self.rearrange {
@@ -86,7 +86,7 @@ impl TypedFreeVars for Substitute {
 impl Subst for Substitute {
     // this function is actually never called on the linearized version of AxCut containing
     // explicit substitutions
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Substitute {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Substitute {
         self.rearrange = self
             .rearrange
             .into_iter()

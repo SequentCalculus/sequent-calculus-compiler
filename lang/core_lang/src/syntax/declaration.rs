@@ -63,7 +63,7 @@ pub struct XtorSig<P: Polarity> {
     /// Whether this is a constructor ([`Data`]) or destructor ([`Codata`])
     pub xtor: P,
     /// The xtor name
-    pub name: Ident,
+    pub name: Identifier,
     /// The argument context
     pub args: TypingContext,
 }
@@ -105,7 +105,7 @@ pub struct TypeDeclaration<P: Polarity> {
     /// Whether this is a [`Data`] or [`Codata`] type
     pub dat: P,
     /// The type name
-    pub name: Ident,
+    pub name: Identifier,
     /// The xtors of the type
     pub xtors: Vec<XtorSig<P>>,
 }
@@ -151,13 +151,13 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
 ///
 /// A panic is caused if the type declaration is not contained in the list.
 pub fn lookup_type_declaration<'a, P: Polarity>(
-    type_name: &Ident,
+    type_name: &Identifier,
     types: &'a [TypeDeclaration<P>],
 ) -> &'a TypeDeclaration<P> {
     types
         .iter()
         .find(|declaration| declaration.name == *type_name)
-        .unwrap_or_else(|| panic!("Type {type_name} not found"))
+        .unwrap_or_else(|| panic!("Type {} not found", type_name.name))
 }
 
 /// This function returns the data type declaration for continuations of type `i64`, used in the
@@ -165,13 +165,13 @@ pub fn lookup_type_declaration<'a, P: Polarity>(
 pub fn cont_int() -> DataDeclaration {
     DataDeclaration {
         dat: Data,
-        name: Ident::new_with_zero("_Cont"),
+        name: Identifier::new("_Cont".to_string()),
         xtors: vec![CtorSig {
             xtor: Data,
-            name: Ident::new_with_zero("Ret"),
+            name: Identifier::new("Ret".to_string()),
             args: TypingContext {
                 bindings: vec![ContextBinding {
-                    var: Ident::new_with_zero("x"),
+                    var: Identifier::new("x".to_string()),
                     chi: Chirality::Prd,
                     ty: Ty::I64,
                 }],

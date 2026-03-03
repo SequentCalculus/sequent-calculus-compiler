@@ -39,7 +39,7 @@ impl Print for BinOp {
 /// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
 /// kind of the binary operator. The type parameter `P` determines whether this is the unfocused
 /// variant (if `P` is instantiated with [`Term<Prd>`], which is the default) or the focused
-/// variant (if `P` is instantiated with [`Ident`]).
+/// variant (if `P` is instantiated with [`Identifier`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op<P = Rc<Term<Prd>>> {
     /// The first operand
@@ -50,7 +50,7 @@ pub struct Op<P = Rc<Term<Prd>>> {
     pub snd: P,
 }
 
-pub type FsOp = Op<Ident>;
+pub type FsOp = Op<Identifier>;
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
@@ -105,8 +105,8 @@ impl Subst for Op {
     type Target = Op;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -117,7 +117,7 @@ impl Subst for Op {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -158,18 +158,18 @@ impl Uniquify for Op {
 
 impl Focusing for Op {
     type Target = FsTerm<Prd>;
-    fn focus(self, _: &mut usize) -> Self::Target {
+    fn focus(self, _: &mut ID) -> Self::Target {
         panic!("Arithmetic operators should always be focused in cuts directly");
     }
 }
 
 impl Bind for Op {
     // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
-            Box::new(|binding_fst: ContextBinding, max_id: &mut usize| {
+            Box::new(|binding_fst: ContextBinding, max_id: &mut ID| {
                 Rc::unwrap_or_clone(self.snd).bind(
-                    Box::new(|binding_snd, max_id: &mut usize| {
+                    Box::new(|binding_snd, max_id: &mut ID| {
                         let new_var = fresh_var(max_id);
                         let new_binding = ContextBinding {
                             var: new_var.clone(),

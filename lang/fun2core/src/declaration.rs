@@ -2,7 +2,7 @@
 //! declarations.
 
 use crate::{context::compile_context, types::compile_ty};
-use core_lang::syntax::names::Ident;
+use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 
 /// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
@@ -12,7 +12,7 @@ pub fn compile_ctor(
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Data,
-        name: Ident::new_with_zero(&ctor.name),
+        name: Identifier::new(ctor.name),
         args: compile_context(ctor.args),
     }
 }
@@ -28,13 +28,13 @@ pub fn compile_dtor(
     new_args
         .bindings
         .push(core_lang::syntax::context::ContextBinding {
-            var: core_lang::syntax::names::Ident::new_with_zero(&new_covar),
+            var: core_lang::syntax::names::Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(&dtor.cont_ty),
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,
-        name: Ident::new_with_zero(&dtor.name),
+        name: Identifier::new(dtor.name),
         args: new_args,
     }
 }

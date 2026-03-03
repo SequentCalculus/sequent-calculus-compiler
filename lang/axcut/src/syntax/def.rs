@@ -1,6 +1,6 @@
 //! This module defines top-level functions in AxCut.
 
-use super::{Ident, Statement, TypingContext};
+use super::{ID, Identifier, Statement, TypingContext};
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
 
 use crate::traits::free_vars::FreeVars;
@@ -13,14 +13,14 @@ use std::collections::HashSet;
 /// is annotated with the list of all variable names used in the top-level function.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
-    pub name: Ident,
+    pub name: Identifier,
     pub context: TypingContext,
     pub body: Statement,
 }
 
 impl Def {
     /// This function applies the linearization procedure to the body of the top-level function.
-    pub fn linearize(mut self, max_id: &mut usize) -> Def {
+    pub fn linearize(mut self, max_id: &mut ID) -> Def {
         // we only call this function to annotate the free variables for all substatements which
         // helps us to avoid computing free variables repeatedly
         self.body = self.body.free_vars(&mut HashSet::new());

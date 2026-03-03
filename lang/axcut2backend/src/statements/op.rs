@@ -31,10 +31,10 @@ impl CodeStatement for Op {
     {
         let comment = format!(
             "{} <- {} {} {};",
-            self.var,
-            self.fst,
+            self.var.print_to_string(None),
+            self.fst.print_to_string(None),
             self.op.print_to_string(None),
-            self.snd
+            self.snd.print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
 

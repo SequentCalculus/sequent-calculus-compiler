@@ -10,7 +10,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
             "Definitions",
             "Data Declarations",
             "Codata Declarations",
-            "Max Used Ident Id",
+            "Max Used Identifier Id",
         ],
         &[(3, parse_str("0").unwrap())],
     );
@@ -29,7 +29,7 @@ pub fn prog(input: TokenStream) -> TokenStream {
             codata_types: ::std::vec::Vec::from([
                 #(#codata_list),*
             ]),
-            max_id:#max_id
+            max_id: #max_id
         }
     }
     .into()

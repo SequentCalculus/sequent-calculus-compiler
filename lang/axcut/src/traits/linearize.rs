@@ -1,7 +1,7 @@
 //! This module defines a trait with a method for performing the linearization pass translating
 //! the non-linearized version of AxCut into the linearized one.
 
-use crate::syntax::TypingContext;
+use crate::syntax::{ID, TypingContext};
 
 use std::rc::Rc;
 
@@ -17,14 +17,14 @@ pub trait Linearizing {
     ///   type environment the given statement is supposed to be typed in.
     ///   linearized. It is threaded through the linearization to facilitate generation of fresh
     ///   variables.
-    /// - `max_id` is the highest used id for identifiers. It is incremented whenever a new
-    ///   identifier is created
-    fn linearize(self, context: TypingContext, max_id: &mut usize) -> Self::Target;
+    /// - `max_id` is the highest id used for [`crate::syntax::Identifier`]s. It is incremented
+    ///   whenever a fresh [`crate::syntax::Identifier`] is created.
+    fn linearize(self, context: TypingContext, max_id: &mut ID) -> Self::Target;
 }
 
 impl<T: Linearizing + Clone> Linearizing for Rc<T> {
     type Target = Rc<T::Target>;
-    fn linearize(self, context: TypingContext, max_id: &mut usize) -> Self::Target {
+    fn linearize(self, context: TypingContext, max_id: &mut ID) -> Self::Target {
         Rc::new(Rc::unwrap_or_clone(self).linearize(context, max_id))
     }
 }

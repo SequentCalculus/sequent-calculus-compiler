@@ -8,7 +8,7 @@ pub fn call(input: TokenStream) -> TokenStream {
     let call_args = expr_to_array(&args[1], 1);
     quote! {
         axcut::syntax::statements::call::Call{
-            label:#label,
+            label: #label,
             args: axcut::syntax::context::TypingContext{
                 bindings: ::std::vec::Vec::from([
                     #(#call_args),*

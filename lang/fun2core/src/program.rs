@@ -5,7 +5,7 @@ use crate::{
     declaration::{compile_ctor, compile_dtor},
     def::{compile_def, compile_main},
 };
-use core_lang::syntax::names::Ident;
+use core_lang::syntax::names::Identifier;
 
 use std::collections::VecDeque;
 
@@ -18,14 +18,14 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     for data in prog.data_types {
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Data,
-            name: Ident::new_with_zero(&data.name),
+            name: Identifier::new(data.name),
             xtors: data.ctors.into_iter().map(compile_ctor).collect(),
         });
     }
     for codata in prog.codata_types {
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
-            name: Ident::new_with_zero(&codata.name),
+            name: Identifier::new(codata.name),
             xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
         });
     }

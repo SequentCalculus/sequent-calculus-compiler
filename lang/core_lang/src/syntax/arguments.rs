@@ -41,8 +41,8 @@ impl Subst for Argument {
     type Target = Argument;
     fn subst_sim(
         self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Argument::Producer(prod) => Argument::Producer(prod.subst_sim(prod_subst, cons_subst)),
@@ -74,7 +74,7 @@ impl Uniquify for Argument {
 }
 
 impl Bind for Argument {
-    fn bind(self, k: Continuation, max_id: &mut usize) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
             Argument::Producer(prd) => prd.bind(k, max_id),
             Argument::Consumer(cns) => cns.bind(k, max_id),
@@ -121,8 +121,8 @@ impl Subst for Arguments {
     type Target = Arguments;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.entries = self.entries.subst_sim(prod_subst, cons_subst);
         self

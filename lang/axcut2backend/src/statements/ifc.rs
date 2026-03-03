@@ -1,5 +1,6 @@
 //! This module defines the code generation for the conditionals comparing two integers.
 
+use printer::Print;
 use printer::tokens::{EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 
 use super::CodeStatement;
@@ -29,17 +30,18 @@ impl CodeStatement for IfC {
             + Utils<Temporary>,
     {
         use axcut::syntax::statements::ifc::IfSort;
+        let fst = &self.fst.print_to_string(None);
         let snd = match self.snd {
             None => ZERO,
-            Some(ref snd) => &snd.to_string(),
+            Some(ref snd) => &snd.print_to_string(None),
         };
         let comment = match self.sort {
-            IfSort::Equal => format!("{IF} {} {EQQ} {snd} \\{{ ... \\}}", self.fst),
-            IfSort::NotEqual => format!("{IF} {} {NEQ} {snd} \\{{ ... \\}}", self.fst),
-            IfSort::Less => format!("{IF} {} {LT} {snd} \\{{ ... \\}}", self.fst),
-            IfSort::LessOrEqual => format!("{IF} {} {LTE} {snd} \\{{ ... \\}}", self.fst),
-            IfSort::Greater => format!("{IF} {} {GT} {snd} \\{{ ... \\}}", self.fst),
-            IfSort::GreaterOrEqual => format!("{IF} {} {GTE} {snd} \\{{ ... \\}}", self.fst),
+            IfSort::Equal => format!("{IF} {fst} {EQQ} {snd} \\{{ ... \\}}",),
+            IfSort::NotEqual => format!("{IF} {fst} {NEQ} {snd} \\{{ ... \\}}",),
+            IfSort::Less => format!("{IF} {fst} {LT} {snd} \\{{ ... \\}}",),
+            IfSort::LessOrEqual => format!("{IF} {fst} {LTE} {snd} \\{{ ... \\}}",),
+            IfSort::Greater => format!("{IF} {fst} {GT} {snd} \\{{ ... \\}}",),
+            IfSort::GreaterOrEqual => format!("{IF} {fst} {GTE} {snd} \\{{ ... \\}}",),
         };
         instructions.push(Backend::comment(comment));
 

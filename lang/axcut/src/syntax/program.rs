@@ -2,7 +2,7 @@
 
 use printer::{DocAllocator, Print};
 
-use super::{Def, TypeDeclaration};
+use super::{Def, ID, TypeDeclaration};
 
 /// This struct defines programs in AxCut. They consist of a list top-level functions and a list of
 /// user-declared types.
@@ -10,7 +10,7 @@ use super::{Def, TypeDeclaration};
 pub struct Prog {
     pub defs: Vec<Def>,
     pub types: Vec<TypeDeclaration>,
-    pub max_id: usize,
+    pub max_id: ID,
 }
 
 impl Prog {

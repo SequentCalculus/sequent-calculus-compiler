@@ -20,7 +20,7 @@ pub struct Clause<C: Chi, S = Statement> {
     /// Whether we have a clause of a match or comatch
     pub prdcns: C,
     /// The name of the xtor
-    pub xtor: Ident,
+    pub xtor: Identifier,
     /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
     /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
@@ -90,11 +90,11 @@ impl<C: Chi> Subst for Clause<C> {
     type Target = Clause<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Ident, Term<Prd>)],
-        cons_subst: &[(Ident, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Clause<C> {
-        let mut prod_subst_reduced: Vec<(Ident, Term<Prd>)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Ident, Term<Cns>)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Identifier, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Identifier, Term<Cns>)> = Vec::new();
 
         for subst in prod_subst {
             if !self.context.vars().contains(&subst.0) {
@@ -116,7 +116,7 @@ impl<C: Chi> Subst for Clause<C> {
 
 impl<C: Chi> SubstVar for FsClause<C> {
     type Target = FsClause<C>;
-    fn subst_sim(mut self, subst: &[(Ident, Ident)]) -> FsClause<C> {
+    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsClause<C> {
         self.body = self.body.subst_sim(subst);
         self
     }
@@ -149,8 +149,8 @@ impl<C: Chi> TypedFreeVars for FsClause<C> {
 impl<C: Chi> Uniquify for Clause<C> {
     fn uniquify(mut self, state: &mut UniquifyState) -> Clause<C> {
         let mut new_context = TypingContext::default();
-        let mut var_subst: Vec<(Ident, Term<Prd>)> = Vec::new();
-        let mut covar_subst: Vec<(Ident, Term<Cns>)> = Vec::new();
+        let mut var_subst: Vec<(Identifier, Term<Prd>)> = Vec::new();
+        let mut covar_subst: Vec<(Identifier, Term<Cns>)> = Vec::new();
 
         for binding in self.context.bindings {
             if state.seen_vars.contains(&binding.var) {
@@ -205,7 +205,7 @@ impl<C: Chi> Uniquify for Clause<C> {
 impl<C: Chi> Focusing for Clause<C> {
     type Target = FsClause<C>;
     // focus(X_i(x_{i,j}) => s_i ) = X_i(x_{i,j}) => focus(s_i)
-    fn focus(self, max_id: &mut usize) -> FsClause<C> {
+    fn focus(self, max_id: &mut ID) -> FsClause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,

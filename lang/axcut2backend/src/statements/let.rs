@@ -29,9 +29,9 @@ impl CodeStatement for Let {
     {
         let comment = format!(
             "{LET} {}: {} = {}({});",
-            self.var,
+            self.var.print_to_string(None),
             self.ty.print_to_string(None),
-            self.tag,
+            self.tag.print_to_string(None),
             self.args.vars().print_to_string(None)
         );
         instructions.push(Backend::comment(comment));

@@ -1,5 +1,7 @@
 //! This module contains some utility functions used during code generation.
 
+use printer::Print;
+
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber},
@@ -7,7 +9,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     statements::CodeStatement,
 };
-use axcut::syntax::{Ident, TypeDeclaration, TypingContext, statements::Clause};
+use axcut::syntax::{Identifier, TypeDeclaration, TypingContext, statements::Clause};
 
 use std::hash::Hash;
 
@@ -25,7 +27,7 @@ pub trait Utils<Temporary> {
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
-        variable: &Ident,
+        variable: &Identifier,
     ) -> Temporary;
     /// This method calculates the next free temporaries for a variable after a given typing
     /// context.
@@ -52,7 +54,7 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
 {
     for clause in clauses {
         Backend::jump_label_fixed(
-            base_label.to_string() + "_" + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.print_to_string(None),
             instructions,
         );
     }
@@ -135,7 +137,7 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string() + "_" + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.print_to_string(None),
         ));
         code_clause::<Backend, _, _, _>(context.clone(), clause, types, instructions);
     }
@@ -163,7 +165,7 @@ pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string() + "_" + &clause.xtor.to_string(),
+            base_label.to_string() + "_" + &clause.xtor.print_to_string(None),
         ));
         code_method::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
     }

@@ -4,7 +4,7 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use crate::syntax::Ident;
+use crate::syntax::Identifier;
 
 /// This trait defines a method for substituting a list of variables for other variables in a
 /// statement.
@@ -17,17 +17,17 @@ pub trait Subst: Clone {
     /// - `subst` is the list of substitutions to perform. Each substitution is represented by a
     ///   pair with the first component being the new variable substituted for the old variable in
     ///   the second component.
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self;
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Self;
 }
 
 impl<T: Subst> Subst for Rc<T> {
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Self {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Self {
         Rc::new(Rc::unwrap_or_clone(self).subst_sim(subst))
     }
 }
 
 impl<T: Subst> Subst for Vec<T> {
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Vec<T> {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Vec<T> {
         self.into_iter()
             .map(|element| element.subst_sim(subst))
             .collect()
@@ -35,7 +35,7 @@ impl<T: Subst> Subst for Vec<T> {
 }
 
 impl<T: Subst + std::hash::Hash + Eq> Subst for HashSet<T> {
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> HashSet<T> {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> HashSet<T> {
         self.into_iter()
             .map(|element| element.subst_sim(subst))
             .collect()
@@ -43,7 +43,7 @@ impl<T: Subst + std::hash::Hash + Eq> Subst for HashSet<T> {
 }
 
 impl<T: Subst> Subst for Option<T> {
-    fn subst_sim(self, subst: &[(Ident, Ident)]) -> Option<T> {
+    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Option<T> {
         self.map(|t| t.subst_sim(subst))
     }
 }

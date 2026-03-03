@@ -2,7 +2,7 @@
 
 use printer::{Print, theme::ThemeExt, tokens::I64};
 
-use super::{Ident, TypeDeclaration};
+use super::{Identifier, TypeDeclaration};
 
 /// This enum encodes the types of AxCut. They are either integers or names of user-declared types.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
@@ -10,7 +10,7 @@ pub enum Ty {
     /// Signed 64-bit integer.
     I64,
     /// User-declared (data or codata) type.
-    Decl(Ident),
+    Decl(Identifier),
 }
 
 impl Ty {
@@ -26,7 +26,7 @@ impl Ty {
             types
                 .iter()
                 .find(|declaration| declaration.name == *type_name)
-                .unwrap_or_else(|| panic!("Type {type_name} not found"))
+                .unwrap_or_else(|| panic!("Type {} not found", type_name.name))
         } else {
             panic!("User-defined type cannot be {}", self.print_to_string(None));
         }

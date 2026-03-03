@@ -19,19 +19,19 @@ asm_main:
     // actual code
 
 main_:
-    // lit f1 <- 3;
+    // lit f_1 <- 3;
     MOVZ X5, 3, LSL 0
-    // lit f2 <- 3;
+    // lit f_2 <- 3;
     MOVZ X7, 3, LSL 0
-    // lit f3 <- 3;
+    // lit f_3 <- 3;
     MOVZ X9, 3, LSL 0
-    // lit f4 <- 3;
+    // lit f_4 <- 3;
     MOVZ X11, 3, LSL 0
-    // lit f5 <- 3;
+    // lit f_5 <- 3;
     MOVZ X13, 3, LSL 0
-    // lit f6 <- 3;
+    // lit f_6 <- 3;
     MOVZ X15, 3, LSL 0
-    // lit f7 <- 3;
+    // lit f_7 <- 3;
     MOVZ X17, 3, LSL 0
     // lit x <- 3;
     MOVZ X20, 3, LSL 0
@@ -239,7 +239,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // substitute (f1 := f1)(f2 := f2)(f3 := f3)(f5 := f5)(f6 := f6)(f7 := f7)(f4 := f4)(bb3 := bb)(bb2 := bb)(bb1 := bb);
+    // substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_3 := bb)(bb_2 := bb)(bb_1 := bb);
     // #share bb
     CMP X19, 0
     BEQ lab27
@@ -259,7 +259,7 @@ lab27:
     MOV X23, X19
     MOV X22, X20
     MOV X24, X20
-    // switch bb1 \{ ... \};
+    // switch bb_1 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 BoxBox_28:
@@ -296,7 +296,7 @@ lab30:
     LDR X23, [ X23, 48 ]
 
 lab31:
-    // switch b1 \{ ... \};
+    // switch b_1 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_32:
@@ -323,7 +323,7 @@ lab33:
     LDR X24, [ X23, 56 ]
 
 lab34:
-    // let d1: Box = B(x1);
+    // let d_1: Box = B(x_1);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -425,7 +425,7 @@ lab45:
 lab47:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // let dd1: BoxBox = BB(d1);
+    // let dd_1: BoxBox = BB(d_1);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -527,8 +527,8 @@ lab58:
 lab60:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // substitute (bb2 := bb2);
-    // #erase bb3
+    // substitute (bb_2 := bb_2);
+    // #erase bb_3
     CMP X19, 0
     BEQ lab63
     // ######check refcount
@@ -548,7 +548,7 @@ lab61:
 lab62:
 
 lab63:
-    // #erase dd1
+    // #erase dd_1
     CMP X23, 0
     BEQ lab66
     // ######check refcount
@@ -573,7 +573,7 @@ lab66:
     MOV X5, X22
     // lit y <- 4;
     MOVZ X7, 4, LSL 0
-    // let a1: Box = B(y);
+    // let a_1: Box = B(y);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -675,7 +675,7 @@ lab77:
 lab79:
     // #load tag
     MOVZ X7, 0, LSL 0
-    // substitute (a1 := a1)(bb2 := bb2);
+    // substitute (a_1 := a_1)(bb_2 := bb_2);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -683,7 +683,7 @@ lab79:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // switch bb2 \{ ... \};
+    // switch bb_2 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 BoxBox_80:
@@ -720,7 +720,7 @@ lab82:
     LDR X6, [ X6, 48 ]
 
 lab83:
-    // switch b2 \{ ... \};
+    // switch b_2 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_84:
@@ -747,7 +747,7 @@ lab85:
     LDR X7, [ X6, 56 ]
 
 lab86:
-    // let a2: Box = B(x2);
+    // let a_2: Box = B(x_2);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -849,7 +849,7 @@ lab97:
 lab99:
     // #load tag
     MOVZ X7, 0, LSL 0
-    // switch a2 \{ ... \};
+    // switch a_2 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_100:
@@ -876,13 +876,13 @@ lab101:
     LDR X7, [ X6, 56 ]
 
 lab102:
-    // substitute (x2 := x2)(a1 := a1);
+    // substitute (x_2 := x_2)(a_1 := a_1);
     // #move variables
     MOV X6, X4
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // switch a1 \{ ... \};
+    // switch a_1 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_103:
@@ -909,7 +909,7 @@ lab104:
     LDR X7, [ X6, 56 ]
 
 lab105:
-    // res <- x1 + x2;
+    // res <- x_1 + x_2;
     ADD X9, X7, X5
     // println_i64 res;
     // #save caller-save registers

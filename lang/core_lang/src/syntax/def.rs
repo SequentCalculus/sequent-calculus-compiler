@@ -15,7 +15,7 @@ use crate::traits::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def<S = Statement> {
     /// The name of the definition
-    pub name: Ident,
+    pub name: Identifier,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
@@ -26,7 +26,7 @@ pub type FsDef = Def<FsStatement>;
 
 impl Def {
     /// This function applies the [`Focusing`] transformation to the body of the top-level function.
-    pub fn focus(self, max_id: &mut usize) -> FsDef {
+    pub fn focus(self, max_id: &mut ID) -> FsDef {
         FsDef {
             name: self.name,
             context: self.context,

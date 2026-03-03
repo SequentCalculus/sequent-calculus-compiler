@@ -14,12 +14,12 @@ pub fn xvar(input: TokenStream, chi: Chirality) -> TokenStream {
         ["Variable Identifier", "Type"],
         &[(1, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
-    let var_id = &args[0];
+    let var_name = &args[0];
     let var_ty = &args[1];
     quote! {
         core_lang::syntax::terms::xvar::XVar{
             prdcns: #prdcns,
-            var: #var_id,
+            var: #var_name,
             ty: #var_ty
         }
     }

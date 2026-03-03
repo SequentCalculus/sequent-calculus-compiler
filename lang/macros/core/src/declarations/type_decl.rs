@@ -19,12 +19,12 @@ fn type_decl<P: Polarity>(input: TokenStream, polarity: P) -> TokenStream {
     };
 
     let args = parse_args(input.into(), ["Type Name", "Xtors"], &[]);
-    let id = &args[0];
+    let identifier = &args[0];
     let xtors = expr_to_array(&args[1], 1);
     quote! {
         core_lang::syntax::declaration::TypeDeclaration{
             dat: #polarity,
-            name: #id,
+            name: #identifier,
             xtors: ::std::vec::Vec::from([
                 #(#xtors),*
             ])
