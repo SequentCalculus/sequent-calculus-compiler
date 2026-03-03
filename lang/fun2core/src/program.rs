@@ -5,6 +5,7 @@ use crate::{
     declaration::{compile_ctor, compile_dtor},
     def::{compile_def, compile_main},
 };
+use fun::syntax::declarations::Def;
 
 use std::collections::VecDeque;
 
@@ -41,6 +42,19 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
             }
         } else {
             defs_translated.extend(compile_def(def, codata_types.as_slice(), &mut used_labels));
+        }
+    }
+    for pdef in prog.pdefs {
+        if pdef.name == "main" {
+            for def_main in compile_main(Def::from(pdef), codata_types.as_slice(), &mut used_labels)
+                .into_iter()
+                .rev()
+            {
+                defs_translated.push_front(def_main);
+            }
+        }
+        else {
+            defs_translated.extend(compile_def(Def::from(pdef), codata_types.as_slice(), &mut used_labels));
         }
     }
 
