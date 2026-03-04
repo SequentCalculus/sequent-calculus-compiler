@@ -120,7 +120,7 @@ impl TypedFreeVars for Op {
 }
 
 impl Subst for Op {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Op {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Op {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 

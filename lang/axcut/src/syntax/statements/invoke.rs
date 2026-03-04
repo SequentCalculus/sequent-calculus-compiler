@@ -72,7 +72,7 @@ impl TypedFreeVars for Invoke {
 }
 
 impl Subst for Invoke {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Invoke {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Invoke {
         self.var = self.var.subst_sim(subst);
         self.args = self.args.subst_sim(subst);
         self

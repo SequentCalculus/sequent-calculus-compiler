@@ -7,10 +7,9 @@ use crate::syntax::*;
 use crate::traits::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, and the body statement. It
-/// is annotated with the list of all variable names used in the top-level function. The type
-/// parameter `S` determines whether this is the unfocused variant (if `S` is instantiated with
-/// [`Statement`], which is the default) or the focused variant (if `S` is instantiated with
+/// (unique in the program), a typing context defining the parameters, and the body statement. The
+/// type parameter `S` determines whether this is the unfocused variant (if `S` is instantiated
+/// with [`Statement`], which is the default) or the focused variant (if `S` is instantiated with
 /// [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Def<S = Statement> {

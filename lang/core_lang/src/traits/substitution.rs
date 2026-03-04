@@ -86,10 +86,9 @@ pub trait SubstVar: Clone {
     /// The result of substitution, usually `Self::Target = Self`
     type Target;
     /// This method substitutes a list of (co)variables for other (co)variables in a term or
-    /// statement. It assumes all variable bindings in each path through a term or statement have a
-    /// unique ID, so no care is needed to account for shadowing. It further assumes that all
-    /// variables substituted into the statement are fresh for this statement, so that no care is
-    /// needed to avoid capture.
+    /// statement. It assumes all variable bindings in a term or statement have a unique ID, so no
+    /// care is needed to account for shadowing. It further assumes that all variables substituted
+    /// into the statement are fresh for this statement, so that no care is needed to avoid capture.
     /// - `subst` is the list of substitutions to perform. Each substitution is represented by a
     ///   pair with the first component being the ID of the old (co)variable substituted by the new
     ///   (co)variable in the second component. The first matching substitution is performed.

@@ -313,10 +313,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let shrunk = self.shrunk(path)?;
-        let linearized = shrunk.linearize();
-        self.linearized.insert(path.clone(), linearized.clone());
-        Ok(linearized)
+        let mut shrunk = self.shrunk(path)?;
+        shrunk.linearize();
+        self.linearized.insert(path.clone(), shrunk.clone());
+        Ok(shrunk)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.

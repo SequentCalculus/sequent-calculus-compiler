@@ -74,7 +74,7 @@ impl TypedFreeVars for Literal {
 }
 
 impl Subst for Literal {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Literal {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Literal {
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
         self

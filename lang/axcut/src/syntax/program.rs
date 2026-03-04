@@ -5,7 +5,8 @@ use printer::{DocAllocator, Print};
 use super::{Def, ID, TypeDeclaration};
 
 /// This struct defines programs in AxCut. They consist of a list top-level functions and a list of
-/// user-declared types.
+/// user-declared types. Moreover, it contains the highest [`ID`] currently used for
+/// [`crate::syntax::Identifier`]s in the program.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Prog {
     pub defs: Vec<Def>,
@@ -16,15 +17,12 @@ pub struct Prog {
 impl Prog {
     /// This function applies the linearization procedure to the whole program, which means to all
     /// top-level functions.
-    pub fn linearize(mut self) -> Prog {
-        let mut max_id = self.max_id;
-        self.defs = self
-            .defs
-            .into_iter()
-            .map(|def| def.linearize(&mut max_id))
-            .collect();
-        self.max_id = max_id;
-        self
+    pub fn linearize(&mut self) {
+        let new_defs = Vec::with_capacity(self.defs.len());
+        for mut def in std::mem::replace(&mut self.defs, new_defs) {
+            def = def.linearize(&mut self.max_id);
+            self.defs.push(def);
+        }
     }
 }
 

@@ -144,7 +144,7 @@ impl TypedFreeVars for IfC {
 }
 
 impl Subst for IfC {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> IfC {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> IfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 

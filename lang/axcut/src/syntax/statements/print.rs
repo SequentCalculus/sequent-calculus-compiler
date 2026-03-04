@@ -70,7 +70,7 @@ impl TypedFreeVars for PrintI64 {
 }
 
 impl Subst for PrintI64 {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> PrintI64 {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> PrintI64 {
         self.var = self.var.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);

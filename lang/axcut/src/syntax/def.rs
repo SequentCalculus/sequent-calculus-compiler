@@ -9,8 +9,7 @@ use crate::traits::linearize::Linearizing;
 use std::collections::HashSet;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, and the body statement. It
-/// is annotated with the list of all variable names used in the top-level function.
+/// (unique in the program), a typing context defining the parameters, and the body statement.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Def {
     pub name: Identifier,

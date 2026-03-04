@@ -2,7 +2,7 @@
 
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
-use crate::syntax::{Chirality, ContextBinding, Identifier, Statement, Ty};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -36,7 +36,7 @@ impl From<Exit> for Statement {
 }
 
 impl Subst for Exit {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Exit {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Exit {
         self.var = self.var.subst_sim(subst);
         self
     }

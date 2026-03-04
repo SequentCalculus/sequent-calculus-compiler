@@ -11,13 +11,15 @@ pub trait Linearizing {
     type Target;
     /// This method linearizes a statement, translating the given non-linearized version into
     /// the linearized one. It inserts an explicit substitution before most statements which takes
-    /// care of adapting the context appropriately. It assumes all variable bindings in each path
-    /// through the statement to be unique and maintains this invariant.
+    /// care of adapting the context appropriately. It assumes all variable bindings in each
+    /// statement to be unique and essentially maintains this invariant. The only excpetion is for
+    /// variables in explicit substitutions are merely reordered, for those the
+    /// [`crate::syntax::Identifier`] stays the same, which can be viewed as a trivial shadowing.
     /// - `context` is the list of variables currently in the environment. It constitutes the
     ///   type environment the given statement is supposed to be typed in.
     ///   linearized. It is threaded through the linearization to facilitate generation of fresh
     ///   variables.
-    /// - `max_id` is the highest id used for [`crate::syntax::Identifier`]s. It is incremented
+    /// - `max_id` is the highest [`ID`] used for [`crate::syntax::Identifier`]s. It is incremented
     ///   whenever a fresh [`crate::syntax::Identifier`] is created.
     fn linearize(self, context: TypingContext, max_id: &mut ID) -> Self::Target;
 }

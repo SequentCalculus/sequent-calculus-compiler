@@ -63,7 +63,7 @@ impl Print for ContextBinding {
 }
 
 impl Subst for ContextBinding {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -94,6 +94,12 @@ impl TypingContext {
             .collect()
     }
 
+    /// This function returns an iterator over the [`ID`]s of variables in a typing context, consuming
+    /// the context.
+    pub fn into_iter_ids(self) -> impl Iterator<Item = ID> {
+        self.bindings.into_iter().map(|binding| binding.var.id)
+    }
+
     /// This function returns an iterator over the variables in a typing context, consuming the
     /// context.
     pub fn into_iter_vars(self) -> impl Iterator<Item = Identifier> {
@@ -104,7 +110,7 @@ impl TypingContext {
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the
     ///   context.
-    /// - `max_id` is the highest id used for [`Identifier`]s.
+    /// - `max_id` is the highest [`ID`] currently used for [`Identifier`]s.
     pub fn freshen(&self, mut clashes: HashSet<Identifier>, max_id: &mut ID) -> TypingContext {
         let mut new_bindings = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
@@ -124,9 +130,9 @@ impl TypingContext {
         new_bindings.into()
     }
 
-    /// This function keeps all bindings in a context which are contained in a given set. It tries to
-    /// retain the original positions of as many bindings as possible in the context by moving bindings
-    /// at the end to positions of variables that are not retained.
+    /// This function keeps all bindings in a context that are contained in a given set. It tries
+    /// to retain the original positions of as many bindings as possible in the context by moving
+    /// bindings at the end to positions of variables that are not retained.
     /// - `context` is the context from which to keep bindings.
     /// - `set` is the set of variables for which to keep bindings.
     pub fn filter_by_set(&self, set: &HashSet<Identifier>) -> TypingContext {
@@ -194,7 +200,7 @@ impl From<Vec<ContextBinding>> for TypingContext {
 }
 
 impl Subst for TypingContext {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }

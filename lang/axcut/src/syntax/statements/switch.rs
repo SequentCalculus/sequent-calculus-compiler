@@ -70,7 +70,7 @@ impl TypedFreeVars for Switch {
 }
 
 impl Subst for Switch {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Switch {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Switch {
         self.var = self.var.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);

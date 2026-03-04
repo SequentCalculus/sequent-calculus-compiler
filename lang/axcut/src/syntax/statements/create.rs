@@ -106,7 +106,7 @@ impl TypedFreeVars for Create {
 }
 
 impl Subst for Create {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Create {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Create {
         self.context = self.context.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
@@ -204,8 +204,8 @@ impl Linearizing for Create {
 
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
-            let substitution_next: Vec<(Identifier, Identifier)> = context_next
-                .into_iter_vars()
+            let substitution_next: Vec<(ID, Identifier)> = context_next
+                .into_iter_ids()
                 .zip(context_next_freshened.vars())
                 .collect();
             self.next = self.next.subst_sim(substitution_next.as_slice());

@@ -97,7 +97,7 @@ impl TypedFreeVars for Let {
 }
 
 impl Subst for Let {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Let {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Let {
         self.args = self.args.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);

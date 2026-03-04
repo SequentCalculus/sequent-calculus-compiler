@@ -7,7 +7,7 @@ use printer::{
     util::BracesExt,
 };
 
-use crate::syntax::{ContextBinding, Identifier, Statement, TypingContext};
+use crate::syntax::{ContextBinding, ID, Identifier, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -44,7 +44,7 @@ impl TypedFreeVars for Clause {
 }
 
 impl Subst for Clause {
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Clause {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Clause {
         self.body = self.body.subst_sim(subst);
         self
     }

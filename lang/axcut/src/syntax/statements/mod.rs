@@ -101,7 +101,7 @@ impl TypedFreeVars for Statement {
 }
 
 impl Subst for Statement {
-    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Statement {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> Statement {
         match self {
             Statement::Substitute(substitute) => substitute.subst_sim(subst).into(),
             Statement::Call(call) => call.subst_sim(subst).into(),
