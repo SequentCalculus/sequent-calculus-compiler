@@ -29,6 +29,15 @@ pub fn fresh_identifier(max_id: &mut ID, base_name: &str) -> Identifier {
     }
 }
 
+impl Subst for ID {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> ID {
+        match subst.iter().find(|(old, _)| *old == self) {
+            None => self,
+            Some((_, new)) => new.id,
+        }
+    }
+}
+
 impl Subst for Identifier {
     fn subst_sim(self, subst: &[(ID, Identifier)]) -> Identifier {
         match subst.iter().find(|(old, _)| *old == self.id) {

@@ -22,7 +22,7 @@ pub struct PrintI64 {
     pub newline: bool,
     pub var: Identifier,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Identifier>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for PrintI64 {
@@ -48,11 +48,11 @@ impl From<PrintI64> for Statement {
 }
 
 impl FreeVars for PrintI64 {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.insert(self.var.clone());
+        vars.insert(self.var.id);
 
         self
     }
@@ -88,7 +88,7 @@ impl Linearizing for PrintI64 {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the variables is not consumed, so we have to keep it
-        free_vars.insert(self.var.clone());
+        free_vars.insert(self.var.id);
 
         // the new context consists of the context for the remaining statement
         let new_context = context.filter_by_set(&free_vars);

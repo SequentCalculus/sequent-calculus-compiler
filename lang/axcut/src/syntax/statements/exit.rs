@@ -43,8 +43,8 @@ impl Subst for Exit {
 }
 
 impl FreeVars for Exit {
-    fn free_vars(self, vars: &mut HashSet<Identifier>) -> Self {
-        vars.insert(self.var.clone());
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
+        vars.insert(self.var.id);
         self
     }
 }

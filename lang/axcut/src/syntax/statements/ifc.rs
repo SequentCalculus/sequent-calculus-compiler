@@ -108,16 +108,16 @@ impl From<IfC> for Statement {
 }
 
 impl FreeVars for IfC {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.thenc = self.thenc.free_vars(vars);
 
         let mut vars_elsec = HashSet::new();
         self.elsec = self.elsec.free_vars(&mut vars_elsec);
 
         vars.extend(vars_elsec);
-        vars.insert(self.fst.clone());
+        vars.insert(self.fst.id);
         if let Some(ref snd) = self.snd {
-            vars.insert(snd.clone());
+            vars.insert(snd.id);
         }
 
         self

@@ -85,19 +85,9 @@ impl TypingContext {
             .collect()
     }
 
-    /// This function returns the list of variables in a typing context.
-    pub fn vars_set(&self) -> HashSet<Identifier> {
-        self.bindings
-            .iter()
-            .map(|binding| &binding.var)
-            .cloned()
-            .collect()
-    }
-
-    /// This function returns an iterator over the [`ID`]s of variables in a typing context, consuming
-    /// the context.
-    pub fn into_iter_ids(self) -> impl Iterator<Item = ID> {
-        self.bindings.into_iter().map(|binding| binding.var.id)
+    /// This function returns the set of [`ID`]s of variables in a typing context.
+    pub fn ids_set(&self) -> HashSet<ID> {
+        self.bindings.iter().map(|binding| binding.var.id).collect()
     }
 
     /// This function returns an iterator over the variables in a typing context, consuming the
@@ -108,13 +98,13 @@ impl TypingContext {
 
     /// This function picks fresh names for variables that are duplicated in a context.
     /// - `context` is the context in which to pick fresh names.
-    /// - `clashes` is the set of variables for which a fresh name must be picked if they occur in the
-    ///   context.
+    /// - `clashes` is the set of [`ID`]s of variables for which a fresh name must be picked if
+    ///   they occur in the context.
     /// - `max_id` is the highest [`ID`] currently used for [`Identifier`]s.
-    pub fn freshen(&self, mut clashes: HashSet<Identifier>, max_id: &mut ID) -> TypingContext {
+    pub fn freshen(&self, mut clashes: HashSet<ID>, max_id: &mut ID) -> TypingContext {
         let mut new_bindings = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
-            if clashes.contains(&binding.var) {
+            if clashes.contains(&binding.var.id) {
                 // if the variable has occurred already we pick a fresh one
                 new_bindings.push(ContextBinding {
                     var: fresh_identifier(max_id, &binding.var.name),
@@ -123,7 +113,7 @@ impl TypingContext {
                 });
             } else {
                 // otherwise we keep it, but remember that we have seen it already
-                clashes.insert(binding.var.clone());
+                clashes.insert(binding.var.id);
                 new_bindings.push(binding.clone());
             }
         }
@@ -134,20 +124,20 @@ impl TypingContext {
     /// to retain the original positions of as many bindings as possible in the context by moving
     /// bindings at the end to positions of variables that are not retained.
     /// - `context` is the context from which to keep bindings.
-    /// - `set` is the set of variables for which to keep bindings.
-    pub fn filter_by_set(&self, set: &HashSet<Identifier>) -> TypingContext {
+    /// - `set` is the set of [`ID`]s of variables for which to keep bindings.
+    pub fn filter_by_set(&self, set: &HashSet<ID>) -> TypingContext {
         let mut new_context = self.bindings.to_owned();
         for (pos, binding) in self.bindings.iter().enumerate() {
             // if we are beyond the length of the new context, we must have moved all variables from
             // this point on already, so we are done
             if pos >= new_context.len() {
                 break;
-            } else if !set.contains(&binding.var) {
+            } else if !set.contains(&binding.var.id) {
                 // if we do not keep the binding at the current position, we look for one to keep from
                 // the end of the new context
                 let mut found_element = false;
                 while new_context.len() - 1 > pos {
-                    if set.contains(&new_context[new_context.len() - 1].var) {
+                    if set.contains(&new_context[new_context.len() - 1].var.id) {
                         found_element = true;
                         // if we have found a binding to keep at the end, we move it to the free
                         // position ...

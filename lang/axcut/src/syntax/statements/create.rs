@@ -27,9 +27,9 @@ pub struct Create {
     /// Closure environment
     pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Identifier>>,
+    pub free_vars_clauses: Option<HashSet<ID>>,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Identifier>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Create {
@@ -78,7 +78,7 @@ impl From<Create> for Statement {
 }
 
 impl FreeVars for Create {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
@@ -86,7 +86,7 @@ impl FreeVars for Create {
         self.clauses = self.clauses.free_vars(&mut vars_clauses);
         self.free_vars_clauses = Some(vars_clauses.clone());
 
-        vars.remove(&self.var);
+        vars.remove(&self.var.id);
         vars.extend(vars_clauses);
 
         self
@@ -186,7 +186,7 @@ impl Linearizing for Create {
         } else {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
             let mut context_next_freshened =
-                context_next.freshen(context_clauses.vars_set(), max_id);
+                context_next.freshen(context_clauses.ids_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = context_next_freshened.clone();
@@ -205,7 +205,9 @@ impl Linearizing for Create {
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
             let substitution_next: Vec<(ID, Identifier)> = context_next
-                .into_iter_ids()
+                .bindings
+                .into_iter()
+                .map(|binding| binding.var.id)
                 .zip(context_next_freshened.vars())
                 .collect();
             self.next = self.next.subst_sim(substitution_next.as_slice());

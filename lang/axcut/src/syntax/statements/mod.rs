@@ -65,7 +65,7 @@ pub enum Statement {
 }
 
 impl FreeVars for Statement {
-    fn free_vars(self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
         match self {
             Statement::Substitute(substitute) => substitute.free_vars(vars).into(),
             Statement::Call(call) => call.free_vars(vars).into(),

@@ -24,7 +24,7 @@ pub struct Let {
     pub tag: Identifier,
     pub args: TypingContext,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Identifier>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Let {
@@ -73,12 +73,12 @@ impl From<Let> for Statement {
 }
 
 impl FreeVars for Let {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.remove(&self.var);
-        vars.extend(self.args.vars());
+        vars.remove(&self.var.id);
+        vars.extend(self.args.bindings.iter().map(|binding| binding.var.id));
 
         self
     }
@@ -137,7 +137,7 @@ impl Linearizing for Let {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args = self.args.freshen(new_context.vars_set(), max_id);
+            self.args = self.args.freshen(new_context.ids_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();

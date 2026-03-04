@@ -23,7 +23,7 @@ pub struct Switch {
     pub var: Identifier,
     pub ty: Ty,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Identifier>>,
+    pub free_vars_clauses: Option<HashSet<ID>>,
 }
 
 impl Print for Switch {
@@ -48,11 +48,11 @@ impl From<Switch> for Statement {
 }
 
 impl FreeVars for Switch {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.clauses = self.clauses.free_vars(vars);
         self.free_vars_clauses = Some(vars.clone());
 
-        vars.insert(self.var.clone());
+        vars.insert(self.var.id);
 
         self
     }
@@ -118,7 +118,7 @@ impl Linearizing for Switch {
             self.into()
         } else {
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
-            if new_context.vars_set().contains(&self.var) {
+            if new_context.ids_set().contains(&self.var.id) {
                 self.var = fresh_identifier(max_id, &self.var.name);
             }
 

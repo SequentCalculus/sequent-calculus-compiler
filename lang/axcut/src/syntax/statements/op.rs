@@ -54,7 +54,7 @@ pub struct Op {
     pub snd: Identifier,
     pub var: Identifier,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Identifier>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Op {
@@ -86,13 +86,13 @@ impl From<Op> for Statement {
 }
 
 impl FreeVars for Op {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.remove(&self.var);
-        vars.insert(self.fst.clone());
-        vars.insert(self.snd.clone());
+        vars.remove(&self.var.id);
+        vars.insert(self.fst.id);
+        vars.insert(self.snd.id);
 
         self
     }
@@ -141,8 +141,8 @@ impl Linearizing for Op {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the input variables are not consumed, so we have to keep them
-        free_vars.insert(self.fst.clone());
-        free_vars.insert(self.snd.clone());
+        free_vars.insert(self.fst.id);
+        free_vars.insert(self.snd.id);
 
         // the new context consists of the context for the remaining statement ...
         let mut new_context = context.filter_by_set(&free_vars);

@@ -22,7 +22,7 @@ pub struct Literal {
     pub lit: i64,
     pub var: Identifier,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Identifier>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Literal {
@@ -52,11 +52,11 @@ impl From<Literal> for Statement {
 }
 
 impl FreeVars for Literal {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.remove(&self.var);
+        vars.remove(&self.var.id);
 
         self
     }

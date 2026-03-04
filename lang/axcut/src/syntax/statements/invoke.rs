@@ -53,9 +53,9 @@ impl From<Invoke> for Statement {
 }
 
 impl FreeVars for Invoke {
-    fn free_vars(self, vars: &mut HashSet<Identifier>) -> Self {
-        vars.extend(self.args.vars());
-        vars.insert(self.var.clone());
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
+        vars.extend(self.args.bindings.iter().map(|binding| binding.var.id));
+        vars.insert(self.var.id);
         self
     }
 }
@@ -99,7 +99,7 @@ impl Linearizing for Invoke {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let mut freshened_context = args.freshen(HashSet::from([self.var.clone()]), max_id);
+            let mut freshened_context = args.freshen(HashSet::from([self.var.id]), max_id);
             freshened_context.bindings.push(closure_binding);
 
             let rearrange = freshened_context

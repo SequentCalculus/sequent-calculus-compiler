@@ -43,8 +43,8 @@ impl From<Call> for Statement {
 }
 
 impl FreeVars for Call {
-    fn free_vars(self, vars: &mut HashSet<Identifier>) -> Self {
-        vars.extend(self.args.vars());
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
+        vars.extend(self.args.bindings.iter().map(|binding| binding.var.id));
         self
     }
 }

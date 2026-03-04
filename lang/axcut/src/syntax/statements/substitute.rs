@@ -57,12 +57,12 @@ impl From<Substitute> for Statement {
 }
 
 impl FreeVars for Substitute {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
 
         for (new, old) in &self.rearrange {
-            vars.insert(old.clone());
-            vars.remove(&new.var);
+            vars.insert(old.id);
+            vars.remove(&new.var.id);
         }
 
         self

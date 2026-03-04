@@ -25,10 +25,10 @@ pub struct Clause {
 }
 
 impl FreeVars for Clause {
-    fn free_vars(mut self, vars: &mut HashSet<Identifier>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.body = self.body.free_vars(vars);
         for binding in &self.context.bindings {
-            vars.remove(&binding.var);
+            vars.remove(&binding.var.id);
         }
         self
     }
