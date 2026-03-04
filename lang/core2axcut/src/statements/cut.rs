@@ -20,12 +20,12 @@ use std::rc::Rc;
 /// This function function eliminates the cut of a (co)variable and a (tilde-)mu-binding by
 /// reduction.
 /// - `var` is the (co)variable on one side of the cut.
-/// - `var_mu` is the variable bound by the (tilde-)mu.
+/// - `var_mu` is the ID of the variable bound by the (tilde-)mu.
 /// - `statement` is the body of the (tilde-)mu.
 /// - `state` is the state of the whole translation.
 fn shrink_renaming(
     var: Identifier,
-    var_mu: Identifier,
+    var_mu: ID,
     statement: Rc<FsStatement>,
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
@@ -35,7 +35,7 @@ fn shrink_renaming(
 }
 
 /// This function function eliminates the cut of an xtor and a (co)match by reduction.
-/// - `id` is the name of the xtor.
+/// - `xtor` is the name of the xtor.
 /// - `args` is the argument list of the xtor.
 /// - `clauses` are the clauses of the (co)match.
 /// - `state` is the state of the whole translation.
@@ -44,16 +44,16 @@ fn shrink_renaming(
 ///
 /// A panic is caused if no clause for the xtor is in the (co)match.
 fn shrink_known_cuts<T: Chi + std::fmt::Debug>(
-    id: &Identifier,
+    xtor: &Identifier,
     args: Vec<Identifier>,
     clauses: &[Clause<T, FsStatement>],
     state: &mut ShrinkingState,
 ) -> axcut::syntax::Statement {
-    let (statement, context) = match clauses.iter().find(|clause| clause.xtor == *id) {
-        None => panic!("Xtor {} not found in clauses {clauses:?}", id.name),
+    let (statement, context) = match clauses.iter().find(|clause| clause.xtor == *xtor) {
+        None => panic!("Xtor {} not found in clauses {clauses:?}", xtor.name),
         Some(clause) => (clause.body.clone(), &clause.context),
     };
-    let subst: Vec<(Identifier, Identifier)> = context.vec_vars().into_iter().zip(args).collect();
+    let subst: Vec<(ID, Identifier)> = context.vec_ids().into_iter().zip(args).collect();
     Rc::unwrap_or_clone(statement)
         .subst_sim(subst.as_slice())
         .shrink(state)
@@ -509,7 +509,7 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            ) => shrink_renaming(var, variable, statement, state),
+            ) => shrink_renaming(var, variable.id, statement, state),
 
             (
                 FsTerm::Xtor(FsXtor {

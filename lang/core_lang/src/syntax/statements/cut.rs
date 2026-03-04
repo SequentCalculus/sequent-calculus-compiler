@@ -90,7 +90,7 @@ impl Subst for Cut {
 
 impl SubstVar for FsCut {
     type Target = FsCut;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsCut {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsCut {
         self.producer = self.producer.subst_sim(subst);
         self.consumer = self.consumer.subst_sim(subst);
         self
@@ -109,9 +109,9 @@ where
 }
 
 impl Uniquify for Cut {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Cut {
-        self.producer = self.producer.uniquify(state);
-        self.consumer = self.consumer.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> Cut {
+        self.producer = self.producer.uniquify(max_id);
+        self.consumer = self.consumer.uniquify(max_id);
         self
     }
 }
@@ -210,29 +210,29 @@ mod tests {
                 [lit!(1), ctor!(id!("Nil"), [], ty!(id!("ListInt")))],
                 ty!(id!("ListInt"))
             ),
-            covar!(id!("a"), ty!(id!("ListInt"))),
+            covar!(id!("a", 1), ty!(id!("ListInt"))),
             ty!(id!("ListInt"))
         )
-        .focus(&mut Default::default());
+        .focus(&mut 1);
 
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                id!("x", 1),
+                id!("x", 2),
                 fs_cut!(
                     fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
                     fs_mutilde!(
-                        id!("x", 2),
+                        id!("x", 3),
                         fs_cut!(
                             fs_ctor!(
                                 id!("Cons"),
                                 [
-                                    bind!(id!("x", 1), prd!()),
-                                    bind!(id!("x", 2), prd!(), ty!(id!("ListInt")))
+                                    bind!(id!("x", 2), prd!()),
+                                    bind!(id!("x", 3), prd!(), ty!(id!("ListInt")))
                                 ],
                                 ty!(id!("ListInt"))
                             ),
-                            covar!(id!("a", 0), ty!(id!("ListInt"))),
+                            covar!(id!("a", 1), ty!(id!("ListInt"))),
                             ty!(id!("ListInt"))
                         ),
                         ty!(id!("ListInt"))

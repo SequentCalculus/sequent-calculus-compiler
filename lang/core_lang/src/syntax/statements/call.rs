@@ -58,8 +58,8 @@ impl TypedFreeVars for Call {
 }
 
 impl Uniquify for Call {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Call {
-        self.args = self.args.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> Call {
+        self.args = self.args.uniquify(max_id);
         self
     }
 }
@@ -107,7 +107,7 @@ impl From<FsCall> for FsStatement {
 
 impl SubstVar for FsCall {
     type Target = FsCall;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsCall {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsCall {
         self.args = self.args.subst_sim(subst);
         self
     }

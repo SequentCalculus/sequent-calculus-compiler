@@ -126,14 +126,9 @@ impl<C: Chi> Bind for XVar<C> {
 
 impl<C: Chi> SubstVar for XVar<C> {
     type Target = XVar<C>;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> XVar<C> {
-        match subst.iter().find(|(old, _)| *old == self.var) {
-            None => self,
-            Some((_, new)) => {
-                self.var = new.clone();
-                self
-            }
-        }
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> XVar<C> {
+        self.var = self.var.subst_sim(subst);
+        self
     }
 }
 

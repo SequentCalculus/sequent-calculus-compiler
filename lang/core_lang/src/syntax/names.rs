@@ -8,10 +8,11 @@ pub type ID = usize;
 
 /// `Identifier`s in the program, used for (co)variables, top-level labels, and names of
 /// user-declared types and their xtors. Each of the three categories lives in a separate
-/// namespace. `id`s of (co)variables are made globally unique by the [`Uniquify`] pass. Thus,
-/// after this pass, only the `id` matters internally, and the `name` is just for pretty-printing.
-/// By convention, if the `id` is `0`, the `Identifier` is not (yet) unique. For top-level labels
-/// and types and their  xtors, the `id` is currently not used, requiring the `name` to be unique.
+/// namespace. By convention, if the `id` is `0`, the `Identifier` is not (yet) globally unique,
+/// while non-zero `id`s are expected to be globally unique. For top-level labels and types and
+/// their xtors, the `id` is currently not used, requiring the `name` to be unique. `id`s of
+/// (co)variables are made unique by the [`Uniquify`] pass. Thus, after this pass, only the `id`
+/// matters internally, and the `name` is just for pretty-printing.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Identifier {
     /// base name for pretty-printing
@@ -21,39 +22,38 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    /// Create a new [`Identifier`] with id `0`.
+    /// Create a new [`Identifier`] with [`ID`] `0`.
     pub fn new(name: String) -> Self {
         Self { name, id: 0 }
     }
 }
 
-/// Create a fresh [`Identifier`] with given `base_name`. `max_id` is the current maximal ID used
-/// in the program and is incremented by this function.
+/// Create a fresh [`Identifier`] with given `base_name`. `max_id` is the maximal [`ID`] currently
+/// used in the program and is incremented by this function.
 pub fn fresh_identifier(max_id: &mut ID, base_name: &str) -> Identifier {
-    let identifier = Identifier {
-        name: base_name.to_string(),
-        id: *max_id + 1,
-    };
     *max_id += 1;
-    identifier
+    Identifier {
+        name: base_name.to_string(),
+        id: *max_id,
+    }
 }
 
 /// Create a fresh variable, i.e., a fresh [`Identifier`] with base name `x`. `max_id` is the
-/// current maximal ID used in the program and is incremented by this function.
+/// maximal [`ID`] currently used in the program and is incremented by this function.
 pub fn fresh_var(max_id: &mut ID) -> Identifier {
     fresh_identifier(max_id, "x")
 }
 
 /// Create a fresh covariable, i.e., a fresh [`Identifier`] with base name `a`. `max_id` is the
-/// current maximal ID used in the program and is incremented by this function.
+/// maximal [`ID`] currently used in the program and is incremented by this function.
 pub fn fresh_covar(max_id: &mut ID) -> Identifier {
     fresh_identifier(max_id, "a")
 }
 
 impl SubstVar for Identifier {
     type Target = Identifier;
-    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Identifier {
-        match subst.iter().find(|(old, _)| *old == self) {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> Identifier {
+        match subst.iter().find(|(old, _)| *old == self.id) {
             None => self,
             Some((_, new)) => new.clone(),
         }

@@ -65,10 +65,10 @@ impl TypedFreeVars for Argument {
 }
 
 impl Uniquify for Argument {
-    fn uniquify(self, state: &mut UniquifyState) -> Argument {
+    fn uniquify(self, max_id: &mut ID) -> Argument {
         match self {
-            Argument::Producer(term) => Argument::Producer(term.uniquify(state)),
-            Argument::Consumer(term) => Argument::Consumer(term.uniquify(state)),
+            Argument::Producer(term) => Argument::Producer(term.uniquify(max_id)),
+            Argument::Consumer(term) => Argument::Consumer(term.uniquify(max_id)),
         }
     }
 }
@@ -136,8 +136,8 @@ impl TypedFreeVars for Arguments {
 }
 
 impl Uniquify for Arguments {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Arguments {
-        self.entries = self.entries.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> Arguments {
+        self.entries = self.entries.uniquify(max_id);
         self
     }
 }

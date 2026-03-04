@@ -76,17 +76,8 @@ impl<C: Chi> TypedFreeVars for XCase<C> {
 }
 
 impl<C: Chi> Uniquify for XCase<C> {
-    fn uniquify(mut self, state: &mut UniquifyState) -> XCase<C> {
-        self.clauses = self
-            .clauses
-            .into_iter()
-            .map(|clause| {
-                let (clause_unique, new_seen) = state.uniquify_restore(clause);
-                state.seen_vars.extend(new_seen);
-                clause_unique
-            })
-            .collect();
-
+    fn uniquify(mut self, max_id: &mut ID) -> XCase<C> {
+        self.clauses = self.clauses.uniquify(max_id);
         self
     }
 }
@@ -134,7 +125,7 @@ impl Bind for XCase<Cns> {
 
 impl<C: Chi> SubstVar for FsXCase<C> {
     type Target = FsXCase<C>;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.clauses = self.clauses.subst_sim(subst);
         self
     }

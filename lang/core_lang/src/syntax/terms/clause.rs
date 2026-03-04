@@ -95,7 +95,6 @@ impl<C: Chi> Subst for Clause<C> {
     ) -> Clause<C> {
         let mut prod_subst_reduced: Vec<(Identifier, Term<Prd>)> = Vec::new();
         let mut cons_subst_reduced: Vec<(Identifier, Term<Cns>)> = Vec::new();
-
         for subst in prod_subst {
             if !self.context.vars().contains(&subst.0) {
                 prod_subst_reduced.push(subst.clone());
@@ -116,7 +115,7 @@ impl<C: Chi> Subst for Clause<C> {
 
 impl<C: Chi> SubstVar for FsClause<C> {
     type Target = FsClause<C>;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsClause<C> {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsClause<C> {
         self.body = self.body.subst_sim(subst);
         self
     }
@@ -147,14 +146,14 @@ impl<C: Chi> TypedFreeVars for FsClause<C> {
 }
 
 impl<C: Chi> Uniquify for Clause<C> {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Clause<C> {
+    fn uniquify(mut self, max_id: &mut ID) -> Clause<C> {
         let mut new_context = TypingContext::default();
         let mut var_subst: Vec<(Identifier, Term<Prd>)> = Vec::new();
         let mut covar_subst: Vec<(Identifier, Term<Cns>)> = Vec::new();
 
         for binding in self.context.bindings {
-            if state.seen_vars.contains(&binding.var) {
-                let new_var = state.next_var(&binding.var.name);
+            if binding.var.id == 0 {
+                let new_var = fresh_identifier(max_id, &binding.var.name);
                 new_context.bindings.push(ContextBinding {
                     var: new_var.clone(),
                     chi: binding.chi.clone(),
@@ -183,7 +182,6 @@ impl<C: Chi> Uniquify for Clause<C> {
                     ));
                 }
             } else {
-                state.seen_vars.insert(binding.var.clone());
                 new_context.bindings.push(binding);
             }
         }
@@ -191,11 +189,11 @@ impl<C: Chi> Uniquify for Clause<C> {
         self.context = new_context;
 
         self.body = if var_subst.is_empty() && covar_subst.is_empty() {
-            self.body.uniquify(state)
+            self.body.uniquify(max_id)
         } else {
             self.body
                 .subst_sim(&var_subst, &covar_subst)
-                .uniquify(state)
+                .uniquify(max_id)
         };
 
         self

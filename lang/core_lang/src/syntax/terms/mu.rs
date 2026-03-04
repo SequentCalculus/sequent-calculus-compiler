@@ -124,7 +124,7 @@ impl<C: Chi> Subst for Mu<C> {
 
 impl<C: Chi> SubstVar for FsMu<C> {
     type Target = FsMu<C>;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsMu<C> {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsMu<C> {
         self.statement = self.statement.subst_sim(subst);
         self
     }
@@ -169,9 +169,9 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 }
 
 impl<C: Chi> Uniquify for Mu<C> {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Mu<C> {
-        if state.seen_vars.contains(&self.variable) {
-            let new_variable = state.next_var(&self.variable.name);
+    fn uniquify(mut self, max_id: &mut ID) -> Mu<C> {
+        if self.variable.id == 0 {
+            let new_variable = fresh_identifier(max_id, &self.variable.name);
             let old_variable = self.variable;
             self.variable = new_variable;
 
@@ -182,7 +182,7 @@ impl<C: Chi> Uniquify for Mu<C> {
                         old_variable,
                         XVar::covar(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(state);
+                    .uniquify(max_id);
             } else {
                 self.statement = self
                     .statement
@@ -190,11 +190,10 @@ impl<C: Chi> Uniquify for Mu<C> {
                         old_variable,
                         XVar::var(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(state);
+                    .uniquify(max_id);
             }
         } else {
-            state.seen_vars.insert(self.variable.clone());
-            self.statement = self.statement.uniquify(state);
+            self.statement = self.statement.uniquify(max_id);
         }
 
         self

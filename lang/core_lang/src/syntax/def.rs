@@ -33,6 +33,60 @@ impl Def {
             body: self.body.focus(max_id),
         }
     }
+
+    /// This function applies the [`Uniquify`] transformation to the top-level function.
+    pub fn uniquify(mut self, max_id: &mut ID) -> Self {
+        let mut new_context = TypingContext::default();
+        let mut var_subst: Vec<(Identifier, Term<Prd>)> = Vec::new();
+        let mut covar_subst: Vec<(Identifier, Term<Cns>)> = Vec::new();
+
+        for binding in self.context.bindings {
+            if binding.var.id == 0 {
+                let new_var = fresh_identifier(max_id, &binding.var.name);
+                new_context.bindings.push(ContextBinding {
+                    var: new_var.clone(),
+                    chi: binding.chi.clone(),
+                    ty: binding.ty.clone(),
+                });
+
+                if binding.chi == Chirality::Prd {
+                    var_subst.push((
+                        binding.var,
+                        XVar {
+                            prdcns: Prd,
+                            var: new_var,
+                            ty: binding.ty,
+                        }
+                        .into(),
+                    ));
+                } else {
+                    covar_subst.push((
+                        binding.var,
+                        XVar {
+                            prdcns: Cns,
+                            var: new_var,
+                            ty: binding.ty,
+                        }
+                        .into(),
+                    ));
+                }
+            } else {
+                new_context.bindings.push(binding);
+            }
+        }
+
+        self.context = new_context;
+
+        self.body = if var_subst.is_empty() && covar_subst.is_empty() {
+            self.body.uniquify(max_id)
+        } else {
+            self.body
+                .subst_sim(&var_subst, &covar_subst)
+                .uniquify(max_id)
+        };
+
+        self
+    }
 }
 
 impl<S: Print> Print for Def<S> {

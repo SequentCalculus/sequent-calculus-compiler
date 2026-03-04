@@ -83,7 +83,7 @@ impl Subst for PrintI64 {
 
 impl SubstVar for FsPrintI64 {
     type Target = FsPrintI64;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsPrintI64 {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsPrintI64 {
         self.arg = self.arg.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self
@@ -109,9 +109,9 @@ impl TypedFreeVars for FsPrintI64 {
 }
 
 impl Uniquify for PrintI64 {
-    fn uniquify(mut self, state: &mut UniquifyState) -> PrintI64 {
-        self.arg = self.arg.uniquify(state);
-        self.next = self.next.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> PrintI64 {
+        self.arg = self.arg.uniquify(max_id);
+        self.next = self.next.uniquify(max_id);
         self
     }
 }

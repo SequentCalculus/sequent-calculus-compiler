@@ -117,7 +117,7 @@ impl Subst for Op {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -148,9 +148,9 @@ impl TypedFreeVars for FsOp {
 }
 
 impl Uniquify for Op {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Op {
-        self.fst = self.fst.uniquify(state);
-        self.snd = self.snd.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> Op {
+        self.fst = self.fst.uniquify(max_id);
+        self.snd = self.snd.uniquify(max_id);
 
         self
     }

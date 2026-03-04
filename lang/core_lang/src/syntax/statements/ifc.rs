@@ -139,7 +139,7 @@ impl Subst for IfC {
 
 impl SubstVar for FsIfC {
     type Target = FsIfC;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> FsIfC {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsIfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -179,13 +179,11 @@ impl TypedFreeVars for FsIfC {
 }
 
 impl Uniquify for IfC {
-    fn uniquify(mut self, state: &mut UniquifyState) -> IfC {
-        self.fst = self.fst.uniquify(state);
-        self.snd = self.snd.uniquify(state);
-        let (then_unique, then_seen) = state.uniquify_restore(self.thenc);
-        self.thenc = then_unique;
-        self.elsec = self.elsec.uniquify(state);
-        state.seen_vars.extend(then_seen);
+    fn uniquify(mut self, max_id: &mut ID) -> IfC {
+        self.fst = self.fst.uniquify(max_id);
+        self.snd = self.snd.uniquify(max_id);
+        self.thenc = self.thenc.uniquify(max_id);
+        self.elsec = self.elsec.uniquify(max_id);
         self
     }
 }
@@ -237,24 +235,24 @@ mod transform_tests {
         let result = ife!(
             lit!(2),
             lit!(1),
-            cut!(lit!(1), covar!(id!("a"))),
-            exit!(var!(id!("x")))
+            cut!(lit!(1), covar!(id!("a", 1))),
+            exit!(var!(id!("x", 2)))
         )
-        .focus(&mut Default::default());
+        .focus(&mut 2);
 
         let expected = fs_cut!(
             lit!(2),
             fs_mutilde!(
-                id!("x", 1),
+                id!("x", 3),
                 fs_cut!(
                     lit!(1),
                     fs_mutilde!(
-                        id!("x", 2),
+                        id!("x", 4),
                         fs_ife!(
-                            id!("x", 1),
-                            id!("x", 2),
-                            fs_cut!(lit!(1), covar!(id!("a"))),
-                            fs_exit!(id!("x"))
+                            id!("x", 3),
+                            id!("x", 4),
+                            fs_cut!(lit!(1), covar!(id!("a", 1))),
+                            fs_exit!(id!("x", 2))
                         )
                     )
                 )
@@ -264,20 +262,21 @@ mod transform_tests {
 
         assert_eq!(result, expected)
     }
+
     #[test]
     fn transform_ife2() {
         let result = ife!(
-            var!(id!("x")),
-            var!(id!("x")),
-            exit!(var!(id!("y"))),
-            cut!(var!(id!("x")), covar!(id!("a")))
+            var!(id!("x", 1)),
+            var!(id!("x", 1)),
+            exit!(var!(id!("y", 2))),
+            cut!(var!(id!("x", 1)), covar!(id!("a", 3)))
         )
-        .focus(&mut Default::default());
+        .focus(&mut 3);
         let expected = fs_ife!(
-            id!("x"),
-            id!("x"),
-            fs_exit!(id!("y")),
-            fs_cut!(var!(id!("x")), covar!(id!("a")))
+            id!("x", 1),
+            id!("x", 1),
+            fs_exit!(id!("y", 2)),
+            fs_cut!(var!(id!("x", 1)), covar!(id!("a", 3)))
         )
         .into();
         assert_eq!(result, expected)
@@ -305,6 +304,7 @@ mod transform_tests {
         .into();
         assert_eq!(result, expected)
     }
+
     #[test]
     fn transform_ifz2() {
         let result = ife!(

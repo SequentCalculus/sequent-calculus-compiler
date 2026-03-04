@@ -151,12 +151,12 @@ impl<C: Chi> TypedFreeVars for Term<C> {
 }
 
 impl<C: Chi> Uniquify for Term<C> {
-    fn uniquify(self, state: &mut UniquifyState) -> Term<C> {
+    fn uniquify(self, max_id: &mut ID) -> Term<C> {
         match self {
-            Term::Op(op) => op.uniquify(state).into(),
-            Term::Mu(mu) => mu.uniquify(state).into(),
-            Term::Xtor(xtor) => xtor.uniquify(state).into(),
-            Term::XCase(xcase) => xcase.uniquify(state).into(),
+            Term::Op(op) => op.uniquify(max_id).into(),
+            Term::Mu(mu) => mu.uniquify(max_id).into(),
+            Term::Xtor(xtor) => xtor.uniquify(max_id).into(),
+            Term::XCase(xcase) => xcase.uniquify(max_id).into(),
             _ => self,
         }
     }
@@ -245,7 +245,7 @@ impl<C: Chi> Print for FsTerm<C> {
 
 impl<C: Chi> SubstVar for FsTerm<C> {
     type Target = FsTerm<C>;
-    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> Self::Target {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
             FsTerm::Literal(ref _lit) => self,

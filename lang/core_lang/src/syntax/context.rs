@@ -54,7 +54,7 @@ impl Print for ContextBinding {
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -75,11 +75,20 @@ impl TypingContext {
             .collect()
     }
 
-    /// This functions returns a list of (co)variable names in the context in the correct order.
+    /// This functions returns the list of (co)variable names in the context in the correct order.
     pub fn vec_vars(&self) -> Vec<Identifier> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             vars.push(binding.var.clone());
+        }
+        vars
+    }
+
+    /// This functions returns the list of (co)variable IDs in the context in the correct order.
+    pub fn vec_ids(&self) -> Vec<ID> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in &self.bindings {
+            vars.push(binding.var.id);
         }
         vars
     }
@@ -114,7 +123,7 @@ impl Print for TypingContext {
 
 impl SubstVar for TypingContext {
     type Target = TypingContext;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }

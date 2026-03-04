@@ -48,7 +48,6 @@ impl Subst for Exit {
         cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
-
         self
     }
 }
@@ -60,9 +59,8 @@ impl TypedFreeVars for Exit {
 }
 
 impl Uniquify for Exit {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Exit {
-        self.arg = self.arg.uniquify(state);
-
+    fn uniquify(mut self, max_id: &mut ID) -> Exit {
+        self.arg = self.arg.uniquify(max_id);
         self
     }
 }
@@ -110,9 +108,8 @@ impl From<FsExit> for FsStatement {
 
 impl SubstVar for FsExit {
     type Target = FsExit;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.var = self.var.subst_sim(subst);
-
         self
     }
 }

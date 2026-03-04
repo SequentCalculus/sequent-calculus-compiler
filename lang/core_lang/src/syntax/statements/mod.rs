@@ -89,13 +89,13 @@ impl TypedFreeVars for Statement {
 }
 
 impl Uniquify for Statement {
-    fn uniquify(self, state: &mut UniquifyState) -> Statement {
+    fn uniquify(self, max_id: &mut ID) -> Statement {
         match self {
-            Statement::Cut(cut) => cut.uniquify(state).into(),
-            Statement::IfC(ifc) => ifc.uniquify(state).into(),
-            Statement::PrintI64(print) => print.uniquify(state).into(),
-            Statement::Call(call) => call.uniquify(state).into(),
-            Statement::Exit(exit) => exit.uniquify(state).into(),
+            Statement::Cut(cut) => cut.uniquify(max_id).into(),
+            Statement::IfC(ifc) => ifc.uniquify(max_id).into(),
+            Statement::PrintI64(print) => print.uniquify(max_id).into(),
+            Statement::Call(call) => call.uniquify(max_id).into(),
+            Statement::Exit(exit) => exit.uniquify(max_id).into(),
         }
     }
 }
@@ -143,7 +143,7 @@ impl Print for FsStatement {
 
 impl SubstVar for FsStatement {
     type Target = FsStatement;
-    fn subst_sim(self, subst: &[(Identifier, Identifier)]) -> FsStatement {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),

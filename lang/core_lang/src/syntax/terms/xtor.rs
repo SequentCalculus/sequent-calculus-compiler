@@ -98,7 +98,7 @@ impl<C: Chi> Subst for Xtor<C> {
 
 impl<C: Chi> SubstVar for FsXtor<C> {
     type Target = FsXtor<C>;
-    fn subst_sim(mut self, subst: &[(Identifier, Identifier)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.args = self.args.subst_sim(subst);
         self
     }
@@ -117,8 +117,8 @@ impl<C: Chi> TypedFreeVars for FsXtor<C> {
 }
 
 impl<C: Chi> Uniquify for Xtor<C> {
-    fn uniquify(mut self, state: &mut UniquifyState) -> Xtor<C> {
-        self.args = self.args.uniquify(state);
+    fn uniquify(mut self, max_id: &mut ID) -> Xtor<C> {
+        self.args = self.args.uniquify(max_id);
         self
     }
 }

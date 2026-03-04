@@ -163,15 +163,16 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the uniquified version of the [Core](core_lang) code.
     pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         if let Some(res) = self.uniquified.get(path) {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let uniquified = compiled.uniquify();
-        self.uniquified.insert(path.clone(), uniquified.clone());
-        Ok(uniquified)
+        let mut compiled = self.compiled(path)?;
+        compiled.uniquify();
+        self.uniquified.insert(path.clone(), compiled.clone());
+        Ok(compiled)
     }
 
     pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {

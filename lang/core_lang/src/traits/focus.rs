@@ -23,8 +23,8 @@ pub trait Focusing {
     /// This method peforms the focusing transformation on a term or statement. To do so, it lifts
     /// all non-variable terms out of argument positions, names them and puts the names in their
     /// place.
-    /// `max_id` is the highest id used for [`crate::syntax::Identifier`]s in the program.
-    /// It is threaded through the focusing to facilitate generation of fresh (co)variables.
+    /// `max_id` is the highest [`ID`] currently used for [`crate::syntax::Identifier`]s in the
+    /// program. It is threaded through the focusing to facilitate generation of fresh (co)variables.
     fn focus(self, max_id: &mut ID) -> Self::Target;
 }
 
@@ -46,8 +46,8 @@ impl<T: Focusing> Focusing for Vec<T> {
 /// standing for a term in argument position that has been lifted out of a statement. When the
 /// continuation is applied to a (co)variable, it returns the focused statement with the
 /// (co)variable in the place of the term that was lifted. The continuation also expects the
-/// highest id used for [`crate::syntax::Identifier`]s in the program, which is used to generate
-/// fresh names.
+/// highest [`ID`] currently used for [`crate::syntax::Identifier`]s in the program, which is used
+/// to generate fresh names.
 pub type Continuation = Box<dyn FnOnce(ContextBinding, &mut ID) -> FsStatement>;
 /// This is a type alias for a meta-level continuation similar to [Continuation], but it abstracts
 /// over many (co)variables at once.
@@ -61,8 +61,9 @@ pub trait Bind: Sized {
     /// lifted. It eventually yields the focused statement.
     /// - `continuation` is the continuation containing the statement from which the term has been
     ///   lifted.
-    /// - `max_id` is the highest id used for [`crate::syntax::Identifier`]s in the program.
-    ///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
+    /// - `max_id` is the highest [`ID`] currently used for [`crate::syntax::Identifier`]s in the
+    ///   program. It is threaded through the focusing to facilitate generation of fresh
+    ///   (co)variables.
     fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement;
 }
 
@@ -71,8 +72,8 @@ pub trait Bind: Sized {
 /// - `args` is the list of lifted terms.
 /// - `continuation` is the continuation containing the statement from which the terms have been
 ///   lifted.
-/// - `max_id` is the highest id used for [`crate::syntax::Identifier`]s in the program.
-///   It is threaded through the focusing to facilitate generation of fresh (co)variables.
+/// - `max_id` is the highest [`ID`] currently used for [`crate::syntax::Identifier`]s in the
+///   program. It is threaded through the focusing to facilitate generation of fresh (co)variables.
 pub fn bind_many(mut args: VecDeque<Argument>, k: ContinuationVec, max_id: &mut ID) -> FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), max_id),

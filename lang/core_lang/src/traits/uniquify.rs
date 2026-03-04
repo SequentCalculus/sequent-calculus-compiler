@@ -1,72 +1,36 @@
 //! This module defines a trait for making all binders in every path through a term or statement
 //! unique.
 
-use crate::syntax::{ID, Identifier};
-use std::collections::HashSet;
-use std::mem::swap;
+use crate::syntax::ID;
 use std::rc::Rc;
-
-pub struct UniquifyState {
-    pub seen_vars: HashSet<Identifier>,
-    pub next_id: ID,
-}
-
-impl UniquifyState {
-    pub fn new(seen: HashSet<Identifier>, max_id: ID) -> Self {
-        Self {
-            seen_vars: seen,
-            next_id: max_id + 1,
-        }
-    }
-
-    pub fn uniquify_restore<T>(&mut self, t: T) -> (T, HashSet<Identifier>)
-    where
-        T: Uniquify,
-    {
-        let mut seen_clone = self.seen_vars.clone();
-        let res = t.uniquify(self);
-        swap(&mut seen_clone, &mut self.seen_vars);
-        (res, seen_clone)
-    }
-
-    pub fn next_var(&mut self, base_name: &str) -> Identifier {
-        let new_var = Identifier {
-            name: base_name.to_string(),
-            id: self.next_id,
-        };
-        self.next_id += 1;
-        self.seen_vars.insert(new_var.clone());
-        new_var
-    }
-}
 
 /// This trait defines a method for making all binders in every path through a term or statement
 /// unique.
 pub trait Uniquify {
-    /// This method makes all binders in every path through a term or statement unique by renaming
-    /// them if needed.
-    /// - `seen_vars` is the set of names we have already seen in the path we are currently in.
-    ///   It is threaded through the uniquification to facilitate generation of fresh
+    /// This method makes all binders in a term or statement unique for the program assigning a
+    /// globally unique ID.
+    /// - `max_id` is the highest [`ID`] currently used for [`crate::syntax::Identifier`]s in the
+    ///   program. It is threaded through the uniquifying to facilitate generation of fresh
     ///   (co)variables.
-    fn uniquify(self, state: &mut UniquifyState) -> Self;
+    fn uniquify(self, max_id: &mut ID) -> Self;
 }
 
 impl<T: Uniquify + Clone> Uniquify for Rc<T> {
-    fn uniquify(self, state: &mut UniquifyState) -> Self {
-        Rc::new(Rc::unwrap_or_clone(self).uniquify(state))
+    fn uniquify(self, max_id: &mut ID) -> Self {
+        Rc::new(Rc::unwrap_or_clone(self).uniquify(max_id))
     }
 }
 
 impl<T: Uniquify> Uniquify for Option<T> {
-    fn uniquify(self, state: &mut UniquifyState) -> Self {
-        self.map(|t| t.uniquify(state))
+    fn uniquify(self, max_id: &mut ID) -> Self {
+        self.map(|t| t.uniquify(max_id))
     }
 }
 
 impl<T: Uniquify> Uniquify for Vec<T> {
-    fn uniquify(self, state: &mut UniquifyState) -> Self {
+    fn uniquify(self, max_id: &mut ID) -> Self {
         self.into_iter()
-            .map(|element| element.uniquify(state))
+            .map(|element| element.uniquify(max_id))
             .collect()
     }
 }
