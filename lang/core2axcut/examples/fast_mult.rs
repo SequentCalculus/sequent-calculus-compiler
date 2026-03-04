@@ -70,13 +70,13 @@ fn main() {
                                 prod!(
                                     var!(id!("x")),
                                     mu!(
-                                        id!("a", 1),
+                                        id!("a", 3),
                                         call!(
                                             id!("mult"),
                                             [
                                                 var!(id!("xs"), ty!(id!("ListInt"))),
                                                 covar!(id!("a", 2)),
-                                                covar!(id!("a", 1))
+                                                covar!(id!("a", 3))
                                             ]
                                         )
                                     )
@@ -104,7 +104,7 @@ fn main() {
         call!(id!("fmult"), [cons4, covar!(id!("a"))]),
     );
 
-    let program = prog!([main, mult, fmult], [ty_list], []);
+    let program = prog!([main, mult, fmult], [ty_list], [], 3);
 
     println!("{}\n", program.print_to_string(None));
     let program = program.focus();
