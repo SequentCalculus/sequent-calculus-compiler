@@ -70,7 +70,7 @@ impl CodeStatement for Create {
         });
 
         instructions.push(Backend::comment("#load tag".to_string()));
-        let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let table_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         Backend::load_label(table_temporary, fresh_label.clone(), instructions);
 
         self.next

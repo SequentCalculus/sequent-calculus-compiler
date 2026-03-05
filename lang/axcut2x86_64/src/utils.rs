@@ -1,13 +1,11 @@
 //! This module implements the utility functions used during code generation.
 
-use printer::Print;
-
 use super::Backend;
 use super::config::{
     REGISTER_NUM, RESERVED, RESERVED_SPILLS, Register, SPILL_NUM, Spill, Temporary,
 };
 
-use axcut::syntax::{Identifier, TypingContext};
+use axcut::syntax::{ID, TypingContext};
 use axcut2backend::{config::TemporaryNumber, utils::Utils};
 
 fn temporary_from_position(position: usize) -> Temporary {
@@ -28,22 +26,19 @@ impl Utils<Temporary> for Backend {
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
-        variable: &Identifier,
+        variable_id: ID,
     ) -> Temporary {
-        fn get_position(context: &TypingContext, variable: &Identifier) -> usize {
+        fn get_position(context: &TypingContext, variable_id: ID) -> usize {
             context
                 .bindings
                 .iter()
-                .position(|binding| binding.var == *variable)
+                .position(|binding| binding.var.id == variable_id)
                 .unwrap_or_else(|| {
-                    panic!(
-                        "Variable {} not found in context {context:?}",
-                        variable.print_to_string(None)
-                    )
+                    panic!("Variable {variable_id} not found in context {context:?}",)
                 })
         }
 
-        let position = 2 * get_position(context, variable) + number as usize;
+        let position = 2 * get_position(context, variable_id) + number as usize;
         temporary_from_position(position)
     }
 

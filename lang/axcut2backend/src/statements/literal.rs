@@ -38,7 +38,7 @@ impl CodeStatement for Literal {
             ty: Ty::I64,
         });
         Backend::load_immediate(
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             Backend::i64_to_immediate(self.lit),
             instructions,
         );

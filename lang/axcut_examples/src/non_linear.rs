@@ -4,11 +4,17 @@ use axcut_macros::{
 };
 
 pub fn non_linear_print() -> axcut::syntax::Prog {
-    non_linear(println_i64!(id!("res"), lit!(0, id!("ret"), exit!(id!("ret")))).into())
+    non_linear(
+        println_i64!(
+            id!("res", 25),
+            lit!(0, id!("ret", 26), exit!(id!("ret", 26)))
+        )
+        .into(),
+    )
 }
 
 pub fn non_linear_exit() -> axcut::syntax::Prog {
-    non_linear(exit!(id!("res")).into())
+    non_linear(exit!(id!("res", 25)).into())
 }
 
 pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
@@ -22,23 +28,23 @@ pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     );
 
     let main_body_switch_switch = switch!(
-        id!("a", 2),
+        id!("a", 22),
         ty!(id!("Box")),
         [clause!(
             id!("B"),
-            [bind!(id!("x", 2))],
+            [bind!(id!("x", 23))],
             substitute!(
                 [
-                    (bind!(id!("x", 2)), id!("x", 2)),
-                    (bind!(id!("a", 1), prd!(), ty!(id!("Box"))), id!("a", 1)),
+                    (bind!(id!("x", 23)), id!("x", 23)),
+                    (bind!(id!("a", 19), prd!(), ty!(id!("Box"))), id!("a", 19)),
                 ],
                 switch!(
-                    id!("a", 1),
+                    id!("a", 19),
                     ty!(id!("Box")),
                     [clause!(
                         id!("B"),
-                        [bind!(id!("x", 1))],
-                        sum!(id!("x", 1), id!("x", 2), id!("res"), exit_stmt)
+                        [bind!(id!("x", 24))],
+                        sum!(id!("x", 24), id!("x", 23), id!("res", 25), exit_stmt)
                     )]
                 )
             )
@@ -46,68 +52,72 @@ pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     );
 
     let main_body_switch = switch!(
-        id!("bb", 1),
+        id!("bb", 11),
         ty!(id!("BoxBox")),
         [clause!(
             id!("BB"),
-            [bind!(id!("b", 1), prd!(), ty!(id!("Box")))],
+            [bind!(id!("b", 14), prd!(), ty!(id!("Box")))],
             switch!(
-                id!("b", 1),
+                id!("b", 14),
                 ty!(id!("Box")),
                 [clause!(
                     id!("B"),
-                    [bind!(id!("x", 1))],
+                    [bind!(id!("x", 15))],
                     letin!(
-                        id!("d", 1),
+                        id!("d", 16),
                         ty!(id!("Box")),
                         id!("B"),
-                        [bind!(id!("x", 1))],
+                        [bind!(id!("x", 15))],
                         letin!(
-                            id!("dd", 1),
+                            id!("dd", 17),
                             ty!(id!("BoxBox")),
                             id!("BB"),
-                            [bind!(id!("d", 1), prd!(), ty!(id!("Box")))],
+                            [bind!(id!("d", 16), prd!(), ty!(id!("Box")))],
                             substitute!(
                                 [(
-                                    bind!(id!("bb", 2), prd!(), ty!(id!("BoxBox"))),
-                                    id!("bb", 2)
+                                    bind!(id!("bb", 12), prd!(), ty!(id!("BoxBox"))),
+                                    id!("bb", 12)
                                 )],
                                 lit!(
                                     4,
-                                    id!("y"),
+                                    id!("y", 18),
                                     letin!(
-                                        id!("a", 1),
+                                        id!("a", 19),
                                         ty!(id!("Box")),
                                         id!("B"),
-                                        [bind!(id!("y"))],
+                                        [bind!(id!("y", 18))],
                                         substitute!(
                                             [
                                                 (
-                                                    bind!(id!("a", 1), prd!(), ty!(id!("Box"))),
-                                                    id!("a", 1)
+                                                    bind!(id!("a", 19), prd!(), ty!(id!("Box"))),
+                                                    id!("a", 19)
                                                 ),
                                                 (
-                                                    bind!(id!("bb", 2), prd!(), ty!(id!("BoxBox"))),
-                                                    id!("bb", 2)
+                                                    bind!(
+                                                        id!("bb", 12),
+                                                        prd!(),
+                                                        ty!(id!("BoxBox"))
+                                                    ),
+                                                    id!("bb", 12)
                                                 ),
                                             ],
                                             switch!(
-                                                id!("bb", 2),
+                                                id!("bb", 12),
                                                 ty!(id!("BoxBox")),
                                                 [clause!(
                                                     id!("BB"),
-                                                    [bind!(id!("b", 2), prd!(), ty!(id!("Box")))],
+                                                    [bind!(id!("b", 20), prd!(), ty!(id!("Box")))],
                                                     switch!(
-                                                        id!("b", 2),
+                                                        id!("b", 20),
                                                         ty!(id!("Box")),
                                                         [clause!(
                                                             id!("B"),
-                                                            [bind!(id!("x", 2))],
+                                                            [bind!(id!("x", 21))],
                                                             letin!(
-                                                                id!("a", 2),
+                                                                id!("a", 22),
                                                                 ty!(id!("Box")),
                                                                 id!("B"),
-                                                                [bind!(id!("x", 2))],
+                                                                [bind!(id!("x", 21))],
                                                                 main_body_switch_switch
                                                             )
                                                         )]
@@ -148,17 +158,17 @@ pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
                                 id!("f", 7),
                                 lit!(
                                     3,
-                                    id!("x"),
+                                    id!("x", 8),
                                     letin!(
-                                        id!("b"),
+                                        id!("b", 9),
                                         ty!(id!("Box")),
                                         id!("B"),
-                                        [bind!(id!("x"))],
+                                        [bind!(id!("x", 8))],
                                         letin!(
-                                            id!("bb"),
+                                            id!("bb", 10),
                                             ty!(id!("BoxBox")),
                                             id!("BB"),
-                                            [bind!(id!("b"), prd!(), ty!(id!("Box")))],
+                                            [bind!(id!("b", 9), prd!(), ty!(id!("Box")))],
                                             substitute!(
                                                 [
                                                     (bind!(id!("f", 1)), id!("f", 1)),
@@ -170,27 +180,27 @@ pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
                                                     (bind!(id!("f", 4)), id!("f", 4)),
                                                     (
                                                         bind!(
-                                                            id!("bb", 3),
+                                                            id!("bb", 13),
                                                             prd!(),
                                                             ty!(id!("BoxBox"))
                                                         ),
-                                                        id!("bb")
+                                                        id!("bb", 10)
                                                     ),
                                                     (
                                                         bind!(
-                                                            id!("bb", 2),
+                                                            id!("bb", 12),
                                                             prd!(),
                                                             ty!(id!("BoxBox"))
                                                         ),
-                                                        id!("bb")
+                                                        id!("bb", 10)
                                                     ),
                                                     (
                                                         bind!(
-                                                            id!("bb", 1),
+                                                            id!("bb", 11),
                                                             prd!(),
                                                             ty!(id!("BoxBox"))
                                                         ),
-                                                        id!("bb")
+                                                        id!("bb", 10)
                                                     ),
                                                 ],
                                                 main_body_switch
@@ -207,5 +217,5 @@ pub fn non_linear(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     );
     let main = def!(id!("main"), [], main_body);
 
-    prog!([main], [ty_box, ty_box_box])
+    prog!([main], [ty_box, ty_box_box], 26)
 }

@@ -34,7 +34,7 @@ impl CodeStatement for PrintI64 {
 
         Backend::print_i64(
             self.newline,
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             &context.bindings,
             instructions,
         );

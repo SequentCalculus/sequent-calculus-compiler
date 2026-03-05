@@ -25,31 +25,31 @@ asm_main:
     ; actual code
 
 main_:
-    ; lit a <- 1;
+    ; lit a_1 <- 1;
     mov rdx, 1
-    ; lit b <- 3;
+    ; lit b_2 <- 3;
     mov rdi, 3
-    ; c <- a - b;
+    ; c_3 <- a_1 - b_2;
     mov r9, rdx
     sub r9, rdi
-    ; lit d <- 8;
+    ; lit d_4 <- 8;
     mov r11, 8
-    ; lit e <- -1;
+    ; lit e_5 <- -1;
     mov r13, -1
-    ; f <- e * d;
+    ; f_6 <- e_5 * d_4;
     mov r15, r13
     imul r15, r11
-    ; g <- f + c;
+    ; g_7 <- f_6 + c_3;
     mov rcx, r15
     add rcx, r9
     mov [rsp + 2024], rcx
-    ; lit h <- -6;
+    ; lit h_8 <- -6;
     mov qword [rsp + 2008], -6
-    ; i <- h * g;
+    ; i_9 <- h_8 * g_7;
     mov rcx, [rsp + 2008]
     imul rcx, [rsp + 2024]
     mov [rsp + 1992], rcx
-    ; println_i64 i;
+    ; println_i64 i_9;
     ; #move argument to TEMP before adapting the stack pointer
     mov rcx, [rsp + 1992]
     ; #save caller-save registers
@@ -67,9 +67,9 @@ main_:
     pop r9
     pop rdi
     pop rdx
-    ; lit ret <- 0;
+    ; lit ret_10 <- 0;
     mov qword [rsp + 1976], 0
-    ; exit ret
+    ; exit ret_10
     mov rax, [rsp + 1976]
     jmp cleanup
 

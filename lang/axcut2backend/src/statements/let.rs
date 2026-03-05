@@ -53,7 +53,7 @@ impl CodeStatement for Let {
         });
 
         instructions.push(Backend::comment("#load tag".to_string()));
-        let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let tag_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         Backend::load_immediate(
             tag_temporary,
             Backend::jump_length(tag_position),

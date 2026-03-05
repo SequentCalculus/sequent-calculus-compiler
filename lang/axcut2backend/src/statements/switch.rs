@@ -50,7 +50,7 @@ impl CodeStatement for Switch {
             ));
         } else {
             Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
-            let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+            let tag_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
             Backend::add(
                 Backend::temp(),
                 Backend::temp(),

@@ -19,15 +19,15 @@ asm_main:
     // actual code
 
 main_:
-    // lit z <- 8;
+    // lit z_1 <- 8;
     MOVZ X5, 8, LSL 0
-    // lit y <- 6;
+    // lit y_2 <- 6;
     MOVZ X7, 6, LSL 0
-    // lit x <- 4;
+    // lit x_3 <- 4;
     MOVZ X9, 4, LSL 0
-    // lit w <- 2;
+    // lit w_4 <- 2;
     MOVZ X11, 2, LSL 0
-    // let q: Quad = Q(z, y, x, w);
+    // let q_5: Quad = Q(z_1, y_2, x_3, w_4);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
@@ -229,7 +229,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X5, 0, LSL 0
-    // switch q \{ ... \};
+    // switch q_5 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Quad_27:
@@ -271,11 +271,11 @@ lab28:
     LDR X7, [ X6, 24 ]
 
 lab29:
-    // lit z <- 7;
+    // lit z_10 <- 7;
     MOVZ X13, 7, LSL 0
-    // e <- d + z;
+    // e_11 <- d_6 + z_10;
     ADD X15, X5, X13
-    // println_i64 e;
+    // println_i64 e_11;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -297,9 +297,9 @@ lab29:
     MOV X11, X24
     MOV X13, X25
     MOV X15, X26
-    // lit ret <- 0;
+    // lit ret_12 <- 0;
     MOVZ X17, 0, LSL 0
-    // exit ret
+    // exit ret_12
     MOV X0, X17
     B cleanup
 

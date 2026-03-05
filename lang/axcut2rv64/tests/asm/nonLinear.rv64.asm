@@ -14,9 +14,9 @@ LI X13 3
 LI X15 3
 // lit f_7 <- 3;
 LI X17 3
-// lit x <- 3;
+// lit x_8 <- 3;
 LI X19 3
-// let b: Box = B(x);
+// let b_9: Box = B(x_8);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -110,7 +110,7 @@ lab11:
 lab13:
 // #load tag
 LI X19 0
-// let bb: BoxBox = BB(b);
+// let bb_10: BoxBox = BB(b_9);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -204,8 +204,8 @@ lab24:
 lab26:
 // #load tag
 LI X19 0
-// substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_3 := bb)(bb_2 := bb)(bb_1 := bb);
-// #share bb
+// substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_13 := bb_10)(bb_12 := bb_10)(bb_11 := bb_10);
+// #share bb_10
 BEQ X18 X0 lab27
 // ####increment refcount
 LW X1 0 X18
@@ -223,7 +223,7 @@ MV X20 X18
 MV X22 X18
 MV X21 X19
 MV X23 X19
-// switch bb_1 \{ ... \};
+// switch bb_11 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 BoxBox_28:
@@ -258,7 +258,7 @@ LW X23 56 X22
 LW X22 48 X22
 
 lab31:
-// switch b_1 \{ ... \};
+// switch b_14 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_32:
@@ -284,7 +284,7 @@ MV X2 X22
 LW X23 56 X22
 
 lab34:
-// let d_1: Box = B(x_1);
+// let d_16: Box = B(x_15);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -378,7 +378,7 @@ lab45:
 lab47:
 // #load tag
 LI X23 0
-// let dd_1: BoxBox = BB(d_1);
+// let dd_17: BoxBox = BB(d_16);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -472,8 +472,8 @@ lab58:
 lab60:
 // #load tag
 LI X23 0
-// substitute (bb_2 := bb_2);
-// #erase bb_3
+// substitute (bb_12 := bb_12);
+// #erase bb_13
 BEQ X18 X0 lab63
 // ######check refcount
 LW X1 0 X18
@@ -491,7 +491,7 @@ MV X3 X18
 lab62:
 
 lab63:
-// #erase dd_1
+// #erase dd_17
 BEQ X22 X0 lab66
 // ######check refcount
 LW X1 0 X22
@@ -512,9 +512,9 @@ lab66:
 // #move variables
 MV X4 X20
 MV X5 X21
-// lit y <- 4;
+// lit y_18 <- 4;
 LI X7 4
-// let a_1: Box = B(y);
+// let a_19: Box = B(y_18);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -608,7 +608,7 @@ lab77:
 lab79:
 // #load tag
 LI X7 0
-// substitute (a_1 := a_1)(bb_2 := bb_2);
+// substitute (a_19 := a_19)(bb_12 := bb_12);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -616,7 +616,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// switch bb_2 \{ ... \};
+// switch bb_12 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 BoxBox_80:
@@ -651,7 +651,7 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab83:
-// switch b_2 \{ ... \};
+// switch b_20 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_84:
@@ -677,7 +677,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab86:
-// let a_2: Box = B(x_2);
+// let a_22: Box = B(x_21);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -771,7 +771,7 @@ lab97:
 lab99:
 // #load tag
 LI X7 0
-// switch a_2 \{ ... \};
+// switch a_22 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_100:
@@ -797,13 +797,13 @@ MV X2 X6
 LW X7 56 X6
 
 lab102:
-// substitute (x_2 := x_2)(a_1 := a_1);
+// substitute (x_23 := x_23)(a_19 := a_19);
 // #move variables
 MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// switch a_1 \{ ... \};
+// switch a_19 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_103:
@@ -829,9 +829,9 @@ MV X2 X6
 LW X7 56 X6
 
 lab105:
-// res <- x_1 + x_2;
+// res_25 <- x_24 + x_23;
 ADD X9 X7 X5
-// exit res
+// exit res_25
 MV X10 X9
 JAL X0 cleanup
 

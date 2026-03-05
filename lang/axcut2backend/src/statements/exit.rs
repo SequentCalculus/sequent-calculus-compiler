@@ -26,7 +26,7 @@ impl CodeStatement for Exit {
 
         Backend::mov(
             Backend::return1(),
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             instructions,
         );
         Backend::jump_label("cleanup".to_string(), instructions);

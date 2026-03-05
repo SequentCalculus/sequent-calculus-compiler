@@ -3,11 +3,11 @@ use axcut_macros::{
 };
 
 pub fn either_print() -> axcut::syntax::Prog {
-    either(println_i64!(id!("c"), lit!(0, id!("ret"), exit!(id!("ret")))).into())
+    either(println_i64!(id!("c", 7), lit!(0, id!("ret", 8), exit!(id!("ret", 8)))).into())
 }
 
 pub fn either_exit() -> axcut::syntax::Prog {
-    either(exit!(id!("c")).into())
+    either(exit!(id!("c", 7)).into())
 }
 
 pub fn either(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
@@ -21,28 +21,28 @@ pub fn either(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
 
     let main_body = lit!(
         1,
-        id!("z"),
+        id!("z", 1),
         lit!(
             9,
-            id!("x"),
+            id!("x", 2),
             letin!(
-                id!("p"),
+                id!("p", 3),
                 ty!(id!("Either")),
                 id!("Right"),
-                [bind!(id!("x"))],
+                [bind!(id!("x", 2))],
                 switch!(
-                    id!("p"),
+                    id!("p", 3),
                     ty!(id!("Either")),
                     [
                         clause!(
                             id!("Left"),
-                            [bind!(id!("a"))],
-                            lit!(-1, id!("err"), exit!(id!("err")))
+                            [bind!(id!("a", 4))],
+                            lit!(-1, id!("err", 5), exit!(id!("err", 5)))
                         ),
                         clause!(
                             id!("Right"),
-                            [bind!(id!("b"))],
-                            sum!(id!("b"), id!("z"), id!("c"), exit_stmt)
+                            [bind!(id!("b", 6))],
+                            sum!(id!("b", 6), id!("z", 1), id!("c", 7), exit_stmt)
                         )
                     ]
                 )
@@ -52,5 +52,5 @@ pub fn either(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
 
     let main = def!(id!("main"), [], main_body);
 
-    prog!([main], [ty_either])
+    prog!([main], [ty_either], 8)
 }

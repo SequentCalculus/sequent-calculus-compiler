@@ -3,11 +3,11 @@ use axcut_macros::{
 };
 
 pub fn list_print() -> axcut::syntax::Prog {
-    list(println_i64!(id!("a"), lit!(0, id!("ret"), exit!(id!("ret")))).into())
+    list(println_i64!(id!("a", 10), lit!(0, id!("ret", 11), exit!(id!("ret", 11)))).into())
 }
 
 pub fn list_exit() -> axcut::syntax::Prog {
-    list(exit!(id!("a")).into())
+    list(exit!(id!("a", 10)).into())
 }
 
 pub fn list(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
@@ -23,48 +23,57 @@ pub fn list(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     );
 
     let main_body = letin!(
-        id!("ws"),
+        id!("ws", 1),
         ty!(id!("List")),
         id!("Nil"),
         [],
         lit!(
             5,
-            id!("z"),
+            id!("z", 2),
             letin!(
-                id!("zs"),
+                id!("zs", 3),
                 ty!(id!("List")),
                 id!("Cons"),
-                [bind!(id!("z")), bind!(id!("ws"), prd!(), ty!(id!("List")))],
+                [
+                    bind!(id!("z", 2)),
+                    bind!(id!("ws", 1), prd!(), ty!(id!("List")))
+                ],
                 lit!(
                     7,
-                    id!("y"),
+                    id!("y", 4),
                     letin!(
-                        id!("ys"),
+                        id!("ys", 5),
                         ty!(id!("List")),
                         id!("Cons"),
-                        [bind!(id!("y")), bind!(id!("zs"), prd!(), ty!(id!("List")))],
+                        [
+                            bind!(id!("y", 4)),
+                            bind!(id!("zs", 3), prd!(), ty!(id!("List")))
+                        ],
                         lit!(
                             9,
-                            id!("x"),
+                            id!("x", 6),
                             letin!(
-                                id!("xs"),
+                                id!("xs", 7),
                                 ty!(id!("List")),
                                 id!("Cons"),
-                                [bind!(id!("x")), bind!(id!("ys"), prd!(), ty!(id!("List")))],
+                                [
+                                    bind!(id!("x", 6)),
+                                    bind!(id!("ys", 5), prd!(), ty!(id!("List")))
+                                ],
                                 switch!(
-                                    id!("xs"),
+                                    id!("xs", 7),
                                     ty!(id!("List")),
                                     [
                                         clause!(
                                             id!("Nil"),
                                             [],
-                                            lit!(-1, id!("err"), exit!(id!("err")))
+                                            lit!(-1, id!("err", 8), exit!(id!("err", 8)))
                                         ),
                                         clause!(
                                             id!("Cons"),
                                             [
-                                                bind!(id!("as"), prd!(), ty!(id!("List"))),
-                                                bind!(id!("a"))
+                                                bind!(id!("as", 9), prd!(), ty!(id!("List"))),
+                                                bind!(id!("a", 10))
                                             ],
                                             exit_stmt
                                         ),
@@ -79,5 +88,5 @@ pub fn list(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
     );
     let main = def!(id!("main"), [], main_body);
 
-    prog!([main], [ty_list])
+    prog!([main], [ty_list], 11)
 }

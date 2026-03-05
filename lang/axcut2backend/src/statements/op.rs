@@ -43,36 +43,36 @@ impl CodeStatement for Op {
             chi: Chirality::Ext,
             ty: Ty::I64,
         });
-        let target_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let target_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         match self.op {
             BinOp::Sum => Backend::add(
                 target_temporary,
-                Backend::variable_temporary(Snd, &context, &self.fst),
-                Backend::variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, self.fst.id),
+                Backend::variable_temporary(Snd, &context, self.snd.id),
                 instructions,
             ),
             BinOp::Sub => Backend::sub(
                 target_temporary,
-                Backend::variable_temporary(Snd, &context, &self.fst),
-                Backend::variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, self.fst.id),
+                Backend::variable_temporary(Snd, &context, self.snd.id),
                 instructions,
             ),
             BinOp::Prod => Backend::mul(
                 target_temporary,
-                Backend::variable_temporary(Snd, &context, &self.fst),
-                Backend::variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, self.fst.id),
+                Backend::variable_temporary(Snd, &context, self.snd.id),
                 instructions,
             ),
             BinOp::Div => Backend::div(
                 target_temporary,
-                Backend::variable_temporary(Snd, &context, &self.fst),
-                Backend::variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, self.fst.id),
+                Backend::variable_temporary(Snd, &context, self.snd.id),
                 instructions,
             ),
             BinOp::Rem => Backend::rem(
                 target_temporary,
-                Backend::variable_temporary(Snd, &context, &self.fst),
-                Backend::variable_temporary(Snd, &context, &self.snd),
+                Backend::variable_temporary(Snd, &context, self.fst.id),
+                Backend::variable_temporary(Snd, &context, self.snd.id),
                 instructions,
             ),
         }
