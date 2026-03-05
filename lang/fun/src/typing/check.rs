@@ -96,7 +96,7 @@ pub fn check_args(
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
                     if let Some(ty) = variable.ty {
                         check_equality(&variable.span, symbol_table, &ty, &found_ty)?;
-                    };
+                    }
 
                     check_equality(&variable.span, symbol_table, &binding.ty, &found_ty)?;
 

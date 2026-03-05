@@ -89,7 +89,7 @@ impl SymbolTable {
             if pol == &Polarity::Codata && xtors.contains(dtor) {
                 let ty = Ty::Decl {
                     span: None,
-                    name: name.to_string(),
+                    name: name.clone(),
                     type_args: type_args.clone(),
                 };
                 ty.check(&type_args.span, self)?;
@@ -143,7 +143,7 @@ impl SymbolTable {
             if pol == &Polarity::Data && xtors.contains(ctor) {
                 let ty = Ty::Decl {
                     span: None,
-                    name: name.to_string(),
+                    name: name.clone(),
                     type_args: type_args.clone(),
                 };
                 let xtors = xtors.clone();

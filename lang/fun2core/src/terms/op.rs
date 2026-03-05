@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 /// This function converts [arithmetic binary operations in Fun](fun::syntax::terms::BinOp) to
 /// [arithmetic binary operations in Core](core_lang::syntax::BinOp).
-fn compile_op(op: fun::syntax::terms::BinOp) -> core_lang::syntax::BinOp {
+fn compile_op(op: &fun::syntax::terms::BinOp) -> core_lang::syntax::BinOp {
     match op {
         fun::syntax::terms::BinOp::Div => core_lang::syntax::BinOp::Div,
         fun::syntax::terms::BinOp::Prod => core_lang::syntax::BinOp::Prod,
@@ -32,7 +32,7 @@ impl Compile for fun::syntax::terms::Op {
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            op: compile_op(self.op),
+            op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into()
@@ -49,7 +49,7 @@ impl Compile for fun::syntax::terms::Op {
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            op: compile_op(self.op),
+            op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into();

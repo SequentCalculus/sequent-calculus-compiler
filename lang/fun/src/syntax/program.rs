@@ -122,9 +122,9 @@ impl Program {
         }
 
         Ok(CheckedProgram {
-            defs,
             data_types,
             codata_types,
+            defs,
         })
     }
 

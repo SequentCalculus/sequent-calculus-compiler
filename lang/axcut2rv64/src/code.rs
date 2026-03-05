@@ -49,7 +49,7 @@ impl std::fmt::Display for Code {
             ADDI(x, y, c) => write!(f, "ADD {x} {y} {c}"),
             SUB(x, y, z) => write!(f, "SUB {x} {y} {z}"),
             MUL(x, y, z) => write!(f, "MUL {x} {y} {z}"),
-            DIV(x, y, z) => write!(f, "MUL {x} {y} {z}"),
+            DIV(x, y, z) => write!(f, "DIV {x} {y} {z}"),
             REM(x, y, z) => write!(f, "REM {x} {y} {z}"),
             JAL(x, l) => write!(f, "JAL {x} {l}"),
             JALR(x, y, c) => write!(f, "JALR {x} {y} {c}"),

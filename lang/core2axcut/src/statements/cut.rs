@@ -514,7 +514,7 @@ impl Shrinking for FsCut {
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
@@ -523,7 +523,7 @@ impl Shrinking for FsCut {
                     clauses,
                     ..
                 }),
-            ) => shrink_known_cuts(&id, args.vec_vars(), clauses.as_slice(), state),
+            ) => shrink_known_cuts(&name, args.vec_vars(), clauses.as_slice(), state),
             (
                 FsTerm::XCase(XCase {
                     prdcns: Prd,
@@ -532,11 +532,11 @@ impl Shrinking for FsCut {
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
-            ) => shrink_known_cuts(&id, args.vec_vars(), clauses.as_slice(), state),
+            ) => shrink_known_cuts(&name, args.vec_vars(), clauses.as_slice(), state),
 
             (
                 FsTerm::XVar(XVar {
@@ -615,7 +615,7 @@ impl Shrinking for FsCut {
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
@@ -635,14 +635,14 @@ impl Shrinking for FsCut {
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
             ) => axcut::syntax::statements::Let {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
-                tag: shrink_identifier(id),
+                tag: shrink_identifier(name),
                 args: shrink_context(args, state.codata),
                 next: statement.shrink(state),
                 free_vars_next: None,
@@ -653,7 +653,7 @@ impl Shrinking for FsCut {
             (
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
@@ -671,13 +671,13 @@ impl Shrinking for FsCut {
                 }),
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
-                    name: id,
+                    name,
                     args,
                     ty: _,
                 }),
             ) => axcut::syntax::statements::Invoke {
                 var: shrink_identifier(var),
-                tag: shrink_identifier(id),
+                tag: shrink_identifier(name),
                 ty: shrink_ty(self.ty),
                 args: shrink_context(args, state.codata),
             }

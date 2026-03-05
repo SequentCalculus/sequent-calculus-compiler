@@ -68,7 +68,7 @@ pub trait Bind: Sized {
 }
 
 /// This function is used during [focusing](Focusing) to avoid administrative redexes. It is
-/// similar to the [Bind::bind]-method, but for a whole list of lifted terms.
+/// similar to the [`Bind::bind`]-method, but for a whole list of lifted terms.
 /// - `args` is the list of lifted terms.
 /// - `continuation` is the continuation containing the statement from which the terms have been
 ///   lifted.

@@ -36,12 +36,12 @@ impl Ty {
 impl Print for Ty {
     fn print<'a>(
         &'a self,
-        _cfg: &printer::PrintCfg,
+        cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
             Ty::I64 => alloc.typ(I64),
-            Ty::Decl(name) => alloc.typ(&name.print_to_string(Some(_cfg))),
+            Ty::Decl(name) => alloc.typ(&name.print_to_string(Some(cfg))),
         }
     }
 }

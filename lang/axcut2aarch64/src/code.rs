@@ -1083,7 +1083,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
         match source_temporary {
             Temporary::Register(source_register) => {
-                instructions.push(Code::MOVR(Register::X(0), source_register))
+                instructions.push(Code::MOVR(Register::X(0), source_register));
             }
             Temporary::Spill(_) => instructions.push(Code::MOVR(Register::X(0), TEMP)),
         }

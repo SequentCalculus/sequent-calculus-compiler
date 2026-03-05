@@ -124,7 +124,7 @@ impl Check for New {
                             .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
                     new_clauses.push(clause);
                 }
-            };
+            }
         }
 
         if !self.clauses.is_empty() {

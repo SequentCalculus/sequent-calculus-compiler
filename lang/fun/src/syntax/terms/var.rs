@@ -74,7 +74,7 @@ impl Check for XVar {
         let found_ty = context.lookup_var(&self.var, &self.span)?;
         if let Some(ty) = self.ty {
             check_equality(&self.span, symbol_table, &ty, &found_ty)?;
-        };
+        }
 
         check_equality(&self.span, symbol_table, expected, &found_ty)?;
 

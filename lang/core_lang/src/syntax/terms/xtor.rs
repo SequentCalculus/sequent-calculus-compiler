@@ -106,13 +106,13 @@ impl<C: Chi> SubstVar for FsXtor<C> {
 
 impl<C: Chi> TypedFreeVars for Xtor<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.args.typed_free_vars(vars)
+        self.args.typed_free_vars(vars);
     }
 }
 
 impl<C: Chi> TypedFreeVars for FsXtor<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.extend(self.args.bindings.iter().cloned())
+        vars.extend(self.args.bindings.iter().cloned());
     }
 }
 

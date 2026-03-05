@@ -126,7 +126,7 @@ impl TypingContext {
     /// - `context` is the context from which to keep bindings.
     /// - `set` is the set of [`ID`]s of variables for which to keep bindings.
     pub fn filter_by_set(&self, set: &HashSet<ID>) -> TypingContext {
-        let mut new_context = self.bindings.to_owned();
+        let mut new_context = self.bindings.clone();
         for (pos, binding) in self.bindings.iter().enumerate() {
             // if we are beyond the length of the new context, we must have moved all variables from
             // this point on already, so we are done

@@ -53,7 +53,7 @@ impl Subst for Call {
 
 impl TypedFreeVars for Call {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.args.typed_free_vars(vars)
+        self.args.typed_free_vars(vars);
     }
 }
 
@@ -115,7 +115,7 @@ impl SubstVar for FsCall {
 
 impl TypedFreeVars for FsCall {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.extend(self.args.bindings.iter().cloned())
+        vars.extend(self.args.bindings.iter().cloned());
     }
 }
 
