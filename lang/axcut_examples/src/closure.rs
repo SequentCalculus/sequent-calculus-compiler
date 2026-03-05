@@ -1,67 +1,73 @@
 use axcut_macros::{
-    bind, clause, cns, create, def, exit, invoke, lit, prd, println_i64, prog, substitute, sum, ty,
-    ty_decl, xtor_sig,
+    bind, clause, cns, create, def, exit, id, invoke, lit, prd, println_i64, prog, substitute, sum,
+    ty, ty_decl, xtor_sig,
 };
 
 pub fn closure_print() -> axcut::syntax::Prog {
-    closure(println_i64!("r", lit!(0, "ret", exit!("ret"))).into())
+    closure(println_i64!(id!("r", 7), lit!(0, id!("ret", 8), exit!(id!("ret", 8)))).into())
 }
 
 pub fn closure_exit() -> axcut::syntax::Prog {
-    closure(exit!("r").into())
+    closure(exit!(id!("r", 7)).into())
 }
 
 pub fn closure(exit_stmt: axcut::syntax::Statement) -> axcut::syntax::Prog {
-    let ty_cont = ty_decl!("Cont", [xtor_sig!("Ret", [bind!("r")])],);
+    let ty_cont = ty_decl!(id!("Cont"), [xtor_sig!(id!("Ret"), [bind!(id!("r"))])],);
     let ty_func = ty_decl!(
-        "Fun",
+        id!("Fun"),
         [xtor_sig!(
-            "apply",
-            [bind!("x"), bind!("k", cns!(), ty!("Cont"))]
+            id!("apply"),
+            [bind!(id!("x")), bind!(id!("k"), cns!(), ty!(id!("Cont")))]
         )],
     );
 
     let main_body = lit!(
         9,
-        "a",
+        id!("a", 1),
         create!(
-            "f",
-            ty!("Fun"),
-            [bind!("a")],
+            id!("f", 2),
+            ty!(id!("Fun")),
+            [bind!(id!("a", 1))],
             [clause!(
-                "apply",
-                [bind!("x"), bind!("k", cns!(), ty!("Cont"))],
+                id!("apply"),
+                [
+                    bind!(id!("x", 3)),
+                    bind!(id!("k", 4), cns!(), ty!(id!("Cont")))
+                ],
                 sum!(
-                    "a",
-                    "x",
-                    "b",
+                    id!("a", 1),
+                    id!("x", 3),
+                    id!("b", 5),
                     substitute!(
-                        [(bind!("b"), "b"), (bind!("k", cns!(), ty!("Cont")), "k")],
-                        invoke!("k", "Ret", ty!("Cont"), []),
+                        [
+                            (bind!(id!("b", 5)), id!("b", 5)),
+                            (bind!(id!("k", 4), cns!(), ty!(id!("Cont"))), id!("k", 4))
+                        ],
+                        invoke!(id!("k", 4), id!("Ret"), ty!(id!("Cont")), []),
                     )
                 )
             )],
             create!(
-                "k",
-                ty!("Cont"),
+                id!("k", 6),
+                ty!(id!("Cont")),
                 [],
-                [clause!("Ret", [bind!("r")], exit_stmt,),],
+                [clause!(id!("Ret"), [bind!(id!("r", 7))], exit_stmt,),],
                 lit!(
                     1,
-                    "y",
+                    id!("y", 9),
                     substitute!(
                         [
-                            (bind!("y"), "y"),
-                            (bind!("k", cns!(), ty!("Cont")), "k"),
-                            (bind!("f", prd!(), ty!("Fun")), "f"),
+                            (bind!(id!("y", 9)), id!("y", 9)),
+                            (bind!(id!("k", 6), cns!(), ty!(id!("Cont"))), id!("k", 6)),
+                            (bind!(id!("f", 2), prd!(), ty!(id!("Fun"))), id!("f", 2)),
                         ],
-                        invoke!("f", "apply", ty!("Fun"), [])
+                        invoke!(id!("f", 2), id!("apply"), ty!(id!("Fun")), [])
                     )
                 ),
             ),
         )
     );
-    let main = def!("main", [], main_body);
+    let main = def!(id!("main"), [], main_body);
 
-    prog!([main], [ty_cont, ty_func])
+    prog!([main], [ty_cont, ty_func], 9)
 }

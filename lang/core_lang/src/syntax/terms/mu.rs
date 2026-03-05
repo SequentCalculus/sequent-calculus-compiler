@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This struct defines mu- and mu-tilde-abstractions in Core. It consists of the information
@@ -20,7 +20,7 @@ pub struct Mu<C: Chi, S = Statement> {
     /// Whether we have a mu- or mu-tilde-abstraction
     pub prdcns: C,
     /// The bound (co)variable
-    pub variable: Var,
+    pub variable: Identifier,
     /// The body statement, either unfocused ([`Statement`]) or focused ([`FsStatement`])
     pub statement: Rc<S>,
     /// The type
@@ -33,10 +33,10 @@ pub type FsMu<C: Chi> = Mu<C, FsStatement>;
 impl<S> Mu<Prd, S> {
     /// This function creates a mu-abstraction from a given covariable, body, and type.
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<S>>(covar: &str, stmt: T, ty: Ty) -> Self {
+    pub fn mu<T: Into<S>>(covar: Identifier, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Prd,
-            variable: covar.to_string(),
+            variable: covar,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -44,10 +44,10 @@ impl<S> Mu<Prd, S> {
 }
 impl<S> Mu<Cns, S> {
     /// This function creates a mu-tilde-abstraction from a given variable, body, and type.
-    pub fn tilde_mu<T: Into<S>>(var: &str, stmt: T, ty: Ty) -> Self {
+    pub fn tilde_mu<T: Into<S>>(var: Identifier, stmt: T, ty: Ty) -> Self {
         Mu {
             prdcns: Cns,
-            variable: var.to_string(),
+            variable: var,
             statement: Rc::new(stmt.into()),
             ty,
         }
@@ -99,11 +99,11 @@ impl<C: Chi> Subst for Mu<C> {
     type Target = Mu<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Mu<C> {
-        let mut prod_subst_reduced: Vec<(Var, Term<Prd>)> = Vec::new();
-        let mut cons_subst_reduced: Vec<(Covar, Term<Cns>)> = Vec::new();
+        let mut prod_subst_reduced: Vec<(Identifier, Term<Prd>)> = Vec::new();
+        let mut cons_subst_reduced: Vec<(Identifier, Term<Cns>)> = Vec::new();
         for subst in prod_subst {
             if subst.0 != self.variable {
                 prod_subst_reduced.push(subst.clone());
@@ -124,7 +124,7 @@ impl<C: Chi> Subst for Mu<C> {
 
 impl<C: Chi> SubstVar for FsMu<C> {
     type Target = FsMu<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsMu<C> {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsMu<C> {
         self.statement = self.statement.subst_sim(subst);
         self
     }
@@ -169,10 +169,9 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
 }
 
 impl<C: Chi> Uniquify for Mu<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Mu<C> {
-        if seen_vars.contains(&self.variable) {
-            let new_variable = fresh_name(used_vars, &self.variable);
-            seen_vars.insert(new_variable.clone());
+    fn uniquify(mut self, max_id: &mut ID) -> Mu<C> {
+        if self.variable.id == 0 {
+            let new_variable = fresh_identifier(max_id, &self.variable.name);
             let old_variable = self.variable;
             self.variable = new_variable;
 
@@ -181,21 +180,20 @@ impl<C: Chi> Uniquify for Mu<C> {
                     .statement
                     .subst_covar(
                         old_variable,
-                        XVar::covar(&self.variable, self.ty.clone()).into(),
+                        XVar::covar(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(seen_vars, used_vars);
+                    .uniquify(max_id);
             } else {
                 self.statement = self
                     .statement
                     .subst_var(
                         old_variable,
-                        XVar::var(&self.variable, self.ty.clone()).into(),
+                        XVar::var(self.variable.clone(), self.ty.clone()).into(),
                     )
-                    .uniquify(seen_vars, used_vars);
+                    .uniquify(max_id);
             }
         } else {
-            seen_vars.insert(self.variable.clone());
-            self.statement = self.statement.uniquify(seen_vars, used_vars);
+            self.statement = self.statement.uniquify(max_id);
         }
 
         self
@@ -205,11 +203,11 @@ impl<C: Chi> Uniquify for Mu<C> {
 impl<C: Chi> Focusing for Mu<C> {
     type Target = FsMu<C>;
     // focus(μa.s) = μa.focus(s) AND focus(~μx.s) = ~μx.focus(s)
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         Mu {
             prdcns: self.prdcns,
             variable: self.variable,
-            statement: self.statement.focus(used_vars),
+            statement: self.statement.focus(max_id),
             ty: self.ty,
         }
     }
@@ -217,17 +215,17 @@ impl<C: Chi> Focusing for Mu<C> {
 
 impl Bind for Mu<Prd> {
     // bind(μa.s)[k] = ⟨ μa.focus(s) | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let ty = self.ty.clone();
-        let new_var = fresh_var(used_vars);
+        let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
             ty: ty.clone(),
         };
         FsCut::new(
-            self.focus(used_vars),
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), ty.clone()),
+            self.focus(max_id),
+            Mu::tilde_mu(new_var, k(new_binding, max_id), ty.clone()),
             ty,
         )
         .into()
@@ -235,17 +233,17 @@ impl Bind for Mu<Prd> {
 }
 impl Bind for Mu<Cns> {
     // bind(~μx.s)[k] = ⟨ μa.k(a) | ~μx.focus(s) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         let ty = self.ty.clone();
-        let new_covar = fresh_covar(used_vars);
+        let new_covar = fresh_covar(max_id);
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
             ty: ty.clone(),
         };
         FsCut::new(
-            Mu::mu(&new_covar, k(new_binding, used_vars), ty.clone()),
-            self.focus(used_vars),
+            Mu::mu(new_covar, k(new_binding, max_id), ty.clone()),
+            self.focus(max_id),
             ty,
         )
         .into()
@@ -260,24 +258,25 @@ mod mu_tests {
         test_common::example_subst,
     };
     extern crate self as core_lang;
-    use core_macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, lit, mu, mutilde, var};
+    use core_macros::{covar, cut, fs_cut, fs_exit, fs_mu, fs_mutilde, id, lit, mu, mutilde, var};
 
     // Substitution tests
 
     #[test]
     fn subst_mu() {
         let subst = example_subst();
-        let result = mu!("a", cut!(var!("x"), covar!("a"))).subst_sim(&subst.0, &subst.1);
-        let expected = mu!("a", cut!(var!("y"), covar!("a")));
+        let result =
+            mu!(id!("a"), cut!(var!(id!("x")), covar!(id!("a")))).subst_sim(&subst.0, &subst.1);
+        let expected = mu!(id!("a"), cut!(var!(id!("y")), covar!(id!("a"))));
         assert_eq!(result, expected)
     }
 
     #[test]
     fn subst_mutilde() {
         let subst = example_subst();
-        let example = mutilde!("x", cut!(var!("x"), covar!("a")));
+        let example = mutilde!(id!("x"), cut!(var!(id!("x")), covar!(id!("a"))));
         let result = example.subst_sim(&subst.0, &subst.1);
-        let expected = mutilde!("x", cut!(var!("x"), covar!("b")));
+        let expected = mutilde!(id!("x"), cut!(var!(id!("x")), covar!(id!("b"))));
         assert_eq!(result, expected)
     }
 
@@ -285,21 +284,21 @@ mod mu_tests {
 
     #[test]
     fn focus_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(id!("a"), cut!(lit!(1), covar!(id!("a"))));
+        let example_var = fs_mu!(id!("a"), fs_cut!(lit!(1), covar!(id!("a"))));
         let result = example.clone().focus(&mut Default::default());
         assert_eq!(result, example_var)
     }
 
     #[test]
     fn bind_mu() {
-        let example = mu!("a", cut!(lit!(1), covar!("a")));
-        let example_var = fs_mu!("a", fs_cut!(lit!(1), covar!("a")));
+        let example = mu!(id!("a"), cut!(lit!(1), covar!(id!("a"))));
+        let example_var = fs_mu!(id!("a"), fs_cut!(lit!(1), covar!(id!("a"))));
         let result = example.clone().bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(example_var, fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(example_var, fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
     }
 }

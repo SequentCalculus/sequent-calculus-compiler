@@ -5,7 +5,7 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -54,8 +54,8 @@ impl Print for IfSort {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfC {
     pub sort: IfSort,
-    pub fst: Var,
-    pub snd: Option<Var>,
+    pub fst: Identifier,
+    pub snd: Option<Identifier>,
     pub thenc: Rc<Statement>,
     pub elsec: Rc<Statement>,
 }
@@ -108,16 +108,16 @@ impl From<IfC> for Statement {
 }
 
 impl FreeVars for IfC {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.thenc = self.thenc.free_vars(vars);
 
         let mut vars_elsec = HashSet::new();
         self.elsec = self.elsec.free_vars(&mut vars_elsec);
 
         vars.extend(vars_elsec);
-        vars.insert(self.fst.clone());
+        vars.insert(self.fst.id);
         if let Some(ref snd) = self.snd {
-            vars.insert(snd.clone());
+            vars.insert(snd.id);
         }
 
         self
@@ -144,7 +144,7 @@ impl TypedFreeVars for IfC {
 }
 
 impl Subst for IfC {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> IfC {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> IfC {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -157,11 +157,11 @@ impl Subst for IfC {
 
 impl Linearizing for IfC {
     type Target = IfC;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> IfC {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> IfC {
         // we do not insert an explicit substitution, as there are no new bindings and there will
         // be an explicit substitution in each branch
-        self.thenc = self.thenc.linearize(context.clone(), used_vars);
-        self.elsec = self.elsec.linearize(context, used_vars);
+        self.thenc = self.thenc.linearize(context.clone(), max_id);
+        self.elsec = self.elsec.linearize(context, max_id);
 
         self
     }

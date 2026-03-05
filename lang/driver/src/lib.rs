@@ -163,15 +163,16 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the uniquified version of the [Core](core_lang) code.
     pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         if let Some(res) = self.uniquified.get(path) {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let uniquified = compiled.uniquify();
-        self.uniquified.insert(path.clone(), uniquified.clone());
-        Ok(uniquified)
+        let mut compiled = self.compiled(path)?;
+        compiled.uniquify();
+        self.uniquified.insert(path.clone(), compiled.clone());
+        Ok(compiled)
     }
 
     pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
@@ -312,10 +313,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let shrunk = self.shrunk(path)?;
-        let linearized = shrunk.linearize();
-        self.linearized.insert(path.clone(), linearized.clone());
-        Ok(linearized)
+        let mut shrunk = self.shrunk(path)?;
+        shrunk.linearize();
+        self.linearized.insert(path.clone(), shrunk.clone());
+        Ok(shrunk)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.

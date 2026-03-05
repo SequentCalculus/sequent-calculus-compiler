@@ -1,6 +1,6 @@
 //! This module defines a trait with a method for computing the free variables of a statement.
 
-use crate::syntax::Var;
+use crate::syntax::ID;
 
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -11,19 +11,19 @@ pub trait FreeVars: Sized {
     /// This method calculates the free variables of a statement. It moreover annotates the free
     /// variables for each substatement where necessary to avoid repeated computation of free
     /// variables.
-    /// - `vars` is a reference to the set into which the free variables are collected. The set is
-    ///   assumed to be empty when passed to this method.
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self;
+    /// - `vars` is a reference to the set into which the [`ID`]s of the free variables are
+    ///   collected. The set is assumed to be empty when passed to this method.
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self;
 }
 
 impl<T: FreeVars + Clone> FreeVars for Rc<T> {
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
         Rc::new(Rc::unwrap_or_clone(self).free_vars(vars))
     }
 }
 
 impl<T: FreeVars> FreeVars for Vec<T> {
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
         self.into_iter()
             .map(|element| {
                 let mut free_vars = HashSet::new();

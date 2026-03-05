@@ -1,14 +1,14 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args};
+use macro_utils::{expr_to_array, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
 pub fn xtor_sig(input: TokenStream) -> TokenStream {
     let args = parse_args(input.into(), ["Xtor Name", "Xtor Args"], &[]);
-    let name = expr_to_string(&args[0], 0);
+    let name = &args[0];
     let xtor_args = expr_to_array(&args[1], 1);
     quote! {
         axcut::syntax::declaration::XtorSig{
-            name: #name.to_string(),
+            name: #name,
             args: axcut::syntax::context::TypingContext{
                 bindings: ::std::vec::Vec::from([
                     #(#xtor_args),*

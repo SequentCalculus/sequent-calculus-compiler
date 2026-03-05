@@ -3,7 +3,7 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{ContextBinding, Name, Statement, TypingContext, Var};
+use crate::syntax::{ContextBinding, ID, Identifier, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -20,7 +20,7 @@ use std::{
 /// function anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
-    pub label: Name,
+    pub label: Identifier,
     pub args: TypingContext,
 }
 
@@ -43,8 +43,8 @@ impl From<Call> for Statement {
 }
 
 impl FreeVars for Call {
-    fn free_vars(self, vars: &mut HashSet<Var>) -> Self {
-        vars.extend(self.args.vars());
+    fn free_vars(self, vars: &mut HashSet<ID>) -> Self {
+        vars.extend(self.args.bindings.iter().map(|binding| binding.var.id));
         self
     }
 }
@@ -56,7 +56,7 @@ impl TypedFreeVars for Call {
 }
 
 impl Subst for Call {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Call {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Call {
         self.args = self.args.subst_sim(subst);
         self
     }
@@ -64,7 +64,7 @@ impl Subst for Call {
 
 impl Linearizing for Call {
     type Target = Statement;
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> Statement {
         let args = std::mem::take(&mut self.args.bindings).into();
 
         // the context must consist of the arguments for the top-level function
@@ -73,7 +73,7 @@ impl Linearizing for Call {
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables via an explicit substitution
-            let freshened_context = args.freshen(HashSet::new(), used_vars);
+            let freshened_context = args.freshen(HashSet::new(), max_id);
             let rearrange = freshened_context
                 .bindings
                 .into_iter()

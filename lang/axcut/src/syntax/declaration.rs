@@ -7,13 +7,13 @@ use printer::{
     util::BracesExt,
 };
 
-use super::{Name, TypingContext};
+use super::{Identifier, TypingContext};
 
 /// This struct defines an xtor which represents a constructor or destructor. It consists of a
 /// name (unique within its type) and a typing context defining its parameters.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct XtorSig {
-    pub name: Name,
+    pub name: Identifier,
     pub args: TypingContext,
 }
 
@@ -29,7 +29,9 @@ impl Print for XtorSig {
             self.args.print(cfg, alloc).parens()
         };
 
-        alloc.ctor(&self.name).append(args.group())
+        alloc
+            .ctor(&self.name.print_to_string(Some(cfg)))
+            .append(args.group())
     }
 }
 
@@ -37,7 +39,7 @@ impl Print for XtorSig {
 /// list of xtors (constructors or destructors).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeDeclaration {
-    pub name: Name,
+    pub name: Identifier,
     pub xtors: Vec<XtorSig>,
 }
 
@@ -49,13 +51,14 @@ impl TypeDeclaration {
     /// # Panics
     ///
     /// A panic is caused if the xtor is not in the type declaration.
-    pub fn xtor_position(&self, tag: &Name) -> usize {
+    pub fn xtor_position(&self, tag: &Identifier) -> usize {
         self.xtors
             .iter()
             .position(|xtor| xtor.name == *tag)
             .unwrap_or_else(|| {
                 panic!(
-                    "Xtor {tag} not found in type declaration {}",
+                    "Xtor {} not found in type declaration {}",
+                    tag.name,
                     self.print_to_string(None)
                 )
             })
@@ -71,7 +74,7 @@ impl Print for TypeDeclaration {
         let head = alloc
             .keyword(TYPE)
             .append(alloc.space())
-            .append(alloc.typ(&self.name))
+            .append(alloc.typ(&self.name.print_to_string(Some(cfg))))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());

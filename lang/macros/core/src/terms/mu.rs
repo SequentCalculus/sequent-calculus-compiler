@@ -1,5 +1,5 @@
 use core_lang::syntax::context::Chirality;
-use macro_utils::{expr_to_string, parse_args};
+use macro_utils::parse_args;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_str;
@@ -18,13 +18,13 @@ pub fn xmu(
         ["Bound Variable", "Bound Statement", "Type"],
         &[(2, parse_str("core_lang::syntax::types::Ty::I64").unwrap())],
     );
-    let var = expr_to_string(&args[0], 0);
+    let var = &args[0];
     let stmt = &args[1];
     let ty = &args[2];
     quote! {
         core_lang::syntax::terms::mu::Mu{
             prdcns: #prdcns,
-            variable: #var.to_string(),
+            variable: #var,
             statement: ::std::rc::Rc::new(#statement_kind::from(#stmt)),
             ty: #ty
         }

@@ -6,14 +6,14 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This struct defines printing an integer in Core. It consists of the information whether a
 /// newline should be printed, the term for the integer to print, and the remaining statement. The
 /// type parameters `P` and `S` determine whether this is the unfocused variant (if `P` and `S` are
 /// instantiated with [`Term<Prd>`] and [`Statement`], which is the default) or the focused variant
-/// (if `P` and `C` is instantiated with [`Var`] and [`FsStatement`]).
+/// (if `P` and `C` is instantiated with [`Identifier`] and [`FsStatement`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
     /// Whether to print a newline after the value
@@ -24,7 +24,7 @@ pub struct PrintI64<P = Rc<Term<Prd>>, S = Statement> {
     pub next: Rc<S>,
 }
 
-pub type FsPrintI64 = PrintI64<Var, FsStatement>;
+pub type FsPrintI64 = PrintI64<Identifier, FsStatement>;
 
 impl Typed for PrintI64 {
     fn get_type(&self) -> Ty {
@@ -72,8 +72,8 @@ impl Subst for PrintI64 {
     type Target = PrintI64;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.arg = self.arg.subst_sim(prod_subst, cons_subst);
         self.next = self.next.subst_sim(prod_subst, cons_subst);
@@ -83,7 +83,7 @@ impl Subst for PrintI64 {
 
 impl SubstVar for FsPrintI64 {
     type Target = FsPrintI64;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> FsPrintI64 {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> FsPrintI64 {
         self.arg = self.arg.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self
@@ -109,9 +109,9 @@ impl TypedFreeVars for FsPrintI64 {
 }
 
 impl Uniquify for PrintI64 {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> PrintI64 {
-        self.arg = self.arg.uniquify(seen_vars, used_vars);
-        self.next = self.next.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, max_id: &mut ID) -> PrintI64 {
+        self.arg = self.arg.uniquify(max_id);
+        self.next = self.next.uniquify(max_id);
         self
     }
 }
@@ -119,19 +119,17 @@ impl Uniquify for PrintI64 {
 impl Focusing for PrintI64 {
     type Target = FsStatement;
     // focus(println_i64(p); s) = bind(p)[λa.println_i64(a); focus(s)]
-    fn focus(self, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self, max_id: &mut ID) -> FsStatement {
         Rc::unwrap_or_clone(self.arg).bind(
-            Box::new(
-                move |binding: ContextBinding, used_vars: &mut HashSet<Var>| {
-                    FsPrintI64 {
-                        newline: self.newline,
-                        arg: binding.var,
-                        next: self.next.focus(used_vars),
-                    }
-                    .into()
-                },
-            ),
-            used_vars,
+            Box::new(move |binding: ContextBinding, max_id: &mut ID| {
+                FsPrintI64 {
+                    newline: self.newline,
+                    arg: binding.var,
+                    next: self.next.focus(max_id),
+                }
+                .into()
+            }),
+            max_id,
         )
     }
 }

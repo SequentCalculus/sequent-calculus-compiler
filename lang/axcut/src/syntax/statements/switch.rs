@@ -3,9 +3,12 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext,
+    names::fresh_identifier,
+};
 use crate::traits::free_vars::FreeVars;
-use crate::traits::linearize::{Linearizing, fresh_var};
+use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -17,10 +20,10 @@ use std::rc::Rc;
 /// Moreover, the free variables of the clauses can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
-    pub var: Var,
+    pub var: Identifier,
     pub ty: Ty,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Var>>,
+    pub free_vars_clauses: Option<HashSet<ID>>,
 }
 
 impl Print for Switch {
@@ -45,11 +48,11 @@ impl From<Switch> for Statement {
 }
 
 impl FreeVars for Switch {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.clauses = self.clauses.free_vars(vars);
         self.free_vars_clauses = Some(vars.clone());
 
-        vars.insert(self.var.clone());
+        vars.insert(self.var.id);
 
         self
     }
@@ -67,7 +70,7 @@ impl TypedFreeVars for Switch {
 }
 
 impl Subst for Switch {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Switch {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Switch {
         self.var = self.var.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.free_vars_clauses = self.free_vars_clauses.subst_sim(subst);
@@ -81,7 +84,7 @@ impl Linearizing for Switch {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
 
@@ -105,7 +108,7 @@ impl Linearizing for Switch {
                 extended_context
                     .bindings
                     .extend(clause.context.bindings.clone());
-                clause.body = clause.body.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, max_id);
                 clause
             })
             .collect();
@@ -115,8 +118,8 @@ impl Linearizing for Switch {
             self.into()
         } else {
             // otherwise we pick a fresh name for the variable matched on if it is duplicated ...
-            if new_context.vars_set().contains(&self.var) {
-                self.var = fresh_var(used_vars, &self.var);
+            if new_context.ids_set().contains(&self.var.id) {
+                self.var = fresh_identifier(max_id, &self.var.name);
             }
 
             // ... via an explicit substitution

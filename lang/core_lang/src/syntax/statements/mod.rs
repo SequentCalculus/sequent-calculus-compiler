@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 pub mod call;
 pub mod cut;
@@ -63,8 +63,8 @@ impl Subst for Statement {
     type Target = Statement;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Statement {
         match self {
             Statement::Cut(cut) => cut.subst_sim(prod_subst, cons_subst).into(),
@@ -89,26 +89,26 @@ impl TypedFreeVars for Statement {
 }
 
 impl Uniquify for Statement {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Statement {
+    fn uniquify(self, max_id: &mut ID) -> Statement {
         match self {
-            Statement::Cut(cut) => cut.uniquify(seen_vars, used_vars).into(),
-            Statement::IfC(ifc) => ifc.uniquify(seen_vars, used_vars).into(),
-            Statement::PrintI64(print) => print.uniquify(seen_vars, used_vars).into(),
-            Statement::Call(call) => call.uniquify(seen_vars, used_vars).into(),
-            Statement::Exit(exit) => exit.uniquify(seen_vars, used_vars).into(),
+            Statement::Cut(cut) => cut.uniquify(max_id).into(),
+            Statement::IfC(ifc) => ifc.uniquify(max_id).into(),
+            Statement::PrintI64(print) => print.uniquify(max_id).into(),
+            Statement::Call(call) => call.uniquify(max_id).into(),
+            Statement::Exit(exit) => exit.uniquify(max_id).into(),
         }
     }
 }
 
 impl Focusing for Statement {
     type Target = FsStatement;
-    fn focus(self: Statement, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn focus(self: Statement, max_id: &mut ID) -> FsStatement {
         match self {
-            Statement::Cut(cut) => cut.focus(used_vars),
-            Statement::IfC(ifc) => ifc.focus(used_vars),
-            Statement::PrintI64(print) => print.focus(used_vars),
-            Statement::Call(call) => call.focus(used_vars),
-            Statement::Exit(exit) => exit.focus(used_vars),
+            Statement::Cut(cut) => cut.focus(max_id),
+            Statement::IfC(ifc) => ifc.focus(max_id),
+            Statement::PrintI64(print) => print.focus(max_id),
+            Statement::Call(call) => call.focus(max_id),
+            Statement::Exit(exit) => exit.focus(max_id),
         }
     }
 }
@@ -143,7 +143,7 @@ impl Print for FsStatement {
 
 impl SubstVar for FsStatement {
     type Target = FsStatement;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> FsStatement {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> FsStatement {
         match self {
             FsStatement::Cut(cut) => cut.subst_sim(subst).into(),
             FsStatement::IfC(ifc) => ifc.subst_sim(subst).into(),
@@ -172,30 +172,30 @@ mod test {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{call, covar, cut, ife, ty, var};
+    use core_macros::{call, covar, cut, id, ife, var};
 
     fn example_cut() -> Statement {
-        cut!(var!("x"), covar!("a"), ty!("int")).into()
+        cut!(var!(id!("x")), covar!(id!("a"))).into()
     }
 
     fn example_ifz() -> Statement {
         ife!(
-            var!("x"),
-            cut!(var!("x"), covar!("a"), ty!("int")),
-            cut!(var!("x"), covar!("a"), ty!("int"))
+            var!(id!("x")),
+            cut!(var!(id!("x")), covar!(id!("a"))),
+            cut!(var!(id!("x")), covar!(id!("a")))
         )
         .into()
     }
 
     fn example_call() -> Statement {
-        call!("main", [var!("x"), covar!("a")]).into()
+        call!(id!("main"), [var!(id!("x")), covar!(id!("a"))]).into()
     }
 
     #[test]
     fn subst_cut() {
         let subst = example_subst();
         let result = example_cut().subst_sim(&subst.0, &subst.1);
-        let expected = cut!(var!("y"), covar!("b")).into();
+        let expected = cut!(var!(id!("y")), covar!(id!("b"))).into();
         assert_eq!(result, expected)
     }
 
@@ -204,9 +204,9 @@ mod test {
         let subst = example_subst();
         let result = example_ifz().subst_sim(&subst.0, &subst.1);
         let expected = ife!(
-            var!("y"),
-            cut!(var!("y"), covar!("b"),),
-            cut!(var!("y"), covar!("b"))
+            var!(id!("y")),
+            cut!(var!(id!("y")), covar!(id!("b"))),
+            cut!(var!(id!("y")), covar!(id!("b")))
         )
         .into();
         assert_eq!(result, expected)
@@ -216,7 +216,7 @@ mod test {
     fn subst_call() {
         let subst = example_subst();
         let result = example_call().subst_sim(&subst.0, &subst.1);
-        let expected = call!("main", [var!("y"), covar!("b")]).into();
+        let expected = call!(id!("main"), [var!(id!("y")), covar!(id!("b"))]).into();
         assert_eq!(result, expected)
     }
 }

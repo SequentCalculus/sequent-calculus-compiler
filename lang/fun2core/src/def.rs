@@ -5,7 +5,7 @@ use crate::{
     context::compile_context,
     types::compile_ty,
 };
-use core_lang::syntax::CodataDeclaration;
+use core_lang::syntax::{CodataDeclaration, names::Identifier};
 use fun::{
     syntax::{names::Name, types::OptTyped},
     traits::used_binders::UsedBinders,
@@ -29,9 +29,10 @@ pub fn compile_def(
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
 ) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
+
     let mut context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -51,24 +52,22 @@ pub fn compile_def(
     );
 
     let body = def.body.compile_with_cont(
-        core_lang::syntax::terms::XVar::covar(&new_covar, ty).into(),
+        core_lang::syntax::terms::XVar::covar(Identifier::new(new_covar.clone()), ty).into(),
         &mut state,
     );
 
     context
         .bindings
         .push(core_lang::syntax::context::ContextBinding {
-            var: new_covar,
+            var: Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
             ty: compile_ty(&def.ret_ty),
         });
 
-    let used_vars = state.used_vars;
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
-        name: def.name,
+        name: Identifier::new(def.name),
         context,
         body,
-        used_vars,
     });
 
     def_plus_lifted_statements
@@ -91,9 +90,9 @@ pub fn compile_main(
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
 ) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
     let context = compile_context(def.context);
 
-    let mut used_vars = context.vars();
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -114,9 +113,12 @@ pub fn compile_main(
 
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::Mu::tilde_mu(
-            &new_var,
+            Identifier::new(new_var.clone()),
             core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit {
-                arg: Rc::new(core_lang::syntax::terms::XVar::var(&new_var, ty.clone()).into()),
+                arg: Rc::new(
+                    core_lang::syntax::terms::XVar::var(Identifier::new(new_var), ty.clone())
+                        .into(),
+                ),
                 ty: ty.clone(),
             }),
             ty,
@@ -125,12 +127,10 @@ pub fn compile_main(
         &mut state,
     );
 
-    let used_vars = state.used_vars;
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
-        name: def.name,
+        name: Identifier::new(def.name),
         context,
         body,
-        used_vars,
     });
 
     def_plus_lifted_statements

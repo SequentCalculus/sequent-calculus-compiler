@@ -1,47 +1,74 @@
 //! This module defines some utilities to deal with names and lists of names.
 
 use crate::traits::*;
+use printer::*;
 
-use std::collections::HashSet;
+/// Type alias for unique IDs in the program.
+pub type ID = usize;
 
-/// Type alias for variables
-pub type Var = String;
-/// Type alias for covariables
-pub type Covar = String;
-/// Type alias for names of top-level functions, user-declared types and xtors
-pub type Name = String;
+/// `Identifier`s in the program, used for (co)variables, top-level labels, and names of
+/// user-declared types and their xtors. Each of the three categories lives in a separate
+/// namespace. By convention, if the `id` is `0`, the `Identifier` is not (yet) globally unique,
+/// while non-zero `id`s are expected to be globally unique. For top-level labels and types and
+/// their xtors, the `id` is currently not used, requiring the `name` to be unique. `id`s of
+/// (co)variables are made unique by the [`Uniquify`] pass. Thus, after this pass, only the `id`
+/// matters internally, and the `name` is just for pretty-printing.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Identifier {
+    /// base name for pretty-printing
+    pub name: String,
+    /// unique id
+    pub id: ID,
+}
 
-/// This function generates a fresh name with respect to a given set of names.
-/// - `used_vars` is the set of names for which to generate a fresh one.
-/// - `base_name` is the base name for the generated name to which a number is appended that makes
-///   it fresh.
-pub fn fresh_name(used_names: &mut HashSet<Name>, base_name: &str) -> Name {
-    let mut n = 0;
-    let mut new_name: Name = format!("{base_name}{n}");
-    while used_names.contains(&new_name) {
-        n += 1;
-        new_name = format!("{base_name}{n}");
+impl Identifier {
+    /// Create a new [`Identifier`] with [`ID`] `0`.
+    pub fn new(name: String) -> Self {
+        Self { name, id: 0 }
     }
-    used_names.insert(new_name.clone());
-    new_name
 }
 
-/// This function generates a fresh variable with base name `"x"`.
-pub fn fresh_var(used_vars: &mut HashSet<Var>) -> Var {
-    fresh_name(used_vars, "x")
+/// Create a fresh [`Identifier`] with given `base_name`. `max_id` is the maximal [`ID`] currently
+/// used in the program and is incremented by this function.
+pub fn fresh_identifier(max_id: &mut ID, base_name: &str) -> Identifier {
+    *max_id += 1;
+    Identifier {
+        name: base_name.to_string(),
+        id: *max_id,
+    }
 }
 
-/// This function generates a fresh covariable with base name `"a"`.
-pub fn fresh_covar(used_covars: &mut HashSet<Covar>) -> Covar {
-    fresh_name(used_covars, "a")
+/// Create a fresh variable, i.e., a fresh [`Identifier`] with base name `x`. `max_id` is the
+/// maximal [`ID`] currently used in the program and is incremented by this function.
+pub fn fresh_var(max_id: &mut ID) -> Identifier {
+    fresh_identifier(max_id, "x")
 }
 
-impl SubstVar for Var {
-    type Target = Var;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Var {
-        match subst.iter().find(|(old, _)| *old == self) {
+/// Create a fresh covariable, i.e., a fresh [`Identifier`] with base name `a`. `max_id` is the
+/// maximal [`ID`] currently used in the program and is incremented by this function.
+pub fn fresh_covar(max_id: &mut ID) -> Identifier {
+    fresh_identifier(max_id, "a")
+}
+
+impl SubstVar for Identifier {
+    type Target = Identifier;
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> Identifier {
+        match subst.iter().find(|(old, _)| *old == self.id) {
             None => self,
             Some((_, new)) => new.clone(),
+        }
+    }
+}
+
+impl Print for Identifier {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        if self.id == 0 {
+            self.name.print(cfg, alloc)
+        } else {
+            self.name
+                .print(cfg, alloc)
+                .append(tokens::UNDERSCORE)
+                .append(self.id.to_string())
         }
     }
 }

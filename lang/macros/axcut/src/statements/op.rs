@@ -1,5 +1,5 @@
 use axcut::syntax::statements::op::BinOp;
-use macro_utils::{expr_to_array, expr_to_string};
+use macro_utils::expr_to_array;
 use macro_utils::{parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
@@ -34,14 +34,14 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
         ["Fst", "Snd", "Var", "Next", "Free Vars Next"],
         &[(4, parse_str("::std::option::Option::None").unwrap())],
     );
-    let fst = expr_to_string(&args[0], 0);
-    let snd = expr_to_string(&args[1], 1);
-    let var = expr_to_string(&args[2], 2);
+    let fst = &args[0];
+    let snd = &args[1];
+    let var = &args[2];
     let next = &args[3];
     let free_vars = quote_option(&args[4], |free| {
         let free_vars = expr_to_array(free, 4)
             .into_iter()
-            .map(|expr| quote! { #expr.to_string() })
+            .map(|expr| quote! { #expr })
             .collect::<Vec<_>>();
         quote! {
             ::std::collections::HashSet::from([
@@ -52,10 +52,10 @@ fn op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 
     quote! {
         axcut::syntax::statements::op::Op{
-            fst: #fst.to_string(),
+            fst: #fst,
             op: #bin_op,
-            snd: #snd.to_string(),
-            var: #var.to_string(),
+            snd: #snd,
+            var: #var,
             next: ::std::rc::Rc::new(axcut::syntax::statements::Statement::from(#next)),
             free_vars_next: #free_vars,
         }

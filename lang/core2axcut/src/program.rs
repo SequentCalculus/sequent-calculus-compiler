@@ -23,14 +23,14 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
         assert!(
             typ.name != cont_int.name,
             "{} cannot be used as a type name",
-            cont_int.name
+            cont_int.name.name
         );
     }
     for typ in &program.codata_types {
         assert!(
             typ.name != cont_int.name,
             "{} cannot be used as a type name",
-            cont_int.name
+            cont_int.name.name
         );
     }
     // add the type for integer continuations to the program
@@ -40,6 +40,7 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
     // to generate fresh labels in some places
     let mut used_labels = program.defs.iter().map(|def| def.name.clone()).collect();
 
+    let mut max_id = program.max_id;
     axcut::syntax::Prog {
         defs: program
             .defs
@@ -50,6 +51,7 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
                     &program.data_types,
                     &program.codata_types,
                     &mut used_labels,
+                    &mut max_id,
                 )
             })
             .collect(),
@@ -67,5 +69,6 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
                 .collect(),
         ]
         .concat(),
+        max_id,
     }
 }

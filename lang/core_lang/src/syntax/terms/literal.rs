@@ -5,8 +5,6 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::HashSet;
-
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Literal {
@@ -40,8 +38,8 @@ impl From<Literal> for FsTerm<Prd> {
 
 impl Bind for Literal {
     // bind(n)\k] = ⟨ n | ~μx.k(x) ⟩
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
-        let new_var = fresh_var(used_vars);
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
+        let new_var = fresh_var(max_id);
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
@@ -49,7 +47,7 @@ impl Bind for Literal {
         };
         FsCut::new(
             self,
-            Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
+            Mu::tilde_mu(new_var, k(new_binding, max_id), Ty::I64),
             Ty::I64,
         )
         .into()
@@ -61,27 +59,27 @@ mod lit_tests {
     use crate::syntax::*;
     use crate::traits::*;
 
-    use core_macros::{fs_cut, fs_exit, fs_mutilde, lit};
+    use core_macros::{fs_cut, fs_exit, fs_mutilde, id, lit};
     extern crate self as core_lang;
     // Focusing tests
 
     #[test]
     fn bind_lit1() {
         let result = lit!(1).bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(1), fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(lit!(1), fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn bind_lit2() {
         let result = lit!(2).bind(
-            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(&binding.var))),
+            Box::new(|binding, _| FsStatement::Exit(FsExit::exit(binding.var))),
             &mut Default::default(),
         );
-        let expected = fs_cut!(lit!(2), fs_mutilde!("x0", fs_exit!("x0"))).into();
+        let expected = fs_cut!(lit!(2), fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
     }
 }

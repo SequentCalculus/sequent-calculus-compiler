@@ -1,6 +1,6 @@
 //! This module provides an abstraction over machine instructions.
 
-use axcut::syntax::{ContextBinding, Name};
+use axcut::syntax::ContextBinding;
 
 /// This trait aims to abstract over machine instructions for several platforms. The instructions
 /// are used to implement most of the logic for code generation.
@@ -8,19 +8,19 @@ pub trait Instructions<Code, Temporary, Immediate> {
     /// This generates an assembly comment `msg`.
     fn comment(msg: String) -> Code;
     /// This generates an assembly label `name`.
-    fn label(name: Name) -> Code;
+    fn label(name: String) -> Code;
     /// This instruction jumps to the address in `temporary`.
     fn jump(temporary: Temporary, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name`.
-    fn jump_label(name: Name, instructions: &mut Vec<Code>);
+    fn jump_label(name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` and is guaranteed to have a fixed
     /// size, which not all platforms guarantee by default (e.g., x86_64).
-    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_fixed(name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the two temporaries are equal.
     fn jump_label_if_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the two temporaries are not
@@ -28,18 +28,23 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_not_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the first temporary is less
     /// than the second one.
-    fn jump_label_if_less(fst: Temporary, snd: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_less(
+        fst: Temporary,
+        snd: Temporary,
+        name: String,
+        instructions: &mut Vec<Code>,
+    );
     /// This instruction jumps to the address of the label `name` if the first temporary is less
     /// than or equal to the second one.
     fn jump_label_if_less_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the first temporary is greater
@@ -47,7 +52,7 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_greater(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the first temporary is greater
@@ -55,37 +60,37 @@ pub trait Instructions<Code, Temporary, Immediate> {
     fn jump_label_if_greater_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the temporary is zero.
-    fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the temporary is not zero.
-    fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_not_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the first temporary is less
     /// than zero.
-    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_less_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the first temporary is less
     /// than or equal to zero.
     fn jump_label_if_less_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction jumps to the address of the label `name` if the first temporary is greater
     /// than zero.
-    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn jump_label_if_greater_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>);
     /// This instruction jumps to the address of the label `name` if the first temporary is greater
     /// than or equal to zero.
     fn jump_label_if_greater_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     );
     /// This instruction loads the immediate into the temporary.
     fn load_immediate(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);
     /// This instruction loads the address of the label `name` into the temporary.
-    fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>);
+    fn load_label(temporary: Temporary, name: String, instructions: &mut Vec<Code>);
     /// This instruction adds an immediate to the temporary and then jumps to the resulting
     /// address. This may clobber `temporary`.
     fn add_and_jump(temporary: Temporary, immediate: Immediate, instructions: &mut Vec<Code>);

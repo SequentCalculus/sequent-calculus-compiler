@@ -3,12 +3,12 @@
 use printer::*;
 
 use crate::syntax::*;
-use crate::traits::*;
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
-/// user-declared data types, and a list of user-declared codata types. The type parameter `D`
-/// determines whether the program is in the full language (if `D` is instantiated with [`Def`]) or
-/// in the focused fragment (if `D` is instantiated with [`FsDef`]).
+/// user-declared data types, and a list of user-declared codata types. Moreover, it contains the
+/// highest [`ID`] currently used for [`Identifier`]s in the program. The type parameter `D`
+/// determines whether the program is in the full language (if `D` is instantiated with [`Def`],
+/// which is the default) or in the focused fragment (if `D` is instantiated with [`FsDef`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prog<D = Def> {
     /// The top-level definitions of the program, either unfocused ([`Def`]) or focused ([`FsDef`])
@@ -17,42 +17,37 @@ pub struct Prog<D = Def> {
     pub data_types: Vec<DataDeclaration>,
     /// The codata types of the program
     pub codata_types: Vec<CodataDeclaration>,
+    /// Highest [`ID`] currently used for [`Identifier`]s in the program
+    pub max_id: ID,
 }
 
 pub type FsProg = Prog<FsDef>;
 
 impl Prog {
-    /// This function applies the focusing transformation to a program. As a preprocessing step it
-    /// makes all binders in each path through a top-level function unique.
-    pub fn focus(self) -> FsProg {
+    /// This function applies the focusing transformation to a program. As a preprocessing step, it
+    /// makes all binders in the program unique.
+    pub fn focus(mut self) -> FsProg {
+        self.uniquify();
+        let mut max_id = self.max_id;
+        let mut new_defs = Vec::with_capacity(self.defs.len());
+        for def in self.defs {
+            new_defs.push(def.focus(&mut max_id));
+        }
         FsProg {
-            defs: self
-                .defs
-                .into_iter()
-                .map(|mut def| {
-                    def.body = def
-                        .body
-                        .uniquify(&mut def.context.vars(), &mut def.used_vars);
-                    def.focus()
-                })
-                .collect(),
+            defs: new_defs,
             data_types: self.data_types,
             codata_types: self.codata_types,
+            max_id,
         }
     }
 
-    pub fn uniquify(mut self) -> Self {
-        self.defs = self
-            .defs
-            .into_iter()
-            .map(|mut def| {
-                def.body = def
-                    .body
-                    .uniquify(&mut def.context.vars(), &mut def.used_vars);
-                def
-            })
-            .collect();
-        self
+    /// This function makes all binders in the program unique.
+    pub fn uniquify(&mut self) {
+        let new_defs = Vec::with_capacity(self.defs.len());
+        for mut def in std::mem::replace(&mut self.defs, new_defs) {
+            def = def.uniquify(&mut self.max_id);
+            self.defs.push(def);
+        }
     }
 }
 
@@ -84,14 +79,13 @@ impl<D: Print> Print for Prog<D> {
 mod program_tests {
     use crate::syntax::*;
     extern crate self as core_lang;
-    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, prd, prog, var};
+    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, id, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         fs_def!(
-            "cut",
-            [bind!("x", prd!()), bind!("a", cns!())],
-            fs_cut!(var!("x"), covar!("a")),
-            ["a", "x"]
+            id!("cut"),
+            [bind!(id!("x", 1), prd!()), bind!(id!("a", 2), cns!())],
+            fs_cut!(var!(id!("x", 1)), covar!(id!("a", 2))),
         )
     }
 
@@ -99,17 +93,16 @@ mod program_tests {
     fn transform_prog2() {
         let prog = prog!(
             [def!(
-                "cut",
-                [bind!("x", prd!()), bind!("a", cns!())],
-                cut!(var!("x"), covar!("a")),
-                ["a", "x"]
+                id!("cut"),
+                [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
+                cut!(var!(id!("x")), covar!(id!("a"))),
             )],
             [],
             []
         );
         let result = prog.focus();
 
-        let expected = prog!([example_def2_var()], [], []);
+        let expected = prog!([example_def2_var()], [], [], 2);
         assert_eq!(result, expected)
     }
 }

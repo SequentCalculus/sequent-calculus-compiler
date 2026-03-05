@@ -29,9 +29,9 @@ impl CodeStatement for Let {
     {
         let comment = format!(
             "{LET} {}: {} = {}({});",
-            self.var,
+            self.var.print_to_string(None),
             self.ty.print_to_string(None),
-            self.tag,
+            self.tag.print_to_string(None),
             self.args.vars().print_to_string(None)
         );
         instructions.push(Backend::comment(comment));
@@ -53,7 +53,7 @@ impl CodeStatement for Let {
         });
 
         instructions.push(Backend::comment("#load tag".to_string()));
-        let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let tag_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         Backend::load_immediate(
             tag_temporary,
             Backend::jump_length(tag_position),

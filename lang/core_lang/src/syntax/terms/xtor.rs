@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `C` is instantiated with [`Prd`]) or a destructor
@@ -18,7 +18,7 @@ pub struct Xtor<C: Chi, A = Arguments> {
     /// Whether we have a constructor or destructor
     pub prdcns: C,
     /// The xtor name
-    pub id: Name,
+    pub name: Identifier,
     /// The arguments of the xtor
     pub args: A,
     /// The type of the xtor
@@ -42,9 +42,13 @@ impl<C: Chi> Print for Xtor<C> {
             self.args.print(cfg, alloc).parens()
         };
         if self.prdcns.is_prd() {
-            alloc.ctor(&self.id).append(args.group())
+            alloc
+                .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(args.group())
         } else {
-            alloc.dtor(&self.id).append(args.group())
+            alloc
+                .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(args.group())
         }
     }
 }
@@ -57,9 +61,13 @@ impl<C: Chi> Print for FsXtor<C> {
             self.args.print(cfg, alloc).parens()
         };
         if self.prdcns.is_prd() {
-            alloc.ctor(&self.id).append(args)
+            alloc
+                .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(args)
         } else {
-            alloc.dtor(&self.id).append(args)
+            alloc
+                .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(args)
         }
     }
 }
@@ -80,8 +88,8 @@ impl<C: Chi> Subst for Xtor<C> {
     type Target = Xtor<C>;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.args = self.args.subst_sim(prod_subst, cons_subst);
         self
@@ -90,7 +98,7 @@ impl<C: Chi> Subst for Xtor<C> {
 
 impl<C: Chi> SubstVar for FsXtor<C> {
     type Target = FsXtor<C>;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.args = self.args.subst_sim(subst);
         self
     }
@@ -98,37 +106,37 @@ impl<C: Chi> SubstVar for FsXtor<C> {
 
 impl<C: Chi> TypedFreeVars for Xtor<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        self.args.typed_free_vars(vars)
+        self.args.typed_free_vars(vars);
     }
 }
 
 impl<C: Chi> TypedFreeVars for FsXtor<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
-        vars.extend(self.args.bindings.iter().cloned())
+        vars.extend(self.args.bindings.iter().cloned());
     }
 }
 
 impl<C: Chi> Uniquify for Xtor<C> {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Xtor<C> {
-        self.args = self.args.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, max_id: &mut ID) -> Xtor<C> {
+        self.args = self.args.uniquify(max_id);
         self
     }
 }
 
 impl<C: Chi> Focusing for Xtor<C> {
     type Target = FsTerm<C>;
-    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, _: &mut ID) -> Self::Target {
         panic!("Constructors and destructors should always be focused in cuts directly");
     }
 }
 
 impl Bind for Xtor<Prd> {
     // bind(C(t_i))[k] = bind(t_i)[λas.⟨ C(as) | ~μx.k(x) ⟩]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, used_vars: &mut HashSet<Var>| {
-                let new_var = fresh_var(used_vars);
+            Box::new(|bindings, max_id: &mut ID| {
+                let new_var = fresh_var(max_id);
                 let new_binding = ContextBinding {
                     var: new_var.clone(),
                     chi: Chirality::Prd,
@@ -137,36 +145,36 @@ impl Bind for Xtor<Prd> {
                 FsCut::new(
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
-                        id: self.id,
+                        name: self.name,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
-                    Mu::tilde_mu(&new_var, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::tilde_mu(new_var, k(new_binding, max_id), self.ty.clone()),
                     self.ty,
                 )
                 .into()
             }),
-            used_vars,
+            max_id,
         )
     }
 }
 impl Bind for Xtor<Cns> {
     // bind(D(t_i))[k] = bind(t_i)[λas.⟨ μa.k(a) | D(as) ⟩]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         bind_many(
             self.args.into(),
-            Box::new(|bindings, used_vars: &mut HashSet<Var>| {
-                let new_covar = fresh_covar(used_vars);
+            Box::new(|bindings, max_id: &mut ID| {
+                let new_covar = fresh_covar(max_id);
                 let new_binding = ContextBinding {
                     var: new_covar.clone(),
                     chi: Chirality::Cns,
                     ty: self.ty.clone(),
                 };
                 FsCut::new(
-                    Mu::mu(&new_covar, k(new_binding, used_vars), self.ty.clone()),
+                    Mu::mu(new_covar, k(new_binding, max_id), self.ty.clone()),
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
-                        id: self.id,
+                        name: self.name,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
@@ -174,7 +182,7 @@ impl Bind for Xtor<Cns> {
                 )
                 .into()
             }),
-            used_vars,
+            max_id,
         )
     }
 }
@@ -187,13 +195,13 @@ mod xtor_tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
-    use core_macros::{ctor, ty, var};
+    use core_macros::{ctor, id, ty, var};
 
     fn example() -> Xtor<Prd> {
         ctor!(
-            "Cons",
-            [var!("x"), var!("xs", ty!("ListInt"))],
-            ty!("ListInt")
+            id!("Cons"),
+            [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
+            ty!(id!("ListInt"))
         )
     }
 
@@ -207,9 +215,9 @@ mod xtor_tests {
         let subst = example_subst();
         let result = example().subst_sim(&subst.0, &subst.1);
         let expected = ctor!(
-            "Cons",
-            [var!("y"), var!("xs", ty!("ListInt"))],
-            ty!("ListInt")
+            id!("Cons"),
+            [var!(id!("y")), var!(id!("xs"), ty!(id!("ListInt")))],
+            ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
     }

@@ -1,5 +1,7 @@
 //! This module defines the code generation for explicit substitutions.
 
+use printer::Print;
+
 use super::CodeStatement;
 use crate::substitution::{code_exchange, code_weakening_contraction, transpose};
 use crate::{
@@ -24,7 +26,11 @@ impl CodeStatement for Substitute {
     {
         let mut comment = "substitute ".to_string();
         for (x, y) in &self.rearrange {
-            comment.push_str(&format!("({} := {y})", x.var));
+            comment.push_str(&format!(
+                "({} := {})",
+                x.var.print_to_string(None),
+                y.print_to_string(None)
+            ));
         }
         comment.push(';');
         instructions.push(Backend::comment(comment));

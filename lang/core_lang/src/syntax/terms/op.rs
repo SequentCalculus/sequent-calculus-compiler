@@ -6,7 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -39,7 +39,7 @@ impl Print for BinOp {
 /// This struct defines arithmetic binary operations in Core. It consists of the input terms and the
 /// kind of the binary operator. The type parameter `P` determines whether this is the unfocused
 /// variant (if `P` is instantiated with [`Term<Prd>`], which is the default) or the focused
-/// variant (if `P` is instantiated with [`Var`]).
+/// variant (if `P` is instantiated with [`Identifier`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op<P = Rc<Term<Prd>>> {
     /// The first operand
@@ -50,7 +50,7 @@ pub struct Op<P = Rc<Term<Prd>>> {
     pub snd: P,
 }
 
-pub type FsOp = Op<Var>;
+pub type FsOp = Op<Identifier>;
 
 impl Typed for Op {
     fn get_type(&self) -> Ty {
@@ -105,8 +105,8 @@ impl Subst for Op {
     type Target = Op;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.fst = self.fst.subst_sim(prod_subst, cons_subst);
         self.snd = self.snd.subst_sim(prod_subst, cons_subst);
@@ -117,7 +117,7 @@ impl Subst for Op {
 
 impl SubstVar for FsOp {
     type Target = FsOp;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Self::Target {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -148,9 +148,9 @@ impl TypedFreeVars for FsOp {
 }
 
 impl Uniquify for Op {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Op {
-        self.fst = self.fst.uniquify(seen_vars, used_vars);
-        self.snd = self.snd.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, max_id: &mut ID) -> Op {
+        self.fst = self.fst.uniquify(max_id);
+        self.snd = self.snd.uniquify(max_id);
 
         self
     }
@@ -158,41 +158,39 @@ impl Uniquify for Op {
 
 impl Focusing for Op {
     type Target = FsTerm<Prd>;
-    fn focus(self, _: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, _: &mut ID) -> Self::Target {
         panic!("Arithmetic operators should always be focused in cuts directly");
     }
 }
 
 impl Bind for Op {
     // bind(+(p_1, p_2))[k] = bind(p_1)\[λa1.bind(p_2)[λa_2.⟨ +(a_1, a_2) | ~μx.k(x) ⟩]]
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         Rc::unwrap_or_clone(self.fst).bind(
-            Box::new(
-                |binding_fst: ContextBinding, used_vars: &mut HashSet<Var>| {
-                    Rc::unwrap_or_clone(self.snd).bind(
-                        Box::new(|binding_snd, used_vars: &mut HashSet<Var>| {
-                            let new_var = fresh_var(used_vars);
-                            let new_binding = ContextBinding {
-                                var: new_var.clone(),
-                                chi: Chirality::Prd,
-                                ty: Ty::I64,
-                            };
-                            FsCut::new(
-                                FsOp {
-                                    fst: binding_fst.var,
-                                    op: self.op,
-                                    snd: binding_snd.var,
-                                },
-                                Mu::tilde_mu(&new_var, k(new_binding, used_vars), Ty::I64),
-                                Ty::I64,
-                            )
-                            .into()
-                        }),
-                        used_vars,
-                    )
-                },
-            ),
-            used_vars,
+            Box::new(|binding_fst: ContextBinding, max_id: &mut ID| {
+                Rc::unwrap_or_clone(self.snd).bind(
+                    Box::new(|binding_snd, max_id: &mut ID| {
+                        let new_var = fresh_var(max_id);
+                        let new_binding = ContextBinding {
+                            var: new_var.clone(),
+                            chi: Chirality::Prd,
+                            ty: Ty::I64,
+                        };
+                        FsCut::new(
+                            FsOp {
+                                fst: binding_fst.var,
+                                op: self.op,
+                                snd: binding_snd.var,
+                            },
+                            Mu::tilde_mu(new_var, k(new_binding, max_id), Ty::I64),
+                            Ty::I64,
+                        )
+                        .into()
+                    }),
+                    max_id,
+                )
+            }),
+            max_id,
         )
     }
 }
@@ -203,30 +201,33 @@ mod tests {
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
-    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, lit, prod, sum, var};
+    use core_macros::{covar, cut, fs_cut, fs_mutilde, fs_prod, fs_sum, id, lit, prod, sum, var};
 
     fn example_op() -> Term<Prd> {
-        prod!(var!("x"), var!("x")).into()
+        prod!(var!(id!("x")), var!(id!("x"))).into()
     }
 
     #[test]
     fn subst_op() {
         let subst = example_subst();
         let result = example_op().subst_sim(&subst.0, &subst.1);
-        let expected = prod!(var!("y"), var!("y")).into();
+        let expected = prod!(var!(id!("y")), var!(id!("y"))).into();
         assert_eq!(result, expected)
     }
 
     #[test]
     fn transform_op1() {
-        let result = cut!(sum!(lit!(1), lit!(2)), covar!("a")).focus(&mut Default::default());
+        let result = cut!(sum!(lit!(1), lit!(2)), covar!(id!("a"))).focus(&mut Default::default());
         let expected = fs_cut!(
             lit!(1),
             fs_mutilde!(
-                "x0",
+                id!("x", 1),
                 fs_cut!(
                     lit!(2),
-                    fs_mutilde!("x1", fs_cut!(fs_sum!("x0", "x1"), covar!("a")))
+                    fs_mutilde!(
+                        id!("x", 2),
+                        fs_cut!(fs_sum!(id!("x", 1), id!("x", 2)), covar!(id!("a")))
+                    )
                 )
             )
         )
@@ -237,8 +238,9 @@ mod tests {
 
     #[test]
     fn transform_op2() {
-        let result = cut!(prod!(var!("x"), var!("y")), covar!("a")).focus(&mut Default::default());
-        let expected = fs_cut!(fs_prod!("x", "y"), covar!("a")).into();
+        let result = cut!(prod!(var!(id!("x")), var!(id!("y"))), covar!(id!("a")))
+            .focus(&mut Default::default());
+        let expected = fs_cut!(fs_prod!(id!("x"), id!("y")), covar!(id!("a"))).into();
         assert_eq!(result, expected)
     }
 }

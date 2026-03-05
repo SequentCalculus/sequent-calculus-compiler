@@ -34,7 +34,7 @@ impl Print for Chirality {
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     /// The bound variable
-    pub var: Var,
+    pub var: Identifier,
     /// The chirality, i.e. producer or consumer
     pub chi: Chirality,
     /// The type of the binding
@@ -54,7 +54,7 @@ impl Print for ContextBinding {
 
 impl SubstVar for ContextBinding {
     type Target = ContextBinding;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> ContextBinding {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
     }
@@ -68,18 +68,27 @@ pub struct TypingContext {
 
 impl TypingContext {
     /// This functions returns a set of the (co)variable names in the context.
-    pub fn vars(&self) -> HashSet<Var> {
+    pub fn vars(&self) -> HashSet<Identifier> {
         self.bindings
             .iter()
             .map(|binding| binding.var.clone())
             .collect()
     }
 
-    /// This functions returns a list of (co)variable names in the context in the correct order.
-    pub fn vec_vars(&self) -> Vec<Var> {
+    /// This functions returns the list of (co)variable names in the context in the correct order.
+    pub fn vec_vars(&self) -> Vec<Identifier> {
         let mut vars = Vec::with_capacity(self.bindings.len());
         for binding in &self.bindings {
             vars.push(binding.var.clone());
+        }
+        vars
+    }
+
+    /// This functions returns the list of (co)variable IDs in the context in the correct order.
+    pub fn vec_ids(&self) -> Vec<ID> {
+        let mut vars = Vec::with_capacity(self.bindings.len());
+        for binding in &self.bindings {
+            vars.push(binding.var.id);
         }
         vars
     }
@@ -114,7 +123,7 @@ impl Print for TypingContext {
 
 impl SubstVar for TypingContext {
     type Target = TypingContext;
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> TypingContext {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
     }
