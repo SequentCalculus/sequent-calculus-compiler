@@ -376,7 +376,7 @@ impl MessageHandler {
             Err(_) => None,           
         };
 
-        let hover_information = match self.doc.get_hover_information(&ident) {
+        let hover_information = match self.doc.get_hover_information(&ident, pos) {
             Ok(info) => info, 
             Err(err) => return err.to_response(id),
         };
