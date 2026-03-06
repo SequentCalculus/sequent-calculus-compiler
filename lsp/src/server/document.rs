@@ -65,46 +65,28 @@ impl Document {
         Ok(ident.to_owned())
     }
 
-    // pub fn get_ident(&self, pos: Position) -> Result<String, Error> {
-    //     let line = self
-    //         .source
-    //         .lines()
-    //         .nth(pos.line as usize)
-    //         .ok_or(Error::InvalidPosition(pos))?;
 
-    //     let mut following = line
-    //         .chars()
-    //         .nth(pos.character as usize)
-    //         .ok_or(Error::InvalidPosition(pos))?;
-    //     let mut end_pos = pos.character as usize;
-    //     while following.is_alphanumeric() || following == '_' {
-    //         end_pos += 1;
-    //         if end_pos == line.len() {
-    //             break;
-    //         }
-    //         following = line.chars().nth(end_pos).unwrap();
-    //     }
+//eigener Code
+// index to position
+pub fn ind_to_pos(&self, index: usize) -> Position {
+        let mut line = 0;
+        let mut character = 0;
 
-    //     let mut prev = line
-    //         .chars()
-    //         .nth(pos.character as usize)
-    //         .ok_or(Error::InvalidPosition(pos))?;
-    //     let mut start_pos = pos.character as usize;
-    //     while prev.is_alphanumeric() || following == '_' {
-    //         start_pos -= 1;
-    //         if start_pos == 0 {
-    //             break;
-    //         }
-    //         prev = line.chars().nth(start_pos).unwrap();
-    //     }
-    //     if start_pos > 0 {
-    //         start_pos += 1
-    //     }
-
-    //     let ident = &line[start_pos..end_pos];
-    //     Ok(ident.to_owned())
-    // }
-
+        for (byte_offset, ch) in self.source.char_indices() {
+            if byte_offset >= index {
+                break;
+            }
+            if ch == '\n' {
+                line += 1;
+                character = 0;
+            } else {
+                character += 1;
+            }
+        }
+        Position { line, character }
+    }
+/*
+//alter code
     pub fn ind_to_pos(&self, index: usize) -> Position {
         let mut line = 0;
         let mut character = 0;
@@ -121,7 +103,7 @@ impl Document {
         }
 
         Position { line, character }
-    }
+    } */
 
     fn find_def(&self, ident: &str) -> Option<(Position, Position)> {
         let span = self
@@ -279,9 +261,56 @@ impl Document {
     }
 
     //eigener Code
+    //position to index
+     pub fn pos_to_ind(&self, pos: Position) -> usize {
+        let mut line = 0;
+        let mut character = 0;
+
+        for (byte_offset, ch) in self.source.char_indices() {
+            if line == pos.line && character == pos.character {
+                return byte_offset;
+            }
+            if ch == '\n' {
+                line += 1;
+                character = 0;
+            } else {
+                character += 1;
+            }
+        }
+        self.source.len()
+    }
+   /*
+   //alter code
+    pub fn pos_to_ind(&self, pos: Position) -> usize {
+        let mut ind = 0;
+        for (i, line) in self.source.lines().enumerate(){
+            if i == pos.line as usize{
+                break;
+            }
+            ind += line.len() + 1
+        }
+        ind += pos.character as usize;
+        ind
+    }
+*/
+
+
+    //eigener Code
     //determine hover information
-    pub fn get_hover_information(&self, ident: &str) -> Result<String, Error> {
+    pub fn get_hover_information(&self, ident: &str, pos: lsp_types::Position) -> Result<String, Error> {
         //find definition
+        let cursor_ind = self.pos_to_ind(pos);
+        if let Some(own_def) = self.module.defs.iter().find(|item| { 
+            let start = item.span.start().to_usize();
+            let end = item.span.end().to_usize();
+            cursor_ind >= start && cursor_ind <= end
+        }){
+            if let Some(binding) = own_def.context.bindings.iter().find(|b| b.var == ident){
+               let ty = binding.ty.print_to_string(None);
+               return Ok(format!("```fun\nlocal {}: {}\n```\n\nVariable in **{}**.",
+            ident, ty, own_def.name)); 
+            }
+        }
         if let Some(def) = self.module.defs.iter().find(|item| item.name == ident) {
             let def_param_list: Vec<String> = def
                 .context
