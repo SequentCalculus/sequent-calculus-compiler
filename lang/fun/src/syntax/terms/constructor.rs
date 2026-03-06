@@ -6,8 +6,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
+use crate::typing::inference::args_constraint_equations;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
@@ -93,6 +96,90 @@ impl Check for Constructor {
         }
     }
 }
+
+impl Inference for Constructor {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+
+        let data_type_name = match symbol_table.find_xdata_type_name(&self.id) {
+            Some(type_name) => type_name,
+            None => {
+                return Err(Error::Undefined { span: Some(self.span.clone()), name: self.id.clone() });
+            }
+        };
+
+        let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+        if chirality == &Polarity::Codata {
+            return Err(Error::ExpectedDataForNew { span: self.span, data: data_type_name });
+        }
+        
+        // this instance of the Data Type is instanciated, whith replacing the general type vars
+        // with instance type variables eg. (A -> a1)
+
+        let mut type_var_mapping: HashMap<Name, Name> = HashMap::new();
+        for type_var in &general_type_vars.bindings {
+            type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_name());
+        }
+
+
+        let instanciated_template = match symbol_table.ctor_templates.get(&self.id) {
+            Some(ctor_template) => {
+                let mut template = ctor_template.clone();
+
+                // type var mapping logs the used type variables and maps them to the instantiated type var name
+                for binding in &mut template.bindings {
+                    match &mut binding.ty {
+                        Ty::I64 { .. } => { continue;},
+                        Ty::Decl {span , name, type_args } => {
+                            // if we find a general typ variable as type name it is replaced with a new type variable
+                            if let Some(used_type_name) = type_var_mapping.get(name) {
+                                *name = used_type_name.clone();
+                            }
+                        }
+                    }
+                }
+
+                template          
+            },
+            None => {
+                return Err(Error::Undefined {
+                span: Some(self.span),
+                name: self.id.clone(),
+            })}
+
+        };
+
+        if instanciated_template.bindings.len() != self.args.entries.len() {
+            return Err(Error::WrongNumberOfArguments {
+                span: self.span,
+                expected: instanciated_template.bindings.len(),
+                got: self.args.entries.len()});
+        }
+
+        let mut constraints = Vec::new();
+
+        constraints.append(&mut args_constraint_equations(&mut self.args, &instanciated_template, symbol_table, context, var_name_generator, self.span)?);
+        let expected_type = Ty::Decl { span: Some(self.span), name: data_type_name, type_args: TypeArgs {
+            span: Some(self.span),
+            args: instanciated_template.bindings.iter().map(|bind| bind.ty.clone()).collect()
+        }};
+
+        let new_type_var = var_name_generator.get_new_ty_var();
+
+        constraints.push((new_type_var, ty_var.clone()));
+        constraints.push((ty_var, expected_type));
+
+        Ok(constraints)
+
+        }
+}
+
 
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {

@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a copattern match of a codata type. It consists of a list of clauses, and
@@ -143,6 +145,156 @@ impl Check for New {
         self.ty = Some(expected.clone());
         Ok(self)
     }
+}
+
+impl Inference for New {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+
+        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+        
+        if let Some(first_clause) = self.clauses.first() {
+            let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
+                Some(type_name) => type_name,
+                None => {return Err(Error::Undefined { span: Some(self.span), name: first_clause.xtor.clone()})},
+            };
+
+            let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+            if chirality ==&Polarity::Data {
+                return Err(Error::ExpectedCovariableGotTerm { span: self.span });
+            }
+
+            // this instance of the Codata Type is instanciated by replacing the general type vars
+            // with instance type variables eg. (A -> a1)
+
+            // the mapping is created now, to ensure that the new type varibales in this new-Block stay consistent
+            let mut type_var_mapping: HashMap<Name, Name> = HashMap::new();
+            for type_var in &general_type_vars.bindings {
+                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_name());
+            }
+
+            // Since the Codata Type has to be the same for all clauses, the type is instanciated once
+            // all following clauses are checked against this type.
+
+
+            // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
+            for clause in &mut self.clauses {
+                match symbol_table.find_xdata_type_name(&clause.xtor) {
+                    Some(type_name) => {
+                        if type_name != data_type_name {
+                            return Err(Error::Mismatch { span: self.span, expected: format!("a clause of Type {data_type_name}"), got: format!("a clause of Type {type_name}") });
+                        }
+                    },
+                    None => {
+                    return Err(Error::Undefined { span: Some(self.span.clone()), name: clause.xtor.clone() });
+                    }
+                };
+
+                // the new arg types and out type are hence replaced
+                let (arg_types, out_type) = match symbol_table.dtor_templates.get(&clause.xtor) {
+                    Some((arg_types, out_type)) => {
+                        let mut new_arg_types = arg_types.clone();
+                        let mut new_out_type = out_type.clone();
+
+                        for binding in &mut new_arg_types.bindings {
+                            match &mut binding.ty {
+                                Ty::I64 { .. } => {continue;},
+                                Ty::Decl {
+                                    span: _,
+                                    name,
+                                    type_args: _
+                                } => {
+                                    // if the name for the Declaration is a general variable name it is replaced by a type variable from the mapping
+                                    if let Some(instanciated_type_name) = type_var_mapping.get(name) {
+                                        *name = instanciated_type_name.clone();
+                                    }
+                                }
+                            }
+                        }
+
+                        match &mut new_out_type {
+                                Ty::I64 { .. } => {},
+                                Ty::Decl {
+                                    span: _,
+                                    name,
+                                    type_args: _
+                                } => {
+                                    if let Some(instanciated_type_name) = type_var_mapping.get(name) {
+                                        *name = instanciated_type_name.clone();
+                                    }
+                                }
+                            }
+                        (new_arg_types, new_out_type)
+                    },
+                    None => {
+                        return Err(Error::Undefined {
+                        span: Some(self.span),
+                        name: clause.xtor.clone(),
+                    })},
+                };
+
+                // the arguments are added to the context, variable that are shadowed, are replaced by the new var
+                let mut clause_context = context.clone();
+                for argument in arg_types.bindings {
+                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
+                        clause_context.bindings.swap_remove(index);
+                        clause_context.add_var(&argument.var, argument.ty);
+                    }
+                }
+
+                //the argument types are now compared to the expected type of the body of the clause
+                constraints.append(&mut clause.body.constraint_equations(&mut symbol_table.clone(), &clause_context, var_name_generator, out_type)?);
+            
+            }
+
+
+            let new_type_var = var_name_generator.get_new_ty_var();
+            constraints.push((new_type_var, ty_var.clone()));
+
+            // creating the expected type for the new-block
+            let mut general_arg_types = Vec::new();
+            for ty_var_name in &general_type_vars.bindings {
+                general_arg_types.push(
+                    Ty::Decl {
+                        span: Some(self.span),
+                        name: ty_var_name.clone(),
+                        type_args: TypeArgs {
+                            span: Some(self.span),
+                            args: vec![]
+                        }}
+                );
+            }
+
+            let resulting_codata_type = Ty::Decl {
+                span: Some(self.span),
+                name: data_type_name,
+                type_args: TypeArgs {
+                    span: Some(self.span),
+                    args: general_arg_types
+                }
+            };
+
+            constraints.push((ty_var, resulting_codata_type));
+            
+
+        } else {
+            // the clauses are empty, aborting the type inference
+            return Err(Error::Mismatch {
+                span: self.span,
+                expected: "At least one Clause in New Block".to_string(),
+                got: "No clause".to_string()
+            });
+        }
+        Ok(constraints)
+
+    }
+    
 }
 
 impl UsedBinders for New {

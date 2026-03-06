@@ -5,6 +5,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::inference::{Inference, VarNameGenerator};
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -81,6 +82,29 @@ impl Check for XVar {
         self.ty = Some(expected.clone());
         self.chi = Some(Prd);
         Ok(self)
+    }
+}
+
+impl Inference for XVar {
+    fn constraint_equations(
+        &mut self,
+        symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        var_name_generator: &mut VarNameGenerator,
+        ty_var: Ty
+    ) ->  Result<Vec<(Ty,Ty)>, Error> {
+        // Free covariables must only occur in special positions (`goto` and `arguments`)
+        // and are thus rejected in all other positions by the `check` function for `XVar`.
+        if self.chi == Some(Cns) {
+            return Err(Error::ExpectedTermGotCovariable { span: self.span });
+        }
+
+        let found_ty = context.lookup_var(&self.var, &self.span)?;
+        let new_type_var = var_name_generator.get_new_ty_var();
+
+        self.ty = Some(new_type_var.clone());
+        self.chi = Some(Prd);
+        Ok(vec![(ty_var.clone(), found_ty), (new_type_var, ty_var)])
     }
 }
 
