@@ -211,6 +211,22 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
     }
 
     //eigener Code
+    //echte end Position bestimmen (chars zählen nicht bytes)
+    pub fn get_end_pos(&self) -> lsp_types::Position {
+        let text = self.get_text();
+        let lines: Vec<&str> = text.lines().collect();
+        if lines.is_empty() {
+            return lsp_types::Position {line: 0, character: 0};
+        }
+        let last_line_ind = lines.len() - 1;
+        let last_line_char_amount = lines[last_line_ind].chars().count();
+        lsp_types::Position{
+            line: last_line_ind as u32,
+            character: last_line_char_amount as u32,
+        }
+    }
+
+    //eigener Code
     //ganzen zusammenhängenden String finden auf dem man gerade ist
     pub fn get_rangeident(&self, pos: Position) -> Result<Range, Error> {
         let line = self
