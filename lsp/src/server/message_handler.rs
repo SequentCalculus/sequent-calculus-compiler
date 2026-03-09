@@ -234,8 +234,53 @@ impl MessageHandler {
         }
     }
 
-    
-    //eigener Code
+//eigener Code
+    fn formatting(&mut self, id: RequestId, params: lsp_types::DocumentFormattingParams, ) -> Response {
+        let opts = params.options;
+
+        let mut formatted = self.doc.get_text().to_string();
+
+        if opts.insert_spaces {
+            let to_spaces = " ".repeat(opts.tab_size as usize);
+            formatted = formatted.replace("\t", &to_spaces);
+        } 
+
+        if opts.trim_trailing_whitespace.unwrap_or(false) {
+            formatted = formatted
+                .lines()
+                .map(|line| line.trim_end())
+                .collect::<Vec<_>>()
+                .join("\n");
+        }
+
+        if opts.insert_final_newline.unwrap_or(false) && !formatted.ends_with('\n') {
+            formatted.push('\n');
+        }
+
+        if opts.trim_final_newlines.unwrap_or(false) {
+            while formatted.ends_with("\n\n") {
+                formatted.pop();
+            }
+        }
+
+        let edit = lsp_types::TextEdit {
+            range: lsp_types::Range {
+                start: lsp_types::Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: self.doc.get_end_pos(),
+            },
+            new_text: formatted,
+        };
+
+        Response {
+            id,
+            result: Some(serde_json::to_value(vec![edit]).unwrap()),
+            error: None,
+        }
+    }
+   /*  //eigener Code
     fn formatting(&mut self, id: RequestId, params: lsp_types::DocumentFormattingParams, ) -> Response {
         let opts = params.options;
 
@@ -291,15 +336,15 @@ impl MessageHandler {
             error: None,
         }
     }
-
-    //eigener Code
+      //eigener Code
     fn range_formatting(&mut self, id: RequestId, params: lsp_types::DocumentRangeFormattingParams, ) -> Response {
         let opts = params.options;
         let range = params.range;
+        let full_text = self.doc.get_end_pos();
 
         //extracting text 
-        let  text_all = self.doc.get_text().to_string();
-        let lines: Vec<&str> = text_all.lines().collect();
+        let lines: Vec<&str> = full_text.lines().collect();
+        let mut line_in_range = Vec::new();
 
         //extracting lines and area of the selected text
         let line_start = range.start.line as usize;
@@ -356,6 +401,69 @@ impl MessageHandler {
         Response {
             id,
             result: Some(result),
+            error: None,
+        }
+    }
+
+*/
+
+
+    //eigener Code
+    fn range_formatting(&mut self, id: RequestId, params: lsp_types::DocumentRangeFormattingParams, ) -> Response {
+        let opts = params.options;
+        let range = params.range;
+        let full_text: String = self.doc.get_text().to_string();
+
+        //extracting text 
+        let lines: Vec<&str> = full_text.lines().collect();
+        let mut selected_lines = Vec::new();
+
+        for i in (range.start.line as usize)..=(range.end.line as usize) {
+            if let Some(line) = lines.get(i) {
+                let mut line_content: String = line.to_string();
+                
+                if  i == range.end.line as usize {
+                    let end_char = range.end.character as usize;
+                    line_content = line_content.chars().take(end_char).collect();
+                }
+
+                if i == range.start.character as usize {
+                    let start_char = range.start.character as usize;
+                    line_content = line_content.chars().skip(start_char).collect();
+                }
+                selected_lines.push(line_content);
+            }
+        }
+
+        let mut formatted = selected_lines.join("\n");
+
+        if opts.insert_spaces {
+            let to_spaces = " ".repeat(opts.tab_size as usize);
+            formatted = formatted.replace("\t", &to_spaces);
+        } 
+        if opts.trim_trailing_whitespace.unwrap_or(false) {
+            formatted = formatted
+            .lines()
+            .map(|line| line.trim_end())
+            .collect::<Vec<_>>()
+            .join("\n");
+        }
+
+        if opts.insert_final_newline.unwrap_or(false) && !formatted.ends_with('\n') {
+            formatted.push('\n');
+        }
+
+        if opts.trim_final_newlines.unwrap_or(false) {
+            while formatted.ends_with("\n\n") {
+                formatted.pop();
+            }
+        }
+
+        let edit = lsp_types::TextEdit {range, new_text:formatted};
+
+        Response {
+            id,
+            result: Some(serde_json::to_value(vec![edit]).unwrap()),
             error: None,
         }
     }
