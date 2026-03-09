@@ -1,11 +1,11 @@
 // actual code
 main_:
-// create t: ContInt = ()\{ ... \};
+// create t_1: ContInt = ()\{ ... \};
 // #mark no allocation
 MV X4 X0
 // #load tag
 LA X5 ContInt_1
-// create k: ContList = (t)\{ ... \};
+// create k_4: ContList = (t_1)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -99,14 +99,14 @@ lab12:
 lab14:
 // #load tag
 LA X5 ContList_15
-// let zs: List = Nil();
+// let zs_6: List = Nil();
 // #mark no allocation
 MV X6 X0
 // #load tag
 LI X7 0
-// lit n <- 3;
+// lit n_7 <- 3;
 LI X9 3
-// substitute (k := k)(zs := zs)(n := n);
+// substitute (k_4 := k_4)(zs_6 := zs_6)(n_7 := n_7);
 // range(...)
 JAL X0 range_
 
@@ -142,7 +142,7 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab18:
-// substitute (t := t)(as := as);
+// substitute (t_1 := t_1)(as_5 := as_5);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -156,15 +156,15 @@ JAL X0 sum_
 ContInt_1:
 
 ContInt_1_Reti:
-// exit r
+// exit r_2
 MV X10 X5
 JAL X0 cleanup
 
 range_:
-// if i == 0 \{ ... \}
+// if i_10 == 0 \{ ... \}
 BEQ X9 X0 lab19
 // else branch
-// substitute (n := i)(k := k)(xs := xs)(i := i);
+// substitute (n_11 := i_10)(k_8 := k_8)(xs_9 := xs_9)(i_10 := i_10);
 // #move variables
 MV X8 X6
 MV X6 X4
@@ -173,7 +173,7 @@ MV X11 X9
 MV X9 X7
 MV X7 X5
 MV X5 X1
-// let ys: List = Cons(xs, i);
+// let ys_12: List = Cons(xs_9, i_10);
 // #allocate memory
 // ##store values
 SW X11 56 X2
@@ -268,11 +268,11 @@ lab30:
 lab32:
 // #load tag
 LI X9 4
-// lit o <- -1;
+// lit o_13 <- -1;
 LI X11 -1
-// j <- n + o;
+// j_14 <- n_11 + o_13;
 ADD X13 X5 X11
-// substitute (k := k)(ys := ys)(j := j);
+// substitute (k_8 := k_8)(ys_12 := ys_12)(j_14 := j_14);
 // #move variables
 MV X4 X6
 MV X5 X7
@@ -284,7 +284,7 @@ JAL X0 range_
 
 lab19:
 // then branch
-// substitute (xs := xs)(k := k);
+// substitute (xs_9 := xs_9)(k_8 := k_8);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -292,12 +292,12 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// invoke k Retl
+// invoke k_8 Retl
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 sum_:
-// switch xs \{ ... \};
+// switch xs_16 \{ ... \};
 LA X1 List_33
 ADD X1 X1 X7
 JALR X0 X1 0
@@ -307,15 +307,15 @@ JAL X0 List_33_Nil
 JAL X0 List_33_Cons
 
 List_33_Nil:
-// lit z <- 0;
+// lit z_17 <- 0;
 LI X7 0
-// substitute (z := z)(k := k);
+// substitute (z_17 := z_17)(k_15 := k_15);
 // #move variables
 MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// invoke k Reti
+// invoke k_15 Reti
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
@@ -351,7 +351,7 @@ LW X7 40 X6
 LW X6 32 X6
 
 lab36:
-// substitute (ys := ys)(k := k)(y := y);
+// substitute (ys_18 := ys_18)(k_15 := k_15)(y_19 := y_19);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -359,7 +359,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// create j: ContInt = (k, y)\{ ... \};
+// create j_20: ContInt = (k_15, y_19)\{ ... \};
 // #allocate memory
 // ##store values
 SW X9 56 X2
@@ -454,7 +454,7 @@ lab47:
 lab49:
 // #load tag
 LA X7 ContInt_50
-// substitute (j := j)(ys := ys);
+// substitute (j_20 := j_20)(ys_18 := ys_18);
 // #move variables
 MV X1 X6
 MV X6 X4
@@ -499,12 +499,12 @@ LW X7 40 X6
 LW X6 32 X6
 
 lab53:
-// s <- y + r;
+// s_22 <- y_19 + r_21;
 ADD X11 X9 X5
-// substitute (s := s)(k := k);
+// substitute (s_22 := s_22)(k_15 := k_15);
 // #move variables
 MV X5 X11
-// invoke k Reti
+// invoke k_15 Reti
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
