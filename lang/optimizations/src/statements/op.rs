@@ -35,22 +35,16 @@ impl CleanupInline for Op {
 }
 
 impl Rename for Op {
-    fn rename(
-        mut self,
-        vars_to_rename: &HashSet<Identifier>,
-        used_vars: &mut HashSet<Identifier>,
-    ) -> Self {
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
         if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_identifier(used_vars, &self.var.name);
-            let old_variable = self.var;
-            self.var = new_variable;
+            let new_variable = fresh_identifier(max_id, &self.var.name);
 
             self.next = self
                 .next
-                .subst_sim(&[(old_variable, self.var.clone())])
-                .rename(vars_to_rename, used_vars);
+                .subst_sim(&[(self.var.id, new_variable)])
+                .rename(vars_to_rename, max_id);
         } else {
-            self.next = self.next.rename(vars_to_rename, used_vars);
+            self.next = self.next.rename(vars_to_rename, max_id);
         }
 
         self

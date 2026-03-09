@@ -60,19 +60,12 @@ impl CleanupInline for Switch {
 }
 
 impl Rename for Switch {
-    fn rename(
-        mut self,
-        vars_to_rename: &HashSet<Identifier>,
-        used_vars: &mut HashSet<Identifier>,
-    ) -> Self {
-        let used_vars_clone = used_vars.clone();
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
         self.clauses = self
             .clauses
             .into_iter()
             .map(|clause| {
-                let mut used_vars_clause = used_vars_clone.clone();
-                let clause = clause.rename(vars_to_rename, &mut used_vars_clause);
-                used_vars.extend(used_vars_clause);
+                let clause = clause.rename(vars_to_rename, max_id);
                 clause
             })
             .collect();

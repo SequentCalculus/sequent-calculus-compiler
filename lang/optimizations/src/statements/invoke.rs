@@ -23,6 +23,7 @@ impl Rewrite for Invoke {
             let subst = clause
                 .context
                 .into_iter_vars()
+                .map(|var| var.id)
                 .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
             Rc::unwrap_or_clone(clause.body.subst_sim(&subst))
