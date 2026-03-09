@@ -1,6 +1,6 @@
 use axcut::syntax::{
-    ContextBinding, Def, Name, TypingContext, Var,
-    names::fresh_name,
+    ContextBinding, Def, TypingContext,
+    names::{Identifier, fresh_identifier},
     statements::{Call, Clause, Statement, Switch},
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
@@ -20,29 +20,35 @@ pub struct SwitchInfo {
 /// State during rewriting
 pub struct RewriteState {
     /// `Name`s of definitions in the current program
-    pub used_labels: HashSet<Name>,
+    pub used_labels: HashSet<Identifier>,
     /// `Def`initions in the current program
     pub defs: Vec<Def>,
     /// Used `Var`s in the current definition
-    pub current_used_vars: HashSet<Var>,
+    pub current_used_vars: HashSet<Identifier>,
     /// Name of the current definition
     pub current_label: String,
     /// `Let` bindings defined in the current definition: keys are the bound variables, values are
     /// the correspinding xtor names and arguments
-    pub let_bindings: HashMap<Var, (Name, TypingContext)>,
+    pub let_bindings: HashMap<Identifier, (Identifier, TypingContext)>,
     /// `Create` bindings defined in the current definition: keys are the bound variables, values
     /// are the correspinding clauses
-    pub create_bindings: HashMap<Var, Vec<Clause>>,
+    pub create_bindings: HashMap<Identifier, Vec<Clause>>,
     /// Tracks whether there have been changes during the current pass
     pub new_changes: bool,
+    /// Tracks the maximal used identifier in the program
+    pub max_id: usize,
 }
 
 impl RewriteState {
-    pub fn get_let(&self, var: &Var) -> Option<(Name, TypingContext)> {
+    pub fn get_let(&self, var: &Identifier) -> Option<(Identifier, TypingContext)> {
         self.let_bindings.get(var).cloned()
     }
 
-    pub fn get_create_clause(&self, var: &Var, xtor: &Name) -> Option<(Clause, usize)> {
+    pub fn get_create_clause(
+        &self,
+        var: &Identifier,
+        xtor: &Identifier,
+    ) -> Option<(Clause, usize)> {
         let clauses = self.create_bindings.get(var)?;
         let position = clauses
             .iter()
@@ -53,7 +59,7 @@ impl RewriteState {
 
     pub fn get_switch_info(
         &mut self,
-        called_label: &Name,
+        called_label: &Identifier,
         called_args: &TypingContext,
     ) -> Option<SwitchInfo> {
         let called_def_position = self
@@ -99,11 +105,16 @@ impl RewriteState {
         &mut self,
         clause: Clause,
         position: usize,
-        bound_var: &Var,
-    ) -> (Name, Vec<usize>, Vec<ContextBinding>) {
-        let name = fresh_name(
-            &mut self.used_labels,
-            &("lift_".to_string() + &self.current_label + "_" + bound_var + "_" + &clause.xtor),
+        bound_var: &Identifier,
+    ) -> (Identifier, Vec<usize>, Vec<ContextBinding>) {
+        let name = fresh_identifier(
+            &mut self.max_id,
+            &("lift_".to_string()
+                + &self.current_label
+                + "_"
+                + &bound_var.to_string()
+                + "_"
+                + &clause.xtor.to_string()),
         );
 
         let mut free_vars = BTreeSet::new();
@@ -138,7 +149,6 @@ impl RewriteState {
         let def = Def {
             name: name.clone(),
             context: context.into(),
-            used_vars: self.current_used_vars.clone(),
             body: Rc::unwrap_or_clone(clause.body),
         };
         self.defs.push(def);
@@ -149,14 +159,19 @@ impl RewriteState {
     pub fn lift_switch_clause(
         &mut self,
         switch_info: &mut SwitchInfo,
-        label: &Name,
-    ) -> (Name, Vec<usize>) {
+        label: &Identifier,
+    ) -> (Identifier, Vec<usize>) {
         let clause = &mut switch_info.switch.clauses[switch_info.clause_position];
         let called_def = &self.defs[switch_info.called_def_position];
 
-        let name = fresh_name(
-            &mut self.used_labels,
-            &("lift_".to_string() + label + "_" + &switch_info.switch.var + "_" + &clause.xtor),
+        let name = fresh_identifier(
+            &mut self.max_id,
+            &("lift_".to_string()
+                + &label.to_string()
+                + "_"
+                + &switch_info.switch.var.to_string()
+                + "_"
+                + &clause.xtor.to_string()),
         );
 
         let mut free_vars = BTreeSet::new();
@@ -186,7 +201,6 @@ impl RewriteState {
         let def = Def {
             name: name.clone(),
             context: bindings.into(),
-            used_vars: called_def.used_vars.clone(),
             body: Rc::unwrap_or_clone(body),
         };
         self.defs.push(def);

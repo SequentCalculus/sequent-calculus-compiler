@@ -1,6 +1,6 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::{Var, statements::IfC};
+use axcut::syntax::{names::Identifier, statements::IfC};
 
 use std::collections::HashSet;
 
@@ -32,12 +32,9 @@ impl CleanupInline for IfC {
 }
 
 impl Rename for IfC {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
-        let mut used_vars_thenc = used_vars.clone();
-        self.thenc = self.thenc.rename(vars_to_rename, &mut used_vars_thenc);
-        self.elsec = self.elsec.rename(vars_to_rename, used_vars);
-        used_vars.extend(used_vars_thenc);
-
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
+        self.thenc = self.thenc.rename(vars_to_rename, max_id);
+        self.elsec = self.elsec.rename(vars_to_rename, max_id);
         self
     }
 }

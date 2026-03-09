@@ -1,7 +1,11 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
-    syntax::{ContextBinding, Var, names::fresh_name, statements::Substitute},
+    syntax::{
+        ContextBinding,
+        names::{ID, Identifier, fresh_identifier},
+        statements::Substitute,
+    },
     traits::substitution::Subst,
 };
 
@@ -32,13 +36,13 @@ impl CleanupInline for Substitute {
 }
 
 impl Rename for Substitute {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
         let mut new_rearrange = Vec::new();
-        let mut subst: Vec<(Var, Var)> = Vec::new();
+        let mut subst: Vec<(ID, Identifier)> = Vec::new();
 
         for (binding, old) in self.rearrange {
             if vars_to_rename.contains(&binding.var) {
-                let new_var: Var = fresh_name(used_vars, &binding.var);
+                let new_var: Identifier = fresh_identifier(max_id, &binding.var.name);
                 new_rearrange.push((
                     ContextBinding {
                         var: new_var.clone(),
@@ -48,7 +52,7 @@ impl Rename for Substitute {
                     old,
                 ));
 
-                subst.push((binding.var, new_var));
+                subst.push((binding.var.id, new_var));
             } else {
                 new_rearrange.push((binding, old));
             }
@@ -57,11 +61,9 @@ impl Rename for Substitute {
         self.rearrange = new_rearrange;
 
         self.next = if subst.is_empty() {
-            self.next.rename(vars_to_rename, used_vars)
+            self.next.rename(vars_to_rename, max_id)
         } else {
-            self.next
-                .subst_sim(&subst)
-                .rename(vars_to_rename, used_vars)
+            self.next.subst_sim(&subst).rename(vars_to_rename, max_id)
         };
 
         self

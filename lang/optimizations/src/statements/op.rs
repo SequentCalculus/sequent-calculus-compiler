@@ -1,7 +1,10 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
-    syntax::{Var, names::fresh_name, statements::Op},
+    syntax::{
+        names::{Identifier, fresh_identifier},
+        statements::Op,
+    },
     traits::substitution::Subst,
 };
 
@@ -32,9 +35,13 @@ impl CleanupInline for Op {
 }
 
 impl Rename for Op {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
+    fn rename(
+        mut self,
+        vars_to_rename: &HashSet<Identifier>,
+        used_vars: &mut HashSet<Identifier>,
+    ) -> Self {
         if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_name(used_vars, &self.var);
+            let new_variable = fresh_identifier(used_vars, &self.var.name);
             let old_variable = self.var;
             self.var = new_variable;
 
