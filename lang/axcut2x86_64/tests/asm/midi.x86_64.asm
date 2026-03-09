@@ -25,12 +25,12 @@ asm_main:
     ; actual code
 
 main_:
-    ; create t: ContInt = ()\{ ... \};
+    ; create t_1: ContInt = ()\{ ... \};
     ; #mark no allocation
     mov rax, 0
     ; #load tag
     lea rdx, [rel ContInt_1]
-    ; create k: ContList = (t)\{ ... \};
+    ; create k_4: ContList = (t_1)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdx
@@ -127,14 +127,14 @@ lab12:
 lab14:
     ; #load tag
     lea rdx, [rel ContList_15]
-    ; let zs: List = Nil();
+    ; let zs_6: List = Nil();
     ; #mark no allocation
     mov rsi, 0
     ; #load tag
     mov rdi, 0
-    ; lit n <- 3;
+    ; lit n_7 <- 3;
     mov r9, 3
-    ; substitute (k := k)(zs := zs)(n := n);
+    ; substitute (k_4 := k_4)(zs_6 := zs_6)(n_7 := n_7);
     ; range(...)
     jmp range_
 
@@ -168,7 +168,7 @@ lab17:
     mov rsi, [rsi + 48]
 
 lab18:
-    ; substitute (t := t)(as := as);
+    ; substitute (t_1 := t_1)(as_5 := as_5);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -182,7 +182,7 @@ lab18:
 ContInt_1:
 
 ContInt_1_Reti:
-    ; println_i64 r;
+    ; println_i64 r_2;
     ; #save caller-save registers
     mov r12, rdx
     sub rsp, 8
@@ -192,18 +192,18 @@ ContInt_1_Reti:
     ; #restore caller-save registers
     mov rdx, r12
     add rsp, 8
-    ; lit ret <- 0;
+    ; lit ret_3 <- 0;
     mov rdi, 0
-    ; exit ret
+    ; exit ret_3
     mov rax, rdi
     jmp cleanup
 
 range_:
-    ; if i == 0 \{ ... \}
+    ; if i_10 == 0 \{ ... \}
     cmp r9, 0
     je lab19
     ; else branch
-    ; substitute (n := i)(k := k)(xs := xs)(i := i);
+    ; substitute (n_11 := i_10)(k_8 := k_8)(xs_9 := xs_9)(i_10 := i_10);
     ; #move variables
     mov r8, rsi
     mov rsi, rax
@@ -212,7 +212,7 @@ range_:
     mov r9, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; let ys: List = Cons(xs, i);
+    ; let ys_12: List = Cons(xs_9, i_10);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11
@@ -310,12 +310,12 @@ lab30:
 lab32:
     ; #load tag
     mov r9, 5
-    ; lit o <- -1;
+    ; lit o_13 <- -1;
     mov r11, -1
-    ; j <- n + o;
+    ; j_14 <- n_11 + o_13;
     mov r13, rdx
     add r13, r11
-    ; substitute (k := k)(ys := ys)(j := j);
+    ; substitute (k_8 := k_8)(ys_12 := ys_12)(j_14 := j_14);
     ; #move variables
     mov rax, rsi
     mov rdx, rdi
@@ -327,7 +327,7 @@ lab32:
 
 lab19:
     ; then branch
-    ; substitute (xs := xs)(k := k);
+    ; substitute (xs_9 := xs_9)(k_8 := k_8);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -335,12 +335,12 @@ lab19:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; invoke k Retl
+    ; invoke k_8 Retl
     ; #there is only one clause, so we can jump there directly
     jmp rdi
 
 sum_:
-    ; switch xs \{ ... \};
+    ; switch xs_16 \{ ... \};
     lea rcx, [rel List_33]
     add rcx, rdi
     jmp rcx
@@ -350,15 +350,15 @@ List_33:
     jmp near List_33_Cons
 
 List_33_Nil:
-    ; lit z <- 0;
+    ; lit z_17 <- 0;
     mov rdi, 0
-    ; substitute (z := z)(k := k);
+    ; substitute (z_17 := z_17)(k_15 := k_15);
     ; #move variables
     mov rsi, rax
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; invoke k Reti
+    ; invoke k_15 Reti
     ; #there is only one clause, so we can jump there directly
     jmp rdi
 
@@ -392,7 +392,7 @@ lab35:
     mov rsi, [rsi + 32]
 
 lab36:
-    ; substitute (ys := ys)(k := k)(y := y);
+    ; substitute (ys_18 := ys_18)(k_15 := k_15)(y_19 := y_19);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -400,7 +400,7 @@ lab36:
     mov rcx, rdi
     mov rdi, rdx
     mov rdx, rcx
-    ; create j: ContInt = (k, y)\{ ... \};
+    ; create j_20: ContInt = (k_15, y_19)\{ ... \};
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r9
@@ -498,7 +498,7 @@ lab47:
 lab49:
     ; #load tag
     lea rdi, [rel ContInt_50]
-    ; substitute (j := j)(ys := ys);
+    ; substitute (j_20 := j_20)(ys_18 := ys_18);
     ; #move variables
     mov rcx, rsi
     mov rsi, rax
@@ -541,13 +541,13 @@ lab52:
     mov rsi, [rsi + 32]
 
 lab53:
-    ; s <- y + r;
+    ; s_22 <- y_19 + r_21;
     mov r11, r9
     add r11, rdx
-    ; substitute (s := s)(k := k);
+    ; substitute (s_22 := s_22)(k_15 := k_15);
     ; #move variables
     mov rdx, r11
-    ; invoke k Reti
+    ; invoke k_15 Reti
     ; #there is only one clause, so we can jump there directly
     jmp rdi
 
