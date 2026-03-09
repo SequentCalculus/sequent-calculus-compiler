@@ -3,8 +3,8 @@ use crate::{
     def::rewrite_def,
     rewrite::RewriteState,
 };
-use axcut::syntax::{Def, Prog};
-use std::collections::{HashMap, HashSet};
+use axcut::syntax::{Def, Prog, names::Identifier};
+use std::collections::HashMap;
 
 pub const MAX_RUNS: usize = usize::MAX;
 
@@ -25,7 +25,6 @@ pub fn cleanup_inline_defs(defs: Vec<Def>) -> Vec<Def> {
     let mut cleanup_inline_state = CleanupInlineState {
         defs,
         def_map,
-        used_vars: HashSet::default(),
         current_def_mark: Mark::Once,
     };
     // we traverse the call graph starting at the entry point, gathering information and inlining
@@ -46,13 +45,11 @@ pub fn cleanup_inline_defs(defs: Vec<Def>) -> Vec<Def> {
             .unwrap_or_else(|| panic!("Definition {name} must be in the map of definitions"))
             .mark;
         if mark == Mark::Retain {
-            cleanup_inline_state.used_vars = std::mem::take(&mut def.used_vars);
             let context = std::mem::take(&mut def.context.bindings).into();
             let body = std::mem::take(&mut def.body).cleanup_inline(&mut cleanup_inline_state);
             let def = Def {
                 name,
                 context,
-                used_vars: cleanup_inline_state.used_vars,
                 body,
             };
             retained_defs.push(def);
@@ -72,11 +69,11 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     let mut state = RewriteState {
         used_labels,
         defs,
-        current_label: "".to_owned(),
-        current_used_vars: HashSet::new(),
         let_bindings: HashMap::new(),
+        current_label: Identifier::new_with_zero(""),
         create_bindings: HashMap::new(),
         new_changes: true,
+        max_id: program.max_id,
     };
 
     let mut performed_runs = 0;
@@ -100,5 +97,6 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     }
 
     program.defs = state.defs;
+    program.max_id = state.max_id;
     program
 }

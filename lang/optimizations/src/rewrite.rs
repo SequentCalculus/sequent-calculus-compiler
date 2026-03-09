@@ -23,10 +23,8 @@ pub struct RewriteState {
     pub used_labels: HashSet<Identifier>,
     /// `Def`initions in the current program
     pub defs: Vec<Def>,
-    /// Used `Var`s in the current definition
-    pub current_used_vars: HashSet<Identifier>,
     /// Name of the current definition
-    pub current_label: String,
+    pub current_label: Identifier,
     /// `Let` bindings defined in the current definition: keys are the bound variables, values are
     /// the correspinding xtor names and arguments
     pub let_bindings: HashMap<Identifier, (Identifier, TypingContext)>,
@@ -110,7 +108,7 @@ impl RewriteState {
         let name = fresh_identifier(
             &mut self.max_id,
             &("lift_".to_string()
-                + &self.current_label
+                + &self.current_label.to_string()
                 + "_"
                 + &bound_var.to_string()
                 + "_"
