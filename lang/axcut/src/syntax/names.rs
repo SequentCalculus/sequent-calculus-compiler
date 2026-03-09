@@ -21,6 +21,15 @@ pub struct Identifier {
     pub id: ID,
 }
 
+impl Identifier {
+    pub fn new_with_zero(base: &str) -> Self {
+        Self {
+            name: base.to_string(),
+            id: 0,
+        }
+    }
+}
+
 pub fn fresh_identifier(max_id: &mut ID, base_name: &str) -> Identifier {
     *max_id += 1;
     Identifier {

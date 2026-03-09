@@ -31,7 +31,6 @@ pub struct DefInfo {
 pub struct CleanupInlineState {
     pub defs: Vec<Def>,
     pub def_map: HashMap<Identifier, DefInfo>,
-    pub used_vars: HashSet<Identifier>,
     pub current_def_mark: Mark,
 }
 

@@ -1,11 +1,11 @@
-use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Mark, Rename};
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Mark};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
     syntax::statements::{Call, Statement},
     traits::substitution::Subst,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 impl Rewrite for Call {
     type Target = Statement;
@@ -25,13 +25,17 @@ impl Rewrite for Call {
             // for leaf statements, we do not lift, but just substitute into them
             let subst = clause
                 .context
-                .iter_vars_cloned()
-                .zip(switch_info.let_args.iter_vars_cloned())
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(switch_info.let_args.into_iter_vars())
                 .chain(
                     state.defs[switch_info.called_def_position]
                         .context
-                        .iter_vars_cloned()
-                        .zip(self.args.iter_vars_cloned()),
+                        .clone()
+                        .into_iter_vars()
+                        .map(|var| var.id)
+                        .zip(self.args.into_iter_vars()),
                 )
                 .collect::<Vec<_>>();
 
@@ -71,8 +75,10 @@ impl CleanupInlineGather for Call {
             // `Call`s
             let subst = called_def
                 .context
-                .iter_vars_cloned()
-                .zip(self.args.iter_vars_cloned())
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
 
             called_def.body.clone().subst_sim(&subst)
@@ -84,8 +90,10 @@ impl CleanupInlineGather for Call {
 
             let subst = called_def
                 .context
-                .iter_vars_cloned()
-                .zip(self.args.iter_vars_cloned())
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
 
             // we always recursively visit the definitions only consisting of `Call`s, but we only
@@ -134,32 +142,17 @@ impl CleanupInline for Call {
             let mut called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
 
             // we first recursively inline into the definition to inline
-            let mut called_def_used_vars =
-                std::mem::take(&mut state.defs[called_def_position].used_vars);
-            std::mem::swap(&mut state.used_vars, &mut called_def_used_vars);
             called_def_body = called_def_body.cleanup_inline(state);
-            std::mem::swap(&mut state.used_vars, &mut called_def_used_vars);
 
             let called_def = &state.defs[called_def_position];
-            // to keep names after inlining unique and to avoid accidental capture, we have to
-            // rename the binders that clash (the parameters are not renamed but later substituted);
-            // we could avoid this by making all names unique across branches and definitions when
-            // uniquifing
-            let vars_to_rename: HashSet<_> = called_def_used_vars
-                .intersection(&state.used_vars)
-                .cloned()
-                .collect();
-            // the fresh names must occur neither in the current definition nor in the inlined one
-            state.used_vars.extend(called_def_used_vars);
-            if !vars_to_rename.is_empty() {
-                called_def_body = called_def_body.rename(&vars_to_rename, &mut state.used_vars);
-            }
 
             // now wo substitute the parameters
             let subst = called_def
                 .context
-                .iter_vars_cloned()
-                .zip(self.args.iter_vars_cloned())
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
             called_def_body = called_def_body.subst_sim(&subst);
 

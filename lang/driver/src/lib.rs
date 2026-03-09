@@ -365,10 +365,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let rewritten = self.rewritten(path)?;
-        let linearized = rewritten.linearize();
-        self.linearized.insert(path.clone(), linearized.clone());
-        Ok(linearized)
+        let mut rewritten = self.rewritten(path)?;
+        rewritten.linearize();
+        self.linearized.insert(path.clone(), rewritten.clone());
+        Ok(rewritten)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.

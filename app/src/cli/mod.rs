@@ -50,7 +50,6 @@ pub fn exec() -> miette::Result<()> {
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
-        Rewrite(args) => rewrite::exec(args, !cli.no_color),
     }
 }
 
@@ -92,6 +91,4 @@ enum Command {
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
-    /// Rewrite definitions of a file
-    Rewrite(rewrite::Args),
 }

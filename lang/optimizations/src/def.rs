@@ -33,7 +33,6 @@ pub fn rewrite_def(def_position: usize, state: &mut RewriteState) {
         switch_info.switch.into()
     } else {
         state.current_label = state.defs[def_position].name.clone();
-        state.current_used_vars = state.defs[def_position].used_vars.clone();
         state.let_bindings.clear();
         state.create_bindings.clear();
 
