@@ -2,7 +2,7 @@
 
 use crate::traits::substitution::Subst;
 use printer::*;
-
+use std::fmt;
 /// Type alias for unique IDs in the program.
 pub type ID = usize;
 
@@ -60,6 +60,16 @@ impl Print for Identifier {
                 .print(cfg, alloc)
                 .append(tokens::UNDERSCORE)
                 .append(self.id.to_string())
+        }
+    }
+}
+
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.id == 0 {
+            f.write_str(&self.name)
+        } else {
+            write!(f, "{}_{}", self.name, self.id)
         }
     }
 }

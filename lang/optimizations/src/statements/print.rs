@@ -1,6 +1,6 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::{Var, statements::PrintI64};
+use axcut::syntax::{names::Identifier, statements::PrintI64};
 
 use std::collections::HashSet;
 
@@ -29,8 +29,8 @@ impl CleanupInline for PrintI64 {
 }
 
 impl Rename for PrintI64 {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
-        self.next = self.next.rename(vars_to_rename, used_vars);
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
+        self.next = self.next.rename(vars_to_rename, max_id);
         self
     }
 }

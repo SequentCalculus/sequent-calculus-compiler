@@ -1,8 +1,7 @@
 use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::{
-    Var,
-    names::fresh_name,
+    names::{Identifier, fresh_identifier},
     statements::{Create, Statement},
 };
 use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
@@ -31,7 +30,7 @@ impl Rewrite for Create {
         let mut free_vars = BTreeSet::new();
         self.next.typed_free_vars(&mut free_vars);
         if free_vars.iter().all(|binding| binding.var != self.var) {
-            *state.new_changes = true;
+            state.new_changes = true;
             Rc::unwrap_or_clone(self.next)
         } else {
             self.clauses = clauses;
@@ -59,30 +58,27 @@ impl CleanupInline for Create {
 }
 
 impl Rename for Create {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
-        let used_vars_clone = used_vars.clone();
+    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
         self.clauses = self
             .clauses
             .into_iter()
             .map(|clause| {
-                let mut used_vars_clause = used_vars_clone.clone();
-                let clause = clause.rename(vars_to_rename, &mut used_vars_clause);
-                used_vars.extend(used_vars_clause);
+                let clause = clause.rename(vars_to_rename, max_id);
                 clause
             })
             .collect();
 
         if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_name(used_vars, &self.var);
+            let new_variable = fresh_identifier(max_id, &self.var.name);
             let old_variable = self.var;
             self.var = new_variable;
 
             self.next = self
                 .next
-                .subst_sim(&[(old_variable, self.var.clone())])
-                .rename(vars_to_rename, used_vars);
+                .subst_sim(&[(old_variable.id, self.var.clone())])
+                .rename(vars_to_rename, max_id);
         } else {
-            self.next = self.next.rename(vars_to_rename, used_vars);
+            self.next = self.next.rename(vars_to_rename, max_id);
         }
 
         self

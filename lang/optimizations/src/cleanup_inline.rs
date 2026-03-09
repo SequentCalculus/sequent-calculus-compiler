@@ -1,4 +1,4 @@
-use axcut::syntax::{Def, Name, Var};
+use axcut::syntax::{Def, names::Identifier};
 
 use std::{
     collections::{HashMap, HashSet},
@@ -30,8 +30,8 @@ pub struct DefInfo {
 
 pub struct CleanupInlineState {
     pub defs: Vec<Def>,
-    pub def_map: HashMap<Name, DefInfo>,
-    pub used_vars: HashSet<Var>,
+    pub def_map: HashMap<Identifier, DefInfo>,
+    pub used_vars: HashSet<Identifier>,
     pub current_def_mark: Mark,
 }
 
@@ -78,11 +78,11 @@ impl<T: CleanupInline> CleanupInline for Vec<T> {
 }
 
 pub trait Rename {
-    fn rename(self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self;
+    fn rename(self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self;
 }
 
 impl<T: Rename + Clone> Rename for Rc<T> {
-    fn rename(self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
-        Rc::new(Rc::unwrap_or_clone(self).rename(vars_to_rename, used_vars))
+    fn rename(self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
+        Rc::new(Rc::unwrap_or_clone(self).rename(vars_to_rename, max_id))
     }
 }

@@ -2,7 +2,7 @@ use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineSta
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
     syntax::{
-        Var,
+        names::Identifier,
         statements::{Statement, Switch},
     },
     traits::substitution::Subst,
@@ -23,7 +23,7 @@ impl Rewrite for Switch {
                 self.into()
             }
             Some((xtor, args)) => {
-                *state.new_changes = true;
+                state.new_changes = true;
 
                 let clause = self
                     .clauses
@@ -33,6 +33,7 @@ impl Rewrite for Switch {
                 let subst = clause
                     .context
                     .into_iter_vars()
+                    .map(|var| var.id)
                     .zip(args.into_iter_vars())
                     .collect::<Vec<_>>();
 
@@ -59,7 +60,11 @@ impl CleanupInline for Switch {
 }
 
 impl Rename for Switch {
-    fn rename(mut self, vars_to_rename: &HashSet<Var>, used_vars: &mut HashSet<Var>) -> Self {
+    fn rename(
+        mut self,
+        vars_to_rename: &HashSet<Identifier>,
+        used_vars: &mut HashSet<Identifier>,
+    ) -> Self {
         let used_vars_clone = used_vars.clone();
         self.clauses = self
             .clauses
