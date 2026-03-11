@@ -1,4 +1,4 @@
-use std::{iter::Zip, rc::Rc};
+use std::rc::Rc;
 
 use miette::SourceSpan;
 
@@ -71,10 +71,14 @@ pub fn args_constraint_equations(
 }
 
 pub struct VarNameGenerator {
-    internal_counter: i32
+    internal_counter: u32
 }
 
 impl VarNameGenerator {
+    pub fn new() -> Self {
+        VarNameGenerator { internal_counter: 0 }
+    }
+
     pub fn get_new_name(&mut self) -> String {
         let new_name = self.internal_counter.to_string();
         self.internal_counter = self.internal_counter + 1;

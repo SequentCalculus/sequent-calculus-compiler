@@ -159,6 +159,10 @@ impl Inference for New {
         let mut constraints: Vec<(Ty, Ty)> = Vec::new();
         
         if let Some(first_clause) = self.clauses.first() {
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var.clone()));
+
             let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
                 Some(type_name) => type_name,
                 None => {return Err(Error::Undefined { span: Some(self.span), name: first_clause.xtor.clone()})},
@@ -196,7 +200,7 @@ impl Inference for New {
                     }
                 };
 
-                // the new arg types and out type are hence replaced
+                // the new arg types and out type are replaced
                 let (arg_types, out_type) = match symbol_table.dtor_templates.get(&clause.xtor) {
                     Some((arg_types, out_type)) => {
                         let mut new_arg_types = arg_types.clone();
@@ -254,16 +258,13 @@ impl Inference for New {
             }
 
 
-            let new_type_var = var_name_generator.get_new_ty_var();
-            constraints.push((new_type_var, ty_var.clone()));
-
             // creating the expected type for the new-block
             let mut general_arg_types = Vec::new();
             for ty_var_name in &general_type_vars.bindings {
                 general_arg_types.push(
                     Ty::Decl {
                         span: Some(self.span),
-                        name: ty_var_name.clone(),
+                        name: type_var_mapping.get(ty_var_name).unwrap().clone(),
                         type_args: TypeArgs {
                             span: Some(self.span),
                             args: vec![]
@@ -305,12 +306,16 @@ impl UsedBinders for New {
 
 #[cfg(test)]
 mod test {
+    use std::vec;
+
     use printer::Print;
 
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     #[test]
@@ -444,6 +449,49 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+
+    #[test]
+    fn inference_lpair() {
+        let mut term = New {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "fst".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "snd".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(2).into(),
+                },
+            ],
+            ty: None,
+        };
+
+        let mut symbol_table = symbol_table_lpair();
+
+        let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let lpair_type = Some(Ty::mk_decl(
+                "LPair",
+                TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
+            ));
+
+        let expected = vec![(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), (Ty::mk_ty_var("1"), Ty::mk_i64()), (Ty::mk_ty_var("2"), Ty::mk_i64()), (Ty::mk_ty_var("x"), lpair_type.clone().unwrap())];
+
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(result, expected);
+        
+
     }
 
     fn example_empty() -> New {

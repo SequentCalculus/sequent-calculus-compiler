@@ -124,6 +124,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -165,6 +166,22 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_op() {
+        let mut term = Op {
+            span: dummy_span(),
+            fst: Rc::new(Lit::mk(2).into()),
+            op: BinOp::Sum,
+            snd: Rc::new(Lit::mk(3).into()),
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![(Ty::mk_ty_var("x"), Ty::mk_i64()), (Ty::mk_i64(), Ty::mk_i64()),(Ty::mk_i64(), Ty::mk_i64())];
+
+        assert_eq!(result, expected);
     }
 
     fn example_prod() -> Op {

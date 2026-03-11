@@ -95,16 +95,15 @@ impl Inference for PrintI64 {
             ty_var: Ty
         ) -> Result<Vec<(Ty,Ty)>, Error> {
         let mut constraints: Vec<(Ty, Ty)> = vec![];
-        
-        
-        constraints.append(&mut self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
-        constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
-        
+
         // the term type is set to a type variable for easy type lookup after the unification algorithm
         let new_var_type = var_name_generator.get_new_ty_var();
         self.ty = Some(new_var_type.clone());
 
-        constraints.push((new_var_type, ty_var));
+        constraints.push((new_var_type, ty_var.clone()));
+        
+        constraints.append(&mut self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+        constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var)?);
         
         Ok(constraints)
     }
@@ -114,5 +113,31 @@ impl UsedBinders for PrintI64 {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.arg.used_binders(used);
         self.next.used_binders(used);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::rc::Rc;
+
+    use crate::syntax::{Lit, PrintI64, Term, Ty, TypingContext};
+    use crate::syntax::util::dummy_span;
+    use crate::typing::SymbolTable;
+    use crate::typing::inference::{Inference, VarNameGenerator};
+
+
+
+    #[test]
+    fn inference_print() {
+        let ctx = TypingContext::default();
+
+        let mut term = PrintI64{span: dummy_span(), newline: false, arg: Rc::new(Term::Lit(Lit::mk(5))), next: Rc::new(Term::Lit(Lit::mk(7))), ty: None};
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), (Ty::mk_i64(), Ty::mk_i64()), (Ty::mk_ty_var("x"), Ty::mk_i64())];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 }

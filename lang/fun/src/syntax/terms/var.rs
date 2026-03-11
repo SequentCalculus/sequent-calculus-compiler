@@ -104,7 +104,7 @@ impl Inference for XVar {
 
         self.ty = Some(new_type_var.clone());
         self.chi = Some(Prd);
-        Ok(vec![(ty_var.clone(), found_ty), (new_type_var, ty_var)])
+        Ok(vec![(new_type_var, ty_var.clone()), (ty_var, found_ty)])
     }
 }
 
@@ -112,6 +112,7 @@ impl Inference for XVar {
 mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     #[test]
@@ -139,5 +140,23 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+
+    #[test]
+    fn inference_var() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_i64());
+
+        let mut name_generator = VarNameGenerator::new();
+
+        let mut term = XVar::mk("x");
+
+        let result = term
+        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut name_generator, Ty::mk_i64()).unwrap();
+
+        assert!(matches!(term.ty, Some(Ty::Decl { name, .. }) if name == "0"));
+
+        assert_eq!(result, vec![(Ty::mk_decl("0", TypeArgs::mk(vec![])), Ty::mk_i64()), (Ty::mk_i64(), Ty::mk_i64())])        
     }
 }
