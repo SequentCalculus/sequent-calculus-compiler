@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{Inference, args_constraint_equations};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
@@ -113,6 +115,73 @@ impl Check for Destructor {
                 name: self.id.clone(),
             }),
         }
+    }
+}
+
+impl Inference for Destructor {
+    fn constraint_equations(
+        &mut self,
+        symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        var_name_generator: &mut inference::VarNameGenerator,
+        ty_var: Ty
+    ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+
+        let codata_type_name = match symbol_table.find_xdata_type_name(&self.id) {
+            Some(type_name) => type_name,
+            None => {
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+            },
+        };
+
+        let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&codata_type_name).unwrap();
+
+        if chirality == &Polarity::Data {
+                return Err(Error::ExpectedCovariableGotTerm { span: self.span });
+        }
+
+        // instanciating new type variables
+
+        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+        for type_var in &general_type_vars.bindings {
+            type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+        }
+
+        // collecting the expected signature of the dtor
+        let (mut arg_types, mut out_type) = match symbol_table.dtor_templates.get(&self.id) {
+            Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
+            None => {
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+            }
+        };
+
+        // replacing the general type vars for instaciated ones
+
+        let mut new_arg_types = Vec::new();
+        for arg_ty in arg_types.bindings {
+            new_arg_types.push(arg_ty.subst_ty(&type_var_mapping));
+        }
+
+        arg_types.bindings = new_arg_types;
+
+        out_type = out_type.subst_ty(&type_var_mapping);
+
+        // putting together the instantiated and expected type for the scrutinee and creating the constraints for it
+        let scrutinee_type_args: Vec<Ty> = general_type_vars.bindings.iter().map(|binding| type_var_mapping.get(binding).unwrap()).cloned().collect();
+        let scrutinee_type = Ty::mk_decl(&codata_type_name, TypeArgs { span: None, args: scrutinee_type_args });
+
+        constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator, scrutinee_type)?);
+
+        constraints.append(&mut args_constraint_equations(&mut self.args, &arg_types, symbol_table, context, var_name_generator, self.span)?);
+
+        // creating a new type var to link the type of the current term to the future result after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var.clone()));
+        constraints.push((ty_var, out_type));
+
+        Ok(constraints)
     }
 }
 

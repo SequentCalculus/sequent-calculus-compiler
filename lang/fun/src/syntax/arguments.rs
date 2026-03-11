@@ -2,7 +2,7 @@
 
 use printer::*;
 
-use crate::syntax::*;
+use crate::{syntax::*, typing::inference::Inference};
 
 /// This struct defines arguments in Fun. They consist of a list of [`Term`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

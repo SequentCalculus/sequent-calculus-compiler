@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -137,6 +138,31 @@ impl Check for IfC {
 
         self.ty = Some(expected.clone());
         Ok(self)
+    }
+}
+
+impl Inference for IfC {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+
+        constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+        constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+
+        constraints.append(&mut self.thenc.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
+        constraints.append(&mut self.elsec.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
+
+        // adding a new type var as the type of the term for easier lookup after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var));
+
+        Ok(constraints)
     }
 }
 

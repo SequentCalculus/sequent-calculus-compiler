@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -82,6 +83,30 @@ impl Check for PrintI64 {
 
         self.ty = Some(expected.clone());
         Ok(self)
+    }
+}
+
+impl Inference for PrintI64 {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = vec![];
+        
+        
+        constraints.append(&mut self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+        constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
+        
+        // the term type is set to a type variable for easy type lookup after the unification algorithm
+        let new_var_type = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_var_type.clone());
+
+        constraints.push((new_var_type, ty_var));
+        
+        Ok(constraints)
     }
 }
 

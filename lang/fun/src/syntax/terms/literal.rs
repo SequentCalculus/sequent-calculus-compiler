@@ -5,6 +5,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -57,6 +58,18 @@ impl Check for Lit {
     ) -> Result<Self, Error> {
         check_equality(&self.span, symbol_table, expected, &Ty::mk_i64())?;
         Ok(self)
+    }
+}
+
+impl Inference for Lit {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        Ok(vec![(ty_var, Ty::mk_i64())])
     }
 }
 

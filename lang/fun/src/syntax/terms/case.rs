@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
@@ -155,6 +157,121 @@ impl Check for Case {
 
         self.ty = Some(expected.clone());
         Ok(self)
+    }
+}
+
+impl Inference for Case {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+
+        if let Some(first_clause) = self.clauses.first() {
+            let mut constraints = Vec::new();
+
+
+            let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
+                Some(type_name) => type_name,
+                None => {
+                    return Err(Error::Undefined {
+                        span: Some(self.span),
+                        name: first_clause.xtor.clone()
+                    })
+                }
+            };
+
+            let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+            if chirality == &Polarity::Codata {
+                return Err(Error::ExpectedTermGotCovariable { span: self.span });
+            }
+
+            // this instance of the Codata Type is instanciated by replacing the general type vars
+            // with instance type variables eg. (A -> a1)
+
+            // the mapping is created now, to ensure that the new type varibales in this case-Block stay consistent
+            let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+            for type_var in &general_type_vars.bindings {
+                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+            }
+
+
+            for clause in &mut self.clauses {
+
+                // checking that that type of the clause is the same for all clauses
+                match symbol_table.find_xdata_type_name(&clause.xtor) {
+                    Some(type_name) => {
+                        if type_name != data_type_name {
+                            return Err(Error::Mismatch {
+                                span: self.span,
+                                expected: data_type_name,
+                                got: type_name
+                            });
+                        }
+                    },
+                    None => {
+                        return Err(Error::Undefined {
+                            span: Some(self.span),
+                            name: clause.xtor.clone()
+                        });
+                    }
+                }
+
+                let instantiated_arg_types = match symbol_table.ctor_templates.get(&clause.xtor) {
+                    Some(arg_types) => {
+                        arg_types.clone().subst_ty(&type_var_mapping)
+                    },
+                    None => {
+                        return Err(Error::Undefined {
+                            span: Some(self.span),
+                            name: clause.xtor.clone()
+                        })
+                    }
+                };
+
+                let mut clause_context = context.clone();
+                for argument in instantiated_arg_types.bindings {
+                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
+                        clause_context.bindings.swap_remove(index);
+                        clause_context.add_var(&argument.var, argument.ty);
+                    }
+                }
+                
+                // every clause must have the same out type, the expected type of the whole case block
+                constraints.append(&mut clause.body.constraint_equations(
+                    &mut symbol_table.clone(),
+                    &clause_context,
+                    var_name_generator,
+                    ty_var.clone())?
+                );            
+
+            }
+
+
+            let scutinee_type_args = TypeArgs::mk(general_type_vars.bindings.iter()
+                .map(|binding| type_var_mapping.get(binding).unwrap()).cloned().collect());
+
+            let scrutinee_type = Ty::mk_decl(&data_type_name, scutinee_type_args);
+
+            constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator,scrutinee_type)?);
+
+            // adding a type variable the type of the case block
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var));
+
+            Ok(constraints)
+        } else {
+            // the clauses are empty, aborting the type inference
+            return Err(Error::Mismatch {
+                span: self.span,
+                expected: "At least one Clause in Case Block".to_string(),
+                got: "No clause".to_string()
+            });
+        }
     }
 }
 

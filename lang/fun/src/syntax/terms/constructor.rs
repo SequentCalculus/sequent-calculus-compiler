@@ -170,8 +170,10 @@ impl Inference for Constructor {
             args: instanciated_template.bindings.iter().map(|bind| bind.ty.clone()).collect()
         }};
 
+        // creating a new type var to link the type of the current term to the future result after unification
         let new_type_var = var_name_generator.get_new_ty_var();
 
+        self.ty = Some(new_type_var.clone());
         constraints.push((new_type_var, ty_var.clone()));
         constraints.push((ty_var, expected_type));
 

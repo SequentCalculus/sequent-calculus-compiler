@@ -8,6 +8,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -81,6 +82,21 @@ impl Check for Goto {
         self.ty = Some(expected.clone());
         Ok(self)
     }
+}
+
+impl Inference for Goto {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+            let continuation_type = context.lookup_covar(&self.target, &self.span)?;
+            self.ty = None;
+
+            self.term.constraint_equations(symbol_table, context, var_name_generator, continuation_type)
+        }
 }
 
 impl UsedBinders for Goto {

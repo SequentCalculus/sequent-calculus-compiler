@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -90,6 +91,23 @@ impl Check for Op {
 
         Ok(self)
     }
+}
+
+impl Inference for Op {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = vec![(ty_var, Ty::mk_i64())];
+
+        constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+        constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+
+        Ok(constraints)
+    }    
 }
 
 impl UsedBinders for Op {

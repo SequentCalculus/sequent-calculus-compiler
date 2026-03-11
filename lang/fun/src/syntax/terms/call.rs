@@ -6,6 +6,8 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
+use crate::typing::inference::args_constraint_equations;
 use crate::typing::*;
 
 use std::collections::HashSet;
@@ -71,6 +73,39 @@ impl Check for Call {
                 name: self.name.clone(),
             }),
         }
+    }
+}
+
+impl Inference for Call {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        match symbol_table.defs.get(&self.name) {
+            Some(signature) => {
+                let mut constraints = Vec::new();
+
+                let (types, ret_ty) = signature.clone();
+                constraints.push((ret_ty, ty_var.clone()));
+
+                constraints.append(&mut args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span.clone())?);
+
+                // adding a new type var as the type of the term for easier lookup after unification
+                let new_type_var = var_name_generator.get_new_ty_var();
+                self.ret_ty = Some(new_type_var.clone());
+                constraints.push((new_type_var, ty_var));
+
+                Ok(constraints)
+            }
+            None => Err(Error::Undefined {
+                span: None,
+                name: self.name.clone(),
+            }),
+        }
+
     }
 }
 

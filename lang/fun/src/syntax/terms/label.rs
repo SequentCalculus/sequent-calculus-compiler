@@ -8,6 +8,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -76,6 +77,29 @@ impl Check for Label {
 
         self.ty = Some(expected.clone());
         Ok(self)
+    }
+}
+
+impl Inference for Label {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+            let mut new_context = context.clone();
+            new_context.add_covar(&self.label, ty_var.clone());
+
+            let mut constraints = self.term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var.clone())?;
+
+
+            // adding a new type var as the type of the term for easier lookup after unification
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var));
+
+            Ok(constraints)
     }
 }
 

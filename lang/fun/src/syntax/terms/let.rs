@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 use std::{collections::HashSet, rc::Rc};
@@ -29,6 +30,7 @@ pub struct Let {
     /// The bound variable
     pub variable: Var,
     /// The (annotated) type of the bound term
+    // TODO: could become optional with the type inference
     pub var_ty: Ty,
     /// The bound term
     pub bound_term: Rc<Term>,
@@ -90,6 +92,33 @@ impl Check for Let {
         self.ty = Some(expected.clone());
         Ok(self)
     }
+}
+
+impl Inference for Let {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+            let mut constraints: Vec<(Ty, Ty)> = vec![];
+
+            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, self.var_ty.clone())?);
+
+            let mut new_context = context.clone();
+            new_context.add_var(&self.variable, self.var_ty.clone());
+            constraints.append(&mut self.in_term.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
+
+            // adding a new type var as the type of the term for easier lookup after unification
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+
+            constraints.push((new_type_var, ty_var));
+
+            Ok(constraints)
+    }
+    
 }
 
 impl UsedBinders for Let {
