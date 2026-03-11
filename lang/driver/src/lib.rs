@@ -9,6 +9,7 @@ use std::{
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
+    env::{consts::OS, home_dir},
 };
 
 use core2axcut::program::shrink_prog;
@@ -122,17 +123,11 @@ impl Driver {
             match decl {
                 ModuleDeclaration::Import (import) => {
                     let mut subdrv = Driver::new();
-                    search_path.push(import.name);
-                    search_path.set_extension("sc");
-                    imports.push(subdrv.loaded(&search_path)?);
-                    search_path.pop();
+                    imports.push(subdrv.loaded(&find_given_file(&import.name, &mut search_path, true).expect("Should have found the file"))?);
                 }
                 ModuleDeclaration::Module (module)=> {
                     let mut subdrv = Driver::new();
-                    search_path.push(module.name);
-                    search_path.set_extension("sc");
-                    modules.push(subdrv.loaded(&search_path)?);
-                    search_path.pop();
+                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false).expect("Should have found the file"))?);
                 }
             }
         }
@@ -503,4 +498,82 @@ pub fn generate_io_runtime() -> PathBuf {
     }
 
     filepath
+}
+
+fn find_given_file<'a>(filename: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, DriverError> {
+    path.push(filename);
+    path.set_extension("sc");
+    if path.is_file() {
+        Ok(path.to_path_buf())
+    }
+    else {
+        path.set_extension("");
+        if path.is_dir() {
+            path.push(filename);
+            path.set_extension("sc");
+            if path.is_file() {
+                Ok(path.to_path_buf())
+            }
+            else {
+                Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+            }
+        }
+        else if is_import {
+            let mut std_module_path = {
+                if OS == "linux" {
+                    let mut dir = home_dir().unwrap();
+                    dir.push(".local");
+                    dir.push("share");
+                    dir.push("scc");
+                    dir
+                }
+                else if OS == "windows" {
+                    let mut dir = home_dir().unwrap();
+                    dir.push("AppData");
+                    dir.push("Local");
+                    dir.push("scc");
+                    dir
+                }
+                else if OS == "macos" {
+                    let mut dir = home_dir().unwrap();
+                    dir.push("Library");
+                    dir.push("Application Support");
+                    dir.push("scc");
+                    dir
+                }
+                else {
+                    PathBuf::new()
+                }
+            };
+            if std_module_path.exists() {
+                std_module_path.push(filename);
+                std_module_path.set_extension("sc");
+                if std_module_path.is_file() {
+                    Ok(std_module_path)
+                }
+                else {
+                    std_module_path.set_extension("");
+                    if std_module_path.is_dir() {
+                        std_module_path.push(filename);
+                        std_module_path.set_extension("sc");
+                        if std_module_path.is_file() {
+                            Ok(std_module_path)
+                        }
+                        else {
+                            Err(DriverError::FileNotFound {file_name: std_module_path.to_str().unwrap().to_owned(),})
+                        }
+                    }
+                    else {
+                        Err(DriverError::FileNotFound {file_name: std_module_path.to_str().unwrap().to_owned(),})
+                    }
+                }
+            }
+            else {
+                Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+            }
+        }
+        else {
+            Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+        }
+    }
 }
