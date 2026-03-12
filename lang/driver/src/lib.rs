@@ -112,20 +112,24 @@ impl Driver {
         if let Some(res) = self.loaded.get(path) {
             return Ok(res.clone());
         }
-        let mut search_path = path.clone();
+        
         let parsed = self.parsed(path)?;
         //TODO: add handling for files not in same directory and in subfolders
         //TODO: add comprehensive error for files not found
         let mut imports = Vec::<ModuleProgram>::new();
         let mut modules = Vec::<ModuleProgram>::new();
-        search_path.pop();
+       
         for decl in parsed.module_declarations {
             match decl {
                 ModuleDeclaration::Import (import) => {
+                    let mut search_path = path.clone();
+                    search_path.pop();
                     let mut subdrv = Driver::new();
                     imports.push(subdrv.loaded(&find_given_file(&import.name, &mut search_path, true).expect("Should have found the file"))?);
                 }
                 ModuleDeclaration::Module (module)=> {
+                    let mut search_path = path.clone();
+                    search_path.pop();
                     let mut subdrv = Driver::new();
                     modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false).expect("Should have found the file"))?);
                 }
