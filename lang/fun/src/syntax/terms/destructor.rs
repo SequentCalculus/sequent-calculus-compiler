@@ -128,6 +128,11 @@ impl Inference for Destructor {
     ) -> Result<Vec<(Ty,Ty)>, Error> {
         let mut constraints: Vec<(Ty, Ty)> = Vec::new();
 
+        // creating a new type var to link the type of the current term to the future result after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var.clone()));
+
         let codata_type_name = match symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
@@ -158,11 +163,7 @@ impl Inference for Destructor {
 
         // replacing the general type vars for instaciated ones
 
-        let mut new_arg_types = Vec::new();
-        for arg_ty in arg_types.bindings {
-            new_arg_types.push(arg_ty.subst_ty(&type_var_mapping));
-        }
-
+        let new_arg_types = arg_types.bindings.iter().map(|arg_ty| arg_ty.clone().subst_ty(&type_var_mapping)).collect();
         arg_types.bindings = new_arg_types;
 
         out_type = out_type.subst_ty(&type_var_mapping);
@@ -175,10 +176,6 @@ impl Inference for Destructor {
 
         constraints.append(&mut args_constraint_equations(&mut self.args, &arg_types, symbol_table, context, var_name_generator, self.span)?);
 
-        // creating a new type var to link the type of the current term to the future result after unification
-        let new_type_var = var_name_generator.get_new_ty_var();
-        self.ty = Some(new_type_var.clone());
-        constraints.push((new_type_var, ty_var.clone()));
         constraints.push((ty_var, out_type));
 
         Ok(constraints)
@@ -200,9 +197,12 @@ mod destructor_tests {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
+    use std::vec;
 
     #[test]
     fn check_fst() {
@@ -311,6 +311,83 @@ mod destructor_tests {
         assert!(result.is_err())
     }
 
+
+    #[test]
+    fn inference_lpait_fst() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        let mut symbol_table = symbol_table_lpair();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "fst".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
+            Ty::mk_ty_var("1"),
+            Ty::mk_ty_var("2")
+        ]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("3"), scrutinee_type.clone()),
+            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+
+    #[test]
+    fn inference_ap() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        ctx.add_covar("a", Ty::mk_i64());
+        let mut symbol_table = symbol_table_fun_template();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "apply".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            // new type var
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            // scrutinee
+            (Ty::mk_ty_var("3"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]))),
+            (Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+
+            // argument 1
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+
+            // argument 2,
+            (Ty::mk_ty_var("2"), Ty::mk_i64()),
+
+            //final type constraint
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("2"))
+        ];
+        
+        assert_eq!(result, expected)
+    }
     /// "x.head"
     fn example_1() -> Destructor {
         Destructor {
