@@ -49,7 +49,7 @@ impl ModuleProgram {
         let imports = self.imports.clone();
         let mut checked_imports = Vec::<CheckedProgram>::new();
         for import in imports.values() {
-            let import_symbol_table = build_symbol_table(&import, (true, &import.name))?;
+            //let import_symbol_table = build_symbol_table(&import, (true, &import.name))?;
             checked_imports.push(import.clone().check()?);
         }
         let modules = self.modules.clone();

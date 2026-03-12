@@ -15,7 +15,7 @@ pub enum DriverError {
     #[error("Unable to find binary {bin_name}")]
     #[diagnostic(code("D-001"))]
     BinaryNotFound { bin_name: String },
-    #[error("Unable to find file {file_name}")]
+    #[error("Unable to find file {path_to_file}")]
     #[diagnostic(code("D-002"))]
-    FileNotFound { file_name: String },
+    FileNotFound { path_to_file: String },
 }

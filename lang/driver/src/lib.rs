@@ -16,7 +16,7 @@ use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
-    syntax::program::{CheckedProgram, Program, ModuleProgram},
+    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Name},
     syntax::module_declarations::*,
 };
 use fun2core::program::compile_prog;
@@ -116,7 +116,7 @@ impl Driver {
         let parsed = self.parsed(path)?;
         //TODO: add handling for files not in same directory and in subfolders
         //TODO: add comprehensive error for files not found
-        let mut imports = Vec::<ModuleProgram>::new();
+        let mut imports = HashMap::<Name, ModuleProgram>::new();
         let mut modules = Vec::<ModuleProgram>::new();
        
         for decl in parsed.module_declarations {
@@ -125,7 +125,7 @@ impl Driver {
                     let mut search_path = path.clone();
                     search_path.pop();
                     let mut subdrv = Driver::new();
-                    imports.push(subdrv.loaded(&find_given_file(&import.name, &mut search_path, true).expect("Should have found the file"))?);
+                    imports.insert(import.name.clone(), subdrv.loaded(&find_given_file(&import.name, &mut search_path, true).expect("Should have found the file"))?);
                 }
                 ModuleDeclaration::Module (module)=> {
                     let mut search_path = path.clone();
@@ -519,7 +519,7 @@ fn find_given_file<'a>(filename: &'a str, path: &'a mut PathBuf, is_import: bool
                 Ok(path.to_path_buf())
             }
             else {
-                Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+                Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
             }
         }
         else if is_import {
@@ -564,20 +564,20 @@ fn find_given_file<'a>(filename: &'a str, path: &'a mut PathBuf, is_import: bool
                             Ok(std_module_path)
                         }
                         else {
-                            Err(DriverError::FileNotFound {file_name: std_module_path.to_str().unwrap().to_owned(),})
+                            Err(DriverError::FileNotFound {path_to_file: std_module_path.to_str().unwrap().to_owned(),})
                         }
                     }
                     else {
-                        Err(DriverError::FileNotFound {file_name: std_module_path.to_str().unwrap().to_owned(),})
+                        Err(DriverError::FileNotFound {path_to_file: std_module_path.to_str().unwrap().to_owned(),})
                     }
                 }
             }
             else {
-                Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+                Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
             }
         }
         else {
-            Err(DriverError::FileNotFound {file_name: path.to_str().unwrap().to_owned(),})
+            Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
         }
     }
 }
