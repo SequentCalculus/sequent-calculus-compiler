@@ -69,6 +69,8 @@ impl Inference for Exit {
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
         ) -> Result<Vec<(Ty,Ty)>, Error> {
+            self.ty = Some(ty_var);
+            
             self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())
     }
 }
