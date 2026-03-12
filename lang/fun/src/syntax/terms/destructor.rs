@@ -388,6 +388,25 @@ mod destructor_tests {
         
         assert_eq!(result, expected)
     }
+
+    #[test]
+    fn inference_dtor_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let result = Destructor {
+            span: dummy_span(),
+            id: "head".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        }
+        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+    
+        assert!(result.is_err())
+    }
+
+
     /// "x.head"
     fn example_1() -> Destructor {
         Destructor {
