@@ -91,13 +91,14 @@ impl Inference for Label {
             let mut new_context = context.clone();
             new_context.add_covar(&self.label, ty_var.clone());
 
-            let mut constraints = self.term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var.clone())?;
-
+            let mut constraints = Vec::new();
 
             // adding a new type var as the type of the term for easier lookup after unification
             let new_type_var = var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraints.push((new_type_var, ty_var));
+            constraints.push((new_type_var, ty_var.clone()));
+
+            constraints.append(&mut self.term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
 
             Ok(constraints)
     }
@@ -117,6 +118,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -155,6 +157,26 @@ mod test {
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_label() {
+        let mut term = Label {
+            span: dummy_span(),
+            label: "a".to_owned(),
+            ty: None,
+            term: Rc::new(Lit::mk(1).into()),
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 
     fn example() -> Label {
