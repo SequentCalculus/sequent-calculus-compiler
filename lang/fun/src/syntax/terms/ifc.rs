@@ -151,16 +151,16 @@ impl Inference for IfC {
         ) -> Result<Vec<(Ty,Ty)>, Error> {
         let mut constraints: Vec<(Ty, Ty)> = Vec::new();
 
+        // adding a new type var as the type of the term for easier lookup after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var.clone()));
+
         constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
         constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
 
         constraints.append(&mut self.thenc.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
-        constraints.append(&mut self.elsec.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
-
-        // adding a new type var as the type of the term for easier lookup after unification
-        let new_type_var = var_name_generator.get_new_ty_var();
-        self.ty = Some(new_type_var.clone());
-        constraints.push((new_type_var, ty_var));
+        constraints.append(&mut self.elsec.constraint_equations(symbol_table, context, var_name_generator, ty_var)?);
 
         Ok(constraints)
     }
@@ -182,6 +182,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -230,6 +231,33 @@ mod test {
         }
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_ife() {
+        let mut term = IfC {
+            span: dummy_span(),
+            sort: IfSort::Equal,
+            fst: Rc::new(Lit::mk(2).into()),
+            snd: Some(Rc::new(Lit::mk(1).into())),
+            thenc: Rc::new(Lit::mk(2).into()),
+            elsec: Rc::new(Lit::mk(3).into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_i64(), Ty::mk_i64()),
+            (Ty::mk_i64(), Ty::mk_i64()),
+            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        
     }
 
     fn example() -> IfC {
