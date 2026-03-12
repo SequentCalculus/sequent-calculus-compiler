@@ -203,11 +203,15 @@ pub trait BuildSymbolTable {
 
 impl BuildSymbolTable for ModuleProgram {
     fn build(&self, symbol_table: &mut SymbolTable, include_private: (bool, &str)) -> Result<(), Error> {
-        for import in &self.imports {
-            import.build(symbol_table, (false, &import.name))?;
+        for import in self.imports.values() {
+            //import.build(symbol_table, (false, &import.name))?;
+            let import_symbol_table = build_symbol_table(&import, (false, &import.name));
+            symbol_table.combine(import_symbol_table?);
         }
         for module in &self.modules {
-            module.build(symbol_table, (false, &module.name))?;
+            //module.build(symbol_table, (false, &module.name))?;
+            let module_symbol_table = build_symbol_table(&module, (false, &module.name));
+            symbol_table.combine(module_symbol_table?);
         }
         for declaration in &self.declarations {
             declaration.build(symbol_table, include_private)?;
