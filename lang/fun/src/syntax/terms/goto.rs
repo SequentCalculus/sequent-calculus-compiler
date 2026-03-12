@@ -93,7 +93,7 @@ impl Inference for Goto {
             ty_var: Ty
         ) -> Result<Vec<(Ty,Ty)>, Error> {
             let continuation_type = context.lookup_covar(&self.target, &self.span)?;
-            self.ty = None;
+            self.ty = Some(ty_var);
 
             self.term.constraint_equations(symbol_table, context, var_name_generator, continuation_type)
         }
@@ -112,6 +112,8 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -151,6 +153,25 @@ mod test {
             &Ty::mk_i64(),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_goto() {
+        let mut ctx = TypingContext::default();
+        ctx.add_covar("a", Ty::mk_i64());
+        let mut term = Goto {
+            span: dummy_span(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_i64(), Ty::mk_i64())
+        ];
+        assert_eq!(result, expected)
     }
 
     fn example() -> Goto {
