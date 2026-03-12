@@ -104,17 +104,18 @@ impl Inference for Let {
         ) -> Result<Vec<(Ty,Ty)>, Error> {
             let mut constraints: Vec<(Ty, Ty)> = vec![];
 
-            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, self.var_ty.clone())?);
-
-            let mut new_context = context.clone();
-            new_context.add_var(&self.variable, self.var_ty.clone());
-            constraints.append(&mut self.in_term.constraint_equations(symbol_table, context, var_name_generator, ty_var.clone())?);
-
             // adding a new type var as the type of the term for easier lookup after unification
             let new_type_var = var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var.clone()));
 
-            constraints.push((new_type_var, ty_var));
+            let arg_type_var = var_name_generator.get_new_ty_var();
+
+            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, arg_type_var.clone())?);
+
+            let mut new_context = context.clone();
+            new_context.add_var(&self.variable, arg_type_var);
+            constraints.append(&mut self.in_term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
 
             Ok(constraints)
     }
@@ -137,6 +138,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -200,6 +203,30 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_let() {
+        let mut term = Let {
+            span: dummy_span(),
+            variable: "x".to_owned(),
+            var_ty: Ty::mk_ty_var("not needed"),
+            bound_term: Rc::new(Lit::mk(2).into()),
+            in_term: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 
     fn example() -> Let {
