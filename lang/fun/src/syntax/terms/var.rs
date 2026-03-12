@@ -88,7 +88,7 @@ impl Check for XVar {
 impl Inference for XVar {
     fn constraint_equations(
         &mut self,
-        symbol_table: &mut SymbolTable,
+        _symbol_table: &mut SymbolTable,
         context: &TypingContext,
         var_name_generator: &mut VarNameGenerator,
         ty_var: Ty

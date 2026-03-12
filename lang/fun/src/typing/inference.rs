@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use miette::SourceSpan;
 
-use crate::{syntax::{Arguments, Ty, TypeArgs, TypingContext}, typing::{Error, SymbolTable}};
+use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Term, Ty, TypeArgs, TypingContext}, typing::{Error, SymbolTable}};
 
 
 pub trait Inference: Sized {
@@ -63,8 +63,25 @@ pub fn args_constraint_equations(
     }
 
     for (arg, expected_type) in args.entries.iter_mut().zip(types.bindings.iter()) {
-        
-        constraints.append(&mut arg.constraint_equations(symbol_table, context, var_name_generator, expected_type.ty.clone())?);
+        if expected_type.chi == Cns {
+            match arg {
+                Term::XVar(variable) => {
+                    if variable.chi == Some(Prd) {
+                        return Err(Error::ExpectedCovariableGotTerm { span: variable.span.clone() });
+                    }
+
+                    let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
+                    if let Some(ty) = &variable.ty {
+                        constraints.push((ty.clone(), found_ty.clone()));
+                    }
+
+                    constraints.push((expected_type.ty.clone(), found_ty));
+                },
+                _ => return Err(Error::ExpectedCovariableGotTerm { span: span.clone() }),
+            }
+        } else {
+            constraints.append(&mut arg.constraint_equations(symbol_table, context, var_name_generator, expected_type.ty.clone())?);
+        }
     }
 
     Ok(constraints)
