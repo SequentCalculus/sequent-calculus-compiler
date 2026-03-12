@@ -119,6 +119,16 @@ impl Ty {
         }
     }
 
+    /// This function creates a type variable
+    /// - `name` is th variable name
+    pub fn mk_ty_var(name: &str) -> Self {  
+        Ty::Decl {
+            span: None,
+            name: name.to_string(),
+            type_args: TypeArgs::mk(vec![]),
+        }
+    }
+
     /// This function substitutes type parameters with monomorphic types inside a given type.
     /// - `mappings` contains the substitutions to perform.
     pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {

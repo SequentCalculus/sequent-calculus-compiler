@@ -178,9 +178,9 @@ impl Inference for New {
             // with instance type variables eg. (A -> a1)
 
             // the mapping is created now, to ensure that the new type varibales in this new-Block stay consistent
-            let mut type_var_mapping: HashMap<Name, Name> = HashMap::new();
+            let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
             for type_var in &general_type_vars.bindings {
-                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_name());
+                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
             }
 
             // Since the Codata Type has to be the same for all clauses, the type is instanciated once
@@ -203,37 +203,9 @@ impl Inference for New {
                 // the new arg types and out type are replaced
                 let (arg_types, out_type) = match symbol_table.dtor_templates.get(&clause.xtor) {
                     Some((arg_types, out_type)) => {
-                        let mut new_arg_types = arg_types.clone();
-                        let mut new_out_type = out_type.clone();
+                        let new_arg_types = arg_types.clone().subst_ty(&type_var_mapping);
+                        let new_out_type = out_type.clone().subst_ty(&type_var_mapping);
 
-                        for binding in &mut new_arg_types.bindings {
-                            match &mut binding.ty {
-                                Ty::I64 { .. } => {continue;},
-                                Ty::Decl {
-                                    span: _,
-                                    name,
-                                    type_args: _
-                                } => {
-                                    // if the name for the Declaration is a general variable name it is replaced by a type variable from the mapping
-                                    if let Some(instanciated_type_name) = type_var_mapping.get(name) {
-                                        *name = instanciated_type_name.clone();
-                                    }
-                                }
-                            }
-                        }
-
-                        match &mut new_out_type {
-                                Ty::I64 { .. } => {},
-                                Ty::Decl {
-                                    span: _,
-                                    name,
-                                    type_args: _
-                                } => {
-                                    if let Some(instanciated_type_name) = type_var_mapping.get(name) {
-                                        *name = instanciated_type_name.clone();
-                                    }
-                                }
-                            }
                         (new_arg_types, new_out_type)
                     },
                     None => {
@@ -248,8 +220,8 @@ impl Inference for New {
                 for argument in arg_types.bindings {
                     if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
                         clause_context.bindings.swap_remove(index);
-                        clause_context.add_var(&argument.var, argument.ty);
                     }
+                    clause_context.add_var(&argument.var, argument.ty);
                 }
 
                 //the argument types are now compared to the expected type of the body of the clause
@@ -262,13 +234,7 @@ impl Inference for New {
             let mut general_arg_types = Vec::new();
             for ty_var_name in &general_type_vars.bindings {
                 general_arg_types.push(
-                    Ty::Decl {
-                        span: Some(self.span),
-                        name: type_var_mapping.get(ty_var_name).unwrap().clone(),
-                        type_args: TypeArgs {
-                            span: Some(self.span),
-                            args: vec![]
-                        }}
+                    type_var_mapping.get(ty_var_name).unwrap().clone()
                 );
             }
 
@@ -492,6 +458,148 @@ mod test {
         assert_eq!(result, expected);
         
 
+    }
+
+    #[test]
+    fn inference_fun() {
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+        ctx_names.bindings.push("a".to_string());
+        let mut symbol_table = symbol_table_fun();
+        let mut term = New {
+            span: dummy_span(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "apply".to_owned(),
+                context_names: ctx_names.clone(),
+                context: TypingContext::default(),
+                body: XVar::mk("x").into(),
+            }],
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected_codata_type = Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("3"), Ty::mk_ty_var("2")),
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
+            (Ty::mk_ty_var("x"), expected_codata_type)];
+
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(result, expected);
+
+        
+    }
+
+    #[test]
+    /// This Test tests a Codata Type with it's own Template as a Type
+    fn inference_stream() {
+        let mut symbol_table = symbol_table_stream();
+        let mut term = New {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "head".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into()
+                },
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "tail".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: XVar::mk("y").into()
+                }
+            ],
+            ty: None
+        };
+        let mut ctx = TypingContext::default();
+        // to make it a smaller test, the recursive call of the Stream is put into the variable y with the Stream[y], hence the type argument is already instantiated
+        ctx.add_var("y", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")])));
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected_codata_type = Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("1")]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+            (Ty::mk_ty_var("2"), expected_codata_type.clone()),
+            (expected_codata_type.clone(), Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))),
+            (Ty::mk_ty_var("x"), expected_codata_type)
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")))
+
+        
+    }
+
+    #[test]
+    /// this test checks whether a data Clause in a New-Block is detected as an error
+    fn inference_data_clause() {
+        let mut symbol_table = symbol_table_lpair();
+        symbol_table.combine(symbol_table_list());
+
+        let mut term = New {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "fst".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "Nil".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(2).into(),
+                },
+            ],
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        assert!(result.is_err_and(|f| matches!(f, Error::Mismatch{..})))
+
+    }
+
+    #[test]
+    /// this test checks that an unknown xtor returns an "undefined" error
+    fn inference_unknown_clause() {
+
+        // unknown type in an empty symbol table
+        let mut term = New {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "fst".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+            ],
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+
+        assert!(result.is_err_and(|f| matches!(f, Error::Undefined { .. })));
     }
 
     fn example_empty() -> New {
