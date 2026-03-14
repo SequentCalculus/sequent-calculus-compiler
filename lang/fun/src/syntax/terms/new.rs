@@ -168,7 +168,9 @@ impl Inference for New {
                 None => {return Err(Error::Undefined { span: Some(self.span), name: first_clause.xtor.clone()})},
             };
 
-            let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+            let (chirality, general_type_vars, needed_clauses) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+            let needed_clauses_set: HashSet<&String> = needed_clauses.into_iter().collect();
 
             if chirality ==&Polarity::Data {
                 return Err(Error::ExpectedCovariableGotTerm { span: self.span });
@@ -186,6 +188,7 @@ impl Inference for New {
             // Since the Codata Type has to be the same for all clauses, the type is instanciated once
             // all following clauses are checked against this type.
 
+            let mut used_clauses = HashSet::new();
 
             // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
             for clause in &mut self.clauses {
@@ -199,6 +202,8 @@ impl Inference for New {
                     return Err(Error::Undefined { span: Some(self.span.clone()), name: clause.xtor.clone() });
                     }
                 };
+
+                used_clauses.insert(&clause.xtor);
 
                 // the new arg types and out type are replaced
                 let (arg_types, out_type) = match symbol_table.dtor_templates.get(&clause.xtor) {
@@ -227,6 +232,12 @@ impl Inference for New {
                 //the argument types are now compared to the expected type of the body of the clause
                 constraints.append(&mut clause.body.constraint_equations(&mut symbol_table.clone(), &clause_context, var_name_generator, out_type)?);
             
+            }
+
+            let unused_clauses: HashSet<&String> = needed_clauses_set.difference(&used_clauses).copied().collect();
+
+            if !unused_clauses.is_empty() {
+                return Err(Error::MissingDtorInNew { span: self.span, dtor: unused_clauses.iter().next().unwrap().to_string()});
             }
 
 
@@ -456,8 +467,6 @@ mod test {
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
         assert_eq!(result, expected);
-        
-
     }
 
     #[test]
@@ -575,6 +584,29 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
         assert!(result.is_err_and(|f| matches!(f, Error::Mismatch{..})))
 
+    }
+
+    #[test]
+    /// testing, that a missing clause causes an error
+    fn inference_missing_clause() {
+        let mut symbol_table = symbol_table_lpair();
+
+        let result = New {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Codata,
+                    xtor: "fst".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+            ],
+            ty: None,
+        }.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+
+        assert!(result.is_err_and(|e| matches!(e, Error::MissingDtorInNew { dtor, .. } if dtor == "snd")));
     }
 
     #[test]
