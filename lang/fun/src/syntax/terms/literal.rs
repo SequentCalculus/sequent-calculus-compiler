@@ -64,9 +64,9 @@ impl Check for Lit {
 impl Inference for Lit {
     fn constraint_equations(
             &mut self,
-            symbol_table: &mut SymbolTable,
-            context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
+            _symbol_table: &mut SymbolTable,
+            _context: &TypingContext,
+            _var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
         ) -> Result<Vec<(Ty,Ty)>, Error> {
         Ok(vec![(ty_var, Ty::mk_i64())])
