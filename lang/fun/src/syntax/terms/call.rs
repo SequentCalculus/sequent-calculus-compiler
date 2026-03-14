@@ -88,15 +88,15 @@ impl Inference for Call {
             Some(signature) => {
                 let mut constraints = Vec::new();
 
-                let (types, ret_ty) = signature.clone();
-                constraints.push((ret_ty, ty_var.clone()));
-
-                constraints.append(&mut args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span.clone())?);
-
                 // adding a new type var as the type of the term for easier lookup after unification
                 let new_type_var = var_name_generator.get_new_ty_var();
                 self.ret_ty = Some(new_type_var.clone());
-                constraints.push((new_type_var, ty_var));
+                constraints.push((new_type_var, ty_var.clone()));
+
+                let (types, ret_ty) = signature.clone();
+                constraints.push((ty_var, ret_ty));
+
+                constraints.append(&mut args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span.clone())?);
 
                 Ok(constraints)
             }
@@ -123,6 +123,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     #[test]
@@ -158,6 +160,53 @@ mod test {
             &Ty::mk_i64(),
         );
         assert!(result.is_err())
+    }
+
+
+    #[test]
+    fn inference_simple_def() {
+        let mut symbol_table = SymbolTable::default();
+        let mut typing_ctx = TypingContext::default();
+        typing_ctx.add_var("x", Ty::mk_i64());
+        symbol_table.defs.insert("simple".to_owned(), (typing_ctx, Ty::mk_ty_var("out_type")));
+        
+        let mut term = Call{
+            span: dummy_span(),
+            name: "simple".to_owned(),
+            args: Arguments{
+                entries: vec![Lit::mk(5).into()]
+            },
+            ret_ty: None
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
+
+            (Ty::mk_i64(), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ret_ty, Some(Ty::mk_ty_var("0")))
+    }
+
+
+    #[test]
+    fn inference_mssing_def() {
+        let mut term = Call{
+            span: dummy_span(),
+            name: "simple".to_owned(),
+            args: Arguments{
+                entries: vec![Lit::mk(5).into()]
+            },
+            ret_ty: None
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+
+        assert!(result.is_err_and(|e| matches!(e, Error::Undefined { name, .. } if name == "simple")))
     }
 
     fn example_simple() -> Call {
