@@ -172,6 +172,11 @@ impl Inference for Case {
         if let Some(first_clause) = self.clauses.first() {
             let mut constraints = Vec::new();
 
+            // adding a type variable the type of the case block
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var.clone()));
+
 
             let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
                 Some(type_name) => type_name,
@@ -183,7 +188,9 @@ impl Inference for Case {
                 }
             };
 
-            let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+            let (chirality, general_type_vars, needed_clauses) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+            let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
 
             if chirality == &Polarity::Codata {
                 return Err(Error::ExpectedTermGotCovariable { span: self.span });
@@ -198,8 +205,11 @@ impl Inference for Case {
                 type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
             }
 
+            let mut used_clauses = HashSet::new();
 
             for clause in &mut self.clauses {
+
+                used_clauses.insert(&clause.xtor);
 
                 // checking that that type of the clause is the same for all clauses
                 match symbol_table.find_xdata_type_name(&clause.xtor) {
@@ -221,9 +231,7 @@ impl Inference for Case {
                 }
 
                 let instantiated_arg_types = match symbol_table.ctor_templates.get(&clause.xtor) {
-                    Some(arg_types) => {
-                        arg_types.clone().subst_ty(&type_var_mapping)
-                    },
+                    Some(arg_types) => arg_types.clone().subst_ty(&type_var_mapping),
                     None => {
                         return Err(Error::Undefined {
                             span: Some(self.span),
@@ -232,12 +240,14 @@ impl Inference for Case {
                     }
                 };
 
+                clause.context = instantiated_arg_types.clone();
+
                 let mut clause_context = context.clone();
                 for argument in instantiated_arg_types.bindings {
                     if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
                         clause_context.bindings.swap_remove(index);
-                        clause_context.add_var(&argument.var, argument.ty);
                     }
+                    clause_context.add_var(&argument.var, argument.ty);
                 }
                 
                 // every clause must have the same out type, the expected type of the whole case block
@@ -246,8 +256,14 @@ impl Inference for Case {
                     &clause_context,
                     var_name_generator,
                     ty_var.clone())?
-                );            
+                );
 
+            }
+
+            let unused_clauses: HashSet<&String> = needed_clauses_set.difference(&used_clauses).copied().collect();
+
+            if !unused_clauses.is_empty() {
+                return Err(Error::MissingCtorInCase { span: self.span, ctor: unused_clauses.iter().next().unwrap().to_string()});
             }
 
 
@@ -257,11 +273,6 @@ impl Inference for Case {
             let scrutinee_type = Ty::mk_decl(&data_type_name, scutinee_type_args);
 
             constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator,scrutinee_type)?);
-
-            // adding a type variable the type of the case block
-            let new_type_var = var_name_generator.get_new_ty_var();
-            self.ty = Some(new_type_var.clone());
-            constraints.push((new_type_var, ty_var));
 
             Ok(constraints)
         } else {
@@ -290,6 +301,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -393,6 +406,113 @@ mod test {
             ty: None,
         }
         .check(&mut symbol_table, &TypingContext::default(), &Ty::mk_i64());
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_case_list() {
+        let mut ctx_case_names = NameContext::default();
+        ctx_case_names.bindings.push("x".to_string());
+        ctx_case_names.bindings.push("xs".to_string());
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let mut symbol_table = symbol_table_list_template();
+        let mut term = Case {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Data,
+                    xtor: "Nil".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Data,
+                    xtor: "Cons".to_owned(),
+                    context_names: ctx_case_names.clone(),
+                    context: TypingContext::default(),
+                    body: XVar::mk("x").into(),
+                },
+            ],
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            // Nil
+            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+
+            // Cons
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+
+            // scrutinee
+            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
+            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
+        ];
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+    #[test]
+    fn inference_not_all_cases() {
+        let mut ctx_case_names = NameContext::default();
+        ctx_case_names.bindings.push("x".to_string());
+        ctx_case_names.bindings.push("xs".to_string());
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let mut symbol_table = symbol_table_list_template();
+        let mut term = Case {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Data,
+                    xtor: "Cons".to_owned(),
+                    context_names: ctx_case_names.clone(),
+                    context: TypingContext::default(),
+                    body: XVar::mk("x").into(),
+                },
+            ],
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        assert!(result.is_err_and(|e| matches!(e, Error::MissingCtorInCase { ctor, .. } if ctor == "Nil")));
+    }
+
+    #[test]
+    fn inference_wrong_case() {
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+        ctx_names.bindings.push("y".to_string());
+        let mut symbol_table = symbol_table_list_template();
+        let result = Case {
+            span: dummy_span(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Data,
+                xtor: "Tup".to_owned(),
+                context_names: ctx_names,
+                context: TypingContext::default(),
+                body: XVar::mk("x").into(),
+            }],
+            scrutinee: Rc::new(Lit::mk(1).into()),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            ty: None,
+        }
+        .constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+
         assert!(result.is_err())
     }
 
