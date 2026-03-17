@@ -7,7 +7,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
-use crate::syntax::names::{Covar, Name, Var};
+use crate::syntax::{Ty, names::{Covar, Name, Var}};
 
 /// This enum defines the errors that can occur during typechecking.
 #[derive(Error, Diagnostic, Debug, Clone)]
@@ -252,4 +252,16 @@ pub enum Error {
         /// The provided type arguments
         type_args: String,
     },
+    /// Conflicting Type for Type Inference
+    #[error("Cannot infere the type for constraint created by {expected_type_l} and {expected_type_r}")]
+    #[diagnostic(code("T-024"))]
+    ConnotInfereType {
+        // source location of type l
+        #[label]
+        span_l: SourceSpan,
+        /// left type
+        expected_type_l: Name,
+        /// right type
+        expected_type_r: Name
+    }
 }
