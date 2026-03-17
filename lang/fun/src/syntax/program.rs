@@ -4,6 +4,7 @@ use printer::*;
 use std::collections::HashSet;
 
 use crate::syntax::*;
+use crate::typing::inference::{VarNameGenerator, constraint_unification};
 use crate::typing::*;
 
 /// This struct defines a module consisting of a list of [`Declaration`]s.
@@ -126,6 +127,40 @@ impl Program {
             codata_types,
             defs,
         })
+    }
+
+    pub fn inference_types(self) -> Result<CheckedProgram, Error>{
+        let mut symbol_table = build_symbol_table(&self)?;
+        let mut var_name_generator = &mut VarNameGenerator::new();
+        let mut constraints = Vec::new();
+
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        let mut defs = Vec::new();
+        
+        for decl in self.declarations {
+            match decl {
+                Declaration::Data(data) => {
+                    data.check(&symbol_table)?;
+                    data_types.push(data);
+                }
+                Declaration::Codata(codata) => {
+                    codata.check(&symbol_table)?;
+                    codata_types.push(codata);
+                }
+                Declaration::Def(mut def) => {
+                    constraints.append(&mut def.constraint_equations(&mut symbol_table, &mut var_name_generator)?);
+                    defs.push(def);                    
+                }
+            }
+        }
+
+        let type_mapping = constraint_unification(constraints)?;
+        for def in &mut defs {
+            def.insert_inferred_type(&type_mapping);
+        }
+
+        Ok(CheckedProgram { data_types, codata_types, defs })
     }
 
     /// This function returns the names of all data type templates in a module.
