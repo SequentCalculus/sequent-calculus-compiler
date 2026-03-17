@@ -52,6 +52,10 @@ impl ContextBinding {
         self.ty = self.ty.subst_ty(mappings);
         self
     }
+
+    pub fn mut_subst_ty(&mut self, mappings: &HashMap<Name, Ty>) {
+        self.ty.mut_subst_ty(mappings);
+    }
 }
 
 impl Print for ContextBinding {
@@ -198,6 +202,17 @@ impl TypingContext {
             .map(|binding| binding.subst_ty(mappings))
             .collect();
         self
+    }
+
+
+    /// The in-place mutable borrow variant of subst_ty.
+    /// It substitutes type parameters with concrete types in all types found in the
+    /// context bindings.
+    /// - `mappings` contains the substitutions to perform.
+    pub fn mut_subst_ty(&mut self, mappings: &HashMap<Name, Ty>) {
+        for bind in &mut self.bindings {
+            bind.mut_subst_ty(mappings);
+        }
     }
 }
 
