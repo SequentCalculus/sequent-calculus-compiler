@@ -11,6 +11,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the control operator for invoking a captured continuation/program context
@@ -97,6 +98,18 @@ impl Inference for Goto {
 
             self.term.constraint_equations(symbol_table, context, var_name_generator, continuation_type)
         }
+    
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        self.term.insert_inferred_type(mappings);
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
+    }
 }
 
 impl UsedBinders for Goto {

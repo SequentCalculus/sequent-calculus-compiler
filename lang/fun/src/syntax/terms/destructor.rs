@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::inference::{Inference, args_constraint_equations};
 use crate::typing::*;
 
@@ -179,6 +180,25 @@ impl Inference for Destructor {
         constraints.push((ty_var, out_type));
 
         Ok(constraints)
+    }
+
+
+    fn insert_inferred_type(
+            &mut self,
+            mappings: &HashMap<Name, Ty>
+        ) {
+        self.scrutinee.insert_inferred_type(mappings);
+        
+        for ty in &mut self.type_args.args {
+            ty.mut_subst_ty(mappings);
+        }
+
+        args_insert_inferred_type(&mut self.args, mappings);
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 

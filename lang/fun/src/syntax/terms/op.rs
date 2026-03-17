@@ -10,6 +10,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -107,7 +108,15 @@ impl Inference for Op {
         constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
 
         Ok(constraints)
-    }    
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        self.fst.insert_inferred_type(mappings);
+        self.snd.insert_inferred_type(mappings);
+    }
 }
 
 impl UsedBinders for Op {

@@ -1,5 +1,7 @@
 //! This module defines integer literals in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
@@ -70,6 +72,13 @@ impl Inference for Lit {
             ty_var: Ty
         ) -> Result<Vec<(Ty,Ty)>, Error> {
         Ok(vec![(ty_var, Ty::mk_i64())])
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        _mappings: &HashMap<Name, Ty>
+    ) {
+
     }
 }
 

@@ -272,6 +272,21 @@ impl Inference for New {
         Ok(constraints)
 
     }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        for clause in &mut self.clauses {
+            clause.body.insert_inferred_type(mappings);
+            clause.context.mut_subst_ty(mappings);
+        }
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
+    }
     
 }
 

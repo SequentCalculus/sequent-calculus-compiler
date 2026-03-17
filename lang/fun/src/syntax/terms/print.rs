@@ -10,6 +10,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines printing an integer in Fun. It consists of the information whether a
@@ -106,6 +107,19 @@ impl Inference for PrintI64 {
         constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var)?);
         
         Ok(constraints)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        self.arg.insert_inferred_type(mappings);
+        self.next.insert_inferred_type(mappings);
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 

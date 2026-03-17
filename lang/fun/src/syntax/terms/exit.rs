@@ -10,6 +10,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the exit statement in Fun. It consists of a term for the exit code, and
@@ -72,6 +73,18 @@ impl Inference for Exit {
             self.ty = Some(ty_var);
             
             self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        self.arg.insert_inferred_type(mappings);
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 

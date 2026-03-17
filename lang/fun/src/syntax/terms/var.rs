@@ -1,5 +1,7 @@
 //! This module defines variables and covariables in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
@@ -105,6 +107,16 @@ impl Inference for XVar {
         self.ty = Some(new_type_var.clone());
         self.chi = Some(Prd);
         Ok(vec![(new_type_var, ty_var.clone()), (ty_var, found_ty)])
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 

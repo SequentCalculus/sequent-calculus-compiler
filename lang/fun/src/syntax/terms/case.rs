@@ -284,6 +284,28 @@ impl Inference for Case {
             });
         }
     }
+
+
+    fn insert_inferred_type(
+            &mut self,
+            mappings: &HashMap<Name, Ty>
+        ) {
+        for ty in &mut self.type_args.args {
+            ty.mut_subst_ty(mappings);
+        }
+        
+        self.scrutinee.insert_inferred_type(mappings);
+
+        for clause in &mut self.clauses {
+            clause.body.insert_inferred_type(mappings);
+            clause.context.mut_subst_ty(mappings);
+        }
+        
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
+    }
 }
 
 impl UsedBinders for Case {

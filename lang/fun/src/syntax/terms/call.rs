@@ -8,6 +8,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::inference::args_constraint_equations;
+use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
 
 use std::collections::HashSet;
@@ -106,6 +107,18 @@ impl Inference for Call {
             }),
         }
 
+    }
+
+    fn insert_inferred_type(
+            &mut self,
+            mappings: &std::collections::HashMap<Name, Ty>
+        ) {
+        args_insert_inferred_type(&mut self.args, mappings);
+        
+        match &mut self.ret_ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 

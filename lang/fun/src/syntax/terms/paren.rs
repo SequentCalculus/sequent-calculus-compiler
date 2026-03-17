@@ -79,6 +79,13 @@ impl Inference for Paren {
         ) -> Result<Vec<(Ty,Ty)>, Error> {
         self.inner.constraint_equations(symbol_table, context, var_name_generator, ty_var)
     }
+
+    fn insert_inferred_type(
+            &mut self,
+            mappings: &std::collections::HashMap<Name, Ty>
+        ) {
+        self.inner.insert_inferred_type(mappings);
+    }
 }
 
 impl UsedBinders for Paren {

@@ -11,6 +11,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the control operator capturing the current continuation/program context. It
@@ -101,6 +102,18 @@ impl Inference for Label {
             constraints.append(&mut self.term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
 
             Ok(constraints)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>
+    ) {
+        self.term.insert_inferred_type(mappings);
+
+        match &mut self.ty {
+            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
+            None => ()
+        }
     }
 }
 
