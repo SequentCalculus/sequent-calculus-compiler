@@ -165,7 +165,7 @@ fn shrink_unknown_cuts(
 /// - `statement` is the statement to lift.
 /// - `state` is the state of the whole translation.
 fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax::Statement> {
-    // for each free variables of the statement ...
+    // for each free variable of the statement ...
     let mut typed_free_vars = BTreeSet::new();
     statement.typed_free_vars(&mut typed_free_vars);
     // ... we pick one fresh variable for the signature of the lifted label
