@@ -1,5 +1,6 @@
 //! This module defines the translation of cuts.
 
+use axcut::traits::substitution::Subst;
 use core_lang::syntax::{
     ID, Identifier, Ty, TypingContext,
     declaration::{cont_int, lookup_type_declaration},
@@ -220,7 +221,7 @@ fn shrink_critical_pairs(
         Ty::I64 => axcut::syntax::statements::Create {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
-            // ... so we turn the tilde-mu-binding into a continuation clsoure
+            // ... so we turn the tilde-mu-binding into a continuation closure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
                 xtor: shrink_identifier(cont_int().xtors[0].name.clone()),
@@ -311,17 +312,22 @@ fn shrink_critical_pairs(
                         })
                         .collect::<Vec<_>>()
                         .into();
+                    // we bind the xtor of each clause with the expanded binding, but to keep all
+                    // binders unique, we pick a fresh identifier in each clause
+                    let var = shrink_identifier(fresh_identifier(state.max_id, &var_expand.name));
+                    let next = shrunk_statement_expand
+                        .clone()
+                        .subst_sim(&[(var_expand.id, var.clone())]);
                     axcut::syntax::statements::Clause {
                         xtor: shrink_identifier(xtor.clone()),
                         context: env.clone(),
                         body: Rc::new(
-                            // we bind the xtor of each clause with the expanded binding
                             axcut::syntax::statements::Let {
-                                var: shrink_identifier(var_expand.clone()),
+                                var,
                                 ty: translated_ty.clone(),
                                 tag: shrink_identifier(xtor),
                                 args: env,
-                                next: shrunk_statement_expand.clone(),
+                                next,
                                 free_vars_next: None,
                             }
                             .into(),
