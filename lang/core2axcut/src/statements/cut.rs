@@ -1,7 +1,8 @@
 //! This module defines the translation of cuts.
 
+use axcut::traits::substitution::Subst;
 use core_lang::syntax::{
-    ID, Identifier, Ty, TypingContext,
+    ContextBinding, ID, Identifier, Ty,
     declaration::{cont_int, lookup_type_declaration},
     fresh_identifier, fresh_var,
     statements::{FsCut, FsStatement},
@@ -164,25 +165,28 @@ fn shrink_unknown_cuts(
 /// - `statement` is the statement to lift.
 /// - `state` is the state of the whole translation.
 fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax::Statement> {
-    // the free variables of the statement ...
+    // for each free variable of the statement ...
     let mut typed_free_vars = BTreeSet::new();
     statement.typed_free_vars(&mut typed_free_vars);
-    // ... become the signature of the lifted label ...
-    let context = shrink_context(
-        TypingContext {
-            bindings: typed_free_vars.into_iter().collect(),
-        },
-        state.codata,
-    );
-    // ... and the arguments of the call to it
-    let args = context.clone();
+    // ... we pick one fresh variable for the signature of the lifted label
+    let mut context = Vec::with_capacity(typed_free_vars.len());
+    let mut subst = Vec::with_capacity(typed_free_vars.len());
+    for binding in &typed_free_vars {
+        let fresh_var = fresh_identifier(state.max_id, &binding.var.name);
+        subst.push((binding.var.id, fresh_var.clone()));
+        context.push(ContextBinding {
+            var: fresh_var,
+            ..binding.clone()
+        });
+    }
 
     let label = fresh_identifier(
         state.max_id,
         &("lift_".to_string() + state.current_label + "_"),
     );
-    let body = statement.shrink(state);
-
+    let context = shrink_context(context.into(), state.codata);
+    // we substitute the fresh variables for the free ones in the body
+    let body = statement.subst_sim(&subst).shrink(state);
     // we collect all lifted statements for the current top-level function
     state.lifted_statements.push_front(axcut::syntax::Def {
         name: shrink_identifier(label.clone()),
@@ -190,6 +194,11 @@ fn lift(statement: FsStatement, state: &mut ShrinkingState) -> Rc<axcut::syntax:
         body,
     });
 
+    // we make the free variables the arguments of the call to the lifted label
+    let args = shrink_context(
+        typed_free_vars.into_iter().collect::<Vec<_>>().into(),
+        state.codata,
+    );
     Rc::new(
         axcut::syntax::statements::Call {
             label: shrink_identifier(label),
@@ -220,7 +229,7 @@ fn shrink_critical_pairs(
         Ty::I64 => axcut::syntax::statements::Create {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
-            // ... so we turn the tilde-mu-binding into a continuation clsoure
+            // ... so we turn the tilde-mu-binding into a continuation closure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
                 xtor: shrink_identifier(cont_int().xtors[0].name.clone()),
@@ -311,17 +320,22 @@ fn shrink_critical_pairs(
                         })
                         .collect::<Vec<_>>()
                         .into();
+                    // we bind the xtor of each clause with the expanded binding, but to keep all
+                    // binders unique, we pick a fresh variable in each clause
+                    let var = shrink_identifier(fresh_identifier(state.max_id, &var_expand.name));
+                    let next = shrunk_statement_expand
+                        .clone()
+                        .subst_sim(&[(var_expand.id, var.clone())]);
                     axcut::syntax::statements::Clause {
                         xtor: shrink_identifier(xtor.clone()),
                         context: env.clone(),
                         body: Rc::new(
-                            // we bind the xtor of each clause with the expanded binding
                             axcut::syntax::statements::Let {
-                                var: shrink_identifier(var_expand.clone()),
+                                var,
                                 ty: translated_ty.clone(),
                                 tag: shrink_identifier(xtor),
                                 args: env,
-                                next: shrunk_statement_expand.clone(),
+                                next,
                                 free_vars_next: None,
                             }
                             .into(),
