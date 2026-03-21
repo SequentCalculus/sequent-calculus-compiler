@@ -62,10 +62,7 @@ impl Rename for Create {
         self.clauses = self
             .clauses
             .into_iter()
-            .map(|clause| {
-                let clause = clause.rename(vars_to_rename, max_id);
-                clause
-            })
+            .map(|clause| clause.rename(vars_to_rename, max_id))
             .collect();
 
         if vars_to_rename.contains(&self.var) {
