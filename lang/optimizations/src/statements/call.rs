@@ -1,0 +1,164 @@
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Mark};
+use crate::rewrite::{Rewrite, RewriteState};
+use axcut::{
+    syntax::statements::{Call, Statement},
+    traits::substitution::Subst,
+};
+
+use std::rc::Rc;
+
+impl Rewrite for Call {
+    type Target = Statement;
+    fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
+        // we check whether the called function is a `Switch`, and if so, we temporarily remove the
+        // `Switch` from its definition
+        let Some(mut switch_info) = state.get_switch_info(&self.label, &self.args) else {
+            return self.into();
+        };
+        state.new_changes = true;
+
+        let clause = &switch_info.switch.clauses[switch_info.clause_position];
+        let result = if matches!(
+            &*clause.body,
+            Statement::Call(_) | Statement::Invoke(_) | Statement::Exit(_)
+        ) {
+            // for leaf statements, we do not lift, but just substitute into them
+            let subst = clause
+                .context
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(switch_info.let_args.into_iter_vars())
+                .chain(
+                    state.defs[switch_info.called_def_position]
+                        .context
+                        .clone()
+                        .into_iter_vars()
+                        .map(|var| var.id)
+                        .zip(self.args.into_iter_vars()),
+                )
+                .collect::<Vec<_>>();
+
+            Rc::unwrap_or_clone(clause.body.clone().subst_sim(&subst))
+        } else {
+            let (label, arg_positions) = state.lift_switch_clause(&mut switch_info, &self.label);
+            self.args.bindings.extend(switch_info.let_args.bindings);
+            let mut args = Vec::with_capacity(arg_positions.len());
+            for position in arg_positions {
+                args.push(self.args.bindings[position].clone());
+            }
+
+            Call {
+                label,
+                args: args.into(),
+            }
+            .into()
+        };
+
+        // now we have to put the (potentially lifted) Switch back into place
+        state.defs[switch_info.called_def_position].body = switch_info.switch.into();
+        result
+    }
+}
+
+impl CleanupInlineGather for Call {
+    type Target = Statement;
+    fn cleanup_inline_gather(self, state: &mut CleanupInlineState) -> Self::Target {
+        let called_def_info = state
+            .def_map
+            .get_mut(&self.label)
+            .unwrap_or_else(|| panic!("Called label {} must exist", self.label));
+        let called_def_position = called_def_info.position;
+        let called_def = &state.defs[called_def_position];
+        if matches!(&called_def.body, Statement::Invoke(_) | Statement::Exit(_)) {
+            // we can always inline definitions only consisting of leaf statements, except for
+            // `Call`s
+            let subst = called_def
+                .context
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
+                .collect::<Vec<_>>();
+
+            called_def.body.clone().subst_sim(&subst)
+        } else if matches!(&called_def.body, Statement::Call(_)) {
+            // definitions only consisting of `Call`s could lead to non-termination if always
+            // inlined recursively, because they could form cycles in the call graph; thus, we take
+            // the body out temporarily when inlining recursively, so that we encounter a `Default`
+            // statement when we have reached the last call before closing the cycle
+
+            let subst = called_def
+                .context
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
+                .collect::<Vec<_>>();
+
+            // we always recursively visit the definitions only consisting of `Call`s, but we only
+            // increment their mark on the first time for each call site
+            if state.current_def_mark == Mark::Once {
+                called_def_info.mark.increment();
+            }
+
+            let current_def_mark = state.current_def_mark;
+            state.current_def_mark = called_def_info.mark;
+            let called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
+            let inlined_body = called_def_body.clone().cleanup_inline_gather(state);
+            state.defs[called_def_position].body = called_def_body;
+            state.current_def_mark = current_def_mark;
+
+            inlined_body.subst_sim(&subst)
+        } else {
+            // in all other cases we only gather the marking information ...
+            called_def_info.mark.increment();
+            if called_def_info.mark == Mark::Once
+                && !matches!(&called_def.body, Statement::Default())
+            {
+                // ... and only visit the called `Def` if we have not done so yet
+                let current_def_mark = state.current_def_mark;
+                state.current_def_mark = called_def_info.mark;
+                let called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
+                state.defs[called_def_position].body = called_def_body.cleanup_inline_gather(state);
+                state.current_def_mark = current_def_mark;
+            }
+
+            self.into()
+        }
+    }
+}
+
+impl CleanupInline for Call {
+    type Target = Statement;
+    fn cleanup_inline(self, state: &mut CleanupInlineState) -> Self::Target {
+        let called_def_info = state
+            .def_map
+            .get(&self.label)
+            .unwrap_or_else(|| panic!("Called label {} must exist", self.label));
+
+        if called_def_info.mark == Mark::Once {
+            let called_def_position = called_def_info.position;
+            let mut called_def_body = std::mem::take(&mut state.defs[called_def_position].body);
+
+            // we first recursively inline into the definition to inline
+            called_def_body = called_def_body.cleanup_inline(state);
+
+            let called_def = &state.defs[called_def_position];
+
+            // now wo substitute the parameters
+            let subst = called_def
+                .context
+                .clone()
+                .into_iter_vars()
+                .map(|var| var.id)
+                .zip(self.args.into_iter_vars())
+                .collect::<Vec<_>>();
+            called_def_body = called_def_body.subst_sim(&subst);
+
+            called_def_body
+        } else {
+            self.into()
+        }
+    }
+}
