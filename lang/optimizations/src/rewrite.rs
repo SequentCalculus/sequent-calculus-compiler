@@ -3,11 +3,11 @@ use axcut::syntax::{
     names::{Identifier, fresh_identifier},
     statements::{Call, Clause, Statement, Switch},
 };
-use axcut::traits::typed_free_vars::TypedFreeVars;
+use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
 use printer::Print;
 
 use std::{
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeSet, HashMap},
     rc::Rc,
 };
 
@@ -20,8 +20,6 @@ pub struct SwitchInfo {
 
 /// State during rewriting
 pub struct RewriteState {
-    /// `Name`s of definitions in the current program
-    pub used_labels: HashSet<Identifier>,
     /// `Def`initions in the current program
     pub defs: Vec<Def>,
     /// Name of the current definition
@@ -138,19 +136,51 @@ impl RewriteState {
 
         let mut free_vars = BTreeSet::new();
         clause.body.typed_free_vars(&mut free_vars);
-        let (arg_positions, mut clause_bindings): (Vec<_>, Vec<_>) = clause
+        // we pick fresh names for the parameters of the lifted statement to keep all binders
+        // unique
+        let (arg_positions, (mut clause_subst, (mut clause_args, mut clause_fresh_bindings))): (
+            Vec<_>,
+            (Vec<_>, (Vec<_>, Vec<_>)),
+        ) = clause
             .context
             .bindings
             .into_iter()
             .enumerate()
             .filter(|(_, binding)| free_vars.contains(binding))
+            .map(|(position, binding)| {
+                let fresh_binding = ContextBinding {
+                    var: fresh_identifier(&mut self.max_id, &binding.var.name),
+                    ..binding.clone()
+                };
+                (
+                    position,
+                    (
+                        (binding.var.id, fresh_binding.var.clone()),
+                        (binding, fresh_binding),
+                    ),
+                )
+            })
             .unzip();
-        for binding in &clause_bindings {
-            free_vars.remove(binding);
+        for arg in &clause_args {
+            free_vars.remove(arg);
         }
-        let free_vars: Vec<_> = free_vars.into_iter().collect();
-        let mut context = free_vars.clone();
-        context.append(&mut clause_bindings);
+        let (mut subst, (free_vars, mut fresh_bindings)): (Vec<_>, (Vec<_>, Vec<_>)) = free_vars
+            .into_iter()
+            .map(|binding| {
+                let fresh_binding = ContextBinding {
+                    var: fresh_identifier(&mut self.max_id, &binding.var.name),
+                    ..binding.clone()
+                };
+                (
+                    (binding.var.id, fresh_binding.var.clone()),
+                    (binding, fresh_binding),
+                )
+            })
+            .unzip();
+        let mut args = free_vars.clone();
+        args.append(&mut clause_args);
+        subst.append(&mut clause_subst);
+        fresh_bindings.append(&mut clause_fresh_bindings);
 
         // we have to rewrite the Create whose Clause we lift to avoid duplication
         let create = self.create_bindings.get_mut(bound_var).unwrap_or_else(|| {
@@ -162,15 +192,15 @@ impl RewriteState {
         create[position].body = Rc::new(
             Call {
                 label: name.clone(),
-                args: context.clone().into(),
+                args: args.into(),
             }
             .into(),
         );
 
         let def = Def {
             name: name.clone(),
-            context: context.into(),
-            body: Rc::unwrap_or_clone(clause.body),
+            context: fresh_bindings.into(),
+            body: Rc::unwrap_or_clone(clause.body).subst_sim(&subst),
         };
         self.defs.push(def);
 
@@ -197,15 +227,30 @@ impl RewriteState {
 
         let mut free_vars = BTreeSet::new();
         clause.body.typed_free_vars(&mut free_vars);
-        let (arg_positions, bindings): (Vec<_>, Vec<_>) = called_def
-            .context
-            .bindings
-            .iter()
-            .chain(clause.context.bindings.iter())
-            .enumerate()
-            .filter(|(_, binding)| free_vars.contains(binding))
-            .map(|(position, binding)| (position, binding.clone()))
-            .unzip();
+        // we pick fresh names for the parameters of the lifted statement to keep all binders
+        // unique
+        let (arg_positions, (subst, (args, fresh_bindings))): (Vec<_>, (Vec<_>, (Vec<_>, Vec<_>))) =
+            called_def
+                .context
+                .bindings
+                .iter()
+                .chain(clause.context.bindings.iter())
+                .enumerate()
+                .filter(|(_, binding)| free_vars.contains(binding))
+                .map(|(position, binding)| {
+                    let fresh_binding = ContextBinding {
+                        var: fresh_identifier(&mut self.max_id, &binding.var.name),
+                        ..binding.clone()
+                    };
+                    (
+                        position,
+                        (
+                            (binding.var.id, fresh_binding.var.clone()),
+                            (binding.clone(), fresh_binding),
+                        ),
+                    )
+                })
+                .unzip();
 
         // we have to rewrite the Switch whose Clause we lift to avoid duplication
         let body = std::mem::replace(
@@ -213,7 +258,7 @@ impl RewriteState {
             Rc::new(
                 Call {
                     label: name.clone(),
-                    args: bindings.clone().into(),
+                    args: args.into(),
                 }
                 .into(),
             ),
@@ -221,8 +266,8 @@ impl RewriteState {
 
         let def = Def {
             name: name.clone(),
-            context: bindings.into(),
-            body: Rc::unwrap_or_clone(body),
+            context: fresh_bindings.into(),
+            body: Rc::unwrap_or_clone(body).subst_sim(&subst),
         };
         self.defs.push(def);
 

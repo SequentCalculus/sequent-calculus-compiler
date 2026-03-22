@@ -69,11 +69,7 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
     // we inline once at the beginning to potentially find more rewrites and avoid rewriting dead
     // code in the first pass
     let defs = cleanup_inline_defs(std::mem::take(&mut program.defs));
-    // we thread the set of labels of top-level functions through the translation, because we need
-    // to generate fresh labels when we lift statements
-    let used_labels = defs.iter().map(|def| def.name.clone()).collect();
     let mut state = RewriteState {
-        used_labels,
         defs,
         let_bindings: HashMap::new(),
         current_label: Identifier::default(),
