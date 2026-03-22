@@ -7,8 +7,8 @@ use std::io::prelude::*;
 
 #[test]
 fn test_list() {
-    let prog = axcut_examples::list_print();
-    let assembly_prog = compile::<Backend, _, _, _>(prog);
+    let program = axcut_examples::list_print();
+    let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_aarch64_routine(assembly_prog);
 
     let mut mint = Mint::new("tests/asm");

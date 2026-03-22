@@ -2,6 +2,7 @@ use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineSta
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::syntax::statements::{Create, Statement};
 use axcut::traits::typed_free_vars::TypedFreeVars;
+use printer::Print;
 
 use std::{collections::BTreeSet, rc::Rc};
 
@@ -16,10 +17,12 @@ impl Rewrite for Create {
 
         state.create_bindings.insert(self.var.clone(), clauses);
         self.next = self.next.rewrite(state);
-        let clauses = state
-            .create_bindings
-            .remove(&self.var)
-            .unwrap_or_else(|| panic!("Create variable {} not in bindings anymore", self.var));
+        let clauses = state.create_bindings.remove(&self.var).unwrap_or_else(|| {
+            panic!(
+                "Create variable {} not in bindings anymore",
+                self.var.print_to_string(None)
+            )
+        });
 
         let mut free_vars = BTreeSet::new();
         self.next.typed_free_vars(&mut free_vars);

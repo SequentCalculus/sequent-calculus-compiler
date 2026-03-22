@@ -4,6 +4,7 @@ use axcut::{
     syntax::statements::{Call, Statement},
     traits::substitution::Subst,
 };
+use printer::Print;
 
 use std::rc::Rc;
 
@@ -60,10 +61,12 @@ impl Rewrite for Call {
 impl CleanupInlineGather for Call {
     type Target = Statement;
     fn cleanup_inline_gather(self, state: &mut CleanupInlineState) -> Self::Target {
-        let called_def_info = state
-            .def_map
-            .get_mut(&self.label)
-            .unwrap_or_else(|| panic!("Called label {} must exist", self.label));
+        let called_def_info = state.def_map.get_mut(&self.label).unwrap_or_else(|| {
+            panic!(
+                "Called label {} must exist",
+                self.label.print_to_string(None)
+            )
+        });
         let called_def_position = called_def_info.position;
         let called_def = &state.defs[called_def_position];
         if matches!(&called_def.body, Statement::Invoke(_) | Statement::Exit(_)) {
@@ -124,10 +127,12 @@ impl CleanupInlineGather for Call {
 impl CleanupInline for Call {
     type Target = Statement;
     fn cleanup_inline(self, state: &mut CleanupInlineState) -> Self::Target {
-        let called_def_info = state
-            .def_map
-            .get(&self.label)
-            .unwrap_or_else(|| panic!("Called label {} must exist", self.label));
+        let called_def_info = state.def_map.get(&self.label).unwrap_or_else(|| {
+            panic!(
+                "Called label {} must exist",
+                self.label.print_to_string(None)
+            )
+        });
 
         if called_def_info.mark == Mark::Once {
             let called_def_position = called_def_info.position;

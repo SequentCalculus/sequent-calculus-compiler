@@ -33,8 +33,26 @@ l_:
 j_:
     // z_5 <- x_4 + y_3;
     ADD X9, X7, X5
-    // exit z_5
+    // println_i64 z_5;
+    // #save caller-save registers
+    MOV X19, X0
+    MOV X20, X1
+    MOV X21, X5
+    MOV X22, X7
+    MOV X23, X9
+    // #move argument into place
     MOV X0, X9
+    BL println_i64
+    // #restore caller-save registers
+    MOV X0, X19
+    MOV X1, X20
+    MOV X5, X21
+    MOV X7, X22
+    MOV X9, X23
+    // lit ret_6 <- 0;
+    MOVZ X11, 0, LSL 0
+    // exit ret_6
+    MOV X0, X11
     B cleanup
 
 cleanup:

@@ -4,6 +4,7 @@ use axcut::syntax::{
     statements::{Call, Clause, Statement, Switch},
 };
 use axcut::traits::typed_free_vars::TypedFreeVars;
+use printer::Print;
 
 use std::{
     collections::{BTreeSet, HashMap, HashSet},
@@ -51,7 +52,12 @@ impl RewriteState {
         let position = clauses
             .iter()
             .position(|clause| clause.xtor == *xtor)
-            .unwrap_or_else(|| panic!("Could not find create clause for {xtor}"));
+            .unwrap_or_else(|| {
+                panic!(
+                    "Could not find create clause for {}",
+                    xtor.print_to_string(None)
+                )
+            });
         Some((clauses[position].clone(), position))
     }
 
@@ -64,7 +70,12 @@ impl RewriteState {
             .defs
             .iter()
             .position(|def| def.name == *called_label)
-            .unwrap_or_else(|| panic!("Could not find label {called_label}"));
+            .unwrap_or_else(|| {
+                panic!(
+                    "Could not find label {}",
+                    called_label.print_to_string(None)
+                )
+            });
         let called_def = &mut self.defs[called_def_position];
         let switch_var = match &called_def.body {
             Statement::Switch(switch) => &switch.var,
@@ -76,7 +87,12 @@ impl RewriteState {
             .bindings
             .iter()
             .position(|binding| binding.var == *switch_var)
-            .unwrap_or_else(|| panic!("Could not find argument of Switch variable {switch_var}"));
+            .unwrap_or_else(|| {
+                panic!(
+                    "Could not find argument of Switch variable {}",
+                    switch_var.print_to_string(None)
+                )
+            });
         let (tag, let_args) = self
             .let_bindings
             .get(&called_args.bindings[switch_var_position].var)?;
@@ -89,7 +105,12 @@ impl RewriteState {
             .clauses
             .iter()
             .position(|clause| clause.xtor == *tag)
-            .unwrap_or_else(|| panic!("Could not find Switch Clause for {tag}"));
+            .unwrap_or_else(|| {
+                panic!(
+                    "Could not find Switch Clause for {}",
+                    tag.print_to_string(None)
+                )
+            });
 
         Some(SwitchInfo {
             switch,
@@ -108,11 +129,11 @@ impl RewriteState {
         let name = fresh_identifier(
             &mut self.max_id,
             &("lift_".to_string()
-                + &self.current_label.to_string()
+                + &self.current_label.print_to_string(None)
                 + "_"
-                + &bound_var.to_string()
+                + &bound_var.print_to_string(None)
                 + "_"
-                + &clause.xtor.to_string()),
+                + &clause.xtor.print_to_string(None)),
         );
 
         let mut free_vars = BTreeSet::new();
@@ -132,10 +153,12 @@ impl RewriteState {
         context.append(&mut clause_bindings);
 
         // we have to rewrite the Create whose Clause we lift to avoid duplication
-        let create = self
-            .create_bindings
-            .get_mut(bound_var)
-            .unwrap_or_else(|| panic!("Could not find create for variable {bound_var}"));
+        let create = self.create_bindings.get_mut(bound_var).unwrap_or_else(|| {
+            panic!(
+                "Could not find create for variable {}",
+                bound_var.print_to_string(None)
+            )
+        });
         create[position].body = Rc::new(
             Call {
                 label: name.clone(),
@@ -165,11 +188,11 @@ impl RewriteState {
         let name = fresh_identifier(
             &mut self.max_id,
             &("lift_".to_string()
-                + &label.to_string()
+                + &label.print_to_string(None)
                 + "_"
-                + &switch_info.switch.var.to_string()
+                + &switch_info.switch.var.print_to_string(None)
                 + "_"
-                + &clause.xtor.to_string()),
+                + &clause.xtor.print_to_string(None)),
         );
 
         let mut free_vars = BTreeSet::new();

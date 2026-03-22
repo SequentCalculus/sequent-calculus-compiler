@@ -4,6 +4,7 @@ use crate::{
     rewrite::RewriteState,
 };
 use axcut::syntax::{Def, Prog, names::Identifier};
+use printer::Print;
 use std::collections::HashMap;
 
 pub const MAX_RUNS: usize = usize::MAX;
@@ -42,7 +43,12 @@ pub fn cleanup_inline_defs(defs: Vec<Def>) -> Vec<Def> {
         let mark = cleanup_inline_state
             .def_map
             .get(&name)
-            .unwrap_or_else(|| panic!("Definition {name} must be in the map of definitions"))
+            .unwrap_or_else(|| {
+                panic!(
+                    "Definition {} must be in the map of definitions",
+                    name.print_to_string(None)
+                )
+            })
             .mark;
         if mark == Mark::Retain {
             let context = std::mem::take(&mut def.context.bindings).into();

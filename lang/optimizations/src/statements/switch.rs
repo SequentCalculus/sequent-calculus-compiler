@@ -4,6 +4,7 @@ use axcut::{
     syntax::statements::{Statement, Switch},
     traits::substitution::Subst,
 };
+use printer::Print;
 
 use std::rc::Rc;
 
@@ -26,7 +27,12 @@ impl Rewrite for Switch {
                     .clauses
                     .into_iter()
                     .find(|clause| clause.xtor == xtor)
-                    .unwrap_or_else(|| panic!("Could not find switch clause binding for {xtor}"));
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Could not find switch clause binding for {}",
+                            xtor.print_to_string(None)
+                        )
+                    });
                 let subst = clause
                     .context
                     .into_iter_vars()
