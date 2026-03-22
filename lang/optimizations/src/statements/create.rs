@@ -1,15 +1,9 @@
-use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState};
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::{
-    names::{Identifier, fresh_identifier},
-    statements::{Create, Statement},
-};
-use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
+use axcut::syntax::statements::{Create, Statement};
+use axcut::traits::typed_free_vars::TypedFreeVars;
 
-use std::{
-    collections::{BTreeSet, HashSet},
-    rc::Rc,
-};
+use std::{collections::BTreeSet, rc::Rc};
 
 impl Rewrite for Create {
     type Target = Statement;
@@ -53,31 +47,6 @@ impl CleanupInline for Create {
     fn cleanup_inline(mut self, state: &mut CleanupInlineState) -> Self::Target {
         self.clauses = self.clauses.cleanup_inline(state);
         self.next = self.next.cleanup_inline(state);
-        self
-    }
-}
-
-impl Rename for Create {
-    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
-        self.clauses = self
-            .clauses
-            .into_iter()
-            .map(|clause| clause.rename(vars_to_rename, max_id))
-            .collect();
-
-        if vars_to_rename.contains(&self.var) {
-            let new_variable = fresh_identifier(max_id, &self.var.name);
-            let old_variable = self.var;
-            self.var = new_variable;
-
-            self.next = self
-                .next
-                .subst_sim(&[(old_variable.id, self.var.clone())])
-                .rename(vars_to_rename, max_id);
-        } else {
-            self.next = self.next.rename(vars_to_rename, max_id);
-        }
-
         self
     }
 }

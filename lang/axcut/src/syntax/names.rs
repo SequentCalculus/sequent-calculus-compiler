@@ -13,21 +13,12 @@ pub type ID = usize;
 /// `id` is currently not used, requiring the `name` to be unique. `id`s of variables are expected
 /// to be unique. Thus, only the `id` matters internally, and the `name` is just for
 /// pretty-printing.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct Identifier {
     /// base name for pretty-printing
     pub name: String,
     /// unique id
     pub id: ID,
-}
-
-impl Identifier {
-    pub fn new_with_zero(base: &str) -> Self {
-        Self {
-            name: base.to_string(),
-            id: 0,
-        }
-    }
 }
 
 pub fn fresh_identifier(max_id: &mut ID, base_name: &str) -> Identifier {

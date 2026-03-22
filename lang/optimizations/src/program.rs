@@ -70,7 +70,7 @@ pub fn rewrite_prog(mut program: Prog) -> Prog {
         used_labels,
         defs,
         let_bindings: HashMap::new(),
-        current_label: Identifier::new_with_zero(""),
+        current_label: Identifier::default(),
         create_bindings: HashMap::new(),
         new_changes: true,
         max_id: program.max_id,

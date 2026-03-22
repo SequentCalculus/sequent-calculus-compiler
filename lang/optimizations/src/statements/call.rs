@@ -25,16 +25,12 @@ impl Rewrite for Call {
             // for leaf statements, we do not lift, but just substitute into them
             let subst = clause
                 .context
-                .clone()
-                .into_iter_vars()
-                .map(|var| var.id)
+                .iter_ids()
                 .zip(switch_info.let_args.into_iter_vars())
                 .chain(
                     state.defs[switch_info.called_def_position]
                         .context
-                        .clone()
-                        .into_iter_vars()
-                        .map(|var| var.id)
+                        .iter_ids()
                         .zip(self.args.into_iter_vars()),
                 )
                 .collect::<Vec<_>>();
@@ -75,9 +71,7 @@ impl CleanupInlineGather for Call {
             // `Call`s
             let subst = called_def
                 .context
-                .clone()
-                .into_iter_vars()
-                .map(|var| var.id)
+                .iter_ids()
                 .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
 
@@ -90,9 +84,7 @@ impl CleanupInlineGather for Call {
 
             let subst = called_def
                 .context
-                .clone()
-                .into_iter_vars()
-                .map(|var| var.id)
+                .iter_ids()
                 .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
 
@@ -146,12 +138,10 @@ impl CleanupInline for Call {
 
             let called_def = &state.defs[called_def_position];
 
-            // now wo substitute the parameters
+            // now we substitute the parameters
             let subst = called_def
                 .context
-                .clone()
-                .into_iter_vars()
-                .map(|var| var.id)
+                .iter_ids()
                 .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
             called_def_body = called_def_body.subst_sim(&subst);

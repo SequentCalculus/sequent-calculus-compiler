@@ -1,14 +1,11 @@
-use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState};
 use crate::rewrite::{Rewrite, RewriteState};
 use axcut::{
-    syntax::{
-        names::Identifier,
-        statements::{Statement, Switch},
-    },
+    syntax::statements::{Statement, Switch},
     traits::substitution::Subst,
 };
 
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 impl Rewrite for Switch {
     type Target = Statement;
@@ -55,18 +52,6 @@ impl CleanupInline for Switch {
     type Target = Self;
     fn cleanup_inline(mut self, state: &mut CleanupInlineState) -> Self::Target {
         self.clauses = self.clauses.cleanup_inline(state);
-        self
-    }
-}
-
-impl Rename for Switch {
-    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
-        self.clauses = self
-            .clauses
-            .into_iter()
-            .map(|clause| clause.rename(vars_to_rename, max_id))
-            .collect();
-
         self
     }
 }

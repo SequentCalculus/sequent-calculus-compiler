@@ -22,8 +22,7 @@ impl Rewrite for Invoke {
             // for leaf statements, we do not lift, but just substitute into them
             let subst = clause
                 .context
-                .into_iter_vars()
-                .map(|var| var.id)
+                .iter_ids()
                 .zip(self.args.into_iter_vars())
                 .collect::<Vec<_>>();
             Rc::unwrap_or_clone(clause.body.subst_sim(&subst))

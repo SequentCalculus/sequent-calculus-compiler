@@ -1,9 +1,6 @@
 use axcut::syntax::{Def, names::Identifier};
 
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Mark {
@@ -73,15 +70,5 @@ impl<T: CleanupInline> CleanupInline for Vec<T> {
         self.into_iter()
             .map(|element| element.cleanup_inline(state))
             .collect()
-    }
-}
-
-pub trait Rename {
-    fn rename(self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self;
-}
-
-impl<T: Rename + Clone> Rename for Rc<T> {
-    fn rename(self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
-        Rc::new(Rc::unwrap_or_clone(self).rename(vars_to_rename, max_id))
     }
 }

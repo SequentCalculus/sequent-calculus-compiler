@@ -1,15 +1,6 @@
-use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState};
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::{
-    syntax::{
-        ContextBinding,
-        names::{ID, Identifier, fresh_identifier},
-        statements::Clause,
-    },
-    traits::substitution::Subst,
-};
-
-use std::collections::HashSet;
+use axcut::syntax::statements::Clause;
 
 impl Rewrite for Clause {
     type Target = Self;
@@ -31,38 +22,6 @@ impl CleanupInline for Clause {
     type Target = Self;
     fn cleanup_inline(mut self, state: &mut CleanupInlineState) -> Self::Target {
         self.body = self.body.cleanup_inline(state);
-        self
-    }
-}
-
-impl Rename for Clause {
-    fn rename(mut self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
-        let mut new_bindings = Vec::new();
-        let mut subst: Vec<(ID, Identifier)> = Vec::new();
-
-        for binding in self.context.bindings {
-            if vars_to_rename.contains(&binding.var) {
-                let new_var: Identifier = fresh_identifier(max_id, &binding.var.name);
-                new_bindings.push(ContextBinding {
-                    var: new_var.clone(),
-                    chi: binding.chi.clone(),
-                    ty: binding.ty.clone(),
-                });
-
-                subst.push((binding.var.id, new_var));
-            } else {
-                new_bindings.push(binding);
-            }
-        }
-
-        self.context = new_bindings.into();
-
-        self.body = if subst.is_empty() {
-            self.body.rename(vars_to_rename, max_id)
-        } else {
-            self.body.subst_sim(&subst).rename(vars_to_rename, max_id)
-        };
-
         self
     }
 }

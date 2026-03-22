@@ -1,8 +1,6 @@
-use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState, Rename};
+use crate::cleanup_inline::{CleanupInline, CleanupInlineGather, CleanupInlineState};
 use crate::rewrite::{Rewrite, RewriteState};
-use axcut::syntax::{Statement, names::Identifier};
-
-use std::collections::HashSet;
+use axcut::syntax::Statement;
 
 mod call;
 mod clause;
@@ -72,27 +70,6 @@ impl CleanupInline for Statement {
             Statement::IfC(ifc) => ifc.cleanup_inline(state).into(),
             Statement::Exit(_) => self,
             Statement::Default() => unreachable!("default statement should never occur"),
-        }
-    }
-}
-
-impl Rename for Statement {
-    fn rename(self, vars_to_rename: &HashSet<Identifier>, max_id: &mut usize) -> Self {
-        match self {
-            Statement::Substitute(subst) => subst.rename(vars_to_rename, max_id).into(),
-            Statement::Call(_) => self,
-            Statement::Let(lt) => lt.rename(vars_to_rename, max_id).into(),
-            Statement::Switch(switch) => switch.rename(vars_to_rename, max_id).into(),
-            Statement::Create(cr) => cr.rename(vars_to_rename, max_id).into(),
-            Statement::Invoke(_) => self,
-            Statement::Literal(lit) => lit.rename(vars_to_rename, max_id).into(),
-            Statement::Op(op) => op.rename(vars_to_rename, max_id).into(),
-            Statement::PrintI64(prnt) => prnt.rename(vars_to_rename, max_id).into(),
-            Statement::IfC(ifc) => ifc.rename(vars_to_rename, max_id).into(),
-            Statement::Exit(_) => self,
-            Statement::Default() => {
-                unreachable!("default to_rename, used_varsment should never occur")
-            }
         }
     }
 }
