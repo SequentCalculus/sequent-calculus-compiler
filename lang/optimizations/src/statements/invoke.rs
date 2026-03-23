@@ -10,7 +10,7 @@ use std::rc::Rc;
 impl Rewrite for Invoke {
     type Target = Statement;
     fn rewrite(self, state: &mut RewriteState) -> Self::Target {
-        let Some((clause, position)) = state.get_create_clause(&self.var, &self.tag) else {
+        let Some((clause, position)) = state.get_create_clause(self.var.id, &self.tag) else {
             return self.into();
         };
         state.new_changes = true;

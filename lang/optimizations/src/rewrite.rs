@@ -1,6 +1,6 @@
 use axcut::syntax::{
     ContextBinding, Def, TypingContext,
-    names::{Identifier, fresh_identifier},
+    names::{ID, Identifier, fresh_identifier},
     statements::{Call, Clause, Statement, Switch},
 };
 use axcut::traits::{substitution::Subst, typed_free_vars::TypedFreeVars};
@@ -26,10 +26,10 @@ pub struct RewriteState {
     pub current_label: Identifier,
     /// `Let` bindings defined in the current definition: keys are the bound variables, values are
     /// the correspinding xtor names and arguments
-    pub let_bindings: HashMap<Identifier, (Identifier, TypingContext)>,
+    pub let_bindings: HashMap<ID, (Identifier, TypingContext)>,
     /// `Create` bindings defined in the current definition: keys are the bound variables, values
     /// are the correspinding clauses
-    pub create_bindings: HashMap<Identifier, Vec<Clause>>,
+    pub create_bindings: HashMap<ID, Vec<Clause>>,
     /// Tracks whether there have been changes during the current pass
     pub new_changes: bool,
     /// Tracks the maximal used identifier in the program
@@ -37,16 +37,12 @@ pub struct RewriteState {
 }
 
 impl RewriteState {
-    pub fn get_let(&self, var: &Identifier) -> Option<(Identifier, TypingContext)> {
-        self.let_bindings.get(var).cloned()
+    pub fn get_let(&self, var: ID) -> Option<(Identifier, TypingContext)> {
+        self.let_bindings.get(&var).cloned()
     }
 
-    pub fn get_create_clause(
-        &self,
-        var: &Identifier,
-        xtor: &Identifier,
-    ) -> Option<(Clause, usize)> {
-        let clauses = self.create_bindings.get(var)?;
+    pub fn get_create_clause(&self, var: ID, xtor: &Identifier) -> Option<(Clause, usize)> {
+        let clauses = self.create_bindings.get(&var)?;
         let position = clauses
             .iter()
             .position(|clause| clause.xtor == *xtor)
@@ -93,7 +89,7 @@ impl RewriteState {
             });
         let (tag, let_args) = self
             .let_bindings
-            .get(&called_args.bindings[switch_var_position].var)?;
+            .get(&called_args.bindings[switch_var_position].var.id)?;
 
         // swap the body of the current Definition with a temporary placeholder
         let Statement::Switch(switch) = std::mem::take(&mut called_def.body) else {
@@ -183,12 +179,15 @@ impl RewriteState {
         fresh_bindings.append(&mut clause_fresh_bindings);
 
         // we have to rewrite the Create whose Clause we lift to avoid duplication
-        let create = self.create_bindings.get_mut(bound_var).unwrap_or_else(|| {
-            panic!(
-                "Could not find create for variable {}",
-                bound_var.print_to_string(None)
-            )
-        });
+        let create = self
+            .create_bindings
+            .get_mut(&bound_var.id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Could not find create for variable {}",
+                    bound_var.print_to_string(None)
+                )
+            });
         create[position].body = Rc::new(
             Call {
                 label: name.clone(),

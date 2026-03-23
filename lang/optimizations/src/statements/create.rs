@@ -15,14 +15,17 @@ impl Rewrite for Create {
             .map(|clause| clause.rewrite(state))
             .collect();
 
-        state.create_bindings.insert(self.var.clone(), clauses);
+        state.create_bindings.insert(self.var.id, clauses);
         self.next = self.next.rewrite(state);
-        let clauses = state.create_bindings.remove(&self.var).unwrap_or_else(|| {
-            panic!(
-                "Create variable {} not in bindings anymore",
-                self.var.print_to_string(None)
-            )
-        });
+        let clauses = state
+            .create_bindings
+            .remove(&self.var.id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "Create variable {} not in bindings anymore",
+                    self.var.print_to_string(None)
+                )
+            });
 
         let mut free_vars = BTreeSet::new();
         self.next.typed_free_vars(&mut free_vars);

@@ -10,9 +10,9 @@ impl Rewrite for Let {
     fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
         state
             .let_bindings
-            .insert(self.var.clone(), (self.tag, self.args));
+            .insert(self.var.id, (self.tag, self.args));
         self.next = self.next.rewrite(state);
-        let (tag, args) = state.let_bindings.remove(&self.var).unwrap();
+        let (tag, args) = state.let_bindings.remove(&self.var.id).unwrap();
 
         let mut free_vars = BTreeSet::new();
         self.next.typed_free_vars(&mut free_vars);

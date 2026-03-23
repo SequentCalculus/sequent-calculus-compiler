@@ -11,7 +11,7 @@ use std::rc::Rc;
 impl Rewrite for Switch {
     type Target = Statement;
     fn rewrite(mut self, state: &mut RewriteState) -> Self::Target {
-        match state.get_let(&self.var) {
+        match state.get_let(self.var.id) {
             None => {
                 self.clauses = self
                     .clauses
