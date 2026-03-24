@@ -177,7 +177,7 @@ pub fn constraint_unification(mut equations: Vec<(Ty, Ty)>) -> Result<HashMap<Na
                     }
                 } else {
                     // two different (co-)datatypes are in a constraint -> impossible to unify the equation
-                    return Err(Error::ConnotInfereType { span_l: span_l.unwrap_or(dummy_span()), expected_type_l: name_l.to_string(), expected_type_r: name_r.to_string()});
+                    return Err(Error::ConflictingTypeConstraints { span_l: span_l.unwrap_or(dummy_span()), expected_type_l: name_l.to_string(), expected_type_r: name_r.to_string()});
                 }
             },
             (ty_l, ty_r) => {
@@ -186,7 +186,7 @@ pub fn constraint_unification(mut equations: Vec<(Ty, Ty)>) -> Result<HashMap<Na
                     Ty::I64 { span } => span,
                     Ty::Decl { span,..} => span
                 };
-                return Err(Error::ConnotInfereType { span_l: span.unwrap_or(dummy_span()), expected_type_l: ty_l.to_string(), expected_type_r: ty_r.to_string()});
+                return Err(Error::ConflictingTypeConstraints { span_l: span.unwrap_or(dummy_span()), expected_type_l: ty_l.to_string(), expected_type_r: ty_r.to_string()});
             }
         };
 
