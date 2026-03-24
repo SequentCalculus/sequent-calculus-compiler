@@ -61,9 +61,10 @@ impl Def {
 
     pub fn insert_inferred_type(
         &mut self,
-        mappings: &std::collections::HashMap<Name, Ty>
-    ) {
-        self.body.insert_inferred_type(mappings);
+        mappings: &std::collections::HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.body.insert_inferred_type(mappings, symbol_table)
     }
 }
 

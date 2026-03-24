@@ -111,11 +111,15 @@ impl Inference for XVar {
 
     fn insert_inferred_type(
         &mut self,
-        mappings: &HashMap<Name, Ty>
-    ) {
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
         match &mut self.ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
 }

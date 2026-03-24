@@ -42,6 +42,7 @@ impl Ty {
     /// This function checks the well-formedness of a type during typechecking. For a user-declared
     /// type it creates a monomorphic instance of the corresponding template if necessary. The type
     /// must not be a type parameter.
+    // TODO: Create costum function for Type Inference, to report better errors etc.
     pub fn check(
         &self,
         span: &Option<SourceSpan>,

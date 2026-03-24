@@ -168,17 +168,21 @@ impl Inference for IfC {
 
     fn insert_inferred_type(
         &mut self,
-        mappings: &HashMap<Name, Ty>
-    ) {
-        self.fst.insert_inferred_type(mappings);
-        self.snd.insert_inferred_type(mappings);
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.fst.insert_inferred_type(mappings, symbol_table)?;
+        self.snd.insert_inferred_type(mappings, symbol_table)?;
 
-        self.thenc.insert_inferred_type(mappings);
-        self.elsec.insert_inferred_type(mappings);
+        self.thenc.insert_inferred_type(mappings, symbol_table)?;
+        self.elsec.insert_inferred_type(mappings, symbol_table)?;
 
         match &mut self.ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
 }

@@ -17,8 +17,9 @@ pub trait Inference: Sized {
 
     fn insert_inferred_type(
         &mut self,
-        mappings: &HashMap<Name, Ty>
-    );
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error>;
 }
 
 impl<T: Inference + Clone> Inference for Rc<T> {
@@ -34,9 +35,10 @@ impl<T: Inference + Clone> Inference for Rc<T> {
 
     fn insert_inferred_type(
             &mut self,
-            mappings: &HashMap<Name, Ty>
-        ) {
-        Rc::make_mut(self).insert_inferred_type(mappings);
+            mappings: &HashMap<Name, Ty>,
+            symbol_table: &mut SymbolTable
+        ) -> Result<(), Error> {
+        Rc::make_mut(self).insert_inferred_type(mappings, symbol_table)
     }
 }
 
@@ -56,11 +58,12 @@ impl<T: Inference> Inference for Option<T> {
 
     fn insert_inferred_type(
             &mut self,
-            mappings: &HashMap<Name, Ty>
-        ) {
+            mappings: &HashMap<Name, Ty>,
+            symbol_table: &mut SymbolTable
+        ) -> Result<(), Error> {
         match self {
-            None => (),
-            Some(t) => t.insert_inferred_type(mappings),
+            None => Ok(()),
+            Some(t) => t.insert_inferred_type(mappings, symbol_table),
         }
     }
 }
@@ -111,11 +114,14 @@ pub fn args_constraint_equations(
 
 pub fn args_insert_inferred_type(
     args: &mut Arguments,
-    mappings: &HashMap<Name, Ty>
-) {
+    mappings: &HashMap<Name, Ty>,
+    symbol_table: &mut SymbolTable
+) -> Result<(), Error> {
     for term in &mut args.entries {
-        term.insert_inferred_type(mappings);
+        term.insert_inferred_type(mappings, symbol_table)?;
     }
+
+    Ok(())
 }
 
 pub struct VarNameGenerator {

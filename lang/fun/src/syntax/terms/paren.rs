@@ -9,6 +9,7 @@ use crate::traits::*;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a term in parentheses.
@@ -81,10 +82,12 @@ impl Inference for Paren {
     }
 
     fn insert_inferred_type(
-            &mut self,
-            mappings: &std::collections::HashMap<Name, Ty>
-        ) {
-        self.inner.insert_inferred_type(mappings);
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+
+        self.inner.insert_inferred_type(mappings, symbol_table)
     }
 }
 

@@ -287,23 +287,31 @@ impl Inference for Case {
 
 
     fn insert_inferred_type(
-            &mut self,
-            mappings: &HashMap<Name, Ty>
-        ) {
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
         for ty in &mut self.type_args.args {
             ty.mut_subst_ty(mappings);
+            ty.check(&Some(self.span), symbol_table)?;
         }
         
-        self.scrutinee.insert_inferred_type(mappings);
+        self.scrutinee.insert_inferred_type(mappings, symbol_table)?;
 
         for clause in &mut self.clauses {
-            clause.body.insert_inferred_type(mappings);
-            clause.context.mut_subst_ty(mappings);
+            clause.body.insert_inferred_type(mappings, symbol_table)?;
+            for ctx_binding in &mut clause.context.bindings {
+                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
+                ctx_binding.ty.mut_subst_ty(mappings);
+            }
         }
         
         match &mut self.ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
 }

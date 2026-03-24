@@ -123,14 +123,18 @@ impl Inference for Let {
 
     fn insert_inferred_type(
         &mut self,
-        mappings: &HashMap<Name, Ty>
-    ) {
-        self.bound_term.insert_inferred_type(mappings);
-        self.in_term.insert_inferred_type(mappings);
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.bound_term.insert_inferred_type(mappings, symbol_table)?;
+        self.in_term.insert_inferred_type(mappings, symbol_table)?;
 
         match &mut self.ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
     

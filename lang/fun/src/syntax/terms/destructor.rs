@@ -184,20 +184,24 @@ impl Inference for Destructor {
 
 
     fn insert_inferred_type(
-            &mut self,
-            mappings: &HashMap<Name, Ty>
-        ) {
-        self.scrutinee.insert_inferred_type(mappings);
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.scrutinee.insert_inferred_type(mappings, symbol_table)?;
         
         for ty in &mut self.type_args.args {
             ty.mut_subst_ty(mappings);
         }
 
-        args_insert_inferred_type(&mut self.args, mappings);
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
 
         match &mut self.ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
 }

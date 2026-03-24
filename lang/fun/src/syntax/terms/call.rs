@@ -11,6 +11,7 @@ use crate::typing::inference::args_constraint_equations;
 use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines the call of a top-level function in Fun. It consists of the name of the
@@ -110,14 +111,18 @@ impl Inference for Call {
     }
 
     fn insert_inferred_type(
-            &mut self,
-            mappings: &std::collections::HashMap<Name, Ty>
-        ) {
-        args_insert_inferred_type(&mut self.args, mappings);
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
         
         match &mut self.ret_ty {
-            Some(ty_var) => {ty_var.mut_subst_ty(mappings);},
-            None => ()
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => Ok(())
         }
     }
 }

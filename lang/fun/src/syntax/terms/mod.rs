@@ -194,25 +194,26 @@ impl Inference for Term {
     }
 
     fn insert_inferred_type(
-            &mut self,
-            mappings: &std::collections::HashMap<super::Name, Ty>
-        ) {
+        &mut self,
+        mappings: &std::collections::HashMap<super::Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
         match self {
-            Term::XVar(xvar) => xvar.insert_inferred_type(mappings),
-            Term::Lit(lit) => lit.insert_inferred_type(mappings),
-            Term::Op(op) => op.insert_inferred_type(mappings),
-            Term::IfC(if_c) => if_c.insert_inferred_type(mappings),
-            Term::PrintI64(print_i64) => print_i64.insert_inferred_type(mappings),
-            Term::Let(let_block) => let_block.insert_inferred_type(mappings),
-            Term::Call(call) => call.insert_inferred_type(mappings),
-            Term::Constructor(constructor) => constructor.insert_inferred_type(mappings),
-            Term::Destructor(destructor) => destructor.insert_inferred_type(mappings),
-            Term::Case(case) => case.insert_inferred_type(mappings),
-            Term::New(new_block) => new_block.insert_inferred_type(mappings),
-            Term::Label(label) => label.insert_inferred_type(mappings),
-            Term::Goto(goto) => goto.insert_inferred_type(mappings),
-            Term::Exit(exit) => exit.insert_inferred_type(mappings),
-            Term::Paren(paren) => paren.insert_inferred_type(mappings),
+            Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table),
+            Term::Lit(lit) => lit.insert_inferred_type(mappings, symbol_table),
+            Term::Op(op) => op.insert_inferred_type(mappings, symbol_table),
+            Term::IfC(if_c) => if_c.insert_inferred_type(mappings, symbol_table),
+            Term::PrintI64(print_i64) => print_i64.insert_inferred_type(mappings, symbol_table),
+            Term::Let(let_block) => let_block.insert_inferred_type(mappings, symbol_table),
+            Term::Call(call) => call.insert_inferred_type(mappings, symbol_table),
+            Term::Constructor(constructor) => constructor.insert_inferred_type(mappings, symbol_table),
+            Term::Destructor(destructor) => destructor.insert_inferred_type(mappings, symbol_table),
+            Term::Case(case) => case.insert_inferred_type(mappings, symbol_table),
+            Term::New(new_block) => new_block.insert_inferred_type(mappings, symbol_table),
+            Term::Label(label) => label.insert_inferred_type(mappings, symbol_table),
+            Term::Goto(goto) => goto.insert_inferred_type(mappings, symbol_table),
+            Term::Exit(exit) => exit.insert_inferred_type(mappings, symbol_table),
+            Term::Paren(paren) => paren.insert_inferred_type(mappings, symbol_table),
         }
     }
 }

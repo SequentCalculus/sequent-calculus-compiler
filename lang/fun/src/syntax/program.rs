@@ -157,7 +157,7 @@ impl Program {
 
         let type_mapping = constraint_unification(constraints)?;
         for def in &mut defs {
-            def.insert_inferred_type(&type_mapping);
+            def.insert_inferred_type(&type_mapping, &mut symbol_table)?;
         }
 
         Ok(CheckedProgram { data_types, codata_types, defs })
