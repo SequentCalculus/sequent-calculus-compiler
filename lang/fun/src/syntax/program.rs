@@ -210,6 +210,31 @@ impl Print for Program {
     }
 }
 
+impl Print for CheckedProgram {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep`
+        // option is set. This is useful for typesetting examples in papers which have to make
+        // economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let datas = self.data_types.iter().map(|decl| decl.print(cfg, alloc));
+        let codatas = self.codata_types.iter().map(|decl| decl.print(cfg, alloc));
+        let definitions = self.defs.iter().map(|decl| decl.print(cfg, alloc));
+
+        let declarations = datas.chain(codatas).chain(definitions);
+
+        alloc.intersperse(declarations, sep)
+    }
+}
+
 #[cfg(test)]
 mod program_tests {
     use printer::Print;
