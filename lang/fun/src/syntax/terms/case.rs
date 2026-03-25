@@ -240,16 +240,27 @@ impl Inference for Case {
                     }
                 };
 
+                if clause.context_names.bindings.len() != instantiated_arg_types.bindings.len() {
+                    return Err(Error::WrongNumberOfArguments {
+                        span: self.span,
+                        expected: instantiated_arg_types.bindings.len(),
+                        got: clause.context_names.bindings.len()
+                    });
+                }
+
+                // The Correct Typing Context of the Clause is added, to be used later in the compiler pipeline
                 clause.context = instantiated_arg_types.clone();
 
+                // The outer Context is expanded with the bindings from the clause
                 let mut clause_context = context.clone();
-                for argument in instantiated_arg_types.bindings {
-                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
+                for (template_arg_type, arg_name) in instantiated_arg_types.bindings.iter().zip(&clause.context_names.bindings) {
+                    // if the name of a binding is already in the Context it is shadowed by the new variable
+                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == *arg_name) {
                         clause_context.bindings.swap_remove(index);
                     }
-                    clause_context.add_var(&argument.var, argument.ty);
+                    clause_context.add_var(&arg_name, template_arg_type.ty.clone());
                 }
-                
+
                 // every clause must have the same out type, the expected type of the whole case block
                 constraints.append(&mut clause.body.constraint_equations(
                     &mut symbol_table.clone(),
@@ -301,8 +312,8 @@ impl Inference for Case {
         for clause in &mut self.clauses {
             clause.body.insert_inferred_type(mappings, symbol_table)?;
             for ctx_binding in &mut clause.context.bindings {
-                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
                 ctx_binding.ty.mut_subst_ty(mappings);
+                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
             }
         }
         
@@ -444,6 +455,8 @@ mod test {
         let mut ctx_case_names = NameContext::default();
         ctx_case_names.bindings.push("x".to_string());
         ctx_case_names.bindings.push("xs".to_string());
+        let mut type_ctx_case = TypingContext::default();
+
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let mut symbol_table = symbol_table_list_template();
