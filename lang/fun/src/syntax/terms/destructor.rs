@@ -192,6 +192,7 @@ impl Inference for Destructor {
         
         for ty in &mut self.type_args.args {
             ty.mut_subst_ty(mappings);
+            ty.check(&Some(self.span), symbol_table)?;
         }
 
         args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
