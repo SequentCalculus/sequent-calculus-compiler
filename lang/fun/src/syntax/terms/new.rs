@@ -222,11 +222,11 @@ impl Inference for New {
 
                 // the arguments are added to the context, variable that are shadowed, are replaced by the new var
                 let mut clause_context = context.clone();
-                for argument in arg_types.bindings {
-                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == argument.var) {
+                for (template_arg_type, arg_name) in arg_types.bindings.iter().zip(&clause.context_names.bindings) {
+                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == *arg_name) {
                         clause_context.bindings.swap_remove(index);
                     }
-                    clause_context.add_var(&argument.var, argument.ty);
+                    clause_context.add_var(arg_name, template_arg_type.ty.clone());
                 }
 
                 //the argument types are now compared to the expected type of the body of the clause
@@ -281,8 +281,8 @@ impl Inference for New {
         for clause in &mut self.clauses {
             clause.body.insert_inferred_type(mappings, symbol_table)?;
             for ctx_binding in &mut clause.context.bindings {
-                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
                 ctx_binding.ty.mut_subst_ty(mappings);
+                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
             }
         }
 
