@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use miette::SourceSpan;
 
-use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext, util::dummy_span}, typing::{Error, SymbolTable}};
+use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext, Var, util::dummy_span}, typing::{Error, SymbolTable}};
 
 
 pub trait Inference: Sized {
@@ -81,7 +81,7 @@ pub fn args_constraint_equations(
 
     if args.entries.len() != types.bindings.len() {
         return Err(Error::WrongNumberOfArguments {
-            span: span,
+            span,
             expected: types.bindings.len(),
             got: args.entries.len()
         });
@@ -92,7 +92,7 @@ pub fn args_constraint_equations(
             match arg {
                 Term::XVar(variable) => {
                     if variable.chi == Some(Prd) {
-                        return Err(Error::ExpectedCovariableGotTerm { span: variable.span.clone() });
+                        return Err(Error::ExpectedCovariableGotTerm { span: variable.span });
                     }
 
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
@@ -102,7 +102,7 @@ pub fn args_constraint_equations(
 
                     constraints.push((expected_type.ty.clone(), found_ty));
                 },
-                _ => return Err(Error::ExpectedCovariableGotTerm { span: span.clone() }),
+                _ => return Err(Error::ExpectedCovariableGotTerm { span: span }),
             }
         } else {
             constraints.append(&mut arg.constraint_equations(symbol_table, context, var_name_generator, expected_type.ty.clone())?);
@@ -135,13 +135,19 @@ impl VarNameGenerator {
 
     pub fn get_new_name(&mut self) -> String {
         let new_name = self.internal_counter.to_string();
-        self.internal_counter = self.internal_counter + 1;
-        return new_name;
+        self.internal_counter += 1;
+        new_name
     }
 
     pub fn get_new_ty_var(&mut self) -> Ty {
         let name = self.get_new_name();
         Ty::Decl { span: None, name, type_args: TypeArgs::mk(vec![]) }
+    }
+}
+
+impl Default for VarNameGenerator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -168,7 +174,7 @@ pub fn constraint_unification(mut equations: Vec<(Ty, Ty)>) -> Result<HashMap<Na
                     (name.to_string(), ty.clone())
                 ]))
             },
-            (Ty::Decl { span: span_l , name: name_l, type_args: type_args_l }, Ty::Decl { span: span_r, name: name_r, type_args: type_args_r }) => {
+            (Ty::Decl { span: span_l , name: name_l, type_args: type_args_l }, Ty::Decl {name: name_r, type_args: type_args_r, .. }) => {
                 if name_l == name_r {
                     // two matching (co-)datatypes in a constraint
                     if type_args_l.args.len() == type_args_r.args.len() {
@@ -210,7 +216,7 @@ pub fn constraint_unification(mut equations: Vec<(Ty, Ty)>) -> Result<HashMap<Na
     let old_type_mapping = type_mapping.clone();
 
     // finally the transitive hull of the mappings are used to get all final results in the mappings
-    for (name, ty) in &mut type_mapping {
+    for ty in type_mapping.values_mut() {
         while ty.collect_var_names().iter().any(|name| old_type_mapping.contains_key(name)) {
             ty.mut_subst_ty(&old_type_mapping);
         }

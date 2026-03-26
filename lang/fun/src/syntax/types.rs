@@ -181,7 +181,7 @@ impl Ty {
             Ty::I64 { .. } => vec![],
             Ty::Decl { name, type_args, .. } => {
                 if type_args.args.is_empty() {
-                    return vec![name.to_string()];
+                    vec![name.to_string()]
                 } else {
                     type_args.args.iter().fold(Vec::new(), |mut list, ty| {list.append(&mut ty.collect_var_names()); list})
                 }

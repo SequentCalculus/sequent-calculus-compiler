@@ -182,7 +182,7 @@ impl SymbolTable {
             }
         }
 
-        return None;
+        None
     }
 
     /// This function combines two symbol tables into one.

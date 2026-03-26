@@ -157,7 +157,7 @@ impl Inference for Destructor {
             for (type_var_name, given_ty )in general_type_vars.bindings.iter().zip(self.type_args.args.iter()) {
                 type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
             }
-        } else if self.type_args.args.len() == 0 {
+        } else if self.type_args.args.is_empty() {
             // if no type Arguments are given, they are all replaced by variables,
 
             for type_var in &general_type_vars.bindings {
@@ -220,7 +220,7 @@ impl Inference for Destructor {
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span.clone()), symbol_table)
+                ty_var.check(&Some(self.span), symbol_table)
             },
             None => panic!("The Type of the term {:?} is not set after type inference", self)
         }

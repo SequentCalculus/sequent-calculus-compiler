@@ -149,7 +149,7 @@ impl Program {
                     codata_types.push(codata);
                 }
                 Declaration::Def(mut def) => {
-                    constraints.append(&mut def.constraint_equations(&mut symbol_table, &mut var_name_generator)?);
+                    constraints.append(&mut def.constraint_equations(&mut symbol_table, var_name_generator)?);
                     defs.push(def);                    
                 }
             }

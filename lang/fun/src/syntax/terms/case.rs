@@ -208,7 +208,7 @@ impl Inference for Case {
                 for (type_var_name, given_ty) in general_type_vars.bindings.iter().zip(self.type_args.args.iter()) {
                     type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
                 }
-            } else if self.type_args.args.len() == 0 {
+            } else if self.type_args.args.is_empty() {
                 // if no type Arguments are given, they are all replaced by variables,
 
                 for type_var_name in general_type_vars.bindings.iter() {
@@ -277,7 +277,7 @@ impl Inference for Case {
                     if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == *arg_name) {
                         clause_context.bindings.swap_remove(index);
                     }
-                    clause_context.add_var(&arg_name, template_arg_type.ty.clone());
+                    clause_context.add_var(arg_name, template_arg_type.ty.clone());
                 }
 
                 // every clause must have the same out type, the expected type of the whole case block
@@ -307,11 +307,11 @@ impl Inference for Case {
             Ok(constraints)
         } else {
             // the clauses are empty, aborting the type inference
-            return Err(Error::Mismatch {
+            Err(Error::Mismatch {
                 span: self.span,
                 expected: "At least one Clause in Case Block".to_string(),
                 got: "No clause".to_string()
-            });
+            })
         }
     }
 
@@ -339,7 +339,7 @@ impl Inference for Case {
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span.clone()), symbol_table)
+                ty_var.check(&Some(self.span), symbol_table)
             },
             None => panic!("The Type of the term {:?} is not set after type inference", self)
         }

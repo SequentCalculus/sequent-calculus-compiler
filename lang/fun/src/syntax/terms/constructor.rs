@@ -117,7 +117,7 @@ impl Inference for Constructor {
         let data_type_name = match symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
-                return Err(Error::Undefined { span: Some(self.span.clone()), name: self.id.clone() });
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
             }
         };
 

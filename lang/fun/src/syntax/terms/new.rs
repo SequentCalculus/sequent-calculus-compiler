@@ -170,7 +170,7 @@ impl Inference for New {
 
             let (chirality, general_type_vars, needed_clauses) = symbol_table.type_templates.get(&data_type_name).unwrap();
 
-            let needed_clauses_set: HashSet<&String> = needed_clauses.into_iter().collect();
+            let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
 
             if chirality ==&Polarity::Data {
                 return Err(Error::ExpectedCovariableGotTerm { span: self.span });
@@ -199,7 +199,7 @@ impl Inference for New {
                         }
                     },
                     None => {
-                    return Err(Error::Undefined { span: Some(self.span.clone()), name: clause.xtor.clone() });
+                    return Err(Error::Undefined { span: Some(self.span), name: clause.xtor.clone() });
                     }
                 };
 
@@ -289,7 +289,7 @@ impl Inference for New {
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span.clone()), symbol_table)
+                ty_var.check(&Some(self.span), symbol_table)
             },
             None => panic!("The Type of the term {:?} is not set after type inference", self)
         }
