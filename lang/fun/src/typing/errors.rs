@@ -264,10 +264,19 @@ pub enum Error {
         /// right type
         expected_type_r: Name
     },
+    /// Too few Type constraints to infere the type
     #[error("Cannot infere the type: too few constraints")]
     #[diagnostic(code("T-025"))]
     MissingTypeConstraints {
         // source location of type l
+        #[label]
+        span: SourceSpan,
+    },
+    /// The Type Checker expects Type annotations everywhere
+    #[error("Missing type annotation. The Type Checker needs all type annotations")]
+    #[diagnostic(code("T-026"))]
+    MissingTypeAnnotation {
+        // source location of the missing annotation
         #[label]
         span: SourceSpan,
     }

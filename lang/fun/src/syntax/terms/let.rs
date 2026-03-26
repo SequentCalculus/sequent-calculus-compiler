@@ -32,7 +32,7 @@ pub struct Let {
     pub variable: Var,
     /// The (annotated) type of the bound term
     // TODO: could become optional with the type inference
-    pub var_ty: Ty,
+    pub var_ty: Option<Ty>,
     /// The bound term
     pub bound_term: Rc<Term>,
     /// The term in which the variable for the bound term is in scope
@@ -83,15 +83,20 @@ impl Check for Let {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.var_ty.check(&Some(self.span), symbol_table)?;
-        self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        if let Some(actual_var_ty) = &self.var_ty {
+            actual_var_ty.check(&Some(self.span), symbol_table)?;
+            self.bound_term = self.bound_term.check(symbol_table, context, actual_var_ty)?;
 
-        let mut new_context = context.clone();
-        new_context.add_var(&self.variable, self.var_ty.clone());
-        self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
+            let mut new_context = context.clone();
+            new_context.add_var(&self.variable, actual_var_ty.clone());
+            self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+            self.ty = Some(expected.clone());
+            Ok(self)
+        } else {
+            Err(Error::MissingTypeAnnotation { span: self.span })
+        }
+        
     }
 }
 
@@ -110,12 +115,16 @@ impl Inference for Let {
             self.ty = Some(new_type_var.clone());
             constraints.push((new_type_var, ty_var.clone()));
 
-            let arg_type_var = var_name_generator.get_new_ty_var();
+            // if the bound term has an annotation it is used, else a type variable is substituted
+            let bound_term_type = match &self.var_ty {
+                Some(ty) => ty.clone(),
+                None => var_name_generator.get_new_ty_var()
+            };
 
-            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, arg_type_var.clone())?);
+            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, bound_term_type.clone())?);
 
             let mut new_context = context.clone();
-            new_context.add_var(&self.variable, arg_type_var);
+            new_context.add_var(&self.variable, bound_term_type);
             constraints.append(&mut self.in_term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
 
             Ok(constraints)
@@ -167,7 +176,7 @@ mod test {
         let result = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
@@ -181,7 +190,7 @@ mod test {
         let expected = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 XVar {
@@ -202,7 +211,7 @@ mod test {
         let result = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
@@ -228,7 +237,7 @@ mod test {
         let mut term = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_ty_var("not needed"),
+            var_ty: None,
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
@@ -247,11 +256,35 @@ mod test {
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 
+    #[test]
+    fn inference_let_type_annotation() {
+        let mut term = Let {
+            span: dummy_span(),
+            variable: "x".to_owned(),
+            var_ty: Some(Ty::mk_i64()),
+            bound_term: Rc::new(Lit::mk(2).into()),
+            in_term: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_i64(), Ty::mk_i64()),
+            (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
     fn example() -> Let {
         Let {
             span: dummy_span(),
             variable: "x".to_string(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,
