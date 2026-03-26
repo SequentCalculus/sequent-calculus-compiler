@@ -215,7 +215,8 @@ impl Inference for Case {
                     type_var_mapping.insert(type_var_name.clone(), var_name_generator.get_new_ty_var());
                 }
             } else {
-                // if the wrong amount of type arguments are given, a Error is raised
+                // if the wrong amount of type arguments are given, an error is returned
+
                 return Err(Error::WrongNumberOfTypeArguments{
                     span: Some(self.span),
                     expected: general_type_vars.bindings.len(),
