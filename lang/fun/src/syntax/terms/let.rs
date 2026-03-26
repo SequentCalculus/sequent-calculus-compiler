@@ -281,7 +281,7 @@ mod test {
             (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             (Ty::mk_i64(), Ty::mk_i64()),
             (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
 
         assert_eq!(result, expected);
