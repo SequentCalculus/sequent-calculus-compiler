@@ -150,9 +150,29 @@ impl Inference for Destructor {
         // instanciating new type variables
 
         let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
-        for type_var in &general_type_vars.bindings {
-            type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+
+        if general_type_vars.bindings.len() == self.type_args.args.len() {
+            // if the right amount of type arguments is given they are used
+
+            for (type_var_name, given_ty )in general_type_vars.bindings.iter().zip(self.type_args.args.iter()) {
+                type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
+            }
+        } else if self.type_args.args.len() == 0 {
+            // if no type Arguments are given, they are all replaced by variables,
+
+            for type_var in &general_type_vars.bindings {
+                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+            }
+        } else {
+            // if the wrong amount of type arguments are given, an error is returned
+
+            return Err(Error::WrongNumberOfTypeArguments {
+                span: Some(self.span),
+                expected: general_type_vars.bindings.len(),
+                got: self.type_args.args.len()
+            });
         }
+        
 
         // collecting the expected signature of the dtor
         let (mut arg_types, mut out_type) = match symbol_table.dtor_templates.get(&self.id) {
@@ -348,7 +368,7 @@ mod destructor_tests {
         let mut term = Destructor {
             span: dummy_span(),
             id: "fst".to_owned(),
-            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            type_args: TypeArgs::mk(vec![]),
             args: vec![].into(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
@@ -372,6 +392,43 @@ mod destructor_tests {
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 
+    #[test]
+    fn inference_lpait_fst_with_type_annotation() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        let mut symbol_table = symbol_table_lpair();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "fst".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
+            Ty::mk_i64(),
+            Ty::mk_i64()
+        ]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            (Ty::mk_ty_var("1"), scrutinee_type.clone()),
+            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
 
     #[test]
     fn inference_ap() {
@@ -385,7 +442,7 @@ mod destructor_tests {
         let mut term = Destructor {
             span: dummy_span(),
             id: "apply".to_owned(),
-            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            type_args: TypeArgs::mk(vec![]),
             args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
