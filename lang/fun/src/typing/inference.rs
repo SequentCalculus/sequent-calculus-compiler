@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use miette::SourceSpan;
 
-use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext, Var, util::dummy_span}, typing::{Error, SymbolTable}};
+use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext, util::dummy_span}, typing::{Error, SymbolTable}};
 
 
 pub trait Inference: Sized {
@@ -102,7 +102,7 @@ pub fn args_constraint_equations(
 
                     constraints.push((expected_type.ty.clone(), found_ty));
                 },
-                _ => return Err(Error::ExpectedCovariableGotTerm { span: span }),
+                _ => return Err(Error::ExpectedCovariableGotTerm { span }),
             }
         } else {
             constraints.append(&mut arg.constraint_equations(symbol_table, context, var_name_generator, expected_type.ty.clone())?);

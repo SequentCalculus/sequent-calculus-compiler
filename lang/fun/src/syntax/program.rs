@@ -131,7 +131,7 @@ impl Program {
 
     pub fn inference_types(self) -> Result<CheckedProgram, Error>{
         let mut symbol_table = build_symbol_table(&self)?;
-        let mut var_name_generator = &mut VarNameGenerator::new();
+        let var_name_generator = &mut VarNameGenerator::new();
         let mut constraints = Vec::new();
 
         let mut data_types = Vec::new();
