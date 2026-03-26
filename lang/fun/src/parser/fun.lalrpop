@@ -189,9 +189,9 @@ Lit: Lit = {
 
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
-      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
-    <l: @L> <v: ModCall> <args: Arguments> <r: @R> => 
-      Call {span: span(l, r), name: v, args, ret_ty: None,} .into(),
+      Call { span: span(l, r), name: v, args, ret_ty: None, is_module_call: false}.into(),
+    <l: @L> <m: ModCall> <args: Arguments> <r: @R> => 
+      Call {span: span(l, r), name: m, args, ret_ty: None, is_module_call: true} .into(),
 }
 
 Label: Label = {
@@ -454,6 +454,8 @@ Module: Module = {
 
 Import: Import = {
     <l: @L> "import" <name: Name> <r: @R> =>
+        Import {span: span(l, r), name,},
+    <l: @L> "import" <name: ModCall> <r: @R> =>
         Import {span: span(l, r), name,},
 }
 

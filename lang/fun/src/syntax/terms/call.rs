@@ -27,6 +27,8 @@ pub struct Call {
     pub args: Arguments,
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
+    /// The Namespace to which the funtion belongs
+    pub is_module_call: bool,
 }
 
 impl OptTyped for Call {

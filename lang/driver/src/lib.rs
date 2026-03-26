@@ -11,6 +11,7 @@ use std::{
     process::Command,
     env::{consts::OS, home_dir},
 };
+use regex::Regex;
 
 use core2axcut::program::shrink_prog;
 use fun::{
@@ -102,6 +103,7 @@ impl Driver {
 
         let content = self.source(path)?;
         let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
+        
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
@@ -125,13 +127,13 @@ impl Driver {
                     let mut search_path = path.clone();
                     search_path.pop();
                     let mut subdrv = Driver::new();
-                    imports.insert(import.name.clone(), subdrv.loaded(&find_given_file(&import.name, &mut search_path, true).expect("Should have found the file"))?);
+                    imports.insert(import.name.clone(), subdrv.loaded(&find_given_file(&import.name, &mut search_path, true)?)?);
                 }
                 ModuleDeclaration::Module (module)=> {
                     let mut search_path = path.clone();
                     search_path.pop();
                     let mut subdrv = Driver::new();
-                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false).expect("Should have found the file"))?);
+                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false)?)?);
                 }
             }
         }
@@ -504,7 +506,32 @@ pub fn generate_io_runtime() -> PathBuf {
     filepath
 }
 
-fn find_given_file<'a>(filename: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, DriverError> {
+fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, DriverError> {
+    let reg = Regex::new(r"^[a-z][a-zA-Z0-9_]*(::[a-z][a-zA-Z0-9_]*)+$").unwrap();
+    let filename;
+    if reg.is_match(module_call) {
+        let mut split: Vec<&str> = module_call.split("::").collect();
+        let root = split[0];
+        let mut abs_path = path.canonicalize().expect("Could not get absoule path");
+        while abs_path.file_name().unwrap().to_str().unwrap() != root {
+            abs_path.pop();
+        }
+        println!("{:#?}", split);
+        split.remove(0);
+        let file_name = split.pop().unwrap();
+        for dir in split {
+            abs_path.push(dir);
+            if !abs_path.exists() {
+                return Err(DriverError::FileNotFound {path_to_file: abs_path.to_str().unwrap().to_owned(),})
+            }
+        }
+        abs_path.push(file_name);
+        filename = file_name;
+        *path = abs_path;
+    }
+    else {
+        filename = module_call;
+    }
     path.push(filename);
     path.set_extension("sc");
     if path.is_file() {
