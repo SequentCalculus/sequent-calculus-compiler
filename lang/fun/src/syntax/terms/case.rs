@@ -199,10 +199,28 @@ impl Inference for Case {
             // this instance of the Codata Type is instanciated by replacing the general type vars
             // with instance type variables eg. (A -> a1)
 
-            // the mapping is created now, to ensure that the new type varibales in this case-Block stay consistent
+
             let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
-            for type_var in &general_type_vars.bindings {
-                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+            
+            if self.type_args.args.len() == general_type_vars.bindings.len() {
+                // if the right amount of type arguments is given they are used
+
+                for (type_var_name, given_ty) in general_type_vars.bindings.iter().zip(self.type_args.args.iter()) {
+                    type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
+                }
+            } else if self.type_args.args.len() == 0 {
+                // if no type Arguments are given, they are all replaced by variables,
+
+                for type_var_name in general_type_vars.bindings.iter() {
+                    type_var_mapping.insert(type_var_name.clone(), var_name_generator.get_new_ty_var());
+                }
+            } else {
+                // if the wrong amount of type arguments are given, a Error is raised
+                return Err(Error::WrongNumberOfTypeArguments{
+                    span: Some(self.span),
+                    expected: general_type_vars.bindings.len(),
+                    got: self.type_args.args.len(),
+                });
             }
 
             let mut used_clauses = HashSet::new();
@@ -451,11 +469,64 @@ mod test {
     }
 
     #[test]
-    fn inference_case_list() {
+    fn inference_case_list_no_annotation() {
         let mut ctx_case_names = NameContext::default();
         ctx_case_names.bindings.push("x".to_string());
         ctx_case_names.bindings.push("xs".to_string());
-        let mut type_ctx_case = TypingContext::default();
+
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let mut symbol_table = symbol_table_list_template();
+        let mut term = Case {
+            span: dummy_span(),
+            clauses: vec![
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Data,
+                    xtor: "Nil".to_owned(),
+                    context_names: NameContext::default(),
+                    context: TypingContext::default(),
+                    body: Lit::mk(1).into(),
+                },
+                Clause {
+                    span: dummy_span(),
+                    pol: Polarity::Data,
+                    xtor: "Cons".to_owned(),
+                    context_names: ctx_case_names.clone(),
+                    context: TypingContext::default(),
+                    body: XVar::mk("x").into(),
+                },
+            ],
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            type_args: TypeArgs::mk(vec![]),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            // Nil
+            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+
+            // Cons
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+
+            // scrutinee
+            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
+            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
+        ];
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+        #[test]
+    fn inference_case_list_with_annotation() {
+        let mut ctx_case_names = NameContext::default();
+        ctx_case_names.bindings.push("x".to_string());
+        ctx_case_names.bindings.push("xs".to_string());
 
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
@@ -494,12 +565,12 @@ mod test {
             (Ty::mk_ty_var("x"), Ty::mk_i64()),
 
             // Cons
-            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+            (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_i64()),
 
             // scrutinee
-            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
-            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
+            (Ty::mk_ty_var("2"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
+            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
         ];
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
