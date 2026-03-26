@@ -111,7 +111,7 @@ impl Inference for Goto {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span.clone()), symbol_table)
             },
-            None => Ok(())
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
         }
     }
 }
