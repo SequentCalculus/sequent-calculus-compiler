@@ -259,10 +259,10 @@ impl Inference for Case {
                 };
 
                 if clause.context_names.bindings.len() != instantiated_arg_types.bindings.len() {
-                    return Err(Error::WrongNumberOfArguments {
-                        span: self.span,
+                    return Err(Error::WrongNumberOfBinders {
+                        span: Some(self.span),
                         expected: instantiated_arg_types.bindings.len(),
-                        got: clause.context_names.bindings.len()
+                        provided: clause.context_names.bindings.len()
                     });
                 }
 
