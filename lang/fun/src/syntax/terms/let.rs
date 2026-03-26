@@ -138,6 +138,14 @@ impl Inference for Let {
         self.bound_term.insert_inferred_type(mappings, symbol_table)?;
         self.in_term.insert_inferred_type(mappings, symbol_table)?;
 
+        match &mut self.var_ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)?;
+            },
+            None => ()
+        };
+
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
@@ -273,7 +281,7 @@ mod test {
             (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             (Ty::mk_i64(), Ty::mk_i64()),
             (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_i64())
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
         ];
 
         assert_eq!(result, expected);

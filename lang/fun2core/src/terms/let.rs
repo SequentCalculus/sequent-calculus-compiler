@@ -22,7 +22,7 @@ impl Compile for fun::syntax::terms::Let {
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty(&self.var_ty);
+        let ty = compile_ty(&self.var_ty.expect("Bound Term Type is not set in a Let"));
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
