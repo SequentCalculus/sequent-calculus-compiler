@@ -174,8 +174,12 @@ fn get_pos_parse(err: &ParseError) -> Option<(usize, usize)> {
 
 fn get_pos_type(err: &TypeError) -> (usize, usize) {
     match err {
-        TypeError::DefinedMultipleTimes { span, .. } => span_to_pos(span),
-        TypeError::Undefined { span, .. } => span_to_pos(span),
+        TypeError::DefinedMultipleTimes { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
+        TypeError::Undefined { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
         TypeError::Mismatch { span, .. } => span_to_pos(span),
         TypeError::UnboundVariable { span, .. } => span_to_pos(span),
         TypeError::WrongNumberOfArguments { span, .. } => span_to_pos(span),
@@ -185,17 +189,29 @@ fn get_pos_type(err: &TypeError) -> (usize, usize) {
         TypeError::MissingDtorInNew { span, .. } => span_to_pos(span),
         TypeError::ExpectedI64ForNew { span, .. } => span_to_pos(span),
         TypeError::ExpectedDataForNew { span, .. } => span_to_pos(span),
-        TypeError::WrongNumberOfBinders { span, .. } => span_to_pos(span),
+        TypeError::WrongNumberOfBinders { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
         TypeError::TypingContextMismatch { span, .. } => span_to_pos(span),
         TypeError::MissingCtorInCase { span, .. } => span_to_pos(span),
         TypeError::UnexpectedCtorsInCase { span, .. } => span_to_pos(span),
         TypeError::UnexpectedDtorsInNew { span, .. } => span_to_pos(span),
-        TypeError::VarBoundMultipleTimes { span, .. } => span_to_pos(span),
-        TypeError::CovarBoundMultipleTimes { span, .. } => span_to_pos(span),
-        TypeError::TypeParameterBoundMultipleTimes { span, .. } => span_to_pos(span),
-        TypeError::ExpectedI64ForConstructor { span, .. } => span_to_pos(span),
-        TypeError::WrongNumberOfTypeArguments { span, .. } => span_to_pos(span),
-        TypeError::UndefinedWrongTypeArguments { span, .. } => span_to_pos(span),
+        TypeError::VarBoundMultipleTimes { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
+        TypeError::CovarBoundMultipleTimes { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
+        TypeError::TypeParameterBoundMultipleTimes { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
+        TypeError::ExpectedI64ForConstructor { span, .. } => span_to_pos(&span),
+        TypeError::WrongNumberOfTypeArguments { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
+        TypeError::UndefinedWrongTypeArguments { span, .. } => {
+            span_to_pos(&span.unwrap_or(miette::SourceSpan::new(0.into(), 0.into())))
+        }
         TypeError::UnboundCovariable { span, .. } => span_to_pos(span),
     }
 }

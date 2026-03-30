@@ -39,10 +39,10 @@ impl Document {
             .nth(pos.line as usize)
             .ok_or(Error::InvalidPosition(pos))?;
 
-        if pos.character as usize >= line.len(){
+        if pos.character as usize >= line.len() {
             return Err(Error::InvalidPosition(pos));
         }
-        
+
         let mut end_pos = pos.character as usize;
         while end_pos < line.len() {
             let character = line.chars().nth(end_pos).unwrap();
@@ -55,7 +55,7 @@ impl Document {
         let mut start_pos = pos.character as usize;
         while start_pos > 0 {
             let character = line.chars().nth(start_pos - 1).unwrap();
-            if !character.is_alphanumeric() && character != '_'{
+            if !character.is_alphanumeric() && character != '_' {
                 break;
             }
             start_pos -= 1;
@@ -65,10 +65,9 @@ impl Document {
         Ok(ident.to_owned())
     }
 
-
-//eigener Code
-// index to position
-pub fn ind_to_pos(&self, index: usize) -> Position {
+    //eigener Code
+    // index to position
+    pub fn ind_to_pos(&self, index: usize) -> Position {
         let mut line = 0;
         let mut character = 0;
 
@@ -85,25 +84,25 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         }
         Position { line, character }
     }
-/*
-//alter code
-    pub fn ind_to_pos(&self, index: usize) -> Position {
-        let mut line = 0;
-        let mut character = 0;
-        for (ind, ch) in self.source.chars().enumerate() {
-            if ind == index {
-                break;
+    /*
+    //alter code
+        pub fn ind_to_pos(&self, index: usize) -> Position {
+            let mut line = 0;
+            let mut character = 0;
+            for (ind, ch) in self.source.chars().enumerate() {
+                if ind == index {
+                    break;
+                }
+                if ch == '\n' {
+                    line += 1;
+                    character = 0;
+                } else {
+                    character += 1;
+                }
             }
-            if ch == '\n' {
-                line += 1;
-                character = 0;
-            } else {
-                character += 1;
-            }
-        }
 
-        Position { line, character }
-    } */
+            Position { line, character }
+        } */
 
     fn find_def(&self, ident: &str) -> Option<(Position, Position)> {
         let span = self
@@ -111,10 +110,10 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
             .defs
             .iter()
             .find_map(|df| (df.name == ident).then_some(df.span))?;
-        let mut start = self.ind_to_pos(span.start().to_usize());
+        let mut start = self.ind_to_pos(span.offset());
         //"def "
         start.character += 4;
-        let end = self.ind_to_pos(span.end().to_usize());
+        let end = self.ind_to_pos(span.offset() + span.len());
         Some((start, end))
     }
 
@@ -122,11 +121,11 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         let span = self.module.data_types.iter().find_map(|data| {
             (data.name == ident || data.ctors.iter().any(|ctor| ctor.name == ident))
                 .then_some(data.span)
-        })?;
-        let mut start = self.ind_to_pos(span.start().to_usize());
+        })??;
+        let mut start = self.ind_to_pos(span.offset());
         // "data "
         start.character += 5;
-        let end = self.ind_to_pos(span.end().to_usize());
+        let end = self.ind_to_pos(span.offset() + span.len());
         Some((start, end))
     }
 
@@ -134,44 +133,48 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         let span = self.module.codata_types.iter().find_map(|cod| {
             (cod.name == ident || cod.dtors.iter().any(|dtor| dtor.name == ident))
                 .then_some(cod.span)
-        })?;
-        let mut start = self.ind_to_pos(span.start().to_usize());
+        })??;
+        let mut start = self.ind_to_pos(span.offset());
         // "codata "
         start.character += 7;
-        let end = self.ind_to_pos(span.end().to_usize());
+        let end = self.ind_to_pos(span.offset() + span.len());
         Some((start, end))
     }
 
     //bearbeitet auch selbstprüfend jetzt
     pub fn find_ident(&self, ident: String, uri: Uri) -> Result<Location, Error> {
-        if let Some ((start, end)) = self
+        if let Some((start, end)) = self
             .find_def(&ident)
             .or_else(|| self.find_data(&ident))
-            .or_else(|| self.find_codata(&ident)){
-                Ok(Location::new(uri, Range { start, end }))
-            }else if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
-                let start = self.ind_to_pos(def.span.start().to_usize());
-                let end = self.ind_to_pos(def.span.end().to_usize());
-                Ok(Location::new(uri, Range { start, end }))
-            }else{
-                Err(Error::UndefinedIdentifier(ident))
-            }
+            .or_else(|| self.find_codata(&ident))
+        {
+            Ok(Location::new(uri, Range { start, end }))
+        } else if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
+            let start = self.ind_to_pos(def.span.offset());
+            let end = self.ind_to_pos(def.span.offset() + def.span.len());
+            Ok(Location::new(uri, Range { start, end }))
+        } else {
+            Err(Error::UndefinedIdentifier(ident))
+        }
     }
 
     //eigener Code
     pub fn find_implementation(&self, ident: String, uri: Uri) -> Result<Location, Error> {
         //Suchen von Funktionsimplementierungen die mit ident übereinstimmen
         if let Some(def) = self.module.defs.iter().find(|def| def.name == ident) {
-            let start = self.ind_to_pos(def.span.start().to_usize());
-            let end = self.ind_to_pos(def.span.end().to_usize());
+            let start = self.ind_to_pos(def.span.offset());
+            let end = self.ind_to_pos(def.span.offset() + def.span.len());
             return Ok(Location::new(uri, Range { start, end }));
         }
 
         //Suchen von Konstruktor die mit ident übereinstimmen
         for data in &self.module.data_types {
             if let Some(ctor) = data.ctors.iter().find(|ctor| ctor.name == ident) {
-                let start = self.ind_to_pos(ctor.span.start().to_usize());
-                let end = self.ind_to_pos(ctor.span.end().to_usize());
+                let span = ctor
+                    .span
+                    .unwrap_or(miette::SourceSpan::new(0.into(), 0.into()));
+                let start = self.ind_to_pos(span.offset());
+                let end = self.ind_to_pos(span.offset() + span.len());
                 return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
@@ -179,8 +182,11 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         //Suchen von Destruktoren die mit ident übereinstimmen
         for cod in &self.module.codata_types {
             if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
-                let start = self.ind_to_pos(dtor.span.start().to_usize());
-                let end = self.ind_to_pos(dtor.span.end().to_usize());
+                let span = dtor
+                    .span
+                    .unwrap_or(miette::SourceSpan::new(0.into(), 0.into()));
+                let start = self.ind_to_pos(span.offset());
+                let end = self.ind_to_pos(span.offset() + span.len());
                 return Ok(Location::new(uri.clone(), Range { start, end }));
             }
         }
@@ -216,11 +222,14 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         let text = self.get_text();
         let lines: Vec<&str> = text.lines().collect();
         if lines.is_empty() {
-            return lsp_types::Position {line: 0, character: 0};
+            return lsp_types::Position {
+                line: 0,
+                character: 0,
+            };
         }
         let last_line_ind = lines.len() - 1;
         let last_line_char_amount = lines[last_line_ind].chars().count();
-        lsp_types::Position{
+        lsp_types::Position {
             line: last_line_ind as u32,
             character: last_line_char_amount as u32,
         }
@@ -278,7 +287,7 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
 
     //eigener Code
     //position to index
-     pub fn pos_to_ind(&self, pos: Position) -> usize {
+    pub fn pos_to_ind(&self, pos: Position) -> usize {
         let mut line = 0;
         let mut character = 0;
 
@@ -295,36 +304,41 @@ pub fn ind_to_pos(&self, index: usize) -> Position {
         }
         self.source.len()
     }
-   /*
-   //alter code
-    pub fn pos_to_ind(&self, pos: Position) -> usize {
-        let mut ind = 0;
-        for (i, line) in self.source.lines().enumerate(){
-            if i == pos.line as usize{
-                break;
+    /*
+       //alter code
+        pub fn pos_to_ind(&self, pos: Position) -> usize {
+            let mut ind = 0;
+            for (i, line) in self.source.lines().enumerate(){
+                if i == pos.line as usize{
+                    break;
+                }
+                ind += line.len() + 1
             }
-            ind += line.len() + 1
+            ind += pos.character as usize;
+            ind
         }
-        ind += pos.character as usize;
-        ind
-    }
-*/
-
+    */
 
     //eigener Code
     //determine hover information
-    pub fn get_hover_information(&self, ident: &str, pos: lsp_types::Position) -> Result<String, Error> {
+    pub fn get_hover_information(
+        &self,
+        ident: &str,
+        pos: lsp_types::Position,
+    ) -> Result<String, Error> {
         //find definition
         let cursor_ind = self.pos_to_ind(pos);
-        if let Some(own_def) = self.module.defs.iter().find(|item| { 
-            let start = item.span.start().to_usize();
-            let end = item.span.end().to_usize();
+        if let Some(own_def) = self.module.defs.iter().find(|item| {
+            let start = item.span.offset();
+            let end = item.span.offset() + item.span.len();
             cursor_ind >= start && cursor_ind <= end
-        }){
-            if let Some(binding) = own_def.context.bindings.iter().find(|b| b.var == ident){
-               let ty = binding.ty.print_to_string(None);
-               return Ok(format!("```fun\nlocal {}: {}\n```\n\nVariable in **{}**.",
-            ident, ty, own_def.name)); 
+        }) {
+            if let Some(binding) = own_def.context.bindings.iter().find(|b| b.var == ident) {
+                let ty = binding.ty.print_to_string(None);
+                return Ok(format!(
+                    "```fun\nlocal {}: {}\n```\n\nVariable in **{}**.",
+                    ident, ty, own_def.name
+                ));
             }
         }
         if let Some(def) = self.module.defs.iter().find(|item| item.name == ident) {
