@@ -175,6 +175,16 @@ impl SymbolTable {
         Ok(())
     }
 
+    pub fn find_xdata_type_name(&self, xtor_name: &Name) -> Option<Name> {
+        for (type_name, (_, _, names)) in &self.type_templates {
+            if names.contains(xtor_name) {
+                return Some(type_name.clone());
+            }
+        }
+
+        None
+    }
+
     /// This function combines two symbol tables into one.
     pub fn combine(&mut self, other: SymbolTable) {
         self.defs.extend(other.defs);

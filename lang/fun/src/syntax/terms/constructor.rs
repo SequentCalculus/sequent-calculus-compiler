@@ -6,8 +6,12 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
+use crate::typing::inference::args_constraint_equations;
+use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
@@ -94,6 +98,94 @@ impl Check for Constructor {
     }
 }
 
+impl Inference for Constructor {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+
+        let mut constraints = Vec::new();
+
+        // creating a new type var to link the type of the current term to the future result after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var.clone()));
+
+        let data_type_name = match symbol_table.find_xdata_type_name(&self.id) {
+            Some(type_name) => type_name,
+            None => {
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+            }
+        };
+
+        let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&data_type_name).unwrap();
+
+        if chirality == &Polarity::Codata {
+            return Err(Error::ExpectedDataForNew { span: self.span, data: data_type_name });
+        }
+
+        
+        // this instance of the Data Type is instanciated, whith replacing the general type vars
+        // with instance type variables eg. (A -> a1)
+
+        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+        for type_var in &general_type_vars.bindings {
+            type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+        }
+
+        let expected_type = Ty::Decl { span: Some(self.span), name: data_type_name, type_args: TypeArgs {
+            span: Some(self.span),
+            args: general_type_vars.bindings.iter().map(|name| type_var_mapping.get(name).unwrap().clone()).collect()
+        }};
+
+        let instanciated_template = match symbol_table.ctor_templates.get(&self.id) {
+            Some(ctor_template) => ctor_template.clone().subst_ty(&type_var_mapping),
+            None => {
+                return Err(Error::Undefined {
+                span: Some(self.span),
+                name: self.id.clone(),
+            })}
+
+        };
+
+        if instanciated_template.bindings.len() != self.args.entries.len() {
+            return Err(Error::WrongNumberOfArguments {
+                span: self.span,
+                expected: instanciated_template.bindings.len(),
+                got: self.args.entries.len()});
+        }
+
+
+        constraints.append(&mut args_constraint_equations(&mut self.args, &instanciated_template, symbol_table, context, var_name_generator, self.span)?);
+
+        constraints.push((ty_var, expected_type));
+
+        Ok(constraints)
+
+    }
+
+    
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span.clone()), symbol_table)
+            },
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
+        }
+    }
+}
+
+
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.args.entries.used_binders(used);
@@ -108,6 +200,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     #[test]
@@ -217,6 +311,68 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err());
+    }
+
+
+    #[test]
+    fn inference_nil() {
+        let mut term = Constructor {
+            span: dummy_span(),
+            id: "Nil".to_owned(),
+            args: vec![].into(),
+            ty: None,
+        };
+        
+        let result = term.constraint_equations(&mut symbol_table_list(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+        ];
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+    #[test]
+    fn inference_cons() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_i64());
+        let mut term = Constructor {
+            span: dummy_span(),
+            id: "Cons".to_owned(),
+            args: vec![
+                XVar::mk("x").into(),
+                Constructor {
+                    span: dummy_span(),
+                    id: "Nil".to_owned(),
+                    args: vec![].into(),
+                    ty: None,
+                }
+                .into(),
+            ]
+            .into(),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table_list(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            // cons
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+
+            // nil
+            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
+            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("4")]))),
+
+
+            (Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
 
     fn example_nil() -> Constructor {

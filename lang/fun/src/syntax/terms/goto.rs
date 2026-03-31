@@ -8,8 +8,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the control operator for invoking a captured continuation/program context
@@ -83,6 +85,37 @@ impl Check for Goto {
     }
 }
 
+impl Inference for Goto {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+            let continuation_type = context.lookup_covar(&self.target, &self.span)?;
+            self.ty = Some(ty_var);
+
+            self.term.constraint_equations(symbol_table, context, var_name_generator, continuation_type)
+        }
+    
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.term.insert_inferred_type(mappings, symbol_table)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            },
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
+        }
+    }
+}
+
 impl UsedBinders for Goto {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.term.used_binders(used);
@@ -96,6 +129,8 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -135,6 +170,25 @@ mod test {
             &Ty::mk_i64(),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_goto() {
+        let mut ctx = TypingContext::default();
+        ctx.add_covar("a", Ty::mk_i64());
+        let mut term = Goto {
+            span: dummy_span(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_i64(), Ty::mk_i64())
+        ];
+        assert_eq!(result, expected)
     }
 
     fn example() -> Goto {

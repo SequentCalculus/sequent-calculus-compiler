@@ -39,7 +39,7 @@ use printer::Print;
 use crate::{
     syntax::names::Var,
     traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
+    typing::{check::Check, errors::Error, inference::Inference, symbol_table::SymbolTable},
 };
 
 use super::{
@@ -162,6 +162,58 @@ impl Check for Term {
             Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
             Term::Exit(exit) => exit.check(symbol_table, context, expected).map(Into::into),
             Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
+        }
+    }
+}
+
+impl Inference for Term {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut crate::typing::inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        match self {
+            Term::XVar(xvar) => xvar.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Lit(lit) => lit.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Op(op) => op.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::IfC(if_c) => if_c.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::PrintI64(print_i64) => print_i64.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Let(let_block) => let_block.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Call(call) => call.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Constructor(constructor) => constructor.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Destructor(destructor) => destructor.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Case(case) => case.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::New(new_block) => new_block.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Label(label) => label.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Goto(goto) => goto.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Exit(exit) => exit.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::Paren(paren) => paren.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+        }
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &std::collections::HashMap<super::Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        match self {
+            Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table),
+            Term::Lit(lit) => lit.insert_inferred_type(mappings, symbol_table),
+            Term::Op(op) => op.insert_inferred_type(mappings, symbol_table),
+            Term::IfC(if_c) => if_c.insert_inferred_type(mappings, symbol_table),
+            Term::PrintI64(print_i64) => print_i64.insert_inferred_type(mappings, symbol_table),
+            Term::Let(let_block) => let_block.insert_inferred_type(mappings, symbol_table),
+            Term::Call(call) => call.insert_inferred_type(mappings, symbol_table),
+            Term::Constructor(constructor) => constructor.insert_inferred_type(mappings, symbol_table),
+            Term::Destructor(destructor) => destructor.insert_inferred_type(mappings, symbol_table),
+            Term::Case(case) => case.insert_inferred_type(mappings, symbol_table),
+            Term::New(new_block) => new_block.insert_inferred_type(mappings, symbol_table),
+            Term::Label(label) => label.insert_inferred_type(mappings, symbol_table),
+            Term::Goto(goto) => goto.insert_inferred_type(mappings, symbol_table),
+            Term::Exit(exit) => exit.insert_inferred_type(mappings, symbol_table),
+            Term::Paren(paren) => paren.insert_inferred_type(mappings, symbol_table),
         }
     }
 }

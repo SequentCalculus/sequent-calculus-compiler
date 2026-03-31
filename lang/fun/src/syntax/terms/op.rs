@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -92,6 +94,32 @@ impl Check for Op {
     }
 }
 
+impl Inference for Op {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = vec![(ty_var, Ty::mk_i64())];
+
+        constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+        constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
+
+        Ok(constraints)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.fst.insert_inferred_type(mappings, symbol_table)?;
+        self.snd.insert_inferred_type(mappings, symbol_table)
+    }
+}
+
 impl UsedBinders for Op {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.fst.used_binders(used);
@@ -106,6 +134,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -147,6 +176,22 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_op() {
+        let mut term = Op {
+            span: dummy_span(),
+            fst: Rc::new(Lit::mk(2).into()),
+            op: BinOp::Sum,
+            snd: Rc::new(Lit::mk(3).into()),
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![(Ty::mk_ty_var("x"), Ty::mk_i64()), (Ty::mk_i64(), Ty::mk_i64()),(Ty::mk_i64(), Ty::mk_i64())];
+
+        assert_eq!(result, expected);
     }
 
     fn example_prod() -> Op {

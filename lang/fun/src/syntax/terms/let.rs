@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines let-bindings of a term. It consists of the variable the term is bound to,
@@ -29,7 +31,8 @@ pub struct Let {
     /// The bound variable
     pub variable: Var,
     /// The (annotated) type of the bound term
-    pub var_ty: Ty,
+    // TODO: could become optional with the type inference
+    pub var_ty: Option<Ty>,
     /// The bound term
     pub bound_term: Rc<Term>,
     /// The term in which the variable for the bound term is in scope
@@ -80,16 +83,78 @@ impl Check for Let {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.var_ty.check(&Some(self.span), symbol_table)?;
-        self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        if let Some(actual_var_ty) = &self.var_ty {
+            actual_var_ty.check(&Some(self.span), symbol_table)?;
+            self.bound_term = self.bound_term.check(symbol_table, context, actual_var_ty)?;
 
-        let mut new_context = context.clone();
-        new_context.add_var(&self.variable, self.var_ty.clone());
-        self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
+            let mut new_context = context.clone();
+            new_context.add_var(&self.variable, actual_var_ty.clone());
+            self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+            self.ty = Some(expected.clone());
+            Ok(self)
+        } else {
+            Err(Error::MissingTypeAnnotation { span: self.span })
+        }
+        
     }
+}
+
+impl Inference for Let {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+            let mut constraints: Vec<(Ty, Ty)> = vec![];
+
+            // adding a new type var as the type of the term for easier lookup after unification
+            let new_type_var = var_name_generator.get_new_ty_var();
+            self.ty = Some(new_type_var.clone());
+            constraints.push((new_type_var, ty_var.clone()));
+
+            // if the bound term has an annotation it is used, else a type variable is substituted
+            let bound_term_type = match &self.var_ty {
+                Some(ty) => ty.clone(),
+                None => var_name_generator.get_new_ty_var()
+            };
+
+            constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, bound_term_type.clone())?);
+
+            let mut new_context = context.clone();
+            new_context.add_var(&self.variable, bound_term_type);
+            constraints.append(&mut self.in_term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
+
+            Ok(constraints)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.bound_term.insert_inferred_type(mappings, symbol_table)?;
+        self.in_term.insert_inferred_type(mappings, symbol_table)?;
+
+        match &mut self.var_ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)?;
+            },
+            None => panic!("The Type of the bound term of the Let Term {:?} is not set after type inference", self)
+        };
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            },
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
+        }
+    }
+    
 }
 
 impl UsedBinders for Let {
@@ -108,6 +173,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -117,7 +184,7 @@ mod test {
         let result = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
@@ -131,7 +198,7 @@ mod test {
         let expected = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 XVar {
@@ -152,7 +219,7 @@ mod test {
         let result = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(
                 Constructor {
@@ -173,11 +240,59 @@ mod test {
         assert!(result.is_err())
     }
 
+    #[test]
+    fn inference_let() {
+        let mut term = Let {
+            span: dummy_span(),
+            variable: "x".to_owned(),
+            var_ty: None,
+            bound_term: Rc::new(Lit::mk(2).into()),
+            in_term: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+    #[test]
+    fn inference_let_type_annotation() {
+        let mut term = Let {
+            span: dummy_span(),
+            variable: "x".to_owned(),
+            var_ty: Some(Ty::mk_i64()),
+            bound_term: Rc::new(Lit::mk(2).into()),
+            in_term: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_i64(), Ty::mk_i64()),
+            (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
     fn example() -> Let {
         Let {
             span: dummy_span(),
             variable: "x".to_string(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,

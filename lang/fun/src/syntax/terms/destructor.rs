@@ -7,8 +7,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::args_insert_inferred_type;
+use crate::typing::inference::{Inference, args_constraint_equations};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
@@ -116,6 +119,114 @@ impl Check for Destructor {
     }
 }
 
+impl Inference for Destructor {
+    fn constraint_equations(
+        &mut self,
+        symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        var_name_generator: &mut inference::VarNameGenerator,
+        ty_var: Ty
+    ) -> Result<Vec<(Ty,Ty)>, Error> {
+        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+
+        // creating a new type var to link the type of the current term to the future result after unification
+        let new_type_var = var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraints.push((new_type_var, ty_var.clone()));
+
+        let codata_type_name = match symbol_table.find_xdata_type_name(&self.id) {
+            Some(type_name) => type_name,
+            None => {
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+            },
+        };
+
+        let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&codata_type_name).unwrap();
+
+        if chirality == &Polarity::Data {
+                return Err(Error::ExpectedCovariableGotTerm { span: self.span });
+        }
+
+        // instanciating new type variables
+
+        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+
+        if general_type_vars.bindings.len() == self.type_args.args.len() {
+            // if the right amount of type arguments is given they are used
+
+            for (type_var_name, given_ty )in general_type_vars.bindings.iter().zip(self.type_args.args.iter()) {
+                type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
+            }
+        } else if self.type_args.args.is_empty() {
+            // if no type Arguments are given, they are all replaced by variables,
+
+            for type_var in &general_type_vars.bindings {
+                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+            }
+        } else {
+            // if the wrong amount of type arguments are given, an error is returned
+
+            return Err(Error::WrongNumberOfTypeArguments {
+                span: Some(self.span),
+                expected: general_type_vars.bindings.len(),
+                got: self.type_args.args.len()
+            });
+        }
+        
+
+        // collecting the expected signature of the dtor
+        let (mut arg_types, mut out_type) = match symbol_table.dtor_templates.get(&self.id) {
+            Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
+            None => {
+                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+            }
+        };
+
+        // replacing the general type vars for instaciated ones
+
+        let new_arg_types = arg_types.bindings.iter().map(|arg_ty| arg_ty.clone().subst_ty(&type_var_mapping)).collect();
+        arg_types.bindings = new_arg_types;
+
+        out_type = out_type.subst_ty(&type_var_mapping);
+
+        // putting together the instantiated and expected type for the scrutinee and creating the constraints for it
+        let scrutinee_type_args: Vec<Ty> = general_type_vars.bindings.iter().map(|binding| type_var_mapping.get(binding).unwrap()).cloned().collect();
+        let scrutinee_type = Ty::mk_decl(&codata_type_name, TypeArgs { span: None, args: scrutinee_type_args });
+
+        constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator, scrutinee_type)?);
+
+        constraints.append(&mut args_constraint_equations(&mut self.args, &arg_types, symbol_table, context, var_name_generator, self.span)?);
+
+        constraints.push((ty_var, out_type));
+
+        Ok(constraints)
+    }
+
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        self.scrutinee.insert_inferred_type(mappings, symbol_table)?;
+        
+        for ty in &mut self.type_args.args {
+            ty.mut_subst_ty(mappings);
+            ty.check(&Some(self.span), symbol_table)?;
+        }
+
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            },
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
+        }
+    }
+}
+
 impl UsedBinders for Destructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.scrutinee.used_binders(used);
@@ -131,9 +242,12 @@ mod destructor_tests {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Inference;
+    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
+    use std::vec;
 
     #[test]
     fn check_fst() {
@@ -241,6 +355,139 @@ mod destructor_tests {
         .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
+
+
+    #[test]
+    fn inference_lpait_fst() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        let mut symbol_table = symbol_table_lpair();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "fst".to_owned(),
+            type_args: TypeArgs::mk(vec![]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
+            Ty::mk_ty_var("1"),
+            Ty::mk_ty_var("2")
+        ]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            (Ty::mk_ty_var("3"), scrutinee_type.clone()),
+            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+    #[test]
+    fn inference_lpait_fst_with_type_annotation() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        let mut symbol_table = symbol_table_lpair();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "fst".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
+            Ty::mk_i64(),
+            Ty::mk_i64()
+        ]));
+
+        let expected = vec![
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            (Ty::mk_ty_var("1"), scrutinee_type.clone()),
+            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+
+            (Ty::mk_ty_var("x"), Ty::mk_i64())
+        ];
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+    }
+
+
+    #[test]
+    fn inference_ap() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var(
+            "x",
+            Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
+        );
+        ctx.add_covar("a", Ty::mk_i64());
+        let mut symbol_table = symbol_table_fun_template();
+        let mut term = Destructor {
+            span: dummy_span(),
+            id: "apply".to_owned(),
+            type_args: TypeArgs::mk(vec![]),
+            args: vec![Lit::mk(1).into(), XVar::mk("a").into()].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        };
+
+        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![
+            // new type var
+            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+
+            // scrutinee
+            (Ty::mk_ty_var("3"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]))),
+            (Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+
+            // argument 1
+            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+
+            // argument 2,
+            (Ty::mk_ty_var("2"), Ty::mk_i64()),
+
+            //final type constraint
+            (Ty::mk_ty_var("x"), Ty::mk_ty_var("2"))
+        ];
+        
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn inference_dtor_fail() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
+        let result = Destructor {
+            span: dummy_span(),
+            id: "head".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![].into(),
+            scrutinee: Rc::new(XVar::mk("x").into()),
+            ty: None,
+        }
+        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+    
+        assert!(result.is_err())
+    }
+
 
     /// "x.head"
     fn example_1() -> Destructor {

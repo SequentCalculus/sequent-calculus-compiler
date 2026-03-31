@@ -252,4 +252,32 @@ pub enum Error {
         /// The provided type arguments
         type_args: String,
     },
+    /// Conflicting Type for Type Inference
+    #[error("Cannot infere the type for constraint created by {expected_type_l} and {expected_type_r}")]
+    #[diagnostic(code("T-024"))]
+    ConflictingTypeConstraints {
+        // source location of type l
+        #[label]
+        span_l: SourceSpan,
+        /// left type
+        expected_type_l: Name,
+        /// right type
+        expected_type_r: Name
+    },
+    /// Too few Type constraints to infere the type
+    #[error("Cannot infere the type: too few constraints")]
+    #[diagnostic(code("T-025"))]
+    MissingTypeConstraints {
+        // source location of type l
+        #[label]
+        span: SourceSpan,
+    },
+    /// The Type Checker expects Type annotations everywhere
+    #[error("Missing type annotation. The Type Checker needs all type annotations")]
+    #[diagnostic(code("T-026"))]
+    MissingTypeAnnotation {
+        // source location of the missing annotation
+        #[label]
+        span: SourceSpan,
+    }
 }

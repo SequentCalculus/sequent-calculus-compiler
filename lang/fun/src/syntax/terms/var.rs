@@ -1,10 +1,13 @@
 //! This module defines variables and covariables in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::inference::{Inference, VarNameGenerator};
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -84,10 +87,48 @@ impl Check for XVar {
     }
 }
 
+impl Inference for XVar {
+    fn constraint_equations(
+        &mut self,
+        _symbol_table: &mut SymbolTable,
+        context: &TypingContext,
+        var_name_generator: &mut VarNameGenerator,
+        ty_var: Ty
+    ) ->  Result<Vec<(Ty,Ty)>, Error> {
+        // Free covariables must only occur in special positions (`goto` and `arguments`)
+        // and are thus rejected in all other positions by the `check` function for `XVar`.
+        if self.chi == Some(Cns) {
+            return Err(Error::ExpectedTermGotCovariable { span: self.span });
+        }
+
+        let found_ty = context.lookup_var(&self.var, &self.span)?;
+        let new_type_var = var_name_generator.get_new_ty_var();
+
+        self.ty = Some(new_type_var.clone());
+        self.chi = Some(Prd);
+        Ok(vec![(new_type_var, ty_var.clone()), (ty_var, found_ty)])
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            },
+            None => panic!("The Type of the term {:?} is not set after type inference", self)
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     #[test]
@@ -115,5 +156,23 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+
+    #[test]
+    fn inference_var() {
+        let mut ctx = TypingContext::default();
+        ctx.add_var("x", Ty::mk_i64());
+
+        let mut name_generator = VarNameGenerator::new();
+
+        let mut term = XVar::mk("x");
+
+        let result = term
+        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut name_generator, Ty::mk_i64()).unwrap();
+
+        assert!(matches!(term.ty, Some(Ty::Decl { name, .. }) if name == "0"));
+
+        assert_eq!(result, vec![(Ty::mk_decl("0", TypeArgs::mk(vec![])), Ty::mk_i64()), (Ty::mk_i64(), Ty::mk_i64())])        
     }
 }

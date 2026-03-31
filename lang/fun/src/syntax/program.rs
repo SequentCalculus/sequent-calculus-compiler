@@ -4,6 +4,7 @@ use printer::*;
 use std::collections::HashSet;
 
 use crate::syntax::*;
+use crate::typing::inference::{VarNameGenerator, constraint_unification};
 use crate::typing::*;
 
 /// This struct defines a module consisting of a list of [`Declaration`]s.
@@ -128,6 +129,40 @@ impl Program {
         })
     }
 
+    pub fn inference_types(self) -> Result<CheckedProgram, Error>{
+        let mut symbol_table = build_symbol_table(&self)?;
+        let var_name_generator = &mut VarNameGenerator::new();
+        let mut constraints = Vec::new();
+
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        let mut defs = Vec::new();
+        
+        for decl in self.declarations {
+            match decl {
+                Declaration::Data(data) => {
+                    data.check(&symbol_table)?;
+                    data_types.push(data);
+                }
+                Declaration::Codata(codata) => {
+                    codata.check(&symbol_table)?;
+                    codata_types.push(codata);
+                }
+                Declaration::Def(mut def) => {
+                    constraints.append(&mut def.constraint_equations(&mut symbol_table, var_name_generator)?);
+                    defs.push(def);                    
+                }
+            }
+        }
+
+        let type_mapping = constraint_unification(constraints)?;
+        for def in &mut defs {
+            def.insert_inferred_type(&type_mapping, &mut symbol_table)?;
+        }
+
+        Ok(CheckedProgram { data_types, codata_types, defs })
+    }
+
     /// This function returns the names of all data type templates in a module.
     pub fn data_types(&self) -> HashSet<Name> {
         let mut names = HashSet::new();
@@ -170,6 +205,31 @@ impl Print for Program {
         };
 
         let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
+
+        alloc.intersperse(declarations, sep)
+    }
+}
+
+impl Print for CheckedProgram {
+    fn print<'a>(
+        &'a self,
+        cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        // We usually separate declarations with an empty line, except when the `omit_decl_sep`
+        // option is set. This is useful for typesetting examples in papers which have to make
+        // economic use of vertical space.
+        let sep = if cfg.omit_decl_sep {
+            alloc.line()
+        } else {
+            alloc.line().append(alloc.line())
+        };
+
+        let datas = self.data_types.iter().map(|decl| decl.print(cfg, alloc));
+        let codatas = self.codata_types.iter().map(|decl| decl.print(cfg, alloc));
+        let definitions = self.defs.iter().map(|decl| decl.print(cfg, alloc));
+
+        let declarations = datas.chain(codatas).chain(definitions);
 
         alloc.intersperse(declarations, sep)
     }

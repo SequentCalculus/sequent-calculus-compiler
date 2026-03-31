@@ -115,6 +115,18 @@ impl Driver {
         Ok(checked)
     }
 
+    pub fn inferred(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let parsed = self.parsed(path)?;
+        let checked = parsed.inference_types().map_err(DriverError::TypeError)?;
+        self.checked.insert(path.clone(), checked.clone());
+        Ok(checked)
+    }
+
     /// This function returns the [Core](core_lang) code of the given file.
     pub fn compiled(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         // Check for cache hit.

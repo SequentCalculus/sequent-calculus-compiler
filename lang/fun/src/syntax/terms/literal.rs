@@ -1,10 +1,13 @@
 //! This module defines integer literals in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -60,9 +63,30 @@ impl Check for Lit {
     }
 }
 
+impl Inference for Lit {
+    fn constraint_equations(
+            &mut self,
+            _symbol_table: &mut SymbolTable,
+            _context: &TypingContext,
+            _var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        Ok(vec![(ty_var, Ty::mk_i64())])
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        _mappings: &HashMap<Name, Ty>,
+        _symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
+    use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
 
     #[test]
@@ -86,5 +110,16 @@ mod test {
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn inference_lit() {
+        let mut term = Lit::mk(15);
+
+        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+
+        let expected = vec![(Ty::mk_ty_var("x"), Ty::mk_i64())];
+
+        assert_eq!(result, expected);
     }
 }

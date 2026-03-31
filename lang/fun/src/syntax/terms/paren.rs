@@ -6,8 +6,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a term in parentheses.
@@ -65,6 +67,27 @@ impl Check for Paren {
     ) -> Result<Self, Error> {
         self.inner = self.inner.check(symbol_table, context, expected)?;
         Ok(self)
+    }
+}
+
+impl Inference for Paren {
+    fn constraint_equations(
+            &mut self,
+            symbol_table: &mut SymbolTable,
+            context: &TypingContext,
+            var_name_generator: &mut inference::VarNameGenerator,
+            ty_var: Ty
+        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        self.inner.constraint_equations(symbol_table, context, var_name_generator, ty_var)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable
+    ) -> Result<(), Error> {
+
+        self.inner.insert_inferred_type(mappings, symbol_table)
     }
 }
 
