@@ -13,7 +13,7 @@ pub type ID = usize;
 /// `id` is currently not used, requiring the `name` to be unique. `id`s of variables are expected
 /// to be unique. Thus, only the `id` matters internally, and the `name` is just for
 /// pretty-printing.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct Identifier {
     /// base name for pretty-printing
     pub name: String,
