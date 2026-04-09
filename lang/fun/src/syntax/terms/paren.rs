@@ -58,18 +58,6 @@ impl From<Paren> for Term {
     }
 }
 
-impl Check for Paren {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.inner = self.inner.check(symbol_table, context, expected)?;
-        Ok(self)
-    }
-}
-
 impl Inference for Paren {
     fn constraint_equations(
             &mut self,
@@ -94,24 +82,5 @@ impl Inference for Paren {
 impl UsedBinders for Paren {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.inner.used_binders(used);
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::syntax::*;
-    use crate::typing::*;
-
-    #[test]
-    fn check_parens() {
-        let result = Paren::mk(Lit::mk(1))
-            .check(
-                &mut SymbolTable::default(),
-                &TypingContext::default(),
-                &Ty::mk_i64(),
-            )
-            .unwrap();
-        let expected = Paren::mk(Lit::mk(1));
-        assert_eq!(result, expected)
     }
 }

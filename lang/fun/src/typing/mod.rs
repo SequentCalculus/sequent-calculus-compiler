@@ -5,11 +5,9 @@
 //! monomorphization we rely on annotations of type arguments in pattern matches and destructor
 //! invocations.
 
-pub mod check;
 pub mod errors;
 pub mod symbol_table;
 pub mod inference;
 
-pub use check::{Check, check_args, check_equality};
 pub use errors::Error;
 pub use symbol_table::{SymbolTable, build_symbol_table};

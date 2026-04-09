@@ -53,31 +53,6 @@ impl From<Call> for Term {
     }
 }
 
-impl Check for Call {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        match symbol_table.defs.get(&self.name) {
-            Some(signature) => {
-                let (types, ret_ty) = signature.clone();
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
-
-                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
-
-                self.ret_ty = Some(expected.clone());
-                Ok(self)
-            }
-            None => Err(Error::Undefined {
-                span: None,
-                name: self.name.clone(),
-            }),
-        }
-    }
-}
-
 impl Inference for Call {
     fn constraint_equations(
             &mut self,
@@ -140,45 +115,9 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::test_common::*;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
-
-    #[test]
-    fn check_mult() {
-        let mut symbol_table = symbol_table_list();
-        let mut ctx = TypingContext::default();
-        ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        symbol_table
-            .defs
-            .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
-        let result = def_mult()
-            .body
-            .check(&mut symbol_table, &ctx, &Ty::mk_i64())
-            .unwrap();
-        let expected = def_mult_typed().body;
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_call_fail() {
-        let result = Call {
-            span: dummy_span(),
-            name: "main".to_owned(),
-            args: vec![].into(),
-            ret_ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext {
-                span: None,
-                bindings: vec![],
-            },
-            &Ty::mk_i64(),
-        );
-        assert!(result.is_err())
-    }
 
 
     #[test]

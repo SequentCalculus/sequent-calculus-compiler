@@ -71,22 +71,6 @@ impl From<PrintI64> for Term {
     }
 }
 
-impl Check for PrintI64 {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.arg = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
-
-        self.next = self.next.check(symbol_table, context, expected)?;
-
-        self.ty = Some(expected.clone());
-        Ok(self)
-    }
-}
-
 impl Inference for PrintI64 {
     fn constraint_equations(
             &mut self,

@@ -65,22 +65,6 @@ impl From<Label> for Term {
     }
 }
 
-impl Check for Label {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        let mut new_context = context.clone();
-        new_context.add_covar(&self.label, expected.clone());
-        self.term = self.term.check(symbol_table, &new_context, expected)?;
-
-        self.ty = Some(expected.clone());
-        Ok(self)
-    }
-}
-
 impl Inference for Label {
     fn constraint_equations(
             &mut self,
@@ -139,42 +123,6 @@ mod test {
     use crate::typing::*;
 
     use std::rc::Rc;
-
-    #[test]
-    fn check_label() {
-        let result = Label {
-            span: dummy_span(),
-            label: "a".to_owned(),
-            ty: None,
-            term: Rc::new(Lit::mk(1).into()),
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = Label {
-            span: dummy_span(),
-            label: "a".to_owned(),
-            ty: Some(Ty::mk_i64()),
-            term: Rc::new(Lit::mk(1).into()),
-        };
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_label_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let result = Label {
-            span: dummy_span(),
-            label: "a".to_owned(),
-            term: Rc::new(XVar::mk("x").into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
-        assert!(result.is_err())
-    }
 
     #[test]
     fn inference_label() {

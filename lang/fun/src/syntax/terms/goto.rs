@@ -70,21 +70,6 @@ impl From<Goto> for Term {
     }
 }
 
-impl Check for Goto {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target, &self.span)?;
-        self.term = self.term.check(symbol_table, context, &cont_type)?;
-
-        self.ty = Some(expected.clone());
-        Ok(self)
-    }
-}
-
 impl Inference for Goto {
     fn constraint_equations(
             &mut self,
@@ -134,44 +119,7 @@ mod test {
     use crate::typing::*;
 
     use std::rc::Rc;
-
-    #[test]
-    fn check_goto() {
-        let mut ctx = TypingContext::default();
-        ctx.add_covar("a", Ty::mk_i64());
-        let result = Goto {
-            span: dummy_span(),
-            target: "a".to_owned(),
-            term: Rc::new(Lit::mk(1).into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-        .unwrap();
-        let expected = Goto {
-            span: dummy_span(),
-            target: "a".to_owned(),
-            term: Rc::new(Lit::mk(1).into()),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_goto_fail() {
-        let result = Goto {
-            span: dummy_span(),
-            target: "a".to_owned(),
-            term: Rc::new(Lit::mk(1).into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        );
-        assert!(result.is_err())
-    }
-
+    
     #[test]
     fn inference_goto() {
         let mut ctx = TypingContext::default();

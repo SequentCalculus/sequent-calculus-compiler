@@ -79,20 +79,6 @@ impl From<Op> for Term {
         Term::Op(value)
     }
 }
-impl Check for Op {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
-
-        Ok(self)
-    }
-}
 
 impl Inference for Op {
     fn constraint_equations(
@@ -138,45 +124,6 @@ mod test {
     use crate::typing::*;
 
     use std::rc::Rc;
-
-    #[test]
-    fn check_op() {
-        let result = Op {
-            span: dummy_span(),
-            fst: Rc::new(Lit::mk(1).into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = Op {
-            span: dummy_span(),
-            fst: Rc::new(Lit::mk(1).into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_op_fail() {
-        let result = Op {
-            span: dummy_span(),
-            fst: Rc::new(Lit::mk(2).into()),
-            op: BinOp::Sub,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
-    }
 
     #[test]
     fn inference_op() {

@@ -76,30 +76,6 @@ impl From<Let> for Term {
     }
 }
 
-impl Check for Let {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        if let Some(actual_var_ty) = &self.var_ty {
-            actual_var_ty.check(&Some(self.span), symbol_table)?;
-            self.bound_term = self.bound_term.check(symbol_table, context, actual_var_ty)?;
-
-            let mut new_context = context.clone();
-            new_context.add_var(&self.variable, actual_var_ty.clone());
-            self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
-
-            self.ty = Some(expected.clone());
-            Ok(self)
-        } else {
-            Err(Error::MissingTypeAnnotation { span: self.span })
-        }
-        
-    }
-}
-
 impl Inference for Let {
     fn constraint_equations(
             &mut self,
@@ -172,73 +148,11 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::test_common::*;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
-
-    #[test]
-    fn check_let1() {
-        let result = Let {
-            span: dummy_span(),
-            variable: "x".to_owned(),
-            var_ty: Some(Ty::mk_i64()),
-            bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(XVar::mk("x").into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = Let {
-            span: dummy_span(),
-            variable: "x".to_owned(),
-            var_ty: Some(Ty::mk_i64()),
-            bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(
-                XVar {
-                    span: dummy_span(),
-                    ty: Some(Ty::mk_i64()),
-                    var: "x".to_owned(),
-                    chi: Some(Prd),
-                }
-                .into(),
-            ),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_let_fail() {
-        let mut symbol_table = symbol_table_list();
-        let result = Let {
-            span: dummy_span(),
-            variable: "x".to_owned(),
-            var_ty: Some(Ty::mk_i64()),
-            bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(
-                Constructor {
-                    span: dummy_span(),
-                    id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()].into(),
-                    ty: None,
-                }
-                .into(),
-            ),
-            ty: None,
-        }
-        .check(
-            &mut symbol_table,
-            &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
-    }
 
     #[test]
     fn inference_let() {

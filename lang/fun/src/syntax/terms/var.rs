@@ -60,33 +60,6 @@ impl From<XVar> for Term {
     }
 }
 
-impl Check for XVar {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        use Chirality::*;
-        // Free covariables must only occur in special positions (`goto` and `arguments`)
-        // and are thus rejected in all other positions by the `check` function for `XVar`.
-        if self.chi == Some(Cns) {
-            return Err(Error::ExpectedTermGotCovariable { span: self.span });
-        }
-
-        let found_ty = context.lookup_var(&self.var, &self.span)?;
-        if let Some(ty) = self.ty {
-            check_equality(&self.span, symbol_table, &ty, &found_ty)?;
-        }
-
-        check_equality(&self.span, symbol_table, expected, &found_ty)?;
-
-        self.ty = Some(expected.clone());
-        self.chi = Some(Prd);
-        Ok(self)
-    }
-}
-
 impl Inference for XVar {
     fn constraint_equations(
         &mut self,
@@ -126,38 +99,9 @@ impl Inference for XVar {
 
 #[cfg(test)]
 mod test {
-    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
-
-    #[test]
-    fn check_var() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x")
-            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-            .unwrap();
-        let expected = XVar {
-            span: dummy_span(),
-            var: "x".to_owned(),
-            ty: Some(Ty::mk_i64()),
-            chi: Some(Prd),
-        };
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_var_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x").check(
-            &mut SymbolTable::default(),
-            &ctx,
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
-    }
-
 
     #[test]
     fn inference_var() {

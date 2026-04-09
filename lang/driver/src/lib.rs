@@ -102,19 +102,6 @@ impl Driver {
         Ok(parsed)
     }
 
-    /// This function returns the typechecked source code of the given file.
-    pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
-        // Check for cache hit.
-        if let Some(res) = self.checked.get(path) {
-            return Ok(res.clone());
-        }
-
-        let parsed = self.parsed(path)?;
-        let checked = parsed.check().map_err(DriverError::TypeError)?;
-        self.checked.insert(path.clone(), checked.clone());
-        Ok(checked)
-    }
-
     pub fn inferred(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
         // Check for cache hit.
         if let Some(res) = self.checked.get(path) {
@@ -134,7 +121,7 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let checked = self.checked(path)?;
+        let checked = self.inferred(path)?;
         let compiled = compile_prog(checked);
         self.compiled.insert(path.clone(), compiled.clone());
         Ok(compiled)

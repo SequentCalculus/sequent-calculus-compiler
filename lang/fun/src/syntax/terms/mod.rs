@@ -39,7 +39,7 @@ use printer::Print;
 use crate::{
     syntax::names::Var,
     traits::used_binders::UsedBinders,
-    typing::{check::Check, errors::Error, inference::Inference, symbol_table::SymbolTable},
+    typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
 };
 
 use super::{
@@ -133,39 +133,6 @@ impl Print for Term {
     }
 }
 
-impl Check for Term {
-    fn check(
-        self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        match self {
-            Term::XVar(var) => var.check(symbol_table, context, expected).map(Into::into),
-            Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
-            Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
-            Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
-            Term::PrintI64(print) => print.check(symbol_table, context, expected).map(Into::into),
-            Term::Let(r#letxp) => r#letxp
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
-            Term::Constructor(constructor) => constructor
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Destructor(destructor) => destructor
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Case(case) => case.check(symbol_table, context, expected).map(Into::into),
-            Term::New(new) => new.check(symbol_table, context, expected).map(Into::into),
-            Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
-            Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
-            Term::Exit(exit) => exit.check(symbol_table, context, expected).map(Into::into),
-            Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
-        }
-    }
-}
-
 impl Inference for Term {
     fn constraint_equations(
             &mut self,
@@ -236,5 +203,23 @@ impl UsedBinders for Term {
             Term::Exit(exit) => exit.used_binders(used),
             Term::Paren(paren) => paren.used_binders(used),
         }
+    }
+}
+
+#[cfg(feature = "test-common")]
+pub mod inferr_helper {
+    use crate::{syntax::{Term, TypingContext}, typing::{Error, inference::{Inference, VarNameGenerator, constraint_unification}, symbol_table::SymbolTable}};
+    
+
+    pub fn inferr_term(term: &mut Term, symbol_table: &mut SymbolTable, context: &TypingContext) -> Result<(), Error> {
+        let var_name_generator = &mut VarNameGenerator::new();
+
+        let ty_var = var_name_generator.get_new_ty_var();
+
+        let constraints = term.constraint_equations(symbol_table, context, var_name_generator, ty_var)?;
+
+        let mappings = constraint_unification(constraints)?;
+
+        term.insert_inferred_type(&mappings, symbol_table)
     }
 }

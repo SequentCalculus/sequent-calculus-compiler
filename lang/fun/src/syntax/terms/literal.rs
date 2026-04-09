@@ -51,18 +51,6 @@ impl From<Lit> for Term {
     }
 }
 
-impl Check for Lit {
-    fn check(
-        self,
-        symbol_table: &mut SymbolTable,
-        _context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, expected, &Ty::mk_i64())?;
-        Ok(self)
-    }
-}
-
 impl Inference for Lit {
     fn constraint_equations(
             &mut self,
@@ -88,29 +76,6 @@ mod test {
     use crate::syntax::*;
     use crate::typing::inference::{Inference, VarNameGenerator};
     use crate::typing::*;
-
-    #[test]
-    fn check_lit() {
-        let result = Lit::mk(1)
-            .check(
-                &mut SymbolTable::default(),
-                &TypingContext::default(),
-                &Ty::mk_i64(),
-            )
-            .unwrap();
-        let expected = Lit::mk(1);
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_lit_fail() {
-        let result = Lit::mk(1).check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
-    }
 
     #[test]
     fn inference_lit() {

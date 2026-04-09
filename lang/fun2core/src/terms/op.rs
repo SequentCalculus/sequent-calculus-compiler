@@ -66,7 +66,7 @@ impl Compile for fun::syntax::terms::Op {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{id, lit, prod, sub, ty, var};
-    use fun::{parse_term, typing::check::Check};
+    use fun::{parse_term, syntax::inferr_helper::inferr_term};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -89,16 +89,11 @@ mod compile_tests {
 
     #[test]
     fn compile_op2() {
-        let term = parse_term!("x * (x - 1)");
+        let mut term = parse_term!("x * (x - 1)");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
-        let term_typed = term
-            .check(
-                &mut Default::default(),
-                &ctx,
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+
+        inferr_term(&mut term, &mut Default::default(), &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
@@ -107,7 +102,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = prod!(var!(id!("x")), sub!(var!(id!("x")), lit!(1))).into();
         assert_eq!(result, expected);

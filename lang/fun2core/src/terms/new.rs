@@ -73,27 +73,14 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
-        typing::check::Check,
+        parse_term, syntax::{context::TypingContext, inferr_helper::inferr_term}, test_common::symbol_table_lpair
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_lpair() {
-        let term = parse_term!("new { fst => 1, snd => 2 }");
-        let term_typed = term
-            .check(
-                &mut symbol_table_lpair(),
-                &TypingContext::default(),
-                &fun::syntax::types::Ty::mk_decl(
-                    "LPair",
-                    fun::syntax::types::TypeArgs::mk(vec![
-                        fun::syntax::types::Ty::mk_i64(),
-                        fun::syntax::types::Ty::mk_i64(),
-                    ]),
-                ),
-            )
-            .unwrap();
+        let mut term = parse_term!("new { fst => 1, snd => 2 }");
+        inferr_term(&mut term, &mut symbol_table_lpair(), &TypingContext::default(),).unwrap();
 
         let lpair_declaration = codata!(id!("LPair"), []);
 
@@ -104,7 +91,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!(id!("LPair[i64, i64]")));
+        let result = term.compile(&mut state, ty!(id!("LPair[i64, i64]")));
 
         let expected = cocase!(
             [

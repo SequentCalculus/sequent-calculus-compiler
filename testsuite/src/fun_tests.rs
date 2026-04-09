@@ -1,6 +1,6 @@
 use super::{end_to_end_tests::EndToEndTest, errors::Error, load_tests::AllTests};
 
-use fun::parser::fun::ProgParser;
+use fun::{parser::fun::ProgParser};
 use printer::Print;
 
 use std::{collections::HashSet, fmt};
@@ -119,7 +119,7 @@ fn typecheck_test(name: String, content: &str) -> TestResult {
             return result;
         }
     };
-    let tc_result = parsed.check();
+    let tc_result = parsed.inference_types();
     let res = match tc_result {
         Ok(_) => None,
         Err(err) => Some(err.to_string()),
@@ -131,7 +131,7 @@ fn typecheck_test(name: String, content: &str) -> TestResult {
 fn typecheck_fail(content: &str) -> Option<String> {
     let parser = ProgParser::new();
     let parsed = parser.parse(content).unwrap();
-    let tc_result = parsed.check();
+    let tc_result = parsed.inference_types();
     match tc_result {
         Ok(_) => Some("Test did not fail typecheck".to_owned()),
         Err(_) => None,

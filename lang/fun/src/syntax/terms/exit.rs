@@ -48,20 +48,6 @@ impl From<Exit> for Term {
     }
 }
 
-impl Check for Exit {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.arg = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
-
-        self.ty = Some(expected.clone());
-        Ok(self)
-    }
-}
-
 impl Inference for Exit {
     fn constraint_equations(
             &mut self,

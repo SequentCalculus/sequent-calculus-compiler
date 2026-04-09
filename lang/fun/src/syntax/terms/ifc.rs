@@ -125,23 +125,6 @@ impl From<IfC> for Term {
     }
 }
 
-impl Check for IfC {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
-        self.thenc = self.thenc.check(symbol_table, context, expected)?;
-        self.elsec = self.elsec.check(symbol_table, context, expected)?;
-
-        self.ty = Some(expected.clone());
-        Ok(self)
-    }
-}
-
 impl Inference for IfC {
     fn constraint_equations(
             &mut self,
@@ -209,52 +192,6 @@ mod test {
     use std::rc::Rc;
 
     #[test]
-    fn check_ife() {
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(2).into()),
-            snd: Some(Rc::new(Lit::mk(1).into())),
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(2).into()),
-            snd: Some(Rc::new(Lit::mk(1).into())),
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_ife_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
-            snd: Some(Rc::new(XVar::mk("x").into())),
-            thenc: Rc::new(Lit::mk(1).into()),
-            elsec: Rc::new(Lit::mk(2).into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
-        assert!(result.is_err())
-    }
-
-    #[test]
     fn inference_ife() {
         let mut term = IfC {
             span: dummy_span(),
@@ -308,52 +245,6 @@ mod test {
             parser.parse("if 1 == 1 {2 } else { 4}"),
             Ok(example().into())
         );
-    }
-
-    #[test]
-    fn check_ifz() {
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(1).into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(1).into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_ifz_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(1).into()),
-            elsec: Rc::new(Lit::mk(2).into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
-        assert!(result.is_err())
     }
 
     fn example_zero() -> IfC {
