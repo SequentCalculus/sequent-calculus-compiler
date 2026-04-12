@@ -11,7 +11,8 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{
-    BinOp, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext, statements::Op,
+    BinOp, Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext, context::Quantity,
+    statements::Op,
 };
 
 use std::hash::Hash;
@@ -41,6 +42,7 @@ impl CodeStatement for Op {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         let target_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
