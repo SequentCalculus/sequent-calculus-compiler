@@ -3,6 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -66,6 +67,7 @@ impl TypedFreeVars for Invoke {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         });
     }
@@ -90,6 +92,7 @@ impl Linearizing for Invoke {
         let closure_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(closure_binding.clone());

@@ -3,6 +3,7 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
+use crate::syntax::context::Quantity;
 use crate::syntax::{
     Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext,
     names::fresh_identifier,
@@ -64,6 +65,7 @@ impl TypedFreeVars for Switch {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         });
     }
@@ -95,6 +97,7 @@ impl Linearizing for Switch {
         let xtor_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(xtor_binding);
@@ -127,6 +130,7 @@ impl Linearizing for Switch {
             let new_xtor_binding = ContextBinding {
                 var: self.var.clone(),
                 chi: Chirality::Prd,
+                quantity: Quantity::Unrestricted,
                 ty: self.ty.clone(),
             };
             context_rearrange_freshened.bindings.push(new_xtor_binding);

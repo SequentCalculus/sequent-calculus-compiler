@@ -5,6 +5,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -63,6 +64,7 @@ impl TypedFreeVars for PrintI64 {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);

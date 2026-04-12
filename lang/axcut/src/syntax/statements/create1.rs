@@ -5,6 +5,7 @@ use printer::tokens::{COLON, COMMA, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 
 use crate::traits::free_vars::FreeVars;
@@ -97,6 +98,7 @@ impl TypedFreeVars for Create1 {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::Linear,
             ty: self.ty.clone(),
         });
     }
@@ -166,6 +168,7 @@ impl Linearizing for Create1 {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::Linear,
             ty: self.ty.clone(),
         };
 
