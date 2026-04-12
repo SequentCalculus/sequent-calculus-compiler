@@ -81,6 +81,7 @@ fn shrink_unknown_cuts(
             args: vec![axcut::syntax::ContextBinding {
                 var: shrink_identifier(var_prd),
                 chi: axcut::syntax::Chirality::Ext,
+                quantity: todo!(),
                 ty: axcut::syntax::Ty::I64,
             }]
             .into(),
@@ -236,6 +237,7 @@ fn shrink_critical_pairs(
                 context: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(var_cns),
                     chi: axcut::syntax::Chirality::Ext,
+                    quantity: todo!(),
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),
@@ -398,6 +400,7 @@ fn shrink_literal_var(lit: i64, var: Identifier, max_id: &mut ID) -> axcut::synt
                 args: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(fresh_var),
                     chi: axcut::syntax::Chirality::Ext,
+                    quantity: todo!(),
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),
@@ -476,6 +479,7 @@ fn shrink_op_var(
                 args: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(fresh_var),
                     chi: axcut::syntax::Chirality::Ext,
+                    quantity: todo!(),
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),

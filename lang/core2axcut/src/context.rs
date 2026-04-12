@@ -22,12 +22,14 @@ pub fn shrink_binding(
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Cns,
+                quantity: todo!(),
                 ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
             }
         } else {
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Ext,
+                quantity: todo!(),
                 ty: axcut::syntax::Ty::I64,
             }
         }
@@ -39,12 +41,14 @@ pub fn shrink_binding(
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Prd,
+            quantity: todo!(),
             ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Cns,
+            quantity: todo!(),
             ty: shrink_ty(binding.ty),
         }
     }
