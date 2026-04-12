@@ -3,6 +3,7 @@
 pub mod call;
 pub mod clause;
 pub mod create;
+pub mod create1;
 pub mod exit;
 pub mod ifc;
 pub mod invoke;
@@ -16,6 +17,7 @@ pub mod switch;
 pub use call::Call;
 pub use clause::{Clause, print_clauses};
 pub use create::Create;
+pub use create1::Create1;
 pub use exit::Exit;
 pub use ifc::IfC;
 pub use invoke::Invoke;
@@ -50,6 +52,7 @@ pub enum Statement {
     Switch(Switch),
     /// Creation of a closure
     Create(Create),
+    Create1(Create1),
     /// Invoking a method of a closure
     Invoke(Invoke),
     /// Integer literal
@@ -72,6 +75,7 @@ impl FreeVars for Statement {
             Statement::Let(r#let) => r#let.free_vars(vars).into(),
             Statement::Switch(swich) => swich.free_vars(vars).into(),
             Statement::Create(create) => create.free_vars(vars).into(),
+            Statement::Create1(create) => create.free_vars(vars).into(),
             Statement::Invoke(invoke) => invoke.free_vars(vars).into(),
             Statement::Literal(lit) => lit.free_vars(vars).into(),
             Statement::Op(op) => op.free_vars(vars).into(),
@@ -90,6 +94,7 @@ impl TypedFreeVars for Statement {
             Statement::Let(r#let) => r#let.typed_free_vars(vars),
             Statement::Switch(switch) => switch.typed_free_vars(vars),
             Statement::Create(create) => create.typed_free_vars(vars),
+            Statement::Create1(create) => create.typed_free_vars(vars),
             Statement::Invoke(invoke) => invoke.typed_free_vars(vars),
             Statement::Literal(lit) => lit.typed_free_vars(vars),
             Statement::Op(op) => op.typed_free_vars(vars),
@@ -108,6 +113,7 @@ impl Subst for Statement {
             Statement::Let(r#let) => r#let.subst_sim(subst).into(),
             Statement::Switch(switch) => switch.subst_sim(subst).into(),
             Statement::Create(create) => create.subst_sim(subst).into(),
+            Statement::Create1(create) => create.subst_sim(subst).into(),
             Statement::Invoke(invoke) => invoke.subst_sim(subst).into(),
             Statement::Literal(lit) => lit.subst_sim(subst).into(),
             Statement::Op(op) => op.subst_sim(subst).into(),
@@ -136,6 +142,7 @@ impl Linearizing for Statement {
             Statement::Let(r#let) => r#let.linearize(context, max_id),
             Statement::Switch(switch) => switch.linearize(context, max_id),
             Statement::Create(create) => create.linearize(context, max_id),
+            Statement::Create1(create) => create.linearize(context, max_id),
             Statement::Invoke(invoke) => invoke.linearize(context, max_id),
             Statement::Literal(lit) => lit.linearize(context, max_id),
             Statement::Op(op) => op.linearize(context, max_id),
@@ -158,6 +165,7 @@ impl Print for Statement {
             Statement::Let(r#let) => r#let.print(cfg, alloc),
             Statement::Switch(switch) => switch.print(cfg, alloc),
             Statement::Create(create) => create.print(cfg, alloc),
+            Statement::Create1(create) => create.print(cfg, alloc),
             Statement::Invoke(invoke) => invoke.print(cfg, alloc),
             Statement::Literal(lit) => lit.print(cfg, alloc),
             Statement::Op(op) => op.print(cfg, alloc),
