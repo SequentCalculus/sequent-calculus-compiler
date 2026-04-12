@@ -1,5 +1,6 @@
 //! This module defines the code generation for the creation of a closure.
 
+use axcut::syntax::context::Quantity;
 use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;
@@ -66,6 +67,7 @@ impl CodeStatement for Create {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::Unrestricted,
             ty: self.ty,
         });
 
