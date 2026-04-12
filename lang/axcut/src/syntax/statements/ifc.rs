@@ -5,6 +5,7 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -129,12 +130,14 @@ impl TypedFreeVars for IfC {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         if let Some(ref snd) = self.snd {
             vars.insert(ContextBinding {
                 var: snd.clone(),
                 chi: Chirality::Ext,
+                quantity: Quantity::Unrestricted,
                 ty: Ty::I64,
             });
         }

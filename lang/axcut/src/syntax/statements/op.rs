@@ -4,6 +4,7 @@ use printer::tokens::{DIVIDE, LEFT_ARROW, MINUS, MODULO, PLUS, SEMI, TIMES};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -103,17 +104,20 @@ impl TypedFreeVars for Op {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         vars.insert(ContextBinding {
             var: self.snd.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
     }
@@ -152,6 +156,7 @@ impl Linearizing for Op {
             var: self.var.clone(),
             ty: Ty::I64,
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
         };
         new_context.bindings.push(new_binding);
 

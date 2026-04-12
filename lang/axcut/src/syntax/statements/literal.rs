@@ -5,6 +5,7 @@ use printer::tokens::{LEFT_ARROW, LIT, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
+use crate::syntax::context::Quantity;
 use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -68,6 +69,7 @@ impl TypedFreeVars for Literal {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
     }
@@ -98,6 +100,7 @@ impl Linearizing for Literal {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         };
         new_context.bindings.push(new_binding);

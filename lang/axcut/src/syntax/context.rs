@@ -38,12 +38,32 @@ impl Print for Chirality {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Quantity {
+    Linear,
+    Unrestricted,
+}
+
+impl Print for Quantity {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Quantity::Linear => alloc.space().append(alloc.keyword("1")),
+            Quantity::Unrestricted => alloc.space().append(alloc.keyword("ω")),
+        }
+    }
+}
+
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     pub var: Identifier,
     pub chi: Chirality,
+    pub quantity: Quantity,
     pub ty: Ty,
 }
 
@@ -56,6 +76,7 @@ impl Print for ContextBinding {
         self.var
             .print(cfg, alloc)
             .append(COLON)
+            .append(self.quantity.print(cfg, alloc))
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
@@ -110,6 +131,7 @@ impl TypingContext {
                     var: fresh_identifier(max_id, &binding.var.name),
                     ty: binding.ty.clone(),
                     chi: binding.chi.clone(),
+                    quantity: binding.quantity.clone(),
                 });
             } else {
                 // otherwise we keep it, but remember that we have seen it already
