@@ -103,7 +103,7 @@ impl Bind for XCase<Prd> {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: ty.clone(),
         };
         let cns = Mu::tilde_mu(new_var, k(new_binding, max_id), self.ty.clone());
@@ -118,7 +118,7 @@ impl Bind for XCase<Cns> {
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: ty.clone(),
         };
         let prd = Mu::mu(new_covar, k(new_binding, max_id), self.ty.clone());

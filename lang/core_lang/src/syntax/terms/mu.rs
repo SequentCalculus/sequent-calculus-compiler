@@ -144,7 +144,7 @@ impl<C: Chi> TypedFreeVars for Mu<C> {
         vars_statement.remove(&ContextBinding {
             var: self.variable.clone(),
             chi,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
 
@@ -165,7 +165,7 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
         vars.remove(&ContextBinding {
             var: self.variable.clone(),
             chi,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
     }
@@ -224,7 +224,7 @@ impl Bind for Mu<Prd> {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: ty.clone(),
         };
         FsCut::new(
@@ -243,7 +243,7 @@ impl Bind for Mu<Cns> {
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: ty.clone(),
         };
         FsCut::new(

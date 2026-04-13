@@ -174,7 +174,7 @@ pub fn cont_int() -> DataDeclaration {
                 bindings: vec![ContextBinding {
                     var: Identifier::new("x".to_string()),
                     chi: Chirality::Prd,
-                    quantity: Quantity::Unrestricted,
+                    quantity: todo!(),
                     ty: Ty::I64,
                 }],
             },
