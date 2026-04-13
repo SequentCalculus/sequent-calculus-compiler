@@ -7,6 +7,7 @@ use crate::{
 };
 use core_lang::syntax::{
     Chirality, ContextBinding, Statement,
+    context::Quantity,
     names::Identifier,
     terms::{Cns, Prd},
 };
@@ -49,7 +50,7 @@ pub fn compile_coclause(
     new_context.bindings.push(ContextBinding {
         var: Identifier::new(new_covar.clone()),
         chi: Chirality::Cns,
-        quantity: todo!(),
+        quantity: Quantity::Linear,
         ty: ty.clone(),
     });
 
