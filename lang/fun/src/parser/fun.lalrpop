@@ -94,11 +94,11 @@ Name: String = {
 }
 
 ContextVar: ContextBinding = {
-    <var: Name> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, },
+    <var: Name> ":" <ty: Ty> => ContextBinding { var, chi: Chirality::Prd, ty, quantity: Quantity::Unrestricted },
 }
 
 ContextCovar: ContextBinding = {
-    <var: Name> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, },
+    <var: Name> r":\s*cns" <ty: Ty> => ContextBinding { var, chi: Chirality::Cns, ty, quantity: Quantity::Unrestricted },
 }
 
 Binding: ContextBinding = {

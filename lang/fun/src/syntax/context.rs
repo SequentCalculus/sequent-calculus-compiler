@@ -31,6 +31,25 @@ impl Print for Chirality {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Quantity {
+    Linear,
+    Unrestricted,
+}
+
+impl Print for Quantity {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Quantity::Linear => alloc.space().append(alloc.keyword("1")),
+            Quantity::Unrestricted => alloc.space().append(alloc.keyword("ω")),
+        }
+    }
+}
+
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe. It is hence either
 /// - a variable binding: `x: ty` (in Fun we ususally do not use a `prd` annotation)
@@ -41,6 +60,8 @@ pub struct ContextBinding {
     pub var: Var,
     /// Whether the binding is for a producer or consumer (i.e., a variable or covariable)
     pub chi: Chirality,
+    /// Whether the bound (co)variable must be used linearly or not
+    pub quantity: Quantity,
     /// The type of the binding
     pub ty: Ty,
 }
@@ -171,19 +192,21 @@ impl TypingContext {
     }
 
     /// This function adds a variable (producer) to the context.
-    pub fn add_var(&mut self, var: &str, ty: Ty) {
+    pub fn add_var(&mut self, var: &str, ty: Ty, quantity: Quantity) {
         self.bindings.push(ContextBinding {
             var: var.to_owned(),
             chi: Chirality::Prd,
+            quantity,
             ty,
         });
     }
 
     /// This funciton adds a covariable (consumer) to the context.
-    pub fn add_covar(&mut self, covar: &str, ty: Ty) {
+    pub fn add_covar(&mut self, covar: &str, ty: Ty, quantity: Quantity) {
         self.bindings.push(ContextBinding {
             var: covar.to_owned(),
             chi: Chirality::Cns,
+            quantity,
             ty,
         });
     }
