@@ -40,8 +40,8 @@ impl Print for Quantity {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Quantity::Linear => alloc.space().append(alloc.keyword("1")),
-            Quantity::Unrestricted => alloc.space().append(alloc.keyword("ω")),
+            Quantity::Linear => alloc.space().append(alloc.text("1")),
+            Quantity::Unrestricted => alloc.space().append(alloc.text("ω")),
         }
     }
 }
@@ -67,6 +67,7 @@ impl Print for ContextBinding {
         self.var
             .print(cfg, alloc)
             .append(COLON)
+            .append(self.quantity.print(cfg, alloc))
             .append(self.chi.print(cfg, alloc))
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
