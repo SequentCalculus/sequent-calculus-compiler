@@ -49,6 +49,7 @@ pub fn compile_coclause(
     new_context.bindings.push(ContextBinding {
         var: Identifier::new(new_covar.clone()),
         chi: Chirality::Cns,
+        quantity: todo!(),
         ty: ty.clone(),
     });
 

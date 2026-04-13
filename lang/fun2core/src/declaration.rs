@@ -30,6 +30,7 @@ pub fn compile_dtor(
         .push(core_lang::syntax::context::ContextBinding {
             var: core_lang::syntax::names::Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
+            quantity: todo!(),
             ty: compile_ty(&dtor.cont_ty),
         });
     core_lang::syntax::declaration::XtorSig {

@@ -24,6 +24,7 @@ pub fn compile_context(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
+                quantity: todo!(),
                 ty: compile_ty(&binding.ty),
             })
             .collect(),
