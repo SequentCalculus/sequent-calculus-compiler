@@ -2,6 +2,7 @@
 
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -43,6 +44,7 @@ impl Bind for Literal {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         };
         FsCut::new(

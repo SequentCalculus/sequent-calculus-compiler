@@ -27,6 +27,25 @@ impl Print for Chirality {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Quantity {
+    Linear,
+    Unrestricted,
+}
+
+impl Print for Quantity {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Quantity::Linear => alloc.space().append(alloc.keyword("1")),
+            Quantity::Unrestricted => alloc.space().append(alloc.keyword("ω")),
+        }
+    }
+}
+
 /// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
 /// and its [`Ty`]pe. It is hence either
 /// - a variable binding: `x :prd ty`
@@ -37,6 +56,8 @@ pub struct ContextBinding {
     pub var: Identifier,
     /// The chirality, i.e. producer or consumer
     pub chi: Chirality,
+    /// The quantity, i.e. linear or unrestricted
+    pub quantity: Quantity,
     /// The type of the binding
     pub ty: Ty,
 }

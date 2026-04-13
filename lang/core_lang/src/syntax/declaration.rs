@@ -3,6 +3,7 @@
 use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 
 /// This marker trait allows to abstract over the information of whether something is for data or
@@ -173,6 +174,7 @@ pub fn cont_int() -> DataDeclaration {
                 bindings: vec![ContextBinding {
                     var: Identifier::new("x".to_string()),
                     chi: Chirality::Prd,
+                    quantity: Quantity::Unrestricted,
                     ty: Ty::I64,
                 }],
             },
