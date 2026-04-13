@@ -12,6 +12,17 @@ pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::
     }
 }
 
+pub fn compile_quantity(
+    quantity: &fun::syntax::context::Quantity,
+) -> core_lang::syntax::context::Quantity {
+    match quantity {
+        fun::syntax::context::Quantity::Linear => core_lang::syntax::context::Quantity::Linear,
+        fun::syntax::context::Quantity::Unrestricted => {
+            core_lang::syntax::context::Quantity::Unrestricted
+        }
+    }
+}
+
 /// This function converts [typing contexts in Fun](fun::syntax::context::TypingContext) to
 /// [typing contexts in Core](core_lang::syntax::context::TypingContext).
 pub fn compile_context(
@@ -24,7 +35,7 @@ pub fn compile_context(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
-                quantity: todo!(),
+                quantity: compile_quantity(&binding.quantity),
                 ty: compile_ty(&binding.ty),
             })
             .collect(),
