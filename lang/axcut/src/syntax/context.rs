@@ -51,8 +51,8 @@ impl Print for Quantity {
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
         match self {
-            Quantity::Linear => alloc.space().append(alloc.keyword("1")),
-            Quantity::Unrestricted => alloc.space().append(alloc.keyword("ω")),
+            Quantity::Linear => alloc.space().append(alloc.text("1")),
+            Quantity::Unrestricted => alloc.space().append(alloc.text("ω")),
         }
     }
 }
