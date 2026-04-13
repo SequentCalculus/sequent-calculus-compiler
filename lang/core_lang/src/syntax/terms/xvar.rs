@@ -103,7 +103,7 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
     }
@@ -119,7 +119,7 @@ impl<C: Chi> Bind for XVar<C> {
         let binding = ContextBinding {
             var: self.var,
             chi,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty,
         };
 

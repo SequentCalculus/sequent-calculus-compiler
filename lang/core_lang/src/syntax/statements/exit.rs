@@ -120,7 +120,7 @@ impl TypedFreeVars for FsExit {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
     }

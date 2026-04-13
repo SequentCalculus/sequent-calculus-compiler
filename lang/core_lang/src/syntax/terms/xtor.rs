@@ -141,7 +141,7 @@ impl Bind for Xtor<Prd> {
                 let new_binding = ContextBinding {
                     var: new_var.clone(),
                     chi: Chirality::Prd,
-                    quantity: Quantity::Unrestricted,
+                    quantity: todo!(),
                     ty: self.ty.clone(),
                 };
                 FsCut::new(
@@ -170,7 +170,7 @@ impl Bind for Xtor<Cns> {
                 let new_binding = ContextBinding {
                     var: new_covar.clone(),
                     chi: Chirality::Cns,
-                    quantity: Quantity::Unrestricted,
+                    quantity: todo!(),
                     ty: self.ty.clone(),
                 };
                 FsCut::new(

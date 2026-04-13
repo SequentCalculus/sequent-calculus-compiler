@@ -44,7 +44,7 @@ impl Bind for Literal {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         };
         FsCut::new(
