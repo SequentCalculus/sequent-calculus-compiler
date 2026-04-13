@@ -2,6 +2,7 @@
 
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -102,6 +103,7 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi,
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         });
     }
@@ -117,6 +119,7 @@ impl<C: Chi> Bind for XVar<C> {
         let binding = ContextBinding {
             var: self.var,
             chi,
+            quantity: Quantity::Unrestricted,
             ty: self.ty,
         };
 

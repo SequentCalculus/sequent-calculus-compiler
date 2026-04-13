@@ -3,6 +3,7 @@
 use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -102,6 +103,7 @@ impl TypedFreeVars for FsPrintI64 {
         vars.insert(ContextBinding {
             var: self.arg.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);

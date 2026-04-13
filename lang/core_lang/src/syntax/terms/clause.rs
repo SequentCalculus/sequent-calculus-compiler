@@ -157,6 +157,7 @@ impl<C: Chi> Uniquify for Clause<C> {
                 new_context.bindings.push(ContextBinding {
                     var: new_var.clone(),
                     chi: binding.chi.clone(),
+                    quantity: binding.quantity.clone(),
                     ty: binding.ty.clone(),
                 });
 

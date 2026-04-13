@@ -3,6 +3,7 @@
 use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -164,12 +165,14 @@ impl TypedFreeVars for FsIfC {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         if let Some(ref snd) = self.snd {
             vars.insert(ContextBinding {
                 var: snd.clone(),
                 chi: Chirality::Prd,
+                quantity: Quantity::Unrestricted,
                 ty: Ty::I64,
             });
         }

@@ -3,6 +3,7 @@
 use printer::tokens::EXIT;
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -119,6 +120,7 @@ impl TypedFreeVars for FsExit {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
     }
