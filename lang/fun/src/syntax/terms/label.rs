@@ -6,6 +6,7 @@ use miette::SourceSpan;
 use printer::tokens::LABEL;
 use printer::*;
 
+use crate::syntax::context::Quantity;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
@@ -71,7 +72,7 @@ impl Check for Label {
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
-        new_context.add_covar(&self.label, expected.clone());
+        new_context.add_covar(&self.label, expected.clone(), Quantity::Unrestricted);
         self.term = self.term.check(symbol_table, &new_context, expected)?;
 
         self.ty = Some(expected.clone());
