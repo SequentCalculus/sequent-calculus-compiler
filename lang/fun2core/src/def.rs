@@ -61,6 +61,7 @@ pub fn compile_def(
         .push(core_lang::syntax::context::ContextBinding {
             var: Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
+            quantity: todo!(),
             ty: compile_ty(&def.ret_ty),
         });
 
