@@ -34,6 +34,30 @@ impl Compile for fun::syntax::terms::Call {
         }
         .into()
     }
+
+    fn compile(
+        self,
+        state: &mut CompileState,
+        ty: core_lang::syntax::Ty,
+    ) -> core_lang::syntax::terms::Term<core_lang::syntax::Prd> {
+        let new_covar = state.fresh_covar();
+        let new_statement = self.compile_with_cont(
+            core_lang::syntax::terms::XVar {
+                prdcns: Cns,
+                var: Identifier::new(new_covar.clone()),
+                ty: ty.clone(),
+            }
+            .into(),
+            state,
+        );
+        core_lang::syntax::Mu1 {
+            prdcns: core_lang::syntax::Prd,
+            variable: Identifier::new(new_covar),
+            ty,
+            statement: std::rc::Rc::new(new_statement),
+        }
+        .into()
+    }
 }
 
 #[cfg(test)]

@@ -10,6 +10,7 @@ use std::collections::BTreeSet;
 pub mod clause;
 pub mod literal;
 pub mod mu;
+pub mod mu1;
 pub mod op;
 pub mod xcase;
 pub mod xtor;
@@ -18,6 +19,7 @@ pub mod xvar;
 pub use clause::{Clause, print_clauses};
 pub use literal::Literal;
 pub use mu::Mu;
+pub use mu1::Mu1;
 pub use op::{BinOp, FsOp, Op};
 pub use xcase::XCase;
 pub use xtor::{FsXtor, Xtor};
@@ -71,6 +73,8 @@ pub enum Term<C: Chi> {
     Op(Op),
     /// `mu`- or `mu-tilde` binding
     Mu(Mu<C, Statement>),
+    /// Linear variant of Mu
+    Mu1(Mu1<C, Statement>),
     /// Constructor or destructor
     Xtor(Xtor<C>),
     /// Pattern match or Copattern match
@@ -84,6 +88,7 @@ impl<C: Chi> Typed for Term<C> {
             Term::Literal(lit) => lit.get_type(),
             Term::Op(op) => op.get_type(),
             Term::Mu(mu) => mu.get_type(),
+            Term::Mu1(mu) => mu.get_type(),
             Term::Xtor(xtor) => xtor.get_type(),
             Term::XCase(xcase) => xcase.get_type(),
         }
@@ -97,6 +102,7 @@ impl<C: Chi> Print for Term<C> {
             Term::Literal(lit) => lit.print(cfg, alloc),
             Term::Op(op) => op.print(cfg, alloc),
             Term::Mu(mu) => mu.print(cfg, alloc),
+            Term::Mu1(mu) => mu.print(cfg, alloc),
             Term::Xtor(xtor) => xtor.print(cfg, alloc),
             Term::XCase(xcase) => xcase.print(cfg, alloc),
         }
@@ -115,6 +121,7 @@ impl Subst for Term<Prd> {
             Term::Literal(ref _lit) => self,
             Term::Op(op) => op.subst_sim(prod_subst, cons_subst).into(),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
+            Term::Mu1(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
         }
@@ -131,6 +138,7 @@ impl Subst for Term<Cns> {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
             Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
             Term::Mu(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
+            Term::Mu1(mu) => mu.subst_sim(prod_subst, cons_subst).into(),
             Term::Xtor(xtor) => xtor.subst_sim(prod_subst, cons_subst).into(),
             Term::XCase(xcase) => xcase.subst_sim(prod_subst, cons_subst).into(),
         }
@@ -144,6 +152,7 @@ impl<C: Chi> TypedFreeVars for Term<C> {
             Term::Literal(_) => {}
             Term::Op(op) => op.typed_free_vars(vars),
             Term::Mu(mu) => mu.typed_free_vars(vars),
+            Term::Mu1(mu) => mu.typed_free_vars(vars),
             Term::Xtor(xtor) => xtor.typed_free_vars(vars),
             Term::XCase(xcase) => xcase.typed_free_vars(vars),
         }
@@ -155,6 +164,7 @@ impl<C: Chi> Uniquify for Term<C> {
         match self {
             Term::Op(op) => op.uniquify(max_id).into(),
             Term::Mu(mu) => mu.uniquify(max_id).into(),
+            Term::Mu1(mu) => mu.uniquify(max_id).into(),
             Term::Xtor(xtor) => xtor.uniquify(max_id).into(),
             Term::XCase(xcase) => xcase.uniquify(max_id).into(),
             _ => self,
@@ -170,6 +180,7 @@ impl Focusing for Term<Prd> {
             Term::Literal(lit) => lit.into(),
             Term::Op(op) => op.focus(max_id),
             Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Mu1(mu) => mu.focus(max_id).into(),
             Term::Xtor(xtor) => xtor.focus(max_id),
             Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
@@ -182,6 +193,7 @@ impl Focusing for Term<Cns> {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
             Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Mu1(mu) => mu.focus(max_id).into(),
             Term::Xtor(xtor) => xtor.focus(max_id),
             Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
@@ -195,6 +207,7 @@ impl Bind for Term<Prd> {
             Term::Literal(lit) => lit.bind(k, max_id),
             Term::Op(op) => op.bind(k, max_id),
             Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Mu1(mu) => mu.bind(k, max_id),
             Term::Xtor(xtor) => xtor.bind(k, max_id),
             Term::XCase(xcase) => xcase.bind(k, max_id),
         }
@@ -206,6 +219,7 @@ impl Bind for Term<Cns> {
             Term::XVar(covar) => covar.bind(k, max_id),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
             Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Mu1(mu) => mu.bind(k, max_id),
             Term::Xtor(xtor) => xtor.bind(k, max_id),
             Term::XCase(xcase) => xcase.bind(k, max_id),
         }
@@ -224,6 +238,8 @@ pub enum FsTerm<C: Chi> {
     Op(FsOp),
     /// `mu`- or `mu-tilde` binding
     Mu(Mu<C, FsStatement>),
+    /// Linear variant of Mu
+    Mu1(Mu1<C, FsStatement>),
     /// Constructor or destructor
     Xtor(FsXtor<C>),
     /// Pattern match or Copattern match
@@ -237,6 +253,7 @@ impl<C: Chi> Print for FsTerm<C> {
             FsTerm::Literal(lit) => lit.print(cfg, alloc),
             FsTerm::Op(op) => op.print(cfg, alloc),
             FsTerm::Mu(mu) => mu.print(cfg, alloc),
+            FsTerm::Mu1(mu) => mu.print(cfg, alloc),
             FsTerm::Xtor(xtor) => xtor.print(cfg, alloc),
             FsTerm::XCase(xcase) => xcase.print(cfg, alloc),
         }
@@ -251,6 +268,7 @@ impl<C: Chi> SubstVar for FsTerm<C> {
             FsTerm::Literal(ref _lit) => self,
             FsTerm::Op(op) => op.subst_sim(subst).into(),
             FsTerm::Mu(mu) => mu.subst_sim(subst).into(),
+            FsTerm::Mu1(mu) => mu.subst_sim(subst).into(),
             FsTerm::Xtor(xtor) => xtor.subst_sim(subst).into(),
             FsTerm::XCase(xcase) => xcase.subst_sim(subst).into(),
         }
@@ -264,6 +282,7 @@ impl<C: Chi> TypedFreeVars for FsTerm<C> {
             FsTerm::Literal(_) => {}
             FsTerm::Op(op) => op.typed_free_vars(vars),
             FsTerm::Mu(mu) => mu.typed_free_vars(vars),
+            FsTerm::Mu1(mu) => mu.typed_free_vars(vars),
             FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars),
             FsTerm::XCase(xcase) => xcase.typed_free_vars(vars),
         }
