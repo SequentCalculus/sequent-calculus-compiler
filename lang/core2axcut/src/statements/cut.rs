@@ -81,7 +81,7 @@ fn shrink_unknown_cuts(
             args: vec![axcut::syntax::ContextBinding {
                 var: shrink_identifier(var_prd),
                 chi: axcut::syntax::Chirality::Ext,
-                quantity: todo!(),
+                quantity: axcut::syntax::context::Quantity::Unrestricted,
                 ty: axcut::syntax::Ty::I64,
             }]
             .into(),
@@ -227,7 +227,7 @@ fn shrink_critical_pairs(
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         // for integers the type of the bound covariable becomes the continuation type ...
-        Ty::I64 => axcut::syntax::statements::Create {
+        Ty::I64 => axcut::syntax::statements::Create1 {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
             // ... so we turn the tilde-mu-binding into a continuation closure
@@ -237,7 +237,7 @@ fn shrink_critical_pairs(
                 context: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(var_cns),
                     chi: axcut::syntax::Chirality::Ext,
-                    quantity: todo!(),
+                    quantity: axcut::syntax::context::Quantity::Unrestricted,
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),
@@ -400,7 +400,7 @@ fn shrink_literal_var(lit: i64, var: Identifier, max_id: &mut ID) -> axcut::synt
                 args: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(fresh_var),
                     chi: axcut::syntax::Chirality::Ext,
-                    quantity: todo!(),
+                    quantity: axcut::syntax::context::Quantity::Unrestricted,
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),
@@ -479,7 +479,7 @@ fn shrink_op_var(
                 args: vec![axcut::syntax::ContextBinding {
                     var: shrink_identifier(fresh_var),
                     chi: axcut::syntax::Chirality::Ext,
-                    quantity: todo!(),
+                    quantity: axcut::syntax::context::Quantity::Unrestricted,
                     ty: axcut::syntax::Ty::I64,
                 }]
                 .into(),
@@ -571,6 +571,27 @@ impl Shrinking for FsCut {
 
             (
                 FsTerm::Mu(Mu {
+                    prdcns: Prd,
+                    variable: var_prd,
+                    statement: statement_prd,
+                    ..
+                }),
+                FsTerm::Mu(Mu {
+                    prdcns: Cns,
+                    variable: var_cns,
+                    statement: statement_cns,
+                    ..
+                }),
+            ) => shrink_critical_pairs(
+                var_prd,
+                statement_prd,
+                var_cns,
+                statement_cns,
+                self.ty,
+                state,
+            ),
+            (
+                FsTerm::Mu1(Mu1 {
                     prdcns: Prd,
                     variable: var_prd,
                     statement: statement_prd,
