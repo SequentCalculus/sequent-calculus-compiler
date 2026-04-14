@@ -104,20 +104,20 @@ impl TypedFreeVars for Op {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
         vars.insert(ContextBinding {
             var: self.snd.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
     }
@@ -156,7 +156,7 @@ impl Linearizing for Op {
             var: self.var.clone(),
             ty: Ty::I64,
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
         };
         new_context.bindings.push(new_binding);
 

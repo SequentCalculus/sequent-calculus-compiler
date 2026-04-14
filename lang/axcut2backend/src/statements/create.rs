@@ -67,7 +67,7 @@ impl CodeStatement for Create {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty,
         });
 

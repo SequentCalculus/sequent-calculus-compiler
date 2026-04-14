@@ -69,7 +69,7 @@ impl TypedFreeVars for Literal {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
     }
@@ -100,7 +100,7 @@ impl Linearizing for Literal {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         };
         new_context.bindings.push(new_binding);

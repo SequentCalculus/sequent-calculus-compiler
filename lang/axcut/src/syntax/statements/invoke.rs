@@ -67,7 +67,7 @@ impl TypedFreeVars for Invoke {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
     }
@@ -92,7 +92,7 @@ impl Linearizing for Invoke {
         let closure_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(closure_binding.clone());

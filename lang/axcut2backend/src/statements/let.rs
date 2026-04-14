@@ -51,7 +51,7 @@ impl CodeStatement for Let {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty,
         });
 

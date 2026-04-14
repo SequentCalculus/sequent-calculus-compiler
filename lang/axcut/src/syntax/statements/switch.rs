@@ -65,7 +65,7 @@ impl TypedFreeVars for Switch {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
     }
@@ -97,7 +97,7 @@ impl Linearizing for Switch {
         let xtor_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(xtor_binding);
@@ -130,7 +130,7 @@ impl Linearizing for Switch {
             let new_xtor_binding = ContextBinding {
                 var: self.var.clone(),
                 chi: Chirality::Prd,
-                quantity: Quantity::Unrestricted,
+                quantity: todo!(),
                 ty: self.ty.clone(),
             };
             context_rearrange_freshened.bindings.push(new_xtor_binding);

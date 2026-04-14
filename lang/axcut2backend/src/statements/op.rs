@@ -42,7 +42,7 @@ impl CodeStatement for Op {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
         let target_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
