@@ -144,7 +144,7 @@ impl<C: Chi> TypedFreeVars for Mu<C> {
         vars_statement.remove(&ContextBinding {
             var: self.variable.clone(),
             chi,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         });
 
@@ -165,7 +165,7 @@ impl<C: Chi> TypedFreeVars for FsMu<C> {
         vars.remove(&ContextBinding {
             var: self.variable.clone(),
             chi,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
             ty: self.ty.clone(),
         });
     }
