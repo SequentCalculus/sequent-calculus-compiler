@@ -5,6 +5,15 @@ use core_lang::syntax::declaration::{CodataDeclaration, cont_int};
 
 use crate::{names::shrink_identifier, types::shrink_ty};
 
+fn shrink_quantity(q: &core_lang::syntax::context::Quantity) -> axcut::syntax::context::Quantity {
+    match q {
+        core_lang::syntax::context::Quantity::Linear => axcut::syntax::context::Quantity::Linear,
+        core_lang::syntax::context::Quantity::Unrestricted => {
+            axcut::syntax::context::Quantity::Unrestricted
+        }
+    }
+}
+
 /// This function translates a context binding in [Core](core_lang) to one in [AxCut](axcut). It
 /// essentially consists of mapping producers of data types and consumers of codata types to the
 /// same representation (having chirality `Prd`) and mapping consumers of data types and producers
@@ -22,14 +31,14 @@ pub fn shrink_binding(
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Cns,
-                quantity: todo!(),
+                quantity: shrink_quantity(&binding.quantity),
                 ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
             }
         } else {
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Ext,
-                quantity: todo!(),
+                quantity: shrink_quantity(&binding.quantity),
                 ty: axcut::syntax::Ty::I64,
             }
         }
@@ -41,14 +50,14 @@ pub fn shrink_binding(
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Prd,
-            quantity: todo!(),
+            quantity: shrink_quantity(&binding.quantity),
             ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Cns,
-            quantity: todo!(),
+            quantity: shrink_quantity(&binding.quantity),
             ty: shrink_ty(binding.ty),
         }
     }

@@ -69,7 +69,7 @@ impl TypedFreeVars for Literal {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
     }
