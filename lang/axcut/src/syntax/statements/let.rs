@@ -92,7 +92,7 @@ impl TypedFreeVars for Let {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         });
     }
@@ -128,7 +128,7 @@ impl Linearizing for Let {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: self.ty.clone(),
         };
 

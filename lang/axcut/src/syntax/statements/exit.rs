@@ -55,7 +55,7 @@ impl TypedFreeVars for Exit {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
     }

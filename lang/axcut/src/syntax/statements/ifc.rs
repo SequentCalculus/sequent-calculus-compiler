@@ -130,14 +130,14 @@ impl TypedFreeVars for IfC {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
         if let Some(ref snd) = self.snd {
             vars.insert(ContextBinding {
                 var: snd.clone(),
                 chi: Chirality::Ext,
-                quantity: Quantity::Unrestricted,
+                quantity: todo!(),
                 ty: Ty::I64,
             });
         }

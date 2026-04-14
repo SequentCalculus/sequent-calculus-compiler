@@ -64,7 +64,7 @@ impl TypedFreeVars for PrintI64 {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: Quantity::Unrestricted,
+            quantity: todo!(),
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);
