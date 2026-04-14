@@ -51,8 +51,7 @@ impl Print for Create1 {
         };
 
         alloc
-            .keyword(CREATE)
-            .append(alloc.text("1"))
+            .keyword("create1")
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(COLON)
