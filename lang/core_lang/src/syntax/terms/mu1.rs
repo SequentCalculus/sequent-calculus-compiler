@@ -34,7 +34,7 @@ pub type FsMu<C: Chi> = Mu1<C, FsStatement>;
 impl<S> Mu1<Prd, S> {
     /// This function creates a mu-abstraction from a given covariable, body, and type.
     #[allow(clippy::self_named_constructors)]
-    pub fn mu<T: Into<S>>(covar: Identifier, stmt: T, ty: Ty) -> Self {
+    pub fn mu1<T: Into<S>>(covar: Identifier, stmt: T, ty: Ty) -> Self {
         Mu1 {
             prdcns: Prd,
             variable: covar,
@@ -45,7 +45,7 @@ impl<S> Mu1<Prd, S> {
 }
 impl<S> Mu1<Cns, S> {
     /// This function creates a mu-tilde-abstraction from a given variable, body, and type.
-    pub fn tilde_mu<T: Into<S>>(var: Identifier, stmt: T, ty: Ty) -> Self {
+    pub fn tilde_mu1<T: Into<S>>(var: Identifier, stmt: T, ty: Ty) -> Self {
         Mu1 {
             prdcns: Cns,
             variable: var,
@@ -229,7 +229,7 @@ impl Bind for Mu1<Prd> {
         };
         FsCut::new(
             self.focus(max_id),
-            Mu1::tilde_mu(new_var, k(new_binding, max_id), ty.clone()),
+            Mu1::tilde_mu1(new_var, k(new_binding, max_id), ty.clone()),
             ty,
         )
         .into()
@@ -247,7 +247,7 @@ impl Bind for Mu1<Cns> {
             ty: ty.clone(),
         };
         FsCut::new(
-            Mu1::mu(new_covar, k(new_binding, max_id), ty.clone()),
+            Mu1::mu1(new_covar, k(new_binding, max_id), ty.clone()),
             self.focus(max_id),
             ty,
         )
