@@ -100,10 +100,15 @@ impl<C: Chi> TypedFreeVars for XVar<C> {
         } else {
             Chirality::Cns
         };
+        let quantity = if self.prdcns.is_prd() {
+            Quantity::Unrestricted
+        } else {
+            Quantity::Linear
+        };
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi,
-            quantity: todo!(),
+            quantity,
             ty: self.ty.clone(),
         });
     }
