@@ -224,12 +224,12 @@ impl Bind for Mu1<Prd> {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
-            quantity: todo!(),
+            quantity: Quantity::Linear,
             ty: ty.clone(),
         };
         FsCut::new(
             self.focus(max_id),
-            Mu1::tilde_mu1(new_var, k(new_binding, max_id), ty.clone()),
+            Mu::tilde_mu(new_var, k(new_binding, max_id), ty.clone()),
             ty,
         )
         .into()
@@ -243,7 +243,7 @@ impl Bind for Mu1<Cns> {
         let new_binding = ContextBinding {
             var: new_covar.clone(),
             chi: Chirality::Cns,
-            quantity: todo!(),
+            quantity: Quantity::Linear,
             ty: ty.clone(),
         };
         FsCut::new(
