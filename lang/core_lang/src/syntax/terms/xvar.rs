@@ -121,10 +121,15 @@ impl<C: Chi> Bind for XVar<C> {
         } else {
             Chirality::Cns
         };
+        let quantity = if self.prdcns.is_prd() {
+            Quantity::Unrestricted
+        } else {
+            Quantity::Linear
+        };
         let binding = ContextBinding {
             var: self.var,
             chi,
-            quantity: todo!(),
+            quantity,
             ty: self.ty,
         };
 
