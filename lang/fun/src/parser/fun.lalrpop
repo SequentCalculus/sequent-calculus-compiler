@@ -161,9 +161,14 @@ DtorName: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
+ModLoad: String = {
+    <name: TypeName> "::" <id: TypeName> => name + "::" + &id,
+    <name: TypeName> "::" <rest: ModLoad> => name + "::" + &rest,
+}
+
 ModCall: String = {
-    <name: Name> "::" <id: Name> => name + "::" + &id,
-    <name: Name> "::" <rest: ModCall> => name + "::" + &rest,
+    <name: TypeName> "::" <id: Name> => name + "::" + &id,
+    <name: TypeName> "::" <rest: ModCall> => name + "::" + &rest,
 }
 
 //
@@ -191,7 +196,7 @@ Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
       Call { span: span(l, r), name: v, args, ret_ty: None, is_module_call: false}.into(),
     <l: @L> <m: ModCall> <args: Arguments> <r: @R> => 
-      Call {span: span(l, r), name: m, args, ret_ty: None, is_module_call: true} .into(),
+      Call {span: span(l, r), name: m, args, ret_ty: None, is_module_call: true}.into(),
 }
 
 Label: Label = {
@@ -448,14 +453,16 @@ Def: Def = {
 }
 
 Module: Module = {
-    <l: @L> "module" <name: Name> <r: @R> => 
+    <l: @L> "module" <name: TypeName> <r: @R> => 
         Module { span: span(l, r), name,},
+    <l: @L> "module" <name: ModLoad> <r: @R> =>
+        Module {span: span(l, r), name},
 }
 
 Import: Import = {
-    <l: @L> "import" <name: Name> <r: @R> =>
+    <l: @L> "import" <name: TypeName> <r: @R> =>
         Import {span: span(l, r), name,},
-    <l: @L> "import" <name: ModCall> <r: @R> =>
+    <l: @L> "import" <name: ModLoad> <r: @R> =>
         Import {span: span(l, r), name,},
 }
 

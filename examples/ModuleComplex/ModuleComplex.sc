@@ -1,17 +1,17 @@
 //Testcode for the module system
-import seperatemodule
+import Seperatemodule
 
-module submodulesimple
-module deepmodule
+module Submodulesimple
+module Deepmodule
 
 def add2(x: i64, y: i64) : i64 {
-    seperatemodule::add2(x, y)
+    Seperatemodule::add2(x, y)
 }
 
 def mul2(x: i64, y: i64) : i64 {
-    deepmodule::mul2(x, y)
+    Deepmodule::mul2(x, y)
 }
 
 def sub2(x: i64, y: i64) : i64 {
-    submodulesimple::sub2(x, y)
+    Submodulesimple::sub2(x, y)
 }
