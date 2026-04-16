@@ -17,7 +17,7 @@ use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
-    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Name},
+    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Name, Declaration},
     syntax::module_declarations::*,
 };
 use fun2core::program::compile_prog;
@@ -109,17 +109,17 @@ impl Driver {
     }
 
     /// This function loads the specified modules and submodules of the given file
-    pub fn loaded(&mut self, path: &PathBuf) -> Result<ModuleProgram, DriverError> {
+    pub fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<PathBuf, Option<ModuleProgram>>) -> Result<ModuleProgram, DriverError> {
         // Check for a cache hit
         if let Some(res) = self.loaded.get(path) {
             return Ok(res.clone());
         }
         
         let parsed = self.parsed(path)?;
-        //TODO: add handling for files not in same directory and in subfolders
-        //TODO: add comprehensive error for files not found
+        visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), None);
         let mut imports = HashMap::<Name, ModuleProgram>::new();
         let mut modules = Vec::<ModuleProgram>::new();
+        let name = path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string();
        
         for decl in parsed.module_declarations {
             match decl {
@@ -127,23 +127,76 @@ impl Driver {
                     let mut search_path = path.clone();
                     search_path.pop();
                     let mut subdrv = Driver::new();
-                    imports.insert(import.name.clone(), subdrv.loaded(&find_given_file(&import.name, &mut search_path, true)?)?);
+                    let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
+                    if !visited.contains_key(&path_to_import) {
+                        let loaded = subdrv.loaded(&path_to_import, Some((name.clone(), parsed.declarations.clone())), visited)?;
+                        visited.insert(path_to_import.clone(), Some(loaded.clone()));
+                        if !loaded.imports_to_parent.is_empty() {
+                            imports.extend(loaded.imports_to_parent.clone());
+                        }
+                        imports.insert(import.name.clone(), loaded);
+                    }
+                    else {
+                        let subparsed = subdrv.parsed(&path_to_import)?;
+                        let mut sub_public_decl = Vec::<Declaration>::new();
+                        for decl in subparsed.declarations {
+                            match decl {
+                                Declaration::Codata (ref codata) => {if codata.is_public {sub_public_decl.push(decl)}}
+                                Declaration::Data (ref data) => {if data.is_public {sub_public_decl.push(decl)}}
+                                Declaration::Def (ref def) => {if def.is_public {sub_public_decl.push(decl)}}
+                            }
+                        }
+                        imports.insert(import.name.clone(), 
+                                       ModuleProgram {
+                                            imports: Vec::<ModuleProgram>::new(),
+                                            modules: Vec::<ModuleProgram>::new(),
+                                            declarations: Vec::<Declaration>::new(),
+                                            name: path_to_import.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string(),
+                                            imports_to_parent: HashMap::<Name, ModuleProgram>::new(),
+                                            parent_declarations: None,
+                                            public_declarations: sub_public_decl,});
+                    }
                 }
                 ModuleDeclaration::Module (module)=> {
                     let mut search_path = path.clone();
                     search_path.pop();
                     let mut subdrv = Driver::new();
-                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false)?)?);
+                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false)?, Some((name.clone(), parsed.declarations.clone())), visited)?);
                 }
             }
         }
-        Ok(ModuleProgram{
-            imports,
-            modules,
+        let mut public_declarations = Vec::<Declaration>::new();
+        for decl in &parsed.declarations {
+            match decl {
+                Declaration::Codata (codata) => {
+                    if codata.is_public {
+                        public_declarations.push(decl.clone());
+                    }
+                }
+                Declaration::Data (data) => {
+                    if data.is_public {
+                        public_declarations.push(decl.clone());
+                    }
+                }
+                Declaration::Def (def) => {
+                    if def.is_public {
+                        public_declarations.push(decl.clone());
+                    }
+                }
+            }
+        }
+        let module_program = ModuleProgram{
+            modules: modules,
             declarations: parsed.declarations,
-            name: path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string()
-        })
-
+            name: name,
+            parent_declarations: parent_decl.clone(),
+            imports: imports.values().cloned().collect(),
+            imports_to_parent:  if !parent_decl.is_some() {HashMap::<Name, ModuleProgram>::new()} else {imports.clone()},
+            public_declarations: public_declarations,
+        };
+        visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), Some(module_program.clone()));
+        //println!("{:#?}", imports);
+        Ok(module_program)
     }
 
 
@@ -155,8 +208,8 @@ impl Driver {
         }
 
         //let parsed = self.parsed(path)?;
-        let loaded = self.loaded(path)?;
-        let checked = loaded.check().map_err(DriverError::TypeError)?;
+        let loaded = self.loaded(path, None, &mut HashMap::<PathBuf, Option<ModuleProgram>>::new())?;
+        let checked = loaded.check(false).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -364,7 +417,7 @@ impl Driver {
         fontsize: &str,
     ) -> Result<(), DriverError> {
         //let parsed = self.parsed(path)?;
-        let loaded = self.loaded(path)?;
+        let loaded = self.loaded(path, None, &mut HashMap::<PathBuf, Option<ModuleProgram>>::new())?;
 
         Paths::create_pdf_dir();
 
@@ -507,8 +560,9 @@ pub fn generate_io_runtime() -> PathBuf {
 }
 
 fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, DriverError> {
-    let reg = Regex::new(r"^[a-z][a-zA-Z0-9_]*(::[a-z][a-zA-Z0-9_]*)+$").unwrap();
+    let reg = Regex::new(r"^[A-z][a-zA-Z0-9_]*(::[A-z][a-zA-Z0-9_]*)+$").unwrap();
     let filename;
+    //println!("{}", module_call);
     if reg.is_match(module_call) {
         let mut split: Vec<&str> = module_call.split("::").collect();
         let root = split[0];
@@ -516,7 +570,7 @@ fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: b
         while abs_path.file_name().unwrap().to_str().unwrap() != root {
             abs_path.pop();
         }
-        println!("{:#?}", split);
+        //println!("{:#?}", split);
         split.remove(0);
         let file_name = split.pop().unwrap();
         for dir in split {
