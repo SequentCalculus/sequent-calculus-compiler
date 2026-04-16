@@ -1081,6 +1081,7 @@ dependencies = [
  "clap",
  "clap_complete",
  "driver",
+ "fun",
  "miette",
  "regex",
  "scc-printer",
