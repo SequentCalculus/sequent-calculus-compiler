@@ -6,7 +6,7 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::terms::Cns;
-use fun::syntax::types::OptTyped;
+use fun::traits::OptTyped;
 
 use std::rc::Rc;
 

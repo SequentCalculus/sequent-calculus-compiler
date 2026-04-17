@@ -241,12 +241,6 @@ fn create_instance(
     Ok(())
 }
 
-/// This trait provides a fallible method to obtain the type of a term.
-pub trait OptTyped {
-    /// This method returns the type of a term if it is known.
-    fn get_type(&self) -> Option<Ty>;
-}
-
 impl Print for Ty {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {

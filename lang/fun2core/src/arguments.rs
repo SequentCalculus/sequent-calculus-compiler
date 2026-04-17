@@ -5,7 +5,7 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
-use fun::syntax::types::OptTyped;
+use fun::traits::OptTyped;
 
 /// This function translates [arguments in Fun](fun::syntax::arguments::Arguments) to
 /// [arguments in Core](core_lang::syntax::arguments::Arguments).
