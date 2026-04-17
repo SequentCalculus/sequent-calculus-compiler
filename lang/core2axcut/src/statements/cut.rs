@@ -227,6 +227,7 @@ fn shrink_critical_pairs(
 ) -> axcut::syntax::Statement {
     match ty.clone() {
         // for integers the type of the bound covariable becomes the continuation type ...
+        // FIXME: This is not correct in general, only a hack to get the Fib example working.
         Ty::I64 => axcut::syntax::statements::Create1 {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
