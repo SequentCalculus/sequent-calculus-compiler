@@ -224,7 +224,7 @@ impl Bind for Mu1<Prd> {
         let new_binding = ContextBinding {
             var: new_var.clone(),
             chi: Chirality::Prd,
-            quantity: Quantity::Linear,
+            quantity: Quantity::Unrestricted,
             ty: ty.clone(),
         };
         FsCut::new(
