@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::*;
 use crate::typing::*;
 
 use std::collections::{HashMap, HashSet};

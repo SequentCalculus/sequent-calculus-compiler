@@ -5,13 +5,14 @@
 //! administrative redexes.
 
 use core_lang::syntax::{
-    CodataDeclaration, Def, Ty,
+    CodataDeclaration, Def, Statement, Ty,
+    arguments::Argument,
     context::Chirality,
     names::Identifier,
     statements::Cut,
-    terms::{Cns, Mu, Prd},
+    terms::{Cns, Mu, Prd, XVar},
 };
-use core_lang::traits::{Typed, TypedFreeVars};
+use core_lang::traits::{IsCoValue, Typed, TypedFreeVars};
 use fun::syntax::names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
 
 use std::{
@@ -188,4 +189,90 @@ pub fn share(
         ty,
     )
     .into()
+}
+
+/// This is a type alias for a meta-level continuation that abstracts over an argument that has
+/// been lifted out of a statement. When the continuation is applied to a term, it returns the
+/// statement with the term in the place of the argument that was lifted. The continuation also
+/// expects the current state of the translation.
+pub type Continuation = Box<dyn FnOnce(Argument, &mut CompileState) -> Statement>;
+/// This is a type alias for a meta-level continuation similar to [Continuation], but it abstracts
+/// over many arguments at once.
+pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Argument>, &mut CompileState) -> Statement>;
+
+/// This function is used during the translation from [Fun](fun) into [Core](core_lang) to avoid
+/// administrative redexes in the destructor case. It takes a term that is to be lifted out of
+/// argument position if it is not a (co)value and additionally a meta-level
+/// [continuation](Continuation) that contains the statement from which the term is lifted. It
+/// eventually yields the resulting statement.
+/// - `continuation` is the continuation containing the statement from which the term has been
+///   lifted.
+/// - `state` is the [state](CompileState) threaded through the translation.
+fn bind(arg: Argument, k: Continuation, state: &mut CompileState) -> Statement {
+    if arg.is_co_value(state.codata_types) {
+        k(arg, state)
+    } else {
+        let ty = arg.get_type();
+        match arg {
+            Argument::Producer(prd) => {
+                let new_var = Identifier::new(state.fresh_var());
+                let new_binding = XVar::var(new_var.clone(), ty.clone());
+                Cut::new(
+                    prd,
+                    Mu::tilde_mu(
+                        new_var,
+                        k(Argument::Producer(new_binding.into()), state),
+                        ty.clone(),
+                    ),
+                    ty,
+                )
+                .into()
+            }
+            Argument::Consumer(cns) => {
+                let new_covar = Identifier::new(state.fresh_covar());
+                let new_binding = XVar::covar(new_covar.clone(), ty.clone());
+                Cut::new(
+                    Mu::mu(
+                        new_covar,
+                        k(Argument::Consumer(new_binding.into()), state),
+                        ty.clone(),
+                    ),
+                    cns,
+                    ty,
+                )
+                .into()
+            }
+        }
+    }
+}
+
+/// This function is used during the translation from [Fun](fun) into [Core](core_lang) to avoid
+/// administrative redexes in the destructor case. It is similar to the [`bind_co_value`]-function,
+/// but for a whole list of lifted terms.
+/// - `args` is the list of lifted terms.
+/// - `continuation` is the continuation containing the statement from which the terms have been
+///   lifted.
+/// - `state` is the [state](CompileState) threaded through the translation.
+pub fn bind_many(
+    mut args: VecDeque<Argument>,
+    k: ContinuationVec,
+    state: &mut CompileState,
+) -> Statement {
+    match args.pop_front() {
+        None => k(VecDeque::new(), state),
+        Some(arg) => bind(
+            arg,
+            Box::new(|binding, state| {
+                bind_many(
+                    args,
+                    Box::new(|mut bindings, state| {
+                        bindings.push_front(binding);
+                        k(bindings, state)
+                    }),
+                    state,
+                )
+            }),
+            state,
+        ),
+    }
 }

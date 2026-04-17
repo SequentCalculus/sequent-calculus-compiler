@@ -16,4 +16,4 @@ pub use context::{
 pub use declarations::*;
 pub use names::{Covar, Name, Var, fresh_covar};
 pub use terms::*;
-pub use types::{OptTyped, Ty, TypeArgs};
+pub use types::{Ty, TypeArgs};

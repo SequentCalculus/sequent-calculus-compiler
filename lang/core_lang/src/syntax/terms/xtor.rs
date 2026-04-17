@@ -131,7 +131,7 @@ impl<C: Chi> Focusing for Xtor<C> {
 }
 
 impl Bind for Xtor<Prd> {
-    // bind(C(t_i))[k] = bind(t_i)[λas.⟨ C(as) | ~μx.k(x) ⟩]
+    // bind(K(t_i))[k] = bind(t_i)[λas.⟨ K(as) | ~μx.k(x) ⟩]
     fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         bind_many(
             self.args.into(),
