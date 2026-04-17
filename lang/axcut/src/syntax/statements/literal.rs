@@ -100,7 +100,7 @@ impl Linearizing for Literal {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         };
         new_context.bindings.push(new_binding);

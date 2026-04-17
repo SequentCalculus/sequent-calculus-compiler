@@ -156,7 +156,7 @@ impl Linearizing for Op {
             var: self.var.clone(),
             ty: Ty::I64,
             chi: Chirality::Ext,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
         };
         new_context.bindings.push(new_binding);
 
