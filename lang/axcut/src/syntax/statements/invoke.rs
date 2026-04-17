@@ -92,7 +92,7 @@ impl Linearizing for Invoke {
         let closure_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
-            quantity: todo!(),
+            quantity: Quantity::Linear,
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(closure_binding.clone());
