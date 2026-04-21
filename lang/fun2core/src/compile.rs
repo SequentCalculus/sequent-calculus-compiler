@@ -247,8 +247,8 @@ fn bind(arg: Argument, k: Continuation, state: &mut CompileState) -> Statement {
 }
 
 /// This function is used during the translation from [Fun](fun) into [Core](core_lang) to avoid
-/// administrative redexes in the destructor case. It is similar to the [`bind_co_value`]-function,
-/// but for a whole list of lifted terms.
+/// administrative redexes in the destructor case. It is similar to the [`bind`]-function, but for
+/// a whole list of lifted terms.
 /// - `args` is the list of lifted terms.
 /// - `continuation` is the continuation containing the statement from which the terms have been
 ///   lifted.
