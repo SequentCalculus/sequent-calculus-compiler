@@ -39,7 +39,7 @@ use printer::Print;
 use crate::{
     syntax::names::Var,
     traits::used_binders::UsedBinders,
-    typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
+    typing::{errors::Error, inference::{Constraint, Inference}, symbol_table::SymbolTable},
 };
 
 use super::{
@@ -140,7 +140,7 @@ impl Inference for Term {
             context: &TypingContext,
             var_name_generator: &mut crate::typing::inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
         match self {
             Term::XVar(xvar) => xvar.constraint_equations(symbol_table, context, var_name_generator, ty_var),
             Term::Lit(lit) => lit.constraint_equations(symbol_table, context, var_name_generator, ty_var),

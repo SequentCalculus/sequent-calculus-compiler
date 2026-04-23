@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -61,14 +62,14 @@ impl Inference for New {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
 
-        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+        let mut constraints: Vec<Constraint> = Vec::new();
         
         if let Some(first_clause) = self.clauses.first() {
             let new_type_var = var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraints.push((new_type_var, ty_var.clone()));
+            constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
             let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
                 Some(type_name) => type_name,
@@ -165,7 +166,7 @@ impl Inference for New {
                 }
             };
 
-            constraints.push((ty_var, resulting_codata_type));
+            constraints.push(Constraint::mk_only_ty(ty_var, resulting_codata_type));
             
 
         } else {
@@ -220,6 +221,7 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
@@ -258,7 +260,12 @@ mod test {
                 TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
             ));
 
-        let expected = vec![(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), (Ty::mk_ty_var("1"), Ty::mk_i64()), (Ty::mk_ty_var("2"), Ty::mk_i64()), (Ty::mk_ty_var("x"), lpair_type.clone().unwrap())];
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), lpair_type.clone().unwrap())
+        ];
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
         assert_eq!(result, expected);
@@ -288,10 +295,11 @@ mod test {
         let expected_codata_type = Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]));
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("3"), Ty::mk_ty_var("2")),
-            (Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
-            (Ty::mk_ty_var("x"), expected_codata_type)];
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_ty_var("2")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type)
+        ];
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
         assert_eq!(result, expected);
@@ -334,11 +342,11 @@ mod test {
         let expected_codata_type = Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("1")]));
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("1"), Ty::mk_i64()),
-            (Ty::mk_ty_var("2"), expected_codata_type.clone()),
-            (expected_codata_type.clone(), Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))),
-            (Ty::mk_ty_var("x"), expected_codata_type)
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), expected_codata_type.clone()),
+            Constraint::mk_only_ty(expected_codata_type.clone(), Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type)
         ];
 
         assert_eq!(result, expected);

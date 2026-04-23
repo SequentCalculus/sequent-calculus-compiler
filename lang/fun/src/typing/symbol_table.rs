@@ -27,9 +27,11 @@ use crate::parser::util::ToMiette;
 /// - user-declared type templates with type parameters
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
-    /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
+    /// Maps the uniquenames of top-level [definitions][Def] to their signatures, i.e., their parameter list
     /// and return type.
     pub defs: HashMap<Name, (TypingContext, Ty)>,
+    /// Maps names of top-level [definitions][Def] to the signatures of all functions, that share the name
+    pub variational_defs: HashMap<Name, Vec<(TypingContext, Ty)>>,
     /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
     /// list.
     pub ctors: HashMap<Name, TypingContext>,
@@ -232,16 +234,14 @@ impl BuildSymbolTable for Declaration {
 
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        if symbol_table.defs.contains_key(&self.name) {
-            return Err(Error::DefinedMultipleTimes {
-                span: Some(self.span),
-                name: self.name.clone(),
-            });
-        }
-        symbol_table.defs.insert(
+        if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name){
+            signature_list.push((self.context.clone(), self.ret_ty.clone()));
+        } else {
+            symbol_table.variational_defs.insert(
             self.name.clone(),
-            (self.context.clone(), self.ret_ty.clone()),
+            vec![(self.context.clone(), self.ret_ty.clone())],
         );
+        }
         Ok(())
     }
 }

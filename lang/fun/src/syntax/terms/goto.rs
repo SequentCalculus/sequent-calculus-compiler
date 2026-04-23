@@ -8,6 +8,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -77,7 +78,7 @@ impl Inference for Goto {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
             let continuation_type = context.lookup_covar(&self.target, &self.span)?;
             self.ty = Some(ty_var);
 
@@ -114,6 +115,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
@@ -134,7 +136,7 @@ mod test {
         let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_i64(), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
         ];
         assert_eq!(result, expected)
     }

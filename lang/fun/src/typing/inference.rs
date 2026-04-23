@@ -1,8 +1,9 @@
 use std::{collections::HashMap, rc::Rc};
 
+use derivative::Derivative;
 use miette::SourceSpan;
 
-use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext, util::dummy_span}, typing::{Error, SymbolTable}};
+use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext}, typing::{Error, SymbolTable}};
 
 
 pub trait Inference: Sized {
@@ -13,7 +14,7 @@ pub trait Inference: Sized {
         context: &TypingContext,
         var_name_generator: &mut VarNameGenerator,
         ty_var: Ty
-    ) -> Result<Vec<(Ty,Ty)>, Error>;
+    ) -> Result<Vec<Constraint>, Error>;
 
     fn insert_inferred_type(
         &mut self,
@@ -29,7 +30,7 @@ impl<T: Inference + Clone> Inference for Rc<T> {
         context: &TypingContext,
         var_name_generator: &mut VarNameGenerator,
         ty_var: Ty
-    ) -> Result<Vec<(Ty,Ty)>, Error> {
+    ) -> Result<Vec<Constraint>, Error> {
         Rc::make_mut(self).constraint_equations(symbol_table, context, var_name_generator, ty_var)
     }
 
@@ -49,7 +50,7 @@ impl<T: Inference> Inference for Option<T> {
         context: &TypingContext,
         var_name_generator: &mut VarNameGenerator,
         ty_var: Ty
-    ) -> Result<Vec<(Ty,Ty)>, Error> {
+    ) -> Result<Vec<Constraint>, Error> {
         match self {
             None => Ok(vec![]),
             Some(t ) => t.constraint_equations(symbol_table, context, var_name_generator, ty_var)
@@ -75,9 +76,9 @@ pub fn args_constraint_equations(
     context: &TypingContext,
     var_name_generator: &mut VarNameGenerator,
     span: SourceSpan
-) -> Result<Vec<(Ty, Ty)>, Error> {
+) -> Result<Vec<Constraint>, Error> {
 
-    let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+    let mut constraints: Vec<Constraint> = Vec::new();
 
     if args.entries.len() != types.bindings.len() {
         return Err(Error::WrongNumberOfArguments {
@@ -97,10 +98,10 @@ pub fn args_constraint_equations(
 
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
                     if let Some(ty) = &variable.ty {
-                        constraints.push((ty.clone(), found_ty.clone()));
+                        constraints.push(Constraint::mk_only_ty(ty.clone(), found_ty.clone()));
                     }
 
-                    constraints.push((expected_type.ty.clone(), found_ty));
+                    constraints.push(Constraint::mk_only_ty(expected_type.ty.clone(), found_ty));
                 },
                 _ => return Err(Error::ExpectedCovariableGotTerm { span }),
             }
@@ -151,194 +152,228 @@ impl Default for VarNameGenerator {
     }
 }
 
-pub fn constraint_unification(mut equations: Vec<(Ty, Ty)>) -> Result<HashMap<Name, Ty>, Error> {
-    let mut type_mapping: HashMap<Name, Ty> = HashMap::new();
+// todo: make an incompatible choices struct with the Error explaining why this whould be impossible
+pub type IncompatibleChoices = Vec<(Name, usize)>;
+
+
+
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub enum Constraint {
+    Equality(Ty, Ty, HashMap<Name, usize>),
+    ImpossibleWorld(IncompatibleChoices)
+}
+
+impl Constraint {
+    pub fn mk_equality(a: Ty, b: Ty, choices: HashMap<Name, usize>) -> Self {
+        Constraint::Equality(a, b, choices)
+    }
+
+    pub fn mk_only_ty(a: Ty, b: Ty) -> Self {
+        Constraint::Equality(a, b, Default::default())
+    }
+
+    pub fn mk_single_choice(a: Ty, b: Ty, choice_name: Name, choice_number: usize) -> Self {
+        let mut choices = HashMap::new();
+        choices.insert(choice_name, choice_number);
+        Constraint::Equality(a, b, choices)
+    }
+
+    pub fn mk_impossible_world(choice_name: Name, choice_number: usize) -> Self {
+        let mut choices = Vec::new();
+        choices.push((choice_name, choice_number));
+        Constraint::ImpossibleWorld(choices)
+    }
+
+    pub fn add_choice(&mut self, choice_name: Name, choice_number: usize) {
+        match self {
+            Self::Equality(a, b, choices) => {
+                choices.insert(choice_name, choice_number);
+            },
+            Self::ImpossibleWorld(_) => {}
+        }
+    }
+}
+
+pub fn add_choice_to_list(constraints: &mut Vec<Constraint>, choice_name: Name, choice_number: usize) {
+    for constraint in constraints {
+        constraint.add_choice(choice_name.clone(), choice_number);
+    }
+}
+
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub struct Solution {
+    pub var_name: Name,
+    pub ty: Ty,
+    pub choices: HashMap<Name, usize>
+}
+
+impl Solution {
+    fn new(var_name: Name, ty: Ty, choices: HashMap<String, usize>) -> Self {
+        Solution { var_name, ty, choices }  
+    }
+
+    fn new_no_choice(var_name: Name, ty: Ty) -> Self {
+        Solution { var_name, ty, choices: Default::default() }
+    }
+
+    pub fn get_only_solution(self) -> (Name, Ty) {
+        (self.var_name, self.ty)
+    }
+}
+
+pub fn constraint_unification(mut equations: Vec<Constraint>) -> (Vec<Solution>, Vec<IncompatibleChoices>) {
+    let mut solutions: Vec<Solution> = Vec::new();
+    let mut conflicts: Vec<IncompatibleChoices> = Vec::new();
+    let mut constraint_cache: Vec<Constraint> = Vec::new();
     
-    while let Some(constraint) = &mut equations.pop() {
-        if constraint.0 == constraint.1 {
-            // the constraint is irrevelant, since it declares "x=x"
+    while let Some(constraint) = equations.pop() {
+
+        if constraint_cache.contains(&constraint) {
             continue;
         }
 
-        let maybe_new_mapping = match constraint {
-            (Ty::I64 { .. }, Ty::I64 { .. }) => {continue;},
-            (Ty::Decl { name, type_args, .. }, ty) if type_args.args.is_empty() => {
-                // the first ty is a variable, so it can be added to the mapping
-                Some(HashMap::from([
-                    (name.to_string(), ty.clone())
-                ]))
+        constraint_cache.push(constraint.clone());
+
+        match constraint {
+            // two types that are the same have no value for the solution since x=x is trivial
+            Constraint::Equality(ty1, ty2 , _) if ty1 == ty2 => {continue;},
+            Constraint::Equality(Ty::Decl { name, type_args, .. }, ty, choices) if type_args.args.is_empty() => {
+                // the first ty is a variable, so it can be added to the solutions
+                solutions.push(Solution::new(name.to_string(), ty, choices));
             },
-            (ty, Ty::Decl { name, type_args, .. }) if type_args.args.is_empty() => {
-                // the second ty is a variable, but not the first, so it is insert "in reverse"
-                Some(HashMap::from([
-                    (name.to_string(), ty.clone())
-                ]))
+            Constraint::Equality(ty, Ty::Decl { name, type_args, .. }, choices) if type_args.args.is_empty() => {
+                // the second ty is a variable, but not the first, so it is added "in reverse"
+                solutions.push(Solution::new(name.to_string(), ty, choices));
             },
-            (Ty::Decl { span: span_l , name: name_l, type_args: type_args_l }, Ty::Decl {name: name_r, type_args: type_args_r, .. }) => {
+            Constraint::Equality(Ty::Decl { span: _ , name: name_l, type_args: type_args_l }, Ty::Decl {name: name_r, type_args: type_args_r, .. }, choices) => {
                 if name_l == name_r {
                     // two matching (co-)datatypes in a constraint
                     if type_args_l.args.len() == type_args_r.args.len() {
                         for (ty_l, ty_r) in type_args_l.args.iter().zip(type_args_r.args.iter()) {
-                            equations.push((ty_l.clone(), ty_r.clone()));
+                            equations.push(Constraint::mk_equality(ty_l.clone(), ty_r.clone(), choices.clone()));
                         }
-                        None
                     } else {
                         // theoretically impossible branch, where the type name is the same, but for some reason one Decl has more Type Arguments than the other
                         // this should already be covered by the constraint collection
-                        return Err(Error::WrongNumberOfTypeArguments { span: *span_l, expected: type_args_l.args.len(), got: type_args_r.args.len() });
+                        panic!("Two instances of the same (co-)datatype have different number of arguments");
                     }
                 } else {
                     // two different (co-)datatypes are in a constraint -> impossible to unify the equation
-                    return Err(Error::ConflictingTypeConstraints { span_l: span_l.unwrap_or(dummy_span()), expected_type_l: name_l.to_string(), expected_type_r: name_r.to_string()});
+                    conflicts.push(choices.into_iter().collect());
                 }
             },
-            (ty_l, ty_r) => {
-                // two types, neither a type variable and also not two declerations, which means a literal type and a declaration -> impossible to unify the equation
-                let span = match ty_l {
-                    Ty::I64 { span } => span,
-                    Ty::Decl { span,..} => span
-                };
-                return Err(Error::ConflictingTypeConstraints { span_l: span.unwrap_or(dummy_span()), expected_type_l: ty_l.to_string(), expected_type_r: ty_r.to_string()});
+            Constraint::Equality(_, _, choices) => {
+                // two types, neither a type variable nor two declerations, which means a literal type and a declaration -> impossible to unify the equation
+                conflicts.push(choices.into_iter().collect());
+            },
+            Constraint::ImpossibleWorld(choices) => {
+                conflicts.push(choices);
             }
         };
 
-        if let Some(new_mapping) = maybe_new_mapping {
-            // if a new mapping was found it is applied to all constraints
-            for (ty_l, ty_r) in &mut equations {
-                ty_l.mut_subst_ty(&new_mapping);
-                ty_r.mut_subst_ty(&new_mapping);
-            }
-
-            type_mapping.extend(new_mapping);
-        }
     }
 
-    let old_type_mapping = type_mapping.clone();
-
-    // finally the transitive hull of the mappings are used to get all final results in the mappings
-    for ty in type_mapping.values_mut() {
-        while ty.collect_var_names().iter().any(|name| old_type_mapping.contains_key(name)) {
-            ty.mut_subst_ty(&old_type_mapping);
-        }
-    }
-
-    Ok(type_mapping)
+    (solutions, conflicts)
 }
 
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
 
-    use crate::{syntax::{Ty, TypeArgs}, typing::inference::constraint_unification};
+    use crate::{syntax::{Ty, TypeArgs}, typing::inference::{Constraint, Solution, constraint_unification}};
 
 
     #[test]
     fn unification_test1() {
         let constraints = vec![
-            (Ty::mk_i64(), Ty::mk_i64()),
-            (Ty::mk_ty_var("x"), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
 
-        let result = constraint_unification(constraints).unwrap();
+        let (solutions, conflicts) = constraint_unification(constraints);
 
-        let mut expected = HashMap::new();
-        expected.insert("x".to_string(), Ty::mk_i64());
+        let expected: Vec<Solution> = vec![Solution::new_no_choice("x".to_string(), Ty::mk_i64())];
 
-        assert_eq!(result, expected);
+        assert_eq!(solutions, expected);
+        assert!(conflicts.is_empty());
     }
 
 
     #[test]
     fn unification_test2() {
         let constraints = vec![
-            (Ty::mk_i64(), Ty::mk_i64()),
-            (Ty::mk_ty_var("z"), Ty::mk_ty_var("meta_var 1")),
-            (Ty::mk_ty_var("y"), Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_ty_var("z")]))),
-            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("z"), Ty::mk_ty_var("meta_var 1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("y"), Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_ty_var("z")]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
-        let result = constraint_unification(constraints).unwrap();
+        let (solutions, conflicts) = constraint_unification(constraints);
 
-        let expected = HashMap::from([
-            ("x".to_string(), Ty::mk_i64()),
-            ("y".to_string(), Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("meta_var 1")]))),
-            ("z".to_string(), Ty::mk_ty_var("meta_var 1"))
-        ]);
+        let expected = vec![
+            Solution::new_no_choice("x".to_string(), Ty::mk_i64()),
+            Solution::new_no_choice("y".to_string(), Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("meta_var 1")]))),
+            Solution::new_no_choice("z".to_string(), Ty::mk_ty_var("meta_var 1"))
+        ];
         
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    /// testing that the order of constraints should not affect the final result
-    fn unification_cummutative() {
-        let constraints1 = vec![
-            (Ty::mk_ty_var("final_type"), Ty::mk_decl("ComplexType", TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_i64(), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))]))),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("a")),
-            (Ty::mk_ty_var("a"), Ty::mk_i64()),
-            (Ty::mk_ty_var("y"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("x")])))
-        ];
-
-        let mapping1 = constraint_unification(constraints1).unwrap();
-
-        let constraints2 = vec![
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("a")),
-            (Ty::mk_ty_var("y"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("x")]))),
-            (Ty::mk_ty_var("a"), Ty::mk_i64()),
-            (Ty::mk_ty_var("final_type"), Ty::mk_decl("ComplexType", TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_i64(), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))]))),            
-        ];
-
-        let mapping2 = constraint_unification(constraints2).unwrap();
-
-        assert_eq!(mapping1.get("final_type"), mapping2.get("final_type"));
+        assert_eq!(solutions, expected);
+        assert!(conflicts.is_empty());
     }
 
     #[test]
     fn unification_decl_equation() {
         let constraints = vec![
-            (Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("a"), Ty::mk_ty_var("b")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("x")])))
+            Constraint::mk_only_ty(Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("a"), Ty::mk_ty_var("b")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("x")])))
         ];
 
-        let result = constraint_unification(constraints).unwrap();
+        let (solutions, conflicts) = constraint_unification(constraints);
 
-        let expected = HashMap::from([
-            ("a".to_string(), Ty::mk_i64()),
-            ("b".to_string(), Ty::mk_ty_var("x"))
-        ]);
+        let expected = vec![
+            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
+            Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("x"))
+        ];
 
-        assert_eq!(result, expected);
+        assert_eq!(solutions, expected);
+        assert!(conflicts.is_empty());
     }
 
     #[test]
     fn unification_impossible_constraint1() {
         let constraints = vec![
-            (Ty::mk_i64(), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")])))
+            Constraint::mk_equality(Ty::mk_i64(), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")])), HashMap::from([("a".to_string(), 1)]))
         ];
 
-        let result = constraint_unification(constraints);
+        let (_, conflicts) = constraint_unification(constraints);
 
-        assert!(result.is_err());
+        let expected_conflict: Vec<Vec<(String, usize)>> = vec![vec![("a".to_string(), 1)]];
+
+        assert_eq!(conflicts, expected_conflict);
     }
 
     #[test]
     fn unification_impossible_constraint2() {
         let constraints = vec![
-            (Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_ty_var("a"), Ty::mk_ty_var("b")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")])))
+            Constraint::mk_equality(Ty::mk_decl("Pair", TypeArgs::mk(vec![Ty::mk_ty_var("a"), Ty::mk_ty_var("b")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")])), HashMap::from([("a".to_string(), 2), ("b".to_string(), 5)]))
         ];
 
-        let result = constraint_unification(constraints);
+        let (_, conflicts) = constraint_unification(constraints);
 
-        assert!(result.is_err());
+        let expected_conflicts = vec![vec![("a".to_string(), 2), ("b".to_string(), 5)]];
+
+        assert_eq!(conflicts, expected_conflicts);
     }
 
 
     #[test]
     fn unification_impossible_constraint3() {
         let constraints = vec![
-            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_decl("Optional", TypeArgs::mk(vec![Ty::mk_ty_var("a")]))])))
+            Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_decl("Optional", TypeArgs::mk(vec![Ty::mk_ty_var("a")]))])))
         ];
 
-        let result = constraint_unification(constraints);
+        let (_, conflicts) = constraint_unification(constraints);
 
-        assert!(result.is_err());
+        assert_eq!(conflicts, vec![vec![]]);
     }
 }

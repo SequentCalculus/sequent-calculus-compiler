@@ -6,7 +6,9 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
+use crate::typing::inference::add_choice_to_list;
 use crate::typing::inference::args_constraint_equations;
 use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
@@ -60,23 +62,63 @@ impl Inference for Call {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
-        match symbol_table.defs.get(&self.name) {
-            Some(signature) => {
+        ) -> Result<Vec<Constraint>, Error> {
+        match symbol_table.variational_defs.get(&self.name) {
+            Some(ref signatures) if signatures.len() == 0 => {
+                panic!("encountered a function definition with no signature")
+            },
+            Some(ref signatures) if signatures.len() == 1 => {
+                // there is only one signature -> the function has no overloading, no need to add a variation variable
+                let signature = signatures[0].clone();
+
                 let mut constraints = Vec::new();
 
                 // adding a new type var as the type of the term for easier lookup after unification
                 let new_type_var = var_name_generator.get_new_ty_var();
                 self.ret_ty = Some(new_type_var.clone());
-                constraints.push((new_type_var, ty_var.clone()));
+                constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
                 let (types, ret_ty) = signature.clone();
-                constraints.push((ty_var, ret_ty));
+                constraints.push(Constraint::mk_only_ty(ty_var, ret_ty));
 
                 constraints.append(&mut args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span)?);
 
                 Ok(constraints)
-            }
+            },
+            Some(signatures) => {
+                // there are more than one signatures for a function -> it is overloaded
+                let mut constraints: Vec<Constraint> = Vec::new();
+
+                // adding a new type var as the type of the term for easier lookup after unification
+                let new_type_var = var_name_generator.get_new_ty_var();
+                self.ret_ty = Some(new_type_var.clone());
+                constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+
+                // the constraints are created for every choice, and marked with the choice made
+                for (choice_idx, signature) in signatures.clone().iter().enumerate() {
+                    let (types, ret_ty) = signature.clone();
+
+                    // the choice name is the name of the function and the choice number the index in the list of choices
+                    constraints.push(Constraint::mk_single_choice(ty_var.clone(), ret_ty, self.name.clone(), choice_idx));
+
+                    match args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span) {
+                        Ok(mut additional_constraints) => {
+                            add_choice_to_list(&mut additional_constraints, self.name.clone(), choice_idx);
+                            constraints.append(&mut additional_constraints);
+                        },
+                        Err(Error::WrongNumberOfArguments { .. }) => {
+                            // The wrong number of Arguments Error only indicates that this version of the function won't work,
+                            // others could still work, so the error is catched and marked as an impossible world
+                            constraints.push(Constraint::mk_impossible_world(self.name.clone(), choice_idx));
+                        },
+                        Err(other_err) => {
+                            return Err(other_err);
+                        }
+                    }
+                }
+
+                Ok(constraints)
+            },
             None => Err(Error::Undefined {
                 span: None,
                 name: self.name.clone(),
@@ -115,6 +157,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
@@ -139,10 +182,10 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
 
-            (Ty::mk_i64(), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
         ];
 
         assert_eq!(result, expected);

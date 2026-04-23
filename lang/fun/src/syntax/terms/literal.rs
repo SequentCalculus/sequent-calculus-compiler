@@ -7,7 +7,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
-use crate::typing::inference::Inference;
+use crate::typing::inference::{Constraint, Inference};
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -58,8 +58,8 @@ impl Inference for Lit {
             _context: &TypingContext,
             _var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
-        Ok(vec![(ty_var, Ty::mk_i64())])
+        ) -> Result<Vec<Constraint>, Error> {
+        Ok(vec![Constraint::mk_only_ty(ty_var, Ty::mk_i64())])
     }
 
     fn insert_inferred_type(
@@ -74,7 +74,7 @@ impl Inference for Lit {
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::inference::{Inference, VarNameGenerator};
+    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
     use crate::typing::*;
 
     #[test]
@@ -83,7 +83,7 @@ mod test {
 
         let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
-        let expected = vec![(Ty::mk_ty_var("x"), Ty::mk_i64())];
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
 
         assert_eq!(result, expected);
     }

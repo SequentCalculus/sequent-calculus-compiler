@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::inference::{Inference, args_constraint_equations};
 use crate::typing::*;
@@ -90,13 +91,13 @@ impl Inference for Destructor {
         context: &TypingContext,
         var_name_generator: &mut inference::VarNameGenerator,
         ty_var: Ty
-    ) -> Result<Vec<(Ty,Ty)>, Error> {
-        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+    ) -> Result<Vec<Constraint>, Error> {
+        let mut constraints: Vec<Constraint> = Vec::new();
 
         // creating a new type var to link the type of the current term to the future result after unification
         let new_type_var = var_name_generator.get_new_ty_var();
         self.ty = Some(new_type_var.clone());
-        constraints.push((new_type_var, ty_var.clone()));
+        constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
         let codata_type_name = match symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
@@ -161,7 +162,7 @@ impl Inference for Destructor {
 
         constraints.append(&mut args_constraint_equations(&mut self.args, &arg_types, symbol_table, context, var_name_generator, self.span)?);
 
-        constraints.push((ty_var, out_type));
+        constraints.push(Constraint::mk_only_ty(ty_var, out_type));
 
         Ok(constraints)
     }
@@ -206,6 +207,7 @@ mod destructor_tests {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
@@ -238,10 +240,10 @@ mod destructor_tests {
         ]));
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("3"), scrutinee_type.clone()),
-            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("3"), scrutinee_type.clone()),
+            Constraint::mk_only_ty(scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
         ];
 
         assert_eq!(result, expected);
@@ -273,12 +275,12 @@ mod destructor_tests {
         ]));
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
 
-            (Ty::mk_ty_var("1"), scrutinee_type.clone()),
-            (scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), scrutinee_type.clone()),
+            Constraint::mk_only_ty(scrutinee_type.clone(), Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
 
-            (Ty::mk_ty_var("x"), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
 
         assert_eq!(result, expected);
@@ -308,20 +310,20 @@ mod destructor_tests {
 
         let expected = vec![
             // new type var
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
 
             // scrutinee
-            (Ty::mk_ty_var("3"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]))),
-            (Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]))),
+            Constraint::mk_only_ty(Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")])), Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]))),
 
             // argument 1
-            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
 
             // argument 2,
-            (Ty::mk_ty_var("2"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
 
             //final type constraint
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("2"))
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("2"))
         ];
         
         assert_eq!(result, expected)

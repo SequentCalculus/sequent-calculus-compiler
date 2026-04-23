@@ -6,6 +6,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
 use crate::typing::inference::args_constraint_equations;
 use crate::typing::inference::args_insert_inferred_type;
@@ -65,14 +66,14 @@ impl Inference for Constructor {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
 
         let mut constraints = Vec::new();
 
         // creating a new type var to link the type of the current term to the future result after unification
         let new_type_var = var_name_generator.get_new_ty_var();
         self.ty = Some(new_type_var.clone());
-        constraints.push((new_type_var, ty_var.clone()));
+        constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
         let data_type_name = match symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
@@ -121,7 +122,7 @@ impl Inference for Constructor {
 
         constraints.append(&mut args_constraint_equations(&mut self.args, &instanciated_template, symbol_table, context, var_name_generator, self.span)?);
 
-        constraints.push((ty_var, expected_type));
+        constraints.push(Constraint::mk_only_ty(ty_var, expected_type));
 
         Ok(constraints)
 
@@ -160,6 +161,7 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
 
@@ -176,8 +178,8 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table_list(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
         ];
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
@@ -207,18 +209,18 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table_list(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
         
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
 
             // cons
-            (Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
-            (Ty::mk_ty_var("1"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
 
             // nil
-            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
-            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("4")]))),
+            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
+            Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("4")]))),
 
 
-            (Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
         ];
 
         assert_eq!(result, expected);

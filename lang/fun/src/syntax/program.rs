@@ -1,7 +1,7 @@
 //! This module defines programs in Core.
 
 use printer::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::syntax::*;
 use crate::typing::inference::{VarNameGenerator, constraint_unification};
@@ -53,7 +53,25 @@ impl Program {
             }
         }
 
-        let type_mapping = constraint_unification(constraints)?;
+        let (solutions, conflicts) = constraint_unification(constraints);
+
+        let selected_world = dummy_world_selector(conflicts);
+
+        // now all solutions that are part of the selected world are filtered.
+        let mut selected_solutions = solutions;
+        for (name, wanted_id) in selected_world {
+            selected_solutions.retain(|s| match s.choices.get(&name) {
+                Some(id) => wanted_id == *id,
+
+                // if the solution, doesn't have a choice for the wanted name, it is invariant to the choice, so it is part of the world
+                None => true
+            });
+
+        }
+
+        // the solutions are converted to a HashMap and then they are inserted in the program
+        let type_mapping: HashMap<String, Ty> = selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect();
+
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table)?;
         }
@@ -85,6 +103,10 @@ impl Program {
         }
         names
     }
+}
+
+fn dummy_world_selector(_conflicts: Vec<crate::typing::inference::IncompatibleChoices>) -> Vec<(Name, usize)> {
+    vec![("a".to_string(), 4), ("b".to_string(), 7)]
 }
 
 impl Print for Program {

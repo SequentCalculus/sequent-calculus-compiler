@@ -6,6 +6,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -65,7 +66,7 @@ impl Inference for Paren {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
         self.inner.constraint_equations(symbol_table, context, var_name_generator, ty_var)
     }
 

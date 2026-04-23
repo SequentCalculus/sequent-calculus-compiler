@@ -59,7 +59,7 @@ mod compile_tests {
                     SymbolTable {
                         ctors: HashMap::default(),
                         dtors: HashMap::default(),
-                        overloaded_defs: HashMap::default(),
+                        variational_defs: HashMap::default(),
                         defs: funs,
                         types: HashMap::default(),
                         ctor_templates: HashMap::default(),

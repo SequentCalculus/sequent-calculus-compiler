@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Inference;
+use crate::typing::inference::{Constraint, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -78,14 +78,14 @@ impl Inference for PrintI64 {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
-        let mut constraints: Vec<(Ty, Ty)> = vec![];
+        ) -> Result<Vec<Constraint>, Error> {
+        let mut constraints: Vec<Constraint> = vec![];
 
         // the term type is set to a type variable for easy type lookup after the unification algorithm
         let new_var_type = var_name_generator.get_new_ty_var();
         self.ty = Some(new_var_type.clone());
 
-        constraints.push((new_var_type, ty_var.clone()));
+        constraints.push(Constraint::mk_only_ty(new_var_type, ty_var.clone()));
         
         constraints.append(&mut self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
         constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var)?);
@@ -125,7 +125,7 @@ mod test {
     use crate::syntax::{Lit, PrintI64, Term, Ty, TypingContext};
     use crate::syntax::util::dummy_span;
     use crate::typing::SymbolTable;
-    use crate::typing::inference::{Inference, VarNameGenerator};
+    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
 
 
 
@@ -137,7 +137,7 @@ mod test {
 
         let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
-        let expected = vec![(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), (Ty::mk_i64(), Ty::mk_i64()), (Ty::mk_ty_var("x"), Ty::mk_i64())];
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

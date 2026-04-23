@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Inference;
+use crate::typing::inference::{Constraint, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -83,7 +83,7 @@ impl Inference for Case {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
 
         if let Some(first_clause) = self.clauses.first() {
             let mut constraints = Vec::new();
@@ -91,7 +91,7 @@ impl Inference for Case {
             // adding a type variable the type of the case block
             let new_type_var = var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraints.push((new_type_var, ty_var.clone()));
+            constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
 
             let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
@@ -277,6 +277,7 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
+    use crate::typing::inference::Constraint;
     use crate::typing::inference::Inference;
     use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
@@ -320,18 +321,18 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
 
             // Nil
-            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
 
             // Cons
-            (Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
 
             // scrutinee
-            (Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
-            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
+            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
+            Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
         ];
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
@@ -374,18 +375,18 @@ mod test {
         let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
 
             // Nil
-            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
 
             // Cons
-            (Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
-            (Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
 
             // scrutinee
-            (Ty::mk_ty_var("2"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
-            (Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
+            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
+            Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
         ];
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Inference;
+use crate::typing::inference::{Constraint, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -132,13 +132,13 @@ impl Inference for IfC {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
-        let mut constraints: Vec<(Ty, Ty)> = Vec::new();
+        ) -> Result<Vec<Constraint>, Error> {
+        let mut constraints: Vec<Constraint> = Vec::new();
 
         // adding a new type var as the type of the term for easier lookup after unification
         let new_type_var = var_name_generator.get_new_ty_var();
         self.ty = Some(new_type_var.clone());
-        constraints.push((new_type_var, ty_var.clone()));
+        constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
         constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
         constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
@@ -186,7 +186,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Inference, VarNameGenerator};
+    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -206,11 +206,11 @@ mod test {
         let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
-            (Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            (Ty::mk_i64(), Ty::mk_i64()),
-            (Ty::mk_i64(), Ty::mk_i64()),
-            (Ty::mk_ty_var("x"), Ty::mk_i64()),
-            (Ty::mk_ty_var("x"), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
 
         assert_eq!(result, expected);

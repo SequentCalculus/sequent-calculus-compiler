@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -55,7 +56,7 @@ impl Inference for Exit {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
+        ) -> Result<Vec<Constraint>, Error> {
             self.ty = Some(ty_var);
             
             self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())

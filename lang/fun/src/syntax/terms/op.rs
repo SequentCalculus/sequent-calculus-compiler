@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Inference;
+use crate::typing::inference::{Constraint, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -87,8 +87,8 @@ impl Inference for Op {
             context: &TypingContext,
             var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<(Ty,Ty)>, Error> {
-        let mut constraints: Vec<(Ty, Ty)> = vec![(ty_var, Ty::mk_i64())];
+        ) -> Result<Vec<Constraint>, Error> {
+        let mut constraints: Vec<Constraint> = vec![Constraint::mk_only_ty(ty_var, Ty::mk_i64())];
 
         constraints.append(&mut self.fst.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
         constraints.append(&mut self.snd.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
@@ -120,7 +120,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Inference, VarNameGenerator};
+    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -136,7 +136,7 @@ mod test {
 
         let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
 
-        let expected = vec![(Ty::mk_ty_var("x"), Ty::mk_i64()), (Ty::mk_i64(), Ty::mk_i64()),(Ty::mk_i64(), Ty::mk_i64())];
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())];
 
         assert_eq!(result, expected);
     }
