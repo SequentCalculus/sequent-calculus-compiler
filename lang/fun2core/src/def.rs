@@ -7,8 +7,8 @@ use crate::{
 };
 use core_lang::syntax::{CodataDeclaration, names::Identifier};
 use fun::{
-    syntax::{names::Name, types::OptTyped},
-    traits::used_binders::UsedBinders,
+    syntax::names::Name,
+    traits::{OptTyped, UsedBinders},
 };
 
 use std::collections::{HashSet, VecDeque};

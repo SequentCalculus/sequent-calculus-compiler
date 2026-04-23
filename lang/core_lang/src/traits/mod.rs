@@ -2,12 +2,14 @@
 //! the [`Focusing`] trait for transforming a Core program into the focused fragment of Core.
 
 pub mod focus;
+pub mod is_co_value;
 pub mod substitution;
 pub mod typed;
 pub mod typed_free_vars;
 pub mod uniquify;
 
 pub use focus::{Bind, Continuation, Focusing, bind_many};
+pub use is_co_value::{IsCoValue, IsCovalue, IsValue};
 pub use substitution::{Subst, SubstVar};
 pub use typed::Typed;
 pub use typed_free_vars::TypedFreeVars;

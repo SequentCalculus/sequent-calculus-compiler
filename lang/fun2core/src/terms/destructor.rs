@@ -2,16 +2,16 @@
 
 use crate::{
     arguments::compile_subst,
-    compile::{Compile, CompileState},
+    compile::{Compile, CompileState, bind_many},
     types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
-use fun::syntax::types::OptTyped;
+use fun::traits::OptTyped;
 
 impl Compile for fun::syntax::terms::Destructor {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ..., c)}
+    /// 〚t.D(t_1, ...) 〛_{c} = bind_many_v(〚t_1, ...〛)[λas.〚t〛_{D(as, c)}]
     /// ```
     ///
     /// # Panics
@@ -22,24 +22,30 @@ impl Compile for fun::syntax::terms::Destructor {
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst(self.args, state);
-        args.entries.push(cont.into());
-        // new continuation: D(〚t_1〛, ..., c)
-        let new_cont = core_lang::syntax::terms::Xtor {
-            prdcns: Cns,
-            name: Identifier::new(self.id),
-            args,
-            ty: compile_ty(
-                &self
-                    .scrutinee
-                    .get_type()
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into();
+        bind_many(
+            // 〚t_1, ...〛
+            compile_subst(self.args, state).into(),
+            Box::new(|mut bindings, state| {
+                bindings.push_back(cont.into());
+                // new continuation: D(as, c)
+                let new_cont = core_lang::syntax::terms::Xtor {
+                    prdcns: Cns,
+                    name: Identifier::new(self.id),
+                    args: bindings.into(),
+                    ty: compile_ty(
+                        &self
+                            .scrutinee
+                            .get_type()
+                            .expect("Types should be annotated before translation"),
+                    ),
+                }
+                .into();
 
-        // 〚t〛_{new_cont}
-        self.scrutinee.compile_with_cont(new_cont, state)
+                // 〚t〛_{new_cont}
+                self.scrutinee.compile_with_cont(new_cont, state)
+            }),
+            state,
+        )
     }
 }
 

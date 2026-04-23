@@ -42,7 +42,7 @@ impl<T: Focusing> Focusing for Vec<T> {
     }
 }
 
-/// This is a type alias for a meta-level continuation, which abstracts over a (co)variable
+/// This is a type alias for a meta-level continuation that abstracts over a (co)variable
 /// standing for a term in argument position that has been lifted out of a statement. When the
 /// continuation is applied to a (co)variable, it returns the focused statement with the
 /// (co)variable in the place of the term that was lifted. The continuation also expects the
@@ -57,7 +57,7 @@ pub type ContinuationVec = Box<dyn FnOnce(VecDeque<ContextBinding>, &mut ID) -> 
 pub trait Bind: Sized {
     /// This method is used during [focusing](Focusing) to avoid administrative redexes. It takes
     /// a term that has been lifted out of argument position and additionally a meta-level
-    /// [continuation](Continuation) which contains the statement from which the term has been
+    /// [continuation](Continuation) that contains the statement from which the term has been
     /// lifted. It eventually yields the focused statement.
     /// - `continuation` is the continuation containing the statement from which the term has been
     ///   lifted.
@@ -77,20 +77,7 @@ pub trait Bind: Sized {
 pub fn bind_many(mut args: VecDeque<Argument>, k: ContinuationVec, max_id: &mut ID) -> FsStatement {
     match args.pop_front() {
         None => k(VecDeque::new(), max_id),
-        Some(Argument::Producer(prd)) => prd.bind(
-            Box::new(|binding, max_id| {
-                bind_many(
-                    args,
-                    Box::new(|mut bindings, max_id| {
-                        bindings.push_front(binding);
-                        k(bindings, max_id)
-                    }),
-                    max_id,
-                )
-            }),
-            max_id,
-        ),
-        Some(Argument::Consumer(cns)) => cns.bind(
+        Some(arg) => arg.bind(
             Box::new(|binding, max_id| {
                 bind_many(
                     args,

@@ -38,14 +38,11 @@ use printer::Print;
 
 use crate::{
     syntax::names::Var,
-    traits::used_binders::UsedBinders,
+    traits::*,
     typing::{check::Check, errors::Error, symbol_table::SymbolTable},
 };
 
-use super::{
-    context::TypingContext,
-    types::{OptTyped, Ty},
-};
+use super::{context::TypingContext, types::Ty};
 
 use std::collections::HashSet;
 
