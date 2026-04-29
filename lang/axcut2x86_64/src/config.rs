@@ -145,10 +145,10 @@ pub const fn address(n: isize) -> Immediate {
 pub const FIELDS_PER_BLOCK: usize = 3;
 
 /// The address offset within a memory block of the reference count.
-pub const REFERENCE_COUNT_OFFSET: Immediate = address(0);
+pub const REFERENCE_COUNT_OFFSET: Immediate = address(1);
 
 /// The address offset within a memory block of the link to the next element in a free list.
-pub const NEXT_ELEMENT_OFFSET: Immediate = address(0);
+pub const NEXT_ELEMENT_OFFSET: Immediate = address(1);
 
 /// This function calculates the address offset within a memory block of either the first or the
 /// second slot of a given field. The very first field of a memory block serves as a header and is
