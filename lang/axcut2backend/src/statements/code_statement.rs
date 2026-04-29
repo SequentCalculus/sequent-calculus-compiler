@@ -84,7 +84,9 @@ impl CodeStatement for Statement {
             Statement::Create(new) => {
                 new.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
-            Statement::Create1(_) => todo!(),
+            Statement::Create1(create1) => {
+                create1.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
             Statement::Invoke(invoke) => {
                 invoke.code_statement::<Backend, _, _, _>(types, context, instructions);
             }

@@ -36,7 +36,7 @@ impl CodeStatement for Literal {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
-            quantity: todo!(),
+            quantity: Quantity::Unrestricted,
             ty: Ty::I64,
         });
         Backend::load_immediate(

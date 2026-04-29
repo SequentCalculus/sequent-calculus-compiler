@@ -1,0 +1,95 @@
+//! This module defines the code generation for the creation of a closure.
+
+use axcut::syntax::context::Quantity;
+use printer::{Print, tokens::CREATE};
+
+use super::CodeStatement;
+use crate::fresh_labels::fresh_label;
+use crate::utils::{code_methods, code_table};
+use crate::{
+    code::Instructions,
+    config::{Config, TemporaryNumber::Snd},
+    memory::Memory,
+    parallel_moves::ParallelMoves,
+    utils::Utils,
+};
+use axcut::syntax::{
+    Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::Create1,
+};
+
+use std::hash::Hash;
+
+impl CodeStatement for Create1 {
+    fn code_statement<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
+        self,
+        types: &[TypeDeclaration],
+        mut context: TypingContext,
+        instructions: &mut Vec<Code>,
+    ) where
+        Backend: Config<Temporary, Immediate>
+            + Instructions<Code, Temporary, Immediate>
+            + Memory<Code, Temporary>
+            + ParallelMoves<Code, Temporary>
+            + Utils<Temporary>,
+    {
+        let comment = format!(
+            "{CREATE} {}: {} = ({})\\{{ ... \\}};",
+            self.var.print_to_string(None),
+            self.ty.print_to_string(None),
+            self.context
+                .as_ref()
+                .expect("Closure environment must be annotated")
+                .vars()
+                .print_to_string(None)
+        );
+        instructions.push(Backend::comment(comment));
+
+        let closure_environment = context.bindings.split_off(
+            context.bindings.len()
+                - self
+                    .context
+                    .expect("Closure environment must be annotated")
+                    .bindings
+                    .len(),
+        );
+        Backend::store1(closure_environment.clone().into(), &context, instructions);
+
+        let fresh_label = format!(
+            "{}_{}",
+            self.ty
+                .print_to_string(None)
+                .replace('[', "_")
+                .replace(", ", "_")
+                .replace(']', ""),
+            fresh_label()
+        );
+
+        context.bindings.push(ContextBinding {
+            var: self.var.clone(),
+            chi: Chirality::Cns,
+            quantity: Quantity::Linear,
+            ty: self.ty,
+        });
+
+        instructions.push(Backend::comment("#load tag".to_string()));
+        let table_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
+        Backend::load_label(table_temporary, fresh_label.clone(), instructions);
+
+        self.next
+            .code_statement::<Backend, _, _, _>(types, context, instructions);
+
+        let number_of_clauses = self.clauses.len();
+        instructions.push(Backend::label(fresh_label.clone()));
+        // if there is only one clause, we do not need a jump table
+        if number_of_clauses > 1 {
+            code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
+        }
+        code_methods::<Backend, _, _, _>(
+            &closure_environment.into(),
+            self.clauses,
+            &fresh_label,
+            types,
+            instructions,
+        );
+    }
+}

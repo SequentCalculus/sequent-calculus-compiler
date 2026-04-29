@@ -39,6 +39,11 @@ pub trait Memory<Code, Temporary> {
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     );
+    fn store1(
+        to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    );
     /// This method generates code for loading several values from memory into temporaries to the
     /// right of an existing context. The pointer to the memory from which the values are to be
     /// loaded is expected to be in the first temporary after the existing context.
@@ -46,4 +51,9 @@ pub trait Memory<Code, Temporary> {
     /// - `existing_context` is the existing context before the loads.
     /// - `instructions` is the list of instructions to which the new instructions are appended.
     fn load(to_load: TypingContext, existing_context: &TypingContext, instructions: &mut Vec<Code>);
+    fn load1(
+        to_load: TypingContext,
+        existing_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    );
 }

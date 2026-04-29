@@ -628,7 +628,67 @@ impl Memory<Code, Register> for Backend {
         );
     }
 
+    fn store1(
+        to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Last,
+            instructions,
+        );
+    }
+
     fn load(
+        to_load: TypingContext,
+        existing_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        if !to_load.bindings.is_empty() {
+            let memory_block = Backend::fresh_temporary(Fst, existing_context);
+
+            instructions.push(Code::COMMENT("#load from memory".to_string()));
+            instructions.push(Code::LW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+
+            // the then branch corresponds to the reference count of the object whose memory we
+            // load being zero, so we can release the memory
+            let mut then_branch = Vec::new();
+            then_branch.push(Code::COMMENT(
+                "##... or release blocks onto linear free list when loading".to_string(),
+            ));
+            load_fields(
+                to_load.clone(),
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Release,
+                &mut then_branch,
+            );
+
+            // the else branch corresponds to the reference count of the object whose memory we
+            // load being greater than zero, so we decrement the reference count and share the
+            // pointers to the children
+            let mut else_branch = Vec::new();
+            else_branch.push(Code::COMMENT(
+                "##either decrement refcount and share children...".to_string(),
+            ));
+            else_branch.push(Code::ADDI(TEMP, TEMP, -1));
+            else_branch.push(Code::SW(TEMP, memory_block, REFERENCE_COUNT_OFFSET));
+            load_fields(
+                to_load,
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Share,
+                &mut else_branch,
+            );
+
+            instructions.push(Code::COMMENT("##check refcount".to_string()));
+            if_zero_then_else(TEMP, then_branch, else_branch, instructions);
+        }
+    }
+
+    fn load1(
         to_load: TypingContext,
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,

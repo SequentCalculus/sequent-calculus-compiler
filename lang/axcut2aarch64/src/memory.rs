@@ -784,7 +784,112 @@ impl Memory<Code, Temporary> for Backend {
         );
     }
 
+    fn store1(
+        to_store: TypingContext,
+        remaining_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Last,
+            instructions,
+        );
+    }
+
     fn load(
+        to_load: TypingContext,
+        existing_context: &TypingContext,
+        instructions: &mut Vec<Code>,
+    ) {
+        #[allow(clippy::vec_init_then_push)]
+        fn load_register(
+            memory_block: Register,
+            to_load: TypingContext,
+            existing_context: &TypingContext,
+            instructions: &mut Vec<Code>,
+        ) {
+            // tracks whether a register for memory blocks in a spill position has been freed
+            let mut register_freed = false;
+
+            // the then branch corresponds to the reference count of the object whose memory we
+            // load being zero, so we can release the memory
+            let mut then_branch = Vec::new();
+            then_branch.push(Code::COMMENT(
+                "##... or release blocks onto linear free list when loading".to_string(),
+            ));
+            load_fields(
+                to_load.clone(),
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Release,
+                &mut register_freed,
+                &mut then_branch,
+            );
+
+            // reset for call of `load_fields` in else branch
+            register_freed = false;
+
+            // the else branch corresponds to the reference count of the object whose memory we
+            // load being greater than zero, so we decrement the reference count and share the
+            // pointers to the children
+            let mut else_branch = Vec::new();
+            else_branch.push(Code::COMMENT(
+                "##either decrement refcount and share children...".to_string(),
+            ));
+            // we expect the reference count to be in [`super::config::TEMP2`]
+            else_branch.push(Code::SUBI(TEMP2, TEMP2, 1.into()));
+            else_branch.push(Code::STR(TEMP2, memory_block, REFERENCE_COUNT_OFFSET));
+            load_fields(
+                to_load,
+                existing_context,
+                BlockPosition::Last,
+                LoadMode::Share,
+                &mut register_freed,
+                &mut else_branch,
+            );
+
+            instructions.push(Code::COMMENT("##check refcount".to_string()));
+            // we expect the reference count to be in [`super::config::TEMP2`]
+            if_zero_then_else(TEMP2, then_branch, else_branch, instructions);
+        }
+
+        if !to_load.bindings.is_empty() {
+            let memory_block = Backend::fresh_temporary(Fst, existing_context);
+
+            instructions.push(Code::COMMENT("#load from memory".to_string()));
+            match memory_block {
+                Temporary::Register(memory_block_register) => {
+                    // we put the reference count into [`super::config::TEMP2`], since
+                    // `load_register` expects it to be there
+                    instructions.push(Code::LDR(
+                        TEMP2,
+                        memory_block_register,
+                        REFERENCE_COUNT_OFFSET,
+                    ));
+                    load_register(
+                        memory_block_register,
+                        to_load,
+                        existing_context,
+                        instructions,
+                    );
+                }
+                Temporary::Spill(memory_block_position) => {
+                    instructions.push(Code::LDR(
+                        TEMP,
+                        Register::SP,
+                        stack_offset(memory_block_position),
+                    ));
+                    // we put the reference count into [`super::config::TEMP2`], since
+                    // `load_register` expects it to be there
+                    instructions.push(Code::LDR(TEMP2, TEMP, REFERENCE_COUNT_OFFSET));
+                    load_register(TEMP, to_load, existing_context, instructions);
+                }
+            }
+        }
+    }
+
+    fn load1(
         to_load: TypingContext,
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
