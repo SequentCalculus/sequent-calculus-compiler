@@ -143,6 +143,7 @@ pub const fn address(n: isize) -> Immediate {
 /// The number of usable fields per memory block. One additional field is used as a header,
 /// containing, for example, the reference count or the link to the next element in a free list.
 pub const FIELDS_PER_BLOCK: usize = 3;
+pub const FIELDS_PER_BLOCK_1: usize = 4;
 
 /// The address offset within a memory block of the reference count.
 pub const REFERENCE_COUNT_OFFSET: Immediate = address(1);
@@ -159,6 +160,11 @@ pub const NEXT_ELEMENT_OFFSET: Immediate = address(1);
 #[allow(clippy::cast_possible_wrap)]
 pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
     address(2 + 2 * i as isize + number as isize)
+}
+
+#[allow(clippy::cast_possible_wrap)]
+pub const fn field_offset1(number: TemporaryNumber, i: usize) -> Immediate {
+    address(2 * i as isize + number as isize)
 }
 
 /// This function returns the register in which the `number`th argument is passed to a function

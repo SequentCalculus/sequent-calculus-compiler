@@ -31,11 +31,14 @@
 //! one memory block further. We use bump allocation from this big chunk of unused memory whenever
 //! the free lists are empty.
 
+use crate::config::field_offset1;
+
 use super::Backend;
 use super::code::{Code, compare_immediate};
 use super::config::{
-    FIELDS_PER_BLOCK, FREE, HEAP, Immediate, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
-    SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, field_offset, stack_offset,
+    FIELDS_PER_BLOCK, FIELDS_PER_BLOCK_1, FREE, HEAP, Immediate, NEXT_ELEMENT_OFFSET,
+    REFERENCE_COUNT_OFFSET, Register, SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary,
+    field_offset, stack_offset,
 };
 
 use TemporaryNumber::{Fst, Snd};
@@ -203,6 +206,84 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     if_zero_then_else(HEAP, None, then_branch, else_branch, instructions);
 }
 
+#[allow(clippy::vec_init_then_push)]
+fn acquire_block1(new_block: Temporary, instructions: &mut Vec<Code>) {
+    fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
+        for offset in 0..FIELDS_PER_BLOCK {
+            instructions.push(Code::COMMENT(format!(
+                "#####check child {} for erasure",
+                offset + 1
+            )));
+            instructions.push(Code::MOVL(TEMP, to_erase, field_offset1(Fst, offset)));
+            Backend::erase_block(Temporary::Register(TEMP), instructions);
+        }
+    }
+
+    // we use the block pointed to by heap
+    match new_block {
+        Temporary::Register(new_block_register) => {
+            instructions.push(Code::MOV(new_block_register, HEAP));
+        }
+        Temporary::Spill(new_block_position) => {
+            // this moves the memory block both to `TEMP` and to its spill position for better
+            // performance in the fast path, but executes the first instruction unnecessarily in the
+            // slow path
+            instructions.push(Code::MOV(TEMP, HEAP));
+            instructions.push(Code::MOVS(HEAP, STACK, stack_offset(new_block_position)));
+        }
+    }
+
+    // now we restore the invariant
+    instructions.push(Code::COMMENT(
+        "##get next free block into heap register".to_string(),
+    ));
+    instructions.push(Code::COMMENT(
+        "###(1) check linear free list for next block".to_string(),
+    ));
+    instructions.push(Code::MOVL(HEAP, HEAP, NEXT_ELEMENT_OFFSET));
+
+    // the then branch consists of two branches again, one for possibility 3) in the then branch
+    // ...
+    let mut then_branch_free = Vec::with_capacity(3);
+    //// at this point `HEAP` is the same as `FREE`, now we bump `FREE`
+    then_branch_free.push(Code::COMMENT(
+        "###(3) fall back to bump allocation".to_string(),
+    ));
+    then_branch_free.push(Code::MOV(FREE, HEAP));
+    then_branch_free.push(Code::ADDI(FREE, field_offset1(Fst, FIELDS_PER_BLOCK_1)));
+
+    // ... and one for possibility 2) in the else branch
+    let mut else_branch_free = Vec::with_capacity(64);
+    //// at this point `HEAP` points to the block which was the first element of the non-empty lazy
+    //// free list, so its first field contained a pointer to the next block in that list; we now
+    //// store a zero there to indicate that the linear free list does not contain further blocks
+    else_branch_free.push(Code::COMMENT("####mark linear free list empty".to_string()));
+    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET, 0.into()));
+    else_branch_free.push(Code::COMMENT(
+        "####erase children of next block".to_string(),
+    ));
+    erase_fields(HEAP, &mut else_branch_free);
+
+    let mut then_branch = Vec::with_capacity(64);
+    then_branch.push(Code::COMMENT(
+        "###(2) check non-linear lazy free list for next block".to_string(),
+    ));
+    then_branch.push(Code::MOV(HEAP, FREE));
+    then_branch.push(Code::MOVL(FREE, FREE, NEXT_ELEMENT_OFFSET));
+    if_zero_then_else(
+        FREE,
+        None,
+        then_branch_free,
+        else_branch_free,
+        &mut then_branch,
+    );
+
+    // don't initialize refcount!
+    let else_branch = Vec::new();
+
+    if_zero_then_else(HEAP, None, then_branch, else_branch, instructions);
+}
+
 /// This function generates code for prepending a memory block to the linear free list.
 /// - `to_release` is the register pointing to the block.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
@@ -224,6 +305,14 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
     ));
 }
 
+fn store_zero1(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
+    instructions.push(Code::MOVIM(
+        memory_block,
+        field_offset1(Fst, offset),
+        0.into(),
+    ));
+}
+
 /// This function generates code for storing a zero into the first slot of the first several
 /// non-header fields of a memory block.
 /// - `free_fields` is the number of fields to store a zero into.
@@ -232,6 +321,12 @@ fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code
 fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
     for offset in 0..free_fields {
         store_zero(memory_block, offset, instructions);
+    }
+}
+
+fn store_zeros1(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
+    for offset in 0..free_fields {
+        store_zero1(memory_block, offset, instructions);
     }
 }
 
@@ -259,6 +354,30 @@ fn store_field(
         Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
             instructions.push(Code::MOVS(TEMP, memory_block, field_offset(number, offset)));
+        }
+    }
+}
+
+fn store_field1(
+    number: TemporaryNumber,
+    context: &TypingContext,
+    memory_block: Register,
+    offset: usize,
+    instructions: &mut Vec<Code>,
+) {
+    match Backend::fresh_temporary(number, context) {
+        Temporary::Register(register) => instructions.push(Code::MOVS(
+            register,
+            memory_block,
+            field_offset1(number, offset),
+        )),
+        Temporary::Spill(position) => {
+            instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
+            instructions.push(Code::MOVS(
+                TEMP,
+                memory_block,
+                field_offset1(number, offset),
+            ));
         }
     }
 }
@@ -314,6 +433,23 @@ fn store_value(
         store_zero(memory_block, offset, instructions);
     } else {
         store_field(Fst, remaining_context, memory_block, offset, instructions);
+    }
+}
+
+fn store_value1(
+    to_store: &ContextBinding,
+    remaining_context: &TypingContext,
+    memory_block: Register,
+    offset: usize,
+    instructions: &mut Vec<Code>,
+) {
+    store_field1(Snd, remaining_context, memory_block, offset, instructions);
+    // values of external types like integers occupy only the second temporary, so we zero the
+    // first slot to indicate that there is no pointer to another memory block in this field
+    if to_store.chi == Chirality::Ext {
+        store_zero1(memory_block, offset, instructions);
+    } else {
+        store_field1(Fst, remaining_context, memory_block, offset, instructions);
     }
 }
 
@@ -402,6 +538,40 @@ fn store_values(
         instructions.push(Code::COMMENT("##mark unused fields with null".to_string()));
     }
     store_zeros(free_fields, memory_block, instructions);
+}
+
+fn store_values1(
+    mut to_store: TypingContext,
+    remaining_context: &TypingContext,
+    memory_block: Register,
+    mut free_fields: usize,
+    instructions: &mut Vec<Code>,
+) {
+    instructions.push(Code::COMMENT("##store values".to_string()));
+    // we store the right-most value in the context into the right-most field first
+    while let Some(binding) = to_store.bindings.pop() {
+        // the context to the left after this store is the context remaining after all stores...
+        let mut remaining_plus_rest = remaining_context.clone();
+        // ... plus the context of the stores still pending
+        remaining_plus_rest
+            .bindings
+            .append(&mut to_store.bindings.clone());
+
+        store_value1(
+            &binding,
+            &remaining_plus_rest,
+            memory_block,
+            free_fields - 1,
+            instructions,
+        );
+
+        free_fields -= 1;
+    }
+
+    if free_fields > 0 {
+        instructions.push(Code::COMMENT("##mark unused fields with null".to_string()));
+    }
+    store_zeros1(free_fields, memory_block, instructions);
 }
 
 /// This function generates code for loading several values from some non-header fields of a memory
@@ -545,6 +715,93 @@ fn store_fields(
         );
 
         store_fields(
+            to_store,
+            remaining_context,
+            BlockPosition::Other,
+            instructions,
+        );
+    }
+}
+
+fn store_fields1(
+    mut to_store: TypingContext,
+    remaining_context: &TypingContext,
+    block_position: BlockPosition,
+    instructions: &mut Vec<Code>,
+) {
+    if to_store.bindings.is_empty() {
+        // if no memory is needed at all, we put a zero in the first temporary of the variable to
+        // indicate this
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            Backend::load_immediate(
+                Backend::fresh_temporary(Fst, remaining_context),
+                0.into(),
+                instructions,
+            );
+        }
+    } else {
+        // the full context is the context remaining after all stores...
+        let mut remaining_plus_to_store = remaining_context.clone();
+        // ... plus the context of the stores
+        remaining_plus_to_store
+            .bindings
+            .append(&mut to_store.bindings.clone());
+
+        // if we do not currently store the last block, we have to store a link to the next block
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("##store link to previous block".to_string()));
+            store_field1(
+                Fst,
+                &remaining_plus_to_store,
+                HEAP,
+                FIELDS_PER_BLOCK_1 - 1,
+                instructions,
+            );
+        }
+
+        // we can store at most `FIELDS_PER_BLOCK_1` variables in the last memory block, or
+        // `FIELDS_PER_BLOCK_1 - 1` in all other blocks, since in the latter case the last field is
+        // used for the link
+        let rest_length = if to_store.bindings.len() <= FIELDS_PER_BLOCK_1 - block_position as usize
+        {
+            0
+        } else {
+            to_store.bindings.len() - (FIELDS_PER_BLOCK_1 - block_position as usize)
+        };
+        // we store the last variables first; if we need yet more memory, we have to link further
+        // blocks
+        let to_store_next = to_store.bindings.split_off(rest_length);
+
+        // the context to the left after these stores is the context remaining after all stores...
+        let mut remaining_plus_rest = remaining_context.clone();
+        // ... plus the context of the stores still pending
+        remaining_plus_rest
+            .bindings
+            .append(&mut to_store.bindings.clone());
+
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#allocate memory".to_string()));
+        }
+        store_values1(
+            to_store_next.into(),
+            &remaining_plus_rest,
+            HEAP,
+            FIELDS_PER_BLOCK_1 - block_position as usize,
+            instructions,
+        );
+
+        instructions.push(Code::COMMENT(
+            "##acquire free block from heap register".to_string(),
+        ));
+        // this puts the pointer to the memory block for the variables just stored into the first
+        // free temporary after the remaining context
+        acquire_block1(
+            Backend::fresh_temporary(Fst, &remaining_plus_rest),
+            instructions,
+        );
+
+        store_fields1(
             to_store,
             remaining_context,
             BlockPosition::Other,
@@ -788,7 +1045,7 @@ impl Memory<Code, Temporary> for Backend {
         remaining_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        store_fields(
+        store_fields1(
             to_store,
             remaining_context,
             BlockPosition::Last,
