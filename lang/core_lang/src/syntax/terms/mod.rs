@@ -115,7 +115,7 @@ impl IsValue for Term<Prd> {
             true
         } else {
             match self {
-                Term::Op(_) | Term::Mu(_) => false,
+                Term::Op(_) | Term::Mu(_) | Term::Mu1(_) => false,
                 Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
                 Term::XVar(_) | Term::Literal(_) | Term::XCase(_) => true,
             }
@@ -128,7 +128,7 @@ impl IsCovalue for Term<Cns> {
             true
         } else {
             match self {
-                Term::Mu(_) => false,
+                Term::Mu(_) | Term::Mu1(_) => false,
                 Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
                 Term::XVar(_) | Term::XCase(_) => true,
                 Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
