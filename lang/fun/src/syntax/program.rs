@@ -22,14 +22,55 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
+    /// This field is used to determine whether the program contains monomorphic type instances
+    pub is_mono: bool,
 }
 
 impl Program {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
-    pub fn check(self) -> Result<CheckedProgram, Error> {
+    pub fn check(self, mono_in_fun: bool) -> Result<CheckedProgram, Error> {
         let symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(symbol_table)
+        if mono_in_fun {
+            self.check_with_table(symbol_table)
+        } else {
+            self.check_with_table_poly(symbol_table)
+        }
+        
+    }
+
+    fn check_with_table_poly(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
+        let mut defs = Vec::new();
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        // we check the well-formedness of type declarations first
+        for decl in self.declarations {
+            match decl {
+                Declaration::Data(data) => {
+                    data.check(&symbol_table)?;
+                    data_types.push(data);
+                }
+                Declaration::Codata(codata) => {
+                    codata.check(&symbol_table)?;
+                    codata_types.push(codata);
+                }
+                Declaration::Def(def) => {
+                    defs.push(def);
+                }
+            }
+        }
+
+        let defs = defs
+            .into_iter()
+            .map(|def| def.check(&mut symbol_table))
+            .collect::<Result<_, Error>>()?;
+
+        Ok(CheckedProgram {
+            data_types: data_types,
+            codata_types: codata_types,
+            defs,
+            is_mono: false,
+        })
     }
 
     /// This function typechecks a module, creating a checked module with monomorphic type
@@ -125,6 +166,7 @@ impl Program {
             data_types,
             codata_types,
             defs,
+            is_mono: true,
         })
     }
 

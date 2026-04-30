@@ -167,13 +167,14 @@ mod check_tests {
                 def_mult().into(),
             ],
         }
-        .check()
+        .check(true)
         .unwrap();
 
         let expected = CheckedProgram {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],
+            is_mono: true,
         };
         assert_eq!(result, expected)
     }
