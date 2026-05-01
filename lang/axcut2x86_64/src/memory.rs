@@ -338,7 +338,7 @@ fn store_zeros1(free_fields: usize, memory_block: Register, instructions: &mut V
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn store_field(
+fn store_slot(
     number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
@@ -358,7 +358,7 @@ fn store_field(
     }
 }
 
-fn store_field1(
+fn store_slot1(
     number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
@@ -390,7 +390,7 @@ fn store_field1(
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn load_field(
+fn load_slot(
     number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
@@ -426,13 +426,13 @@ fn store_value(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    store_field(Snd, remaining_context, memory_block, offset, instructions);
+    store_slot(Snd, remaining_context, memory_block, offset, instructions);
     // values of external types like integers occupy only the second temporary, so we zero the
     // first slot to indicate that there is no pointer to another memory block in this field
     if to_store.chi == Chirality::Ext {
         store_zero(memory_block, offset, instructions);
     } else {
-        store_field(Fst, remaining_context, memory_block, offset, instructions);
+        store_slot(Fst, remaining_context, memory_block, offset, instructions);
     }
 }
 
@@ -443,13 +443,13 @@ fn store_value1(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    store_field1(Snd, remaining_context, memory_block, offset, instructions);
+    store_slot1(Snd, remaining_context, memory_block, offset, instructions);
     // values of external types like integers occupy only the second temporary, so we zero the
     // first slot to indicate that there is no pointer to another memory block in this field
     if to_store.chi == Chirality::Ext {
         store_zero1(memory_block, offset, instructions);
     } else {
-        store_field1(Fst, remaining_context, memory_block, offset, instructions);
+        store_slot1(Fst, remaining_context, memory_block, offset, instructions);
     }
 }
 
@@ -480,11 +480,11 @@ fn load_value(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    load_field(Snd, existing_context, memory_block, offset, instructions);
+    load_slot(Snd, existing_context, memory_block, offset, instructions);
     // values of external types like integers occupy only the second temporary, so we do not have to
     // load the first slot
     if to_load.chi != Chirality::Ext {
-        load_field(Fst, existing_context, memory_block, offset, instructions);
+        load_slot(Fst, existing_context, memory_block, offset, instructions);
         let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
             Temporary::Register(register) => register,
             // if the field was loaded to a spill position by `load_field`, its contents are is
@@ -665,7 +665,7 @@ fn store_fields(
         // if we do not currently store the last block, we have to store a link to the next block
         if block_position == BlockPosition::Other {
             instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-            store_field(
+            store_slot(
                 Fst,
                 &remaining_plus_to_store,
                 HEAP,
@@ -751,7 +751,7 @@ fn store_fields1(
         // if we do not currently store the last block, we have to store a link to the next block
         if block_position == BlockPosition::Other {
             instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-            store_field1(
+            store_slot1(
                 Fst,
                 &remaining_plus_to_store,
                 HEAP,
@@ -888,7 +888,7 @@ fn load_fields(
                 // containing the pointer to the memory block
                 if block_position == BlockPosition::Other {
                     instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                    load_field(
+                    load_slot(
                         Fst,
                         &existing_plus_to_load,
                         memory_block_register,
@@ -934,7 +934,7 @@ fn load_fields(
                 // containing the pointer to the memory block
                 if block_position == BlockPosition::Other {
                     instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                    load_field(
+                    load_slot(
                         Fst,
                         &existing_plus_to_load,
                         TEMPORARY_TEMP,
