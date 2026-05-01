@@ -324,12 +324,6 @@ fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Ve
     }
 }
 
-fn store_zeros1(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
-    for offset in 0..free_fields {
-        store_zero1(memory_block, offset, instructions);
-    }
-}
-
 /// This function generates code for storing a value into the first or second slot of some
 /// non-header field of a memory block. The value is in the first or second temporary after the
 /// given context.
@@ -568,10 +562,7 @@ fn store_values1(
         free_fields -= 1;
     }
 
-    if free_fields > 0 {
-        instructions.push(Code::COMMENT("##mark unused fields with null".to_string()));
-    }
-    store_zeros1(free_fields, memory_block, instructions);
+    // NOTE: since linear blocks never land in the lazy free list, we don't need to mark unused fields
 }
 
 /// This function generates code for loading several values from some non-header fields of a memory
