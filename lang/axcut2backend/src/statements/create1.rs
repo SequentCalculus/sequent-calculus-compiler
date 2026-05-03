@@ -5,7 +5,7 @@ use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
-use crate::utils::{code_methods, code_table};
+use crate::utils::{code_methods1, code_table};
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber::Snd},
@@ -84,7 +84,7 @@ impl CodeStatement for Create1 {
         if number_of_clauses > 1 {
             code_table::<Backend, _, _, _>(&self.clauses, &fresh_label, instructions);
         }
-        code_methods::<Backend, _, _, _>(
+        code_methods1::<Backend, _, _, _>(
             &closure_environment.into(),
             self.clauses,
             &fresh_label,

@@ -115,6 +115,28 @@ fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         .code_statement::<Backend, _, _, _>(types, clause.context, instructions);
 }
 
+fn code_method1<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
+    mut closure_environment: TypingContext,
+    mut clause: Clause,
+    types: &[TypeDeclaration],
+    instructions: &mut Vec<Code>,
+) where
+    Backend: Config<Temporary, Immediate>
+        + Instructions<Code, Temporary, Immediate>
+        + Memory<Code, Temporary>
+        + ParallelMoves<Code, Temporary>
+        + Utils<Temporary>,
+{
+    Backend::load1(closure_environment.clone(), &clause.context, instructions);
+    clause
+        .context
+        .bindings
+        .append(&mut closure_environment.bindings);
+    clause
+        .body
+        .code_statement::<Backend, _, _, _>(types, clause.context, instructions);
+}
+
 /// This function generates code for the clauses of a [`axcut::syntax::statements::Switch`]. The
 /// code for each clause start with a fresh label which is the target of a jump in a jump table.
 /// - `context` is the given typing context.
@@ -168,5 +190,26 @@ pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
             base_label.to_string() + "_" + &clause.xtor.print_to_string(None),
         ));
         code_method::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
+    }
+}
+
+pub fn code_methods1<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
+    closure_environment: &TypingContext,
+    clauses: Vec<Clause>,
+    base_label: &str,
+    types: &[TypeDeclaration],
+    instructions: &mut Vec<Code>,
+) where
+    Backend: Config<Temporary, Immediate>
+        + Instructions<Code, Temporary, Immediate>
+        + Memory<Code, Temporary>
+        + ParallelMoves<Code, Temporary>
+        + Utils<Temporary>,
+{
+    for clause in clauses {
+        instructions.push(Backend::label(
+            base_label.to_string() + "_" + &clause.xtor.print_to_string(None),
+        ));
+        code_method1::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
     }
 }
