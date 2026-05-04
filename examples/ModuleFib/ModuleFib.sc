@@ -2,7 +2,7 @@
 
 import Subtraction
 
-//module arith
+module Arith
 
 public def fib(n: i64) : i64 {
     if n <= 0 {
@@ -13,10 +13,10 @@ public def fib(n: i64) : i64 {
             1
         }
         else {
-            //arith::add2(fib(Subtraction::sub2(n, 1)), fib(Subtraction::sub2(n, 2)))
-            //arith::add2(fib(n - 1), fib(n - 2))
+            Arith::add2(fib(Subtraction::sub2(n, 1)), fib(Subtraction::sub2(n, 2)))
+            //Arith::add2(fib(n - 1), fib(n - 2))
             //fib(n - 1) + fib(n - 2)
-            fib(Subtraction::sub3(n, 1)) + fib(Subtraction::sub3(n, 2))
+            //fib(Subtraction::sub3(n, 1)) + fib(Subtraction::sub3(n, 2))
         }
     }
 }
