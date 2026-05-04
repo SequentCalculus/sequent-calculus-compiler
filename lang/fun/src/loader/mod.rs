@@ -36,7 +36,7 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
     for decl in &parsed.module_declarations {
         match decl {
             ModuleDeclaration::Import (import) => {
-                let mut search_path = path.clone();
+                let mut search_path = path.canonicalize().expect("Could not get absoule path").clone();
                 search_path.pop();
                 let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
                 let mut subdrv: Box<dyn DriverTrait> = create_driver();
@@ -59,7 +59,7 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
                             Declaration::Def (def) => {if def.is_public {sub_public_decl.push(decl.clone())}}
                         }
                     }
-                    imports.insert(get_actual_name(import.name.clone()).unwrap(), 
+                    imports.insert(get_actual_name(import.name.clone()).unwrap() + "------TEST----------------", 
                                     ModuleProgram {
                                         imports: HashMap::<Name, ModuleProgram>::new(),
                                         modules: Vec::<ModuleProgram>::new(),
@@ -109,7 +109,6 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
         public_declarations: public_declarations,
     };
     visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf().file_name().expect("Should have filename").to_owned(), Some(module_program.clone()));
-    //println!("{:#?}", imports);
     Ok(module_program)
 }
 
@@ -118,7 +117,6 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
 fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, LoaderError> {
     let reg = Regex::new(r"^[A-z][a-zA-Z0-9_]*(::[A-z][a-zA-Z0-9_]*)+$").unwrap();
     let filename;
-    //println!("{}", module_call);
     if reg.is_match(module_call) {
         let mut split: Vec<&str> = module_call.split("::").collect();
         let root = split[0];
@@ -126,7 +124,6 @@ fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: b
         while abs_path.file_name().unwrap().to_str().unwrap() != root {
             abs_path.pop();
         }
-        //println!("{:#?}", split);
         split.remove(0);
         let file_name = split.pop().unwrap();
         for dir in split {
@@ -138,12 +135,18 @@ fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: b
         abs_path.push(file_name);
         filename = file_name;
         *path = abs_path;
+        path.set_extension("sc");
+        if path.is_file() {
+            return Ok(path.to_path_buf());
+        }
+        path.set_extension("");
     }
     else {
         filename = module_call;
     }
     path.push(filename);
     path.set_extension("sc");
+    //rintln!("{:?}", path);
     if path.is_file() {
         Ok(path.to_path_buf())
     }
