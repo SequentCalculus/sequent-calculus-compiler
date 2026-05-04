@@ -17,6 +17,7 @@ use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
+    loader::{load_module, result::LoaderError, DriverTrait},
     syntax::{program::{CheckedProgram, Program, ModuleProgram}, Name, Declaration},
     syntax::module_declarations::*,
 };
@@ -116,87 +117,11 @@ impl Driver {
         }
         
         let parsed = self.parsed(path)?;
-        visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), None);
-        let mut imports = HashMap::<Name, ModuleProgram>::new();
-        let mut modules = Vec::<ModuleProgram>::new();
-        let name = path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string();
-       
-        for decl in parsed.module_declarations {
-            match decl {
-                ModuleDeclaration::Import (import) => {
-                    let mut search_path = path.clone();
-                    search_path.pop();
-                    let mut subdrv = Driver::new();
-                    let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
-                    if !visited.contains_key(&path_to_import) {
-                        let loaded = subdrv.loaded(&path_to_import, Some((name.clone(), parsed.declarations.clone())), visited)?;
-                        visited.insert(path_to_import.clone(), Some(loaded.clone()));
-                        if !loaded.imports_to_parent.is_empty() {
-                            imports.extend(loaded.imports_to_parent.clone());
-                        }
-                        imports.insert(import.name.clone(), loaded);
-                    }
-                    else {
-                        let subparsed = subdrv.parsed(&path_to_import)?;
-                        let mut sub_public_decl = Vec::<Declaration>::new();
-                        for decl in subparsed.declarations {
-                            match decl {
-                                Declaration::Codata (ref codata) => {if codata.is_public {sub_public_decl.push(decl)}}
-                                Declaration::Data (ref data) => {if data.is_public {sub_public_decl.push(decl)}}
-                                Declaration::Def (ref def) => {if def.is_public {sub_public_decl.push(decl)}}
-                            }
-                        }
-                        imports.insert(import.name.clone(), 
-                                       ModuleProgram {
-                                            imports: Vec::<ModuleProgram>::new(),
-                                            modules: Vec::<ModuleProgram>::new(),
-                                            declarations: Vec::<Declaration>::new(),
-                                            name: path_to_import.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string(),
-                                            imports_to_parent: HashMap::<Name, ModuleProgram>::new(),
-                                            parent_declarations: None,
-                                            public_declarations: sub_public_decl,});
-                    }
-                }
-                ModuleDeclaration::Module (module)=> {
-                    let mut search_path = path.clone();
-                    search_path.pop();
-                    let mut subdrv = Driver::new();
-                    modules.push(subdrv.loaded(&find_given_file(&module.name, &mut search_path, false)?, Some((name.clone(), parsed.declarations.clone())), visited)?);
-                }
-            }
-        }
-        let mut public_declarations = Vec::<Declaration>::new();
-        for decl in &parsed.declarations {
-            match decl {
-                Declaration::Codata (codata) => {
-                    if codata.is_public {
-                        public_declarations.push(decl.clone());
-                    }
-                }
-                Declaration::Data (data) => {
-                    if data.is_public {
-                        public_declarations.push(decl.clone());
-                    }
-                }
-                Declaration::Def (def) => {
-                    if def.is_public {
-                        public_declarations.push(decl.clone());
-                    }
-                }
-            }
-        }
-        let module_program = ModuleProgram{
-            modules: modules,
-            declarations: parsed.declarations,
-            name: name,
-            parent_declarations: parent_decl.clone(),
-            imports: imports.values().cloned().collect(),
-            imports_to_parent:  if !parent_decl.is_some() {HashMap::<Name, ModuleProgram>::new()} else {imports.clone()},
-            public_declarations: public_declarations,
-        };
-        visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), Some(module_program.clone()));
+        let loaded = load_module(&parsed, path, parent_decl, visited, Driver::create_driver)?;
+
+        self.loaded.insert(path.clone(), loaded.clone());
         //println!("{:#?}", imports);
-        Ok(module_program)
+        Ok(loaded)
     }
 
 
@@ -481,6 +406,22 @@ impl Driver {
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
     }
+    pub fn create_driver() -> Box<dyn DriverTrait> {
+        Box::new(Driver::new())
+    }
+}
+
+impl DriverTrait for Driver {
+    fn parsed(&mut self, path: &PathBuf) -> Result<Program, LoaderError> {
+        self.parsed(path).map_err(|_| LoaderError::FileNotFound{path_to_file: "".to_string()})
+    }
+    fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<PathBuf, Option<ModuleProgram>>) -> Result<ModuleProgram, LoaderError> {
+        self.loaded(path, parent_decl, visited).map_err(|_| LoaderError::FileNotFound{path_to_file: "".to_string()})
+    }
+
+    fn new() -> Self {
+        Driver::new()
+    }
 }
 
 /// This function appends a string to a path.
@@ -557,108 +498,4 @@ pub fn generate_io_runtime() -> PathBuf {
     }
 
     filepath
-}
-
-fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: bool) -> Result<PathBuf, DriverError> {
-    let reg = Regex::new(r"^[A-z][a-zA-Z0-9_]*(::[A-z][a-zA-Z0-9_]*)+$").unwrap();
-    let filename;
-    //println!("{}", module_call);
-    if reg.is_match(module_call) {
-        let mut split: Vec<&str> = module_call.split("::").collect();
-        let root = split[0];
-        let mut abs_path = path.canonicalize().expect("Could not get absoule path");
-        while abs_path.file_name().unwrap().to_str().unwrap() != root {
-            abs_path.pop();
-        }
-        //println!("{:#?}", split);
-        split.remove(0);
-        let file_name = split.pop().unwrap();
-        for dir in split {
-            abs_path.push(dir);
-            if !abs_path.exists() {
-                return Err(DriverError::FileNotFound {path_to_file: abs_path.to_str().unwrap().to_owned(),})
-            }
-        }
-        abs_path.push(file_name);
-        filename = file_name;
-        *path = abs_path;
-    }
-    else {
-        filename = module_call;
-    }
-    path.push(filename);
-    path.set_extension("sc");
-    if path.is_file() {
-        Ok(path.to_path_buf())
-    }
-    else {
-        path.set_extension("");
-        if path.is_dir() {
-            path.push(filename);
-            path.set_extension("sc");
-            if path.is_file() {
-                Ok(path.to_path_buf())
-            }
-            else {
-                Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
-            }
-        }
-        else if is_import {
-            let mut std_module_path = {
-                if OS == "linux" {
-                    let mut dir = home_dir().unwrap();
-                    dir.push(".local");
-                    dir.push("share");
-                    dir.push("scc");
-                    dir
-                }
-                else if OS == "windows" {
-                    let mut dir = home_dir().unwrap();
-                    dir.push("AppData");
-                    dir.push("Local");
-                    dir.push("scc");
-                    dir
-                }
-                else if OS == "macos" {
-                    let mut dir = home_dir().unwrap();
-                    dir.push("Library");
-                    dir.push("Application Support");
-                    dir.push("scc");
-                    dir
-                }
-                else {
-                    PathBuf::new()
-                }
-            };
-            if std_module_path.exists() {
-                std_module_path.push(filename);
-                std_module_path.set_extension("sc");
-                if std_module_path.is_file() {
-                    Ok(std_module_path)
-                }
-                else {
-                    std_module_path.set_extension("");
-                    if std_module_path.is_dir() {
-                        std_module_path.push(filename);
-                        std_module_path.set_extension("sc");
-                        if std_module_path.is_file() {
-                            Ok(std_module_path)
-                        }
-                        else {
-                            Err(DriverError::FileNotFound {path_to_file: std_module_path.to_str().unwrap().to_owned(),})
-                        }
-                    }
-                    else {
-                        Err(DriverError::FileNotFound {path_to_file: std_module_path.to_str().unwrap().to_owned(),})
-                    }
-                }
-            }
-            else {
-                Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
-            }
-        }
-        else {
-            Err(DriverError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
-        }
-    }
 }

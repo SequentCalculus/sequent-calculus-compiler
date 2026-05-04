@@ -1,6 +1,7 @@
 //! This crate contains the [syntax], [parser] and [type checker](typing) for the surface
 //! language Fun, as well as some infrastructure [traits].
 pub mod parser;
+pub mod loader;
 pub mod syntax;
 pub mod traits;
 pub mod typing;
