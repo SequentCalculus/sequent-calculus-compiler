@@ -72,6 +72,9 @@ impl ModuleProgram {
             for import in &self.imports {
                 checked_submodules.push(import.1.clone().check(true)?);
             }
+            for import in &self.imports_to_parent {
+                checked_submodules.push(import.1.clone().check(true)?);
+            }
         }
         for module in &self.modules {
             checked_submodules.push(module.clone().check(true)?);
@@ -88,7 +91,6 @@ impl ModuleProgram {
                 checked.defs.extend(submodule.defs.clone());
             }
         }
-        
         Ok(checked)
     }
 
@@ -322,7 +324,6 @@ impl Print for ModuleProgram {
         let modules = self.modules.iter().map(|modu| modu.print(cfg, alloc));
         let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
 
-        alloc.line().append(self.name.print(cfg, alloc));
         alloc.intersperse(imports, sep.clone());
         alloc.intersperse(modules, sep.clone());
         alloc.intersperse(declarations, sep)
