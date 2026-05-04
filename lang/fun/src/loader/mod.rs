@@ -29,6 +29,7 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
 
     visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf().file_name().expect("Should have filename").to_owned(), None);
     let mut imports = HashMap::<Name, ModuleProgram>::new();
+    let mut imports_from_children = HashMap::<Name, ModuleProgram>::new();
     let mut modules = Vec::<ModuleProgram>::new();
     let name = path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string();
     
@@ -39,14 +40,14 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
                 search_path.pop();
                 let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
                 let mut subdrv: Box<dyn DriverTrait> = create_driver();
-                //println!("{:?}", visited);
                 if !visited.contains_key(&path_to_import.file_name().expect("Should have filename").to_owned()) {
                     let loaded = subdrv.loaded(&path_to_import, None, visited)?;
                     visited.insert(path_to_import.file_name().expect("Should have filename").to_owned(), Some(loaded.clone()));
                     if !loaded.imports_to_parent.is_empty() {
-                        imports.extend(loaded.imports_to_parent.clone());
+                        imports_from_children.extend(loaded.imports_to_parent.clone());
                     }
-                    imports.insert(get_actual_name(import.name.clone()).unwrap(), loaded);
+                    imports.insert(get_actual_name(import.name.clone()).unwrap(), loaded.clone());
+                    imports_from_children.insert(get_actual_name(import.name.clone()).unwrap(), loaded);
                 }
                 else {
                     let subparsed = subdrv.parsed(&path_to_import)?;
@@ -104,7 +105,7 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
         name: name,
         parent_declarations: parent_decl.clone(),
         imports: imports.clone(),
-        imports_to_parent:  if !parent_decl.is_some() {HashMap::<Name, ModuleProgram>::new()} else {imports.clone()},
+        imports_to_parent:  if !parent_decl.is_some() {imports_from_children} else {imports.clone()},
         public_declarations: public_declarations,
     };
     visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf().file_name().expect("Should have filename").to_owned(), Some(module_program.clone()));
