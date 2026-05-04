@@ -5,7 +5,7 @@ use printer::tokens::{COLON, COMMA, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
@@ -22,14 +22,14 @@ use std::rc::Rc;
 /// statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Create {
-    pub var: Var,
+    pub var: Identifier,
     pub ty: Ty,
     /// Closure environment
     pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
-    pub free_vars_clauses: Option<HashSet<Var>>,
+    pub free_vars_clauses: Option<HashSet<ID>>,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Var>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Create {
@@ -78,7 +78,7 @@ impl From<Create> for Statement {
 }
 
 impl FreeVars for Create {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
@@ -86,7 +86,7 @@ impl FreeVars for Create {
         self.clauses = self.clauses.free_vars(&mut vars_clauses);
         self.free_vars_clauses = Some(vars_clauses.clone());
 
-        vars.remove(&self.var);
+        vars.remove(&self.var.id);
         vars.extend(vars_clauses);
 
         self
@@ -106,7 +106,7 @@ impl TypedFreeVars for Create {
 }
 
 impl Subst for Create {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Create {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Create {
         self.context = self.context.subst_sim(subst);
         self.clauses = self.clauses.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
@@ -122,7 +122,7 @@ impl Linearizing for Create {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the clauses and the remaining statement are not annotated.
-    fn linearize(mut self, mut context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, mut context: TypingContext, max_id: &mut ID) -> Statement {
         let free_vars_clauses = std::mem::take(&mut self.free_vars_clauses)
             .expect("Free variables must be annotated before linearization");
         let free_vars_next = std::mem::take(&mut self.free_vars_next)
@@ -154,7 +154,7 @@ impl Linearizing for Create {
                 extended_context
                     .bindings
                     .extend(context_clauses.bindings.clone());
-                clause.body = clause.body.linearize(extended_context, used_vars);
+                clause.body = clause.body.linearize(extended_context, max_id);
                 clause
             })
             .collect();
@@ -180,13 +180,13 @@ impl Linearizing for Create {
             // ... and linearize the remaining statement with the additional binding for the
             // closure
             context_next.bindings.push(new_binding);
-            self.next = self.next.linearize(context_next, used_vars);
+            self.next = self.next.linearize(context_next, max_id);
 
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the remaining statement ...
             let mut context_next_freshened =
-                context_next.freshen(context_clauses.vars_set(), used_vars);
+                context_next.freshen(context_clauses.ids_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = context_next_freshened.clone();
@@ -204,15 +204,17 @@ impl Linearizing for Create {
 
             // since we have picked fresh names in the remaining statement, we have to rename in it
             // accordingly
-            let substitution_next: Vec<(Var, Var)> = context_next
-                .into_iter_vars()
+            let substitution_next: Vec<(ID, Identifier)> = context_next
+                .bindings
+                .into_iter()
+                .map(|binding| binding.var.id)
                 .zip(context_next_freshened.vars())
                 .collect();
             self.next = self.next.subst_sim(substitution_next.as_slice());
 
             // linearize the remaining statement with the additional binding for the closure
             context_next_freshened.bindings.push(new_binding);
-            self.next = self.next.linearize(context_next_freshened, used_vars);
+            self.next = self.next.linearize(context_next_freshened, max_id);
 
             Substitute {
                 rearrange,

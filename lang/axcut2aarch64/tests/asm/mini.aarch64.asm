@@ -23,17 +23,17 @@ main_:
     B l_
 
 l_:
-    // lit x <- 1;
+    // lit x_1 <- 1;
     MOVZ X5, 1, LSL 0
-    // lit y <- 9;
+    // lit y_2 <- 9;
     MOVZ X7, 9, LSL 0
     // j(...)
     B j_
 
 j_:
-    // z <- x + y;
+    // z_5 <- x_4 + y_3;
     ADD X9, X7, X5
-    // println_i64 z;
+    // println_i64 z_5;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -49,9 +49,9 @@ j_:
     MOV X5, X21
     MOV X7, X22
     MOV X9, X23
-    // lit ret <- 0;
+    // lit ret_6 <- 0;
     MOVZ X11, 0, LSL 0
-    // exit ret
+    // exit ret_6
     MOV X0, X11
     B cleanup
 

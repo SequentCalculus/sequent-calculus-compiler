@@ -20,6 +20,9 @@ pub const COMPILED_PATH: &str = "compiled";
 /// Path for focused files
 pub const FOCUSED_PATH: &str = "focused";
 
+/// Path for Uniquified files
+pub const UNIQUIFIED_PATH: &str = "uniquified";
+
 /// Path for non-linearized axcut files
 pub const SHRUNK_PATH: &str = "shrunk";
 
@@ -93,6 +96,20 @@ impl Paths {
     /// Create the directory for files after focusing, if it doesn't exist yet.
     pub fn create_focused_dir() {
         create_dir_all(Paths::focused_dir()).expect("Could not create path");
+    }
+
+    /// Return the directory for files after uniquifying
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::uniquified_dir().to_str().unwrap(),"target_scc/uniquified")
+    /// ```
+    pub fn uniquified_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(UNIQUIFIED_PATH)
+    }
+
+    /// Create the directory for files after uniquifying if it doesn't exist yet.
+    pub fn create_uniquified_dir() {
+        create_dir_all(Paths::uniquified_dir()).expect("Could not create path");
     }
 
     /// Return the directory for files after shrinking.

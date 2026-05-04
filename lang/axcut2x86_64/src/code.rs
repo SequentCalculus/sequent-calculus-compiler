@@ -6,7 +6,7 @@ use super::config::{
     Register, STACK, Spill, TEMP, Temporary, address, arg, stack_offset,
 };
 
-use axcut::syntax::{Chirality, ContextBinding, Name};
+use axcut::syntax::{Chirality, ContextBinding};
 use axcut2backend::code::Instructions;
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
@@ -569,30 +569,26 @@ fn op_commutative(
         Temporary::Register(target_register) => {
             // if one source operand also is the target (due to commutativity, it does not matter
             // which one), we can avoid moving one source to the target first
-            if target_temporary != source_temporary_1 {
-                if target_temporary != source_temporary_2 {
-                    move_to_register(target_register, source_temporary_1, instructions);
-                    op_to_register(target_register, source_temporary_2, instructions);
-                } else {
-                    op_to_register(target_register, source_temporary_1, instructions);
-                }
+            if target_temporary == source_temporary_1 {
+                op_to_register(target_register, source_temporary_2, instructions);
+            } else if target_temporary == source_temporary_2 {
+                op_to_register(target_register, source_temporary_1, instructions);
             } else {
+                move_to_register(target_register, source_temporary_1, instructions);
                 op_to_register(target_register, source_temporary_2, instructions);
             }
         }
         Temporary::Spill(target_position) => {
             // if one source operand also is the target (due to commutativity, it does not matter
             // which one), we can avoid moving one source to the target first
-            if target_temporary != source_temporary_1 {
-                if target_temporary != source_temporary_2 {
-                    move_to_register(TEMP, source_temporary_1, instructions);
-                    op_to_register(TEMP, source_temporary_2, instructions);
-                    instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
-                } else {
-                    op_to_spill(target_position, source_temporary_1, instructions);
-                }
-            } else {
+            if target_temporary == source_temporary_1 {
                 op_to_spill(target_position, source_temporary_2, instructions);
+            } else if target_temporary == source_temporary_2 {
+                op_to_spill(target_position, source_temporary_1, instructions);
+            } else {
+                move_to_register(TEMP, source_temporary_1, instructions);
+                op_to_register(TEMP, source_temporary_2, instructions);
+                instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
             }
         }
     }
@@ -633,28 +629,28 @@ fn sub(
     match target_temporary {
         Temporary::Register(target_register) => {
             // if the first source operand also is the target, we can avoid moving it
-            if target_temporary != source_temporary_1 {
+            if target_temporary == source_temporary_1 {
+                sub_to_register(target_register, source_temporary_2, instructions);
+            } else {
                 // if the second source operand is the target, we need to use a scratch register
-                if target_temporary != source_temporary_2 {
-                    move_to_register(target_register, source_temporary_1, instructions);
-                    sub_to_register(target_register, source_temporary_2, instructions);
-                } else {
+                if target_temporary == source_temporary_2 {
                     move_to_register(TEMP, source_temporary_1, instructions);
                     sub_to_register(TEMP, source_temporary_2, instructions);
                     instructions.push(Code::MOV(target_register, TEMP));
+                } else {
+                    move_to_register(target_register, source_temporary_1, instructions);
+                    sub_to_register(target_register, source_temporary_2, instructions);
                 }
-            } else {
-                sub_to_register(target_register, source_temporary_2, instructions);
             }
         }
         Temporary::Spill(target_position) => {
             // if the first source operand also is the target, we can avoid moving it
-            if target_temporary != source_temporary_1 {
+            if target_temporary == source_temporary_1 {
+                sub_to_spill(target_position, source_temporary_2, instructions);
+            } else {
                 move_to_register(TEMP, source_temporary_1, instructions);
                 sub_to_register(TEMP, source_temporary_2, instructions);
                 instructions.push(Code::MOVS(TEMP, STACK, stack_offset(target_position)));
-            } else {
-                sub_to_spill(target_position, source_temporary_2, instructions);
             }
         }
     }
@@ -813,7 +809,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         Code::COMMENT(msg)
     }
 
-    fn label(name: Name) -> Code {
+    fn label(name: String) -> Code {
         Code::LAB(name)
     }
 
@@ -827,18 +823,18 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn jump_label(name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPL(name));
     }
 
-    fn jump_label_fixed(name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_fixed(name: String, instructions: &mut Vec<Code>) {
         instructions.push(Code::JMPLN(name));
     }
 
     fn jump_label_if_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -848,7 +844,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_not_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -858,7 +854,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_less(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -868,7 +864,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_less_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -878,7 +874,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_greater(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
@@ -888,45 +884,49 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
     fn jump_label_if_greater_or_equal(
         fst: Temporary,
         snd: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare(fst, snd, instructions);
         instructions.push(Code::JGEL(name));
     }
 
-    fn jump_label_if_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JEL(name));
     }
 
-    fn jump_label_if_not_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_not_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JNEL(name));
     }
 
-    fn jump_label_if_less_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_less_zero(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JLL(name));
     }
 
     fn jump_label_if_less_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JLEL(name));
     }
 
-    fn jump_label_if_greater_zero(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn jump_label_if_greater_zero(
+        temporary: Temporary,
+        name: String,
+        instructions: &mut Vec<Code>,
+    ) {
         compare_immediate(temporary, 0.into(), instructions);
         instructions.push(Code::JGL(name));
     }
 
     fn jump_label_if_greater_or_equal_zero(
         temporary: Temporary,
-        name: Name,
+        name: String,
         instructions: &mut Vec<Code>,
     ) {
         compare_immediate(temporary, 0.into(), instructions);
@@ -942,7 +942,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         }
     }
 
-    fn load_label(temporary: Temporary, name: Name, instructions: &mut Vec<Code>) {
+    fn load_label(temporary: Temporary, name: String, instructions: &mut Vec<Code>) {
         match temporary {
             Temporary::Register(register) => instructions.push(Code::LEAL(register, name)),
             Temporary::Spill(position) => {
@@ -1091,7 +1091,7 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::COMMENT("#move argument into place".to_string()));
         match source_temporary {
             Temporary::Register(source_register) => {
-                instructions.push(Code::MOV(arg(0), source_register))
+                instructions.push(Code::MOV(arg(0), source_register));
             }
             Temporary::Spill(_) => instructions.push(Code::MOV(arg(0), TEMP)),
         }

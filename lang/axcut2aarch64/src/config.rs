@@ -138,7 +138,7 @@ pub const FIELD_SLOT_SIZE: usize = 8;
 /// block.
 pub const fn address(n: isize) -> Immediate {
     Immediate {
-        val: (FIELD_SLOT_SIZE as isize * n) as i64,
+        val: (FIELD_SLOT_SIZE.cast_signed() * n) as i64,
     }
 }
 

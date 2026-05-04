@@ -4,8 +4,8 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
-use fun::syntax::types::OptTyped;
+use core_lang::syntax::{names::Identifier, terms::Cns};
+use fun::traits::OptTyped;
 
 /// This function translates [arguments in Fun](fun::syntax::arguments::Arguments) to
 /// [arguments in Core](core_lang::syntax::arguments::Arguments).
@@ -30,7 +30,7 @@ pub fn compile_subst(
                 }) => core_lang::syntax::arguments::Argument::Consumer(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
-                        var,
+                        var: Identifier::new(var),
                         ty: compile_ty(&ty.expect("Types should be annotated before translation")),
                     }
                     .into(),

@@ -52,7 +52,7 @@ impl Print for Destructor {
 
         if (matches!(*self.scrutinee, Term::XVar(_))
             || matches!(*self.scrutinee, Term::Call(ref call) if call.args.entries.is_empty()))
-            && (self.scrutinee.print_to_string(Some(cfg)).len() <= cfg.indent as usize)
+            && (self.scrutinee.print_to_string(Some(cfg)).len() <= cfg.indent.cast_unsigned())
         {
             self.scrutinee
                 .print(cfg, alloc)

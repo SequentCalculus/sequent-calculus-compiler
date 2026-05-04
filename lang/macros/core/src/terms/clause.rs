@@ -1,4 +1,4 @@
-use macro_utils::{expr_to_array, expr_to_string, parse_args};
+use macro_utils::{expr_to_array, parse_args};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -17,14 +17,14 @@ fn clause(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> Token
         &[],
     );
     let chi = &args[0];
-    let xtor = expr_to_string(&args[1], 1);
+    let xtor = &args[1];
     let xtor_args = expr_to_array(&args[2], 2);
     let body = &args[3];
 
     quote! {
         core_lang::syntax::terms::clause::Clause{
             prdcns: #chi,
-            xtor: #xtor.to_string(),
+            xtor: #xtor,
             context: core_lang::syntax::context::TypingContext{
                 bindings: Vec::from([
                     #(#xtor_args),*

@@ -29,7 +29,7 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var);
+        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!(
@@ -50,7 +50,7 @@ impl CodeStatement for Switch {
             ));
         } else {
             Backend::load_label(Backend::temp(), fresh_label.clone(), instructions);
-            let tag_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+            let tag_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
             Backend::add(
                 Backend::temp(),
                 Backend::temp(),

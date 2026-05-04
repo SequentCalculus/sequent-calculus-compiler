@@ -1,5 +1,5 @@
 use core_lang::syntax::terms::op::BinOp;
-use macro_utils::{expr_to_string, parse_args};
+use macro_utils::parse_args;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::Expr;
@@ -37,7 +37,7 @@ pub fn fs_sub(input: TokenStream) -> TokenStream {
 }
 
 fn unfocused_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
-    op(input, bin_op, |exp, _| {
+    op(input, bin_op, |exp| {
         quote! {
             ::std::rc::Rc::new(core_lang::syntax::terms::Term::from(#exp))
         }
@@ -45,10 +45,10 @@ fn unfocused_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 }
 
 fn fs_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
-    op(input, bin_op, |exp, num_arg| {
-        let var = expr_to_string(exp, num_arg);
+    op(input, bin_op, |exp| {
+        let var = exp;
         quote! {
-                #var.to_string()
+                #var
         }
     })
 }
@@ -56,7 +56,7 @@ fn fs_op(input: TokenStream, bin_op: BinOp) -> TokenStream {
 fn op(
     input: TokenStream,
     op: BinOp,
-    arg_converter: fn(&Expr, usize) -> proc_macro2::TokenStream,
+    arg_converter: fn(&Expr) -> proc_macro2::TokenStream,
 ) -> TokenStream {
     let args = parse_args(input.into(), ["First Operand", "Second Operand"], &[]);
     let op = match op {
@@ -66,8 +66,8 @@ fn op(
         BinOp::Sum => quote! {core_lang::syntax::terms::op::BinOp::Sum},
         BinOp::Sub => quote! {core_lang::syntax::terms::op::BinOp::Sub},
     };
-    let fst = arg_converter(&args[0], 0);
-    let snd = arg_converter(&args[1], 1);
+    let fst = arg_converter(&args[0]);
+    let snd = arg_converter(&args[1]);
     quote! {
         core_lang::syntax::terms::op::Op{
             fst: #fst,

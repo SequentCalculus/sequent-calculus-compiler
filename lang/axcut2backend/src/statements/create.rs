@@ -33,7 +33,7 @@ impl CodeStatement for Create {
     {
         let comment = format!(
             "{CREATE} {}: {} = ({})\\{{ ... \\}};",
-            self.var,
+            self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.context
                 .as_ref()
@@ -70,7 +70,7 @@ impl CodeStatement for Create {
         });
 
         instructions.push(Backend::comment("#load tag".to_string()));
-        let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let table_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         Backend::load_label(table_temporary, fresh_label.clone(), instructions);
 
         self.next

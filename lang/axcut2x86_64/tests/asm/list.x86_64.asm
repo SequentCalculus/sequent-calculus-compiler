@@ -25,14 +25,14 @@ asm_main:
     ; actual code
 
 main_:
-    ; let ws: List = Nil();
+    ; let ws_1: List = Nil();
     ; #mark no allocation
     mov rax, 0
     ; #load tag
     mov rdx, 0
-    ; lit z <- 5;
+    ; lit z_2 <- 5;
     mov rdi, 5
-    ; let zs: List = Cons(z, ws);
+    ; let zs_3: List = Cons(z_2, ws_1);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -130,9 +130,9 @@ lab11:
 lab13:
     ; #load tag
     mov rdx, 5
-    ; lit y <- 7;
+    ; lit y_4 <- 7;
     mov rdi, 7
-    ; let ys: List = Cons(y, zs);
+    ; let ys_5: List = Cons(y_4, zs_3);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -230,9 +230,9 @@ lab24:
 lab26:
     ; #load tag
     mov rdx, 5
-    ; lit x <- 9;
+    ; lit x_6 <- 9;
     mov rdi, 9
-    ; let xs: List = Cons(x, ys);
+    ; let xs_7: List = Cons(x_6, ys_5);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], rdi
@@ -330,7 +330,7 @@ lab37:
 lab39:
     ; #load tag
     mov rdx, 5
-    ; switch xs \{ ... \};
+    ; switch xs_7 \{ ... \};
     lea rcx, [rel List_40]
     add rcx, rdx
     jmp rcx
@@ -340,9 +340,9 @@ List_40:
     jmp near List_40_Cons
 
 List_40_Nil:
-    ; lit err <- -1;
+    ; lit err_8 <- -1;
     mov rdx, -1
-    ; exit err
+    ; exit err_8
     mov rax, rdx
     jmp cleanup
 
@@ -376,7 +376,7 @@ lab42:
     mov rax, [rax + 32]
 
 lab43:
-    ; println_i64 a;
+    ; println_i64 a_10;
     ; #save caller-save registers
     mov r12, rax
     mov r13, rdx
@@ -390,9 +390,9 @@ lab43:
     mov rdx, r13
     mov rdi, r14
     add rsp, 8
-    ; lit ret <- 0;
+    ; lit ret_11 <- 0;
     mov r9, 0
-    ; exit ret
+    ; exit ret_11
     mov rax, r9
     jmp cleanup
 

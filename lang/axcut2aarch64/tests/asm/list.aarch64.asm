@@ -19,14 +19,14 @@ asm_main:
     // actual code
 
 main_:
-    // let ws: List = Nil();
+    // let ws_1: List = Nil();
     // #mark no allocation
     MOVZ X4, 0, LSL 0
     // #load tag
     MOVZ X5, 0, LSL 0
-    // lit z <- 5;
+    // lit z_2 <- 5;
     MOVZ X7, 5, LSL 0
-    // let zs: List = Cons(z, ws);
+    // let zs_3: List = Cons(z_2, ws_1);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -129,9 +129,9 @@ lab11:
 lab13:
     // #load tag
     MOVZ X5, 4, LSL 0
-    // lit y <- 7;
+    // lit y_4 <- 7;
     MOVZ X7, 7, LSL 0
-    // let ys: List = Cons(y, zs);
+    // let ys_5: List = Cons(y_4, zs_3);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -234,9 +234,9 @@ lab24:
 lab26:
     // #load tag
     MOVZ X5, 4, LSL 0
-    // lit x <- 9;
+    // lit x_6 <- 9;
     MOVZ X7, 9, LSL 0
-    // let xs: List = Cons(x, ys);
+    // let xs_7: List = Cons(x_6, ys_5);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -339,7 +339,7 @@ lab37:
 lab39:
     // #load tag
     MOVZ X5, 4, LSL 0
-    // switch xs \{ ... \};
+    // switch xs_7 \{ ... \};
     ADR X2, List_40
     ADD X2, X2, X5
     BR X2
@@ -349,9 +349,9 @@ List_40:
     B List_40_Cons
 
 List_40_Nil:
-    // lit err <- -1;
+    // lit err_8 <- -1;
     MOVN X5, 0, LSL 0
-    // exit err
+    // exit err_8
     MOV X0, X5
     B cleanup
 
@@ -389,7 +389,7 @@ lab42:
     LDR X4, [ X4, 32 ]
 
 lab43:
-    // println_i64 a;
+    // println_i64 a_10;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -405,9 +405,9 @@ lab43:
     MOV X4, X21
     MOV X5, X22
     MOV X7, X23
-    // lit ret <- 0;
+    // lit ret_11 <- 0;
     MOVZ X9, 0, LSL 0
-    // exit ret
+    // exit ret_11
     MOV X0, X9
     B cleanup
 

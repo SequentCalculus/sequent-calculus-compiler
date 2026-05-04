@@ -5,6 +5,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::*;
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.

@@ -136,7 +136,7 @@ pub const FIELD_SLOT_SIZE: usize = 8;
 /// block.
 pub const fn address(n: isize) -> Immediate {
     Immediate {
-        val: (FIELD_SLOT_SIZE as isize * n) as i64,
+        val: (FIELD_SLOT_SIZE.cast_signed() * n) as i64,
     }
 }
 
@@ -163,6 +163,11 @@ pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
 
 /// This function returns the register in which the `number`th argument is passed to a function
 /// according to the standard calling convention.
+///
+/// # Panics
+///
+/// This function panics if `number` is greater than `5`, since function calls can use at most 6
+/// argument registers.
 pub const fn arg(number: usize) -> Register {
     match number {
         0 => Register(7),

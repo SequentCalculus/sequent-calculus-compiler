@@ -24,7 +24,7 @@ impl CodeStatement for Invoke {
         let comment = self.print_to_string(None);
         instructions.push(Backend::comment(comment));
 
-        let table_temporary = Backend::variable_temporary(Snd, &context, &self.var);
+        let table_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         let type_declaration = self.ty.lookup_type_declaration(types);
         let number_of_clauses = type_declaration.xtors.len();
         // the case < 1 cannot happen

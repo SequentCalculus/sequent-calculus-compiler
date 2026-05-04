@@ -200,10 +200,10 @@ impl ModuleProgram {
         }
 
         Ok(CheckedProgram {
-            defs,
             data_types,
             codata_types,
             name: self.name,
+            defs,
         })
     }
 

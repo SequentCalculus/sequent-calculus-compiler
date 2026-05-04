@@ -4,7 +4,7 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{ContextBinding, Statement, Var};
+use crate::syntax::{ContextBinding, ID, Identifier, Statement};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -17,7 +17,7 @@ use std::rc::Rc;
 /// statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Substitute {
-    pub rearrange: Vec<(ContextBinding, Var)>,
+    pub rearrange: Vec<(ContextBinding, Identifier)>,
     pub next: Rc<Statement>,
 }
 
@@ -57,12 +57,12 @@ impl From<Substitute> for Statement {
 }
 
 impl FreeVars for Substitute {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
 
         for (new, old) in &self.rearrange {
-            vars.insert(old.clone());
-            vars.remove(&new.var);
+            vars.insert(old.id);
+            vars.remove(&new.var.id);
         }
 
         self
@@ -85,8 +85,10 @@ impl TypedFreeVars for Substitute {
 
 impl Subst for Substitute {
     // this function is actually never called on the linearized version of AxCut containing
-    // explicit substitutions
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Substitute {
+    // explicit substitutions; since the linearization pass does not generate fresh variables for
+    // reorderings, we substitute into the left-hand sides as well, instead of considering these
+    // bindings as proper shadowing, so that it stays obvious which rearrangments are reorderings
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Substitute {
         self.rearrange = self
             .rearrange
             .into_iter()

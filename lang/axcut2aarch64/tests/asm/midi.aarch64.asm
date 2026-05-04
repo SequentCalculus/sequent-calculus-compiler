@@ -19,12 +19,12 @@ asm_main:
     // actual code
 
 main_:
-    // create t: ContInt = ()\{ ... \};
+    // create t_1: ContInt = ()\{ ... \};
     // #mark no allocation
     MOVZ X4, 0, LSL 0
     // #load tag
     ADR X5, ContInt_1
-    // create k: ContList = (t)\{ ... \};
+    // create k_4: ContList = (t_1)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -126,14 +126,14 @@ lab12:
 lab14:
     // #load tag
     ADR X5, ContList_15
-    // let zs: List = Nil();
+    // let zs_6: List = Nil();
     // #mark no allocation
     MOVZ X6, 0, LSL 0
     // #load tag
     MOVZ X7, 0, LSL 0
-    // lit n <- 3;
+    // lit n_7 <- 3;
     MOVZ X9, 3, LSL 0
-    // substitute (k := k)(zs := zs)(n := n);
+    // substitute (k_4 := k_4)(zs_6 := zs_6)(n_7 := n_7);
     // range(...)
     B range_
 
@@ -171,7 +171,7 @@ lab17:
     LDR X6, [ X6, 48 ]
 
 lab18:
-    // substitute (t := t)(as := as);
+    // substitute (t_1 := t_1)(as_5 := as_5);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -185,7 +185,7 @@ lab18:
 ContInt_1:
 
 ContInt_1_Reti:
-    // println_i64 r;
+    // println_i64 r_2;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -197,18 +197,18 @@ ContInt_1_Reti:
     MOV X0, X19
     MOV X1, X20
     MOV X5, X21
-    // lit ret <- 0;
+    // lit ret_3 <- 0;
     MOVZ X7, 0, LSL 0
-    // exit ret
+    // exit ret_3
     MOV X0, X7
     B cleanup
 
 range_:
-    // if i == 0 \{ ... \}
+    // if i_10 == 0 \{ ... \}
     CMP X9, 0
     BEQ lab19
     // else branch
-    // substitute (n := i)(k := k)(xs := xs)(i := i);
+    // substitute (n_11 := i_10)(k_8 := k_8)(xs_9 := xs_9)(i_10 := i_10);
     // #move variables
     MOV X8, X6
     MOV X6, X4
@@ -217,7 +217,7 @@ range_:
     MOV X9, X7
     MOV X7, X5
     MOV X5, X2
-    // let ys: List = Cons(xs, i);
+    // let ys_12: List = Cons(xs_9, i_10);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
@@ -320,11 +320,11 @@ lab30:
 lab32:
     // #load tag
     MOVZ X9, 4, LSL 0
-    // lit o <- -1;
+    // lit o_13 <- -1;
     MOVN X11, 0, LSL 0
-    // j <- n + o;
+    // j_14 <- n_11 + o_13;
     ADD X13, X5, X11
-    // substitute (k := k)(ys := ys)(j := j);
+    // substitute (k_8 := k_8)(ys_12 := ys_12)(j_14 := j_14);
     // #move variables
     MOV X4, X6
     MOV X5, X7
@@ -336,7 +336,7 @@ lab32:
 
 lab19:
     // then branch
-    // substitute (xs := xs)(k := k);
+    // substitute (xs_9 := xs_9)(k_8 := k_8);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -344,12 +344,12 @@ lab19:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // invoke k Retl
+    // invoke k_8 Retl
     // #there is only one clause, so we can jump there directly
     BR X7
 
 sum_:
-    // switch xs \{ ... \};
+    // switch xs_16 \{ ... \};
     ADR X2, List_33
     ADD X2, X2, X7
     BR X2
@@ -359,15 +359,15 @@ List_33:
     B List_33_Cons
 
 List_33_Nil:
-    // lit z <- 0;
+    // lit z_17 <- 0;
     MOVZ X7, 0, LSL 0
-    // substitute (z := z)(k := k);
+    // substitute (z_17 := z_17)(k_15 := k_15);
     // #move variables
     MOV X6, X4
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // invoke k Reti
+    // invoke k_15 Reti
     // #there is only one clause, so we can jump there directly
     BR X7
 
@@ -405,7 +405,7 @@ lab35:
     LDR X6, [ X6, 32 ]
 
 lab36:
-    // substitute (ys := ys)(k := k)(y := y);
+    // substitute (ys_18 := ys_18)(k_15 := k_15)(y_19 := y_19);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -413,7 +413,7 @@ lab36:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // create j: ContInt = (k, y)\{ ... \};
+    // create j_20: ContInt = (k_15, y_19)\{ ... \};
     // #allocate memory
     // ##store values
     STR X9, [ X0, 56 ]
@@ -516,7 +516,7 @@ lab47:
 lab49:
     // #load tag
     ADR X7, ContInt_50
-    // substitute (j := j)(ys := ys);
+    // substitute (j_20 := j_20)(ys_18 := ys_18);
     // #move variables
     MOV X2, X6
     MOV X6, X4
@@ -563,12 +563,12 @@ lab52:
     LDR X6, [ X6, 32 ]
 
 lab53:
-    // s <- y + r;
+    // s_22 <- y_19 + r_21;
     ADD X11, X9, X5
-    // substitute (s := s)(k := k);
+    // substitute (s_22 := s_22)(k_15 := k_15);
     // #move variables
     MOV X5, X11
-    // invoke k Reti
+    // invoke k_15 Reti
     // #there is only one clause, so we can jump there directly
     BR X7
 

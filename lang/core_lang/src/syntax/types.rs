@@ -11,7 +11,7 @@ pub enum Ty {
     /// Signed 64-Bit integer.
     I64,
     /// User-declared data or codata type.
-    Decl(Name),
+    Decl(Identifier),
 }
 
 impl Ty {
@@ -28,10 +28,10 @@ impl Ty {
 }
 
 impl Print for Ty {
-    fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         match self {
             Ty::I64 => alloc.typ(I64),
-            Ty::Decl(name) => alloc.typ(name),
+            Ty::Decl(name) => alloc.typ(&name.print_to_string(Some(cfg))),
         }
     }
 }

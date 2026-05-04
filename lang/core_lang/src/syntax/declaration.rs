@@ -63,7 +63,7 @@ pub struct XtorSig<P: Polarity> {
     /// Whether this is a constructor ([`Data`]) or destructor ([`Codata`])
     pub xtor: P,
     /// The xtor name
-    pub name: Name,
+    pub name: Identifier,
     /// The argument context
     pub args: TypingContext,
 }
@@ -86,9 +86,13 @@ impl<P: Polarity> Print for XtorSig<P> {
         };
 
         if self.xtor.is_data() {
-            alloc.ctor(&self.name).append(args.group())
+            alloc
+                .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(args.group())
         } else {
-            alloc.dtor(&self.name).append(args.group())
+            alloc
+                .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(args.group())
         }
     }
 }
@@ -101,7 +105,7 @@ pub struct TypeDeclaration<P: Polarity> {
     /// Whether this is a [`Data`] or [`Codata`] type
     pub dat: P,
     /// The type name
-    pub name: Name,
+    pub name: Identifier,
     /// The xtors of the type
     pub xtors: Vec<XtorSig<P>>,
 }
@@ -121,7 +125,7 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
             .dat
             .print(cfg, alloc)
             .append(alloc.space())
-            .append(alloc.typ(&self.name))
+            .append(alloc.typ(&self.name.print_to_string(Some(cfg))))
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
@@ -147,13 +151,13 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
 ///
 /// A panic is caused if the type declaration is not contained in the list.
 pub fn lookup_type_declaration<'a, P: Polarity>(
-    type_name: &String,
+    type_name: &Identifier,
     types: &'a [TypeDeclaration<P>],
 ) -> &'a TypeDeclaration<P> {
     types
         .iter()
         .find(|declaration| declaration.name == *type_name)
-        .unwrap_or_else(|| panic!("Type {type_name} not found"))
+        .unwrap_or_else(|| panic!("Type {} not found", type_name.name))
 }
 
 /// This function returns the data type declaration for continuations of type `i64`, used in the
@@ -161,13 +165,13 @@ pub fn lookup_type_declaration<'a, P: Polarity>(
 pub fn cont_int() -> DataDeclaration {
     DataDeclaration {
         dat: Data,
-        name: "_Cont".to_string(),
+        name: Identifier::new("_Cont".to_string()),
         xtors: vec![CtorSig {
             xtor: Data,
-            name: "Ret".to_string(),
+            name: Identifier::new("Ret".to_string()),
             args: TypingContext {
                 bindings: vec![ContextBinding {
-                    var: "x".to_string(),
+                    var: Identifier::new("x".to_string()),
                     chi: Chirality::Prd,
                     ty: Ty::I64,
                 }],

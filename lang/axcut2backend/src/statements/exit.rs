@@ -1,6 +1,6 @@
 //! This module defines the code generation for the exit statement.
 
-use printer::tokens::EXIT;
+use printer::{Print, tokens::EXIT};
 
 use super::CodeStatement;
 use crate::{
@@ -21,12 +21,12 @@ impl CodeStatement for Exit {
             + Instructions<Code, Temporary, Immediate>
             + Utils<Temporary>,
     {
-        let comment = format!("{EXIT} {}", self.var);
+        let comment = format!("{EXIT} {}", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
         Backend::mov(
             Backend::return1(),
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             instructions,
         );
         Backend::jump_label("cleanup".to_string(), instructions);

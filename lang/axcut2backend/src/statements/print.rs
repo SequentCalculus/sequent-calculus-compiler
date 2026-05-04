@@ -1,5 +1,6 @@
 //! This module defines the code generation for printing an integer.
 
+use printer::Print;
 use printer::tokens::{PRINT_I64, PRINTLN_I64};
 
 use super::CodeStatement;
@@ -28,12 +29,12 @@ impl CodeStatement for PrintI64 {
             + Utils<Temporary>,
     {
         let print_i64 = if self.newline { PRINTLN_I64 } else { PRINT_I64 };
-        let comment = format!("{print_i64} {};", self.var);
+        let comment = format!("{print_i64} {};", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
         Backend::print_i64(
             self.newline,
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             &context.bindings,
             instructions,
         );

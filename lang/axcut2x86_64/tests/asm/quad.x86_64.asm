@@ -25,15 +25,15 @@ asm_main:
     ; actual code
 
 main_:
-    ; lit z <- 8;
+    ; lit z_1 <- 8;
     mov rdx, 8
-    ; lit y <- 6;
+    ; lit y_2 <- 6;
     mov rdi, 6
-    ; lit x <- 4;
+    ; lit x_3 <- 4;
     mov r9, 4
-    ; lit w <- 2;
+    ; lit w_4 <- 2;
     mov r11, 2
-    ; let q: Quad = Q(z, y, x, w);
+    ; let q_5: Quad = Q(z_1, y_2, x_3, w_4);
     ; #allocate memory
     ; ##store values
     mov [rbx + 56], r11
@@ -225,7 +225,7 @@ lab24:
 lab26:
     ; #load tag
     mov rdx, 0
-    ; switch q \{ ... \};
+    ; switch q_5 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
 Quad_27:
@@ -265,12 +265,12 @@ lab28:
     mov rdi, [rsi + 24]
 
 lab29:
-    ; lit z <- 7;
+    ; lit z_10 <- 7;
     mov r13, 7
-    ; e <- d + z;
+    ; e_11 <- d_6 + z_10;
     mov r15, rdx
     add r15, r13
-    ; println_i64 e;
+    ; println_i64 e_11;
     ; #save caller-save registers
     push rdx
     push rdi
@@ -286,9 +286,9 @@ lab29:
     pop r9
     pop rdi
     pop rdx
-    ; lit ret <- 0;
+    ; lit ret_12 <- 0;
     mov qword [rsp + 2024], 0
-    ; exit ret
+    ; exit ret_12
     mov rax, [rsp + 2024]
     jmp cleanup
 

@@ -1,5 +1,5 @@
 use core_lang::syntax::statements::ifc::IfSort;
-use macro_utils::{expr_to_string, parse_args, quote_option};
+use macro_utils::{parse_args, quote_option};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Expr, parse_str};
@@ -55,9 +55,8 @@ pub fn fs_if(input: TokenStream, sort: IfSort) -> TokenStream {
     ifc(
         input,
         sort,
-        |exp, num_arg| {
-            let var = expr_to_string(exp, num_arg);
-            quote! { #var.to_string() }
+        |exp, _| {
+            quote! { #exp }
         },
         quote! {core_lang::syntax::statements::FsStatement},
     )
@@ -90,10 +89,7 @@ fn ifc(
         &[(1, parse_str("::std::option::Option::None").unwrap())],
     );
     let fst = arg_converter(&args[0], 0);
-    let snd = quote_option(&args[1], |expr| {
-        let exp = arg_converter(expr, 1);
-        quote!(#exp)
-    });
+    let snd = quote_option(&args[1], |expr| arg_converter(expr, 1));
     let thenc = &args[2];
     let elsec = &args[3];
     quote! {

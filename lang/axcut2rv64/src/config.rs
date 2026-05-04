@@ -55,7 +55,7 @@ pub const FIELD_SLOT_SIZE: usize = 8;
 /// This function calculates a memory address offset from a given logical slot offset into a memory
 /// block.
 pub const fn address(n: isize) -> Immediate {
-    (FIELD_SLOT_SIZE as isize * n) as Immediate
+    (FIELD_SLOT_SIZE.cast_signed() * n) as Immediate
 }
 
 /// The number of usable fields per memory block. One additional field is used as a header,

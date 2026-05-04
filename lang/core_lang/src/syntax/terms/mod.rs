@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 pub mod clause;
 pub mod literal;
@@ -103,12 +103,40 @@ impl<C: Chi> Print for Term<C> {
     }
 }
 
+impl IsValue for Term<Prd> {
+    fn is_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        if self.get_type().is_codata(codata_types) {
+            true
+        } else {
+            match self {
+                Term::Op(_) | Term::Mu(_) => false,
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::XVar(_) | Term::Literal(_) | Term::XCase(_) => true,
+            }
+        }
+    }
+}
+impl IsCovalue for Term<Cns> {
+    fn is_covalue(&self, codata_types: &[CodataDeclaration]) -> bool {
+        if !self.get_type().is_codata(codata_types) {
+            true
+        } else {
+            match self {
+                Term::Mu(_) => false,
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::XVar(_) | Term::XCase(_) => true,
+                Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
+            }
+        }
+    }
+}
+
 impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -124,8 +152,8 @@ impl Subst for Term<Cns> {
     type Target = Term<Cns>;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Term::XVar(var) => Subst::subst_sim(var, prod_subst, cons_subst),
@@ -151,12 +179,12 @@ impl<C: Chi> TypedFreeVars for Term<C> {
 }
 
 impl<C: Chi> Uniquify for Term<C> {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Term<C> {
+    fn uniquify(self, max_id: &mut ID) -> Term<C> {
         match self {
-            Term::Op(op) => op.uniquify(seen_vars, used_vars).into(),
-            Term::Mu(mu) => mu.uniquify(seen_vars, used_vars).into(),
-            Term::Xtor(xtor) => xtor.uniquify(seen_vars, used_vars).into(),
-            Term::XCase(xcase) => xcase.uniquify(seen_vars, used_vars).into(),
+            Term::Op(op) => op.uniquify(max_id).into(),
+            Term::Mu(mu) => mu.uniquify(max_id).into(),
+            Term::Xtor(xtor) => xtor.uniquify(max_id).into(),
+            Term::XCase(xcase) => xcase.uniquify(max_id).into(),
             _ => self,
         }
     }
@@ -164,50 +192,50 @@ impl<C: Chi> Uniquify for Term<C> {
 
 impl Focusing for Term<Prd> {
     type Target = FsTerm<Prd>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         match self {
             Term::XVar(var) => var.into(),
             Term::Literal(lit) => lit.into(),
-            Term::Op(op) => op.focus(used_vars),
-            Term::Mu(mu) => mu.focus(used_vars).into(),
-            Term::Xtor(xtor) => xtor.focus(used_vars),
-            Term::XCase(xcase) => xcase.focus(used_vars).into(),
+            Term::Op(op) => op.focus(max_id),
+            Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Xtor(xtor) => xtor.focus(max_id),
+            Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
     }
 }
 impl Focusing for Term<Cns> {
     type Target = FsTerm<Cns>;
-    fn focus(self, used_vars: &mut HashSet<Var>) -> Self::Target {
+    fn focus(self, max_id: &mut ID) -> Self::Target {
         match self {
             Term::XVar(covar) => covar.into(),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
-            Term::Mu(mu) => mu.focus(used_vars).into(),
-            Term::Xtor(xtor) => xtor.focus(used_vars),
-            Term::XCase(xcase) => xcase.focus(used_vars).into(),
+            Term::Mu(mu) => mu.focus(max_id).into(),
+            Term::Xtor(xtor) => xtor.focus(max_id),
+            Term::XCase(xcase) => xcase.focus(max_id).into(),
         }
     }
 }
 
 impl Bind for Term<Prd> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
-            Term::XVar(var) => var.bind(k, used_vars),
-            Term::Literal(lit) => lit.bind(k, used_vars),
-            Term::Op(op) => op.bind(k, used_vars),
-            Term::Mu(mu) => mu.bind(k, used_vars),
-            Term::Xtor(xtor) => xtor.bind(k, used_vars),
-            Term::XCase(xcase) => xcase.bind(k, used_vars),
+            Term::XVar(var) => var.bind(k, max_id),
+            Term::Literal(lit) => lit.bind(k, max_id),
+            Term::Op(op) => op.bind(k, max_id),
+            Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Xtor(xtor) => xtor.bind(k, max_id),
+            Term::XCase(xcase) => xcase.bind(k, max_id),
         }
     }
 }
 impl Bind for Term<Cns> {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
-            Term::XVar(covar) => covar.bind(k, used_vars),
+            Term::XVar(covar) => covar.bind(k, max_id),
             Term::Literal(_) | Term::Op(_) => panic!("Cannot happen"),
-            Term::Mu(mu) => mu.bind(k, used_vars),
-            Term::Xtor(xtor) => xtor.bind(k, used_vars),
-            Term::XCase(xcase) => xcase.bind(k, used_vars),
+            Term::Mu(mu) => mu.bind(k, max_id),
+            Term::Xtor(xtor) => xtor.bind(k, max_id),
+            Term::XCase(xcase) => xcase.bind(k, max_id),
         }
     }
 }
@@ -245,7 +273,7 @@ impl<C: Chi> Print for FsTerm<C> {
 
 impl<C: Chi> SubstVar for FsTerm<C> {
     type Target = FsTerm<C>;
-    fn subst_sim(self, subst: &[(Var, Var)]) -> Self::Target {
+    fn subst_sim(self, subst: &[(ID, Identifier)]) -> Self::Target {
         match self {
             FsTerm::XVar(var) => var.subst_sim(subst).into(),
             FsTerm::Literal(ref _lit) => self,

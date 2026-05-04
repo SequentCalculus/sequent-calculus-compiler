@@ -4,7 +4,7 @@ use printer::tokens::{DIVIDE, LEFT_ARROW, MINUS, MODULO, PLUS, SEMI, TIMES};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -49,12 +49,12 @@ impl Print for BinOp {
 /// statement. Moreover, the free variables of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Op {
-    pub fst: Var,
+    pub fst: Identifier,
     pub op: BinOp,
-    pub snd: Var,
-    pub var: Var,
+    pub snd: Identifier,
+    pub var: Identifier,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Var>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Op {
@@ -86,13 +86,13 @@ impl From<Op> for Statement {
 }
 
 impl FreeVars for Op {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.remove(&self.var);
-        vars.insert(self.fst.clone());
-        vars.insert(self.snd.clone());
+        vars.remove(&self.var.id);
+        vars.insert(self.fst.id);
+        vars.insert(self.snd.id);
 
         self
     }
@@ -120,7 +120,7 @@ impl TypedFreeVars for Op {
 }
 
 impl Subst for Op {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Op {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Op {
         self.fst = self.fst.subst_sim(subst);
         self.snd = self.snd.subst_sim(subst);
 
@@ -137,12 +137,12 @@ impl Linearizing for Op {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> Statement {
         let mut free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
         // the input variables are not consumed, so we have to keep them
-        free_vars.insert(self.fst.clone());
-        free_vars.insert(self.snd.clone());
+        free_vars.insert(self.fst.id);
+        free_vars.insert(self.snd.id);
 
         // the new context consists of the context for the remaining statement ...
         let mut new_context = context.filter_by_set(&free_vars);
@@ -156,7 +156,7 @@ impl Linearizing for Op {
         new_context.bindings.push(new_binding);
 
         // linearize the remaining statement
-        self.next = self.next.linearize(new_context, used_vars);
+        self.next = self.next.linearize(new_context, max_id);
 
         if context == context_rearrange {
             // if the context is exactly right already, we do not have to do anything

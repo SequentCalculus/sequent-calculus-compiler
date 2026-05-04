@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 /// This function converts [arithmetic binary operations in Fun](fun::syntax::terms::BinOp) to
 /// [arithmetic binary operations in Core](core_lang::syntax::BinOp).
-fn compile_op(op: fun::syntax::terms::BinOp) -> core_lang::syntax::BinOp {
+fn compile_op(op: &fun::syntax::terms::BinOp) -> core_lang::syntax::BinOp {
     match op {
         fun::syntax::terms::BinOp::Div => core_lang::syntax::BinOp::Div,
         fun::syntax::terms::BinOp::Prod => core_lang::syntax::BinOp::Prod,
@@ -32,7 +32,7 @@ impl Compile for fun::syntax::terms::Op {
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            op: compile_op(self.op),
+            op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into()
@@ -49,7 +49,7 @@ impl Compile for fun::syntax::terms::Op {
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            op: compile_op(self.op),
+            op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile(state, Ty::I64)),
         }
         .into();
@@ -65,7 +65,7 @@ impl Compile for fun::syntax::terms::Op {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{lit, prod, sub, ty, var};
+    use core_macros::{id, lit, prod, sub, ty, var};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -109,7 +109,7 @@ mod compile_tests {
         };
         let result = term_typed.compile(&mut state, ty!("int"));
 
-        let expected = prod!(var!("x"), sub!(var!("x"), lit!(1))).into();
+        let expected = prod!(var!(id!("x")), sub!(var!(id!("x")), lit!(1))).into();
         assert_eq!(result, expected);
     }
 }

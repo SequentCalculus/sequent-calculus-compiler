@@ -29,18 +29,18 @@ main_:
     jmp l_
 
 l_:
-    ; lit x <- 1;
+    ; lit x_1 <- 1;
     mov rdx, 1
-    ; lit y <- 9;
+    ; lit y_2 <- 9;
     mov rdi, 9
     ; j(...)
     jmp j_
 
 j_:
-    ; z <- x + y;
+    ; z_5 <- x_4 + y_3;
     mov r9, rdi
     add r9, rdx
-    ; println_i64 z;
+    ; println_i64 z_5;
     ; #save caller-save registers
     mov r12, rdx
     mov r13, rdi
@@ -54,9 +54,9 @@ j_:
     mov rdi, r13
     mov r9, r14
     add rsp, 8
-    ; lit ret <- 0;
+    ; lit ret_6 <- 0;
     mov r11, 0
-    ; exit ret
+    ; exit ret_6
     mov rax, r11
     jmp cleanup
 

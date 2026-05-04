@@ -66,7 +66,7 @@ impl Compile for fun::syntax::terms::IfC {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, cut, ife, lit, mu, ty, var};
+    use core_macros::{covar, cut, id, ife, lit, mu, ty, var};
     use fun::{parse_term, typing::check::Check};
 
     use std::collections::{HashSet, VecDeque};
@@ -85,12 +85,12 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             ife!(
                 lit!(3),
                 lit!(4),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(lit!(2), covar!(id!("a0")))
             )
         )
         .into();
@@ -120,12 +120,12 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             ife!(
-                var!("x"),
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!(id!("x")),
+                var!(id!("x")),
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(var!(id!("x")), covar!(id!("a0")))
             )
         )
         .into();
@@ -146,11 +146,11 @@ mod compile_tests {
         let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             ife!(
                 lit!(0),
-                cut!(lit!(1), covar!("a0")),
-                cut!(lit!(2), covar!("a0"))
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(lit!(2), covar!(id!("a0")))
             )
         )
         .into();
@@ -180,11 +180,11 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             ife!(
-                var!("x"),
-                cut!(lit!(1), covar!("a0")),
-                cut!(var!("x"), covar!("a0"))
+                var!(id!("x")),
+                cut!(lit!(1), covar!(id!("a0"))),
+                cut!(var!(id!("x")), covar!(id!("a0")))
             )
         )
         .into();

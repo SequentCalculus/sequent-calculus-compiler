@@ -5,7 +5,7 @@ use printer::tokens::{COLON, COMMA, EQ, LET, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, Name, Statement, Ty, TypingContext, Var};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 use crate::traits::substitution::Subst;
@@ -19,12 +19,12 @@ use std::rc::Rc;
 /// the free variables of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Let {
-    pub var: Var,
+    pub var: Identifier,
     pub ty: Ty,
-    pub tag: Name,
+    pub tag: Identifier,
     pub args: TypingContext,
     pub next: Rc<Statement>,
-    pub free_vars_next: Option<HashSet<Var>>,
+    pub free_vars_next: Option<HashSet<ID>>,
 }
 
 impl Print for Let {
@@ -73,12 +73,12 @@ impl From<Let> for Statement {
 }
 
 impl FreeVars for Let {
-    fn free_vars(mut self, vars: &mut HashSet<Var>) -> Self {
+    fn free_vars(mut self, vars: &mut HashSet<ID>) -> Self {
         self.next = self.next.free_vars(vars);
         self.free_vars_next = Some(vars.clone());
 
-        vars.remove(&self.var);
-        vars.extend(self.args.vars());
+        vars.remove(&self.var.id);
+        vars.extend(self.args.bindings.iter().map(|binding| binding.var.id));
 
         self
     }
@@ -97,7 +97,7 @@ impl TypedFreeVars for Let {
 }
 
 impl Subst for Let {
-    fn subst_sim(mut self, subst: &[(Var, Var)]) -> Let {
+    fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Let {
         self.args = self.args.subst_sim(subst);
         self.next = self.next.subst_sim(subst);
         self.free_vars_next = self.free_vars_next.subst_sim(subst);
@@ -111,7 +111,7 @@ impl Linearizing for Let {
     ///
     /// In this implementation of [`Linearizing::linearize`] a panic is caused if the free
     /// variables of the remaining statement are not annotated.
-    fn linearize(mut self, context: TypingContext, used_vars: &mut HashSet<Var>) -> Statement {
+    fn linearize(mut self, context: TypingContext, max_id: &mut ID) -> Statement {
         let free_vars = std::mem::take(&mut self.free_vars_next)
             .expect("Free variables must be annotated before linearization");
 
@@ -133,11 +133,11 @@ impl Linearizing for Let {
             // if the context is exactly right already, we simply linearize the remaining statement
             // with the additional binding for the xtor
             new_context.bindings.push(new_binding);
-            self.next = self.next.linearize(new_context, used_vars);
+            self.next = self.next.linearize(new_context, max_id);
             self.into()
         } else {
             // otherwise we pick fresh names for duplicated variables in the arguments ...
-            self.args = self.args.freshen(new_context.vars_set(), used_vars);
+            self.args = self.args.freshen(new_context.ids_set(), max_id);
 
             // ...  via the rearrangement in an explicit substitution
             let mut context_rearrange_freshened = new_context.clone();
@@ -147,7 +147,7 @@ impl Linearizing for Let {
 
             // linearize the remaining statement with the additional binding for the xtor
             new_context.bindings.push(new_binding);
-            self.next = self.next.linearize(new_context, used_vars);
+            self.next = self.next.linearize(new_context, max_id);
 
             let rearrange = context_rearrange_freshened
                 .bindings

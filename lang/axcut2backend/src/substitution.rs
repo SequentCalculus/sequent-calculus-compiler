@@ -1,5 +1,7 @@
 //! This module contains some functions needed for generating code for explicit substitutions.
 
+use printer::Print;
+
 use crate::{
     code::Instructions,
     config::{
@@ -10,28 +12,29 @@ use crate::{
     parallel_moves::{ParallelMoves, parallel_moves},
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, TypingContext, Var};
+use axcut::syntax::{Chirality, ContextBinding, ID, Identifier, TypingContext};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::Hash;
 
 /// This function takes a list of pairs each of which associates a variable for a new typing
 /// context with a binding from a given context. It then "transposes" this list, returning a mapping
-/// for each binding in the given context to the associated variables in the new context.
+/// for each binding in the given context to the [`ID`]s of the associated variables in the new
+/// context.
 /// - `rearrange` is the list of pairs.
 /// - `context` is the given context.
 pub fn transpose(
-    rearrange: &[(ContextBinding, Var)],
+    rearrange: &[(ContextBinding, Identifier)],
     context: &TypingContext,
-) -> BTreeMap<ContextBinding, Vec<Var>> {
+) -> BTreeMap<ContextBinding, Vec<ID>> {
     let mut target_map = BTreeMap::new();
     for binding in &context.bindings {
         let targets = rearrange
             .iter()
-            .filter(|(_, old)| binding.var == *old)
-            .map(|(new, _)| new.var.clone())
+            .filter(|(_, old)| binding.var.id == old.id)
+            .map(|(new, _)| new.var.id)
             .collect();
-        let _ = target_map.insert(binding.clone(), targets);
+        target_map.insert(binding.clone(), targets);
     }
     target_map
 }
@@ -43,7 +46,7 @@ pub fn transpose(
 /// - `new_context` is the resulting context.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
-    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+    target_map: &BTreeMap<ContextBinding, Vec<ID>>,
     context: &TypingContext,
     new_context: &TypingContext,
     instructions: &mut Vec<Code>,
@@ -55,7 +58,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     /// This function transforms a mapping of variables to a corresponding mapping of temporaries.
     fn connections<Backend, Temporary: Ord, Immediate>(
-        target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+        target_map: &BTreeMap<ContextBinding, Vec<ID>>,
         context: &TypingContext,
         new_context: &TypingContext,
     ) -> BTreeMap<Temporary, BTreeSet<Temporary>>
@@ -67,25 +70,25 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
             // values of external types like integers occupy only one temporary
             if binding.chi == Chirality::Ext {
                 let _ = target_list_temporaries.insert(
-                    Backend::variable_temporary(Snd, context, &binding.var),
+                    Backend::variable_temporary(Snd, context, binding.var.id),
                     targets
                         .iter()
-                        .map(|target| Backend::variable_temporary(Snd, new_context, target))
+                        .map(|target| Backend::variable_temporary(Snd, new_context, *target))
                         .collect(),
                 );
             } else {
                 let _ = target_list_temporaries.insert(
-                    Backend::variable_temporary(Fst, context, &binding.var),
+                    Backend::variable_temporary(Fst, context, binding.var.id),
                     targets
                         .iter()
-                        .map(|target| Backend::variable_temporary(Fst, new_context, target))
+                        .map(|target| Backend::variable_temporary(Fst, new_context, *target))
                         .collect(),
                 );
                 let _ = target_list_temporaries.insert(
-                    Backend::variable_temporary(Snd, context, &binding.var),
+                    Backend::variable_temporary(Snd, context, binding.var.id),
                     targets
                         .iter()
-                        .map(|target| Backend::variable_temporary(Snd, new_context, target))
+                        .map(|target| Backend::variable_temporary(Snd, new_context, *target))
                         .collect(),
                 );
             }
@@ -105,7 +108,7 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 /// - `context` is the old context.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
-    target_map: &BTreeMap<ContextBinding, Vec<Var>>,
+    target_map: &BTreeMap<ContextBinding, Vec<ID>>,
     context: &TypingContext,
     instructions: &mut Vec<Code>,
 ) where
@@ -116,7 +119,7 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
 {
     #[allow(clippy::cast_possible_wrap)]
     fn update_reference_count<Backend, Code, Temporary, Immediate>(
-        variable: &Var,
+        variable: &Identifier,
         context: &TypingContext,
         new_count: usize,
         instructions: &mut Vec<Code>,
@@ -124,15 +127,21 @@ pub fn code_weakening_contraction<Backend, Code, Temporary, Immediate>(
         Backend:
             Memory<Code, Temporary> + Instructions<Code, Temporary, Immediate> + Utils<Temporary>,
     {
-        let temporary = Backend::variable_temporary(Fst, context, variable);
+        let temporary = Backend::variable_temporary(Fst, context, variable.id);
         match new_count {
             0 => {
-                instructions.push(Backend::comment(format!("#erase {variable}")));
+                instructions.push(Backend::comment(format!(
+                    "#erase {}",
+                    variable.print_to_string(None)
+                )));
                 Backend::erase_block(temporary, instructions);
             }
             1 => {}
             _ => {
-                instructions.push(Backend::comment(format!("#share {variable}")));
+                instructions.push(Backend::comment(format!(
+                    "#share {}",
+                    variable.print_to_string(None)
+                )));
                 Backend::share_block_n(temporary, new_count - 1, instructions);
             }
         }

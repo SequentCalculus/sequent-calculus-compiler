@@ -1,10 +1,10 @@
 // actual code
 main_:
-// lit z <- 1;
+// lit z_1 <- 1;
 LI X5 1
-// lit x <- 9;
+// lit x_2 <- 9;
 LI X7 9
-// let p: Either = Right(x);
+// let p_3: Either = Right(x_2);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -98,7 +98,7 @@ lab11:
 lab13:
 // #load tag
 LI X7 4
-// switch p \{ ... \};
+// switch p_3 \{ ... \};
 LA X1 Either_14
 ADD X1 X1 X7
 JALR X0 X1 0
@@ -128,9 +128,9 @@ MV X2 X6
 LW X7 56 X6
 
 lab16:
-// lit err <- -1;
+// lit err_5 <- -1;
 LI X9 -1
-// exit err
+// exit err_5
 MV X10 X9
 JAL X0 cleanup
 
@@ -155,9 +155,9 @@ MV X2 X6
 LW X7 56 X6
 
 lab18:
-// c <- b + z;
+// c_7 <- b_6 + z_1;
 ADD X9 X7 X5
-// exit c
+// exit c_7
 MV X10 X9
 JAL X0 cleanup
 

@@ -19,25 +19,25 @@ asm_main:
     // actual code
 
 main_:
-    // lit a <- 1;
+    // lit a_1 <- 1;
     MOVZ X5, 1, LSL 0
-    // lit b <- 3;
+    // lit b_2 <- 3;
     MOVZ X7, 3, LSL 0
-    // c <- a - b;
+    // c_3 <- a_1 - b_2;
     SUB X9, X5, X7
-    // lit d <- 8;
+    // lit d_4 <- 8;
     MOVZ X11, 8, LSL 0
-    // lit e <- -1;
+    // lit e_5 <- -1;
     MOVN X13, 0, LSL 0
-    // f <- e * d;
+    // f_6 <- e_5 * d_4;
     MUL X15, X13, X11
-    // g <- f + c;
+    // g_7 <- f_6 + c_3;
     ADD X17, X15, X9
-    // lit h <- -6;
+    // lit h_8 <- -6;
     MOVN X20, 5, LSL 0
-    // i <- h * g;
+    // i_9 <- h_8 * g_7;
     MUL X22, X20, X17
-    // println_i64 i;
+    // println_i64 i_9;
     // #save caller-save registers
     MOV X23, X0
     MOV X24, X1
@@ -63,9 +63,9 @@ main_:
     LDR X17, [ SP, 0 ]
     LDR X15, [ SP, 8 ]
     ADD SP, SP, 16
-    // lit ret <- 0;
+    // lit ret_10 <- 0;
     MOVZ X24, 0, LSL 0
-    // exit ret
+    // exit ret_10
     MOV X0, X24
     B cleanup
 

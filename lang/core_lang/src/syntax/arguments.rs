@@ -5,7 +5,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 
-use std::collections::{BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeSet, VecDeque};
 
 /// A single argument that can be either a producer or a consumer.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -37,12 +37,30 @@ impl From<Term<Cns>> for Argument {
     }
 }
 
+impl Typed for Argument {
+    fn get_type(&self) -> Ty {
+        match self {
+            Argument::Producer(prd) => prd.get_type(),
+            Argument::Consumer(cns) => cns.get_type(),
+        }
+    }
+}
+
+impl IsCoValue for Argument {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        match self {
+            Argument::Producer(prd) => prd.is_value(codata_types),
+            Argument::Consumer(cns) => cns.is_covalue(codata_types),
+        }
+    }
+}
+
 impl Subst for Argument {
     type Target = Argument;
     fn subst_sim(
         self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         match self {
             Argument::Producer(prod) => Argument::Producer(prod.subst_sim(prod_subst, cons_subst)),
@@ -65,19 +83,19 @@ impl TypedFreeVars for Argument {
 }
 
 impl Uniquify for Argument {
-    fn uniquify(self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Argument {
+    fn uniquify(self, max_id: &mut ID) -> Argument {
         match self {
-            Argument::Producer(term) => Argument::Producer(term.uniquify(seen_vars, used_vars)),
-            Argument::Consumer(term) => Argument::Consumer(term.uniquify(seen_vars, used_vars)),
+            Argument::Producer(term) => Argument::Producer(term.uniquify(max_id)),
+            Argument::Consumer(term) => Argument::Consumer(term.uniquify(max_id)),
         }
     }
 }
 
 impl Bind for Argument {
-    fn bind(self, k: Continuation, used_vars: &mut HashSet<Var>) -> FsStatement {
+    fn bind(self, k: Continuation, max_id: &mut ID) -> FsStatement {
         match self {
-            Argument::Producer(prd) => prd.bind(k, used_vars),
-            Argument::Consumer(cns) => cns.bind(k, used_vars),
+            Argument::Producer(prd) => prd.bind(k, max_id),
+            Argument::Consumer(cns) => cns.bind(k, max_id),
         }
     }
 }
@@ -112,8 +130,22 @@ impl Print for Arguments {
 }
 
 impl From<Arguments> for VecDeque<Argument> {
-    fn from(s: Arguments) -> VecDeque<Argument> {
-        s.entries.into()
+    fn from(args: Arguments) -> VecDeque<Argument> {
+        args.entries.into()
+    }
+}
+
+impl From<VecDeque<Argument>> for Arguments {
+    fn from(args: VecDeque<Argument>) -> Arguments {
+        Arguments {
+            entries: args.into(),
+        }
+    }
+}
+
+impl IsCoValue for Arguments {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        self.entries.is_co_value(codata_types)
     }
 }
 
@@ -121,8 +153,8 @@ impl Subst for Arguments {
     type Target = Arguments;
     fn subst_sim(
         mut self,
-        prod_subst: &[(Var, Term<Prd>)],
-        cons_subst: &[(Covar, Term<Cns>)],
+        prod_subst: &[(Identifier, Term<Prd>)],
+        cons_subst: &[(Identifier, Term<Cns>)],
     ) -> Self::Target {
         self.entries = self.entries.subst_sim(prod_subst, cons_subst);
         self
@@ -136,8 +168,8 @@ impl TypedFreeVars for Arguments {
 }
 
 impl Uniquify for Arguments {
-    fn uniquify(mut self, seen_vars: &mut HashSet<Var>, used_vars: &mut HashSet<Var>) -> Arguments {
-        self.entries = self.entries.uniquify(seen_vars, used_vars);
+    fn uniquify(mut self, max_id: &mut ID) -> Arguments {
+        self.entries = self.entries.uniquify(max_id);
         self
     }
 }

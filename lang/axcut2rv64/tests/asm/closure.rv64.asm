@@ -1,8 +1,8 @@
 // actual code
 main_:
-// lit a <- 9;
+// lit a_1 <- 9;
 LI X5 9
-// create f: Fun = (a)\{ ... \};
+// create f_2: Fun = (a_1)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -96,27 +96,27 @@ lab11:
 lab13:
 // #load tag
 LA X5 Fun_14
-// create k: Cont = ()\{ ... \};
+// create k_6: Cont = ()\{ ... \};
 // #mark no allocation
 MV X6 X0
 // #load tag
 LA X7 Cont_15
-// lit y <- 1;
+// lit y_9 <- 1;
 LI X9 1
-// substitute (y := y)(k := k)(f := f);
+// substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
 // #move variables
 MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
-// invoke f apply
+// invoke f_2 apply
 // #there is only one clause, so we can jump there directly
 JALR X0 X9 0
 
 Cont_15:
 
 Cont_15_Ret:
-// exit r
+// exit r_7
 MV X10 X5
 JAL X0 cleanup
 
@@ -143,12 +143,12 @@ MV X2 X8
 LW X9 56 X8
 
 lab17:
-// b <- a + x;
+// b_5 <- a_1 + x_3;
 ADD X11 X9 X5
-// substitute (b := b)(k := k);
+// substitute (b_5 := b_5)(k_4 := k_4);
 // #move variables
 MV X5 X11
-// invoke k Ret
+// invoke k_4 Ret
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 

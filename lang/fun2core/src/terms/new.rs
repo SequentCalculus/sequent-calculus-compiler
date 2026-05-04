@@ -71,7 +71,7 @@ impl Compile for fun::syntax::terms::New {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
-    use core_macros::{bind, clause, cns, cocase, codata, covar, cut, lit, ty};
+    use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
@@ -95,7 +95,7 @@ mod compile_tests {
             )
             .unwrap();
 
-        let lpair_declaration = codata!("LPair", []);
+        let lpair_declaration = codata!(id!("LPair"), []);
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
@@ -104,24 +104,24 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("LPair[i64, i64]"));
+        let result = term_typed.compile(&mut state, ty!(id!("LPair[i64, i64]")));
 
         let expected = cocase!(
             [
                 clause!(
                     core_syntax::Prd,
-                    "fst",
-                    [bind!("a0", cns!()),],
-                    cut!(lit!(1), covar!("a0"))
+                    id!("fst"),
+                    [bind!(id!("a0"), cns!()),],
+                    cut!(lit!(1), covar!(id!("a0")))
                 ),
                 clause!(
                     core_syntax::Prd,
-                    "snd",
-                    [bind!("a1", cns!())],
-                    cut!(lit!(2), covar!("a1"))
+                    id!("snd"),
+                    [bind!(id!("a1"), cns!())],
+                    cut!(lit!(2), covar!(id!("a1")))
                 )
             ],
-            ty!("LPair[i64, i64]")
+            ty!(id!("LPair[i64, i64]"))
         )
         .into();
 

@@ -50,6 +50,8 @@ pub struct Driver {
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Uniquified in core, but not yet focused,
+    uniquified: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
     focused: HashMap<PathBuf, core_lang::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
@@ -75,6 +77,7 @@ impl Driver {
             loaded: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
+            uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
@@ -194,6 +197,50 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the uniquified version of the [Core](core_lang) code.
+    pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
+        if let Some(res) = self.uniquified.get(path) {
+            return Ok(res.clone());
+        }
+
+        let mut compiled = self.compiled(path)?;
+        compiled.uniquify();
+        self.uniquified.insert(path.clone(), compiled.clone());
+        Ok(compiled)
+    }
+
+    pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let uniquified = self.uniquified(path)?;
+        Paths::create_uniquified_dir();
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+        let filename = Paths::uniquified_dir().join(filename);
+
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                uniquified
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                uniquified
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
     /// This function returns the focused version of the [Core](core_lang) code.
     pub fn focused(
         &mut self,
@@ -300,10 +347,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let shrunk = self.shrunk(path)?;
-        let linearized = shrunk.linearize();
-        self.linearized.insert(path.clone(), linearized.clone());
-        Ok(linearized)
+        let mut shrunk = self.shrunk(path)?;
+        shrunk.linearize();
+        self.linearized.insert(path.clone(), shrunk.clone());
+        Ok(shrunk)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.

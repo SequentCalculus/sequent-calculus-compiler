@@ -49,7 +49,7 @@ impl<Temporary: Eq + Hash + Copy> Root<Temporary> {
             Root::StartNode(temporary, trees) => {
                 if trees.iter().any(Tree::refers_back) {
                     visited.insert(*temporary);
-                };
+                }
                 for tree in trees {
                     visited.extend(tree.nodes());
                 }
@@ -213,7 +213,7 @@ fn root_moves<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
             }
             if trees.iter().any(Tree::refers_back) {
                 Backend::restore_temporary(temporary, contains_spill_move, instructions);
-            };
+            }
         }
     }
 }

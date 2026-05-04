@@ -19,9 +19,9 @@ asm_main:
     // actual code
 
 main_:
-    // lit a <- 9;
+    // lit a_1 <- 9;
     MOVZ X5, 9, LSL 0
-    // create f: Fun = (a)\{ ... \};
+    // create f_2: Fun = (a_1)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -123,27 +123,27 @@ lab11:
 lab13:
     // #load tag
     ADR X5, Fun_14
-    // create k: Cont = ()\{ ... \};
+    // create k_6: Cont = ()\{ ... \};
     // #mark no allocation
     MOVZ X6, 0, LSL 0
     // #load tag
     ADR X7, Cont_15
-    // lit y <- 1;
+    // lit y_9 <- 1;
     MOVZ X9, 1, LSL 0
-    // substitute (y := y)(k := k)(f := f);
+    // substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
     // #move variables
     MOV X8, X4
     MOV X2, X9
     MOV X9, X5
     MOV X5, X2
-    // invoke f apply
+    // invoke f_2 apply
     // #there is only one clause, so we can jump there directly
     BR X9
 
 Cont_15:
 
 Cont_15_Ret:
-    // println_i64 r;
+    // println_i64 r_7;
     // #save caller-save registers
     MOV X19, X0
     MOV X20, X1
@@ -155,9 +155,9 @@ Cont_15_Ret:
     MOV X0, X19
     MOV X1, X20
     MOV X5, X21
-    // lit ret <- 0;
+    // lit ret_8 <- 0;
     MOVZ X7, 0, LSL 0
-    // exit ret
+    // exit ret_8
     MOV X0, X7
     B cleanup
 
@@ -185,12 +185,12 @@ lab16:
     LDR X9, [ X8, 56 ]
 
 lab17:
-    // b <- a + x;
+    // b_5 <- a_1 + x_3;
     ADD X11, X9, X5
-    // substitute (b := b)(k := k);
+    // substitute (b_5 := b_5)(k_4 := k_4);
     // #move variables
     MOV X5, X11
-    // invoke k Ret
+    // invoke k_4 Ret
     // #there is only one clause, so we can jump there directly
     BR X7
 

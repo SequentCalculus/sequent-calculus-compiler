@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::traits::*;
 use crate::typing::*;
 
 use std::collections::{HashMap, HashSet};
@@ -83,6 +84,10 @@ pub struct TypingContext {
 }
 
 impl TypingContext {
+    pub fn vars(&self) -> HashSet<Var> {
+        self.bindings.iter().map(|bind| bind.var.clone()).collect()
+    }
+
     /// This function checks whether all types in the typing context are well-formed.
     pub fn check(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         for binding in &self.bindings {

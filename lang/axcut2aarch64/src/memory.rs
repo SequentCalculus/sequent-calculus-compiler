@@ -461,7 +461,18 @@ fn store_fields(
     block_position: BlockPosition,
     instructions: &mut Vec<Code>,
 ) {
-    if !to_store.bindings.is_empty() {
+    if to_store.bindings.is_empty() {
+        // if no memory is needed at all, we put a zero in the first temporary of the variable to
+        // indicate this
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            Backend::load_immediate(
+                Backend::fresh_temporary(Fst, remaining_context),
+                0.into(),
+                instructions,
+            );
+        }
+    } else {
         // the full context is the context remaining after all stores...
         let mut remaining_plus_to_store = remaining_context.clone();
         // ... plus the context of the stores
@@ -527,17 +538,6 @@ fn store_fields(
             BlockPosition::Other,
             instructions,
         );
-    } else {
-        // if no memory is needed at all, we put a zero in the first temporary of the variable to
-        // indicate this
-        if block_position == BlockPosition::Last {
-            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
-            Backend::load_immediate(
-                Backend::fresh_temporary(Fst, remaining_context),
-                0.into(),
-                instructions,
-            );
-        }
     }
 }
 
@@ -859,7 +859,7 @@ impl Memory<Code, Temporary> for Backend {
                         to_load,
                         existing_context,
                         instructions,
-                    )
+                    );
                 }
                 Temporary::Spill(memory_block_position) => {
                     instructions.push(Code::LDR(

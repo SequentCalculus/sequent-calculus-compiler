@@ -2,16 +2,16 @@
 
 use crate::{
     arguments::compile_subst,
-    compile::{Compile, CompileState},
+    compile::{Compile, CompileState, bind_many},
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
-use fun::syntax::types::OptTyped;
+use core_lang::syntax::{names::Identifier, terms::Cns};
+use fun::traits::OptTyped;
 
 impl Compile for fun::syntax::terms::Destructor {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
-    /// 〚t.D(t_1, ...) 〛_{c} = 〚t〛_{D(〚t_1〛, ..., c)}
+    /// 〚t.D(t_1, ...) 〛_{c} = bind_many_v(〚t_1, ...〛)[λas.〚t〛_{D(as, c)}]
     /// ```
     ///
     /// # Panics
@@ -22,24 +22,30 @@ impl Compile for fun::syntax::terms::Destructor {
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst(self.args, state);
-        args.entries.push(cont.into());
-        // new continuation: D(〚t_1〛, ..., c)
-        let new_cont = core_lang::syntax::terms::Xtor {
-            prdcns: Cns,
-            id: self.id,
-            args,
-            ty: compile_ty(
-                &self
-                    .scrutinee
-                    .get_type()
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into();
+        bind_many(
+            // 〚t_1, ...〛
+            compile_subst(self.args, state).into(),
+            Box::new(|mut bindings, state| {
+                bindings.push_back(cont.into());
+                // new continuation: D(as, c)
+                let new_cont = core_lang::syntax::terms::Xtor {
+                    prdcns: Cns,
+                    name: Identifier::new(self.id),
+                    args: bindings.into(),
+                    ty: compile_ty(
+                        &self
+                            .scrutinee
+                            .get_type()
+                            .expect("Types should be annotated before translation"),
+                    ),
+                }
+                .into();
 
-        // 〚t〛_{new_cont}
-        self.scrutinee.compile_with_cont(new_cont, state)
+                // 〚t〛_{new_cont}
+                self.scrutinee.compile_with_cont(new_cont, state)
+            }),
+            state,
+        )
     }
 }
 
@@ -47,7 +53,7 @@ impl Compile for fun::syntax::terms::Destructor {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::Prd;
-    use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, lit, mu, ty};
+    use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, id, lit, mu, ty};
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use std::collections::{HashSet, VecDeque};
 
@@ -72,27 +78,27 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
-                            "fst",
-                            [bind!("a1", cns!())],
-                            cut!(lit!(1), covar!("a1"))
+                            id!("fst"),
+                            [bind!(id!("a1"), cns!())],
+                            cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
-                            "snd",
-                            [bind!("a2", cns!())],
-                            cut!(lit!(2), covar!("a2"))
+                            id!("snd"),
+                            [bind!(id!("a2"), cns!())],
+                            cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
-                    ty!("LPair[i64, i64]")
+                    ty!(id!("LPair[i64, i64]"))
                 ),
-                dtor!("fst", [covar!("a0")], ty!("LPair[i64, i64]")),
-                ty!("LPair[i64, i64]")
+                dtor!(id!("fst"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
+                ty!(id!("LPair[i64, i64]"))
             )
         )
         .into();
@@ -120,27 +126,27 @@ mod compile_tests {
         let result = term_typed.compile(&mut state, ty!("int"));
 
         let expected = mu!(
-            "a0",
+            id!("a0"),
             cut!(
                 cocase!(
                     [
                         clause!(
                             Prd,
-                            "fst",
-                            [bind!("a1", cns!())],
-                            cut!(lit!(1), covar!("a1"))
+                            id!("fst"),
+                            [bind!(id!("a1"), cns!())],
+                            cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
-                            "snd",
-                            [bind!("a2", cns!())],
-                            cut!(lit!(2), covar!("a2"))
+                            id!("snd"),
+                            [bind!(id!("a2"), cns!())],
+                            cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
-                    ty!("LPair[i64, i64]")
+                    ty!(id!("LPair[i64, i64]"))
                 ),
-                dtor!("snd", [covar!("a0")], ty!("LPair[i64, i64]")),
-                ty!("LPair[i64, i64]")
+                dtor!(id!("snd"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
+                ty!(id!("LPair[i64, i64]"))
             )
         )
         .into();

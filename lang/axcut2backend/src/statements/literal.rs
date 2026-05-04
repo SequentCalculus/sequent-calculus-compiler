@@ -1,6 +1,6 @@
 //! This module defines the code generation for integer literals.
 
-use printer::tokens::LIT;
+use printer::{Print, tokens::LIT};
 
 use super::CodeStatement;
 use crate::{
@@ -29,7 +29,7 @@ impl CodeStatement for Literal {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{LIT} {} <- {};", self.var, self.lit);
+        let comment = format!("{LIT} {} <- {};", self.var.print_to_string(None), self.lit);
         instructions.push(Backend::comment(comment));
 
         context.bindings.push(ContextBinding {
@@ -38,7 +38,7 @@ impl CodeStatement for Literal {
             ty: Ty::I64,
         });
         Backend::load_immediate(
-            Backend::variable_temporary(Snd, &context, &self.var),
+            Backend::variable_temporary(Snd, &context, self.var.id),
             Backend::i64_to_immediate(self.lit),
             instructions,
         );

@@ -5,6 +5,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::*;
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -74,7 +75,7 @@ impl Check for XVar {
         let found_ty = context.lookup_var(&self.var, &self.span)?;
         if let Some(ty) = self.ty {
             check_equality(&self.span, symbol_table, &ty, &found_ty)?;
-        };
+        }
 
         check_equality(&self.span, symbol_table, expected, &found_ty)?;
 
