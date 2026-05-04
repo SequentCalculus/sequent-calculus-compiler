@@ -54,25 +54,24 @@ impl Print for Def {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = if self.is_public {
             alloc
-            .keyword(PDEF)
-            .append(alloc.space())
-            .append(self.name.print(cfg, alloc))
-            .append(self.context.print(cfg, alloc).parens())
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.ret_ty.print(cfg, alloc))
-            .append(alloc.space())
-        }
-        else {
+                .keyword(PDEF)
+                .append(alloc.space())
+                .append(self.name.print(cfg, alloc))
+                .append(self.context.print(cfg, alloc).parens())
+                .append(COLON)
+                .append(alloc.space())
+                .append(self.ret_ty.print(cfg, alloc))
+                .append(alloc.space())
+        } else {
             alloc
-            .keyword(DEF)
-            .append(alloc.space())
-            .append(self.name.print(cfg, alloc))
-            .append(self.context.print(cfg, alloc).parens())
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.ret_ty.print(cfg, alloc))
-            .append(alloc.space())
+                .keyword(DEF)
+                .append(alloc.space())
+                .append(self.name.print(cfg, alloc))
+                .append(self.context.print(cfg, alloc).parens())
+                .append(COLON)
+                .append(alloc.space())
+                .append(self.ret_ty.print(cfg, alloc))
+                .append(alloc.space())
         };
 
         let body = alloc
@@ -91,7 +90,6 @@ impl From<Def> for Declaration {
         Declaration::Def(value)
     }
 }
-
 
 #[cfg(test)]
 mod def_tests {

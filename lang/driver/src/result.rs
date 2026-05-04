@@ -22,4 +22,3 @@ pub enum DriverError {
     #[diagnostic(code("D-002"))]
     FileNotFound { path_to_file: String },
 }
-

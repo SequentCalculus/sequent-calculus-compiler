@@ -108,19 +108,18 @@ impl Print for Codata {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = if self.is_public {
             alloc
-            .keyword(PCODATA)
-            .append(alloc.space())
-            .append(alloc.typ(&self.name))
-            .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space())
-        }
-        else {
+                .keyword(PCODATA)
+                .append(alloc.space())
+                .append(alloc.typ(&self.name))
+                .append(self.type_params.print(cfg, alloc))
+                .append(alloc.space())
+        } else {
             alloc
-            .keyword(CODATA)
-            .append(alloc.space())
-            .append(alloc.typ(&self.name))
-            .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space())
+                .keyword(CODATA)
+                .append(alloc.space())
+                .append(alloc.typ(&self.name))
+                .append(self.type_params.print(cfg, alloc))
+                .append(alloc.space())
         };
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.dtors.is_empty() {

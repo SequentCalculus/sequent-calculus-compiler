@@ -7,7 +7,6 @@ pub mod codata;
 pub mod data;
 pub mod def;
 
-
 pub use codata::*;
 pub use data::*;
 pub use def::*;

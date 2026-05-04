@@ -1,10 +1,10 @@
 //! This module contains the command for formatting a Fun source code file.
 
-use std::{fs::File, path::PathBuf, collections::HashMap, ffi::OsString};
+use std::{collections::HashMap, ffi::OsString, fs::File, path::PathBuf};
 
 use driver::Driver;
-use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 use fun::syntax::program::ModuleProgram;
+use printer::{ColorChoice, Print, PrintCfg, StandardStream, WriteColor};
 
 use crate::utils::ignore_colors::IgnoreColors;
 
@@ -42,7 +42,11 @@ fn compute_output_stream(cmd: &Args) -> Box<dyn WriteColor> {
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mut drv = Driver::new();
     //let parsed = drv.parsed(&cmd.filepath);
-    let loaded = drv.loaded(&cmd.filepath, None, &mut HashMap::<OsString, Option<ModuleProgram>>::new());
+    let loaded = drv.loaded(
+        &cmd.filepath,
+        None,
+        &mut HashMap::<OsString, Option<ModuleProgram>>::new(),
+    );
     let loaded = match loaded {
         Ok(loaded) => loaded,
         Err(err) => return Err(drv.error_to_report(err, &cmd.filepath)),

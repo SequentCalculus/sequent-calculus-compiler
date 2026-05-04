@@ -5,7 +5,6 @@ use miette::SourceSpan;
 use printer::tokens::MODULE;
 use printer::*;
 
-
 use crate::syntax::*;
 use crate::typing::*;
 
@@ -22,7 +21,7 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Module, Error>{
+    pub fn check(self, _symbol_table: &SymbolTable) -> Result<Module, Error> {
         Ok(self)
     }
 }

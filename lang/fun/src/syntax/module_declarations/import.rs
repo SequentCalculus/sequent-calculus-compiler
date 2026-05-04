@@ -5,7 +5,6 @@ use miette::SourceSpan;
 use printer::tokens::IMPORT;
 use printer::*;
 
-
 use crate::syntax::*;
 use crate::typing::*;
 
@@ -22,7 +21,7 @@ pub struct Import {
 }
 
 impl Import {
-    pub fn check(self, _symbol_table: & SymbolTable) -> Result<Import, Error>{
+    pub fn check(self, _symbol_table: &SymbolTable) -> Result<Import, Error> {
         Ok(self)
     }
 }

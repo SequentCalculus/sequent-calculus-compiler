@@ -4,20 +4,23 @@
 
 use std::{
     collections::HashMap,
+    ffi::OsString,
     fmt::Write as _,
     fs::{self, File, remove_dir_all},
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
-    ffi::OsString,
 };
 
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
+    loader::{DriverTrait, load_module, result::LoaderError},
     parser::parse_module,
-    loader::{load_module, result::LoaderError, DriverTrait},
-    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Declaration},
+    syntax::{
+        Declaration,
+        program::{CheckedProgram, ModuleProgram, Program},
+    },
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
@@ -85,8 +88,7 @@ impl Driver {
             return Ok(res.clone());
         }
         //revert expect when error handling is implemented
-        let content =
-            fs::read_to_string(path.clone()).expect(path.to_str().expect("Err 2"));
+        let content = fs::read_to_string(path.clone()).expect(path.to_str().expect("Err 2"));
         //let content =
         //    fs::read_to_string(path.clone()).expect("Should have been able to read the file");
         self.sources.insert(path.clone(), content.clone());
@@ -102,25 +104,29 @@ impl Driver {
 
         let content = self.source(path)?;
         let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
-        
+
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
 
     /// This function loads the specified modules and submodules of the given file
-    pub fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<OsString, Option<ModuleProgram>>) -> Result<ModuleProgram, DriverError> {
+    pub fn loaded(
+        &mut self,
+        path: &PathBuf,
+        parent_decl: Option<(String, Vec<Declaration>)>,
+        visited: &mut HashMap<OsString, Option<ModuleProgram>>,
+    ) -> Result<ModuleProgram, DriverError> {
         // Check for a cache hit
         if let Some(res) = self.loaded.get(path) {
             return Ok(res.clone());
         }
-        
+
         let parsed = self.parsed(path)?;
         let loaded = load_module(&parsed, path, parent_decl, visited, Driver::create_driver)?;
 
         self.loaded.insert(path.clone(), loaded.clone());
         Ok(loaded)
     }
-
 
     /// This function returns the typechecked source code of the given file.
     pub fn checked(&mut self, path: &PathBuf) -> Result<CheckedProgram, DriverError> {
@@ -130,7 +136,11 @@ impl Driver {
         }
 
         //let parsed = self.parsed(path)?;
-        let loaded = self.loaded(path, None, &mut HashMap::<OsString, Option<ModuleProgram>>::new())?;
+        let loaded = self.loaded(
+            path,
+            None,
+            &mut HashMap::<OsString, Option<ModuleProgram>>::new(),
+        )?;
         let checked = loaded.check(false).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
@@ -339,7 +349,11 @@ impl Driver {
         fontsize: &str,
     ) -> Result<(), DriverError> {
         //let parsed = self.parsed(path)?;
-        let loaded = self.loaded(path, None, &mut HashMap::<OsString, Option<ModuleProgram>>::new())?;
+        let loaded = self.loaded(
+            path,
+            None,
+            &mut HashMap::<OsString, Option<ModuleProgram>>::new(),
+        )?;
 
         Paths::create_pdf_dir();
 
@@ -410,10 +424,20 @@ impl Driver {
 
 impl DriverTrait for Driver {
     fn parsed(&mut self, path: &PathBuf) -> Result<Program, LoaderError> {
-        self.parsed(path).map_err(|_| LoaderError::FileNotFound{path_to_file: "".to_string()})
+        self.parsed(path).map_err(|_| LoaderError::FileNotFound {
+            path_to_file: "".to_string(),
+        })
     }
-    fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<OsString, Option<ModuleProgram>>) -> Result<ModuleProgram, LoaderError> {
-        self.loaded(path, parent_decl, visited).map_err(|_| LoaderError::FileNotFound{path_to_file: "".to_string()})
+    fn loaded(
+        &mut self,
+        path: &PathBuf,
+        parent_decl: Option<(String, Vec<Declaration>)>,
+        visited: &mut HashMap<OsString, Option<ModuleProgram>>,
+    ) -> Result<ModuleProgram, LoaderError> {
+        self.loaded(path, parent_decl, visited)
+            .map_err(|_| LoaderError::FileNotFound {
+                path_to_file: "".to_string(),
+            })
     }
 
     fn new() -> Self {

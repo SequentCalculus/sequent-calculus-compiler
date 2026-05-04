@@ -188,7 +188,11 @@ impl SymbolTable {
 }
 
 /// This function builds a symbol table for a [program](Program).
-pub fn build_symbol_table(module: &ModuleProgram, import_decl: Vec<(String, Vec<Declaration>)>, module_decl: Vec<(String, Vec<Declaration>)>) -> Result<SymbolTable, Error> {
+pub fn build_symbol_table(
+    module: &ModuleProgram,
+    import_decl: Vec<(String, Vec<Declaration>)>,
+    module_decl: Vec<(String, Vec<Declaration>)>,
+) -> Result<SymbolTable, Error> {
     let mut symbol_table = SymbolTable::default();
     module.build(&mut symbol_table, "")?;
     for declarations in import_decl {
@@ -234,20 +238,19 @@ impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable, prefix: &str) -> Result<(), Error> {
         let mod_name = if prefix.is_empty() {
             &self.name
-        }
-        else {
+        } else {
             &(prefix.to_owned() + "::" + &self.name.clone())
         };
         if symbol_table.defs.contains_key(mod_name) {
-                return Err(Error::DefinedMultipleTimes {
-                    span: Some(self.span),
-                    name: mod_name.to_string(),
-                });
-            }
-            symbol_table.defs.insert(
-                mod_name.to_string(),
-                (self.context.clone(), self.ret_ty.clone()),
-            );
+            return Err(Error::DefinedMultipleTimes {
+                span: Some(self.span),
+                name: mod_name.to_string(),
+            });
+        }
+        symbol_table.defs.insert(
+            mod_name.to_string(),
+            (self.context.clone(), self.ret_ty.clone()),
+        );
         Ok(())
     }
 }
@@ -256,8 +259,7 @@ impl BuildSymbolTable for Data {
     fn build(&self, symbol_table: &mut SymbolTable, prefix: &str) -> Result<(), Error> {
         let mod_name = if prefix.is_empty() {
             &self.name
-        }
-        else {
+        } else {
             &(prefix.to_owned() + "::" + &self.name.clone())
         };
         if symbol_table.type_templates.contains_key(mod_name) {
@@ -301,28 +303,27 @@ impl BuildSymbolTable for Codata {
     fn build(&self, symbol_table: &mut SymbolTable, prefix: &str) -> Result<(), Error> {
         let mod_name = if prefix.is_empty() {
             &self.name
-        }
-        else {
+        } else {
             &(prefix.to_owned() + "::" + &self.name.clone())
         };
         if symbol_table.type_templates.contains_key(mod_name) {
-                return Err(Error::DefinedMultipleTimes {
-                    span: self.span.to_miette(),
-                    name: mod_name.to_string(),
-                });
-            }
-            symbol_table.type_templates.insert(
-                mod_name.to_string(),
-                (
-                    Polarity::Codata,
-                    self.type_params.clone(),
-                    self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
-                ),
-            );
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span.to_miette(),
+                name: mod_name.to_string(),
+            });
+        }
+        symbol_table.type_templates.insert(
+            mod_name.to_string(),
+            (
+                Polarity::Codata,
+                self.type_params.clone(),
+                self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
+            ),
+        );
 
-            for dtor in &self.dtors {
-                dtor.build(symbol_table, prefix)?;
-            }
+        for dtor in &self.dtors {
+            dtor.build(symbol_table, prefix)?;
+        }
         Ok(())
     }
 }

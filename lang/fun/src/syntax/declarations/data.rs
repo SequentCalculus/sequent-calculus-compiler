@@ -99,19 +99,18 @@ impl Print for Data {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let head = if self.is_public {
             alloc
-            .keyword(PDATA)
-            .append(alloc.space())
-            .append(alloc.typ(&self.name))
-            .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space())
-        }
-        else {
+                .keyword(PDATA)
+                .append(alloc.space())
+                .append(alloc.typ(&self.name))
+                .append(self.type_params.print(cfg, alloc))
+                .append(alloc.space())
+        } else {
             alloc
-            .keyword(DATA)
-            .append(alloc.space())
-            .append(alloc.typ(&self.name))
-            .append(self.type_params.print(cfg, alloc))
-            .append(alloc.space())
+                .keyword(DATA)
+                .append(alloc.space())
+                .append(alloc.typ(&self.name))
+                .append(self.type_params.print(cfg, alloc))
+                .append(alloc.space())
         };
         let sep = alloc.text(COMMA).append(alloc.line());
         let body = if self.ctors.is_empty() {

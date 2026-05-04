@@ -3,12 +3,11 @@
 
 use printer::*;
 
-pub mod module;
 pub mod import;
+pub mod module;
 
-pub use module::*;
 pub use import::*;
-
+pub use module::*;
 
 #[allow(clippy::large_enum_variant)]
 /// This enum defines module-level declarations. They are either [`Module`] or [`Import`] type templates
