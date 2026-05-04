@@ -521,6 +521,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "miette",
+ "regex",
  "scc-printer",
  "thiserror",
 ]
