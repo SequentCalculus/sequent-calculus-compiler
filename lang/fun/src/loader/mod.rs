@@ -3,6 +3,7 @@ use std::{
     collections::HashMap,
     path::{PathBuf},
     env::{consts::OS, home_dir},
+    ffi::OsString,
 };
 
 use crate::syntax::{
@@ -18,15 +19,15 @@ pub mod result;
 
 pub trait DriverTrait {
     fn parsed(&mut self, path: &PathBuf) -> Result<Program, LoaderError>;
-    fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<PathBuf, Option<ModuleProgram>>) -> Result<ModuleProgram, LoaderError>;
+    fn loaded(&mut self, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<OsString, Option<ModuleProgram>>) -> Result<ModuleProgram, LoaderError>;
 
     fn new() -> Self where Self: Sized;
 }
 
 /// This functions loads a module the specified modules ans submodules of the given file
-pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<PathBuf, Option<ModuleProgram>>, create_driver: impl Fn() -> Box<dyn DriverTrait>) -> Result<ModuleProgram, LoaderError> {
+pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(String, Vec<Declaration>)>, visited: &mut HashMap::<OsString, Option<ModuleProgram>>, create_driver: impl Fn() -> Box<dyn DriverTrait>) -> Result<ModuleProgram, LoaderError> {
 
-    visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), None);
+    visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf().file_name().expect("Should have filename").to_owned(), None);
     let mut imports = HashMap::<Name, ModuleProgram>::new();
     let mut modules = Vec::<ModuleProgram>::new();
     let name = path.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string();
@@ -38,16 +39,18 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
                 search_path.pop();
                 let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
                 let mut subdrv: Box<dyn DriverTrait> = create_driver();
-                if !visited.contains_key(&path_to_import) {
-                    let loaded = subdrv.loaded(&path_to_import, Some((name.clone(), parsed.declarations.clone())), visited)?;
-                    visited.insert(path_to_import.clone(), Some(loaded.clone()));
+                println!("{:?}", visited);
+                if !visited.contains_key(&path_to_import.file_name().expect("Should have filename").to_owned()) {
+                    let loaded = subdrv.loaded(&path_to_import, None, visited)?;
+                    visited.insert(path_to_import.file_name().expect("Should have filename").to_owned(), Some(loaded.clone()));
                     if !loaded.imports_to_parent.is_empty() {
                         imports.extend(loaded.imports_to_parent.clone());
                     }
                     imports.insert(import.name.clone(), loaded);
                 }
                 else {
-                    let subparsed = subdrv.parsed(&path_to_import)?;
+                    let sub_import = visited.get(&path_to_import.file_name().expect("Should have filename").to_owned()).unwrap().clone().unwrap();
+                    /*let subparsed = subdrv.parsed(&path_to_import)?;
                     let mut sub_public_decl = Vec::<Declaration>::new();
                     for decl in subparsed.declarations {
                         match decl {
@@ -55,16 +58,17 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
                             Declaration::Data (ref data) => {if data.is_public {sub_public_decl.push(decl)}}
                             Declaration::Def (ref def) => {if def.is_public {sub_public_decl.push(decl)}}
                         }
-                    }
+                    }*/
                     imports.insert(import.name.clone(), 
                                     ModuleProgram {
-                                        imports: Vec::<ModuleProgram>::new(),
+                                        imports: HashMap::<Name, ModuleProgram>::new(),
                                         modules: Vec::<ModuleProgram>::new(),
-                                        declarations: Vec::<Declaration>::new(),
+                                        declarations: sub_import.declarations.clone(),
                                         name: path_to_import.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string(),
                                         imports_to_parent: HashMap::<Name, ModuleProgram>::new(),
                                         parent_declarations: None,
-                                        public_declarations: sub_public_decl,});
+                                        public_declarations: sub_import.public_declarations.clone(),});
+                                        
                 }
             }
             ModuleDeclaration::Module (module)=> {
@@ -100,11 +104,11 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
         declarations: parsed.declarations.clone(),
         name: name,
         parent_declarations: parent_decl.clone(),
-        imports: imports.values().cloned().collect(),
+        imports: imports.clone(),
         imports_to_parent:  if !parent_decl.is_some() {HashMap::<Name, ModuleProgram>::new()} else {imports.clone()},
         public_declarations: public_declarations,
     };
-    visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf(), Some(module_program.clone()));
+    visited.insert(path.canonicalize().expect("Could not get absoule path").to_path_buf().file_name().expect("Should have filename").to_owned(), Some(module_program.clone()));
     //println!("{:#?}", imports);
     Ok(module_program)
 }

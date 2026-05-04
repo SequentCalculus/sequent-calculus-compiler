@@ -18,7 +18,7 @@ pub struct Program {
 pub struct ModuleProgram {
     /// The imports found in the file
     //pub imports: Vec<ModuleProgram>,
-    pub imports: Vec<ModuleProgram>,
+    pub imports: HashMap<Name, ModuleProgram>,
     /// The submodule declared in the file
     pub modules: Vec<ModuleProgram>,
     /// The public top-level functions in the file
@@ -54,8 +54,8 @@ impl ModuleProgram {
     pub fn check(self, has_parent: bool) -> Result<CheckedProgram, Error> {
         let mut import_decl = Vec::<(String, Vec::<Declaration>)>::new();
         for import in &self.imports {
-            if !import.public_declarations.is_empty() {
-                import_decl.push((import.name.clone(), import.public_declarations.clone()));
+            if !import.1.public_declarations.is_empty() {
+                import_decl.push((import.1.name.clone(), import.1.public_declarations.clone()));
             }
         }
         let mut module_decl = Vec::<(String, Vec::<Declaration>)>::new();
@@ -70,7 +70,7 @@ impl ModuleProgram {
         let mut checked_submodules = Vec::<CheckedProgram>::new();
         if !has_parent {
             for import in &self.imports {
-                checked_submodules.push(import.clone().check(true)?);
+                checked_submodules.push(import.1.clone().check(true)?);
             }
         }
         for module in &self.modules {
@@ -317,11 +317,12 @@ impl Print for ModuleProgram {
             alloc.line().append(alloc.line())
         };
 
-        let imports = self.imports.iter().map(|imp| imp.print(cfg, alloc));
+        let imports = self.imports.keys().collect::<Vec<_>>().into_iter().map(|imp| imp.print(cfg, alloc));
         //let imports = self.imports.iter().map(|imp| imp.print(cfg, alloc));
         let modules = self.modules.iter().map(|modu| modu.print(cfg, alloc));
         let declarations = self.declarations.iter().map(|decl| decl.print(cfg, alloc));
 
+        alloc.line().append(self.name.print(cfg, alloc));
         alloc.intersperse(imports, sep.clone());
         alloc.intersperse(modules, sep.clone());
         alloc.intersperse(declarations, sep)
