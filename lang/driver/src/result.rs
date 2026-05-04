@@ -12,6 +12,9 @@ pub enum DriverError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     TypeError(#[from] fun::typing::errors::Error),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    LoaderError(#[from] fun::loader::result::LoaderError),
     #[error("Unable to find binary {bin_name}")]
     #[diagnostic(code("D-001"))]
     BinaryNotFound { bin_name: String },
@@ -19,3 +22,4 @@ pub enum DriverError {
     #[diagnostic(code("D-002"))]
     FileNotFound { path_to_file: String },
 }
+
