@@ -208,6 +208,8 @@ impl UsedBinders for Term {
 
 #[cfg(feature = "test-common")]
 pub mod inferr_helper {
+    use std::collections::HashMap;
+
     use crate::{syntax::{Term, TypingContext}, typing::{Error, inference::{Inference, VarNameGenerator, constraint_unification}, symbol_table::SymbolTable}};
     
 
@@ -218,7 +220,10 @@ pub mod inferr_helper {
 
         let constraints = term.constraint_equations(symbol_table, context, var_name_generator, ty_var)?;
 
-        let mappings = constraint_unification(constraints)?;
+        todo!("use new constraint_unification algorithm correct");
+
+        
+        let mappings = HashMap::new(); //constraint_unification(constraints)?;
 
         term.insert_inferred_type(&mappings, symbol_table)
     }

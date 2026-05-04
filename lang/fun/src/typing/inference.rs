@@ -187,7 +187,7 @@ impl Constraint {
 
     pub fn add_choice(&mut self, choice_name: Name, choice_number: usize) {
         match self {
-            Self::Equality(a, b, choices) => {
+            Self::Equality(_, _, choices) => {
                 choices.insert(choice_name, choice_number);
             },
             Self::ImpossibleWorld(_) => {}

@@ -31,7 +31,6 @@ pub struct Let {
     /// The bound variable
     pub variable: Var,
     /// The (annotated) type of the bound term
-    // TODO: could become optional with the type inference
     pub var_ty: Option<Ty>,
     /// The bound term
     pub bound_term: Rc<Term>,

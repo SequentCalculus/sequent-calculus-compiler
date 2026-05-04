@@ -19,10 +19,11 @@ categories.workspace   = true
 test-common = []
 
 [dependencies]
-lalrpop-util = { workspace = true, features = ["lexer"] }
-derivative   = { workspace = true }
-thiserror    = { workspace = true }
-miette       = { workspace = true }
+lalrpop-util      = { workspace = true, features = ["lexer"] }
+derivative        = { workspace = true }
+thiserror         = { workspace = true }
+miette            = { workspace = true }
+biodivine-lib-bdd = { workspace = true }
 
 # Workspace members
 printer = { workspace = true }
