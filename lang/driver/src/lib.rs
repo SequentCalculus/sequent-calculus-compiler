@@ -118,7 +118,8 @@ impl Driver {
         let loaded = load_module(&parsed, path, parent_decl, visited, Driver::create_driver)?;
 
         self.loaded.insert(path.clone(), loaded.clone());
-        //println!("{:?}", loaded.imports);
+        //println!("{:?}", path.file_name().expect("Should have filename"));
+        //println!("{:?}", loaded.imports.keys());
         Ok(loaded)
     }
 
