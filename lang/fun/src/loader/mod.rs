@@ -39,35 +39,34 @@ pub fn load_module<'a>(parsed: &Program, path: &PathBuf, parent_decl: Option<(St
                 search_path.pop();
                 let path_to_import = find_given_file(&import.name, &mut search_path, true)?;
                 let mut subdrv: Box<dyn DriverTrait> = create_driver();
-                println!("{:?}", visited);
+                //println!("{:?}", visited);
                 if !visited.contains_key(&path_to_import.file_name().expect("Should have filename").to_owned()) {
                     let loaded = subdrv.loaded(&path_to_import, None, visited)?;
                     visited.insert(path_to_import.file_name().expect("Should have filename").to_owned(), Some(loaded.clone()));
                     if !loaded.imports_to_parent.is_empty() {
                         imports.extend(loaded.imports_to_parent.clone());
                     }
-                    imports.insert(import.name.clone(), loaded);
+                    imports.insert(get_actual_name(import.name.clone()).unwrap(), loaded);
                 }
                 else {
-                    let sub_import = visited.get(&path_to_import.file_name().expect("Should have filename").to_owned()).unwrap().clone().unwrap();
-                    /*let subparsed = subdrv.parsed(&path_to_import)?;
+                    let subparsed = subdrv.parsed(&path_to_import)?;
                     let mut sub_public_decl = Vec::<Declaration>::new();
-                    for decl in subparsed.declarations {
+                    for decl in &subparsed.declarations {
                         match decl {
-                            Declaration::Codata (ref codata) => {if codata.is_public {sub_public_decl.push(decl)}}
-                            Declaration::Data (ref data) => {if data.is_public {sub_public_decl.push(decl)}}
-                            Declaration::Def (ref def) => {if def.is_public {sub_public_decl.push(decl)}}
+                            Declaration::Codata (codata) => {if codata.is_public {sub_public_decl.push(decl.clone())}}
+                            Declaration::Data (data) => {if data.is_public {sub_public_decl.push(decl.clone())}}
+                            Declaration::Def (def) => {if def.is_public {sub_public_decl.push(decl.clone())}}
                         }
-                    }*/
-                    imports.insert(import.name.clone(), 
+                    }
+                    imports.insert(get_actual_name(import.name.clone()).unwrap(), 
                                     ModuleProgram {
                                         imports: HashMap::<Name, ModuleProgram>::new(),
                                         modules: Vec::<ModuleProgram>::new(),
-                                        declarations: sub_import.declarations.clone(),
+                                        declarations: subparsed.declarations.clone(),
                                         name: path_to_import.file_stem().map(|os_str| os_str.to_str().expect("Modulename conatins invalid Unicode")).expect("No filename given").to_string(),
                                         imports_to_parent: HashMap::<Name, ModuleProgram>::new(),
                                         parent_declarations: None,
-                                        public_declarations: sub_import.public_declarations.clone(),});
+                                        public_declarations: sub_public_decl,});
                                         
                 }
             }
@@ -217,4 +216,11 @@ fn find_given_file<'a>(module_call: &'a str, path: &'a mut PathBuf, is_import: b
             Err(LoaderError::FileNotFound {path_to_file: path.to_str().unwrap().to_owned(),})
         }
     }
+}
+
+fn get_actual_name(input: String) -> Result<String, String> {
+    input.rsplit("::")
+         .next()
+         .map(|s| s.to_string())
+         .ok_or_else(|| input)
 }
