@@ -9,17 +9,14 @@ use std::{
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
-    env::{consts::OS, home_dir},
 };
-use regex::Regex;
 
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
     parser::parse_module,
     loader::{load_module, result::LoaderError, DriverTrait},
-    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Name, Declaration},
-    syntax::module_declarations::*,
+    syntax::{program::{CheckedProgram, Program, ModuleProgram}, Declaration},
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
