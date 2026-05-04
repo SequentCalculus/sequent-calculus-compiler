@@ -4,6 +4,7 @@
 
 use std::{
     collections::HashMap,
+    ffi::OsString,
     fmt::Write as _,
     fs::{self, File, remove_dir_all},
     io::{self, Write},
@@ -14,8 +15,12 @@ use std::{
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
+    loader::{DriverTrait, load_module, result::LoaderError},
     parser::parse_module,
-    syntax::program::{CheckedProgram, Program},
+    syntax::{
+        Declaration,
+        program::{CheckedProgram, ModuleProgram, Program},
+    },
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
@@ -39,6 +44,8 @@ pub struct Driver {
     sources: HashMap<PathBuf, String>,
     /// Parsed but not typechecked
     parsed: HashMap<PathBuf, Program>,
+    /// Modules/submodules loaded, not typechecked
+    loaded: HashMap<PathBuf, ModuleProgram>,
     /// Typechecked
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
@@ -67,6 +74,7 @@ impl Driver {
         Driver {
             sources: HashMap::new(),
             parsed: HashMap::new(),
+            loaded: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
             uniquified: HashMap::new(),
@@ -82,9 +90,10 @@ impl Driver {
         if let Some(res) = self.sources.get(path) {
             return Ok(res.clone());
         }
-
-        let content =
-            fs::read_to_string(path.clone()).expect("Should have been able to read the file");
+        //revert expect when error handling is implemented
+        let content = fs::read_to_string(path.clone()).expect(path.to_str().expect("Err 2"));
+        //let content =
+        //    fs::read_to_string(path.clone()).expect("Should have been able to read the file");
         self.sources.insert(path.clone(), content.clone());
         Ok(content)
     }
@@ -98,8 +107,28 @@ impl Driver {
 
         let content = self.source(path)?;
         let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
+
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
+    }
+
+    /// This function loads the specified modules and submodules of the given file
+    pub fn loaded(
+        &mut self,
+        path: &PathBuf,
+        parent_decl: Option<(String, Vec<Declaration>)>,
+        visited: &mut HashMap<OsString, Option<ModuleProgram>>,
+    ) -> Result<ModuleProgram, DriverError> {
+        // Check for a cache hit
+        if let Some(res) = self.loaded.get(path) {
+            return Ok(res.clone());
+        }
+
+        let parsed = self.parsed(path)?;
+        let loaded = load_module(&parsed, path, parent_decl, visited, Driver::create_driver)?;
+
+        self.loaded.insert(path.clone(), loaded.clone());
+        Ok(loaded)
     }
 
     /// This function returns the typechecked source code of the given file.
@@ -109,8 +138,13 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let parsed = self.parsed(path)?;
-        let checked = parsed.check().map_err(DriverError::TypeError)?;
+        //let parsed = self.parsed(path)?;
+        let loaded = self.loaded(
+            path,
+            None,
+            &mut HashMap::<OsString, Option<ModuleProgram>>::new(),
+        )?;
+        let checked = loaded.check(false).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -361,7 +395,12 @@ impl Driver {
         cfg: &PrintCfg,
         fontsize: &str,
     ) -> Result<(), DriverError> {
-        let parsed = self.parsed(path)?;
+        //let parsed = self.parsed(path)?;
+        let loaded = self.loaded(
+            path,
+            None,
+            &mut HashMap::<OsString, Option<ModuleProgram>>::new(),
+        )?;
 
         Paths::create_pdf_dir();
 
@@ -374,7 +413,7 @@ impl Driver {
 
         stream.write_all(latex_start(fontsize).as_bytes()).unwrap();
 
-        parsed
+        loaded
             .print_latex(cfg, &mut stream)
             .expect("Failed to print to stdout");
         println!();
@@ -424,6 +463,32 @@ impl Driver {
     /// This function deletes all files in the target directory.
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
+    }
+    pub fn create_driver() -> Box<dyn DriverTrait> {
+        Box::new(Driver::new())
+    }
+}
+
+impl DriverTrait for Driver {
+    fn parsed(&mut self, path: &PathBuf) -> Result<Program, LoaderError> {
+        self.parsed(path).map_err(|_| LoaderError::FileNotFound {
+            path_to_file: "".to_string(),
+        })
+    }
+    fn loaded(
+        &mut self,
+        path: &PathBuf,
+        parent_decl: Option<(String, Vec<Declaration>)>,
+        visited: &mut HashMap<OsString, Option<ModuleProgram>>,
+    ) -> Result<ModuleProgram, LoaderError> {
+        self.loaded(path, parent_decl, visited)
+            .map_err(|_| LoaderError::FileNotFound {
+                path_to_file: "".to_string(),
+            })
+    }
+
+    fn new() -> Self {
+        Driver::new()
     }
 }
 

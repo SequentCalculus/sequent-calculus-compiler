@@ -26,6 +26,8 @@ thiserror     = { workspace = true }
 # Workspace members
 driver  = { workspace = true }
 printer = { workspace = true }
+regex = "1.12.3"
+fun.workspace = true
 
 
 

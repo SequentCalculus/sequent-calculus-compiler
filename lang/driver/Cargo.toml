@@ -31,3 +31,4 @@ thiserror = { workspace = true }
 miette    = { workspace = true, features = ["fancy"] }
 opener    = { workspace = true }
 askama    = { workspace = true }
+regex = "1.12.3"

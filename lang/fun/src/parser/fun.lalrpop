@@ -2,6 +2,7 @@ use crate::syntax::*;
 use crate::syntax::arguments::*;
 use crate::syntax::context::*;
 use crate::syntax::declarations::*;
+use crate::syntax::module_declarations::*;
 use crate::syntax::names::*;
 use crate::syntax::program::*;
 use crate::syntax::terms::*;
@@ -21,7 +22,7 @@ grammar;
 
 match {
     // Symbols
-    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".",
+    "(", ")", "{", "}", "[", "]", ";", "=>", ",", ":", r":\s*cns", ".","::",
     "=", "==", "!=", "<", "<=", ">", ">=",
     r"==\s*0", r"0\s*==", r"!=\s*0", r"0\s*!=", r"<\s*0", r"0\s*<", r"<=\s*0", r"0\s*<=", r">\s*0", r"0\s*>", r">=\s*0", r"0\s*>=",
     // BinOps/Negation
@@ -37,6 +38,7 @@ match {
     "print_i64", "println_i64",
     "let", "case", "new",
     "def", "data", "codata",
+    "import","module","public def","public data","public codata",
     // Types
     "i64",
     // Comments and whitespace
@@ -159,6 +161,16 @@ DtorName: String = {
     <s: r"[a-z][a-zA-Z0-9_]*"> => s.to_string(),
 }
 
+ModLoad: String = {
+    <name: TypeName> "::" <id: TypeName> => name + "::" + &id,
+    <name: TypeName> "::" <rest: ModLoad> => name + "::" + &rest,
+}
+
+ModCall: String = {
+    <name: TypeName> "::" <id: Name> => name + "::" + &id,
+    <name: TypeName> "::" <rest: ModCall> => name + "::" + &rest,
+}
+
 //
 // Arguments
 //
@@ -182,7 +194,9 @@ Lit: Lit = {
 
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
-      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+      Call { span: span(l, r), name: v, args, ret_ty: None, is_module_call: false}.into(),
+    <l: @L> <m: ModCall> <args: Arguments> <r: @R> => 
+      Call {span: span(l, r), name: m, args, ret_ty: None, is_module_call: true}.into(),
 }
 
 Label: Label = {
@@ -425,7 +439,31 @@ Def: Def = {
             context,
             body,
             ret_ty,
-        }
+            is_public: false,
+        },
+    <l: @L> "public def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+        Def {
+            span: span(l, r),
+            name,
+            context,
+            body,
+            ret_ty,
+            is_public: true,
+        },   
+}
+
+Module: Module = {
+    <l: @L> "module" <name: TypeName> <r: @R> => 
+        Module { span: span(l, r), name,},
+    <l: @L> "module" <name: ModLoad> <r: @R> =>
+        Module {span: span(l, r), name},
+}
+
+Import: Import = {
+    <l: @L> "import" <name: TypeName> <r: @R> =>
+        Import {span: span(l, r), name,},
+    <l: @L> "import" <name: ModLoad> <r: @R> =>
+        Import {span: span(l, r), name,},
 }
 
 pub OptTypeContext: TypeContext = {
@@ -439,8 +477,18 @@ Data: Data = {
             name,
             type_params,
             ctors,
+            is_public: false,
+        },
+    <l: @L> "public data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
+        Data {
+            span: Some(span(l, r)),
+            name,
+            type_params,
+            ctors,
+            is_public: true,
         }
 }
+
 
 Codata: Codata = {
     <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
@@ -449,6 +497,15 @@ Codata: Codata = {
             name,
             type_params,
             dtors,
+            is_public: false,
+        },
+        <l: @L> "public codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
+        Codata {
+            span: Some(span(l, r)),
+            name,
+            type_params,
+            dtors,
+            is_public: true,
         }
 }
 
@@ -458,6 +515,11 @@ Declaration: Declaration = {
     <codata: Codata> => codata.into()
 }
 
+ModuleDeclaration: ModuleDeclaration = {
+    <module: Module> => module.into(),
+    <import: Import> => import.into(),
+}
+
 pub Prog: Program = {
-    <declarations: Declaration*> => Program { declarations }
+    <module_declarations: ModuleDeclaration*> <declarations: Declaration*> => Program { module_declarations, declarations }
 }

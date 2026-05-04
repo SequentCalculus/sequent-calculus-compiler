@@ -90,14 +90,29 @@ pub const GTE: &str = ">=";
 /// The keyword `data`
 pub const DATA: &str = "data";
 
+/// The keyword 'public data'
+pub const PDATA: &str = "public data";
+
 /// The keyword `codata`
 pub const CODATA: &str = "codata";
+
+/// The keyword 'public codata
+pub const PCODATA: &str = "public codata";
 
 /// The keyword `type`
 pub const TYPE: &str = "type";
 
+/// The keyword 'module'
+pub const MODULE: &str = "module";
+
+/// The keyword 'import'
+pub const IMPORT: &str = "import";
+
 /// The keyword `def`
 pub const DEF: &str = "def";
+
+///The keyword 'public def'
+pub const PDEF: &str = "public def";
 
 /// The keyword `let`
 pub const LET: &str = "let";

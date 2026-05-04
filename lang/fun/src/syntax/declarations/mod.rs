@@ -10,7 +10,6 @@ pub mod def;
 pub use codata::*;
 pub use data::*;
 pub use def::*;
-
 /// This enum encodes whether a user-declared type is a data or codata type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Polarity {
