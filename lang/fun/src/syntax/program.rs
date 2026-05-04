@@ -51,7 +51,7 @@ pub struct CheckedProgram {
 impl ModuleProgram {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
-    pub fn check(self, has_parent: bool) -> Result<CheckedProgram, Error> {
+    pub fn check(mut self, has_parent: bool) -> Result<CheckedProgram, Error> {
         let mut import_decl = Vec::<(String, Vec::<Declaration>)>::new();
         for import in &self.imports {
             if !import.1.public_declarations.is_empty() {
@@ -69,10 +69,8 @@ impl ModuleProgram {
 
         let mut checked_submodules = Vec::<CheckedProgram>::new();
         if !has_parent {
+            self.imports.extend(self.imports_to_parent);
             for import in &self.imports {
-                checked_submodules.push(import.1.clone().check(true)?);
-            }
-            for import in &self.imports_to_parent {
                 checked_submodules.push(import.1.clone().check(true)?);
             }
         }
@@ -224,85 +222,6 @@ impl ModuleProgram {
     }
 }
 
-trait RenameTerms {
-    fn rename(self, prefix: &str) -> Result<Term ,Error>;
-}
-
-impl RenameTerms for Term {
-    fn rename(self, prefix: &str) -> Result<Term, Error> {
-        match self {
-            Term::Call(mut call) => {
-                call.name = prefix.to_owned() + "::" + &call.name;
-                Ok(Term::Call(call.clone()))
-            }
-            Term::Case(mut case) => {
-                case.scrutinee = <terms::Term as Clone>::clone(&case.scrutinee).rename(prefix).expect("Should have been renamed").into();
-                for clause in &mut case.clauses {
-                    clause.body = <terms::Term as Clone>::clone(&clause.body).rename(prefix).expect("Should have been renamed");
-                }
-                Ok(Term::Case(case.clone()))
-            }
-            Term::Constructor(ref constructor) => {
-                Ok(Term::Constructor(constructor.clone()))
-            }
-            Term::Destructor(ref destructor) => {
-                Ok(Term::Destructor(destructor.clone()))
-            }
-            Term::Exit(mut exit) => {
-                exit.arg = <terms::Term as Clone>::clone(&exit.arg).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Exit(exit.clone()))
-            }
-            Term::Goto(mut goto) => {
-                goto.term = <terms::Term as Clone>::clone(&goto.term).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Goto(goto.clone()))
-            }
-            Term::IfC(mut ifc) => {
-                if ifc.snd.is_some() {
-                    ifc.snd = Some(<terms::Term as Clone>::clone(&ifc.snd.unwrap()).rename(prefix).expect("Should have been renamed").into());
-                }
-                ifc.fst = <terms::Term as Clone>::clone(&ifc.fst).rename(prefix).expect("Should have been renamed").into();
-                ifc.thenc = <terms::Term as Clone>::clone(&ifc.thenc).rename(prefix).expect("Should have been renamed").into();
-                ifc.elsec = <terms::Term as Clone>::clone(&ifc.elsec).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::IfC(ifc.clone()))
-            }
-            Term::Label(mut label) => {
-                label.term = <terms::Term as Clone>::clone(&label.term).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Label(label.clone()))
-            }
-            Term::Let(mut mlet) => {
-                mlet.bound_term = <terms::Term as Clone>::clone(&mlet.bound_term).rename(prefix).expect("Should have been renamed").into();
-                mlet.in_term = <terms::Term as Clone>::clone(&mlet.in_term).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Let(mlet.clone()))
-            }
-            Term::Lit(ref lit) => {
-                Ok(Term::Lit(lit.clone()))
-            }
-            Term::New(mut new) => {
-                for clause in &mut new.clauses {
-                    clause.body = <terms::Term as Clone>::clone(&clause.body).rename(prefix).expect("Should have been renamed");
-                }
-                Ok(Term::New(new.clone()))
-            }
-            Term::Op(mut op) => {
-                op.fst = <terms::Term as Clone>::clone(&op.fst).rename(prefix).expect("Should have been renamed").into();
-                op.snd = <terms::Term as Clone>::clone(&op.snd).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Op(op.clone()))
-            }
-            Term::Paren(mut paren) => {
-                paren.inner = <terms::Term as Clone>::clone(&paren.inner).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::Paren(paren.clone()))
-            }
-            Term::PrintI64(mut print) => {
-                print.arg = <terms::Term as Clone>::clone(&print.arg).rename(prefix).expect("Should have been renamed").into();
-                print.next = <terms::Term as Clone>::clone(&print.next).rename(prefix).expect("Should have been renamed").into();
-                Ok(Term::PrintI64(print.clone()))
-            }
-            Term::XVar(ref xvar) => {
-                Ok(Term::XVar(xvar.clone()))
-            }
-        }
-    }
-}
 
 impl Print for ModuleProgram {
     fn print<'a>(
