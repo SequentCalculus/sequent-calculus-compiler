@@ -55,7 +55,9 @@ impl Program {
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        let selected_world = dummy_world_selector(conflicts);
+        let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len())).collect();
+        
+        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
 
         // now all solutions that are part of the selected world are filtered.
         let mut selected_solutions = solutions;

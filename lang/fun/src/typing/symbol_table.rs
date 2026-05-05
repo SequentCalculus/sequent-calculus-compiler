@@ -30,7 +30,7 @@ pub struct SymbolTable {
     /// Maps the uniquenames of top-level [definitions][Def] to their signatures, i.e., their parameter list
     /// and return type.
     pub defs: HashMap<Name, (TypingContext, Ty)>,
-    /// Maps names of top-level [definitions][Def] to the signatures of all functions, that share the name
+    /// Maps names of top-level [definitions][Def] to the signatures of all functions, that share the same name
     pub variational_defs: HashMap<Name, Vec<(TypingContext, Ty)>>,
     /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
     /// list.

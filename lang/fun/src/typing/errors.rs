@@ -279,5 +279,12 @@ pub enum Error {
         // source location of the missing annotation
         #[label]
         span: SourceSpan,
+    },
+    /// The world resolution failed, with the wrong number of possible Worlds
+    #[error("Type Inference failed because there is not exactly one overloading resolution. Instead the are {number_worlds} possible overloading combinations")]
+    #[diagnostic(code("T-027"))]
+    NotExactlyOneWorld {
+        /// number of found worlds
+        number_worlds: f64
     }
 }

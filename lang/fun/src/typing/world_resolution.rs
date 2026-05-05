@@ -3,7 +3,7 @@ use biodivine_lib_bdd::{
     Bdd, BddPartialValuation, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder,
 };
 
-use crate::{syntax::Name, typing::inference::IncompatibleChoices};
+use crate::{syntax::Name, typing::{Error, inference::IncompatibleChoices}};
 
 
 
@@ -135,7 +135,7 @@ fn create_fail_clauses(var_set: &BddVariableSet, mapping: &BddMapping, incompati
 }
 
 
-fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<IncompatibleChoices>) -> Result<Vec<(Name, usize)>, String> {
+pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<IncompatibleChoices>) -> Result<Vec<(Name, usize)>, Error> {
     let (base_clauses, mapping, var_set) = create_base_bdd(choices);
 
     let incompatible_clauses = create_fail_clauses(&var_set, &mapping, incompatible_choices);
@@ -144,8 +144,8 @@ fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<Incom
 
     let possible_worlds = combined_formular.cardinality();
 
-    if possible_worlds > 1.0 {
-        return Err("Too many possible worlds".to_string());
+    if possible_worlds != 1.0 {
+        return Err(Error::NotExactlyOneWorld { number_worlds: possible_worlds });
     }
 
     if let Some(solution) = combined_formular.sat_valuations().next() {
