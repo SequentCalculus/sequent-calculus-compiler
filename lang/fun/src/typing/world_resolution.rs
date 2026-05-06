@@ -1,9 +1,9 @@
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap};
 use biodivine_lib_bdd::{
-    Bdd, BddPartialValuation, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder,
+    Bdd, BddVariable, BddVariableSet, BddVariableSetBuilder,
 };
 
-use crate::{syntax::Name, typing::{Error, inference::IncompatibleChoices}};
+use crate::{syntax::{Def, Name}, typing::{Error, inference::IncompatibleChoices}};
 
 
 
@@ -11,42 +11,24 @@ type PossibleChoice = (Name, usize);
 
 /// Since the choices are represented with several variables, the mapping between BDD Variables and Choice Variables is stored here.
 /// In the first iteration, the choices are one-hot encoded
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct BddMapping {
     /// Maps each choice variable to its bit variables (logarithmic encoding)
     choice_bit_vars: HashMap<Name, Vec<BddVariable>>,
     variable_resolving: HashMap<BddVariable, (Name, usize)>,
-    /// Number of alternatives for each choice variable (for validation)
-    choice_sizes: HashMap<Name, usize>,
-    /// Ordered list of choice variables (for consistent solution ordering)
-    choice_order: Vec<Name>,
 }
 
 
 impl BddMapping {
-    fn new() -> Self {
-        Self {
-            choice_bit_vars: HashMap::default(),
-            variable_resolving: HashMap::default(),
-            choice_sizes: HashMap::default(),
-            choice_order: Vec::new(),
-        }
-    }
-
     fn add_choice(
         &mut self,
         choice_var: Name,
         bit_vars: Vec<BddVariable>,
-        num_alternatives: usize,
     ) {
         self.choice_bit_vars.insert(choice_var.clone(), bit_vars.clone());
         for (idx, variable) in bit_vars.iter().enumerate() {
             self.variable_resolving.insert(*variable, (choice_var.clone(), idx));
-        }
-        self.choice_sizes
-            .insert(choice_var.clone(), num_alternatives);
-        self.choice_order.push(choice_var.clone());
-        
+        }        
     }
 
     pub fn get_bit_vars(&self, choice_var: &Name) -> Option<&Vec<BddVariable>> {
@@ -58,9 +40,18 @@ impl BddMapping {
     }
 }
 
+impl Default for BddMapping {
+    fn default() -> Self {
+        Self {
+            choice_bit_vars: HashMap::default(),
+            variable_resolving: HashMap::default(),
+        }
+    }
+}
+
 fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariableSet) {
     let mut builder = BddVariableSetBuilder::new();
-    let mut mapping = BddMapping::new();
+    let mut mapping = BddMapping::default();
 
     for (cvar, num_alternatives) in choices {
         // Register the bits variables needed to represent the choice
@@ -68,7 +59,7 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
             .map(|bit| builder.make_variable(&format!("{}_choice{}", cvar, bit)))
             .collect();
 
-        mapping.add_choice(cvar.clone(), bit_vars, *num_alternatives);
+        mapping.add_choice(cvar.clone(), bit_vars);
     }
 
     let var_set = builder.build();
@@ -85,15 +76,15 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
         clauses.push(at_least_once_term);
 
 
-        let mut at_most_terms = Vec::new();
+        let mut at_most_once_terms = Vec::new();
 
         for (var_idx, var_term_a) in bdd_terms.iter().enumerate() {
-            for var_term_b in bdd_terms.iter().skip(var_idx) {
-                at_most_terms.push(var_term_a.and(var_term_b).not());
+            for var_term_b in bdd_terms.iter().skip(var_idx + 1) {
+                at_most_once_terms.push(var_term_a.and(var_term_b).not());
             }
         }
 
-        let combined_at_most_once_term = at_most_terms.iter().skip(1).fold(at_most_terms[0].clone(), |acc, next| acc.and(next));
+        let combined_at_most_once_term = at_most_once_terms.iter().skip(1).fold(at_most_once_terms[0].clone(), |acc, next| acc.and(next));
 
         clauses.push(combined_at_most_once_term);
         
@@ -104,6 +95,7 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
     }
 
     let combined_clause = clauses.iter().skip(1).fold(clauses[0].clone(), |acc, next| acc.and(next));
+    
 
     (combined_clause, mapping, var_set)
 }
@@ -156,5 +148,81 @@ pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<I
         Ok(selected_choices)
     } else {
         panic!("No Solution found although there were {} solutions calculated", possible_worlds)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::typing::world_resolution::{BddMapping, create_base_bdd};
+    use biodivine_lib_bdd::{
+        Bdd, BddPartialValuation, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder,
+    };
+
+
+    #[test]
+    fn base_clauses_test_single() {
+        let possible_choices: Vec<(String, usize)> = vec![("add".to_string(), 3)];
+        let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
+
+        let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2"]);
+        assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
+
+        let mut expected_mapping = BddMapping::default();
+        expected_mapping.add_choice("add".to_owned(), expected_var_set.variables());
+        assert_eq!(expected_mapping, resulting_mapping);
+
+        // the resulting var set is used, because two different var sets can make problems if you compare the terms
+
+        let sub_clause_1 = resulting_var_set.eval_expression_string("add_choice0 | add_choice1 | add_choice2");
+        let sub_clause_2 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice1)");
+        let sub_clause_3 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice2)");
+        let sub_clause_4 = resulting_var_set.eval_expression_string("!(add_choice1 & add_choice2)");
+
+        let all_clauses = sub_clause_1.and(&sub_clause_2).and(&sub_clause_3).and(&sub_clause_4);
+
+        assert_eq!(all_clauses, resulting_clause);
+    }
+
+    #[test]
+    fn base_clauses_test_multi() {
+        let possible_choices: Vec<(String, usize)> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
+        let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
+
+        let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
+        assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
+
+        let mut expected_mapping = BddMapping::default();
+        expected_mapping.add_choice("add".to_owned(), expected_var_set.variables()[0..3].to_vec());
+        expected_mapping.add_choice("new".to_owned(), expected_var_set.variables()[3..7].to_vec());
+        expected_mapping.add_choice("func".to_owned(), expected_var_set.variables()[7..9].to_vec());
+        assert_eq!(expected_mapping, resulting_mapping);
+
+        // the resulting var set is used, because two different var sets can make problems if you compare the terms
+
+        // -- add
+        let sub_clause_1 = resulting_var_set.eval_expression_string("add_choice0 | add_choice1 | add_choice2");
+        let sub_clause_2 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice1)");
+        let sub_clause_3 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice2)");
+        let sub_clause_4 = resulting_var_set.eval_expression_string("!(add_choice1 & add_choice2)");
+
+        // -- new
+        let sub_clause_5 = resulting_var_set.eval_expression_string("new_choice0 | new_choice1 | new_choice2 | new_choice3");
+        let sub_clause_6 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice1)");
+        let sub_clause_7 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice2)");
+        let sub_clause_8 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice3)");
+        let sub_clause_9 = resulting_var_set.eval_expression_string("!(new_choice1 & new_choice2)");
+        let sub_clause_10 = resulting_var_set.eval_expression_string("!(new_choice1 & new_choice3)");
+        let sub_clause_11 = resulting_var_set.eval_expression_string("!(new_choice2 & new_choice3)");
+
+        // -- func
+        let sub_clause_12 = resulting_var_set.eval_expression_string("func_choice0 | func_choice1");
+        let sub_clause_13 = resulting_var_set.eval_expression_string("!(func_choice0 & func_choice1)");
+        
+        
+        let all_clauses = sub_clause_1.and(&sub_clause_2).and(&sub_clause_3).and(&sub_clause_4)
+            .and(&sub_clause_5).and(&sub_clause_6).and(&sub_clause_7).and(&sub_clause_8).and(&sub_clause_9).and(&sub_clause_10)
+            .and(&sub_clause_11).and(&sub_clause_12).and(&sub_clause_13);
+
+        assert_eq!(all_clauses, resulting_clause);
     }
 }
