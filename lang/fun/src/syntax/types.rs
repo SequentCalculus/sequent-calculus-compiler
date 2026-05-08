@@ -57,10 +57,12 @@ impl Ty {
                 match symbol_table.types.get(&instance_name) {
                     Some(_) => Ok(()),
                     None => match symbol_table.type_templates.get(name) {
-                        None => Err(Error::Undefined {
+                        None => {
+                            println!("Throwing Undefined Error for {}", self);
+                            return Err(Error::Undefined {
                             span: span.to_miette(),
                             name: name.clone(),
-                        }),
+                        })},
                         Some((pol, type_params, xtors)) => create_instance(
                             *span,
                             instance_name,
@@ -176,6 +178,7 @@ impl Ty {
         }
     }
 
+    /// This function collects all type variable names in a type
     pub fn collect_var_names(&self) -> Vec<Name> {
         match self {
             Ty::I64 { .. } => vec![],

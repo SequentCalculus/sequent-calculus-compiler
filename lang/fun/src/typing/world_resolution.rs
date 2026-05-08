@@ -270,7 +270,7 @@ mod test {
         ];
 
         let result = resolve_worlds(&possible_choices, incompatible_choices);
-
+        
         assert!(result.is_err());
     }
 }

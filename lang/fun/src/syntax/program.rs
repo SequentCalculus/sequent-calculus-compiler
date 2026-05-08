@@ -55,9 +55,16 @@ impl Program {
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len())).collect();
+        println!("gathered conflicts: {:?}", conflicts);
+
+        println!("Types unified");
+
+        let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
+            .filter(|(_, size)| *size > 1 ).collect();
         
-        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
+        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;    
+
+        println!("World selected: {:?}", selected_world);
 
         // now all solutions that are part of the selected world are filtered.
         let mut selected_solutions = solutions;
@@ -68,15 +75,25 @@ impl Program {
                 // if the solution, doesn't have a choice for the wanted name, it is invariant to the choice, so it is part of the world
                 None => true
             });
-
         }
 
         // the solutions are converted to a HashMap and then they are inserted in the program
-        let type_mapping: HashMap<String, Ty> = selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect();
+        let mut type_mapping: HashMap<String, Ty> = selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect();
+
+        // the mapping is applied on it self. The mapping can contain a reference to another type variable.
+        let reference_map = type_mapping.clone();
+
+        for (_, ty) in type_mapping.iter_mut() {
+            while !ty.collect_var_names().is_empty() {
+                ty.mut_subst_ty(&reference_map);
+            }
+        }
 
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table)?;
         }
+
+        println!("Types inserted");
 
         Ok(CheckedProgram { data_types, codata_types, defs })
     }
