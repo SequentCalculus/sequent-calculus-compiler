@@ -153,11 +153,8 @@ pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<I
 
 #[cfg(test)]
 mod test {
-    use crate::typing::world_resolution::{BddMapping, create_base_bdd};
-    use biodivine_lib_bdd::{
-        Bdd, BddPartialValuation, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder,
-    };
-
+    use crate::typing::{inference::IncompatibleChoices, world_resolution::{BddMapping, PossibleChoice, create_base_bdd, create_fail_clauses, resolve_worlds}};
+    use biodivine_lib_bdd::BddVariableSet;
 
     #[test]
     fn base_clauses_test_single() {
@@ -185,7 +182,7 @@ mod test {
 
     #[test]
     fn base_clauses_test_multi() {
-        let possible_choices: Vec<(String, usize)> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
+        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
         let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
 
         let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
@@ -224,5 +221,56 @@ mod test {
             .and(&sub_clause_11).and(&sub_clause_12).and(&sub_clause_13);
 
         assert_eq!(all_clauses, resulting_clause);
+    }
+
+    #[test]
+    fn fail_clause_test1() {
+        let var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
+
+        let mut mapping = BddMapping::default();
+        mapping.add_choice("add".to_owned(), var_set.variables()[0..3].to_vec());
+        mapping.add_choice("new".to_owned(), var_set.variables()[3..7].to_vec());
+        mapping.add_choice("func".to_owned(), var_set.variables()[7..9].to_vec());
+
+        let incompatible_choices:Vec<IncompatibleChoices> = vec![vec![("add".to_string(), 2), ("new".to_string(), 1)], vec![("new".to_string(), 0), ("func".to_string(), 0), ("add".to_string(), 1)]];
+
+        let resulting_clauses = create_fail_clauses(&var_set, &mapping, incompatible_choices);
+
+        let sub_clause_1 = var_set.eval_expression_string("!(add_choice2 & new_choice1)");
+        let sub_clause_2 = var_set.eval_expression_string("!(new_choice0 & func_choice0 & add_choice1)");
+
+        let expected_clauses = sub_clause_1.and(&sub_clause_2);
+
+        assert_eq!(resulting_clauses, expected_clauses);
+    }
+
+
+    #[test]
+    fn resolve_worlds_test1() {
+        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 2)];
+        let incompatible_choices: Vec<IncompatibleChoices> = vec![vec![("add".to_string(), 2), ("new".to_string(), 1)], vec![("new".to_string(), 0)], vec![("add".to_string(), 1)]];
+
+        let result = resolve_worlds(&possible_choices, incompatible_choices).unwrap();
+
+        // there is only one correct solution
+        let expected = vec![("add".to_string(), 0), ("new".to_string(), 1)];
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn resolve_worlds_test2() {
+        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
+        let incompatible_choices: Vec<IncompatibleChoices> = vec![
+            vec![("add".to_string(), 2), ("new".to_string(), 1)],
+            vec![("new".to_string(), 0)],
+            vec![("add".to_string(), 1)],
+            vec![("func".to_string(), 1)],
+            vec![("add".to_string(), 0), ("new".to_string(), 3), ("func".to_string(), 0)]
+        ];
+
+        let result = resolve_worlds(&possible_choices, incompatible_choices);
+
+        assert!(result.is_err());
     }
 }
