@@ -214,7 +214,7 @@ fn acquire_block1(new_block: Temporary, instructions: &mut Vec<Code>) {
                 "#####check child {} for erasure",
                 offset + 1
             )));
-            instructions.push(Code::MOVL(TEMP, to_erase, field_offset1(Fst, offset)));
+            instructions.push(Code::MOVL(TEMP, to_erase, field_offset(Fst, offset)));
             Backend::erase_block(Temporary::Register(TEMP), instructions);
         }
     }
@@ -250,7 +250,7 @@ fn acquire_block1(new_block: Temporary, instructions: &mut Vec<Code>) {
         "###(3) fall back to bump allocation".to_string(),
     ));
     then_branch_free.push(Code::MOV(FREE, HEAP));
-    then_branch_free.push(Code::ADDI(FREE, field_offset1(Fst, FIELDS_PER_BLOCK_1)));
+    then_branch_free.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 
     // ... and one for possibility 2) in the else branch
     let mut else_branch_free = Vec::with_capacity(64);
