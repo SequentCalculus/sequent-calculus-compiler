@@ -843,26 +843,60 @@ fn store_fields1(
             .bindings
             .append(&mut to_store.bindings.clone());
 
-        if block_position == BlockPosition::Last {
-            instructions.push(Code::COMMENT("#allocate memory".to_string()));
-        }
-        store_values1(
-            to_store_next.into(),
-            &remaining_plus_rest,
-            HEAP,
-            FIELDS_PER_BLOCK_1 - block_position as usize,
-            instructions,
-        );
+        // if all fields are needed, we must treat the first field specially.
+        if to_store_next.len() + block_position as usize == FIELDS_PER_BLOCK_1 {
+            let mut to_store_next = to_store_next;
+            let first_field = to_store_next.remove(0);
 
-        instructions.push(Code::COMMENT(
-            "##acquire free block from heap register".to_string(),
-        ));
-        // this puts the pointer to the memory block for the variables just stored into the first
-        // free temporary after the remaining context
-        acquire_block1(
-            Backend::fresh_temporary(Fst, &remaining_plus_rest),
-            instructions,
-        );
+            let mut remaining_plus_rest_plus_first = remaining_plus_rest.clone();
+            remaining_plus_rest_plus_first
+                .bindings
+                .push(first_field.clone());
+
+            store_values1(
+                to_store_next.into(),
+                &remaining_plus_rest_plus_first,
+                HEAP,
+                FIELDS_PER_BLOCK_1 - block_position as usize,
+                instructions,
+            );
+
+            store_slot1(Fst, &remaining_plus_rest, HEAP, 0, instructions);
+
+            instructions.push(Code::COMMENT(
+                "##acquire free block from heap register".to_string(),
+            ));
+            // this puts the pointer to the memory block for the variables just stored into the first
+            // free temporary after the remaining context
+            acquire_block1(
+                Backend::fresh_temporary(Fst, &remaining_plus_rest),
+                instructions,
+            );
+
+            store_slot1(Snd, &remaining_plus_rest, HEAP, 0, instructions);
+        } else {
+            if block_position == BlockPosition::Last {
+                instructions.push(Code::COMMENT("#allocate memory".to_string()));
+            }
+            // store all fields except for potentially the first one if it must be treated specially
+            store_values1(
+                to_store_next.into(),
+                &remaining_plus_rest,
+                HEAP,
+                FIELDS_PER_BLOCK_1 - block_position as usize,
+                instructions,
+            );
+
+            instructions.push(Code::COMMENT(
+                "##acquire free block from heap register".to_string(),
+            ));
+            // this puts the pointer to the memory block for the variables just stored into the first
+            // free temporary after the remaining context
+            acquire_block1(
+                Backend::fresh_temporary(Fst, &remaining_plus_rest),
+                instructions,
+            );
+        }
 
         store_fields1(
             to_store,
