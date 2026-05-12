@@ -1110,9 +1110,6 @@ fn load_fields1(
 
         match memory_block {
             Temporary::Register(memory_block_register) => {
-                instructions.push(Code::COMMENT("###release block".to_string()));
-                release_block(memory_block_register, instructions);
-
                 // if we do not currently load the last block, we have to load the link to the next block;
                 // we have to load the link first, since loading the values will clobber the temporary
                 // containing the pointer to the memory block
@@ -1127,13 +1124,53 @@ fn load_fields1(
                     );
                 }
 
-                load_values1(
-                    to_load_next.into(),
-                    &existing_plus_rest,
-                    memory_block_register,
-                    FIELDS_PER_BLOCK - block_position as usize,
-                    instructions,
-                );
+                if to_load_next.len() + block_position as usize == FIELDS_PER_BLOCK_1 {
+                    let mut to_load_next = to_load_next;
+                    let first_field = to_load_next.remove(0);
+
+                    let mut existing_plus_rest_plus_first = existing_plus_rest.clone();
+                    existing_plus_rest_plus_first
+                        .bindings
+                        .push(first_field.clone());
+
+                    load_values1(
+                        to_load_next.into(),
+                        &existing_plus_rest_plus_first,
+                        memory_block_register,
+                        FIELDS_PER_BLOCK_1 - block_position as usize,
+                        instructions,
+                    );
+
+                    load_slot1(
+                        Snd,
+                        &existing_plus_rest,
+                        memory_block_register,
+                        0,
+                        instructions,
+                    );
+
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(memory_block_register, instructions);
+
+                    load_slot1(
+                        Fst,
+                        &existing_plus_rest,
+                        memory_block_register,
+                        0,
+                        instructions,
+                    );
+                } else {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(memory_block_register, instructions);
+
+                    load_values1(
+                        to_load_next.into(),
+                        &existing_plus_rest,
+                        memory_block_register,
+                        FIELDS_PER_BLOCK_1 - block_position as usize,
+                        instructions,
+                    );
+                }
             }
             Temporary::Spill(memory_block_position) => {
                 // the first time a memory block is in a spill position, we free a register for it
@@ -1154,9 +1191,6 @@ fn load_fields1(
                     stack_offset(memory_block_position),
                 ));
 
-                instructions.push(Code::COMMENT("###release block".to_string()));
-                release_block(TEMPORARY_TEMP, instructions);
-
                 // if we do not currently load the last block, we have to load the link to the next block;
                 // we have to load the link first, since loading the values will clobber the temporary
                 // containing the pointer to the memory block
@@ -1171,13 +1205,41 @@ fn load_fields1(
                     );
                 }
 
-                load_values1(
-                    to_load_next.into(),
-                    &existing_plus_rest,
-                    TEMPORARY_TEMP,
-                    FIELDS_PER_BLOCK - block_position as usize,
-                    instructions,
-                );
+                if to_load_next.len() + block_position as usize == FIELDS_PER_BLOCK_1 {
+                    let mut to_load_next = to_load_next;
+                    let first_field = to_load_next.remove(0);
+
+                    let mut existing_plus_rest_plus_first = existing_plus_rest.clone();
+                    existing_plus_rest_plus_first
+                        .bindings
+                        .push(first_field.clone());
+
+                    load_values1(
+                        to_load_next.into(),
+                        &existing_plus_rest_plus_first,
+                        TEMPORARY_TEMP,
+                        FIELDS_PER_BLOCK_1 - block_position as usize,
+                        instructions,
+                    );
+
+                    load_slot1(Snd, &existing_plus_rest, TEMPORARY_TEMP, 0, instructions);
+
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(TEMPORARY_TEMP, instructions);
+
+                    load_slot1(Fst, &existing_plus_rest, TEMPORARY_TEMP, 0, instructions);
+                } else {
+                    instructions.push(Code::COMMENT("###release block".to_string()));
+                    release_block(TEMPORARY_TEMP, instructions);
+
+                    load_values1(
+                        to_load_next.into(),
+                        &existing_plus_rest,
+                        TEMPORARY_TEMP,
+                        FIELDS_PER_BLOCK_1 - block_position as usize,
+                        instructions,
+                    );
+                }
 
                 // after the last loads, we can restore the evacuated register
                 if block_position == BlockPosition::Last {
