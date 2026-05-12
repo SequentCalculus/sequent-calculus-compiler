@@ -36,7 +36,6 @@ impl Program {
         } else {
             self.check_with_table_poly(symbol_table)
         }
-        
     }
 
     fn check_with_table_poly(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
@@ -66,8 +65,8 @@ impl Program {
             .collect::<Result<_, Error>>()?;
 
         Ok(CheckedProgram {
-            data_types: data_types,
-            codata_types: codata_types,
+            data_types,
+            codata_types,
             defs,
             is_mono: false,
         })
