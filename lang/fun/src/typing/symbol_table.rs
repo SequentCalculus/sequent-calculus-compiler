@@ -207,6 +207,11 @@ pub fn build_symbol_table(module: &Program) -> Result<SymbolTable, Error> {
     Ok(symbol_table)
 }
 
+/// simple function to have a single function/naming scheme for the unique names of overloaded functions
+pub fn build_unique_def_name(name: &String, index: &usize) -> String {
+    format!("{}_{}", name, index)
+}
+
 /// This trait provides a method for adding entries to a symbol table.
 pub trait BuildSymbolTable {
     /// This method adds an entry to the given symbol table.
@@ -236,11 +241,16 @@ impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name){
             signature_list.push((self.context.clone(), self.ret_ty.clone()));
+            let def_index = signature_list.len() - 1;
+            let def_name = build_unique_def_name(&self.name, &def_index);
+            symbol_table.defs.insert(def_name, (self.context.clone(), self.ret_ty.clone()));
         } else {
             symbol_table.variational_defs.insert(
-            self.name.clone(),
-            vec![(self.context.clone(), self.ret_ty.clone())],
-        );
+                self.name.clone(),
+                vec![(self.context.clone(), self.ret_ty.clone())],
+            );
+            let def_name = build_unique_def_name(&self.name, &0);
+            symbol_table.defs.insert(def_name, (self.context.clone(), self.ret_ty.clone()));
         }
         Ok(())
     }

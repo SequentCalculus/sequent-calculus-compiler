@@ -85,7 +85,8 @@ impl Inference for XVar {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        _choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
         match &mut self.ty {
             Some(ty_var) => {

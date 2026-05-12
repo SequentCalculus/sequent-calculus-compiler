@@ -99,10 +99,11 @@ impl Inference for Op {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
-        self.fst.insert_inferred_type(mappings, symbol_table)?;
-        self.snd.insert_inferred_type(mappings, symbol_table)
+        self.fst.insert_inferred_type(mappings, symbol_table, choices)?;
+        self.snd.insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 

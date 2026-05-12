@@ -3,7 +3,7 @@ use biodivine_lib_bdd::{
     Bdd, BddVariable, BddVariableSet, BddVariableSetBuilder,
 };
 
-use crate::{syntax::{Def, Name}, typing::{Error, inference::IncompatibleChoices}};
+use crate::{syntax::Name, typing::{Error, inference::IncompatibleChoices}};
 
 
 

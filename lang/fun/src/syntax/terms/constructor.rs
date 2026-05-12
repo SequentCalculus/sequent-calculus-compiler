@@ -132,9 +132,10 @@ impl Inference for Constructor {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>,
     ) -> Result<(), Error> {
-        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
 
         match &mut self.ty {
             Some(ty_var) => {

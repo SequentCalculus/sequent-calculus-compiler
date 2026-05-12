@@ -27,6 +27,8 @@ pub struct CheckedProgram {
 
 impl Program {
     
+    /// the main function for type inference. It consumes the (uncheckd)[`Program`] and returns a [`CheckedProgram`] with
+    /// the all types inferred and overloading resolved.
     pub fn inference_types(self) -> Result<CheckedProgram, Error>{
         let mut symbol_table = build_symbol_table(&self)?;
         let var_name_generator = &mut VarNameGenerator::new();
@@ -35,6 +37,7 @@ impl Program {
         let mut data_types = Vec::new();
         let mut codata_types = Vec::new();
         let mut defs = Vec::new();
+        let mut overloaded_defs_counter = HashMap::new();
         
         for decl in self.declarations {
             match decl {
@@ -48,7 +51,20 @@ impl Program {
                 }
                 Declaration::Def(mut def) => {
                     constraints.append(&mut def.constraint_equations(&mut symbol_table, var_name_generator)?);
-                    defs.push(def);                    
+
+                    // the names of overloaded functions are replaced with a unique name.
+                    if symbol_table.variational_defs[&def.name].len() > 1 {
+
+                        // the name consists of the index of the definition, so they are counted in the overloaded defs counter
+                        if let Some(counter) = overloaded_defs_counter.get_mut(&def.name) {
+                            def.name = symbol_table::build_unique_def_name(&def.name, counter);
+                            *counter += 1;
+                        } else {
+                            def.name = symbol_table::build_unique_def_name(&def.name, &0);
+                            overloaded_defs_counter.insert(def.name.clone(), 1);
+                        }
+                    }
+                    defs.push(def);
                 }
             }
         }
@@ -62,7 +78,9 @@ impl Program {
         let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
             .filter(|(_, size)| *size > 1 ).collect();
         
-        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;    
+        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
+
+        let choices_map: HashMap<Name, usize> = selected_world.iter().cloned().collect();
 
         println!("World selected: {:?}", selected_world);
 
@@ -72,7 +90,7 @@ impl Program {
             selected_solutions.retain(|s| match s.choices.get(&name) {
                 Some(id) => wanted_id == *id,
 
-                // if the solution, doesn't have a choice for the wanted name, it is invariant to the choice, so it is part of the world
+                // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
                 None => true
             });
         }
@@ -90,7 +108,7 @@ impl Program {
         }
 
         for def in &mut defs {
-            def.insert_inferred_type(&type_mapping, &mut symbol_table)?;
+            def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
         }
 
         println!("Types inserted");

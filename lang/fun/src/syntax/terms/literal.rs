@@ -65,7 +65,8 @@ impl Inference for Lit {
     fn insert_inferred_type(
         &mut self,
         _mappings: &HashMap<Name, Ty>,
-        _symbol_table: &mut SymbolTable
+        _symbol_table: &mut SymbolTable,
+        _choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
         Ok(())
     }

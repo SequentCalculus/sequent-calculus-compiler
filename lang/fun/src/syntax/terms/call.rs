@@ -130,9 +130,15 @@ impl Inference for Call {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
-        args_insert_inferred_type(&mut self.args, mappings, symbol_table)?;
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
+
+        // insert the individual name of the function, if it is overloaded
+        if let Some(index) = choices.get(&self.name) {
+            self.name = symbol_table::build_unique_def_name(&self.name, index);
+        }
         
         match &mut self.ret_ty {
             Some(ty_var) => {

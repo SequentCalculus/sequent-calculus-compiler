@@ -37,7 +37,7 @@ pub use var::*;
 use printer::Print;
 
 use crate::{
-    syntax::names::Var,
+    syntax::{Name, names::Var},
     traits::used_binders::UsedBinders,
     typing::{errors::Error, inference::{Constraint, Inference}, symbol_table::SymbolTable},
 };
@@ -47,7 +47,7 @@ use super::{
     types::{OptTyped, Ty},
 };
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// This enum defines the terms of Fun. It contains one variant for each construct which simply
 /// wraps the struct defining the corresponding construct.
@@ -163,24 +163,25 @@ impl Inference for Term {
     fn insert_inferred_type(
         &mut self,
         mappings: &std::collections::HashMap<super::Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
         match self {
-            Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table),
-            Term::Lit(lit) => lit.insert_inferred_type(mappings, symbol_table),
-            Term::Op(op) => op.insert_inferred_type(mappings, symbol_table),
-            Term::IfC(if_c) => if_c.insert_inferred_type(mappings, symbol_table),
-            Term::PrintI64(print_i64) => print_i64.insert_inferred_type(mappings, symbol_table),
-            Term::Let(let_block) => let_block.insert_inferred_type(mappings, symbol_table),
-            Term::Call(call) => call.insert_inferred_type(mappings, symbol_table),
-            Term::Constructor(constructor) => constructor.insert_inferred_type(mappings, symbol_table),
-            Term::Destructor(destructor) => destructor.insert_inferred_type(mappings, symbol_table),
-            Term::Case(case) => case.insert_inferred_type(mappings, symbol_table),
-            Term::New(new_block) => new_block.insert_inferred_type(mappings, symbol_table),
-            Term::Label(label) => label.insert_inferred_type(mappings, symbol_table),
-            Term::Goto(goto) => goto.insert_inferred_type(mappings, symbol_table),
-            Term::Exit(exit) => exit.insert_inferred_type(mappings, symbol_table),
-            Term::Paren(paren) => paren.insert_inferred_type(mappings, symbol_table),
+            Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Lit(lit) => lit.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Op(op) => op.insert_inferred_type(mappings, symbol_table, choices),
+            Term::IfC(if_c) => if_c.insert_inferred_type(mappings, symbol_table, choices),
+            Term::PrintI64(print_i64) => print_i64.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Let(let_block) => let_block.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Call(call) => call.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Constructor(constructor) => constructor.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Destructor(destructor) => destructor.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Case(case) => case.insert_inferred_type(mappings, symbol_table, choices),
+            Term::New(new_block) => new_block.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Label(label) => label.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Goto(goto) => goto.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Exit(exit) => exit.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Paren(paren) => paren.insert_inferred_type(mappings, symbol_table, choices),
         }
     }
 }

@@ -65,9 +65,10 @@ impl Inference for Exit {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
-        self.arg.insert_inferred_type(mappings, symbol_table)?;
+        self.arg.insert_inferred_type(mappings, symbol_table, choices)?;
 
         match &mut self.ty {
             Some(ty_var) => {

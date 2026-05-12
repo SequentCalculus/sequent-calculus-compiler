@@ -73,10 +73,11 @@ impl Inference for Paren {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
 
-        self.inner.insert_inferred_type(mappings, symbol_table)
+        self.inner.insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 

@@ -184,10 +184,11 @@ impl Inference for New {
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
         for clause in &mut self.clauses {
-            clause.body.insert_inferred_type(mappings, symbol_table)?;
+            clause.body.insert_inferred_type(mappings, symbol_table, choices)?;
             for ctx_binding in &mut clause.context.bindings {
                 ctx_binding.ty.mut_subst_ty(mappings);
                 ctx_binding.ty.check(&clause.context.span, symbol_table)?;

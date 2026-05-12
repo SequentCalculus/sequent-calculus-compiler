@@ -1,5 +1,7 @@
 //! This module contains the definition of top-level functions.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::tokens::{COLON, DEF};
@@ -50,9 +52,10 @@ impl Def {
     pub fn insert_inferred_type(
         &mut self,
         mappings: &std::collections::HashMap<Name, Ty>,
-        symbol_table: &mut SymbolTable
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<Name, usize>
     ) -> Result<(), Error> {
-        self.body.insert_inferred_type(mappings, symbol_table)
+        self.body.insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
