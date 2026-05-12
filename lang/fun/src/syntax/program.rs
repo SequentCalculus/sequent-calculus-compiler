@@ -71,18 +71,12 @@ impl Program {
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        println!("gathered conflicts: {:?}", conflicts);
-
-        println!("Types unified");
-
         let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
             .filter(|(_, size)| *size > 1 ).collect();
         
         let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
 
         let choices_map: HashMap<Name, usize> = selected_world.iter().cloned().collect();
-
-        println!("World selected: {:?}", selected_world);
 
         // now all solutions that are part of the selected world are filtered.
         let mut selected_solutions = solutions;
@@ -100,7 +94,6 @@ impl Program {
 
         // the mapping is applied on it self. The mapping can contain a reference to another type variable.
         let reference_map = type_mapping.clone();
-
         for (_, ty) in type_mapping.iter_mut() {
             while !ty.collect_var_names().is_empty() {
                 ty.mut_subst_ty(&reference_map);
@@ -110,8 +103,6 @@ impl Program {
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
         }
-
-        println!("Types inserted");
 
         Ok(CheckedProgram { data_types, codata_types, defs })
     }
