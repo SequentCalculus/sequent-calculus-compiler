@@ -861,6 +861,9 @@ fn store_fields1(
                 instructions,
             );
 
+            instructions.push(Code::COMMENT(
+                "##store first slot of first field".to_string(),
+            ));
             store_slot1(Fst, &remaining_plus_rest, HEAP, 0, instructions);
 
             instructions.push(Code::COMMENT(
@@ -873,6 +876,9 @@ fn store_fields1(
                 instructions,
             );
 
+            instructions.push(Code::COMMENT(
+                "##store second slot of first field".to_string(),
+            ));
             store_slot1(Snd, &remaining_plus_rest, HEAP, 0, instructions);
         } else {
             if block_position == BlockPosition::Last {
@@ -1141,6 +1147,9 @@ fn load_fields1(
                         instructions,
                     );
 
+                    instructions.push(Code::COMMENT(
+                        "##load second slot of first field".to_string(),
+                    ));
                     load_slot1(
                         Snd,
                         &existing_plus_rest,
@@ -1152,6 +1161,9 @@ fn load_fields1(
                     instructions.push(Code::COMMENT("###release block".to_string()));
                     release_block(memory_block_register, instructions);
 
+                    instructions.push(Code::COMMENT(
+                        "##load first slot of first field".to_string(),
+                    ));
                     load_slot1(
                         Fst,
                         &existing_plus_rest,
@@ -1222,11 +1234,17 @@ fn load_fields1(
                         instructions,
                     );
 
+                    instructions.push(Code::COMMENT(
+                        "##load second slot of first field".to_string(),
+                    ));
                     load_slot1(Snd, &existing_plus_rest, TEMPORARY_TEMP, 0, instructions);
 
                     instructions.push(Code::COMMENT("###release block".to_string()));
                     release_block(TEMPORARY_TEMP, instructions);
 
+                    instructions.push(Code::COMMENT(
+                        "##load first slot of first field".to_string(),
+                    ));
                     load_slot1(Fst, &existing_plus_rest, TEMPORARY_TEMP, 0, instructions);
                 } else {
                     instructions.push(Code::COMMENT("###release block".to_string()));
