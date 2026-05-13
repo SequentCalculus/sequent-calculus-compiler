@@ -2,11 +2,12 @@
 //! [Core](core_lang) program.
 
 use crate::{
-    declaration::{compile_ctor, compile_dtor},
+    declaration::{compile_ctor_with_subst, compile_dtor_with_subst},
     def::{compile_def, compile_main},
     types::compile_type_params,
 };
 use core_lang::syntax::names::Identifier;
+use std::collections::HashMap;
 
 use std::collections::VecDeque;
 
@@ -18,19 +19,31 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     let mut max_id = 0;
 
     for data in prog.data_types {
+        let type_params = compile_type_params(&data.type_params, &mut max_id);
+        let type_param_subst = build_type_param_subst(&data.type_params.bindings, &type_params);
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Data,
             name: Identifier::new(data.name),
-            xtors: data.ctors.into_iter().map(compile_ctor).collect(),
-            type_params: compile_type_params(&data.type_params, &mut max_id),
+            xtors: data
+                .ctors
+                .into_iter()
+                .map(|ctor| compile_ctor_with_subst(ctor, &type_param_subst))
+                .collect(),
+            type_params,
         });
     }
     for codata in prog.codata_types {
+        let type_params = compile_type_params(&codata.type_params, &mut max_id);
+        let type_param_subst = build_type_param_subst(&codata.type_params.bindings, &type_params);
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
             name: Identifier::new(codata.name),
-            xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
-            type_params: compile_type_params(&codata.type_params, &mut max_id),
+            xtors: codata
+                .dtors
+                .into_iter()
+                .map(|dtor| compile_dtor_with_subst(dtor, &type_param_subst))
+                .collect(),
+            type_params,
         });
     }
 
@@ -56,6 +69,10 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         max_id,
         is_mono: prog.is_mono,
     }
+}
+
+fn build_type_param_subst(names: &[String], params: &[Identifier]) -> HashMap<String, Identifier> {
+    names.iter().cloned().zip(params.iter().cloned()).collect()
 }
 
 #[cfg(test)]

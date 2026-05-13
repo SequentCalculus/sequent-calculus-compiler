@@ -110,7 +110,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = parsed.check(false).map_err(DriverError::TypeError)?;
+        let checked = parsed.check(true).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
