@@ -81,13 +81,16 @@ mod compile_tests {
         def::{compile_def, compile_main},
         program::compile_prog,
     };
-    use core_macros::{bind, cns, covar, cut, def, exit, id, lit, mutilde, prd, var};
+    use core_macros::{
+        bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, ty, var,
+    };
+    use fun::syntax::context::TypeContext;
     use fun::syntax::{
         Chirality,
-        declarations::Def,
+        declarations::{CtorSig, Data, Def},
         program::CheckedProgram,
         terms::{Lit, XVar},
-        types::Ty,
+        types::{Ty, TypeArgs},
         util::dummy_span,
     };
     use std::collections::HashSet;
@@ -136,6 +139,60 @@ mod compile_tests {
             data_types: vec![],
             codata_types: vec![],
             is_mono: true,
+        }
+    }
+
+    fn example_list_poly() -> Data {
+        let mut cons_ctx = fun::syntax::context::TypingContext::default();
+        cons_ctx.add_var("x", Ty::mk_decl("A", TypeArgs::default()));
+        cons_ctx.add_var(
+            "xs",
+            Ty::mk_decl(
+                "List",
+                TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+            ),
+        );
+
+        Data {
+            span: None,
+            name: "List".to_string(),
+            type_params: TypeContext::mk(&["A"]),
+            ctors: vec![
+                CtorSig {
+                    span: None,
+                    name: "Nil".to_string(),
+                    args: fun::syntax::context::TypingContext::default(),
+                },
+                CtorSig {
+                    span: None,
+                    name: "Cons".to_string(),
+                    args: cons_ctx,
+                },
+            ],
+        }
+    }
+
+    fn example_list_mono() -> Data {
+        let mut cons_ctx = fun::syntax::context::TypingContext::default();
+        cons_ctx.add_var("x", Ty::mk_i64());
+        cons_ctx.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
+
+        Data {
+            span: None,
+            name: "List[i64]".to_string(),
+            type_params: TypeContext::default(),
+            ctors: vec![
+                CtorSig {
+                    span: None,
+                    name: "Nil".to_string(),
+                    args: fun::syntax::context::TypingContext::default(),
+                },
+                CtorSig {
+                    span: None,
+                    name: "Cons".to_string(),
+                    args: cons_ctx,
+                },
+            ],
         }
     }
 
@@ -198,5 +255,67 @@ mod compile_tests {
 
         assert_eq!(def1, &expected1);
         assert_eq!(def2, &expected2);
+    }
+
+    #[test]
+    fn compile_prog_poly_substitutes_type_params_in_xtor_args() {
+        let checked = CheckedProgram {
+            defs: vec![],
+            data_types: vec![example_list_poly()],
+            codata_types: vec![],
+            is_mono: false,
+        };
+        let result = compile_prog(checked);
+        assert!(!result.is_mono);
+        assert_eq!(result.data_types.len(), 1);
+
+        // Expected: data List[A_1] with Nil and Cons(x: prd A_1, xs: prd List[A_1])
+        let expected = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [
+                        bind!(id!("x"), prd!(), ty!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List[A_1]"))),
+                    ]
+                )
+            ],
+            [id!("A", 1)]
+        );
+
+        assert_eq!(result.data_types[0], expected);
+    }
+
+    #[test]
+    fn compile_prog_mono_keeps_monomorphic_types() {
+        let checked = CheckedProgram {
+            defs: vec![],
+            data_types: vec![example_list_mono()],
+            codata_types: vec![],
+            is_mono: true,
+        };
+        let result = compile_prog(checked);
+        assert!(result.is_mono);
+        assert_eq!(result.data_types.len(), 1);
+
+        // Expected: monomorphic List[i64]
+        let expected = data!(
+            id!("List[i64]"),
+            [
+                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("List[i64]"))),
+                    ]
+                )
+            ],
+            []
+        );
+
+        assert_eq!(result.data_types[0], expected);
     }
 }

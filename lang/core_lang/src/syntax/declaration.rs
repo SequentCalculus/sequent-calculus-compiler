@@ -128,18 +128,21 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
             .print(cfg, alloc)
             .append(alloc.space())
             .append(alloc.typ(&self.name.print_to_string(Some(cfg))))
-            .append(if self.type_params.is_empty() { alloc.nil()}
-                else {
-                    alloc
-                        .text("[")
-                        .append(alloc.intersperse(
-                            self.type_params.iter().map(|param| {
-                                alloc.typ(&param.print_to_string(Some(cfg)))
-                            }),
+            .append(if self.type_params.is_empty() {
+                alloc.nil()
+            } else {
+                alloc
+                    .text("[")
+                    .append(
+                        alloc.intersperse(
+                            self.type_params
+                                .iter()
+                                .map(|param| alloc.typ(&param.print_to_string(Some(cfg)))),
                             alloc.text(COMMA).append(alloc.space()),
-                        ))
-                        .append(alloc.text("]"))
-                })
+                        ),
+                    )
+                    .append(alloc.text("]"))
+            })
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());

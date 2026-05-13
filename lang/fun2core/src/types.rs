@@ -26,7 +26,9 @@ pub fn compile_ty_with_subst(
 ) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
-        fun::syntax::types::Ty::Decl { name, type_args, .. } => {
+        fun::syntax::types::Ty::Decl {
+            name, type_args, ..
+        } => {
             // If the type is a bare type parameter, replace it directly with the fresh Core identifier.
             if type_args.args.is_empty() {
                 if let Some(identifier) = type_params.get(name) {
@@ -65,4 +67,36 @@ pub fn compile_type_params(
         .iter()
         .map(|param| fresh_identifier(max_id, param))
         .collect()
+}
+
+#[cfg(test)]
+mod compile_tests {
+    use super::compile_ty_with_subst;
+    use core_lang::syntax::names::Identifier;
+    use core_macros::{id, ty};
+    use fun::syntax::types::{Ty, TypeArgs};
+    use std::collections::HashMap;
+
+    #[test]
+    fn compile_ty_with_subst_rewrites_nested_type_arguments() {
+        let ty = Ty::mk_decl(
+            "List",
+            TypeArgs::mk(vec![Ty::mk_decl(
+                "List",
+                TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+            )]),
+        );
+
+        let subst = HashMap::from([(
+            "A".to_string(),
+            Identifier {
+                name: "A".to_string(),
+                id: 1,
+            },
+        )]);
+
+        let result = compile_ty_with_subst(&ty, &subst);
+        let expected = ty!(id!("List[List[A_1]]"));
+        assert_eq!(result, expected);
+    }
 }
