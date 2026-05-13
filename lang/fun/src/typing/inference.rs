@@ -218,6 +218,8 @@ impl Solution {
         Solution { var_name, ty, choices }  
     }
 
+    // the function is used in the tests
+    
     fn new_no_choice(var_name: Name, ty: Ty) -> Self {
         Solution { var_name, ty, choices: Default::default() }
     }

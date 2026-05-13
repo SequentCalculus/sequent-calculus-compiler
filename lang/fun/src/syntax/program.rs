@@ -60,8 +60,8 @@ impl Program {
                             def.name = symbol_table::build_unique_def_name(&def.name, counter);
                             *counter += 1;
                         } else {
-                            def.name = symbol_table::build_unique_def_name(&def.name, &0);
                             overloaded_defs_counter.insert(def.name.clone(), 1);
+                            def.name = symbol_table::build_unique_def_name(&def.name, &0);
                         }
                     }
                     defs.push(def);
@@ -131,10 +131,6 @@ impl Program {
         }
         names
     }
-}
-
-fn dummy_world_selector(_conflicts: Vec<crate::typing::inference::IncompatibleChoices>) -> Vec<(Name, usize)> {
-    vec![("a".to_string(), 4), ("b".to_string(), 7)]
 }
 
 impl Print for Program {
