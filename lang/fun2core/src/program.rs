@@ -2,7 +2,7 @@
 //! [Core](core_lang) program.
 
 use crate::{
-    declaration::{compile_ctor_with_subst, compile_dtor_with_subst},
+    declaration::{compile_ctor, compile_ctor_with_subst, compile_dtor, compile_dtor_with_subst},
     def::{compile_def, compile_main},
     types::compile_type_params,
 };
@@ -14,6 +14,53 @@ use std::collections::VecDeque;
 /// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program.
 /// - `program` is the typechecked [Fun](fun) program.
 pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
+    let mut data_types = Vec::new();
+    let mut codata_types = Vec::new();
+
+    for data in prog.data_types {
+        data_types.push(core_lang::syntax::declaration::TypeDeclaration {
+            dat: core_lang::syntax::declaration::Data,
+            name: Identifier::new(data.name),
+            xtors: data.ctors.into_iter().map(compile_ctor).collect(),
+            type_params: vec![],
+        });
+    }
+    for codata in prog.codata_types {
+        codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
+            dat: core_lang::syntax::declaration::Codata,
+            name: Identifier::new(codata.name),
+            xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
+            type_params: vec![],
+        });
+    }
+
+    let mut used_labels = prog.defs.iter().map(|def| def.name.clone()).collect();
+    let mut defs_translated = VecDeque::new();
+    for def in prog.defs {
+        if def.name == "main" {
+            for def_main in compile_main(def, codata_types.as_slice(), &mut used_labels)
+                .into_iter()
+                .rev()
+            {
+                defs_translated.push_front(def_main);
+            }
+        } else {
+            defs_translated.extend(compile_def(def, codata_types.as_slice(), &mut used_labels));
+        }
+    }
+
+    core_lang::syntax::Prog {
+        defs: defs_translated.into(),
+        data_types,
+        codata_types,
+        max_id: 0,
+        is_mono: prog.is_mono,
+    }
+}
+
+/// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program. Additionally, it replaces type parameters in the program with fresh core identifiers.
+/// - `program` is the typechecked [Fun](fun) program.
+pub fn compile_prog_subst(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
     let mut max_id = 0;
@@ -80,9 +127,10 @@ mod compile_tests {
     use crate::{
         def::{compile_def, compile_main},
         program::compile_prog,
+        program::compile_prog_subst,
     };
     use core_macros::{
-        bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, ty, var,
+        bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tvar, ty, var,
     };
     use fun::syntax::context::TypeContext;
     use fun::syntax::{
@@ -265,7 +313,7 @@ mod compile_tests {
             codata_types: vec![],
             is_mono: false,
         };
-        let result = compile_prog(checked);
+        let result = compile_prog_subst(checked);
         assert!(!result.is_mono);
         assert_eq!(result.data_types.len(), 1);
 
@@ -277,8 +325,8 @@ mod compile_tests {
                 ctor_sig!(
                     id!("Cons"),
                     [
-                        bind!(id!("x"), prd!(), ty!(id!("A", 1))),
-                        bind!(id!("xs"), prd!(), ty!(id!("List[A_1]"))),
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))])),
                     ]
                 )
             ],

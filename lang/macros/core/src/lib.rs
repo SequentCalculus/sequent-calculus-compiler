@@ -27,6 +27,12 @@ pub fn ty(input: TokenStream) -> TokenStream {
     types::ty(input)
 }
 
+/// Create a [`core_lang::syntax::types::Ty::Var`] from an identifier.
+#[proc_macro]
+pub fn tvar(input: TokenStream) -> TokenStream {
+    types::tvar(input)
+}
+
 /// Create a [`core_lang::syntax::context::ContextBinding`] with given name, chirality, and type.
 /// If no type is provided, it defaults to [`core_lang::syntax::types::Ty`].
 #[proc_macro]

@@ -17,7 +17,7 @@ use fun::{
     parser::parse_module,
     syntax::program::{CheckedProgram, Program},
 };
-use fun2core::program::compile_prog;
+use fun2core::program::{compile_prog, compile_prog_subst};
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
@@ -123,8 +123,19 @@ impl Driver {
         }
 
         let checked = self.checked(path)?;
-        let compiled = compile_prog(checked);
+        // dispatch to the correct compile function based on whether the program is monomorphic or polymorphic. If the program is polymorphic this triggers all subsequent compilation steps to handle the substitution of type parameters with fresh core identifiers. Monomorphization is then deferred into a separate step in the core IR.
+        let compiled = if checked.is_mono {
+            compile_prog(checked)
+        } else {
+            compile_prog_subst(checked)
+        };
         self.compiled.insert(path.clone(), compiled.clone());
+        compiled.clone().data_types.iter().for_each(|data| {
+            data.xtors
+                .iter()
+                .for_each(|ctor| println!("{:?}", ctor.args))
+        });
+
         Ok(compiled)
     }
 

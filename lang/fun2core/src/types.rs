@@ -10,7 +10,13 @@ pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
         fun::syntax::types::Ty::Decl { .. } => {
-            core_lang::syntax::types::Ty::Decl(Identifier::new(ty.print_to_string(None)))
+            core_lang::syntax::types::Ty::Decl {
+                name: Identifier::new(ty.print_to_string(None)),
+                type_args: core_lang::syntax::types::TypeArgs {
+                    // Just pass empty type arguments since monomorphization already happened in the fun IR.
+                    args: vec![],
+                },
+            }
         }
     }
 }
@@ -29,29 +35,26 @@ pub fn compile_ty_with_subst(
         fun::syntax::types::Ty::Decl {
             name, type_args, ..
         } => {
-            // If the type is a bare type parameter, replace it directly with the fresh Core identifier.
+            // Bare type parameter -> explicit Core type variable
             if type_args.args.is_empty() {
                 if let Some(identifier) = type_params.get(name) {
-                    return core_lang::syntax::types::Ty::Decl(identifier.clone());
+                    return core_lang::syntax::types::Ty::Var(identifier.clone());
                 }
             }
 
-            // Otherwise, recursively translate the type arguments first so nested references to
-            // type parameters also use the fresh Core identifiers.
+            // Otherwise, recursively translate the type arguments first so nested references to type parameters also use the fresh Core identifiers.
             let translated_args = type_args
                 .args
                 .iter()
-                .map(|arg| compile_ty_with_subst(arg, type_params).print_to_string(None))
-                .collect::<Vec<_>>()
-                .join(", ");
+                .map(|arg| compile_ty_with_subst(arg, type_params))
+                .collect::<Vec<_>>();
 
-            let translated_name = if translated_args.is_empty() {
-                name.clone()
-            } else {
-                format!("{name}[{translated_args}]")
-            };
-
-            core_lang::syntax::types::Ty::Decl(Identifier::new(translated_name))
+            core_lang::syntax::types::Ty::Decl {
+                name: Identifier::new(name.clone()),
+                type_args: core_lang::syntax::types::TypeArgs {
+                    args: translated_args,
+                },
+            }
         }
     }
 }
@@ -73,7 +76,7 @@ pub fn compile_type_params(
 mod compile_tests {
     use super::compile_ty_with_subst;
     use core_lang::syntax::names::Identifier;
-    use core_macros::{id, ty};
+    use core_macros::{id, tvar, ty};
     use fun::syntax::types::{Ty, TypeArgs};
     use std::collections::HashMap;
 
@@ -96,7 +99,9 @@ mod compile_tests {
         )]);
 
         let result = compile_ty_with_subst(&ty, &subst);
-        let expected = ty!(id!("List[List[A_1]]"));
+
+        let expected = ty!(id!("List"), [ty!(id!("List"), [tvar!(id!("A", 1))])]);
+
         assert_eq!(result, expected);
     }
 }

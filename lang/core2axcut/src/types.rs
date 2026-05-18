@@ -7,6 +7,9 @@ use crate::names::shrink_identifier;
 pub fn shrink_ty(ty: core_lang::syntax::Ty) -> axcut::syntax::Ty {
     match ty {
         core_lang::syntax::Ty::I64 => axcut::syntax::Ty::I64,
-        core_lang::syntax::Ty::Decl(name) => axcut::syntax::Ty::Decl(shrink_identifier(name)),
+        core_lang::syntax::Ty::Decl { name, .. } => {
+            axcut::syntax::Ty::Decl(shrink_identifier(name))
+        },
+        core_lang::syntax::Ty::Var(name) => panic!("Unexpected type variable {} in Core, which should have been substituted away", name.name),
     }
 }

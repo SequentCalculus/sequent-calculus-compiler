@@ -1,8 +1,8 @@
 //! This module defines the translation of constructors of data and destructors of codata type
 //! declarations.
 
-use crate::context::compile_context_with_subst;
-use crate::types::compile_ty_with_subst;
+use crate::context::{compile_context, compile_context_with_subst};
+use crate::types::{compile_ty, compile_ty_with_subst};
 use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
@@ -12,7 +12,11 @@ use std::collections::HashMap;
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
-    compile_ctor_with_subst(ctor, &HashMap::new())
+    core_lang::syntax::declaration::XtorSig {
+        xtor: core_lang::syntax::declaration::Data,
+        name: Identifier::new(ctor.name),
+        args: compile_context(ctor.args),
+    }
 }
 
 /// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
@@ -36,7 +40,21 @@ pub fn compile_ctor_with_subst(
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
-    compile_dtor_with_subst(dtor, &HashMap::new())
+    let new_covar = fresh_covar(&mut dtor.args.vars());
+    let mut new_args = compile_context(dtor.args);
+
+    new_args
+        .bindings
+        .push(core_lang::syntax::context::ContextBinding {
+            var: core_lang::syntax::names::Identifier::new(new_covar),
+            chi: core_lang::syntax::context::Chirality::Cns,
+            ty: compile_ty(&dtor.cont_ty),
+        });
+    core_lang::syntax::declaration::XtorSig {
+        xtor: core_lang::syntax::declaration::Codata,
+        name: Identifier::new(dtor.name),
+        args: new_args,
+    }
 }
 
 /// This function converts [destructors in Fun](fun::syntax::declarations::DtorSig) to
