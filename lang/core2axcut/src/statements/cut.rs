@@ -88,7 +88,7 @@ fn shrink_unknown_cuts(
         .into(),
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
-        Ty::Decl{name, ..} => {
+        Ty::Decl { name, .. } => {
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
             let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
@@ -157,8 +157,11 @@ fn shrink_unknown_cuts(
                 free_vars_clauses: None,
             }
             .into()
-        },
-        Ty::Var(name) => panic!("Unexpected type variable {} in Core, which should have been substituted away", name.name),
+        }
+        Ty::Var(name) => panic!(
+            "Unexpected type variable {} in Core, which should have been substituted away",
+            name.name
+        ),
     }
 }
 
@@ -356,8 +359,11 @@ fn shrink_critical_pairs(
                 free_vars_next: None,
             }
             .into()
-        },
-        Ty::Var(name) => panic!("Unexpected type variable {} in Core, which should have been substituted away", name.name),
+        }
+        Ty::Var(name) => panic!(
+            "Unexpected type variable {} in Core, which should have been substituted away",
+            name.name
+        ),
     }
 }
 
