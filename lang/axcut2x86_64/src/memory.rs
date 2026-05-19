@@ -879,12 +879,16 @@ fn store_fields1(
             instructions.push(Code::COMMENT(
                 "##store second slot of first field".to_string(),
             ));
-            store_slot1(Snd, &remaining_plus_rest, HEAP, 0, instructions);
+            match Backend::fresh_temporary(Fst, &remaining_plus_rest) {
+                Temporary::Register(register) => {
+                    store_slot1(Snd, &remaining_plus_rest, register, 0, instructions)
+                }
+                Temporary::Spill(spill) => todo!(),
+            }
         } else {
             if block_position == BlockPosition::Last {
                 instructions.push(Code::COMMENT("#allocate memory".to_string()));
             }
-            // store all fields except for potentially the first one if it must be treated specially
             store_values1(
                 to_store_next.into(),
                 &remaining_plus_rest,
@@ -1457,8 +1461,6 @@ impl Memory<Code, Temporary> for Backend {
             // tracks whether a register for memory blocks in a spill position has been freed
             let mut register_freed = false;
 
-            // the then branch corresponds to the reference count of the object whose memory we
-            // load being zero, so we can release the memory
             instructions.push(Code::COMMENT(
                 "##release blocks onto linear free list when loading".to_string(),
             ));
