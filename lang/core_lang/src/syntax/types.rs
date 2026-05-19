@@ -40,7 +40,7 @@ impl Print for Ty {
             Ty::Decl { name, type_args } => {
                 alloc.typ(&name.name).append(type_args.print(cfg, alloc))
             }
-            Ty::Var(name) => alloc.typ(&name.name),
+            Ty::Var(name) => alloc.typ(&name.print_to_string(None)),
         }
     }
 }
@@ -91,5 +91,19 @@ mod type_tests {
             },
         };
         assert_eq!(ty.print_to_string(None), "List[i64]");
+    }
+
+    #[test]
+    fn display_decl2() {
+        let ty = Ty::Decl {
+            name: Identifier::new("List".to_string()),
+            type_args: TypeArgs {
+                args: vec![Ty::Var(Identifier {
+                    name: "A".to_string(),
+                    id: 1,
+                })],
+            },
+        };
+        assert_eq!(ty.print_to_string(None), "List[A]");
     }
 }
