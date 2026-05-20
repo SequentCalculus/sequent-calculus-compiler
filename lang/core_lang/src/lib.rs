@@ -3,6 +3,7 @@
 //! [focused](traits::focus::Focusing) fragment of Core, where only (co)variables are allowed in
 //! argument positions.
 
+pub mod mono;
 pub mod syntax;
 pub mod traits;
 

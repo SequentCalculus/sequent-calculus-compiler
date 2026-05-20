@@ -130,11 +130,6 @@ impl Driver {
             compile_prog_subst(checked)
         };
         self.compiled.insert(path.clone(), compiled.clone());
-        compiled.clone().data_types.iter().for_each(|data| {
-            data.xtors
-                .iter()
-                .for_each(|ctor| println!("{:?}", ctor.args))
-        });
 
         Ok(compiled)
     }
