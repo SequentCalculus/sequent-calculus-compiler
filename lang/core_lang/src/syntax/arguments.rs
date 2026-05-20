@@ -82,6 +82,15 @@ impl Bind for Argument {
     }
 }
 
+impl Typed for Argument {
+    fn get_type(&self) -> Ty {
+        match &self {
+            Argument::Consumer(term) => term.get_type(),
+            Argument::Producer(term) => term.get_type(),
+        }
+    }
+}
+
 /// This struct defines arguments in Core. They consist of a list of [`Argument`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
