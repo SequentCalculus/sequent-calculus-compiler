@@ -1452,38 +1452,18 @@ impl Memory<Code, Temporary> for Backend {
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        #[allow(clippy::vec_init_then_push)]
-        fn load_register(
-            to_load: TypingContext,
-            existing_context: &TypingContext,
-            instructions: &mut Vec<Code>,
-        ) {
-            // tracks whether a register for memory blocks in a spill position has been freed
-            let mut register_freed = false;
+        // tracks whether a register for memory blocks in a spill position has been freed
+        let mut register_freed = false;
 
-            instructions.push(Code::COMMENT(
-                "##release blocks onto linear free list when loading".to_string(),
-            ));
-            load_fields1(
-                to_load.clone(),
-                existing_context,
-                BlockPosition::Last,
-                &mut register_freed,
-                instructions,
-            );
-        }
-
-        if !to_load.bindings.is_empty() {
-            let memory_block = Backend::fresh_temporary(Fst, existing_context);
-
-            instructions.push(Code::COMMENT("#load from memory".to_string()));
-            match memory_block {
-                Temporary::Register(_) => load_register(to_load, existing_context, instructions),
-                Temporary::Spill(memory_block_position) => {
-                    instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
-                    load_register(to_load, existing_context, instructions);
-                }
-            }
-        }
+        instructions.push(Code::COMMENT(
+            "##release blocks onto linear free list when loading".to_string(),
+        ));
+        load_fields1(
+            to_load.clone(),
+            existing_context,
+            BlockPosition::Last,
+            &mut register_freed,
+            instructions,
+        );
     }
 }
