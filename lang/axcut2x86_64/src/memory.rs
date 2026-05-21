@@ -1470,18 +1470,20 @@ impl Memory<Code, Temporary> for Backend {
         existing_context: &TypingContext,
         instructions: &mut Vec<Code>,
     ) {
-        // tracks whether a register for memory blocks in a spill position has been freed
-        let mut register_freed = false;
+        if !to_load.bindings.is_empty() {
+            // tracks whether a register for memory blocks in a spill position has been freed
+            let mut register_freed = false;
 
-        instructions.push(Code::COMMENT(
-            "##release blocks onto linear free list when loading".to_string(),
-        ));
-        load_fields1(
-            to_load.clone(),
-            existing_context,
-            BlockPosition::Last,
-            &mut register_freed,
-            instructions,
-        );
+            instructions.push(Code::COMMENT(
+                "##release blocks onto linear free list when loading".to_string(),
+            ));
+            load_fields1(
+                to_load.clone(),
+                existing_context,
+                BlockPosition::Last,
+                &mut register_freed,
+                instructions,
+            );
+        }
     }
 }
