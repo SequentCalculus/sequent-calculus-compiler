@@ -881,9 +881,27 @@ fn store_fields1(
             ));
             match Backend::fresh_temporary(Fst, &remaining_plus_rest) {
                 Temporary::Register(register) => {
-                    store_slot1(Snd, &remaining_plus_rest, register, 0, instructions)
+                    store_slot1(Snd, &remaining_plus_rest, register, 0, instructions);
                 }
-                Temporary::Spill(spill) => todo!(),
+                Temporary::Spill(memory_block_position) => {
+                    // Evacuate an additional scratch register, do the load and restore it
+                    // immediately. This is not the most efficient way.
+
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                    instructions.push(Code::MOVL(
+                        TEMPORARY_TEMP,
+                        STACK,
+                        stack_offset(memory_block_position),
+                    ));
+
+                    store_slot1(Snd, &remaining_plus_rest, TEMPORARY_TEMP, 0, instructions);
+
+                    instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                    instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                }
             }
         } else {
             if block_position == BlockPosition::Last {
