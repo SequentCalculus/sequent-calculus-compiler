@@ -1129,7 +1129,7 @@ fn load_fields1(
                         Fst,
                         &existing_plus_to_load,
                         memory_block_register,
-                        FIELDS_PER_BLOCK - 1,
+                        FIELDS_PER_BLOCK_1 - 1,
                         instructions,
                     );
                 }
@@ -1216,7 +1216,7 @@ fn load_fields1(
                         Fst,
                         &existing_plus_to_load,
                         TEMPORARY_TEMP,
-                        FIELDS_PER_BLOCK - 1,
+                        FIELDS_PER_BLOCK_1 - 1,
                         instructions,
                     );
                 }
