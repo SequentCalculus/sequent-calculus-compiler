@@ -1,8 +1,8 @@
 //! This module defines the translation of constructors of data and destructors of codata type
 //! declarations.
 
-use crate::context::{compile_context, compile_context_with_subst};
-use crate::types::{compile_ty, compile_ty_with_subst};
+use crate::context::{compile_context, compile_context_poly};
+use crate::types::{compile_ty, compile_ty_poly};
 use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
@@ -24,14 +24,14 @@ pub fn compile_ctor(
 /// the given core identifiers.
 /// - `ctor` is the Fun constructor to translate.
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
-pub fn compile_ctor_with_subst(
+pub fn compile_ctor_poly(
     ctor: fun::syntax::declarations::CtorSig,
     type_params: &HashMap<String, Identifier>,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Data,
         name: Identifier::new(ctor.name),
-        args: compile_context_with_subst(ctor.args, type_params),
+        args: compile_context_poly(ctor.args, type_params),
     }
 }
 
@@ -62,19 +62,19 @@ pub fn compile_dtor(
 /// the given core identifiers.
 /// - `dtor` is the Fun destructor to translate.
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
-pub fn compile_dtor_with_subst(
+pub fn compile_dtor_poly(
     dtor: fun::syntax::declarations::DtorSig,
     type_params: &HashMap<String, Identifier>,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
-    let mut new_args = compile_context_with_subst(dtor.args, type_params);
+    let mut new_args = compile_context_poly(dtor.args, type_params);
 
     new_args
         .bindings
         .push(core_lang::syntax::context::ContextBinding {
             var: core_lang::syntax::names::Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty_with_subst(&dtor.cont_ty, type_params),
+            ty: compile_ty_poly(&dtor.cont_ty, type_params),
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,

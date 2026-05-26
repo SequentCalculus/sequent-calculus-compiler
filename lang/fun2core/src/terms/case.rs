@@ -1,14 +1,14 @@
 //! This module defines the translation of a pattern match.
 
 use crate::{
-    compile::{Compile, CompileState, share},
-    terms::clause::compile_clause,
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState, share},
+    terms::clause::{compile_clause, compile_clause_poly},
+    types::{compile_ty, compile_ty_poly},
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{Identifier, terms::Cns};
 use fun::syntax::types::OptTyped;
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Case {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -63,6 +63,53 @@ impl Compile for fun::syntax::terms::Case {
 
         // 〚t〛_{new_cont}
         Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state)
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Case {
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        // if there is more than one clause and the consumer is a not a leaf, we share it by
+        // lifting it to the top level to avoid exponential blowup
+        let cont = if self.clauses.len() <= 1
+            || matches!(
+                cont,
+                core_lang::syntax::Term::XVar(_)
+            )
+            // check if consumer is μ~x.exit p with p a leaf
+            || matches!(&cont, core_lang::syntax::Term::Mu(core_lang::syntax::terms::Mu { statement, .. })
+                if (matches!(&**statement, core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit { arg, .. })
+                    if matches!(**arg, core_lang::syntax::Term::XVar(_)) || matches!(**arg, core_lang::syntax::Term::Literal(_))))
+            ) {
+            cont
+        } else {
+            share(cont, state)
+        };
+
+        // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{cont}, ... }
+        let new_cont = core_lang::syntax::terms::XCase {
+            prdcns: Cns,
+            clauses: self
+                .clauses
+                .into_iter()
+                .map(|clause| compile_clause_poly(clause, cont.clone(), state, type_params))
+                .collect(),
+            ty: compile_ty_poly(
+                &self
+                    .scrutinee
+                    .get_type()
+                    .expect("Types should be annotated before translation"),
+                type_params,
+            ),
+        }
+        .into();
+
+        // 〚t〛_{new_cont}
+        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont_poly(new_cont, state, type_params)
     }
 }
 

@@ -1,9 +1,11 @@
 //! This module defines the translation of a destructor.
 
+use std::collections::HashMap;
+
 use crate::{
-    arguments::compile_subst,
-    compile::{Compile, CompileState},
-    types::compile_ty,
+    arguments::{compile_subst, compile_subst_poly},
+    compile::{Compile, CompilePoly, CompileState},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 use fun::syntax::types::OptTyped;
@@ -40,6 +42,36 @@ impl Compile for fun::syntax::terms::Destructor {
 
         // 〚t〛_{new_cont}
         self.scrutinee.compile_with_cont(new_cont, state)
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Destructor {
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        let mut args = compile_subst_poly(self.args, state, type_params);
+        args.entries.push(cont.into());
+        // new continuation: D(〚t_1〛, ..., c)
+        let new_cont = core_lang::syntax::terms::Xtor {
+            prdcns: Cns,
+            name: Identifier::new(self.id),
+            args,
+            ty: compile_ty_poly(
+                &self
+                    .scrutinee
+                    .get_type()
+                    .expect("Types should be annotated before translation"),
+                type_params,
+            ),
+        }
+        .into();
+
+        // 〚t〛_{new_cont}
+        self.scrutinee
+            .compile_with_cont_poly(new_cont, state, type_params)
     }
 }
 

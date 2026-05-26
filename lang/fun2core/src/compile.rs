@@ -15,7 +15,7 @@ use core_lang::traits::{Typed, TypedFreeVars};
 use fun::syntax::names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
 
 use std::{
-    collections::{BTreeSet, HashSet, VecDeque},
+    collections::{BTreeSet, HashMap, HashSet, VecDeque},
     rc::Rc,
 };
 
@@ -113,6 +113,61 @@ impl<T: Compile + Clone> Compile for Rc<T> {
         state: &mut CompileState,
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
+    }
+}
+
+pub trait CompilePoly: Sized {
+    fn compile_with_cont_poly(
+        self,
+        consumer: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement;
+
+    fn compile_poly(
+        self,
+        state: &mut CompileState,
+        ty: Ty,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        let new_covar = state.fresh_covar();
+        let new_statement = self.compile_with_cont_poly(
+            core_lang::syntax::terms::XVar {
+                prdcns: Cns,
+                var: Identifier::new(new_covar.clone()),
+                ty: ty.clone(),
+            }
+            .into(),
+            state,
+            type_params,
+        );
+        Mu {
+            prdcns: Prd,
+            variable: Identifier::new(new_covar),
+            ty,
+            statement: Rc::new(new_statement),
+        }
+        .into()
+    }
+}
+
+impl<T: CompilePoly + Clone> CompilePoly for Rc<T> {
+    fn compile_poly(
+        self,
+        state: &mut CompileState,
+        ty: Ty,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        Rc::unwrap_or_clone(self).compile_poly(state, ty, type_params)
+    }
+
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        Rc::unwrap_or_clone(self).compile_with_cont_poly(cont, state, &type_params)
     }
 }
 

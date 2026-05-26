@@ -1,16 +1,16 @@
 //! This module defines the translation of a copattern match.
 
 use crate::{
-    compile::{Compile, CompileState},
-    terms::clause::compile_coclause,
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    terms::clause::{compile_coclause, compile_coclause_poly},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{
-    Ty,
+    Identifier, Ty,
     terms::{Cns, Prd},
 };
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::New {
     /// This implementation of [Compile::compile] proceeds as follows.
@@ -60,6 +60,52 @@ impl Compile for fun::syntax::terms::New {
         );
         core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile(state, ty.clone())),
+            ty,
+            consumer: Rc::new(cont),
+        }
+        .into()
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::New {
+    fn compile_poly(
+        self,
+        state: &mut CompileState,
+        _ty: Ty,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::XCase {
+            prdcns: Prd,
+            clauses: self
+                .clauses
+                .into_iter()
+                .map(|clause| compile_coclause_poly(clause, state, type_params))
+                .collect(),
+            ty: compile_ty_poly(
+                &self
+                    .ty
+                    .expect("Types should be annotated before translation"),
+                type_params,
+            ),
+        }
+        .into()
+    }
+
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        let ty = compile_ty_poly(
+            &self
+                .ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+            type_params,
+        );
+        core_lang::syntax::statements::Cut {
+            producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }

@@ -2,8 +2,8 @@
 //! [Core](core_lang) program.
 
 use crate::{
-    declaration::{compile_ctor, compile_ctor_with_subst, compile_dtor, compile_dtor_with_subst},
-    def::{compile_def, compile_main},
+    declaration::{compile_ctor, compile_ctor_poly, compile_dtor, compile_dtor_poly},
+    def::{compile_def, compile_def_poly, compile_main, compile_main_poly},
     types::compile_type_params,
 };
 use core_lang::syntax::names::Identifier;
@@ -60,37 +60,41 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
 
 /// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program. Additionally, it replaces type parameters in the program with fresh core identifiers.
 /// - `program` is the typechecked [Fun](fun) program.
-pub fn compile_prog_subst(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
+pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
     let mut max_id = 0;
+    let mut global_type_param_subst = HashMap::new();
 
     for data in prog.data_types {
         let type_params = compile_type_params(&data.type_params, &mut max_id);
         let type_param_subst = build_type_param_subst(&data.type_params.bindings, &type_params);
+        global_type_param_subst.extend(type_param_subst.clone());
+
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Data,
             name: Identifier::new(data.name),
             xtors: data
                 .ctors
                 .into_iter()
-                .map(|ctor| compile_ctor_with_subst(ctor, &type_param_subst))
+                .map(|ctor| compile_ctor_poly(ctor, &type_param_subst))
                 .collect(),
-            type_params,
+            type_params: type_params.clone(),
         });
     }
     for codata in prog.codata_types {
         let type_params = compile_type_params(&codata.type_params, &mut max_id);
         let type_param_subst = build_type_param_subst(&codata.type_params.bindings, &type_params);
+        global_type_param_subst.extend(type_param_subst.clone());
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
             name: Identifier::new(codata.name),
             xtors: codata
                 .dtors
                 .into_iter()
-                .map(|dtor| compile_dtor_with_subst(dtor, &type_param_subst))
+                .map(|dtor| compile_dtor_poly(dtor, &type_param_subst))
                 .collect(),
-            type_params,
+            type_params: type_params.clone(),
         });
     }
 
@@ -98,14 +102,24 @@ pub fn compile_prog_subst(prog: fun::syntax::program::CheckedProgram) -> core_la
     let mut defs_translated = VecDeque::new();
     for def in prog.defs {
         if def.name == "main" {
-            for def_main in compile_main(def, codata_types.as_slice(), &mut used_labels)
-                .into_iter()
-                .rev()
+            for def_main in compile_main_poly(
+                def,
+                codata_types.as_slice(),
+                &mut used_labels,
+                &global_type_param_subst,
+            )
+            .into_iter()
+            .rev()
             {
                 defs_translated.push_front(def_main);
             }
         } else {
-            defs_translated.extend(compile_def(def, codata_types.as_slice(), &mut used_labels));
+            defs_translated.extend(compile_def_poly(
+                def,
+                codata_types.as_slice(),
+                &mut used_labels,
+                &global_type_param_subst,
+            ));
         }
     }
 
@@ -127,7 +141,7 @@ mod compile_tests {
     use crate::{
         def::{compile_def, compile_main},
         program::compile_prog,
-        program::compile_prog_subst,
+        program::compile_prog_poly,
     };
     use core_macros::{
         bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tvar, ty, var,
@@ -313,7 +327,7 @@ mod compile_tests {
             codata_types: vec![],
             is_mono: false,
         };
-        let result = compile_prog_subst(checked);
+        let result = compile_prog_poly(checked);
         assert!(!result.is_mono);
         assert_eq!(result.data_types.len(), 1);
 

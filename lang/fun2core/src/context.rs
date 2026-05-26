@@ -1,6 +1,6 @@
 //! This module defines the trivial translation of typing contexts.
 
-use crate::types::{compile_ty, compile_ty_with_subst};
+use crate::types::{compile_ty, compile_ty_poly};
 use core_lang::syntax::names::Identifier;
 use std::collections::HashMap;
 
@@ -36,7 +36,7 @@ pub fn compile_context(
 /// parameters with the given core identifiers.
 /// - `context` is the Fun typing context to translate.
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
-pub fn compile_context_with_subst(
+pub fn compile_context_poly(
     context: fun::syntax::context::TypingContext,
     type_params: &HashMap<String, Identifier>,
 ) -> core_lang::syntax::context::TypingContext {
@@ -47,7 +47,7 @@ pub fn compile_context_with_subst(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
-                ty: compile_ty_with_subst(&binding.ty, type_params),
+                ty: compile_ty_poly(&binding.ty, type_params),
             })
             .collect(),
     }

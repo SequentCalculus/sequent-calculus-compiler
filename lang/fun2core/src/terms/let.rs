@@ -1,12 +1,12 @@
 //! This module defines the translation of let-bindings.
 
 use crate::{
-    compile::{Compile, CompileState},
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Let {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -43,6 +43,39 @@ impl Compile for fun::syntax::terms::Let {
         } else {
             // 〚t_1 〛_{new_cont}
             self.bound_term.compile_with_cont(new_cont, state)
+        }
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Let {
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        let ty = compile_ty_poly(&self.var_ty, type_params);
+        // new continuation: μ~x.〚t_2 〛_{c}
+        let new_cont = core_lang::syntax::terms::Mu {
+            prdcns: Cns,
+            variable: Identifier::new(self.variable),
+            ty: ty.clone(),
+            statement: Rc::new(self.in_term.compile_with_cont_poly(cont, state, type_params)),
+        }
+        .into();
+
+        if ty.is_codata(state.codata_types) {
+            // <〚t_1 〛| new_cont>
+            core_lang::syntax::statements::Cut {
+                producer: Rc::new(self.bound_term.compile_poly(state, ty.clone(), type_params)),
+                ty,
+                consumer: Rc::new(new_cont),
+            }
+            .into()
+        } else {
+            // 〚t_1 〛_{new_cont}
+            self.bound_term
+                .compile_with_cont_poly(new_cont, state, type_params)
         }
     }
 }

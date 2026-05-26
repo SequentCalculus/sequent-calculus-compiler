@@ -1,9 +1,9 @@
 //! This module defines the translation of top-level functions.
 
 use crate::{
-    compile::{Compile, CompileState},
-    context::compile_context,
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    context::{compile_context, compile_context_poly},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{CodataDeclaration, names::Identifier};
 use fun::{
@@ -11,7 +11,7 @@ use fun::{
     traits::used_binders::UsedBinders,
 };
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 
 /// This function translates a [top-level function in Fun](fun::syntax::declarations::Def) to a
@@ -125,6 +125,112 @@ pub fn compile_main(
         )
         .into(),
         &mut state,
+    );
+
+    def_plus_lifted_statements.push_front(core_lang::syntax::Def {
+        name: Identifier::new(def.name),
+        context,
+        body,
+    });
+
+    def_plus_lifted_statements
+}
+
+pub fn compile_def_poly(
+    def: fun::syntax::declarations::Def,
+    codata_types: &'_ [CodataDeclaration],
+    used_labels: &mut HashSet<Name>,
+    type_params: &HashMap<String, Identifier>,
+) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
+
+    let mut context = compile_context_poly(def.context, type_params);
+
+    def.body.used_binders(&mut used_vars);
+    // we sometimes create new top-level labels during the translation, so we need to collect them
+    let mut def_plus_lifted_statements = VecDeque::new();
+    let mut state: CompileState = CompileState {
+        used_vars,
+        codata_types,
+        used_labels,
+        current_label: &def.name,
+        lifted_statements: &mut def_plus_lifted_statements,
+    };
+
+    let new_covar = state.fresh_covar();
+    let ty = compile_ty_poly(
+        &def.body
+            .get_type()
+            .expect("Types should be annotated before translation"),
+        type_params,
+    );
+
+    let body = def.body.compile_with_cont_poly(
+        core_lang::syntax::terms::XVar::covar(Identifier::new(new_covar.clone()), ty).into(),
+        &mut state,
+        type_params,
+    );
+
+    context
+        .bindings
+        .push(core_lang::syntax::context::ContextBinding {
+            var: Identifier::new(new_covar),
+            chi: core_lang::syntax::context::Chirality::Cns,
+            ty: compile_ty_poly(&def.ret_ty, type_params),
+        });
+
+    def_plus_lifted_statements.push_front(core_lang::syntax::Def {
+        name: Identifier::new(def.name),
+        context,
+        body,
+    });
+
+    def_plus_lifted_statements
+}
+
+pub fn compile_main_poly(
+    def: fun::syntax::declarations::Def,
+    codata_types: &'_ [CodataDeclaration],
+    used_labels: &mut HashSet<Name>,
+    type_params: &HashMap<String, Identifier>,
+) -> VecDeque<core_lang::syntax::Def> {
+    let mut used_vars = def.context.vars();
+    let context = compile_context_poly(def.context, type_params);
+
+    def.body.used_binders(&mut used_vars);
+    // we sometimes create new top-level labels during the translation, so we need to collect them
+    let mut def_plus_lifted_statements = VecDeque::new();
+    let mut state: CompileState = CompileState {
+        used_vars,
+        codata_types,
+        used_labels,
+        current_label: &def.name,
+        lifted_statements: &mut def_plus_lifted_statements,
+    };
+
+    let new_var = state.fresh_var();
+    let ty = compile_ty_poly(
+        &def.body
+            .get_type()
+            .expect("Types should be annotated before translation"),
+        type_params,
+    );
+
+    let body = def.body.compile_with_cont_poly(
+        core_lang::syntax::terms::Mu::tilde_mu(
+            Identifier::new(new_var.clone()),
+            core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit {
+                arg: Rc::new(
+                    core_lang::syntax::terms::XVar::var(Identifier::new(new_var), ty.clone())
+                        .into(),
+                ),
+                ty: ty.clone(),
+            }),
+            ty,
+        )
+        .into(),
+        &mut state,
+        type_params,
     );
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {

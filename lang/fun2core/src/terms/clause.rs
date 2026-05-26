@@ -1,9 +1,9 @@
 //! This module defines the translation for a clause in a pattern or copattern match.
 
 use crate::{
-    compile::{Compile, CompileState},
-    context::compile_context,
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    context::{compile_context, compile_context_poly},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{
     Chirality, ContextBinding, Statement,
@@ -12,7 +12,7 @@ use core_lang::syntax::{
 };
 use fun::syntax::types::OptTyped;
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 /// This function translates a [clause of a pattern match in Fun](fun::syntax::terms::Clause) to a
 /// [clause of a pattern match in Core](core_lang::syntax::terms::Clause).
@@ -65,6 +65,58 @@ pub fn compile_coclause(
                 }
                 .into(),
                 state,
+            ),
+        ),
+    }
+}
+
+pub fn compile_clause_poly(
+    clause: fun::syntax::terms::Clause,
+    cont: core_lang::syntax::terms::Term<Cns>,
+    state: &mut CompileState,
+    type_params: &HashMap<String, Identifier>,
+) -> core_lang::syntax::terms::Clause<Cns, Statement> {
+    core_lang::syntax::terms::Clause {
+        prdcns: Cns,
+        xtor: Identifier::new(clause.xtor),
+        context: compile_context_poly(clause.context, type_params),
+        body: Rc::new(clause.body.compile_with_cont_poly(cont, state, type_params)),
+    }
+}
+
+pub fn compile_coclause_poly(
+    clause: fun::syntax::terms::Clause,
+    state: &mut CompileState,
+    type_params: &HashMap<String, Identifier>,
+) -> core_lang::syntax::terms::Clause<Prd, Statement> {
+    let ty = compile_ty_poly(
+        &clause
+            .get_type()
+            .expect("Types should be annotated before translation"),
+        type_params,
+    );
+    let mut new_context = compile_context_poly(clause.context, type_params);
+    let new_covar = state.fresh_covar();
+    new_context.bindings.push(ContextBinding {
+        var: Identifier::new(new_covar.clone()),
+        chi: Chirality::Cns,
+        ty: ty.clone(),
+    });
+
+    core_lang::syntax::terms::Clause {
+        prdcns: Prd,
+        xtor: Identifier::new(clause.xtor),
+        context: new_context,
+        body: Rc::new(
+            clause.body.compile_with_cont_poly(
+                core_lang::syntax::terms::XVar {
+                    prdcns: Cns,
+                    var: Identifier::new(new_covar),
+                    ty,
+                }
+                .into(),
+                state,
+                type_params,
             ),
         ),
     }

@@ -1,12 +1,12 @@
 //! This module defines the translation of arithmetic binary operations.
 
-use crate::compile::{Compile, CompileState};
+use crate::compile::{Compile, CompilePoly, CompileState};
 use core_lang::syntax::{
-    Ty,
+    Identifier, Ty,
     terms::{Cns, Prd},
 };
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 /// This function converts [arithmetic binary operations in Fun](fun::syntax::terms::BinOp) to
 /// [arithmetic binary operations in Core](core_lang::syntax::BinOp).
@@ -51,6 +51,42 @@ impl Compile for fun::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64)),
             op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile(state, Ty::I64)),
+        }
+        .into();
+        core_lang::syntax::statements::Cut {
+            producer: Rc::new(new_op),
+            ty: Ty::I64,
+            consumer: Rc::new(cont),
+        }
+        .into()
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Op {
+    fn compile_poly(
+        self,
+        state: &mut crate::compile::CompileState,
+        _ty: Ty,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        core_lang::syntax::terms::Op {
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            op: compile_op(&self.op),
+            snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
+        }
+        .into()
+    }
+
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            op: compile_op(&self.op),
+            snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
         }
         .into();
         core_lang::syntax::statements::Cut {

@@ -26,7 +26,7 @@ pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
 /// identifiers.
 /// - `ty` is the Fun type to translate.
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
-pub fn compile_ty_with_subst(
+pub fn compile_ty_poly(
     ty: &fun::syntax::types::Ty,
     type_params: &HashMap<String, Identifier>,
 ) -> core_lang::syntax::types::Ty {
@@ -46,7 +46,7 @@ pub fn compile_ty_with_subst(
             let translated_args = type_args
                 .args
                 .iter()
-                .map(|arg| compile_ty_with_subst(arg, type_params))
+                .map(|arg| compile_ty_poly(arg, type_params))
                 .collect::<Vec<_>>();
 
             core_lang::syntax::types::Ty::Decl {
@@ -74,7 +74,7 @@ pub fn compile_type_params(
 
 #[cfg(test)]
 mod compile_tests {
-    use super::compile_ty_with_subst;
+    use super::compile_ty_poly;
     use core_lang::syntax::names::Identifier;
     use core_macros::{id, tvar, ty};
     use fun::syntax::types::{Ty, TypeArgs};
@@ -98,7 +98,7 @@ mod compile_tests {
             },
         )]);
 
-        let result = compile_ty_with_subst(&ty, &subst);
+        let result = compile_ty_poly(&ty, &subst);
 
         let expected = ty!(id!("List"), [ty!(id!("List"), [tvar!(id!("A", 1))])]);
 

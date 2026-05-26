@@ -1,8 +1,8 @@
 //! This module defines the translation for the goto control operator.
 
 use crate::{
-    compile::{Compile, CompileState},
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -32,6 +32,31 @@ impl Compile for fun::syntax::terms::Goto {
             }
             .into(),
             state,
+        )
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Goto {
+    fn compile_with_cont_poly(
+        self,
+        _: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &std::collections::HashMap<String, core_lang::syntax::names::Identifier>,
+    ) -> core_lang::syntax::Statement {
+        self.term.compile_with_cont_poly(
+            core_lang::syntax::terms::XVar {
+                prdcns: Cns,
+                var: Identifier::new(self.target),
+                ty: compile_ty_poly(
+                    &self
+                        .ty
+                        .expect("Types should be annotated before translation"),
+                    type_params,
+                ),
+            }
+            .into(),
+            state,
+            type_params,
         )
     }
 }

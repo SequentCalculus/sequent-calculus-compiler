@@ -64,12 +64,14 @@ impl Program {
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
-        Ok(CheckedProgram {
+        let checked = CheckedProgram {
             data_types,
             codata_types,
             defs,
             is_mono: false,
-        })
+        };
+
+        Ok(checked)
     }
 
     /// This function typechecks a module, creating a checked module with monomorphic type

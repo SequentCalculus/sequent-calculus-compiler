@@ -1,9 +1,9 @@
 //! This module defines the translation for the conditionals comparing two terms.
 
-use crate::compile::{Compile, CompileState, share};
-use core_lang::syntax::{Ty, terms::Cns};
+use crate::compile::{Compile, CompilePoly, CompileState, share};
+use core_lang::syntax::{Identifier, Ty, terms::Cns};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::IfC {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -58,6 +58,60 @@ impl Compile for fun::syntax::terms::IfC {
             snd: self.snd.map(|term| Rc::new(term.compile(state, Ty::I64))),
             thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
             elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
+        }
+        .into()
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::IfC {
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        // if the consumer is a not a leaf, we share it by lifting it to the top level to avoid
+        // exponential blowup
+        let cont = if matches!(
+                cont,
+                core_lang::syntax::Term::XVar(_)
+            )
+            // check if consumer is μ~x.exit p with p a leaf
+            || matches!(&cont, core_lang::syntax::Term::Mu(core_lang::syntax::terms::Mu { statement, .. })
+                if (matches!(&**statement, core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit { arg, .. })
+                    if matches!(**arg, core_lang::syntax::Term::XVar(_)) || matches!(**arg, core_lang::syntax::Term::Literal(_))))
+            ) {
+            cont
+        } else {
+            share(cont, state)
+        };
+
+        core_lang::syntax::statements::IfC {
+            sort: match self.sort {
+                fun::syntax::terms::IfSort::Equal => core_lang::syntax::statements::IfSort::Equal,
+                fun::syntax::terms::IfSort::NotEqual => {
+                    core_lang::syntax::statements::IfSort::NotEqual
+                }
+                fun::syntax::terms::IfSort::Less => core_lang::syntax::statements::IfSort::Less,
+                fun::syntax::terms::IfSort::LessOrEqual => {
+                    core_lang::syntax::statements::IfSort::LessOrEqual
+                }
+                fun::syntax::terms::IfSort::Greater => {
+                    core_lang::syntax::statements::IfSort::Greater
+                }
+                fun::syntax::terms::IfSort::GreaterOrEqual => {
+                    core_lang::syntax::statements::IfSort::GreaterOrEqual
+                }
+            },
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            snd: self
+                .snd
+                .map(|term| Rc::new(term.compile_poly(state, Ty::I64, type_params))),
+            thenc: Rc::new(
+                self.thenc
+                    .compile_with_cont_poly(cont.clone(), state, type_params),
+            ),
+            elsec: Rc::new(self.elsec.compile_with_cont_poly(cont, state, type_params)),
         }
         .into()
     }

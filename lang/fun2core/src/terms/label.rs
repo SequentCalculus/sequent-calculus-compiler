@@ -1,8 +1,8 @@
 //! This module defines the translation for the goto control operator.
 
 use crate::{
-    compile::{Compile, CompileState},
-    types::compile_ty,
+    compile::{Compile, CompilePoly, CompileState},
+    types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{
     Ty,
@@ -10,7 +10,7 @@ use core_lang::syntax::{
     terms::{Cns, Prd},
 };
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Label {
     /// This implementation of [Compile::compile] proceeds as follows.
@@ -64,6 +64,57 @@ impl Compile for fun::syntax::terms::Label {
         );
         core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile(state, ty.clone())),
+            ty,
+            consumer: Rc::new(cont),
+        }
+        .into()
+    }
+}
+
+impl CompilePoly for fun::syntax::terms::Label {
+    fn compile_poly(
+        self,
+        state: &mut CompileState,
+        _ty: Ty,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        let var_ty = compile_ty_poly(
+            &self
+                .ty
+                .expect("Types should be annotated before translation"),
+            type_params,
+        );
+        let cont = core_lang::syntax::terms::XVar {
+            prdcns: Cns,
+            var: Identifier::new(self.label.clone()),
+            ty: var_ty.clone(),
+        }
+        .into();
+
+        core_lang::syntax::terms::Mu {
+            prdcns: Prd,
+            variable: Identifier::new(self.label),
+            ty: var_ty,
+            statement: Rc::new(self.term.compile_with_cont_poly(cont, state, type_params)),
+        }
+        .into()
+    }
+
+    fn compile_with_cont_poly(
+        self,
+        cont: core_lang::syntax::terms::Term<Cns>,
+        state: &mut CompileState,
+        type_params: &HashMap<String, Identifier>,
+    ) -> core_lang::syntax::Statement {
+        let ty = compile_ty_poly(
+            &self
+                .ty
+                .clone()
+                .expect("Types should be annotated before translation"),
+            type_params,
+        );
+        core_lang::syntax::statements::Cut {
+            producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }
