@@ -93,7 +93,11 @@ impl Inference for Let {
             // if the bound term has an annotation it is used, else a type variable is substituted
             let bound_term_type = match &self.var_ty {
                 Some(ty) => ty.clone(),
-                None => var_name_generator.get_new_ty_var()
+                None => {
+                    let new_ty = var_name_generator.get_new_ty_var();
+                    self.var_ty = Some(new_ty.clone());
+                    new_ty                    
+                }
             };
 
             constraints.append(&mut self.bound_term.constraint_equations(symbol_table, context, var_name_generator, bound_term_type.clone())?);
