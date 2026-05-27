@@ -2,6 +2,9 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -129,6 +132,17 @@ impl<C: Chi> SubstVar for XVar<C> {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> XVar<C> {
         self.var = self.var.subst_sim(subst);
         self
+    }
+}
+
+impl<C: Chi> ConstraintCollector for XVar<C> {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        self.ty
+            .collect_constraints(data_declarations, codata_declarations)
     }
 }
 

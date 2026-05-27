@@ -2,6 +2,9 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -148,5 +151,36 @@ impl Uniquify for Arguments {
     fn uniquify(mut self, max_id: &mut ID) -> Arguments {
         self.entries = self.entries.uniquify(max_id);
         self
+    }
+}
+
+impl ConstraintCollector for Argument {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        match self {
+            Argument::Producer(term) => {
+                term.collect_constraints(data_declarations, codata_declarations)
+            }
+            Argument::Consumer(term) => {
+                term.collect_constraints(data_declarations, codata_declarations)
+            }
+        }
+    }
+}
+
+impl ConstraintCollector for Arguments {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = FlowConstraintSet::new();
+        for arg in &self.entries {
+            constraints.extend(arg.collect_constraints(data_declarations, codata_declarations)?);
+        }
+        Ok(constraints)
     }
 }

@@ -3,6 +3,8 @@
 use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -131,5 +133,23 @@ impl Focusing for PrintI64 {
             }),
             max_id,
         )
+    }
+}
+
+impl ConstraintCollector for PrintI64 {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .arg
+            .collect_constraints(data_declarations, codata_declarations)?;
+
+        constraints.extend(
+            self.next
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }

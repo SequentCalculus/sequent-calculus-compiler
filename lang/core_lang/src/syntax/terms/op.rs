@@ -3,6 +3,8 @@
 use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -192,6 +194,25 @@ impl Bind for Op {
             }),
             max_id,
         )
+    }
+}
+
+impl ConstraintCollector for Op {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = FlowConstraintSet::new();
+        constraints.extend(
+            self.fst
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        constraints.extend(
+            self.snd
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }
 

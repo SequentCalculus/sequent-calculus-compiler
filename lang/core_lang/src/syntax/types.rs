@@ -3,6 +3,9 @@
 use printer::tokens::I64;
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::errors::Error;
+use crate::syntax::declaration::lookup_type_declaration;
 use crate::syntax::*;
 
 /// This enum encodes the types of AxCut. They are either integers or names of user-declared types.
@@ -29,6 +32,40 @@ impl Ty {
                 .iter()
                 .any(|declaration| declaration.name == *name),
             Ty::Var(_) => false,
+        }
+    }
+}
+
+impl ConstraintCollector for Ty {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        match self {
+            Ty::I64 => Ok(FlowConstraintSet::new()),
+            Ty::Var(_) => Ok(FlowConstraintSet::new()),
+            Ty::Decl { name, type_args } => {
+                if self.is_codata(codata_declarations) {
+                    let template = lookup_type_declaration(&name, codata_declarations);
+                    type_args.args.iter().zip(&template.type_params).try_fold(
+                        FlowConstraintSet::new(),
+                        |mut acc, (arg, param)| {
+                            acc.extend(collect_type_flow(arg, &Ty::Var(param.clone()))?);
+                            Ok(acc)
+                        },
+                    )
+                } else {
+                    let template = lookup_type_declaration(&name, data_declarations);
+                    type_args.args.iter().zip(&template.type_params).try_fold(
+                        FlowConstraintSet::new(),
+                        |mut acc, (arg, param)| {
+                            acc.extend(collect_type_flow(arg, &Ty::Var(param.clone()))?);
+                            Ok(acc)
+                        },
+                    )
+                }
+            }
         }
     }
 }
@@ -104,6 +141,6 @@ mod type_tests {
                 })],
             },
         };
-        assert_eq!(ty.print_to_string(None), "List[A]");
+        assert_eq!(ty.print_to_string(None), "List[A_1]");
     }
 }

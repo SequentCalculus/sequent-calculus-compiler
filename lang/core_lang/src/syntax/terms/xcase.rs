@@ -3,6 +3,8 @@
 use printer::tokens::{CASE, NEW};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -134,6 +136,28 @@ impl<C: Chi> SubstVar for FsXCase<C> {
 impl<C: Chi> TypedFreeVars for FsXCase<C> {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         self.clauses.typed_free_vars(vars);
+    }
+}
+
+impl<C: Chi> ConstraintCollector for XCase<C> {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+        constraints.extend(
+            self.clauses
+                .iter()
+                .map(|clause| clause.collect_constraints(data_declarations, codata_declarations))
+                .try_fold(FlowConstraintSet::new(), |mut acc, res| {
+                    acc.extend(res?);
+                    Ok(acc)
+                })?,
+        );
+        Ok(constraints)
     }
 }
 

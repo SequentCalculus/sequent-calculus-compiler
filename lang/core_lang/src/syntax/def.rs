@@ -3,6 +3,9 @@
 use printer::tokens::DEF;
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -105,5 +108,16 @@ impl<S: Print> Print for Def<S> {
             .braces_anno();
 
         head.group().append(body)
+    }
+}
+
+impl ConstraintCollector for Def {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        self.body
+            .collect_constraints(data_declarations, codata_declarations)
     }
 }

@@ -8,7 +8,11 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// A concrete type does not match the expected type.
-    TypeMismatch { expected: Ty, got: Ty },
+    TypeMismatch {
+        expected: Ty,
+        got: Ty,
+        msg: Option<String>,
+    },
 
     /// A referenced type name was not declared in the program.
     UndeclaredType(String),
@@ -33,12 +37,24 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::TypeMismatch { expected, got } => write!(
-                f,
-                "Type mismatch: expected '{}' but got '{}'",
-                expected.print_to_string(None),
-                got.print_to_string(None)
-            ),
+            Error::TypeMismatch { expected, got, msg } => {
+                if let Some(m) = msg {
+                    write!(
+                        f,
+                        "Type mismatch: expected '{}' but got '{}'. \n{}",
+                        expected.print_to_string(None),
+                        got.print_to_string(None),
+                        m
+                    )
+                } else {
+                    write!(
+                        f,
+                        "Type mismatch: expected '{}' but got '{}'",
+                        expected.print_to_string(None),
+                        got.print_to_string(None)
+                    )
+                }
+            }
             Error::UndeclaredType(name) => write!(f, "Undeclared type: '{}'", name),
             Error::UndeclaredVariable(name) => write!(f, "Undeclared variable: '{}'", name),
             Error::ArityMismatch { expected, got } => write!(

@@ -3,6 +3,9 @@
 use printer::tokens::DOT;
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -247,6 +250,23 @@ impl Bind for Mu<Cns> {
             ty,
         )
         .into()
+    }
+}
+
+impl<C: Chi> ConstraintCollector for Mu<C> {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+        constraints.extend(
+            self.statement
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }
 

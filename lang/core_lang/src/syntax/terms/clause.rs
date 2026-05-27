@@ -3,6 +3,8 @@
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -210,5 +212,17 @@ impl<C: Chi> Focusing for Clause<C> {
             context: self.context,
             body: self.body.focus(max_id),
         }
+    }
+}
+
+impl<C: Chi> ConstraintCollector for Clause<C> {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        // collect constraints from the body of the clause
+        self.body
+            .collect_constraints(data_declarations, codata_declarations)
     }
 }

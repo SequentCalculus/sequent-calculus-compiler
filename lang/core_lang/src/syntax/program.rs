@@ -2,7 +2,13 @@
 
 use printer::*;
 
-use crate::syntax::*;
+use crate::{
+    mono::{
+        constraints::{ConstraintCollector, FlowConstraintSet},
+        errors::Error,
+    },
+    syntax::*,
+};
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
 /// user-declared data types, and a list of user-declared codata types. Moreover, it contains the
@@ -78,11 +84,33 @@ impl<D: Print> Print for Prog<D> {
     }
 }
 
+impl ConstraintCollector for Prog {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = FlowConstraintSet::new();
+
+        for def in &self.defs {
+            constraints.extend(def.collect_constraints(data_declarations, codata_declarations)?);
+        }
+        Ok(constraints)
+    }
+}
+
 #[cfg(test)]
 mod program_tests {
+
+    use std::collections::HashSet;
+
+    use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
     extern crate self as core_lang;
-    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, id, prd, prog, var};
+    use core_macros::{
+        bind, cns, covar, ctor_sig, cut, data, def, exit, fs_cut, fs_def, id, lit, prd, prog, tvar,
+        ty, var,
+    };
 
     fn example_def2_var() -> FsDef {
         fs_def!(
@@ -107,5 +135,49 @@ mod program_tests {
 
         let expected = prog!([example_def2_var()], [], [], 2);
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn collect_constraints_prog() {
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [id!("A", 1)]
+        );
+
+        let prog = prog!(
+            [def!(
+                id!("main"),
+                [],
+                exit!(lit!(1), ty!(id!("List"), [ty!("int")]))
+            )],
+            [list],
+            []
+        );
+
+        let constraints = prog
+            .collect_constraints(&prog.data_types, &prog.codata_types)
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
+                from: Ty::I64,
+                to: Ty::Var(Identifier {
+                    name: "A".to_string(),
+                    id: 1,
+                }),
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
     }
 }

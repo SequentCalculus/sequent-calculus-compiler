@@ -1,10 +1,10 @@
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 use crate::mono::errors::Error;
 use crate::syntax::{CodataDeclaration, DataDeclaration, Ty};
 
 /// A flow constraint describing how a concrete type reaches a polymorphic type parameter.
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct FlowConstraint {
     /// The concrete type that reaches the polymorphic type parameter.
     pub from: Ty,
@@ -14,9 +14,9 @@ pub struct FlowConstraint {
 
 /// A set of flow constraints. This is the main output of the constraint collection phase and the main input to the
 /// constraint solving phase.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FlowConstraintSet {
-    pub constraints: BTreeSet<FlowConstraint>,
+    pub constraints: HashSet<FlowConstraint>,
 }
 
 impl FlowConstraintSet {
@@ -43,46 +43,42 @@ pub trait ConstraintCollector {
 }
 
 /// This function collects flow constraints from a concrete type reaching a polymorphic type parameter. It is used as a helper function in the implementation of the `ConstraintCollector` trait for various syntax elements.
-pub fn collect_type_flow(
-    actual: &Ty,
-    expected: &Ty,
-    constraints: &mut FlowConstraintSet,
-) -> Result<(), Error> {
-    match (actual, expected) {
-        (_, Ty::Var(param)) => {
-            constraints.insert(FlowConstraint {
-                from: actual.clone(),
-                to: Ty::Var(param.clone()),
-            });
-            Ok(())
-        }
-        (Ty::I64, Ty::I64) => Ok(()),
-        (
-            Ty::Decl {
-                name: actual_name,
-                type_args: actual_args,
-            },
-            Ty::Decl {
-                name: expected_name,
-                type_args: expected_args,
-            },
-        ) if actual_name == expected_name => {
-            if actual_args.args.len() != expected_args.args.len() {
-                return Err(Error::ArityMismatch {
-                    expected: expected_args.args.len(),
-                    got: actual_args.args.len(),
+pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet, Error> {
+    fn collect_type_flow_into(
+        actual: &Ty,
+        expected: &Ty,
+        constraints: &mut FlowConstraintSet,
+    ) -> Result<(), Error> {
+        match (actual, expected) {
+            (_, Ty::Var(param)) => {
+                let target = Ty::Var(param.clone());
+                constraints.insert(FlowConstraint {
+                    from: actual.clone(),
+                    to: target.clone(),
                 });
-            }
 
-            for (actual_arg, expected_arg) in actual_args.args.iter().zip(expected_args.args.iter())
-            {
-                collect_type_flow(actual_arg, expected_arg, constraints)?;
+                if let Ty::Decl { type_args, .. } = actual {
+                    for arg in &type_args.args {
+                        collect_type_flow_into(arg, &target, constraints)?;
+                    }
+                }
+                Ok(())
             }
-            Ok(())
+            (Ty::I64, Ty::I64) => Ok(()),
+            (Ty::Decl { .. }, Ty::Decl { .. }) => Err(Error::TypeMismatch {
+                expected: expected.clone(),
+                got: actual.clone(),
+                msg: Some("Expected a polymorphic type parameter on the right-hand side of the flow constraint, but got a concrete type declaration.".to_string()),
+            }),
+            _ => Err(Error::TypeMismatch {
+                expected: expected.clone(),
+                got: actual.clone(),
+                msg: None,
+            }),
         }
-        _ => Err(Error::TypeMismatch {
-            expected: expected.clone(),
-            got: actual.clone(),
-        }),
     }
+
+    let mut constraints = FlowConstraintSet::new();
+    collect_type_flow_into(actual, expected, &mut constraints)?;
+    Ok(constraints)
 }

@@ -2,9 +2,8 @@
 
 use printer::*;
 
-use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::declaration::{Polarity, TypeDeclaration, lookup_type_declaration};
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -191,77 +190,32 @@ impl Bind for Xtor<Cns> {
     }
 }
 
-fn resolve_xtor_arg_type<P: Polarity>(
-    declarations: &[TypeDeclaration<P>],
-    decl_name: &Identifier,
-    xtor_name: &Identifier,
-    index: usize,
-) -> Result<Ty, Error> {
-    let ty = lookup_type_declaration(decl_name, declarations);
-    let xtor_sig = ty
-        .xtors
-        .iter()
-        .find(|xtor| &xtor.name == xtor_name)
-        .ok_or_else(|| Error::UndeclaredXtor {
-            type_name: decl_name.print_to_string(None),
-            xtor_name: xtor_name.print_to_string(None),
-        })?;
-    xtor_sig
-        .args
-        .bindings
-        .get(index)
-        .map(|binding| binding.ty.clone())
-        .ok_or_else(|| Error::ArityMismatch {
-            expected: xtor_sig.args.bindings.len(),
-            got: index + 1,
-        })
-}
-
 impl<C: Chi> ConstraintCollector for Xtor<C> {
     fn collect_constraints(
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
     ) -> Result<FlowConstraintSet, Error> {
-        let mut constraints = FlowConstraintSet::new();
-        for (i, arg) in self.args.entries.iter().enumerate() {
-            let actual = arg.get_type();
-            let expected = match self.get_type() {
-                Ty::Decl { name, .. } => {
-                    if self.prdcns.is_prd() {
-                        resolve_xtor_arg_type(data_declarations, &name, &self.name, i)?
-                    } else {
-                        resolve_xtor_arg_type(codata_declarations, &name, &self.name, i)?
-                    }
-                }
-                Ty::I64 => {
-                    return Err(Error::TypeMismatch {
-                        expected: self.get_type(),
-                        got: actual,
-                    });
-                }
-                Ty::Var(id) => {
-                    return Err(Error::TypeMismatch {
-                        expected: self.get_type(),
-                        got: Ty::Var(id),
-                    });
-                }
-            };
-
-            collect_type_flow(&actual, &expected, &mut constraints)?;
-        }
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+        constraints.extend(
+            self.args
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
         Ok(constraints)
     }
 }
 
 #[cfg(test)]
 mod xtor_tests {
-    use std::collections::BTreeSet;
+    use std::collections::HashSet;
 
     use printer::Print;
 
     use super::Subst;
     use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
+    use crate::syntax::types::TypeArgs;
     use crate::test_common::example_subst;
     use crate::{mono::constraints::ConstraintCollector, syntax::*};
     extern crate self as core_lang;
@@ -290,6 +244,7 @@ mod xtor_tests {
                     ]
                 )
             ],
+            [id!("A", 1)]
         )
     }
 
@@ -333,7 +288,7 @@ mod xtor_tests {
         let constraints = cons.collect_constraints(&[list], &[]).unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: BTreeSet::from_iter(vec![FlowConstraint {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
                 from: Ty::I64,
                 to: Ty::Var(Identifier {
                     name: "A".to_string(),
@@ -364,6 +319,7 @@ mod xtor_tests {
                     ]
                 )
             ],
+            [id!("A", 1)]
         );
 
         let cons: Xtor<Prd> = ctor!(
@@ -382,13 +338,30 @@ mod xtor_tests {
 
         let constraints = cons.collect_constraints(&[list], &[]).unwrap();
         let expected = FlowConstraintSet {
-            constraints: BTreeSet::from_iter(vec![FlowConstraint {
-                from: Ty::I64,
-                to: Ty::Var(Identifier {
-                    name: "A".to_string(),
-                    id: 1,
-                }),
-            }]),
+            constraints: HashSet::from_iter(vec![
+                FlowConstraint {
+                    from: Ty::I64,
+                    to: Ty::Var(Identifier {
+                        name: "A".to_string(),
+                        id: 1,
+                    }),
+                },
+                FlowConstraint {
+                    from: Ty::Decl {
+                        name: Identifier {
+                            name: "List".to_string(),
+                            id: 0,
+                        },
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    },
+                    to: Ty::Var(Identifier {
+                        name: "A".to_string(),
+                        id: 1,
+                    }),
+                },
+            ]),
         };
 
         assert_eq!(constraints, expected)
@@ -402,7 +375,18 @@ mod xtor_tests {
 
         let constraints = nil.collect_constraints(&[list], &[]).unwrap();
 
-        assert_eq!(constraints, FlowConstraintSet::new())
+        assert_eq!(
+            constraints,
+            FlowConstraintSet {
+                constraints: HashSet::from_iter(vec![FlowConstraint {
+                    from: Ty::I64,
+                    to: Ty::Var(Identifier {
+                        name: "A".to_string(),
+                        id: 1
+                    })
+                }])
+            }
+        )
     }
 
     #[test]
@@ -420,6 +404,7 @@ mod xtor_tests {
                     )]
                 )
             ],
+            [id!("A", 1)]
         );
 
         let dtor: Xtor<Cns> = dtor!(id!("Head"), [lit!(1)], ty!(id!("List"), [ty!("int")]));
@@ -427,7 +412,7 @@ mod xtor_tests {
         let constraints = dtor.collect_constraints(&[], &[list]).unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: BTreeSet::from_iter(vec![FlowConstraint {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
                 from: Ty::I64,
                 to: Ty::Var(Identifier {
                     name: "A".to_string(),

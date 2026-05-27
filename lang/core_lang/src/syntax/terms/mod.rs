@@ -2,6 +2,9 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -209,6 +212,33 @@ impl Bind for Term<Cns> {
             Term::Xtor(xtor) => xtor.bind(k, max_id),
             Term::XCase(xcase) => xcase.bind(k, max_id),
         }
+    }
+}
+
+impl<C: Chi> ConstraintCollector for Term<C> {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = FlowConstraintSet::new();
+        match self {
+            Term::XVar(var) => {
+                constraints.extend(var.collect_constraints(data_declarations, codata_declarations)?)
+            }
+            Term::Literal(_) => {}
+            Term::Op(op) => {
+                constraints.extend(op.collect_constraints(data_declarations, codata_declarations)?)
+            }
+            Term::Mu(mu) => {
+                constraints.extend(mu.collect_constraints(data_declarations, codata_declarations)?)
+            }
+            Term::Xtor(xtor) => constraints
+                .extend(xtor.collect_constraints(data_declarations, codata_declarations)?),
+            Term::XCase(xcase) => constraints
+                .extend(xcase.collect_constraints(data_declarations, codata_declarations)?),
+        }
+        Ok(constraints)
     }
 }
 

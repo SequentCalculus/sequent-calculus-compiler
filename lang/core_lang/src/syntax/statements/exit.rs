@@ -3,6 +3,9 @@
 use printer::tokens::EXIT;
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -121,5 +124,22 @@ impl TypedFreeVars for FsExit {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+    }
+}
+
+impl ConstraintCollector for Exit {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+        constraints.extend(
+            self.arg
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }

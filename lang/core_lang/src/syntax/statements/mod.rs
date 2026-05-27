@@ -2,6 +2,9 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -110,6 +113,33 @@ impl Focusing for Statement {
             Statement::Call(call) => call.focus(max_id),
             Statement::Exit(exit) => exit.focus(max_id),
         }
+    }
+}
+
+impl ConstraintCollector for Statement {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let constraints = match self {
+            Statement::Cut(cut) => {
+                cut.collect_constraints(data_declarations, codata_declarations)?
+            }
+            Statement::IfC(ifc) => {
+                ifc.collect_constraints(data_declarations, codata_declarations)?
+            }
+            Statement::PrintI64(print) => {
+                print.collect_constraints(data_declarations, codata_declarations)?
+            }
+            Statement::Call(call) => {
+                call.collect_constraints(data_declarations, codata_declarations)?
+            }
+            Statement::Exit(exit) => {
+                exit.collect_constraints(data_declarations, codata_declarations)?
+            }
+        };
+        Ok(constraints)
     }
 }
 

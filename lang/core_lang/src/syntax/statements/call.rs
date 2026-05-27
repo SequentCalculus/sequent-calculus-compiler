@@ -2,6 +2,9 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -116,6 +119,24 @@ impl SubstVar for FsCall {
 impl TypedFreeVars for FsCall {
     fn typed_free_vars(&self, vars: &mut BTreeSet<ContextBinding>) {
         vars.extend(self.args.bindings.iter().cloned());
+    }
+}
+
+impl ConstraintCollector for Call {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+
+        constraints.extend(
+            self.args
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }
 

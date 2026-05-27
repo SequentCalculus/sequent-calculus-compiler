@@ -3,6 +3,8 @@
 use printer::tokens::{LANGLE, PIPE, RANGLE};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -188,6 +190,27 @@ impl Focusing for Cut {
             }
             .into(),
         }
+    }
+}
+
+impl ConstraintCollector for Cut {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        let mut constraints = self
+            .ty
+            .collect_constraints(data_declarations, codata_declarations)?;
+        constraints.extend(
+            self.producer
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        constraints.extend(
+            self.consumer
+                .collect_constraints(data_declarations, codata_declarations)?,
+        );
+        Ok(constraints)
     }
 }
 
