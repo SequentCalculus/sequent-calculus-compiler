@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 
@@ -226,7 +228,9 @@ impl<C: Chi> ConstraintCollector for Term<C> {
             Term::XVar(var) => {
                 constraints.extend(var.collect_constraints(data_declarations, codata_declarations)?)
             }
-            Term::Literal(_) => {}
+            Term::Literal(lit) => {
+                constraints.extend(lit.collect_constraints(data_declarations, codata_declarations)?)
+            }
             Term::Op(op) => {
                 constraints.extend(op.collect_constraints(data_declarations, codata_declarations)?)
             }

@@ -2,8 +2,13 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::TypeError;
 
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,6 +56,16 @@ impl Bind for Literal {
             Ty::I64,
         )
         .into()
+    }
+}
+
+impl ConstraintCollector for Literal {
+    fn collect_constraints(
+        &self,
+        _data_declarations: &[DataDeclaration],
+        _codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        Ok(FlowConstraintSet::new())
     }
 }
 
