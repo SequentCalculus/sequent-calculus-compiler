@@ -71,34 +71,47 @@ impl Program {
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
+        let all_possible_choices: Vec<(String, usize)> = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
             .filter(|(_, size)| *size > 1 ).collect();
-        
-        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
 
-        let choices_map: HashMap<Name, usize> = selected_world.iter().cloned().collect();
 
-        // now all solutions that are part of the selected world are filtered.
-        let mut selected_solutions = solutions;
-        for (name, wanted_id) in selected_world {
-            selected_solutions.retain(|s| match s.choices.get(&name) {
-                Some(id) => wanted_id == *id,
+        // generating a type and choice mapping, either with overload resolution or without
+        // overload resolution is only done, if there are any overloads to resolve
+        let (mut type_mapping, choices_map): (HashMap<Name, Ty>, HashMap<Name, usize>) = if all_possible_choices.len() > 0 {
+            let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
 
-                // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                None => true
-            });
-        }
+            let choices_map: HashMap<Name, usize> = selected_world.iter().cloned().collect();
 
-        // the solutions are converted to a HashMap and then they are inserted in the program
-        let mut type_mapping: HashMap<String, Ty> = selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect();
+            // now all solutions that are part of the selected world are filtered.
+            let mut selected_solutions = solutions;
+            for (name, wanted_id) in selected_world {
+                selected_solutions.retain(|s| match s.choices.get(&name) {
+                    Some(id) => wanted_id == *id,
 
+                    // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
+                    None => true
+                });
+            }
+
+            // the solutions are converted to a HashMap and then they are inserted in the program
+            (selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), choices_map)
+        } else {
+            (solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), Default::default())
+        };
+
+        /* TODO: decide if the self applying is necessary
         // the mapping is applied on it self. The mapping can contain a reference to another type variable.
         let reference_map = type_mapping.clone();
         for (_, ty) in type_mapping.iter_mut() {
             while !ty.collect_var_names().is_empty() {
-                ty.mut_subst_ty(&reference_map);
+                if ty.collect_var_names().iter().all(|k| reference_map.contains_key(k)) {
+                    ty.mut_subst_ty(&reference_map);
+                } else {
+                    let missing_names: Vec<String> = ty.collect_var_names().into_iter().filter(|k| !reference_map.contains_key(k)).collect();
+                    panic!("Missing type var names in the final type mapping: {:?}", missing_names);
+                }
             }
-        }
+        }*/
 
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;

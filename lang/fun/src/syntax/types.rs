@@ -178,6 +178,22 @@ impl Ty {
         }
     }
 
+    /// special case of the type substitution with only one type variable to substitute by
+    pub fn mut_subst_one_ty(&mut self, new_name: &Name, new_ty: &Ty) {
+        match self {
+            Ty::I64 { .. } => {},
+            Ty::Decl { name, type_args, .. } => {
+                if name == new_name {
+                    *self = new_ty.clone();
+                } else {
+                    for ty in &mut type_args.args {
+                        ty.mut_subst_one_ty(new_name, new_ty);
+                    }
+                }
+            }
+        }
+    }
+
     /// This function collects all type variable names in a type
     pub fn collect_var_names(&self) -> Vec<Name> {
         match self {

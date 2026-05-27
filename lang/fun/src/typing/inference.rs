@@ -197,6 +197,16 @@ impl Constraint {
             Self::ImpossibleWorld(_) => {}
         }
     }
+
+    /// this function checks if a Solution can be combined/applied to this Constraint.
+    fn in_same_choice_realm(&self, other: &Solution) -> bool {
+        match self {
+            Constraint::Equality(_, _, choices) => 
+                // checking that all choices of the Solution are also in this constraint
+                other.choices.iter().all(|(name, choice_idx)| choices.get(name) == Some(choice_idx)),            
+            Constraint::ImpossibleWorld(_) => false,
+        }        
+    }
 }
 
 pub fn add_choice_to_list(constraints: &mut Vec<Constraint>, choice_name: Name, choice_number: usize) {
@@ -218,8 +228,7 @@ impl Solution {
         Solution { var_name, ty, choices }  
     }
 
-    // the function is used in the tests
-    
+    // the function is used in the tests    
     fn new_no_choice(var_name: Name, ty: Ty) -> Self {
         Solution { var_name, ty, choices: Default::default() }
     }
@@ -227,13 +236,44 @@ impl Solution {
     pub fn get_only_solution(self) -> (Name, Ty) {
         (self.var_name, self.ty)
     }
+
+    /// this function checks if another Solution can be combined/applied to this Solution.
+    fn in_same_choice_realm(&self, other: &Self) -> bool {
+        // checking that all choices of the other Solution are also in this Solution --> the other Solution can be applied to this one
+        other.choices.iter().all(|(name, choice_idx)| self.choices.get(name) == Some(choice_idx))
+    }
+}
+
+fn integrate_new_solution(equations: &mut Vec<Constraint>, solutions: &mut Vec<Solution>, new_solution: Solution) {
+    // applying the new solution to all constraints
+    for constraint in equations {
+        if constraint.in_same_choice_realm(&new_solution) {
+            match constraint {
+                Constraint::Equality(ty1, ty2, _) => {
+                    ty1.mut_subst_one_ty(&new_solution.var_name, &new_solution.ty);
+                    ty2.mut_subst_one_ty(&new_solution.var_name, &new_solution.ty);
+                },
+                Constraint::ImpossibleWorld(_) => {}
+            }
+        }
+    }
+
+    // applying the new solution to all other solutions
+    for solution in solutions.iter_mut() {
+        if solution.in_same_choice_realm(&new_solution) {
+            solution.ty.mut_subst_one_ty(&new_solution.var_name, &new_solution.ty);
+        }
+    }
+
+    // adding the new solution to the solution list
+    solutions.push(new_solution);
 }
 
 pub fn constraint_unification(mut equations: Vec<Constraint>) -> (Vec<Solution>, Vec<IncompatibleChoices>) {
     let mut solutions: Vec<Solution> = Vec::new();
     let mut conflicts: Vec<IncompatibleChoices> = Vec::new();
     let mut constraint_cache: Vec<Constraint> = Vec::new();
-    
+
     while let Some(constraint) = equations.pop() {
 
         if constraint_cache.contains(&constraint) {
@@ -247,11 +287,11 @@ pub fn constraint_unification(mut equations: Vec<Constraint>) -> (Vec<Solution>,
             Constraint::Equality(ty1, ty2 , _) if ty1 == ty2 => {continue;},
             Constraint::Equality(Ty::Decl { name, type_args, .. }, ty, choices) if type_args.args.is_empty() => {
                 // the first ty is a variable, so it can be added to the solutions
-                solutions.push(Solution::new(name.to_string(), ty, choices));
+                integrate_new_solution(&mut equations, &mut solutions, Solution::new(name.to_string(), ty, choices));
             },
             Constraint::Equality(ty, Ty::Decl { name, type_args, .. }, choices) if type_args.args.is_empty() => {
                 // the second ty is a variable, but not the first, so it is added "in reverse"
-                solutions.push(Solution::new(name.to_string(), ty, choices));
+                integrate_new_solution(&mut equations, &mut solutions, Solution::new(name.to_string(), ty, choices));
             },
             Constraint::Equality(Ty::Decl { span: _ , name: name_l, type_args: type_args_l }, Ty::Decl {name: name_r, type_args: type_args_r, .. }, choices) => {
                 if name_l == name_r {
