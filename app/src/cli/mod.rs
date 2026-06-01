@@ -11,6 +11,7 @@ mod fmt;
 mod focus;
 mod gen_completions;
 mod linearize;
+mod monomorphize;
 mod shrink;
 mod texify;
 #[cfg(debug_assertions)]
@@ -48,6 +49,7 @@ pub fn exec() -> miette::Result<()> {
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
+        Monomorphize(args) => monomorphize::exec(args),
     }
 }
 
@@ -87,4 +89,6 @@ enum Command {
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
+
+    Monomorphize(monomorphize::Args),
 }
