@@ -7,8 +7,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::check::Checked;
-use crate::typing::errors::TypeError;
+
 
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]

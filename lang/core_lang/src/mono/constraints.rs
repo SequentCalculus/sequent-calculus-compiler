@@ -1,5 +1,8 @@
 use std::collections::HashSet;
 
+use printer::tokens::COMMA;
+use printer::{Alloc, Anno, Builder, DocAllocator, Print, PrintCfg};
+
 use crate::mono::errors::Error;
 use crate::syntax::{CodataDeclaration, DataDeclaration, Ty};
 
@@ -10,6 +13,14 @@ pub struct FlowConstraint {
     pub from: Ty,
     /// The name of the polymorphic type parameter.
     pub to: Ty,
+}
+impl Print for FlowConstraint {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        self.from
+            .print(cfg, alloc)
+            .append(alloc.text(" ⊑ "))
+            .append(self.to.print(cfg, alloc))
+    }
 }
 
 /// A set of flow constraints. This is the main output of the constraint collection phase and the main input to the
@@ -30,6 +41,46 @@ impl FlowConstraintSet {
 
     pub fn extend(&mut self, other: FlowConstraintSet) {
         self.constraints.extend(other.constraints);
+    }
+}
+
+impl Print for FlowConstraintSet {
+    fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
+        // fallback for empty sets
+        if self.constraints.is_empty() {
+            return alloc
+                .text("{")
+                .annotate(Anno::BraceOpen)
+                .append(alloc.text("}").annotate(Anno::BraceClose));
+        }
+
+        // sort for deterministic output
+        let mut sorted: Vec<&FlowConstraint> = self.constraints.iter().collect();
+        sorted.sort();
+
+        let sep = if cfg.allow_linebreaks {
+            alloc.text(COMMA).append(alloc.line())
+        } else {
+            alloc.text(COMMA).append(alloc.space())
+        };
+
+        let body = alloc.intersperse(sorted.into_iter().map(|x| x.print(cfg, alloc).group()), sep);
+
+        if cfg.allow_linebreaks {
+            alloc
+                .text("{")
+                .annotate(Anno::BraceOpen)
+                .append(alloc.line().append(body).nest(cfg.indent))
+                .append(alloc.line())
+                .append(alloc.text("}").annotate(Anno::BraceClose))
+                .group()
+        } else {
+            alloc
+                .text("{ ")
+                .annotate(Anno::BraceOpen)
+                .append(body)
+                .append(alloc.text(" }").annotate(Anno::BraceClose))
+        }
     }
 }
 

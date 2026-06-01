@@ -17,7 +17,7 @@ use fun::{
     parser::parse_module,
     syntax::program::{CheckedProgram, Program},
 };
-use fun2core::program::{compile_prog, compile_prog_subst};
+use fun2core::program::{compile_prog, compile_prog_poly};
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
@@ -110,7 +110,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = parsed.check(true).map_err(DriverError::TypeError)?;
+        let checked = parsed.check(false).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -127,8 +127,9 @@ impl Driver {
         let compiled = if checked.is_mono {
             compile_prog(checked)
         } else {
-            compile_prog_subst(checked)
+            compile_prog_poly(checked)
         };
+
         self.compiled.insert(path.clone(), compiled.clone());
 
         Ok(compiled)
@@ -166,6 +167,12 @@ impl Driver {
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
+        Ok(())
+    }
+
+    pub fn monomorphized(&mut self, path: &PathBuf) -> Result<(), DriverError> {
+        let compiled = self.compiled(path)?;
+        core_lang::mono::monomorphize_program(compiled);
         Ok(())
     }
 
