@@ -7,8 +7,6 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::check::Checked;
-use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 
