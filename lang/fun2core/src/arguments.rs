@@ -83,7 +83,11 @@ pub fn compile_subst_poly(
                             .expect("Types should be annotated before translation"),
                         type_params,
                     );
-                    core_lang::syntax::arguments::Argument::Producer(term.compile_poly(state, ty, type_params))
+                    core_lang::syntax::arguments::Argument::Producer(term.compile_poly(
+                        state,
+                        ty,
+                        type_params,
+                    ))
                 }
             })
             .collect(),

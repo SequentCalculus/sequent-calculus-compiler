@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     arguments::{compile_subst, compile_subst_poly},
-    compile::{Compile, CompilePoly, CompileState},
+    compile::{Compile, CompilePoly, CompileState, bind_many},
     types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};

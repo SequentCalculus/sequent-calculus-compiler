@@ -60,7 +60,10 @@ impl CompilePoly for fun::syntax::terms::Let {
             prdcns: Cns,
             variable: Identifier::new(self.variable),
             ty: ty.clone(),
-            statement: Rc::new(self.in_term.compile_with_cont_poly(cont, state, type_params)),
+            statement: Rc::new(
+                self.in_term
+                    .compile_with_cont_poly(cont, state, type_params),
+            ),
         }
         .into();
 

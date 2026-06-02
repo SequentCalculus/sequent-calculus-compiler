@@ -6,7 +6,7 @@ use crate::{
     types::{compile_ty, compile_ty_poly},
 };
 use core_lang::syntax::{Identifier, terms::Cns};
-use fun::syntax::types::OptTyped;
+use fun::traits::OptTyped;
 
 use std::{collections::HashMap, rc::Rc};
 
