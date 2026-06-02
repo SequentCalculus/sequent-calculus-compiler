@@ -5,6 +5,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::*;
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
