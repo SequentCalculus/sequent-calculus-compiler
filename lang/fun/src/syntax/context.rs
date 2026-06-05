@@ -338,6 +338,12 @@ impl TypeContext {
         Ok(())
     }
 
+
+    /// checks if a name is bound in this [`TypeContext`]
+    pub fn contains_binding(&self, name: &Name) -> bool {
+        self.bindings.contains(name)
+    }
+
     /// This function constructs a type context with empty source location from a list of strings.
     pub fn mk(params: &[&str]) -> TypeContext {
         TypeContext {

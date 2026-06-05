@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use derivative::Derivative;
 use miette::SourceSpan;
 
-use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypeArgs, TypingContext}, typing::{Error, SymbolTable}};
+use crate::{syntax::{Arguments, Chirality::{Cns, Prd}, Name, Term, Ty, TypingContext}, typing::{Error, SymbolTable}};
 
 
 pub trait Inference: Sized {
@@ -146,7 +146,7 @@ impl VarNameGenerator {
 
     pub fn get_new_ty_var(&mut self) -> Ty {
         let name = self.get_new_name();
-        Ty::Decl { span: None, name, type_args: TypeArgs::mk(vec![]) }
+        Ty::mk_ty_var(&name)
     }
 }
 
@@ -285,11 +285,11 @@ pub fn constraint_unification(mut equations: Vec<Constraint>) -> (Vec<Solution>,
         match constraint {
             // two types that are the same have no value for the solution since x=x is trivial
             Constraint::Equality(ty1, ty2 , _) if ty1 == ty2 => {continue;},
-            Constraint::Equality(Ty::Decl { name, type_args, .. }, ty, choices) if type_args.args.is_empty() => {
+            Constraint::Equality(Ty::TypeVar { name, .. }, ty, choices) => {
                 // the first ty is a variable, so it can be added to the solutions
                 integrate_new_solution(&mut equations, &mut solutions, Solution::new(name.to_string(), ty, choices));
             },
-            Constraint::Equality(ty, Ty::Decl { name, type_args, .. }, choices) if type_args.args.is_empty() => {
+            Constraint::Equality(ty, Ty::TypeVar { name, .. }, choices) => {
                 // the second ty is a variable, but not the first, so it is added "in reverse"
                 integrate_new_solution(&mut equations, &mut solutions, Solution::new(name.to_string(), ty, choices));
             },

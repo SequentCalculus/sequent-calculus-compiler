@@ -239,7 +239,11 @@ impl BuildSymbolTable for Declaration {
 
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+        // a definition can be overloaded, so they are stored in a vec.
+        
+        // looking up if a definition with the same name was already registered
         if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name){
+            // adding the new definition to the List of (variational)defs
             signature_list.push((self.context.clone(), self.ret_ty.clone()));
             let def_index = signature_list.len() - 1;
             let def_name = build_unique_def_name(&self.name, &def_index);
@@ -274,23 +278,34 @@ impl BuildSymbolTable for Data {
         );
 
         for ctor in &self.ctors {
-            ctor.build(symbol_table)?;
+            ctor.build(symbol_table, &self.type_params)?;
         }
         Ok(())
     }
 }
 
-impl BuildSymbolTable for CtorSig {
-    fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+impl CtorSig {
+    fn build(&self, symbol_table: &mut SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         if symbol_table.ctor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
+        // type variables like type parameters need to be identified here
+        // each argument type is checked, whether it is a type variable or not
+        // note that a type decleration could have a wrong name at this point, but that is not checked
+
+        let mut new_args = self.args.clone();
+
+        for argument in &mut new_args.bindings {
+            // check every argument, and replace decl by type var if necessary
+            argument.ty.identifiy_type_vars(type_params);
+        }
+
         symbol_table
             .ctor_templates
-            .insert(self.name.clone(), self.args.clone());
+            .insert(self.name.clone(), new_args);
         Ok(())
     }
 }
@@ -313,23 +328,39 @@ impl BuildSymbolTable for Codata {
         );
 
         for dtor in &self.dtors {
-            dtor.build(symbol_table)?;
+            dtor.build(symbol_table, &self.type_params)?;
         }
         Ok(())
     }
 }
 
-impl BuildSymbolTable for DtorSig {
-    fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
+impl DtorSig {
+    fn build(&self, symbol_table: &mut SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
         if symbol_table.dtor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
                 name: self.name.clone(),
             });
         }
+
+        // type variables like type parameters need to be identified here
+        // each argument type is checked, whether it is a type variable or not
+        // note that a type decleration could have a wrong name at this point, but that is not checked
+
+        let mut new_args = self.args.clone();
+
+        for argument in &mut new_args.bindings {
+            // check every argument, and replace decl by type var if necessary
+            argument.ty.identifiy_type_vars(type_params);
+        }
+
+        let mut new_cont_ty = self.cont_ty.clone();
+
+        new_cont_ty.identifiy_type_vars(type_params);
+
         symbol_table
             .dtor_templates
-            .insert(self.name.clone(), (self.args.clone(), self.cont_ty.clone()));
+            .insert(self.name.clone(), (new_args, new_cont_ty));
         Ok(())
     }
 }
