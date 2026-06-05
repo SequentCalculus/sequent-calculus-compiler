@@ -102,6 +102,10 @@ pub fn args_constraint_equations(
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
                     if let Some(ty) = &variable.ty {
                         constraints.push(Constraint::mk_only_ty(ty.clone(), found_ty.clone()));
+                    } else {
+                        let new_type_var = var_name_generator.get_new_ty_var();
+                        variable.ty = Some(new_type_var.clone());
+                        constraints.push(Constraint::mk_only_ty(new_type_var, found_ty.clone()));
                     }
 
                     constraints.push(Constraint::mk_only_ty(expected_type.ty.clone(), found_ty));
