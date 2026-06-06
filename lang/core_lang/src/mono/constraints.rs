@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use printer::tokens::COMMA;
 use printer::{Alloc, Anno, Builder, DocAllocator, Print, PrintCfg};
 
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::{CodataDeclaration, DataDeclaration, Ty};
 
 /// A flow constraint describing how a concrete type reaches a polymorphic type parameter.
@@ -90,16 +90,16 @@ pub trait ConstraintCollector {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error>;
+    ) -> Result<FlowConstraintSet, MonoError>;
 }
 
 /// This function collects flow constraints from a concrete type reaching a polymorphic type parameter. It is used as a helper function in the implementation of the `ConstraintCollector` trait for various syntax elements.
-pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet, Error> {
+pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet, MonoError> {
     fn collect_type_flow_into(
         actual: &Ty,
         expected: &Ty,
         constraints: &mut FlowConstraintSet,
-    ) -> Result<(), Error> {
+    ) -> Result<(), MonoError> {
         match (actual, expected) {
             (_, Ty::Var(param)) => {
                 let target = Ty::Var(param.clone());
@@ -116,14 +116,14 @@ pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet
                 Ok(())
             }
             (Ty::I64, Ty::I64) => Ok(()),
-            (Ty::Decl { .. }, Ty::Decl { .. }) => Err(Error::TypeMismatch {
-                expected: expected.clone(),
-                got: actual.clone(),
+            (Ty::Decl { .. }, Ty::Decl { .. }) => Err(MonoError::TypeMismatch {
+                expected: expected.print_to_string(None),
+                got: actual.print_to_string(None),
                 msg: Some("Expected a polymorphic type parameter on the right-hand side of the flow constraint, but got a concrete type declaration.".to_string()),
             }),
-            _ => Err(Error::TypeMismatch {
-                expected: expected.clone(),
-                got: actual.clone(),
+            _ => Err(MonoError::TypeMismatch {
+                expected: expected.print_to_string(None),
+                got: actual.print_to_string(None),
                 msg: None,
             }),
         }

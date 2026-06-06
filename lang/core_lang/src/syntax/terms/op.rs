@@ -4,7 +4,7 @@ use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -204,7 +204,7 @@ impl ConstraintCollector for Op {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = FlowConstraintSet::new();
         constraints.extend(
             self.fst
@@ -229,16 +229,16 @@ impl Checked for Op {
         // check that both operands of the binary operator have type i64
         if self.fst.get_type() != Ty::I64 {
             bail!(TypeError::TypeMismatch {
-                expected: Ty::I64,
-                got: self.fst.get_type(),
+                expected: Ty::I64.print_to_string(None),
+                got: self.fst.get_type().print_to_string(None),
                 msg: Some("First operand of binary operator must have type i64".to_string()),
             });
         }
 
         if self.snd.get_type() != Ty::I64 {
             bail!(TypeError::TypeMismatch {
-                expected: Ty::I64,
-                got: self.snd.get_type(),
+                expected: Ty::I64.print_to_string(None),
+                got: self.snd.get_type().print_to_string(None),
                 msg: Some("Second operand of binary operator must have type i64".to_string()),
             });
         }

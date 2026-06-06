@@ -4,7 +4,7 @@ use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -222,7 +222,7 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         // collect constraints from the body of the clause
         self.body
             .collect_constraints(data_declarations, codata_declarations)

@@ -4,7 +4,7 @@ use printer::*;
 
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -64,7 +64,7 @@ impl ConstraintCollector for Literal {
         &self,
         _data_declarations: &[DataDeclaration],
         _codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         Ok(FlowConstraintSet::new())
     }
 }

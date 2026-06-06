@@ -4,7 +4,7 @@ use printer::*;
 
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -250,7 +250,7 @@ impl<C: Chi> ConstraintCollector for Term<C> {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = FlowConstraintSet::new();
         match self {
             Term::XVar(var) => {

@@ -5,7 +5,7 @@ use printer::*;
 use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -131,7 +131,7 @@ impl ConstraintCollector for Call {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self
             .ty
             .collect_constraints(data_declarations, codata_declarations)?;
@@ -175,8 +175,8 @@ impl Checked for Call {
         for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {
             if binding.ty != arg.get_type() {
                 bail!(TypeError::TypeMismatch {
-                    expected: binding.ty.clone(),
-                    got: arg.get_type(),
+                    expected: binding.ty.print_to_string(None),
+                    got: arg.get_type().print_to_string(None),
                     msg: None,
                 });
             }

@@ -4,7 +4,7 @@ use printer::tokens::I64;
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::declaration::lookup_type_declaration;
 use crate::typing::check::Checked;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -44,7 +44,7 @@ impl Checked for Ty {
         type_params: &[Identifier],
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        _defs: &[Def],
     ) -> Result<(), LocatedTypeError> {
         match self {
             Ty::I64 => Ok(()),
@@ -82,7 +82,7 @@ impl Checked for Ty {
 
                 // check that all type arguments are well-formed
                 for arg in &type_args.args {
-                    arg.check(type_params, data_declarations, codata_declarations, defs)?;
+                    arg.check(type_params, data_declarations, codata_declarations, _defs)?;
                 }
                 Ok(())
             }
@@ -95,13 +95,13 @@ impl ConstraintCollector for Ty {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         match self {
             Ty::I64 => Ok(FlowConstraintSet::new()),
             Ty::Var(_) => Ok(FlowConstraintSet::new()),
             Ty::Decl { name, type_args } => {
                 if self.is_codata(codata_declarations) {
-                    let template = lookup_type_declaration(&name, codata_declarations);
+                    let template = lookup_type_declaration(name, codata_declarations);
                     type_args.args.iter().zip(&template.type_params).try_fold(
                         FlowConstraintSet::new(),
                         |mut acc, (arg, param)| {
@@ -110,7 +110,7 @@ impl ConstraintCollector for Ty {
                         },
                     )
                 } else {
-                    let template = lookup_type_declaration(&name, data_declarations);
+                    let template = lookup_type_declaration(name, data_declarations);
                     type_args.args.iter().zip(&template.type_params).try_fold(
                         FlowConstraintSet::new(),
                         |mut acc, (arg, param)| {

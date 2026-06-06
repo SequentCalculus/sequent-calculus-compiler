@@ -168,7 +168,7 @@ impl<T: CompilePoly + Clone> CompilePoly for Rc<T> {
         state: &mut CompileState,
         type_params: &HashMap<String, Identifier>,
     ) -> core_lang::syntax::Statement {
-        Rc::unwrap_or_clone(self).compile_with_cont_poly(cont, state, &type_params)
+        Rc::unwrap_or_clone(self).compile_with_cont_poly(cont, state, type_params)
     }
 }
 

@@ -5,7 +5,7 @@ use printer::*;
 use crate::{
     mono::{
         constraints::{ConstraintCollector, FlowConstraintSet},
-        errors::Error,
+        errors::MonoError,
     },
     syntax::*,
     typing::{check::Checked, errors::LocatedTypeError},
@@ -90,7 +90,7 @@ impl ConstraintCollector for Prog {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         // collect all type parameters from the data and codata declarations in the program
         let type_params: Vec<Identifier> = self
             .data_types

@@ -1,16 +1,14 @@
-use crate::syntax::Ty;
-use printer::Print;
 use std::fmt;
 
 /// This enum defines the errors that can occur during typechecking and
 /// constraint collection. Variants are designed to be specific and to
 /// provide human-friendly messages via `Display`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {
+pub enum MonoError {
     /// A concrete type does not match the expected type.
     TypeMismatch {
-        expected: Ty,
-        got: Ty,
+        expected: String,
+        got: String,
         msg: Option<String>,
     },
 
@@ -34,35 +32,32 @@ pub enum Error {
     Contextual { msg: String },
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for MonoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::TypeMismatch { expected, got, msg } => {
+            MonoError::TypeMismatch { expected, got, msg } => {
                 if let Some(m) = msg {
                     write!(
                         f,
                         "Type mismatch: expected '{}' but got '{}'. \n{}",
-                        expected.print_to_string(None),
-                        got.print_to_string(None),
-                        m
+                        expected, got, m
                     )
                 } else {
                     write!(
                         f,
                         "Type mismatch: expected '{}' but got '{}'",
-                        expected.print_to_string(None),
-                        got.print_to_string(None)
+                        expected, got
                     )
                 }
             }
-            Error::UndeclaredType(name) => write!(f, "Undeclared type: '{}'", name),
-            Error::UndeclaredVariable(name) => write!(f, "Undeclared variable: '{}'", name),
-            Error::ArityMismatch { expected, got } => write!(
+            MonoError::UndeclaredType(name) => write!(f, "Undeclared type: '{}'", name),
+            MonoError::UndeclaredVariable(name) => write!(f, "Undeclared variable: '{}'", name),
+            MonoError::ArityMismatch { expected, got } => write!(
                 f,
                 "Arity mismatch: expected {} arguments but got {}",
                 expected, got
             ),
-            Error::UndeclaredXtor {
+            MonoError::UndeclaredXtor {
                 type_name,
                 xtor_name,
             } => write!(
@@ -70,9 +65,9 @@ impl fmt::Display for Error {
                 "Undeclared xtor: '{}' has no xtor named '{}'",
                 type_name, xtor_name
             ),
-            Error::Contextual { msg } => write!(f, "{}", msg),
+            MonoError::Contextual { msg } => write!(f, "{}", msg),
         }
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for MonoError {}

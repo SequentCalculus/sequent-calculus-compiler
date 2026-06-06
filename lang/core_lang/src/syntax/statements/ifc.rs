@@ -4,7 +4,7 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -233,7 +233,7 @@ impl ConstraintCollector for IfC {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         // collect constraints from the first term, then the second term if it exists, then the then-branch and else-branch
         let mut constraints = self
             .fst
@@ -265,8 +265,8 @@ impl Checked for IfC {
         if let Ty::I64 = self.fst.get_type() {
         } else {
             bail!(TypeError::TypeMismatch {
-                expected: Ty::I64,
-                got: self.fst.get_type(),
+                expected: Ty::I64.print_to_string(None),
+                got: self.fst.get_type().print_to_string(None),
                 msg: Some("Operands in if condition must be i64".to_string()),
             });
         }
@@ -276,8 +276,8 @@ impl Checked for IfC {
             if let Ty::I64 = snd.get_type() {
             } else {
                 bail!(TypeError::TypeMismatch {
-                    expected: Ty::I64,
-                    got: snd.get_type(),
+                    expected: Ty::I64.print_to_string(None),
+                    got: snd.get_type().print_to_string(None),
                     msg: Some("Operands in if condition must be i64".to_string()),
                 });
             }
@@ -286,8 +286,8 @@ impl Checked for IfC {
         // check that the then-branch and else-branch of the if statement have the same type
         if self.thenc.get_type() != self.elsec.get_type() {
             bail!(TypeError::TypeMismatch {
-                expected: self.thenc.get_type(),
-                got: self.elsec.get_type(),
+                expected: self.thenc.get_type().print_to_string(None),
+                got: self.elsec.get_type().print_to_string(None),
                 msg: Some("Then-branch and else-branch of if must have the same type".to_string()),
             });
         }

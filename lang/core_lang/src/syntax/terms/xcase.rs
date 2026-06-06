@@ -4,9 +4,8 @@ use printer::tokens::{CASE, NEW};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::syntax::declaration::{Polarity, TypeDeclaration, lookup_type_declaration};
-use crate::syntax::types::TypeArgs;
 use crate::traits::*;
 use crate::typing::check::{Checked, instantiate_type_params};
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -148,7 +147,7 @@ impl<C: Chi> ConstraintCollector for XCase<C> {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self
             .ty
             .collect_constraints(data_declarations, codata_declarations)?;
@@ -180,13 +179,8 @@ impl<C: Chi> Checked for XCase<C> {
         // check that the type is a declaration type and get the declaration
         let (type_name, concrete_type_args) = match &self.ty {
             Ty::Decl { name, type_args } => Ok((name, &type_args.args)),
-            _ => bail!(TypeError::TypeMismatch {
-                expected: Ty::Decl {
-                    name: Identifier::new("<decl-type>".to_string()),
-                    type_args: TypeArgs { args: vec![] },
-                },
-                got: self.ty.clone(),
-                msg: Some("case/new requires a declared algebraic type".to_string()),
+            _ => bail!(TypeError::Contextual {
+                msg: "case/new requires a declared algebraic type".to_string()
             }),
         }?;
 
@@ -220,6 +214,7 @@ impl<C: Chi> Checked for XCase<C> {
 }
 
 /// Checks that the given case or cocase is well-typed against the given type declaration. This includes checking that the type arguments match the type parameters of the declaration, that for each clause, the xtor exists in the declaration, and that the context of each clause matches the argument types of the corresponding xtor in the declaration.
+#[allow(clippy::too_many_arguments)]
 fn check_xcase_against_decl<P: Polarity, C: Chi>(
     xcase: &XCase<C>,
     decl: &TypeDeclaration<P>,
@@ -279,8 +274,8 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
             if actual_binding.ty != expected_ty {
                 bail!(TypeError::TypeMismatch {
-                    expected: expected_ty,
-                    got: actual_binding.ty.clone(),
+                    expected: expected_ty.print_to_string(None),
+                    got: actual_binding.ty.print_to_string(None),
                     msg: Some(format!(
                         "Binder type mismatch in clause '{}'",
                         clause.xtor.name

@@ -4,7 +4,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -143,7 +143,7 @@ impl ConstraintCollector for PrintI64 {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self
             .arg
             .collect_constraints(data_declarations, codata_declarations)?;
@@ -166,8 +166,8 @@ impl Checked for PrintI64 {
     ) -> Result<(), LocatedTypeError> {
         if self.arg.get_type() != Ty::I64 {
             bail!(TypeError::TypeMismatch {
-                expected: Ty::I64,
-                got: self.arg.get_type(),
+                expected: Ty::I64.print_to_string(None),
+                got: self.arg.get_type().print_to_string(None),
                 msg: Some("Argument of print statement must have type i64".to_string()),
             });
         }

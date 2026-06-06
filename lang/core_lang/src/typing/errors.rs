@@ -1,5 +1,3 @@
-use crate::syntax::Ty;
-use printer::Print;
 use std::fmt;
 use std::panic::Location;
 
@@ -49,8 +47,8 @@ impl LocatedTypeError {
 pub enum TypeError {
     /// A concrete type does not match the expected type.
     TypeMismatch {
-        expected: Ty,
-        got: Ty,
+        expected: String,
+        got: String,
         msg: Option<String>,
     },
 
@@ -99,16 +97,13 @@ impl fmt::Display for TypeError {
                     write!(
                         f,
                         "Type mismatch: expected '{}' but got '{}'. \n{}",
-                        expected.print_to_string(None),
-                        got.print_to_string(None),
-                        m
+                        expected, got, m
                     )
                 } else {
                     write!(
                         f,
                         "Type mismatch: expected '{}' but got '{}'",
-                        expected.print_to_string(None),
-                        got.print_to_string(None)
+                        expected, got
                     )
                 }
             }

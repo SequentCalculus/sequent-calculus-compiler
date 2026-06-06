@@ -4,7 +4,7 @@ use printer::tokens::{LANGLE, PIPE, RANGLE};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::errors::Error;
+use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -200,7 +200,7 @@ impl ConstraintCollector for Cut {
         &self,
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
+    ) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self
             .ty
             .collect_constraints(data_declarations, codata_declarations)?;
@@ -231,16 +231,16 @@ impl Checked for Cut {
         // check that the producer and consumer have the same type as the cut itself
         if self.producer.get_type() != self.ty {
             bail!(TypeError::TypeMismatch {
-                expected: self.ty.clone(),
-                got: self.consumer.get_type(),
+                expected: self.ty.print_to_string(None),
+                got: self.consumer.get_type().print_to_string(None),
                 msg: Some("Producer and consumer of a cut must have the same type".to_string()),
             });
         }
 
         if self.consumer.get_type() != self.ty {
             bail!(TypeError::TypeMismatch {
-                expected: self.ty.clone(),
-                got: self.producer.get_type(),
+                expected: self.ty.print_to_string(None),
+                got: self.producer.get_type().print_to_string(None),
                 msg: Some("Producer and consumer of a cut must have the same type".to_string()),
             });
         }
