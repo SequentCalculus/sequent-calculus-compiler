@@ -1,9 +1,11 @@
 //! This module defines user-declared data and codata types in Core.
 
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
-use crate::syntax::*;
+use crate::{bail, syntax::*};
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.
@@ -195,5 +197,92 @@ pub fn cont_int() -> DataDeclaration {
             },
         }],
         type_params: vec![],
+    }
+}
+
+impl<P: Polarity> Checked for TypeDeclaration<P> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check existence of type declaration
+        if self.dat.is_data() {
+            if !data_declarations.iter().any(|data| data.name == self.name) {
+                bail!(TypeError::UndeclaredType(self.name.name.clone()));
+            }
+        } else {
+            if !codata_declarations
+                .iter()
+                .any(|codata| codata.name == self.name)
+            {
+                bail!(TypeError::UndeclaredType(self.name.name.clone()));
+            }
+        }
+
+        // check xtors
+        for xtor in &self.xtors {
+            xtor.check(type_params, data_declarations, codata_declarations, defs)?;
+        }
+        Ok(())
+    }
+}
+
+impl<P: Polarity> Checked for XtorSig<P> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        self.args
+            .check(type_params, data_declarations, codata_declarations, defs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::typing::check::Checked;
+    extern crate self as core_lang;
+    use core_macros::{bind, ctor_sig, data, id, prd, ty};
+
+    #[test]
+    fn ty_decl_check_arity_and_args() {
+        // create a data declaration: List[A]
+        let list = data!(id!("List"), [], [id!("A", 1)]);
+
+        // well-formed: List[i64]
+        let ty_good = ty!(id!("List"), [ty!("int")]);
+
+        assert!(ty_good.check(&[], &[list.clone()], &[], &[]).is_ok());
+
+        // arity mismatch: List[] against List[A]
+        let ty_bad = ty!(id!("List"));
+
+        let res = ty_bad.check(&[], &[list.clone()], &[], &[]);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn type_declaration_and_xtor_check() {
+        // create a constructor signature with one argument of type i64
+        let decl = data!(
+            id!("List"),
+            [ctor_sig!(
+                id!("Cons"),
+                [bind!(id!("x"), prd!(), ty!("int"))]
+            )],
+            []
+        );
+
+        // xtor signature check
+        assert!(decl.check(&[], &[decl.clone()], &[], &[]).is_ok());
+
+        // missing declaration (empty declarations list)
+        let res = decl.check(&[], &[], &[], &[]);
+        assert!(res.is_err());
     }
 }

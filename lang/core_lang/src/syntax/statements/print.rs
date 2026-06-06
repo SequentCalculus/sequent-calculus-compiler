@@ -5,8 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -151,5 +153,51 @@ impl ConstraintCollector for PrintI64 {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Checked for PrintI64 {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        if self.arg.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64,
+                got: self.arg.get_type(),
+                msg: Some("Argument of print statement must have type i64".to_string()),
+            });
+        }
+
+        self.arg
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.next
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod print_tests {
+    use super::*;
+    use crate::typing::check::Checked;
+    extern crate self as core_lang;
+    use core_macros::{exit, lit, ty};
+
+    #[test]
+    fn print_check_ok_with_macros() {
+        let print_stmt = PrintI64 {
+            newline: false,
+            arg: lit!(1),
+            next: std::rc::Rc::new(Statement::Exit(exit!(lit!(0), ty!("int")))),
+        };
+
+        // components are well-formed
+        assert!(print_stmt.arg.check(&[], &[], &[], &[]).is_ok());
+        assert!(print_stmt.next.check(&[], &[], &[], &[]).is_ok());
     }
 }

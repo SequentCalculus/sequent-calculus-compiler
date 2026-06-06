@@ -6,6 +6,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use core::panic;
 use std::collections::BTreeSet;
@@ -204,6 +206,21 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl<C: Chi> Checked for Xtor<C> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.args
+            .check(type_params, data_declarations, codata_declarations, defs)
     }
 }
 

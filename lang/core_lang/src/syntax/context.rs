@@ -5,6 +5,8 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{HashSet, VecDeque};
 
@@ -132,5 +134,23 @@ impl SubstVar for TypingContext {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
+    }
+}
+
+impl Checked for TypingContext {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check that all types in the context are well-formed
+        for binding in &self.bindings {
+            binding
+                .ty
+                .check(type_params, data_declarations, codata_declarations, defs)?;
+        }
+        Ok(())
     }
 }

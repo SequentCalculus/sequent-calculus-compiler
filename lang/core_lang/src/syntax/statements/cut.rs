@@ -5,8 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -211,6 +213,45 @@ impl ConstraintCollector for Cut {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Checked for Cut {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        // check that the producer and consumer have the same type as the cut itself
+        if self.producer.get_type() != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: self.ty.clone(),
+                got: self.consumer.get_type(),
+                msg: Some("Producer and consumer of a cut must have the same type".to_string()),
+            });
+        }
+
+        if self.consumer.get_type() != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: self.ty.clone(),
+                got: self.producer.get_type(),
+                msg: Some("Producer and consumer of a cut must have the same type".to_string()),
+            });
+        }
+
+        // check well-formedness of the producer and the consumer
+        self.producer
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.consumer
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
     }
 }
 

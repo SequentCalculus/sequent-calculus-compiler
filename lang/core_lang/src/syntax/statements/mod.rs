@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 
@@ -140,6 +142,34 @@ impl ConstraintCollector for Statement {
             }
         };
         Ok(constraints)
+    }
+}
+
+impl Checked for Statement {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Statement::Cut(cut) => {
+                cut.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Statement::IfC(ifc) => {
+                ifc.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Statement::PrintI64(print) => {
+                print.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Statement::Call(call) => {
+                call.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Statement::Exit(exit) => {
+                exit.check(type_params, data_declarations, codata_declarations, defs)
+            }
+        }
     }
 }
 

@@ -8,6 +8,7 @@ use crate::{
         errors::Error,
     },
     syntax::*,
+    typing::{check::Checked, errors::LocatedTypeError},
 };
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
@@ -90,12 +91,64 @@ impl ConstraintCollector for Prog {
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
     ) -> Result<FlowConstraintSet, Error> {
+        // collect all type parameters from the data and codata declarations in the program
+        let type_params: Vec<Identifier> = self
+            .data_types
+            .iter()
+            .flat_map(|data| data.type_params.clone())
+            .chain(
+                self.codata_types
+                    .iter()
+                    .flat_map(|codata| codata.type_params.clone()),
+            )
+            .collect();
+
+        // type check the program before collecting constraints, to ensure that all type annotations in the program are well-formed
+        self.check(
+            &type_params,
+            data_declarations,
+            codata_declarations,
+            &self.defs,
+        )
+        .unwrap();
+
         let mut constraints = FlowConstraintSet::new();
 
         for def in &self.defs {
             constraints.extend(def.collect_constraints(data_declarations, codata_declarations)?);
         }
         Ok(constraints)
+    }
+}
+
+impl Checked for Prog {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        for data in &self.data_types {
+            data.check(
+                &data.type_params,
+                data_declarations,
+                codata_declarations,
+                defs,
+            )?;
+        }
+        for codata in &self.codata_types {
+            codata.check(
+                &codata.type_params,
+                data_declarations,
+                codata_declarations,
+                defs,
+            )?;
+        }
+        for def in &self.defs {
+            def.check(type_params, data_declarations, codata_declarations, defs)?;
+        }
+        Ok(())
     }
 }
 
@@ -106,6 +159,7 @@ mod program_tests {
 
     use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
+    use crate::typing::check::Checked;
     extern crate self as core_lang;
     use core_macros::{
         bind, cns, covar, ctor_sig, cut, data, def, exit, fs_cut, fs_def, id, lit, prd, prog, tvar,
@@ -179,5 +233,109 @@ mod program_tests {
         };
 
         assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn check_undeclared_type_in_prog() {
+        // program uses an undeclared type in a top-level definition
+        let prog = prog!(
+            [def!(
+                id!("main"),
+                [],
+                exit!(lit!(1), ty!(id!("NonExistent")))
+            )],
+            [],
+            []
+        );
+
+        let type_params: Vec<Identifier> = prog
+            .data_types
+            .iter()
+            .flat_map(|data| data.type_params.clone())
+            .chain(
+                prog.codata_types
+                    .iter()
+                    .flat_map(|codata| codata.type_params.clone()),
+            )
+            .collect();
+
+        assert!(
+            prog.check(
+                &type_params,
+                &prog.data_types,
+                &prog.codata_types,
+                &prog.defs
+            )
+            .is_err(),
+            "expected error for undeclared type in program"
+        );
+    }
+
+    #[test]
+    fn check_declared_type_annotation_ok() {
+        // declared type exists and is used as an annotation on an exit statement
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            []
+        );
+
+        let type_params: Vec<Identifier> = prog
+            .data_types
+            .iter()
+            .flat_map(|data| data.type_params.clone())
+            .chain(
+                prog.codata_types
+                    .iter()
+                    .flat_map(|codata| codata.type_params.clone()),
+            )
+            .collect();
+
+        assert!(
+            prog.check(
+                &type_params,
+                &prog.data_types,
+                &prog.codata_types,
+                &prog.defs
+            )
+            .is_ok(),
+            "expected declared type annotation to be accepted"
+        );
+    }
+
+    #[test]
+    fn check_type_arity_mismatch_in_prog() {
+        // data declaration with one type parameter but used without arguments in a def
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], [id!("A", 1)]);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            []
+        );
+
+        let type_params: Vec<Identifier> = prog
+            .data_types
+            .iter()
+            .flat_map(|data| data.type_params.clone())
+            .chain(
+                prog.codata_types
+                    .iter()
+                    .flat_map(|codata| codata.type_params.clone()),
+            )
+            .collect();
+
+        assert!(
+            prog.check(
+                &type_params,
+                &prog.data_types,
+                &prog.codata_types,
+                &prog.defs
+            )
+            .is_err(),
+            "expected arity mismatch for type application in program"
+        );
     }
 }

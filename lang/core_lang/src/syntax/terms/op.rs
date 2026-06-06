@@ -5,8 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -213,6 +215,40 @@ impl ConstraintCollector for Op {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Checked for Op {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check that both operands of the binary operator have type i64
+        if self.fst.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64,
+                got: self.fst.get_type(),
+                msg: Some("First operand of binary operator must have type i64".to_string()),
+            });
+        }
+
+        if self.snd.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64,
+                got: self.snd.get_type(),
+                msg: Some("Second operand of binary operator must have type i64".to_string()),
+            });
+        }
+
+        self.fst
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.snd
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
     }
 }
 

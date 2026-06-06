@@ -7,6 +7,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -224,5 +226,21 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
         // collect constraints from the body of the clause
         self.body
             .collect_constraints(data_declarations, codata_declarations)
+    }
+}
+
+impl<C: Chi> Checked for Clause<C> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        self.context
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.body
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        Ok(())
     }
 }

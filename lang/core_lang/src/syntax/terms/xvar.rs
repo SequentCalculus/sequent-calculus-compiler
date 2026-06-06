@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 
@@ -143,6 +145,19 @@ impl<C: Chi> ConstraintCollector for XVar<C> {
     ) -> Result<FlowConstraintSet, Error> {
         self.ty
             .collect_constraints(data_declarations, codata_declarations)
+    }
+}
+
+impl<C: Chi> Checked for XVar<C> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)
     }
 }
 

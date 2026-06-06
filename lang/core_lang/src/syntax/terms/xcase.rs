@@ -5,8 +5,12 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::*;
+use crate::syntax::declaration::{Polarity, TypeDeclaration, lookup_type_declaration};
+use crate::syntax::types::TypeArgs;
 use crate::traits::*;
+use crate::typing::check::{Checked, instantiate_type_params};
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 
@@ -161,14 +165,144 @@ impl<C: Chi> ConstraintCollector for XCase<C> {
     }
 }
 
+impl<C: Chi> Checked for XCase<C> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        // check that the type is a declaration type and get the declaration
+        let (type_name, concrete_type_args) = match &self.ty {
+            Ty::Decl { name, type_args } => Ok((name, &type_args.args)),
+            _ => bail!(TypeError::TypeMismatch {
+                expected: Ty::Decl {
+                    name: Identifier::new("<decl-type>".to_string()),
+                    type_args: TypeArgs { args: vec![] },
+                },
+                got: self.ty.clone(),
+                msg: Some("case/new requires a declared algebraic type".to_string()),
+            }),
+        }?;
+
+        // branch on whether we have a case or a new and check against the corresponding declaration
+        if self.prdcns.is_prd() {
+            let decl = lookup_type_declaration(type_name, codata_declarations);
+            check_xcase_against_decl(
+                self,
+                decl,
+                type_name,
+                type_params,
+                concrete_type_args,
+                data_declarations,
+                codata_declarations,
+                defs,
+            )
+        } else {
+            let decl = lookup_type_declaration(type_name, data_declarations);
+            check_xcase_against_decl(
+                self,
+                decl,
+                type_name,
+                type_params,
+                concrete_type_args,
+                data_declarations,
+                codata_declarations,
+                defs,
+            )
+        }
+    }
+}
+
+/// Checks that the given case or cocase is well-typed against the given type declaration. This includes checking that the type arguments match the type parameters of the declaration, that for each clause, the xtor exists in the declaration, and that the context of each clause matches the argument types of the corresponding xtor in the declaration.
+fn check_xcase_against_decl<P: Polarity, C: Chi>(
+    xcase: &XCase<C>,
+    decl: &TypeDeclaration<P>,
+    type_name: &Identifier,
+    type_params: &[Identifier],
+    concrete_type_args: &[Ty],
+    data_declarations: &[DataDeclaration],
+    codata_declarations: &[CodataDeclaration],
+    defs: &[Def],
+) -> Result<(), LocatedTypeError> {
+    // check that the number of type arguments matches the number of type parameters
+    if decl.type_params.len() != concrete_type_args.len() {
+        bail!(TypeError::ArityMismatch {
+            expected: decl.type_params.len(),
+            got: concrete_type_args.len(),
+        });
+    }
+
+    for clause in &xcase.clauses {
+        // check well-formedness of the clause
+        clause.check(type_params, data_declarations, codata_declarations, defs)?;
+
+        // check that the xtor exists in the declaration and get its signature
+        let Some(sig) = decl.xtors.iter().find(|xt| xt.name == clause.xtor) else {
+            bail!(TypeError::UndeclaredXtor {
+                type_name: type_name.name.clone(),
+                xtor_name: clause.xtor.name.clone(),
+            });
+        };
+
+        // check that the number of binders in the clause matches the number of arguments in the xtor signature
+        if sig.args.bindings.len() != clause.context.bindings.len() {
+            bail!(TypeError::ArityMismatch {
+                expected: sig.args.bindings.len(),
+                got: clause.context.bindings.len(),
+            });
+        }
+
+        // check that the types of the binders in the clause match the types of the arguments in the xtor signature, after instantiating the type parameters with the concrete type arguments
+        for (expected_binding, actual_binding) in
+            sig.args.bindings.iter().zip(clause.context.bindings.iter())
+        {
+            if expected_binding.chi != actual_binding.chi {
+                bail!(TypeError::Contextual {
+                    msg: format!(
+                        "Chirality mismatch in clause '{}' for binder '{}'",
+                        clause.xtor.name, actual_binding.var.name
+                    ),
+                });
+            }
+
+            let expected_ty = instantiate_type_params(
+                &expected_binding.ty,
+                &decl.type_params,
+                concrete_type_args,
+            );
+
+            if actual_binding.ty != expected_ty {
+                bail!(TypeError::TypeMismatch {
+                    expected: expected_ty,
+                    got: actual_binding.ty.clone(),
+                    msg: Some(format!(
+                        "Binder type mismatch in clause '{}'",
+                        clause.xtor.name
+                    )),
+                });
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
     extern crate self as core_lang;
+    use crate::typing::check::Checked;
     use core_macros::{
-        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, id, prd, ty, var,
+        bind, case, clause, cns, cocase, covar, ctor_sig, cut, data, fs_clause, fs_cut, id, prd,
+        ty, var,
     };
 
     #[test]
@@ -265,5 +399,39 @@ mod tests {
             ty!(id!("LPairIntInt"))
         );
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_against_declaration() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+
+        let good_case: XCase<Cns> = case!(
+            [clause!(
+                Cns,
+                id!("Nil"),
+                [],
+                cut!(var!(id!("x")), covar!(id!("a")))
+            )],
+            ty!(id!("List"))
+        )
+        .into();
+        assert!(good_case.check(&[], &[list.clone()], &[], &[]).is_ok());
+    }
+
+    #[test]
+    fn check_undeclared_type() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+
+        let wrong: XCase<Cns> = case!(
+            [clause!(
+                Cns,
+                id!("Nil"),
+                [],
+                cut!(var!(id!("x")), covar!(id!("a")))
+            )],
+            ty!(id!("NonExistent"))
+        )
+        .into();
+        assert!(wrong.check(&[], &[list.clone()], &[], &[]).is_err());
     }
 }

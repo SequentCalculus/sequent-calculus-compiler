@@ -3,11 +3,15 @@
 use printer::tokens::EXIT;
 use printer::*;
 
+use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -141,5 +145,33 @@ impl ConstraintCollector for Exit {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Checked for Exit {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        // check that the argument of the exit statement has type i64
+        if self.arg.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64,
+                got: self.arg.get_type(),
+                msg: Some("Exit argument must have type i64".to_string()),
+            });
+        }
+        // check the argument of the exit statement
+        self.arg
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
     }
 }

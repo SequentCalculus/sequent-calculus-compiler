@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{BTreeSet, VecDeque};
 
@@ -103,11 +105,38 @@ impl Bind for Argument {
     }
 }
 
-impl Typed for Argument {
-    fn get_type(&self) -> Ty {
-        match &self {
-            Argument::Consumer(term) => term.get_type(),
-            Argument::Producer(term) => term.get_type(),
+impl ConstraintCollector for Argument {
+    fn collect_constraints(
+        &self,
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+    ) -> Result<FlowConstraintSet, Error> {
+        match self {
+            Argument::Producer(term) => {
+                term.collect_constraints(data_declarations, codata_declarations)
+            }
+            Argument::Consumer(term) => {
+                term.collect_constraints(data_declarations, codata_declarations)
+            }
+        }
+    }
+}
+
+impl Checked for Argument {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Argument::Producer(term) => {
+                term.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Argument::Consumer(term) => {
+                term.check(type_params, data_declarations, codata_declarations, defs)
+            }
         }
     }
 }
@@ -186,23 +215,6 @@ impl Uniquify for Arguments {
     }
 }
 
-impl ConstraintCollector for Argument {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, Error> {
-        match self {
-            Argument::Producer(term) => {
-                term.collect_constraints(data_declarations, codata_declarations)
-            }
-            Argument::Consumer(term) => {
-                term.collect_constraints(data_declarations, codata_declarations)
-            }
-        }
-    }
-}
-
 impl ConstraintCollector for Arguments {
     fn collect_constraints(
         &self,
@@ -214,5 +226,19 @@ impl ConstraintCollector for Arguments {
             constraints.extend(arg.collect_constraints(data_declarations, codata_declarations)?);
         }
         Ok(constraints)
+    }
+}
+
+impl Checked for Arguments {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        self.entries.iter().try_for_each(|arg| {
+            arg.check(type_params, data_declarations, codata_declarations, defs)
+        })
     }
 }

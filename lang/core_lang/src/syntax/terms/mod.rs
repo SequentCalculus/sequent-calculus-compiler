@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 
@@ -269,6 +271,31 @@ impl<C: Chi> ConstraintCollector for Term<C> {
                 .extend(xcase.collect_constraints(data_declarations, codata_declarations)?),
         }
         Ok(constraints)
+    }
+}
+
+impl<C: Chi> Checked for Term<C> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Term::XVar(var) => var.check(type_params, data_declarations, codata_declarations, defs),
+            Term::Literal(lit) => {
+                lit.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Term::Op(op) => op.check(type_params, data_declarations, codata_declarations, defs),
+            Term::Mu(mu) => mu.check(type_params, data_declarations, codata_declarations, defs),
+            Term::Xtor(xtor) => {
+                xtor.check(type_params, data_declarations, codata_declarations, defs)
+            }
+            Term::XCase(xcase) => {
+                xcase.check(type_params, data_declarations, codata_declarations, defs)
+            }
+        }
     }
 }
 

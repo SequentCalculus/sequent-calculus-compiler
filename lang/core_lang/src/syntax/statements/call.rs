@@ -2,11 +2,15 @@
 
 use printer::*;
 
+use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::Error;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 
@@ -137,6 +141,98 @@ impl ConstraintCollector for Call {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Checked for Call {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        // Check that the called function is defined
+        let Some(def) = defs.iter().find(|def| def.name == self.name) else {
+            bail!(TypeError::UndefinedFunction(
+                self.name.clone().name.to_string()
+            ));
+        };
+
+        // check arity
+        if def.context.bindings.len() != self.args.entries.len() {
+            bail!(TypeError::ArityMismatch {
+                expected: def.context.bindings.len(),
+                got: self.args.entries.len(),
+            });
+        }
+
+        // check that the types of the arguments match the types of the parameters
+        for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {
+            if binding.ty != arg.get_type() {
+                bail!(TypeError::TypeMismatch {
+                    expected: binding.ty.clone(),
+                    got: arg.get_type(),
+                    msg: None,
+                });
+            }
+        }
+        self.args
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod check_tests {
+    use crate::{syntax::Statement, typing::check::Checked};
+    extern crate self as core_lang;
+    use core_macros::{bind, call, def, exit, id, lit, prd, ty, var};
+
+    #[test]
+    fn call_check_ok() {
+        let def = def!(
+            id!("f"),
+            [bind!(id!("x"), prd!(), ty!("int"))],
+            exit!(var!(id!("x")), ty!("int"))
+        );
+        let defs = vec![def.clone()];
+
+        let call_ok_stmt: Statement = call!(id!("f"), [lit!(1)]).into();
+        assert!(call_ok_stmt.check(&[], &[], &[], &defs).is_ok());
+    }
+
+    #[test]
+    fn call_check_undefined() {
+        let call_undef: Statement = call!(id!("g"), []).into();
+        assert!(call_undef.check(&[], &[], &[], &[]).is_err());
+    }
+
+    #[test]
+    fn call_check_arity_mismatch() {
+        let call_arity: Statement = call!(id!("f"), [lit!(1)]).into();
+        let def_no_args = def!(id!("f"), [], exit!(lit!(0), ty!("int")));
+        assert!(call_arity.check(&[], &[], &[], &[def_no_args]).is_err());
+    }
+
+    #[test]
+    fn call_check_type_mismatch() {
+        let def_param_other = def!(
+            id!("h"),
+            [bind!(id!("x"), prd!(), ty!(id!("List")))],
+            exit!(lit!(0), ty!(id!("List")))
+        );
+        let call_type_mismatch: Statement = call!(id!("h"), [lit!(42)]).into();
+        assert!(
+            call_type_mismatch
+                .check(&[], &[], &[], &[def_param_other])
+                .is_err()
+        );
     }
 }
 

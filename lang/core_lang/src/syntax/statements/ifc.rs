@@ -5,8 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::Error;
-use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -251,6 +253,60 @@ impl ConstraintCollector for IfC {
     }
 }
 
+impl Checked for IfC {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        // check that the first term of the comparison has type i64
+        if let Ty::I64 = self.fst.get_type() {
+        } else {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64,
+                got: self.fst.get_type(),
+                msg: Some("Operands in if condition must be i64".to_string()),
+            });
+        }
+
+        // check that the second term of the comparison has type i64 if it exists
+        if let Some(ref snd) = self.snd {
+            if let Ty::I64 = snd.get_type() {
+            } else {
+                bail!(TypeError::TypeMismatch {
+                    expected: Ty::I64,
+                    got: snd.get_type(),
+                    msg: Some("Operands in if condition must be i64".to_string()),
+                });
+            }
+        }
+
+        // check that the then-branch and else-branch of the if statement have the same type
+        if self.thenc.get_type() != self.elsec.get_type() {
+            bail!(TypeError::TypeMismatch {
+                expected: self.thenc.get_type(),
+                got: self.elsec.get_type(),
+                msg: Some("Then-branch and else-branch of if must have the same type".to_string()),
+            });
+        }
+
+        // check well-formedness of the terms
+        self.fst
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        if let Some(ref snd) = self.snd {
+            snd.check(type_params, data_declarations, codata_declarations, defs)?;
+        }
+        self.thenc
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.elsec
+            .check(type_params, data_declarations, codata_declarations, defs)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod transform_tests {
     use crate::traits::*;
@@ -347,5 +403,65 @@ mod transform_tests {
         )
         .into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod check_tests {
+
+    use crate::{syntax::Statement, typing::check::Checked};
+    extern crate self as core_lang;
+    use core_macros::{ctor, ctor_sig, data, exit, id, ife, lit, ty};
+
+    #[test]
+    fn ifc_check_ok_binary() {
+        let stmt: Statement = ife!(
+            lit!(1),
+            lit!(2),
+            exit!(lit!(1), ty!("int")),
+            exit!(lit!(2), ty!("int"))
+        )
+        .into();
+        assert!(stmt.check(&[], &[], &[], &[]).is_ok());
+    }
+
+    #[test]
+    fn ifc_check_branch_type_mismatch() {
+        let stmt: Statement = ife!(
+            lit!(1),
+            lit!(2),
+            exit!(lit!(1), ty!(id!("List"))),
+            exit!(lit!(2), ty!("int"))
+        )
+        .into();
+        assert!(stmt.check(&[], &[], &[], &[]).is_err());
+    }
+
+    #[test]
+    fn ifc_check_fst_not_i64() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let fst = ctor!(id!("Nil"), [], ty!(id!("List")));
+        let stmt: Statement = ife!(
+            fst,
+            lit!(1),
+            exit!(lit!(0), ty!("int")),
+            exit!(lit!(0), ty!("int"))
+        )
+        .into();
+        assert!(stmt.check(&[], &[list], &[], &[]).is_err());
+    }
+
+    #[test]
+    fn ifc_check_snd_not_i64() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let snd = ctor!(id!("Nil"), [], ty!(id!("List")));
+        let stmt: Statement = ife!(
+            lit!(1),
+            snd,
+            exit!(lit!(0), ty!("int")),
+            exit!(lit!(0), ty!("int"))
+        )
+        .into();
+        assert!(stmt.check(&[], &[list], &[], &[]).is_err());
     }
 }

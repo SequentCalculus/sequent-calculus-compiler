@@ -6,7 +6,9 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::Error;
 use crate::syntax::declaration::lookup_type_declaration;
-use crate::syntax::*;
+use crate::typing::check::Checked;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 /// This enum encodes the types of AxCut. They are either integers or names of user-declared types.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
@@ -32,6 +34,58 @@ impl Ty {
                 .iter()
                 .any(|declaration| declaration.name == *name),
             Ty::Var(_) => false,
+        }
+    }
+}
+
+impl Checked for Ty {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        data_declarations: &[DataDeclaration],
+        codata_declarations: &[CodataDeclaration],
+        defs: &[Def],
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Ty::I64 => Ok(()),
+            Ty::Var(param) => {
+                // check that the type variable is declared as a type parameter in the current context
+                if type_params.iter().any(|type_param| type_param == param) {
+                    Ok(())
+                } else {
+                    bail!(TypeError::UndeclaredType(param.print_to_string(None)))
+                }
+            }
+            Ty::Decl { name, type_args } => {
+                // check that the type name is declared as a data or codata type
+                let declaration_type_params = if let Some(declaration) = data_declarations
+                    .iter()
+                    .find(|declaration| declaration.name == *name)
+                {
+                    &declaration.type_params
+                } else if let Some(declaration) = codata_declarations
+                    .iter()
+                    .find(|declaration| declaration.name == *name)
+                {
+                    &declaration.type_params
+                } else {
+                    bail!(TypeError::UndeclaredType(name.print_to_string(None)));
+                };
+
+                // check that the number of type arguments matches the number of type parameters in the declaration
+                if declaration_type_params.len() != type_args.args.len() {
+                    bail!(TypeError::ArityMismatch {
+                        expected: declaration_type_params.len(),
+                        got: type_args.args.len(),
+                    });
+                }
+
+                // check that all type arguments are well-formed
+                for arg in &type_args.args {
+                    arg.check(type_params, data_declarations, codata_declarations, defs)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -112,7 +166,10 @@ impl Print for TypeArgs {
 #[cfg(test)]
 mod type_tests {
     use super::{Identifier, Ty, TypeArgs};
+    use crate::typing::check::Checked;
     use printer::Print;
+    extern crate self as core_lang;
+    use core_macros::{data, id, tvar, ty};
 
     #[test]
     fn display_i64() {
@@ -142,5 +199,56 @@ mod type_tests {
             },
         };
         assert_eq!(ty.print_to_string(None), "List[A_1]");
+    }
+
+    #[test]
+    fn check_fails_for_undeclared_type_var() {
+        let t = tvar!(id!("A", 1));
+
+        let res = t.check(&[], &[], &[], &[]);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn check_succeeds_for_declared_type_var() {
+        let t = tvar!(id!("A", 1));
+
+        let res = t.check(&[id!("A", 1)], &[], &[], &[]);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn check_fails_for_undeclared_type_decl() {
+        let ty_decl = Ty::Decl {
+            name: Identifier::new("List".to_string()),
+            type_args: TypeArgs { args: vec![] },
+        };
+
+        let res = ty_decl.check(&[], &[], &[], &[]);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn check_arity_mismatch_against_declaration() {
+        // create a data declaration: List[A]
+        let list = data!(id!("List"), [], [id!("A", 1)]);
+
+        // arity mismatch: List[] against List[A]
+        let ty_bad = ty!(id!("List"));
+
+        let res = ty_bad.check(&[], &[list.clone()], &[], &[]);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn check_succeeds_for_type_var_arg_with_type_params() {
+        // create a data declaration: List[A]
+        let list = data!(id!("List"), [], [id!("A", 1)]);
+
+        // List[A] where A is a type variable declared in the current context
+        let ty_var_arg = ty!(id!("List"), [tvar!(id!("A", 1))]);
+
+        let res = ty_var_arg.check(&[id!("A", 1)], &[list.clone()], &[], &[]);
+        assert!(res.is_ok());
     }
 }
