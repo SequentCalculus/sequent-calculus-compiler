@@ -7,7 +7,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
-use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -61,13 +61,12 @@ impl From<XVar> for Term {
 }
 
 impl Inference for XVar {
-    fn constraint_equations(
-        &mut self,
-        _symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        var_name_generator: &mut VarNameGenerator,
-        ty_var: Ty
-    ) ->  Result<Vec<Constraint>, Error> {
+    fn gather_constraints(
+            &mut self,
+            constraint_bank: &mut ConstraintBank,
+            context: &TypingContext,
+            ty_var: Ty
+        ) -> Result<(), Error> {
         // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
@@ -75,11 +74,13 @@ impl Inference for XVar {
         }
 
         let found_ty = context.lookup_var(&self.var, &self.span)?;
-        let new_type_var = var_name_generator.get_new_ty_var();
+        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
 
         self.ty = Some(new_type_var.clone());
         self.chi = Some(Prd);
-        Ok(vec![Constraint::mk_only_ty(new_type_var, ty_var.clone()), Constraint::mk_only_ty(ty_var, found_ty)])
+        constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, found_ty));
+        Ok(())
     }
 
     fn insert_inferred_type(
@@ -101,23 +102,27 @@ impl Inference for XVar {
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     #[test]
     fn inference_var() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
 
-        let mut name_generator = VarNameGenerator::new();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
 
         let mut term = XVar::mk("x");
 
-        let result = term
-        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut name_generator, Ty::mk_i64()).unwrap();
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_i64()).unwrap();
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
 
         assert!(matches!(term.ty, Some(Ty::Decl { name, .. }) if name == "0"));
-
         assert_eq!(result, vec![Constraint::mk_only_ty(Ty::mk_decl("0", TypeArgs::mk(vec![])), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())])
     }
 }

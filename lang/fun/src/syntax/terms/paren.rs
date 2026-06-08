@@ -6,7 +6,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Constraint;
+use crate::typing::inference::ConstraintBank;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -60,14 +60,13 @@ impl From<Paren> for Term {
 }
 
 impl Inference for Paren {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
-        self.inner.constraint_equations(symbol_table, context, var_name_generator, ty_var)
+        ) -> Result<(), Error> {
+        self.inner.gather_constraints(constraint_bank, context, ty_var)
     }
 
     fn insert_inferred_type(

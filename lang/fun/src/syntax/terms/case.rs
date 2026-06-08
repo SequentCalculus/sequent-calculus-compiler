@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, Inference};
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -77,24 +77,23 @@ impl From<Case> for Term {
 }
 
 impl Inference for Case {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
+        ) -> Result<(), Error> {
 
         if let Some(first_clause) = self.clauses.first() {
             let mut constraints = Vec::new();
 
             // adding a type variable the type of the case block
-            let new_type_var = var_name_generator.get_new_ty_var();
+            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
             constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
 
-            let data_type_name = match symbol_table.find_xdata_type_name(&first_clause.xtor) {
+            let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&first_clause.xtor) {
                 Some(type_name) => type_name,
                 None => {
                     return Err(Error::Undefined {
@@ -104,11 +103,11 @@ impl Inference for Case {
                 }
             };
 
-            let (chirality, general_type_vars, needed_clauses) = symbol_table.type_templates.get(&data_type_name).unwrap();
+            let (chirality, general_type_vars, needed_clauses) = constraint_bank.symbol_table.type_templates.get(&data_type_name).unwrap().clone();
 
             let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
 
-            if chirality == &Polarity::Codata {
+            if chirality == Polarity::Codata {
                 return Err(Error::ExpectedTermGotCovariable { span: self.span });
             }
 
@@ -128,7 +127,7 @@ impl Inference for Case {
                 // if no type Arguments are given, they are all replaced by variables,
 
                 for type_var_name in general_type_vars.bindings.iter() {
-                    type_var_mapping.insert(type_var_name.clone(), var_name_generator.get_new_ty_var());
+                    type_var_mapping.insert(type_var_name.clone(), constraint_bank.var_name_generator.get_new_ty_var());
                 }
             } else {
                 // if the wrong amount of type arguments are given, an error is returned
@@ -147,7 +146,7 @@ impl Inference for Case {
                 used_clauses.insert(&clause.xtor);
 
                 // checking that that type of the clause is the same for all clauses
-                match symbol_table.find_xdata_type_name(&clause.xtor) {
+                match constraint_bank.symbol_table.find_xdata_type_name(&clause.xtor) {
                     Some(type_name) => {
                         if type_name != data_type_name {
                             return Err(Error::Mismatch {
@@ -165,7 +164,7 @@ impl Inference for Case {
                     }
                 }
 
-                let instantiated_arg_types = match symbol_table.ctor_templates.get(&clause.xtor) {
+                let instantiated_arg_types = match constraint_bank.symbol_table.ctor_templates.get(&clause.xtor) {
                     Some(arg_types) => arg_types.clone().subst_ty(&type_var_mapping),
                     None => {
                         return Err(Error::Undefined {
@@ -197,12 +196,10 @@ impl Inference for Case {
                 }
 
                 // every clause must have the same out type, the expected type of the whole case block
-                constraints.append(&mut clause.body.constraint_equations(
-                    &mut symbol_table.clone(),
+                clause.body.gather_constraints(
+                    constraint_bank,
                     &clause_context,
-                    var_name_generator,
-                    ty_var.clone())?
-                );
+                    ty_var.clone())?;
 
             }
 
@@ -218,9 +215,9 @@ impl Inference for Case {
 
             let scrutinee_type = Ty::mk_decl(&data_type_name, scutinee_type_args);
 
-            constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator,scrutinee_type)?);
+            self.scrutinee.gather_constraints(constraint_bank, context, scrutinee_type)?;
 
-            Ok(constraints)
+            Ok(())
         } else {
             // the clauses are empty, aborting the type inference
             Err(Error::Mismatch {
@@ -279,8 +276,8 @@ mod test {
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
     use crate::typing::inference::Inference;
-    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -293,7 +290,7 @@ mod test {
 
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let mut symbol_table = symbol_table_list_template();
+        let symbol_table = symbol_table_list_template();
         let mut term = Case {
             span: dummy_span(),
             clauses: vec![
@@ -319,7 +316,14 @@ mod test {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table,
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
@@ -335,6 +339,9 @@ mod test {
             Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
             Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
         ];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
+
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
@@ -347,7 +354,7 @@ mod test {
 
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let mut symbol_table = symbol_table_list_template();
+        let symbol_table = symbol_table_list_template();
         let mut term = Case {
             span: dummy_span(),
             clauses: vec![
@@ -373,7 +380,14 @@ mod test {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table,
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
@@ -389,6 +403,9 @@ mod test {
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])))
         ];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
+
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
@@ -400,7 +417,7 @@ mod test {
         ctx_case_names.bindings.push("xs".to_string());
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let mut symbol_table = symbol_table_list_template();
+        let symbol_table = symbol_table_list_template();
         let mut term = Case {
             span: dummy_span(),
             clauses: vec![
@@ -418,7 +435,14 @@ mod test {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        let mut constraint_bank = ConstraintBank{
+            symbol_table,
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        let result = term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"));
         assert!(result.is_err_and(|e| matches!(e, Error::MissingCtorInCase { ctor, .. } if ctor == "Nil")));
     }
 
@@ -427,7 +451,15 @@ mod test {
         let mut ctx_names = NameContext::default();
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("y".to_string());
-        let mut symbol_table = symbol_table_list_template();
+        let symbol_table = symbol_table_list_template();
+
+        let mut constraint_bank = ConstraintBank{
+            symbol_table,
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
         let result = Case {
             span: dummy_span(),
             clauses: vec![Clause {
@@ -442,7 +474,7 @@ mod test {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
-        .constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        .gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x"));
 
         assert!(result.is_err())
     }

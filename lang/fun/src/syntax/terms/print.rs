@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, Inference};
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -72,25 +72,23 @@ impl From<PrintI64> for Term {
 }
 
 impl Inference for PrintI64 {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
-        let mut constraints: Vec<Constraint> = vec![];
+        ) -> Result<(), Error> {
 
         // the term type is set to a type variable for easy type lookup after the unification algorithm
-        let new_var_type = var_name_generator.get_new_ty_var();
+        let new_var_type = constraint_bank.var_name_generator.get_new_ty_var();
         self.ty = Some(new_var_type.clone());
 
-        constraints.push(Constraint::mk_only_ty(new_var_type, ty_var.clone()));
+        constraint_bank.constraints.push(Constraint::mk_only_ty(new_var_type, ty_var.clone()));
         
-        constraints.append(&mut self.arg.constraint_equations(symbol_table, context, var_name_generator, Ty::mk_i64())?);
-        constraints.append(&mut self.next.constraint_equations(symbol_table, context, var_name_generator, ty_var)?);
+        self.arg.gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.next.gather_constraints(constraint_bank, context, ty_var)?;
         
-        Ok(constraints)
+        Ok(())
     }
 
     fn insert_inferred_type(
@@ -125,20 +123,27 @@ mod test {
 
     use crate::syntax::{Lit, PrintI64, Term, Ty, TypingContext};
     use crate::syntax::util::dummy_span;
-    use crate::typing::SymbolTable;
-    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
-
-
+    
     #[test]
     fn inference_print() {
         let ctx = TypingContext::default();
 
         let mut term = PrintI64{span: dummy_span(), newline: false, arg: Rc::new(Term::Lit(Lit::mk(5))), next: Rc::new(Term::Lit(Lit::mk(7))), ty: None};
 
-        let result = term.constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

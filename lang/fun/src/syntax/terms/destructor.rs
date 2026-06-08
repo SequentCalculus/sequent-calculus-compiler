@@ -8,6 +8,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::inference::Constraint;
+use crate::typing::inference::ConstraintBank;
 use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::inference::{Inference, args_constraint_equations};
 use crate::typing::*;
@@ -85,28 +86,26 @@ impl From<Destructor> for Term {
 }
 
 impl Inference for Destructor {
-    fn constraint_equations(
-        &mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        var_name_generator: &mut inference::VarNameGenerator,
-        ty_var: Ty
-    ) -> Result<Vec<Constraint>, Error> {
-        let mut constraints: Vec<Constraint> = Vec::new();
+    fn gather_constraints(
+            &mut self,
+            constraint_bank: &mut ConstraintBank,
+            context: &TypingContext,
+            ty_var: Ty
+        ) -> Result<(), Error> {
 
         // creating a new type var to link the type of the current term to the future result after unification
-        let new_type_var = var_name_generator.get_new_ty_var();
+        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
         self.ty = Some(new_type_var.clone());
-        constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
-        let codata_type_name = match symbol_table.find_xdata_type_name(&self.id) {
+        let codata_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
                 return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
             },
         };
 
-        let (chirality, general_type_vars, _) = symbol_table.type_templates.get(&codata_type_name).unwrap();
+        let (chirality, general_type_vars, _) = constraint_bank.symbol_table.type_templates.get(&codata_type_name).unwrap();
 
         if chirality == &Polarity::Data {
                 return Err(Error::ExpectedCovariableGotTerm { span: self.span });
@@ -126,7 +125,7 @@ impl Inference for Destructor {
             // if no type Arguments are given, they are all replaced by variables,
 
             for type_var in &general_type_vars.bindings {
-                type_var_mapping.insert(type_var.clone(), var_name_generator.get_new_ty_var());
+                type_var_mapping.insert(type_var.clone(), constraint_bank.var_name_generator.get_new_ty_var());
             }
         } else {
             // if the wrong amount of type arguments are given, an error is returned
@@ -140,7 +139,7 @@ impl Inference for Destructor {
         
 
         // collecting the expected signature of the dtor
-        let (mut arg_types, mut out_type) = match symbol_table.dtor_templates.get(&self.id) {
+        let (mut arg_types, mut out_type) = match constraint_bank.symbol_table.dtor_templates.get(&self.id) {
             Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
             None => {
                 return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
@@ -158,13 +157,13 @@ impl Inference for Destructor {
         let scrutinee_type_args: Vec<Ty> = general_type_vars.bindings.iter().map(|binding| type_var_mapping.get(binding).unwrap()).cloned().collect();
         let scrutinee_type = Ty::mk_decl(&codata_type_name, TypeArgs { span: None, args: scrutinee_type_args });
 
-        constraints.append(&mut self.scrutinee.constraint_equations(symbol_table, context, var_name_generator, scrutinee_type)?);
+        self.scrutinee.gather_constraints(constraint_bank, context, scrutinee_type)?;
 
-        constraints.append(&mut args_constraint_equations(&mut self.args, &arg_types, symbol_table, context, var_name_generator, self.span)?);
+        args_constraint_equations(&mut self.args, &arg_types, context, constraint_bank, self.span)?;
 
-        constraints.push(Constraint::mk_only_ty(ty_var, out_type));
+        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, out_type));
 
-        Ok(constraints)
+        Ok(())
     }
 
 
@@ -209,9 +208,8 @@ mod destructor_tests {
     use crate::syntax::*;
     use crate::test_common::*;
     use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
     use crate::typing::inference::Inference;
-    use crate::typing::inference::VarNameGenerator;
-    use crate::typing::*;
 
     use std::rc::Rc;
     use std::vec;
@@ -223,7 +221,7 @@ mod destructor_tests {
             "x",
             Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
-        let mut symbol_table = symbol_table_lpair();
+        
         let mut term = Destructor {
             span: dummy_span(),
             id: "fst".to_owned(),
@@ -233,7 +231,14 @@ mod destructor_tests {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: symbol_table_lpair(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
             Ty::mk_ty_var("1"),
@@ -247,6 +252,8 @@ mod destructor_tests {
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
         ];
 
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
+
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
@@ -258,7 +265,7 @@ mod destructor_tests {
             "x",
             Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
-        let mut symbol_table = symbol_table_lpair();
+
         let mut term = Destructor {
             span: dummy_span(),
             id: "fst".to_owned(),
@@ -268,7 +275,14 @@ mod destructor_tests {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: symbol_table_lpair(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![
             Ty::mk_i64(),
@@ -284,6 +298,8 @@ mod destructor_tests {
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
 
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
+
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
     }
@@ -297,7 +313,7 @@ mod destructor_tests {
             Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
         ctx.add_covar("a", Ty::mk_i64());
-        let mut symbol_table = symbol_table_fun_template();
+
         let mut term = Destructor {
             span: dummy_span(),
             id: "apply".to_owned(),
@@ -307,7 +323,14 @@ mod destructor_tests {
             ty: None,
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: symbol_table_fun_template(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
             // new type var
@@ -326,6 +349,8 @@ mod destructor_tests {
             //final type constraint
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("2"))
         ];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
         
         assert_eq!(result, expected)
     }
@@ -334,6 +359,15 @@ mod destructor_tests {
     fn inference_dtor_fail() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
+
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+        
+
         let result = Destructor {
             span: dummy_span(),
             id: "head".to_owned(),
@@ -342,7 +376,7 @@ mod destructor_tests {
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .constraint_equations(&mut SymbolTable::default(), &ctx, &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        .gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"));
     
         assert!(result.is_err())
     }

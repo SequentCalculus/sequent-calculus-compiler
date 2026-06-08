@@ -39,7 +39,7 @@ use printer::Print;
 use crate::{
     syntax::{Name, names::Var},
     traits::used_binders::UsedBinders,
-    typing::{errors::Error, inference::{Constraint, Inference}, symbol_table::SymbolTable},
+    typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
 };
 
 use super::{
@@ -134,29 +134,28 @@ impl Print for Term {
 }
 
 impl Inference for Term {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut crate::typing::inference::ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut crate::typing::inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
+        ) -> Result<(), Error> {
         match self {
-            Term::XVar(xvar) => xvar.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Lit(lit) => lit.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Op(op) => op.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::IfC(if_c) => if_c.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::PrintI64(print_i64) => print_i64.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Let(let_block) => let_block.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Call(call) => call.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Constructor(constructor) => constructor.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Destructor(destructor) => destructor.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Case(case) => case.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::New(new_block) => new_block.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Label(label) => label.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Goto(goto) => goto.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Exit(exit) => exit.constraint_equations(symbol_table, context, var_name_generator, ty_var),
-            Term::Paren(paren) => paren.constraint_equations(symbol_table, context, var_name_generator, ty_var),
+            Term::XVar(xvar) => xvar.gather_constraints(constraint_bank, context, ty_var),
+            Term::Lit(lit) => lit.gather_constraints(constraint_bank, context, ty_var),
+            Term::Op(op) => op.gather_constraints(constraint_bank, context, ty_var),
+            Term::IfC(if_c) => if_c.gather_constraints(constraint_bank, context, ty_var),
+            Term::PrintI64(print_i64) => print_i64.gather_constraints(constraint_bank, context, ty_var),
+            Term::Let(let_block) => let_block.gather_constraints(constraint_bank, context, ty_var),
+            Term::Call(call) => call.gather_constraints(constraint_bank, context, ty_var),
+            Term::Constructor(constructor) => constructor.gather_constraints(constraint_bank, context, ty_var),
+            Term::Destructor(destructor) => destructor.gather_constraints(constraint_bank, context, ty_var),
+            Term::Case(case) => case.gather_constraints(constraint_bank, context, ty_var),
+            Term::New(new_block) => new_block.gather_constraints(constraint_bank, context, ty_var),
+            Term::Label(label) => label.gather_constraints(constraint_bank, context, ty_var),
+            Term::Goto(goto) => goto.gather_constraints(constraint_bank, context, ty_var),
+            Term::Exit(exit) => exit.gather_constraints(constraint_bank, context, ty_var),
+            Term::Paren(paren) => paren.gather_constraints(constraint_bank, context, ty_var),
         }
     }
 
@@ -211,15 +210,22 @@ impl UsedBinders for Term {
 pub mod inferr_helper {
     use std::collections::HashMap;
 
-    use crate::{syntax::{Term, Ty, TypingContext}, typing::{Error, inference::{Inference, VarNameGenerator, constraint_unification}, symbol_table::SymbolTable}};
+    use crate::{syntax::{Term, Ty, TypingContext}, typing::{Error, inference::{ConstraintBank, Inference, VarNameGenerator, constraint_unification}, symbol_table::SymbolTable}};
     
 
     pub fn inferr_term(term: &mut Term, symbol_table: &mut SymbolTable, context: &TypingContext) -> Result<(), Error> {
-        let var_name_generator = &mut VarNameGenerator::new();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: symbol_table.clone(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
 
-        let ty_var = var_name_generator.get_new_ty_var();
+        let ty_var = constraint_bank.var_name_generator.get_new_ty_var();
 
-        let constraints = term.constraint_equations(symbol_table, context, var_name_generator, ty_var)?;
+        term.gather_constraints(&mut constraint_bank, context, ty_var)?;
+
+        let ConstraintBank { symbol_table, var_name_generator, constraints, possible_choices } = constraint_bank;
 
         let (solutions, conflicts) = constraint_unification(constraints);
 

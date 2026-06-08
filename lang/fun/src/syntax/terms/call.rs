@@ -7,8 +7,8 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::inference::Constraint;
+use crate::typing::inference::ConstraintBank;
 use crate::typing::inference::Inference;
-use crate::typing::inference::add_choice_to_list;
 use crate::typing::inference::args_constraint_equations;
 use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
@@ -33,6 +33,8 @@ pub struct Call {
     pub args: Arguments,
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
+    /// The potential choice identifier to resolve overloading
+    pub choice_id: Option<u32>
 }
 
 impl OptTyped for Call {
@@ -56,14 +58,13 @@ impl From<Call> for Term {
 }
 
 impl Inference for Call {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
-        match symbol_table.variational_defs.get(&self.name) {
+        ) -> Result<(), Error> {
+        match constraint_bank.symbol_table.variational_defs.get(&self.name) {
             Some(ref signatures) if signatures.len() == 0 => {
                 panic!("encountered a function definition with no signature")
             },
@@ -71,53 +72,64 @@ impl Inference for Call {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
                 let signature = signatures[0].clone();
 
-                let mut constraints = Vec::new();
 
                 // adding a new type var as the type of the term for easier lookup after unification
-                let new_type_var = var_name_generator.get_new_ty_var();
+                let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
                 self.ret_ty = Some(new_type_var.clone());
-                constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+                constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
                 let (types, ret_ty) = signature.clone();
-                constraints.push(Constraint::mk_only_ty(ty_var, ret_ty));
+                constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, ret_ty));
 
-                constraints.append(&mut args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span)?);
+                args_constraint_equations(&mut self.args, &types, context, constraint_bank, self.span)?;
 
-                Ok(constraints)
+                Ok(())
             },
             Some(signatures) => {
                 // there are more than one signatures for a function -> it is overloaded
-                let mut constraints: Vec<Constraint> = Vec::new();
 
                 // adding a new type var as the type of the term for easier lookup after unification
-                let new_type_var = var_name_generator.get_new_ty_var();
+                let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
                 self.ret_ty = Some(new_type_var.clone());
-                constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+                constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+
+                // setting the choice id to resolve the overload later
+                let new_choice_id = ConstraintBank::get_new_choice_id(
+                    &mut constraint_bank.var_name_generator,
+                    &mut constraint_bank.possible_choices,
+                    signatures.len());
+                
+                self.choice_id = Some(new_choice_id);
 
                 // the constraints are created for every choice, and marked with the choice made
-                for (choice_idx, signature) in signatures.clone().iter().enumerate() {
-                    let (types, ret_ty) = signature.clone();
+                for (signature_idx, signature) in signatures.clone().iter().enumerate() {
+                    let (mut types, ret_ty) = signature.clone();
 
-                    // the choice name is the name of the function and the choice number the index in the list of choices
-                    constraints.push(Constraint::mk_single_choice(ty_var.clone(), ret_ty, self.name.clone(), choice_idx));
+                    // the return type is linked to the choice
+                    constraint_bank.constraints.push(Constraint::mk_single_choice(ty_var.clone(), ret_ty, new_choice_id, self.name.clone(), signature_idx));
 
-                    match args_constraint_equations(&mut self.args, &types, symbol_table, context, var_name_generator, self.span) {
-                        Ok(mut additional_constraints) => {
-                            add_choice_to_list(&mut additional_constraints, self.name.clone(), choice_idx);
-                            constraints.append(&mut additional_constraints);
-                        },
+                    // the argument types are replaced by type variables to enable linking the choice to the argument types
+                    for binding in types.bindings.iter_mut() {
+                        let old_type = &binding.ty;
+                        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
+                        constraint_bank.constraints.push(Constraint::mk_single_choice(old_type.clone(), new_type_var.clone(), new_choice_id, self.name.clone(), signature_idx));
+                        binding.ty = new_type_var;
+                    }
+
+                    match args_constraint_equations(&mut self.args, &types, context, constraint_bank, self.span) {
                         Err(Error::WrongNumberOfArguments { .. }) => {
                             // The wrong number of Arguments Error only indicates that this version of the function won't work,
                             // others could still work, so the error is catched and marked as an impossible world
-                            constraints.push(Constraint::mk_impossible_world(self.name.clone(), choice_idx));
+                            constraint_bank.constraints.push(Constraint::mk_impossible_world(new_choice_id, self.name.clone(), signature_idx));
                         },
                         Err(other_err) => {
                             return Err(other_err);
-                        }
+                        },
+                        _ => {}
                     }
                 }
 
-                Ok(constraints)
+                Ok(())
             },
             None => Err(Error::Undefined {
                 span: None,
@@ -164,8 +176,8 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
     use crate::typing::inference::Inference;
-    use crate::typing::inference::VarNameGenerator;
     use crate::typing::*;
 
 
@@ -182,10 +194,18 @@ mod test {
             args: Arguments{
                 entries: vec![Lit::mk(5).into()]
             },
-            ret_ty: None
+            ret_ty: None,
+            choice_id: None
         };
 
-        let result = term.constraint_equations(&mut symbol_table, &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table,
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
@@ -193,6 +213,8 @@ mod test {
 
             Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
         ];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ret_ty, Some(Ty::mk_ty_var("0")))
@@ -207,10 +229,18 @@ mod test {
             args: Arguments{
                 entries: vec![Lit::mk(5).into()]
             },
-            ret_ty: None
+            ret_ty: None,
+            choice_id: None
         };
 
-        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x"));
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        let result = term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x"));
 
         assert!(result.is_err_and(|e| matches!(e, Error::Undefined { name, .. } if name == "simple")))
     }
@@ -221,6 +251,7 @@ mod test {
             name: "foo".to_string(),
             args: vec![].into(),
             ret_ty: None,
+            choice_id: None
         }
     }
 
@@ -244,6 +275,7 @@ mod test {
             name: "foo".to_string(),
             args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,
+            choice_id: None
         }
     }
 

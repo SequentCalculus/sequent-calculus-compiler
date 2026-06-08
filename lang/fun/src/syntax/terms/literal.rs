@@ -7,7 +7,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
-use crate::typing::inference::{Constraint, Inference};
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -52,14 +52,15 @@ impl From<Lit> for Term {
 }
 
 impl Inference for Lit {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            _symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             _context: &TypingContext,
-            _var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
-        Ok(vec![Constraint::mk_only_ty(ty_var, Ty::mk_i64())])
+        ) -> Result<(), Error> {
+        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+
+        Ok(())
     }
 
     fn insert_inferred_type(
@@ -75,16 +76,24 @@ impl Inference for Lit {
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     #[test]
     fn inference_lit() {
         let mut term = Lit::mk(15);
 
-        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
 
         assert_eq!(result, expected);
     }

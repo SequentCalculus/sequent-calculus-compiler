@@ -9,6 +9,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::inference::Constraint;
+use crate::typing::inference::ConstraintBank;
 use crate::typing::inference::Inference;
 use crate::typing::*;
 
@@ -67,26 +68,23 @@ impl From<Label> for Term {
 }
 
 impl Inference for Label {
-    fn constraint_equations(
+    fn gather_constraints(
             &mut self,
-            symbol_table: &mut SymbolTable,
+            constraint_bank: &mut ConstraintBank,
             context: &TypingContext,
-            var_name_generator: &mut inference::VarNameGenerator,
             ty_var: Ty
-        ) -> Result<Vec<Constraint>, Error> {
+        ) -> Result<(), Error> {
             let mut new_context = context.clone();
             new_context.add_covar(&self.label, ty_var.clone());
 
-            let mut constraints = Vec::new();
-
             // adding a new type var as the type of the term for easier lookup after unification
-            let new_type_var = var_name_generator.get_new_ty_var();
+            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+            constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
-            constraints.append(&mut self.term.constraint_equations(symbol_table, &new_context, var_name_generator, ty_var)?);
+            self.term.gather_constraints(constraint_bank, &new_context, ty_var)?;
 
-            Ok(constraints)
+            Ok(())
     }
 
     fn insert_inferred_type(
@@ -121,8 +119,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, Inference, VarNameGenerator};
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     use std::rc::Rc;
 
@@ -135,12 +132,21 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
         };
 
-        let result = term.constraint_equations(&mut SymbolTable::default(), &TypingContext::default(), &mut VarNameGenerator::new(), Ty::mk_ty_var("x")).unwrap();
+        let mut constraint_bank = ConstraintBank{
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
         ];
+
+        let ConstraintBank { constraints: result, .. } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

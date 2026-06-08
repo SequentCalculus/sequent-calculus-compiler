@@ -8,7 +8,7 @@ use printer::tokens::{COLON, DEF};
 use printer::*;
 
 use crate::syntax::*;
-use crate::typing::inference::{Constraint, Inference};
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
@@ -39,14 +39,15 @@ pub struct Def {
 
 impl Def {
 
-    pub fn constraint_equations(
-        &mut self,
-        symbol_table: &mut SymbolTable,
-        var_name_generator: &mut inference::VarNameGenerator,
-    ) -> Result<Vec<Constraint>, Error> {
+    pub fn gather_constraints(
+            &mut self,
+            constraint_bank: &mut ConstraintBank,
+            _context: &TypingContext,
+            _ty_var: Ty
+        ) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
 
-        self.body.constraint_equations(symbol_table, &self.context, var_name_generator, self.ret_ty.clone())
+        self.body.gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
     }
 
     pub fn insert_inferred_type(
