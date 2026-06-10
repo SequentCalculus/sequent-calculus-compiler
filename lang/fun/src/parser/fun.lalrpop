@@ -182,7 +182,7 @@ Lit: Lit = {
 
 Call: Term = {
     <l: @L> <v: Name> <args: Arguments> <r: @R> =>
-      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+      Call { span: span(l, r), name: v, args, ret_ty: None, choice_id: None }.into(),
 }
 
 Label: Label = {

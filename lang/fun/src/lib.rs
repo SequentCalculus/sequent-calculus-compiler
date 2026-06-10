@@ -23,12 +23,12 @@ pub mod test_common {
 
     fn context_cons(type_param: &str) -> TypingContext {
         let mut ctx_cons = TypingContext::default();
-        ctx_cons.add_var("x", Ty::mk_decl(type_param, TypeArgs::default()));
+        ctx_cons.add_var("x", Ty::mk_ty_var(type_param));
         ctx_cons.add_var(
             "xs",
             Ty::mk_decl(
                 "List",
-                TypeArgs::mk(vec![Ty::mk_decl(type_param, TypeArgs::default())]),
+                TypeArgs::mk(vec![Ty::mk_ty_var(type_param)]),
             ),
         );
         ctx_cons
@@ -150,7 +150,7 @@ pub mod test_common {
                     span: None,
                     name: "head".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl("A", TypeArgs::default()),
+                    cont_ty: Ty::mk_ty_var("A"),
                 },
                 DtorSig {
                     span: None,
@@ -158,7 +158,7 @@ pub mod test_common {
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl(
                         "Stream",
-                        TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                        TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
                     ),
                 },
             ],
@@ -179,7 +179,7 @@ pub mod test_common {
             "head".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl("A", TypeArgs::default()),
+                Ty::mk_ty_var("A"),
             ),
         );
         table.dtor_templates.insert(
@@ -188,7 +188,7 @@ pub mod test_common {
                 TypingContext::default(),
                 Ty::mk_decl(
                     "Stream",
-                    TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                    TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
                 ),
             ),
         );
@@ -209,7 +209,7 @@ pub mod test_common {
             "head".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl("A", TypeArgs::default()),
+                Ty::mk_ty_var("A"),
             ),
         );
         table.dtor_templates.insert(
@@ -218,7 +218,7 @@ pub mod test_common {
                 TypingContext::default(),
                 Ty::mk_decl(
                     "Stream",
-                    TypeArgs::mk(vec![Ty::mk_decl("A", TypeArgs::default())]),
+                    TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
                 ),
             ),
         );
@@ -246,8 +246,8 @@ pub mod test_common {
 
     fn context_ap(type_param_in: &str, type_param_out: &str) -> TypingContext {
         let mut ctx_ap = TypingContext::default();
-        ctx_ap.add_var("x", Ty::mk_decl(type_param_in, TypeArgs::default()));
-        ctx_ap.add_covar("a", Ty::mk_decl(type_param_out, TypeArgs::default()));
+        ctx_ap.add_var("x", Ty::mk_ty_var(type_param_in));
+        ctx_ap.add_covar("a", Ty::mk_ty_var(type_param_out));
         ctx_ap
     }
 
@@ -267,7 +267,7 @@ pub mod test_common {
                 span: None,
                 name: "apply".to_owned(),
                 args: context_ap("A", "B"),
-                cont_ty: Ty::mk_decl("B", TypeArgs::default()),
+                cont_ty: Ty::mk_ty_var("B"),
             }],
         }
     }
@@ -284,7 +284,7 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "apply".to_owned(),
-            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+            (context_ap("A", "B"), Ty::mk_ty_var("B")),
         );
         table
     }
@@ -301,7 +301,7 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "apply".to_owned(),
-            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+            (context_ap("A", "B"), Ty::mk_ty_var("B")),
         );
         table.types.insert(
             "Fun[i64, i64]".to_owned(),
@@ -328,13 +328,13 @@ pub mod test_common {
                     span: None,
                     name: "fst".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl("A", TypeArgs::default()),
+                    cont_ty: Ty::mk_ty_var("A"),
                 },
                 DtorSig {
                     span: None,
                     name: "snd".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl("B", TypeArgs::default()),
+                    cont_ty: Ty::mk_ty_var("B"),
                 },
             ],
         }
@@ -354,14 +354,14 @@ pub mod test_common {
             "fst".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl("A", TypeArgs::default()),
+                Ty::mk_ty_var("A"),
             ),
         );
         table.dtor_templates.insert(
             "snd".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl("B", TypeArgs::default()),
+                Ty::mk_ty_var("B"),
             ),
         );
         table.types.insert(

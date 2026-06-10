@@ -186,7 +186,7 @@ mod test {
         let mut symbol_table = SymbolTable::default();
         let mut typing_ctx = TypingContext::default();
         typing_ctx.add_var("x", Ty::mk_i64());
-        symbol_table.defs.insert("simple".to_owned(), (typing_ctx, Ty::mk_ty_var("out_type")));
+        symbol_table.variational_defs.insert("simple".to_owned(), vec![(typing_ctx, Ty::mk_ty_var("out_type"))]);
         
         let mut term = Call{
             span: dummy_span(),

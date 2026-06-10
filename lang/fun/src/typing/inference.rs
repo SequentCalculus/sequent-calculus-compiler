@@ -138,7 +138,7 @@ pub fn args_constraint_equations(
                 _ => return Err(Error::ExpectedCovariableGotTerm { span }),
             }
         } else {
-            arg.gather_constraints(constraint_bank, context, expected_type.ty.clone())?
+            arg.gather_constraints(constraint_bank, context, expected_type.ty.clone())?;
         }
     }
 
@@ -565,8 +565,8 @@ mod test {
         let (solutions, conflicts) = constraint_unification(constraints);
 
         let expected = vec![
-            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
             Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("x")),
+            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
         ];
 
         assert_eq!(solutions, expected);

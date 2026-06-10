@@ -122,7 +122,7 @@ mod test {
 
         let ConstraintBank { constraints: result, .. } = constraint_bank;
 
-        assert!(matches!(term.ty, Some(Ty::Decl { name, .. }) if name == "0"));
-        assert_eq!(result, vec![Constraint::mk_only_ty(Ty::mk_decl("0", TypeArgs::mk(vec![])), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())])
+        assert!(matches!(term.ty, Some(Ty::TypeVar { name, ..}) if name == "0"));
+        assert_eq!(result, vec![Constraint::mk_only_ty(Ty::mk_ty_var("0" ), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())])
     }
 }

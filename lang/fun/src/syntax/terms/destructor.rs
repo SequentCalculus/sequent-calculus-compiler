@@ -344,6 +344,7 @@ mod destructor_tests {
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
 
             // argument 2,
+            Constraint::mk_only_ty(Ty::mk_ty_var("4"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
 
             //final type constraint

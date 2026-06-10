@@ -85,12 +85,11 @@ impl Inference for Case {
         ) -> Result<(), Error> {
 
         if let Some(first_clause) = self.clauses.first() {
-            let mut constraints = Vec::new();
 
             // adding a type variable the type of the case block
             let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+            constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
 
             let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&first_clause.xtor) {
