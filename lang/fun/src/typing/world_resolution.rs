@@ -3,40 +3,36 @@ use biodivine_lib_bdd::{
     Bdd, BddVariable, BddVariableSet, BddVariableSetBuilder,
 };
 
-use crate::{syntax::Name, typing::{Error, inference::IncompatibleChoices}};
+use crate::typing::{Error, inference::IncompatibleChoices};
 
 
 
-type PossibleChoice = (Name, usize);
+type PossibleChoice = (u32, usize);
 
 /// Since the choices are represented with several variables, the mapping between BDD Variables and Choice Variables is stored here.
 /// In the first iteration, the choices are one-hot encoded
 #[derive(Debug, PartialEq, Eq)]
 pub struct BddMapping {
     /// Maps each choice variable to its bit variables (logarithmic encoding)
-    choice_bit_vars: HashMap<Name, Vec<BddVariable>>,
-    variable_resolving: HashMap<BddVariable, (Name, usize)>,
+    choice_bit_vars: HashMap<u32, Vec<BddVariable>>,
+    variable_resolving: HashMap<BddVariable, (u32, usize)>,
 }
 
 
 impl BddMapping {
     fn add_choice(
         &mut self,
-        choice_var: Name,
+        choice_id: u32,
         bit_vars: Vec<BddVariable>,
     ) {
-        self.choice_bit_vars.insert(choice_var.clone(), bit_vars.clone());
+        self.choice_bit_vars.insert(choice_id, bit_vars.clone());
         for (idx, variable) in bit_vars.iter().enumerate() {
-            self.variable_resolving.insert(*variable, (choice_var.clone(), idx));
+            self.variable_resolving.insert(*variable, (choice_id, idx));
         }        
     }
 
-    pub fn get_bit_vars(&self, choice_var: &Name) -> Option<&Vec<BddVariable>> {
+    pub fn get_bit_vars(&self, choice_var: &u32) -> Option<&Vec<BddVariable>> {
         self.choice_bit_vars.get(choice_var)
-    }
-
-    pub fn all_choice_vars(&self) -> impl Iterator<Item = &Name> {
-        self.choice_bit_vars.keys()
     }
 }
 
@@ -44,7 +40,7 @@ impl Default for BddMapping {
     fn default() -> Self {
         Self {
             choice_bit_vars: HashMap::default(),
-            variable_resolving: HashMap::default(),
+            variable_resolving: HashMap::default()
         }
     }
 }
@@ -101,20 +97,20 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
 }
 
 
-fn create_fail_clauses(var_set: &BddVariableSet, mapping: &BddMapping, incompatible_choices: Vec<IncompatibleChoices>) -> Bdd {
+fn create_fail_clauses(var_set: &BddVariableSet, mapping: &BddMapping, incompatible_worlds: Vec<IncompatibleChoices>) -> Bdd {
 
     let mut clauses = Vec::new();
 
-    for choice in incompatible_choices {
+    for world in incompatible_worlds {
         let mut clause_parts = Vec::new();
 
-        for (var_name, bit_idx) in choice {
-            if let Some(bit_var) = mapping.get_bit_vars(&var_name).expect(&format!("choice {} could not be found", var_name)).get(bit_idx) {
+        for (choice_id, bit_idx) in world {
+            if let Some(bit_var) = mapping.get_bit_vars(&choice_id).expect(&format!("choice {} could not be found", choice_id)).get(bit_idx) {
                 let bdd_var = var_set.mk_var(*bit_var);
 
                 clause_parts.push(bdd_var);
             } else {
-                panic!("Alternative bit {} for choice {} could not be found", bit_idx, var_name)
+                panic!("Alternative bit {} for choice {} could not be found", bit_idx, choice_id)
             }
         }
 
@@ -127,12 +123,14 @@ fn create_fail_clauses(var_set: &BddVariableSet, mapping: &BddMapping, incompati
 }
 
 
-pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<IncompatibleChoices>) -> Result<Vec<(Name, usize)>, Error> {
+pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<IncompatibleChoices>) -> Result<Vec<PossibleChoice>, Error> {
     let (base_clauses, mapping, var_set) = create_base_bdd(choices);
 
     let incompatible_clauses = create_fail_clauses(&var_set, &mapping, incompatible_choices);
 
     let combined_formular = base_clauses.and(&incompatible_clauses);
+
+    println!("{}", combined_formular.to_dot_string(&var_set, true));
 
     let possible_worlds = combined_formular.cardinality();
 
@@ -144,6 +142,8 @@ pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<I
         let selected_variables: Vec<(BddVariable, bool)> = solution.to_values().into_iter().filter(|(_, truth_value)| *truth_value).collect();
 
         let selected_choices = selected_variables.iter().map(|(bdd_var, _)| mapping.variable_resolving.get(bdd_var).expect("BDDVariable could not be found").clone()).collect();
+
+        println!("selected_choice: {:?}", selected_choices);
 
         Ok(selected_choices)
     } else {
@@ -158,14 +158,14 @@ mod test {
 
     #[test]
     fn base_clauses_test_single() {
-        let possible_choices: Vec<(String, usize)> = vec![("add".to_string(), 3)];
+        let possible_choices: Vec<(u32, usize)> = vec![(42, 3)];
         let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
 
         let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2"]);
         assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
 
         let mut expected_mapping = BddMapping::default();
-        expected_mapping.add_choice("add".to_owned(), expected_var_set.variables());
+        expected_mapping.add_choice(42, expected_var_set.variables());
         assert_eq!(expected_mapping, resulting_mapping);
 
         // the resulting var set is used, because two different var sets can make problems if you compare the terms
@@ -182,16 +182,16 @@ mod test {
 
     #[test]
     fn base_clauses_test_multi() {
-        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
+        let possible_choices: Vec<PossibleChoice> = vec![(41, 3), (42, 4), (43, 2)];
         let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
 
         let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
         assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
 
         let mut expected_mapping = BddMapping::default();
-        expected_mapping.add_choice("add".to_owned(), expected_var_set.variables()[0..3].to_vec());
-        expected_mapping.add_choice("new".to_owned(), expected_var_set.variables()[3..7].to_vec());
-        expected_mapping.add_choice("func".to_owned(), expected_var_set.variables()[7..9].to_vec());
+        expected_mapping.add_choice(41, expected_var_set.variables()[0..3].to_vec());
+        expected_mapping.add_choice(42, expected_var_set.variables()[3..7].to_vec());
+        expected_mapping.add_choice(43, expected_var_set.variables()[7..9].to_vec());
         assert_eq!(expected_mapping, resulting_mapping);
 
         // the resulting var set is used, because two different var sets can make problems if you compare the terms
@@ -228,11 +228,11 @@ mod test {
         let var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
 
         let mut mapping = BddMapping::default();
-        mapping.add_choice("add".to_owned(), var_set.variables()[0..3].to_vec());
-        mapping.add_choice("new".to_owned(), var_set.variables()[3..7].to_vec());
-        mapping.add_choice("func".to_owned(), var_set.variables()[7..9].to_vec());
+        mapping.add_choice(41, var_set.variables()[0..3].to_vec());
+        mapping.add_choice(42, var_set.variables()[3..7].to_vec());
+        mapping.add_choice(43, var_set.variables()[7..9].to_vec());
 
-        let incompatible_choices:Vec<IncompatibleChoices> = vec![vec![("add".to_string(), 2), ("new".to_string(), 1)], vec![("new".to_string(), 0), ("func".to_string(), 0), ("add".to_string(), 1)]];
+        let incompatible_choices:Vec<IncompatibleChoices> = vec![vec![(41, 2), (42, 1)], vec![(42, 0), (43, 0), (41, 1)]];
 
         let resulting_clauses = create_fail_clauses(&var_set, &mapping, incompatible_choices);
 
@@ -247,26 +247,26 @@ mod test {
 
     #[test]
     fn resolve_worlds_test1() {
-        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 2)];
-        let incompatible_choices: Vec<IncompatibleChoices> = vec![vec![("add".to_string(), 2), ("new".to_string(), 1)], vec![("new".to_string(), 0)], vec![("add".to_string(), 1)]];
+        let possible_choices: Vec<PossibleChoice> = vec![(41, 3), (42, 2)];
+        let incompatible_choices: Vec<IncompatibleChoices> = vec![vec![(41, 2), (42, 1)], vec![(42, 0)], vec![(41, 1)]];
 
         let result = resolve_worlds(&possible_choices, incompatible_choices).unwrap();
 
         // there is only one correct solution
-        let expected = vec![("add".to_string(), 0), ("new".to_string(), 1)];
+        let expected = vec![(41, 0), (42, 1)];
 
         assert_eq!(result, expected);
     }
 
     #[test]
     fn resolve_worlds_test2() {
-        let possible_choices: Vec<PossibleChoice> = vec![("add".to_string(), 3), ("new".to_string(), 4), ("func".to_string(), 2)];
+        let possible_choices: Vec<PossibleChoice> = vec![(41, 3), (42, 4), (43, 2)];
         let incompatible_choices: Vec<IncompatibleChoices> = vec![
-            vec![("add".to_string(), 2), ("new".to_string(), 1)],
-            vec![("new".to_string(), 0)],
-            vec![("add".to_string(), 1)],
-            vec![("func".to_string(), 1)],
-            vec![("add".to_string(), 0), ("new".to_string(), 3), ("func".to_string(), 0)]
+            vec![(41, 2), (42, 1)],
+            vec![(42, 0)],
+            vec![(41, 1)],
+            vec![(43, 1)],
+            vec![(41, 0), (42, 3), (43, 0)]
         ];
 
         let result = resolve_worlds(&possible_choices, incompatible_choices);
