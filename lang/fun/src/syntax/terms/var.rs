@@ -87,7 +87,7 @@ impl Inference for XVar {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        _choices: &HashMap<Name, usize>
+        _choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         match &mut self.ty {
             Some(ty_var) => {

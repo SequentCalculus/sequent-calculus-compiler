@@ -423,6 +423,7 @@ pub mod test_common {
                                     name: "mult".to_owned(),
                                     args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
+                                    choice_id: None
                                 }
                                 .into(),
                             ),
@@ -500,6 +501,7 @@ pub mod test_common {
                                     ]
                                     .into(),
                                     ret_ty: Some(Ty::mk_i64()),
+                                    choice_id: None
                                 }
                                 .into(),
                             ),

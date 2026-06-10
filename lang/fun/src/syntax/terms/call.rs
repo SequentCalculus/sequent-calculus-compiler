@@ -106,13 +106,13 @@ impl Inference for Call {
                     let (mut types, ret_ty) = signature.clone();
 
                     // the return type is linked to the choice
-                    constraint_bank.constraints.push(Constraint::mk_single_choice(ty_var.clone(), ret_ty, new_choice_id, self.name.clone(), signature_idx));
+                    constraint_bank.constraints.push(Constraint::mk_single_choice(ty_var.clone(), ret_ty, new_choice_id, signature_idx));
 
                     // the argument types are replaced by type variables to enable linking the choice to the argument types
                     for binding in types.bindings.iter_mut() {
                         let old_type = &binding.ty;
                         let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-                        constraint_bank.constraints.push(Constraint::mk_single_choice(old_type.clone(), new_type_var.clone(), new_choice_id, self.name.clone(), signature_idx));
+                        constraint_bank.constraints.push(Constraint::mk_single_choice(old_type.clone(), new_type_var.clone(), new_choice_id, signature_idx));
                         binding.ty = new_type_var;
                     }
 
@@ -120,7 +120,7 @@ impl Inference for Call {
                         Err(Error::WrongNumberOfArguments { .. }) => {
                             // The wrong number of Arguments Error only indicates that this version of the function won't work,
                             // others could still work, so the error is catched and marked as an impossible world
-                            constraint_bank.constraints.push(Constraint::mk_impossible_world(new_choice_id, self.name.clone(), signature_idx));
+                            constraint_bank.constraints.push(Constraint::mk_impossible_world(new_choice_id, signature_idx));
                         },
                         Err(other_err) => {
                             return Err(other_err);
@@ -143,12 +143,12 @@ impl Inference for Call {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
-
-        // insert the individual name of the function, if it is overloaded
-        if let Some(index) = choices.get(&self.name) {
+        if let Some(choice) = &self.choice_id {
+            let index = choices.get(choice).expect("Although the function call had a choice_id, the choice id was not in the choices");
+            // insert the individual name of the function, if it is overloaded
             self.name = symbol_table::build_unique_def_name(&self.name, index);
         }
         

@@ -233,7 +233,7 @@ impl Inference for Case {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         for ty in &mut self.type_args.args {
             ty.mut_subst_ty(mappings);

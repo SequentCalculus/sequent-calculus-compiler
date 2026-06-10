@@ -37,7 +37,7 @@ pub use var::*;
 use printer::Print;
 
 use crate::{
-    syntax::{Name, names::Var},
+    syntax::names::Var,
     traits::used_binders::UsedBinders,
     typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
 };
@@ -163,7 +163,7 @@ impl Inference for Term {
         &mut self,
         mappings: &std::collections::HashMap<super::Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         match self {
             Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table, choices),
@@ -210,7 +210,7 @@ impl UsedBinders for Term {
 pub mod inferr_helper {
     use std::collections::HashMap;
 
-    use crate::{syntax::{Term, Ty, TypingContext}, typing::{Error, inference::{ConstraintBank, Inference, VarNameGenerator, constraint_unification}, symbol_table::SymbolTable}};
+    use crate::{syntax::{Term, Ty, TypingContext}, typing::{Error, inference::{ConstraintBank, Inference, constraint_unification}, symbol_table::SymbolTable}};
     
 
     pub fn inferr_term(term: &mut Term, symbol_table: &mut SymbolTable, context: &TypingContext) -> Result<(), Error> {
@@ -225,39 +225,34 @@ pub mod inferr_helper {
 
         term.gather_constraints(&mut constraint_bank, context, ty_var)?;
 
-        let ConstraintBank { symbol_table, var_name_generator, constraints, possible_choices } = constraint_bank;
+        let ConstraintBank { mut symbol_table, constraints, possible_choices, .. } = constraint_bank;
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        let all_possible_choices = symbol_table.variational_defs.iter().map(|(name, variation_list)| (name.clone(), variation_list.len()))
-            .filter(|(_, size)| *size > 1 ).collect();
-        
-        let selected_world = crate::typing::world_resolution::resolve_worlds(&all_possible_choices, conflicts)?;
+        // generating a type and choice mapping, either with overload resolution or without
+        // overload resolution is only done, if there are any overloads to resolve
+        let (type_mapping, choices_map): (HashMap<String, Ty>, HashMap<u32, usize>) = if possible_choices.len() > 0 {
+            let selected_world = crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?;
 
-        let choices_map = selected_world.iter().cloned().collect();
+            let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
 
-        // now all solutions that are part of the selected world are filtered.
-        let mut selected_solutions = solutions;
-        for (name, wanted_id) in selected_world {
-            selected_solutions.retain(|s| match s.choices.get(&name) {
-                Some(id) => wanted_id == *id,
+            // now all solutions that are part of the selected world are filtered.
+            let mut selected_solutions = solutions;
+            for (choice_id, signature_id) in selected_world {
+                selected_solutions.retain(|s| match s.choices.get(&choice_id) {
+                    Some(id) => signature_id == *id,
 
-                // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                None => true
-            });
-        }
-
-        // the solutions are converted to a HashMap and then they are inserted in the program
-        let mut type_mapping: HashMap<String, Ty> = selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect();
-
-        // the mapping is applied on it self. The mapping can contain a reference to another type variable.
-        let reference_map = type_mapping.clone();
-        for (_, ty) in type_mapping.iter_mut() {
-            while !ty.collect_var_names().is_empty() {
-                ty.mut_subst_ty(&reference_map);
+                    // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
+                    None => true
+                });
             }
-        }
 
-        term.insert_inferred_type(&type_mapping, symbol_table, &choices_map)
+            // the solutions are converted to a HashMap and then they are inserted in the program
+            (selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), choices_map)
+        } else {
+            (solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), Default::default())
+        };
+
+        term.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)
     }
 }

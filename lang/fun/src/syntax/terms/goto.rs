@@ -88,7 +88,7 @@ impl Inference for Goto {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         self.term.insert_inferred_type(mappings, symbol_table, choices)?;
 

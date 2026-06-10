@@ -131,7 +131,7 @@ impl Inference for Constructor {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>,
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
         args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
 

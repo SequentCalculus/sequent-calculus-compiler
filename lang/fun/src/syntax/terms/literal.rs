@@ -67,7 +67,7 @@ impl Inference for Lit {
         &mut self,
         _mappings: &HashMap<Name, Ty>,
         _symbol_table: &mut SymbolTable,
-        _choices: &HashMap<Name, usize>
+        _choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         Ok(())
     }

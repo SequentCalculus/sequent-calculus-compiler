@@ -41,9 +41,7 @@ impl Def {
 
     pub fn gather_constraints(
             &mut self,
-            constraint_bank: &mut ConstraintBank,
-            _context: &TypingContext,
-            _ty_var: Ty
+            constraint_bank: &mut ConstraintBank
         ) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
 
@@ -54,7 +52,7 @@ impl Def {
         &mut self,
         mappings: &std::collections::HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         self.body.insert_inferred_type(mappings, symbol_table, choices)
     }

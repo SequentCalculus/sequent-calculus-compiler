@@ -95,7 +95,7 @@ impl Inference for PrintI64 {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<Name, usize>
+        choices: &HashMap<u32, usize>
     ) -> Result<(), Error> {
         self.arg.insert_inferred_type(mappings, symbol_table, choices)?;
         self.next.insert_inferred_type(mappings, symbol_table, choices)?;
