@@ -193,17 +193,6 @@ impl Default for VarNameGenerator {
     }
 }
 
-/// The [`ChoiceRealm`] is an enumerable to represent the possibilities for comparing
-/// the choices of a [`Solution`] with a [`Constraint`] or other [`Solution`]
-enum ChoiceRealm {
-    /// The two entities are in the same Choice Realm, the new [`Solution`] can be applied
-    Same,
-    /// The two entities are compatible, so a new [`Solution`] could be applied on a copy of the first entity
-    Compatible,
-    /// The choices are incompatible and the new [`Solution`] can't be applied
-    Incompatible,
-}
-
 // todo: make an incompatible choices struct with the Error explaining why this whould be impossible
 pub type IncompatibleChoices = Vec<(u32, usize)>;
 
@@ -247,63 +236,6 @@ impl Constraint {
             Self::ImpossibleWorld(_) => {}
         }
     }
-
-    /// this function checks if a Solution can be combined/applied to this Constraint.
-    fn get_choice_realm(&self, other: &Solution) -> ChoiceRealm {
-        let mut same_choices: usize = 0;
-        match self {
-            Constraint::Equality(_, _, choices) => {
-                // checking that all choices of the Solution are also in this constraint
-
-                for (choice_id, signature_id) in other.choices.iter() {
-                    match choices.get(choice_id) {
-                        Some(found_signature_id) if found_signature_id == signature_id => {
-                            same_choices += 1;
-                        }
-                        Some(_) => {
-                            return ChoiceRealm::Incompatible;
-                        }
-                        None => {}
-                    }
-                }
-
-                if same_choices == other.choices.len() {
-                    ChoiceRealm::Same
-                } else {
-                    ChoiceRealm::Compatible
-                }
-            }
-            //other.choices.iter().all(|(choice_id, signature_id)| choices.get(choice_id) == Some(signature_id)),
-            Constraint::ImpossibleWorld(_) => ChoiceRealm::Incompatible,
-        }
-    }
-
-    /// applies a new solution to a [`Constraint`] if it is in the same ChoiceRealm
-    /// or if it is in a compatible Realm, a copy with the new choices is returned
-    fn apply_new_solution(&mut self, other: &Solution) -> Option<Self> {
-        match self.get_choice_realm(other) {
-            ChoiceRealm::Same => {
-                match self {
-                    Constraint::Equality(ty1, ty2, _) => {
-                        ty1.mut_subst_one_ty(&other.var_name, &other.ty);
-                        ty2.mut_subst_one_ty(&other.var_name, &other.ty);
-                    }
-                    Constraint::ImpossibleWorld(_) => {}
-                }
-                return None;
-            }
-            ChoiceRealm::Compatible => match self {
-                Constraint::ImpossibleWorld(_) => None,
-                Constraint::Equality(ty1, ty2, choices) => {
-                    let mut new_choices = choices.clone();
-                    new_choices.extend(other.choices.clone());
-
-                    Some(Constraint::Equality(ty1.clone(), ty2.clone(), new_choices))
-                }
-            },
-            ChoiceRealm::Incompatible => None,
-        }
-    }
 }
 
 #[derive(Derivative, Debug, Clone)]
@@ -336,80 +268,62 @@ impl Solution {
         (self.var_name, self.ty)
     }
 
-    /// this function checks if another Solution can be combined/applied to this Solution.
-    fn get_choice_realm(&self, other: &Self) -> ChoiceRealm {
-        let mut same_choices: usize = 0;
+    fn get_constraints_with_choice(&self, new_solution: &Solution) -> Option<Constraint> {
+        if self.choices.iter().all(|(choice_id, signature_id)| {
+            new_solution
+                .choices
+                .get(choice_id)
+                .is_none_or(|sig| sig == signature_id)
+        }) {
+            // if there are no conflicting choices the choices can be extended
+            let mut combined_choice = self.choices.clone();
+            combined_choice.extend(new_solution.choices.iter());
 
-        for (choice_id, signature_id) in other.choices.iter() {
-            match self.choices.get(choice_id) {
-                Some(found_signature_id) if found_signature_id == signature_id => {
-                    same_choices += 1;
-                }
-                Some(_) => {
-                    return ChoiceRealm::Incompatible;
-                }
-                None => {}
-            }
-        }
+            let ty1 = if new_solution.var_name == self.var_name
+            {
+                // if the names are the same, the first ty in the equation
+                // is the type from the solution
+                new_solution.ty.clone()
+            } else {
+                // else the name of the current solution is used as a type var
+                Ty::mk_ty_var(&self.var_name)
+            };
 
-        if same_choices == other.choices.len() {
-            ChoiceRealm::Same
+            let ty2 = self.ty.clone().subst_ty(&HashMap::from([(new_solution.var_name.clone(), new_solution.ty.clone())]));
+
+            Some(Constraint::Equality(ty1, ty2, combined_choice))
         } else {
-            ChoiceRealm::Compatible
-        }
-    }
-
-    /// applies a new solution to a [`Constraint`] if it is in the same ChoiceRealm
-    /// or if it is in a compatible Realm, a copy with the new choices is returned
-    fn apply_new_solution(&mut self, other: &Self) -> Option<Self> {
-        match self.get_choice_realm(other) {
-            ChoiceRealm::Same => {
-                self.ty.mut_subst_one_ty(&other.var_name, &other.ty);
-                None
-            }
-            ChoiceRealm::Compatible => {
-                    let mut new_choices = self.choices.clone();
-                    new_choices.extend(other.choices.clone());
-
-                    Some(Self { var_name: self.var_name.clone(), ty: self.ty.clone(), choices: new_choices })
-            },
-            ChoiceRealm::Incompatible => None,
+            // if there are conflicting choices, no new Constraint is created
+            None
         }
     }
 }
 
+/// integrates a new [`Solution`] into the consisting [`SolutionCache`] and [`Constraints`](Constraint)
+/// by adding new constraints for solutions that have the same [`TypeVar`](Ty) as the new solution
 fn integrate_new_solution(
     equations: &mut Vec<Constraint>,
-    solutions: &mut Vec<Solution>,
+    solutions: &mut SolutionCache,
     new_solution: Solution,
-) { 
-    let mut additional_constraints = Vec::new();
-    for constraint in equations.iter_mut() {
-        if let Some(new_constraint) = constraint.apply_new_solution(&new_solution) {
-            additional_constraints.push(new_constraint);
-        }
-    }
-    equations.extend(additional_constraints);
+) {
+    let related_solutions = solutions.get(&new_solution.var_name);
+    // all solutions that have the same TypeVar as the new solution are selected
+    let new_constraints = related_solutions
+        .iter()
+        .filter_map(|s| s.get_constraints_with_choice(&new_solution));
+    // all solutions are converted to constraints with the new choices added
 
-    
-    let mut additional_solutions = Vec::new();
-    for solution in solutions.iter_mut() {
-        if let Some(new_solution) = solution.apply_new_solution(&new_solution) {
-            additional_solutions.push(new_solution);
-        }
-    }
-    solutions.extend(additional_solutions);
+    equations.extend(new_constraints);
 
-
-    solutions.push(new_solution);
+    solutions.add_solution(new_solution);
 }
 
 pub fn constraint_unification(
     mut equations: Vec<Constraint>,
 ) -> (Vec<Solution>, Vec<IncompatibleChoices>) {
-    let mut solutions: Vec<Solution> = Vec::new();
     let mut conflicts: Vec<IncompatibleChoices> = Vec::new();
     let mut constraint_cache: Vec<Constraint> = Vec::new();
+    let mut solutions: SolutionCache = SolutionCache::new();
 
     while let Some(constraint) = equations.pop() {
         if constraint_cache.contains(&constraint) {
@@ -492,7 +406,68 @@ pub fn constraint_unification(
         };
     }
 
-    (solutions, conflicts)
+    (solutions.all_solutions(), conflicts)
+}
+
+pub struct SolutionCache {
+    mapping: HashMap<Name, Vec<usize>>,
+    pool: Vec<Solution>,
+}
+
+impl SolutionCache {
+    pub fn new() -> Self {
+        Self {
+            mapping: HashMap::new(),
+            pool: Vec::new(),
+        }
+    }
+
+    pub fn add_solution(&mut self, solution: Solution) {
+        let new_index = self.pool.len();
+
+        // adding an entry for the solution var name
+        if let Some(entries) = self.mapping.get_mut(&solution.var_name) {
+            entries.push(new_index);
+        } else {
+            self.mapping
+                .insert(solution.var_name.clone(), vec![new_index]);
+        }
+
+        // adding an entry for the possible type var
+        if let Ty::TypeVar { name, .. } = &solution.ty {
+            if let Some(entries) = self.mapping.get_mut(name) {
+                entries.push(new_index);
+            } else {
+                self.mapping.insert(name.clone(), vec![new_index]);
+            }
+        }
+
+        self.pool.push(solution);
+    }
+
+    pub fn get(&self, var_name: &Name) -> Vec<&Solution> {
+        if let Some(indices) = self.mapping.get(var_name) {
+            indices
+                .iter()
+                .filter_map(|index| self.pool.get(*index))
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn all_solutions(self) -> Vec<Solution> {
+        self.pool
+    }
+}
+
+impl Default for SolutionCache {
+    fn default() -> Self {
+        Self {
+            mapping: Default::default(),
+            pool: Default::default(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -501,8 +476,44 @@ mod test {
 
     use crate::{
         syntax::{Ty, TypeArgs},
-        typing::inference::{Constraint, Solution, constraint_unification},
+        typing::inference::{Constraint, Solution, SolutionCache, constraint_unification},
     };
+
+    #[test]
+    fn solution_cache_test1() {
+        let mut solution_cache = SolutionCache::new();
+
+        let solution_1 = Solution::new_no_choice("a".to_string(), Ty::mk_i64());
+        let solution_2 = Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
+        let solution_3 = Solution::new_no_choice("c".to_string(), Ty::mk_i64());
+
+        solution_cache.add_solution(solution_1.clone());
+        solution_cache.add_solution(solution_2.clone());
+        solution_cache.add_solution(solution_3.clone());
+
+        let current_entries_a = solution_cache.get(&"a".to_string());
+        let current_entries_b = solution_cache.get(&"b".to_string());
+        let current_entries_c = solution_cache.get(&"c".to_string());
+
+        let expected_entries_a = vec![&solution_1, &solution_2];
+
+        let expected_entries_b = vec![&solution_2];
+
+        let expected_entries_c = vec![&solution_3];
+
+        assert_eq!(current_entries_a, expected_entries_a);
+        assert_eq!(current_entries_b, expected_entries_b);
+        assert_eq!(current_entries_c, expected_entries_c);
+
+        let all_solutions = solution_cache.all_solutions();
+        let expected_solutions = vec![
+            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
+            Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
+            Solution::new_no_choice("c".to_string(), Ty::mk_i64()),
+        ];
+
+        assert_eq!(all_solutions, expected_solutions);
+    }
 
     #[test]
     fn unification_test1() {

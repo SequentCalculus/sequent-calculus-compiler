@@ -130,8 +130,6 @@ pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<I
 
     let combined_formular = base_clauses.and(&incompatible_clauses);
 
-    println!("{}", combined_formular.to_dot_string(&var_set, true));
-
     let possible_worlds = combined_formular.cardinality();
 
     if possible_worlds != 1.0 {
@@ -142,8 +140,6 @@ pub fn resolve_worlds(choices: &Vec<PossibleChoice>, incompatible_choices: Vec<I
         let selected_variables: Vec<(BddVariable, bool)> = solution.to_values().into_iter().filter(|(_, truth_value)| *truth_value).collect();
 
         let selected_choices = selected_variables.iter().map(|(bdd_var, _)| mapping.variable_resolving.get(bdd_var).expect("BDDVariable could not be found").clone()).collect();
-
-        println!("selected_choice: {:?}", selected_choices);
 
         Ok(selected_choices)
     } else {
