@@ -2,13 +2,16 @@
 
 use printer::{Print, PrintCfg};
 
-use crate::{mono::constraints::ConstraintCollector, syntax::program::Prog};
+use crate::{
+    mono::{constraint_graph::ConstraintGraph, constraints::ConstraintCollector},
+    syntax::program::Prog,
+};
 pub mod constraint_graph;
 pub mod constraints;
 pub mod errors;
 pub mod graph_viz;
 
-pub fn monomorphize_program(program: Prog) {
+pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
     let constraints = program
         .collect_constraints(&program.data_types, &program.codata_types)
         .unwrap();
@@ -24,4 +27,6 @@ pub fn monomorphize_program(program: Prog) {
         "{}",
         constraints.print_to_colored_string(Some(&forced_set_cfg))
     );
+
+    ConstraintGraph::from(constraints)
 }

@@ -69,7 +69,7 @@ impl ConstraintGraph {
 
         // Seed nodes: one rectangle per variable showing all seeding ground types.
         for (var, seeds) in &self.seeds {
-            let labels: Vec<String> = seeds.iter().map(|ty| ty_display_name(ty)).collect();
+            let labels: Vec<String> = seeds.iter().map(ty_display_name).collect();
             out.push_str(&format!(
                 "  seed_{id} [label=\"{{{types}}}\", shape=rectangle, \
                  style=filled, fillcolor=lightgrey];\n",
@@ -149,8 +149,7 @@ impl ConstraintGraph {
         // Wait for the process to finish and check the exit status
         let status = child.wait()?;
         if !status.success() {
-            return Err(Error::new(
-                ErrorKind::Other,
+            return Err(Error::other(
                 format!(
                     "Graphviz 'dot' process exited with an error code: {}",
                     status
