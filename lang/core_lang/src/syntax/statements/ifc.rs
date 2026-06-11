@@ -261,19 +261,23 @@ impl Checked for IfC {
         codata_declarations: &[CodataDeclaration],
         defs: &[Def],
     ) -> Result<(), LocatedTypeError> {
-        let fst_type = self.fst.get_type();
+        if let Ty::I64 = self.fst.get_type() {
+        } else {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.fst.get_type().print_to_string(None),
+                msg: Some("Operands in if condition must be i64".to_string()),
+            });
+        }
 
-        // check that the first and optional second term have the same type
+        // check that the second term of the comparison has type i64 if it exists
         if let Some(ref snd) = self.snd {
-            let snd_type = snd.get_type();
-            if fst_type != snd_type {
+            if let Ty::I64 = snd.get_type() {
+            } else {
                 bail!(TypeError::TypeMismatch {
-                    expected: fst_type.print_to_string(None),
-                    got: snd_type.print_to_string(None),
-                    msg: Some(
-                        "The second operand must have the same type as the first operand"
-                            .to_string()
-                    ),
+                    expected: Ty::I64.print_to_string(None),
+                    got: snd.get_type().print_to_string(None),
+                    msg: Some("Operands in if condition must be i64".to_string()),
                 });
             }
         }
