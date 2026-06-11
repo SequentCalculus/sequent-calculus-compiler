@@ -3,8 +3,10 @@
 use printer::{Print, PrintCfg};
 
 use crate::{mono::constraints::ConstraintCollector, syntax::program::Prog};
+pub mod constraint_graph;
 pub mod constraints;
 pub mod errors;
+pub mod graph_viz;
 
 pub fn monomorphize_program(program: Prog) {
     let constraints = program
