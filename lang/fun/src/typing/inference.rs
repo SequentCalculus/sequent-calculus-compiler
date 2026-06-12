@@ -256,7 +256,7 @@ impl Solution {
     }
 
     // the function is used in the tests
-    fn new_no_choice(var_name: Name, ty: Ty) -> Self {
+    fn _new_no_choice(var_name: Name, ty: Ty) -> Self {
         Solution {
             var_name,
             ty,
@@ -483,9 +483,9 @@ mod test {
     fn solution_cache_test1() {
         let mut solution_cache = SolutionCache::new();
 
-        let solution_1 = Solution::new_no_choice("a".to_string(), Ty::mk_i64());
-        let solution_2 = Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
-        let solution_3 = Solution::new_no_choice("c".to_string(), Ty::mk_i64());
+        let solution_1 = Solution::_new_no_choice("a".to_string(), Ty::mk_i64());
+        let solution_2 = Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
+        let solution_3 = Solution::_new_no_choice("c".to_string(), Ty::mk_i64());
 
         solution_cache.add_solution(solution_1.clone());
         solution_cache.add_solution(solution_2.clone());
@@ -507,9 +507,9 @@ mod test {
 
         let all_solutions = solution_cache.all_solutions();
         let expected_solutions = vec![
-            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
-            Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
-            Solution::new_no_choice("c".to_string(), Ty::mk_i64()),
+            Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
+            Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
+            Solution::_new_no_choice("c".to_string(), Ty::mk_i64()),
         ];
 
         assert_eq!(all_solutions, expected_solutions);
@@ -524,7 +524,7 @@ mod test {
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-        let expected: Vec<Solution> = vec![Solution::new_no_choice("x".to_string(), Ty::mk_i64())];
+        let expected: Vec<Solution> = vec![Solution::_new_no_choice("x".to_string(), Ty::mk_i64())];
 
         assert_eq!(solutions, expected);
         assert!(conflicts.is_empty());
@@ -548,15 +548,15 @@ mod test {
         let (solutions, conflicts) = constraint_unification(constraints);
 
         let expected = vec![
-            Solution::new_no_choice("x".to_string(), Ty::mk_i64()),
-            Solution::new_no_choice(
+            Solution::_new_no_choice("x".to_string(), Ty::mk_i64()),
+            Solution::_new_no_choice(
                 "y".to_string(),
                 Ty::mk_decl(
                     "Pair",
                     TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("meta_var 1")]),
                 ),
             ),
-            Solution::new_no_choice("z".to_string(), Ty::mk_ty_var("meta_var 1")),
+            Solution::_new_no_choice("z".to_string(), Ty::mk_ty_var("meta_var 1")),
         ];
 
         assert_eq!(solutions, expected);
@@ -576,8 +576,8 @@ mod test {
         let (solutions, conflicts) = constraint_unification(constraints);
 
         let expected = vec![
-            Solution::new_no_choice("b".to_string(), Ty::mk_ty_var("x")),
-            Solution::new_no_choice("a".to_string(), Ty::mk_i64()),
+            Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("x")),
+            Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
         ];
 
         assert_eq!(solutions, expected);
