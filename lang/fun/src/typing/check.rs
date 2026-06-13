@@ -17,6 +17,7 @@ use crate::syntax::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
+/// This struct defines the state of the type checking of [Fun](fun).
 #[derive(Debug, Default)]
 pub struct CheckingState {
     pub symbol_table: SymbolTable,
@@ -27,7 +28,7 @@ pub struct CheckingState {
 pub trait Check: Sized {
     /// This method performs typechecking with a given symbol table and typing context against an
     /// expected type. The expected type will be annotated in the checked term.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during type checking.
     /// - `context` is the current typing context containing bindings for the (co)variables in
     ///   scope.
     /// - `expected` is the expected type.
@@ -68,7 +69,7 @@ impl<T: Check> Check for Option<T> {
 /// This function typechecks arguments against a signature, i.e.,
 /// against the types in a list of bindings.
 /// - `span` is the source location of the arguments.
-/// - `symbol_table` is the symbol table during typechecking.
+/// - `state` is the [state](CheckingState) during typechecking.
 /// - `context` is the current typing context.
 /// - `args` are the arguments to check.
 /// - `types` is the list of bindings against whose types the arguments are checked.

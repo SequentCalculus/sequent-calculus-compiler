@@ -98,7 +98,7 @@ impl TypingContext {
 
     /// This function checks whether all types in the typing context within (an xtor of) a
     /// template are well-formed.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during typechecking.
     /// - `type_params` is the list of type parameters of the template.
     pub fn check_template(
         &self,
