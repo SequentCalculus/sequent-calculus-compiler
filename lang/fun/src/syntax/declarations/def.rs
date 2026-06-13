@@ -93,7 +93,7 @@ mod def_tests {
             util::dummy_span,
         },
         test_common::{data_list, def_mult, def_mult_typed},
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
 
     use super::Def;
@@ -131,10 +131,10 @@ mod def_tests {
 
     #[test]
     fn def_check() {
-        let mut symbol_table = SymbolTable::default();
-        def_mult().build(&mut symbol_table).unwrap();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = def_mult().check(&mut symbol_table).unwrap();
+        let mut state = CheckingState::default();
+        def_mult().build(&mut state.symbol_table).unwrap();
+        data_list().build(&mut state.symbol_table).unwrap();
+        let result = def_mult().check(&mut state).unwrap();
         let expected = def_mult_typed();
         assert_eq!(result, expected)
     }

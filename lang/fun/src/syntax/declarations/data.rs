@@ -125,7 +125,7 @@ mod data_tests {
 
     use crate::{
         test_common::data_list,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
 
     #[test]
@@ -137,9 +137,9 @@ mod data_tests {
 
     #[test]
     fn data_check() {
-        let mut symbol_table = SymbolTable::default();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = data_list().check(&mut symbol_table);
+        let mut state = CheckingState::default();
+        data_list().build(&mut state.symbol_table).unwrap();
+        let result = data_list().check(&mut state);
         assert!(result.is_ok())
     }
 }

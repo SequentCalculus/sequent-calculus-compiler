@@ -131,7 +131,7 @@ impl Print for Codata {
 mod codata_tests {
     use crate::{
         test_common::codata_stream,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
     use printer::Print;
 
@@ -144,9 +144,9 @@ mod codata_tests {
 
     #[test]
     fn codata_check() {
-        let mut symbol_table = SymbolTable::default();
-        codata_stream().build(&mut symbol_table).unwrap();
-        let result = codata_stream().check(&mut symbol_table);
+        let mut state = CheckingState::default();
+        codata_stream().build(&mut state.symbol_table).unwrap();
+        let result = codata_stream().check(&mut state);
         assert!(result.is_ok())
     }
 }
