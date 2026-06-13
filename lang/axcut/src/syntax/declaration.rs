@@ -1,5 +1,7 @@
 //! This module defines user-declared types in AxCut.
 
+use std::collections::HashSet;
+
 use printer::{
     DocAllocator, Print,
     theme::ThemeExt,
@@ -7,7 +9,9 @@ use printer::{
     util::BracesExt,
 };
 
-use super::{Identifier, TypingContext};
+use crate::traits::steadfast::SubstituteSteadfastAnnotations;
+
+use super::{ID, Identifier, TypingContext};
 
 /// This struct defines an xtor which represents a constructor or destructor. It consists of a
 /// name (unique within its type) and a typing context defining its parameters.
@@ -15,6 +19,13 @@ use super::{Identifier, TypingContext};
 pub struct XtorSig {
     pub name: Identifier,
     pub args: TypingContext,
+}
+
+impl SubstituteSteadfastAnnotations for XtorSig {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.args = self.args.subst_sf_annotations(quantity_constraints);
+        self
+    }
 }
 
 impl Print for XtorSig {
@@ -62,6 +73,13 @@ impl TypeDeclaration {
                     self.print_to_string(None)
                 )
             })
+    }
+}
+
+impl SubstituteSteadfastAnnotations for TypeDeclaration {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.xtors = self.xtors.subst_sf_annotations(quantity_constraints);
+        self
     }
 }
 

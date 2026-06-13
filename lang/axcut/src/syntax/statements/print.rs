@@ -5,9 +5,14 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Prog, Quantity, Statement, Ty, TypingContext,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -63,6 +68,7 @@ impl TypedFreeVars for PrintI64 {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         });
         self.next.typed_free_vars(vars);
@@ -114,5 +120,24 @@ impl Linearizing for PrintI64 {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for PrintI64 {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        self.next
+            .collect_sf_constraints(program, context, constraints);
+    }
+}
+
+impl SubstituteSteadfastAnnotations for PrintI64 {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.next = self.next.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

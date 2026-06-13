@@ -11,13 +11,21 @@ pub fn invoke(input: TokenStream) -> TokenStream {
             "Invoked tag",
             "Type",
             "Invoke Arguments",
+            "Quantity",
         ],
-        &[(3, parse_str("axcut::syntax::types::Ty::I64").unwrap())],
+        &[
+            (2, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
+            (
+                4,
+                parse_str("axcut::syntax::context::Quantity::Omega").unwrap(),
+            ),
+        ],
     );
     let var = &args[0];
     let tag = &args[1];
     let ty = &args[2];
     let invoke_args = expr_to_array(&args[3], 3);
+    let quantity = &args[4];
     quote! {
         axcut::syntax::statements::invoke::Invoke{
             var: #var,
@@ -27,7 +35,8 @@ pub fn invoke(input: TokenStream) -> TokenStream {
                     #(#invoke_args),*
                 ])
             },
-            ty: #ty
+            ty: #ty,
+            quantity: #quantity,
         }
     }
     .into()

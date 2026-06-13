@@ -5,6 +5,7 @@ use printer::tokens::{CNS, COLON, EXT, PRD};
 use printer::{DocAllocator, Print};
 
 use super::{ID, Identifier, Ty};
+use crate::traits::steadfast::SubstituteSteadfastAnnotations;
 use crate::{syntax::names::fresh_identifier, traits::substitution::Subst};
 
 use std::collections::HashSet;
@@ -38,12 +39,33 @@ impl Print for Chirality {
     }
 }
 
-/// This struct defines a binding in a typing context. It consists of a variable, its [`Chirality`]
-/// and its [`Ty`]pe.
+/// This enum defines quantity annotations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum Quantity {
+    One,
+    Omega,
+}
+
+impl Print for Quantity {
+    fn print<'a>(
+        &'a self,
+        _cfg: &printer::PrintCfg,
+        alloc: &'a printer::Alloc<'a>,
+    ) -> printer::Builder<'a> {
+        match self {
+            Quantity::One => alloc.space().append(alloc.keyword("1")),
+            Quantity::Omega => alloc.space().append(alloc.keyword("ω")),
+        }
+    }
+}
+
+/// This struct defines a binding in a typing context. It consists of a variable, its
+/// [`Chirality`], its [`Quantity`] and its [`Ty`]pe.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct ContextBinding {
     pub var: Identifier,
     pub chi: Chirality,
+    pub quantity: Quantity,
     pub ty: Ty,
 }
 
@@ -57,6 +79,7 @@ impl Print for ContextBinding {
             .print(cfg, alloc)
             .append(COLON)
             .append(self.chi.print(cfg, alloc))
+            .append(self.quantity.print(cfg, alloc))
             .append(alloc.space())
             .append(self.ty.print(cfg, alloc))
     }
@@ -65,6 +88,15 @@ impl Print for ContextBinding {
 impl Subst for ContextBinding {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
+        self
+    }
+}
+
+impl SubstituteSteadfastAnnotations for ContextBinding {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        if quantity_constraints.contains(&self.var.id) {
+            self.quantity = Quantity::Omega;
+        }
         self
     }
 }
@@ -83,6 +115,11 @@ impl TypingContext {
             .map(|binding| &binding.var)
             .cloned()
             .collect()
+    }
+
+    /// This function returns the list of [`ID`]s of variables in a typing context.
+    pub fn ids(&self) -> Vec<ID> {
+        self.bindings.iter().map(|binding| binding.var.id).collect()
     }
 
     /// This function returns the set of [`ID`]s of variables in a typing context.
@@ -109,6 +146,7 @@ impl TypingContext {
                 new_bindings.push(ContextBinding {
                     var: fresh_identifier(max_id, &binding.var.name),
                     ty: binding.ty.clone(),
+                    quantity: Quantity::One,
                     chi: binding.chi.clone(),
                 });
             } else {
@@ -192,6 +230,13 @@ impl From<Vec<ContextBinding>> for TypingContext {
 impl Subst for TypingContext {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
+        self
+    }
+}
+
+impl SubstituteSteadfastAnnotations for TypingContext {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.bindings = self.bindings.subst_sf_annotations(quantity_constraints);
         self
     }
 }

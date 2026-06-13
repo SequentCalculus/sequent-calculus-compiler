@@ -2,6 +2,7 @@
 
 use super::Backend;
 
+use axcut::syntax::Quantity;
 use axcut2backend::config::{Config, TemporaryNumber};
 use printer::{Print, theme::ThemeExt};
 
@@ -140,25 +141,38 @@ pub const fn address(n: isize) -> Immediate {
     }
 }
 
-/// The number of usable fields per memory block. One additional field is used as a header,
-/// containing, for example, the reference count or the link to the next element in a free list.
-pub const FIELDS_PER_BLOCK: usize = 3;
+/// The number of usable fields per memory block.
+/// If it is used non-linearly, one additional field is used as a header, containing, for example,
+/// the reference count or the link to the next element in a free list.
+/// If it is used linearly, every field is used because we don't need a reference count.
+pub const fn fields_per_block(quantity: Quantity) -> usize {
+    match quantity {
+        Quantity::One => 4,
+        Quantity::Omega => 3,
+    }
+}
 
 /// The address offset within a memory block of the reference count.
-pub const REFERENCE_COUNT_OFFSET: Immediate = address(0);
+pub const REFERENCE_COUNT_OFFSET: Immediate = address(1);
 
 /// The address offset within a memory block of the link to the next element in a free list.
-pub const NEXT_ELEMENT_OFFSET: Immediate = address(0);
+pub const NEXT_ELEMENT_OFFSET: Immediate = address(1);
 
 /// This function calculates the address offset within a memory block of either the first or the
 /// second slot of a given field. The very first field of a memory block serves as a header and is
-/// hence always added to the offset.
+/// hence added to the offset.
 /// - `number` determines whether the first or the second slot of a field is needed.
 /// - `field` is the logical offset of the field in the memory block. It must be between `0` and
 ///   [`FIELDS_PER_BLOCK`].
+/// - `quantity` is a flag to omit the header offset if used to calculate an offset for a linearly
+///   used memory block.
 #[allow(clippy::cast_possible_wrap)]
-pub const fn field_offset(number: TemporaryNumber, i: usize) -> Immediate {
-    address(2 + 2 * i as isize + number as isize)
+pub const fn field_offset(number: TemporaryNumber, i: usize, quantity: Quantity) -> Immediate {
+    let header = match quantity {
+        Quantity::One => 0,
+        Quantity::Omega => 2,
+    };
+    address(header + 2 * i as isize + number as isize)
 }
 
 /// This function returns the register in which the `number`th argument is passed to a function

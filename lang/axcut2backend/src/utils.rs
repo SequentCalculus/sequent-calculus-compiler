@@ -8,7 +8,7 @@ use crate::{
     statements::CodeStatement,
 };
 use axcut::syntax::{
-    Chirality, ContextBinding, ID, Identifier, Ty, TypeDeclaration, TypingContext,
+    Chirality, ContextBinding, ID, Identifier, Quantity, Ty, TypeDeclaration, TypingContext,
     statements::Clause,
 };
 
@@ -144,11 +144,13 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
 /// - `context` is the given typing context.
 /// - `clause` is the clause.
 /// - `types` is the list of type declarations in the program.
+/// - `quantity` indicates whether the data is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn code_clause<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     mut context: TypingContext,
     mut clause: Clause,
     types: &[TypeDeclaration],
+    quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate>
@@ -157,7 +159,7 @@ fn code_clause<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         + ParallelMoves<Code, Temporary>
         + Utils<Temporary>,
 {
-    Backend::load(clause.context.clone(), &context, instructions);
+    Backend::load(clause.context.clone(), &context, quantity, instructions);
     context.bindings.append(&mut clause.context.bindings);
     clause
         .body
@@ -170,11 +172,13 @@ fn code_clause<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 /// - `closure_environment` are the variables stored in the closure.
 /// - `clause` is the clause.
 /// - `types` is the list of type declarations in the program.
+/// - `quantity` indicates whether the data is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     mut closure_environment: TypingContext,
     mut clause: Clause,
     types: &[TypeDeclaration],
+    quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate>
@@ -183,7 +187,12 @@ fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         + ParallelMoves<Code, Temporary>
         + Utils<Temporary>,
 {
-    Backend::load(closure_environment.clone(), &clause.context, instructions);
+    Backend::load(
+        closure_environment.clone(),
+        &clause.context,
+        quantity,
+        instructions,
+    );
     clause
         .context
         .bindings
@@ -199,12 +208,14 @@ fn code_method<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 /// - `clauses` is the list of clauses.
 /// - `base_label` is the base name of the labels for the clauses.
 /// - `types` is the list of type declarations in the program.
+/// - `quantity` indicates whether the data is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     context: &TypingContext,
     clauses: Vec<Clause>,
     base_label: &str,
     types: &[TypeDeclaration],
+    quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate>
@@ -217,7 +228,7 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         instructions.push(Backend::label(
             base_label.to_string() + "_" + &asm_safe_name(&clause.xtor),
         ));
-        code_clause::<Backend, _, _, _>(context.clone(), clause, types, instructions);
+        code_clause::<Backend, _, _, _>(context.clone(), clause, types, quantity, instructions);
     }
 }
 
@@ -227,12 +238,14 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 /// - `clauses` is the list of clauses.
 /// - `base_label` is the base name of the labels for the clauses.
 /// - `types` is the list of type declarations in the program.
+/// - `quantity` indicates whether the data is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
     closure_environment: &TypingContext,
     clauses: Vec<Clause>,
     base_label: &str,
     types: &[TypeDeclaration],
+    quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) where
     Backend: Config<Temporary, Immediate>
@@ -245,6 +258,12 @@ pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
         instructions.push(Backend::label(
             base_label.to_string() + "_" + &asm_safe_name(&clause.xtor),
         ));
-        code_method::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
+        code_method::<Backend, _, _, _>(
+            closure_environment.clone(),
+            clause,
+            types,
+            quantity,
+            instructions,
+        );
     }
 }

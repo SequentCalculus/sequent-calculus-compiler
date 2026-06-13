@@ -4,7 +4,7 @@ main_:
 LI X4 1
 // lit x_2 <- 9;
 LI X5 9
-// let p_3: Either = Right(x_2);
+// let ω p_3: Either = Right(x_2);
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -98,7 +98,7 @@ lab11:
 lab13:
 // #load tag
 LI X6 4
-// switch p_3 \{ ... \};
+// switch ω p_3 \{ ... \};
 LA X1 Either_14
 ADD X1 X1 X6
 JALR X0 X1 0

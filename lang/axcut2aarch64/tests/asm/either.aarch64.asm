@@ -23,7 +23,7 @@ main_:
     MOVZ X4, 1, LSL 0
     // lit x_2 <- 9;
     MOVZ X5, 9, LSL 0
-    // let p_3: Either = Right(x_2);
+    // let ω p_3: Either = Right(x_2);
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -125,7 +125,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X6, 4, LSL 0
-    // switch p_3 \{ ... \};
+    // switch ω p_3 \{ ... \};
     ADR X2, Either_14
     ADD X2, X2, X6
     BR X2

@@ -3,12 +3,16 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::SWITCH};
 
 use super::{Clause, Substitute, print_clauses};
+use crate::syntax::Prog;
 use crate::syntax::{
-    Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext,
+    Chirality, ContextBinding, ID, Identifier, Quantity, Statement, Ty, TypingContext,
     names::fresh_identifier,
 };
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -16,12 +20,13 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the pattern matching on an xtor in AxCut. It consists of the variable to
-/// match on, its type, and a list of clauses (one for each xtor in the type declaration).
-/// Moreover, the free variables of the clauses can be annotated.
+/// match on, its type and quantity annotation, and a list of clauses (one for
+/// each xtor in the type declaration). Moreover, the free variables of the clauses can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
     pub var: Identifier,
     pub ty: Ty,
+    pub quantity: Quantity,
     pub clauses: Vec<Clause>,
     pub free_vars_clauses: Option<HashSet<ID>>,
 }
@@ -34,6 +39,7 @@ impl Print for Switch {
     ) -> printer::Builder<'a> {
         alloc
             .keyword(SWITCH)
+            .append(self.quantity.print(cfg, alloc))
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(alloc.space())
@@ -64,6 +70,7 @@ impl TypedFreeVars for Switch {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         });
     }
@@ -95,6 +102,7 @@ impl Linearizing for Switch {
         let xtor_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(xtor_binding);
@@ -127,6 +135,7 @@ impl Linearizing for Switch {
             let new_xtor_binding = ContextBinding {
                 var: self.var.clone(),
                 chi: Chirality::Prd,
+                quantity: Quantity::One,
                 ty: self.ty.clone(),
             };
             context_rearrange_freshened.bindings.push(new_xtor_binding);
@@ -142,5 +151,50 @@ impl Linearizing for Switch {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for Switch {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let Ty::Decl(type_name) = &self.ty else {
+            unreachable!("invoke must be called with (co)data");
+        };
+
+        let Some((var, context_without_var)) = context.split_last() else {
+            unreachable!("last variable in context is the scrutinee");
+        };
+        debug_assert_eq!(*var, self.var.id);
+
+        for clause in &self.clauses {
+            if matches!(*clause.body, Statement::Unreachable(_)) {
+                continue;
+            }
+
+            let xtor = program
+                .find_xtor(type_name, &clause.xtor)
+                .expect("clauses must have a valid xtor");
+            constraints.contexts_flow_together(&clause.context.ids(), &xtor.args.ids());
+
+            let mut clause_context = context_without_var.to_vec();
+            clause_context.extend_from_slice(&clause.context.ids());
+            clause
+                .body
+                .collect_sf_constraints(program, &clause_context, constraints);
+        }
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Switch {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        if quantity_constraints.contains(&self.var.id) {
+            self.quantity = Quantity::Omega;
+        }
+        self.clauses = self.clauses.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

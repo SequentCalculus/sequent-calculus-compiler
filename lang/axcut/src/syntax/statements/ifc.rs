@@ -5,9 +5,14 @@ use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::util::BracesExt;
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Prog, Quantity, Statement, Ty, TypingContext,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -129,12 +134,14 @@ impl TypedFreeVars for IfC {
         vars.insert(ContextBinding {
             var: self.fst.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         });
         if let Some(ref snd) = self.snd {
             vars.insert(ContextBinding {
                 var: snd.clone(),
                 chi: Chirality::Ext,
+                quantity: Quantity::One,
                 ty: Ty::I64,
             });
         }
@@ -163,6 +170,28 @@ impl Linearizing for IfC {
         self.thenc = self.thenc.linearize(context.clone(), max_id);
         self.elsec = self.elsec.linearize(context, max_id);
 
+        self
+    }
+}
+
+impl CollectSteadfastConstraints for IfC {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        self.thenc
+            .collect_sf_constraints(program, context, constraints);
+        self.elsec
+            .collect_sf_constraints(program, context, constraints);
+    }
+}
+
+impl SubstituteSteadfastAnnotations for IfC {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.thenc = self.thenc.subst_sf_annotations(quantity_constraints);
+        self.elsec = self.elsec.subst_sf_annotations(quantity_constraints);
         self
     }
 }

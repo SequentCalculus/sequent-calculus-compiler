@@ -31,10 +31,12 @@ pub use unreachable::Unreachable;
 use printer::Print;
 
 use super::{ContextBinding, ID, Identifier, TypingContext};
-use crate::traits::free_vars::FreeVars;
+use crate::syntax::Prog;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{SteadfastConstraints, SubstituteSteadfastAnnotations};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
+use crate::traits::{free_vars::FreeVars, steadfast::CollectSteadfastConstraints};
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -150,6 +152,67 @@ impl Linearizing for Statement {
             Statement::IfC(ifc) => ifc.linearize(context, max_id).into(),
             Statement::Exit(ref _exit) => self,
             Statement::Unreachable(ref _unreachable) => self,
+        }
+    }
+}
+
+impl CollectSteadfastConstraints for Statement {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        match self {
+            Statement::Substitute(substitute) => {
+                substitute.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Call(call) => call.collect_sf_constraints(program, context, constraints),
+            Statement::Let(r#let) => r#let.collect_sf_constraints(program, context, constraints),
+            Statement::Switch(switch) => {
+                switch.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Create(create) => {
+                create.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Invoke(invoke) => {
+                invoke.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Literal(literal) => {
+                literal.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Op(op) => op.collect_sf_constraints(program, context, constraints),
+            Statement::PrintI64(print_i64) => {
+                print_i64.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::IfC(ifc) => ifc.collect_sf_constraints(program, context, constraints),
+            Statement::Exit(_) => (),
+            Statement::Unreachable(_) => (),
+        }
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Statement {
+    fn subst_sf_annotations(self, quantity_constraints: &HashSet<ID>) -> Self {
+        match self {
+            Statement::Substitute(substitute) => {
+                substitute.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::Call(call) => call.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Let(r#let) => r#let.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Switch(switch) => switch.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Create(create) => create.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Invoke(invoke) => invoke.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Literal(literal) => {
+                literal.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::Op(op) => op.subst_sf_annotations(quantity_constraints).into(),
+            Statement::PrintI64(print_i64) => {
+                print_i64.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::IfC(ifc) => ifc.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Exit(_) => self,
+            Statement::Unreachable(_) => self,
         }
     }
 }

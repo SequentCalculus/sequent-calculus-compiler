@@ -2,7 +2,7 @@
 
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::EXIT};
 
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty};
+use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Quantity, Statement, Ty};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
@@ -54,6 +54,7 @@ impl TypedFreeVars for Exit {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         });
     }
