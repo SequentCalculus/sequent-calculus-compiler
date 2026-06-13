@@ -72,8 +72,10 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
-        typing::check::Check,
+        parse_term,
+        syntax::context::TypingContext,
+        test_common::symbol_table_list,
+        typing::{CheckingState, check::Check},
     };
 
     use std::collections::{HashSet, VecDeque};
@@ -81,9 +83,12 @@ mod compile_tests {
     #[test]
     fn compile_list() {
         let term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+        };
         let term_typed = term
             .check(
-                &mut symbol_table_list(),
+                &mut state,
                 &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
             )

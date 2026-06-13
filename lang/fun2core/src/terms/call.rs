@@ -43,7 +43,7 @@ mod compile_tests {
     use fun::{
         parse_term,
         syntax::context::TypingContext,
-        typing::{check::Check, symbol_table::SymbolTable},
+        typing::{CheckingState, check::Check, symbol_table::SymbolTable},
     };
     use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -58,7 +58,7 @@ mod compile_tests {
                     let mut funs = HashMap::new();
                     funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
 
-                    SymbolTable {
+                    let symbol_table = SymbolTable {
                         ctors: HashMap::default(),
                         dtors: HashMap::default(),
                         defs: funs,
@@ -66,7 +66,9 @@ mod compile_tests {
                         ctor_templates: HashMap::default(),
                         dtor_templates: HashMap::default(),
                         type_templates: HashMap::default(),
-                    }
+                    };
+
+                    CheckingState { symbol_table }
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
