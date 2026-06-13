@@ -140,6 +140,22 @@ mod test {
         assert!(result.is_err())
     }
 
+    #[test]
+    fn detect_nonlinear_continuation_goto() {
+        let mut state = CheckingState::default();
+        let mut ctx = TypingContext::default();
+        ctx.add_covar("a", Ty::mk_i64());
+        Goto {
+            span: dummy_span(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        }
+        .check(&mut state, &ctx, &Ty::mk_i64())
+        .unwrap();
+        assert!(state.nonlinear_continuations)
+    }
+
     fn example() -> Goto {
         Goto {
             span: dummy_span(),

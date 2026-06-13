@@ -136,6 +136,20 @@ mod test {
         assert!(result.is_err())
     }
 
+    #[test]
+    fn detect_nonlinear_continuation_label() {
+        let mut state = CheckingState::default();
+        Label {
+            span: dummy_span(),
+            label: "a".to_owned(),
+            ty: None,
+            term: Rc::new(Lit::mk(1).into()),
+        }
+        .check(&mut state, &TypingContext::default(), &Ty::mk_i64())
+        .unwrap();
+        assert!(state.nonlinear_continuations)
+    }
+
     fn example() -> Label {
         Label {
             span: dummy_span(),
