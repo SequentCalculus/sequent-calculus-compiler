@@ -7,10 +7,13 @@ use printer::{
     util::BracesExt,
 };
 
-use crate::syntax::{ContextBinding, ID, Identifier, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
+use crate::{
+    syntax::{ContextBinding, ID, Identifier, Statement, TypingContext},
+    traits::steadfast::SubstituteSteadfastAnnotations,
+};
 
 use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
@@ -46,6 +49,14 @@ impl TypedFreeVars for Clause {
 impl Subst for Clause {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> Clause {
         self.body = self.body.subst_sim(subst);
+        self
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Clause {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.context = self.context.subst_sf_annotations(quantity_constraints);
+        self.body = self.body.subst_sf_annotations(quantity_constraints);
         self
     }
 }

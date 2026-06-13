@@ -9,7 +9,7 @@
 //! the linear list. When a block is erased by dropping the last reference to it is put onto the
 //! lazy list, without recursively erasing its field however.
 
-use axcut::syntax::TypingContext;
+use axcut::syntax::{Quantity, TypingContext};
 
 /// This trait abstracts some operations for memory management.
 pub trait Memory<Code, Temporary> {
@@ -33,10 +33,12 @@ pub trait Memory<Code, Temporary> {
     /// into the first temporary after the context remaining after the stores.
     /// - `to_store` is the list of variables the values are bound to before the stores.
     /// - `remaining_context` is the remaining context after the stores.
+    /// - `quantity` indicates whether the data is used linearly.
     /// - `instructions` is the list of instructions to which the new instructions are appended.
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        quantity: Quantity,
         instructions: &mut Vec<Code>,
     );
     /// This method generates code for loading several values from memory into temporaries to the
@@ -44,6 +46,12 @@ pub trait Memory<Code, Temporary> {
     /// loaded is expected to be in the first temporary after the existing context.
     /// - `to_load` is the list of variables the values are bound to after the loads.
     /// - `existing_context` is the existing context before the loads.
+    /// - `quantity` indicates whether the data is used linearly.
     /// - `instructions` is the list of instructions to which the new instructions are appended.
-    fn load(to_load: TypingContext, existing_context: &TypingContext, instructions: &mut Vec<Code>);
+    fn load(
+        to_load: TypingContext,
+        existing_context: &TypingContext,
+        quantity: Quantity,
+        instructions: &mut Vec<Code>,
+    );
 }

@@ -19,14 +19,14 @@ asm_main:
     // actual code
 
 main_:
-    // let ws_1: List = Nil();
+    // let ω ws_1: List = Nil();
     // #mark no allocation
     MOVZ X4, 0, LSL 0
     // #load tag
     MOVZ X5, 0, LSL 0
     // lit z_2 <- 5;
     MOVZ X7, 5, LSL 0
-    // let zs_3: List = Cons(z_2, ws_1);
+    // let ω zs_3: List = Cons(z_2, ws_1);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -131,7 +131,7 @@ lab13:
     MOVZ X5, 4, LSL 0
     // lit y_4 <- 7;
     MOVZ X7, 7, LSL 0
-    // let ys_5: List = Cons(y_4, zs_3);
+    // let ω ys_5: List = Cons(y_4, zs_3);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -236,7 +236,7 @@ lab26:
     MOVZ X5, 4, LSL 0
     // lit x_6 <- 9;
     MOVZ X7, 9, LSL 0
-    // let xs_7: List = Cons(x_6, ys_5);
+    // let ω xs_7: List = Cons(x_6, ys_5);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -339,7 +339,7 @@ lab37:
 lab39:
     // #load tag
     MOVZ X5, 4, LSL 0
-    // switch xs_7 \{ ... \};
+    // switch ω xs_7 \{ ... \};
     ADR X2, List_40
     ADD X2, X2, X5
     BR X2

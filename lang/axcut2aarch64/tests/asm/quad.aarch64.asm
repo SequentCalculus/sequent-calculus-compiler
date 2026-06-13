@@ -27,7 +27,7 @@ main_:
     MOVZ X9, 4, LSL 0
     // lit w_4 <- 2;
     MOVZ X11, 2, LSL 0
-    // let q_5: Quad = Q(z_1, y_2, x_3, w_4);
+    // let ω q_5: Quad = Q(z_1, y_2, x_3, w_4);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
@@ -229,7 +229,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X5, 0, LSL 0
-    // switch q_5 \{ ... \};
+    // switch ω q_5 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Quad_27:

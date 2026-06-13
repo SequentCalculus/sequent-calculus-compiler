@@ -39,7 +39,7 @@ use super::config::{
 };
 
 use TemporaryNumber::{Fst, Snd};
-use axcut::syntax::{Chirality, ContextBinding, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, Quantity, TypingContext};
 use axcut2backend::{
     config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory, utils::Utils,
 };
@@ -618,6 +618,8 @@ impl Memory<Code, Register> for Backend {
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
         store_fields(
@@ -631,6 +633,8 @@ impl Memory<Code, Register> for Backend {
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
         if !to_load.bindings.is_empty() {

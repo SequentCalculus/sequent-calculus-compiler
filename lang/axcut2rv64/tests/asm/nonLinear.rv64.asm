@@ -16,7 +16,7 @@ LI X15 3
 LI X17 3
 // lit x_8 <- 3;
 LI X19 3
-// let b_9: Box = B(x_8);
+// let ω b_9: Box = B(x_8);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -110,7 +110,7 @@ lab11:
 lab13:
 // #load tag
 LI X19 0
-// let bb_10: BoxBox = BB(b_9);
+// let ω bb_10: BoxBox = BB(b_9);
 // #allocate memory
 // ##store values
 SW X19 56 X2
@@ -223,7 +223,7 @@ MV X20 X18
 MV X22 X18
 MV X21 X19
 MV X23 X19
-// switch bb_11 \{ ... \};
+// switch ω bb_11 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 BoxBox_28:
@@ -258,7 +258,7 @@ LW X23 56 X22
 LW X22 48 X22
 
 lab31:
-// switch b_14 \{ ... \};
+// switch ω b_14 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_32:
@@ -284,7 +284,7 @@ MV X2 X22
 LW X23 56 X22
 
 lab34:
-// let d_16: Box = B(x_15);
+// let ω d_16: Box = B(x_15);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -378,7 +378,7 @@ lab45:
 lab47:
 // #load tag
 LI X23 0
-// let dd_17: BoxBox = BB(d_16);
+// let ω dd_17: BoxBox = BB(d_16);
 // #allocate memory
 // ##store values
 SW X23 56 X2
@@ -514,7 +514,7 @@ MV X4 X20
 MV X5 X21
 // lit y_18 <- 4;
 LI X7 4
-// let a_19: Box = B(y_18);
+// let ω a_19: Box = B(y_18);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -616,7 +616,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// switch bb_12 \{ ... \};
+// switch ω bb_12 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 BoxBox_80:
@@ -651,7 +651,7 @@ LW X7 56 X6
 LW X6 48 X6
 
 lab83:
-// switch b_20 \{ ... \};
+// switch ω b_20 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_84:
@@ -677,7 +677,7 @@ MV X2 X6
 LW X7 56 X6
 
 lab86:
-// let a_22: Box = B(x_21);
+// let ω a_22: Box = B(x_21);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -771,7 +771,7 @@ lab97:
 lab99:
 // #load tag
 LI X7 0
-// switch a_22 \{ ... \};
+// switch ω a_22 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_100:
@@ -803,7 +803,7 @@ MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// switch a_19 \{ ... \};
+// switch ω a_19 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Box_103:

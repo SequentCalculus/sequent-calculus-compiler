@@ -13,7 +13,7 @@ pub mod program;
 pub mod statements;
 pub mod types;
 
-pub use context::{Chirality, ContextBinding, TypingContext};
+pub use context::{Chirality, ContextBinding, Quantity, TypingContext};
 pub use declaration::{TypeDeclaration, XtorSig};
 pub use def::Def;
 pub use names::{ID, Identifier};

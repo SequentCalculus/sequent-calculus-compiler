@@ -19,12 +19,12 @@ asm_main:
     // actual code
 
 main_:
-    // create t_1: ContInt = ()\{ ... \};
+    // create ω t_1: ContInt = ()\{ ... \};
     // #mark no allocation
     MOVZ X4, 0, LSL 0
     // #load tag
     ADR X5, ContInt_1
-    // create k_4: ContList = (t_1)\{ ... \};
+    // create ω k_4: ContList = (t_1)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -126,7 +126,7 @@ lab12:
 lab14:
     // #load tag
     ADR X5, ContList_15
-    // let zs_6: List = Nil();
+    // let ω zs_6: List = Nil();
     // #mark no allocation
     MOVZ X6, 0, LSL 0
     // #load tag
@@ -217,7 +217,7 @@ range_:
     MOV X9, X7
     MOV X7, X5
     MOV X5, X2
-    // let ys_12: List = Cons(xs_9, i_10);
+    // let ω ys_12: List = Cons(xs_9, i_10);
     // #allocate memory
     // ##store values
     STR X11, [ X0, 56 ]
@@ -344,12 +344,12 @@ lab19:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // invoke k_8 Retl
+    // invoke ω k_8 Retl
     // #there is only one clause, so we can jump there directly
     BR X7
 
 sum_:
-    // switch xs_16 \{ ... \};
+    // switch ω xs_16 \{ ... \};
     ADR X2, List_33
     ADD X2, X2, X7
     BR X2
@@ -367,7 +367,7 @@ List_33_Nil:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // invoke k_15 Reti
+    // invoke ω k_15 Reti
     // #there is only one clause, so we can jump there directly
     BR X7
 
@@ -413,7 +413,7 @@ lab36:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // create j_20: ContInt = (k_15, y_19)\{ ... \};
+    // create ω j_20: ContInt = (k_15, y_19)\{ ... \};
     // #allocate memory
     // ##store values
     STR X9, [ X0, 56 ]
@@ -568,7 +568,7 @@ lab53:
     // substitute (s_22 := s_22)(k_15 := k_15);
     // #move variables
     MOV X5, X11
-    // invoke k_15 Reti
+    // invoke ω k_15 Reti
     // #there is only one clause, so we can jump there directly
     BR X7
 

@@ -21,7 +21,7 @@ asm_main:
 main_:
     // lit a_1 <- 9;
     MOVZ X5, 9, LSL 0
-    // create f_2: Fun = (a_1)\{ ... \};
+    // create ω f_2: Fun = (a_1)\{ ... \};
     // #allocate memory
     // ##store values
     STR X5, [ X0, 56 ]
@@ -123,7 +123,7 @@ lab11:
 lab13:
     // #load tag
     ADR X5, Fun_14
-    // create k_6: Cont = ()\{ ... \};
+    // create ω k_6: Cont = ()\{ ... \};
     // #mark no allocation
     MOVZ X6, 0, LSL 0
     // #load tag
@@ -136,7 +136,7 @@ lab13:
     MOV X2, X9
     MOV X9, X5
     MOV X5, X2
-    // invoke f_2 apply
+    // invoke ω f_2 apply
     // #there is only one clause, so we can jump there directly
     BR X9
 
@@ -190,7 +190,7 @@ lab17:
     // substitute (b_5 := b_5)(k_4 := k_4);
     // #move variables
     MOV X5, X11
-    // invoke k_4 Ret
+    // invoke ω k_4 Ret
     // #there is only one clause, so we can jump there directly
     BR X7
 

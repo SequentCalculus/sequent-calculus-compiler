@@ -35,7 +35,7 @@ main_:
     MOVZ X17, 3, LSL 0
     // lit x_8 <- 3;
     MOVZ X20, 3, LSL 0
-    // let b_9: Box = B(x_8);
+    // let ω b_9: Box = B(x_8);
     // #allocate memory
     // ##store values
     STR X20, [ X0, 56 ]
@@ -137,7 +137,7 @@ lab11:
 lab13:
     // #load tag
     MOVZ X20, 0, LSL 0
-    // let bb_10: BoxBox = BB(b_9);
+    // let ω bb_10: BoxBox = BB(b_9);
     // #allocate memory
     // ##store values
     STR X20, [ X0, 56 ]
@@ -259,7 +259,7 @@ lab27:
     MOV X23, X19
     MOV X22, X20
     MOV X24, X20
-    // switch bb_11 \{ ... \};
+    // switch ω bb_11 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 BoxBox_28:
@@ -296,7 +296,7 @@ lab30:
     LDR X23, [ X23, 48 ]
 
 lab31:
-    // switch b_14 \{ ... \};
+    // switch ω b_14 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_32:
@@ -323,7 +323,7 @@ lab33:
     LDR X24, [ X23, 56 ]
 
 lab34:
-    // let d_16: Box = B(x_15);
+    // let ω d_16: Box = B(x_15);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -425,7 +425,7 @@ lab45:
 lab47:
     // #load tag
     MOVZ X24, 0, LSL 0
-    // let dd_17: BoxBox = BB(d_16);
+    // let ω dd_17: BoxBox = BB(d_16);
     // #allocate memory
     // ##store values
     STR X24, [ X0, 56 ]
@@ -573,7 +573,7 @@ lab66:
     MOV X5, X22
     // lit y_18 <- 4;
     MOVZ X7, 4, LSL 0
-    // let a_19: Box = B(y_18);
+    // let ω a_19: Box = B(y_18);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -683,7 +683,7 @@ lab79:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // switch bb_12 \{ ... \};
+    // switch ω bb_12 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 BoxBox_80:
@@ -720,7 +720,7 @@ lab82:
     LDR X6, [ X6, 48 ]
 
 lab83:
-    // switch b_20 \{ ... \};
+    // switch ω b_20 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_84:
@@ -747,7 +747,7 @@ lab85:
     LDR X7, [ X6, 56 ]
 
 lab86:
-    // let a_22: Box = B(x_21);
+    // let ω a_22: Box = B(x_21);
     // #allocate memory
     // ##store values
     STR X7, [ X0, 56 ]
@@ -849,7 +849,7 @@ lab97:
 lab99:
     // #load tag
     MOVZ X7, 0, LSL 0
-    // switch a_22 \{ ... \};
+    // switch ω a_22 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_100:
@@ -882,7 +882,7 @@ lab102:
     MOV X2, X7
     MOV X7, X5
     MOV X5, X2
-    // switch a_19 \{ ... \};
+    // switch ω a_19 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Box_103:

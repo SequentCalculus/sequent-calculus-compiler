@@ -11,7 +11,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{
-    Chirality, ContextBinding, Ty, TypeDeclaration, TypingContext, statements::Literal,
+    Chirality, ContextBinding, Quantity, Ty, TypeDeclaration, TypingContext, statements::Literal,
 };
 
 use std::hash::Hash;
@@ -35,6 +35,7 @@ impl CodeStatement for Literal {
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         });
         Backend::load_immediate(

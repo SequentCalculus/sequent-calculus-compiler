@@ -1,13 +1,13 @@
 // actual code
 main_:
-// let ws_1: List = Nil();
+// let ω ws_1: List = Nil();
 // #mark no allocation
 MV X4 X0
 // #load tag
 LI X5 0
 // lit z_2 <- 5;
 LI X7 5
-// let zs_3: List = Cons(z_2, ws_1);
+// let ω zs_3: List = Cons(z_2, ws_1);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -104,7 +104,7 @@ lab13:
 LI X5 4
 // lit y_4 <- 7;
 LI X7 7
-// let ys_5: List = Cons(y_4, zs_3);
+// let ω ys_5: List = Cons(y_4, zs_3);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -201,7 +201,7 @@ lab26:
 LI X5 4
 // lit x_6 <- 9;
 LI X7 9
-// let xs_7: List = Cons(x_6, ys_5);
+// let ω xs_7: List = Cons(x_6, ys_5);
 // #allocate memory
 // ##store values
 SW X7 56 X2
@@ -296,7 +296,7 @@ lab37:
 lab39:
 // #load tag
 LI X5 4
-// switch xs_7 \{ ... \};
+// switch ω xs_7 \{ ... \};
 LA X1 List_40
 ADD X1 X1 X5
 JALR X0 X1 0

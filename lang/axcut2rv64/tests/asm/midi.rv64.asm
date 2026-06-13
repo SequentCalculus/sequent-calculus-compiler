@@ -1,11 +1,11 @@
 // actual code
 main_:
-// create t_1: ContInt = ()\{ ... \};
+// create ω t_1: ContInt = ()\{ ... \};
 // #mark no allocation
 MV X4 X0
 // #load tag
 LA X5 ContInt_1
-// create k_4: ContList = (t_1)\{ ... \};
+// create ω k_4: ContList = (t_1)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -99,7 +99,7 @@ lab12:
 lab14:
 // #load tag
 LA X5 ContList_15
-// let zs_6: List = Nil();
+// let ω zs_6: List = Nil();
 // #mark no allocation
 MV X6 X0
 // #load tag
@@ -173,7 +173,7 @@ MV X11 X9
 MV X9 X7
 MV X7 X5
 MV X5 X1
-// let ys_12: List = Cons(xs_9, i_10);
+// let ω ys_12: List = Cons(xs_9, i_10);
 // #allocate memory
 // ##store values
 SW X11 56 X2
@@ -292,12 +292,12 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// invoke k_8 Retl
+// invoke ω k_8 Retl
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
 sum_:
-// switch xs_16 \{ ... \};
+// switch ω xs_16 \{ ... \};
 LA X1 List_33
 ADD X1 X1 X7
 JALR X0 X1 0
@@ -315,7 +315,7 @@ MV X6 X4
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// invoke k_15 Reti
+// invoke ω k_15 Reti
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
@@ -359,7 +359,7 @@ MV X4 X1
 MV X1 X7
 MV X7 X5
 MV X5 X1
-// create j_20: ContInt = (k_15, y_19)\{ ... \};
+// create ω j_20: ContInt = (k_15, y_19)\{ ... \};
 // #allocate memory
 // ##store values
 SW X9 56 X2
@@ -504,7 +504,7 @@ ADD X11 X9 X5
 // substitute (s_22 := s_22)(k_15 := k_15);
 // #move variables
 MV X5 X11
-// invoke k_15 Reti
+// invoke ω k_15 Reti
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 

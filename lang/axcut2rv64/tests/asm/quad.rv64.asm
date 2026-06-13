@@ -8,7 +8,7 @@ LI X7 6
 LI X9 4
 // lit w_4 <- 2;
 LI X11 2
-// let q_5: Quad = Q(z_1, y_2, x_3, w_4);
+// let ω q_5: Quad = Q(z_1, y_2, x_3, w_4);
 // #allocate memory
 // ##store values
 SW X11 56 X2
@@ -194,7 +194,7 @@ lab24:
 lab26:
 // #load tag
 LI X5 0
-// switch q_5 \{ ... \};
+// switch ω q_5 \{ ... \};
 // #there is only one clause, so we can just fall through
 
 Quad_27:

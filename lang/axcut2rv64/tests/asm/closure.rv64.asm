@@ -2,7 +2,7 @@
 main_:
 // lit a_1 <- 9;
 LI X5 9
-// create f_2: Fun = (a_1)\{ ... \};
+// create ω f_2: Fun = (a_1)\{ ... \};
 // #allocate memory
 // ##store values
 SW X5 56 X2
@@ -96,7 +96,7 @@ lab11:
 lab13:
 // #load tag
 LA X5 Fun_14
-// create k_6: Cont = ()\{ ... \};
+// create ω k_6: Cont = ()\{ ... \};
 // #mark no allocation
 MV X6 X0
 // #load tag
@@ -109,7 +109,7 @@ MV X8 X4
 MV X1 X9
 MV X9 X5
 MV X5 X1
-// invoke f_2 apply
+// invoke ω f_2 apply
 // #there is only one clause, so we can jump there directly
 JALR X0 X9 0
 
@@ -148,7 +148,7 @@ ADD X11 X9 X5
 // substitute (b_5 := b_5)(k_4 := k_4);
 // #move variables
 MV X5 X11
-// invoke k_4 Ret
+// invoke ω k_4 Ret
 // #there is only one clause, so we can jump there directly
 JALR X0 X7 0
 
