@@ -70,6 +70,9 @@ impl Check for Label {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        // any label expression means that the whole program may contain nonlinear continuations
+        state.nonlinear_continuations = true;
+
         let mut new_context = context.clone();
         new_context.add_covar(&self.label, expected.clone());
         self.term = self.term.check(state, &new_context, expected)?;

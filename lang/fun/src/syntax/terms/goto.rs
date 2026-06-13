@@ -75,6 +75,9 @@ impl Check for Goto {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        // any goto expression means that the whole program may contain nonlinear continuations
+        state.nonlinear_continuations = true;
+
         let cont_type = context.lookup_covar(&self.target, &self.span)?;
         self.term = self.term.check(state, context, &cont_type)?;
 
