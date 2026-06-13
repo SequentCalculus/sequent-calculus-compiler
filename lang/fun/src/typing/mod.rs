@@ -9,6 +9,6 @@ pub mod check;
 pub mod errors;
 pub mod symbol_table;
 
-pub use check::{Check, check_args, check_equality};
+pub use check::{Check, CheckingState, check_args, check_equality};
 pub use errors::Error;
 pub use symbol_table::{SymbolTable, build_symbol_table};

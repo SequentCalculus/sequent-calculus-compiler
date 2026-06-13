@@ -71,12 +71,12 @@ impl From<Goto> for Term {
 impl Check for Goto {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         let cont_type = context.lookup_covar(&self.target, &self.span)?;
-        self.term = self.term.check(symbol_table, context, &cont_type)?;
+        self.term = self.term.check(state, context, &cont_type)?;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -110,7 +110,7 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Goto {
             span: dummy_span(),
@@ -130,7 +130,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         );

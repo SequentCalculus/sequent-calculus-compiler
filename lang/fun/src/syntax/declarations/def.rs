@@ -38,12 +38,13 @@ impl Def {
     /// This function checks the well-formedness of the top-level function. This consists of
     /// checking the well-formedness of the paramater list and return type, and typechecking the
     /// body in the context given by the parameters.
-    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+    pub fn check(mut self, state: &mut CheckingState) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
-        self.context.check(symbol_table)?;
-        self.ret_ty.check(&Some(self.span), symbol_table)?;
+        self.context.check(&mut state.symbol_table)?;
+        self.ret_ty
+            .check(&Some(self.span), &mut state.symbol_table)?;
 
-        self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
+        self.body = self.body.check(state, &self.context, &self.ret_ty)?;
 
         Ok(self)
     }

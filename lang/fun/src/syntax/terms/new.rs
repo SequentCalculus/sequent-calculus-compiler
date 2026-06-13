@@ -55,7 +55,7 @@ impl From<New> for Term {
 impl Check for New {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -71,7 +71,7 @@ impl Check for New {
         // the name of the instance of the data type in the symbol table, the instance must exists
         // already
         let type_name = name.clone() + &type_args.print_to_string(None);
-        let expected_dtors = match symbol_table.types.get(&type_name) {
+        let expected_dtors = match state.symbol_table.types.get(&type_name) {
             Some((Polarity::Codata, _type_args, dtors)) => dtors.clone(),
             Some((Polarity::Data, _, _)) => {
                 return Err(Error::ExpectedDataForNew {
@@ -101,7 +101,7 @@ impl Check for New {
                     dtor: dtor.clone(),
                 });
             };
-            match symbol_table.dtors.get(&dtor_name) {
+            match state.symbol_table.dtors.get(&dtor_name) {
                 None => {
                     return Err(Error::Undefined {
                         span: Some(self.span),
@@ -118,10 +118,9 @@ impl Check for New {
                         .append(&mut context_clause.bindings.clone());
 
                     clause.context = context_clause;
-                    clause.body =
-                        clause
-                            .body
-                            .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
+                    clause.body = clause
+                        .body
+                        .check(state, &new_context, &dtor_ret_ty.clone())?;
                     new_clauses.push(clause);
                 }
             }
@@ -163,7 +162,9 @@ mod test {
 
     #[test]
     fn check_lpair() {
-        let mut symbol_table = symbol_table_lpair();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_lpair(),
+        };
         let result = New {
             span: dummy_span(),
             clauses: vec![
@@ -187,7 +188,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table,
+            &mut state,
             &TypingContext::default(),
             &Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         )
@@ -228,7 +229,9 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         ctx.add_covar("a", Ty::mk_i64());
-        let mut symbol_table = symbol_table_fun();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_fun(),
+        };
         let result = New {
             span: dummy_span(),
             clauses: vec![Clause {
@@ -242,7 +245,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table,
+            &mut state,
             &TypingContext::default(),
             &Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         )
@@ -273,7 +276,9 @@ mod test {
 
     #[test]
     fn check_new_fail() {
-        let mut symbol_table = symbol_table_fun();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_fun(),
+        };
         let result = New {
             span: dummy_span(),
             clauses: vec![Clause {
@@ -287,7 +292,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table,
+            &mut state,
             &TypingContext::default(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );

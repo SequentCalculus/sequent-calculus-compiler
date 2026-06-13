@@ -66,13 +66,13 @@ impl From<Label> for Term {
 impl Check for Label {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         let mut new_context = context.clone();
         new_context.add_covar(&self.label, expected.clone());
-        self.term = self.term.check(symbol_table, &new_context, expected)?;
+        self.term = self.term.check(state, &new_context, expected)?;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -106,7 +106,7 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -129,7 +129,7 @@ mod test {
             term: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

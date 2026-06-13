@@ -52,16 +52,16 @@ impl From<Call> for Term {
 impl Check for Call {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        match symbol_table.defs.get(&self.name) {
+        match state.symbol_table.defs.get(&self.name) {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+                check_equality(&self.span, state, expected, &ret_ty)?;
 
-                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
+                self.args = check_args(&self.span, state, context, self.args, &types)?;
 
                 self.ret_ty = Some(expected.clone());
                 Ok(self)
@@ -92,15 +92,18 @@ mod test {
 
     #[test]
     fn check_mult() {
-        let mut symbol_table = symbol_table_list();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+        };
         let mut ctx = TypingContext::default();
         ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        symbol_table
+        state
+            .symbol_table
             .defs
             .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
         let result = def_mult()
             .body
-            .check(&mut symbol_table, &ctx, &Ty::mk_i64())
+            .check(&mut state, &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = def_mult_typed().body;
         assert_eq!(result, expected)
@@ -115,7 +118,7 @@ mod test {
             ret_ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext {
                 span: None,
                 bindings: vec![],

@@ -76,16 +76,17 @@ impl From<Let> for Term {
 impl Check for Let {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.var_ty.check(&Some(self.span), symbol_table)?;
-        self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        self.var_ty
+            .check(&Some(self.span), &mut state.symbol_table)?;
+        self.bound_term = self.bound_term.check(state, context, &self.var_ty)?;
 
         let mut new_context = context.clone();
         new_context.add_var(&self.variable, self.var_ty.clone());
-        self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
+        self.in_term = self.in_term.check(state, &new_context, expected)?;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -123,7 +124,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -148,7 +149,9 @@ mod test {
     }
     #[test]
     fn check_let_fail() {
-        let mut symbol_table = symbol_table_list();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+        };
         let result = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
@@ -166,7 +169,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table,
+            &mut state,
             &TypingContext::default(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );

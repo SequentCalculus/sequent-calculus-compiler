@@ -82,12 +82,12 @@ impl Ty {
     pub fn check_template(
         &self,
         span: Option<SourceSpan>,
-        symbol_table: &SymbolTable,
+        state: &CheckingState,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         match self {
             Ty::I64 { .. } => Ok(()),
-            Ty::Decl { name, .. } => match symbol_table.type_templates.get(name) {
+            Ty::Decl { name, .. } => match state.symbol_table.type_templates.get(name) {
                 Some(_) => Ok(()),
                 None => {
                     if type_params.bindings.contains(name) {
