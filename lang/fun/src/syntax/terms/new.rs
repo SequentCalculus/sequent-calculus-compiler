@@ -164,6 +164,7 @@ mod test {
     fn check_lpair() {
         let mut state = CheckingState {
             symbol_table: symbol_table_lpair(),
+            ..Default::default()
         };
         let result = New {
             span: dummy_span(),
@@ -231,6 +232,7 @@ mod test {
         ctx.add_covar("a", Ty::mk_i64());
         let mut state = CheckingState {
             symbol_table: symbol_table_fun(),
+            ..Default::default()
         };
         let result = New {
             span: dummy_span(),
@@ -278,6 +280,7 @@ mod test {
     fn check_new_fail() {
         let mut state = CheckingState {
             symbol_table: symbol_table_fun(),
+            ..Default::default()
         };
         let result = New {
             span: dummy_span(),

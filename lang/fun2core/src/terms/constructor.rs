@@ -81,6 +81,7 @@ mod compile_tests {
         let term = parse_term!("Cons(1,Nil)");
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let term_typed = term
             .check(

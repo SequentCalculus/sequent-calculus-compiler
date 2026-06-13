@@ -97,6 +97,7 @@ mod compile_tests {
         let term = parse_term!("let x : List[i64] = Cons(x,Nil); x");
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());

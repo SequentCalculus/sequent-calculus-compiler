@@ -30,6 +30,7 @@ impl Program {
     pub fn check(self) -> Result<CheckedProgram, Error> {
         let state = CheckingState {
             symbol_table: build_symbol_table(&self)?,
+            nonlinear_continuations: false,
         };
         self.check_with_state(state)
     }

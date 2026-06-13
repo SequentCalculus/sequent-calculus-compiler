@@ -151,6 +151,7 @@ mod test {
     fn check_let_fail() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let result = Let {
             span: dummy_span(),

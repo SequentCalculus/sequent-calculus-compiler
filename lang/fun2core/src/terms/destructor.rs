@@ -66,6 +66,7 @@ mod compile_tests {
         let term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
         let mut state = CheckingState {
             symbol_table: symbol_table_lpair(),
+            ..Default::default()
         };
         let term_typed = term
             .check(
@@ -117,6 +118,7 @@ mod compile_tests {
         let term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
         let mut state = CheckingState {
             symbol_table: symbol_table_lpair(),
+            ..Default::default()
         };
         let term_typed = term
             .check(

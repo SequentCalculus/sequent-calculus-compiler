@@ -113,6 +113,7 @@ mod test {
     fn check_nil() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let result = Constructor {
             span: dummy_span(),
@@ -139,6 +140,7 @@ mod test {
     fn check_cons() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
@@ -193,6 +195,7 @@ mod test {
     fn check_ctor_fail() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let result = Constructor {
             span: dummy_span(),

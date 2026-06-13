@@ -149,6 +149,7 @@ mod destructor_tests {
         );
         let mut state = CheckingState {
             symbol_table: symbol_table_lpair(),
+            ..Default::default()
         };
         let result = Destructor {
             span: dummy_span(),
@@ -192,6 +193,7 @@ mod destructor_tests {
         ctx.add_covar("a", Ty::mk_i64());
         let mut state = CheckingState {
             symbol_table: symbol_table_fun_template(),
+            ..Default::default()
         };
         let result = Destructor {
             span: dummy_span(),

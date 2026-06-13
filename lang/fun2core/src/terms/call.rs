@@ -68,7 +68,10 @@ mod compile_tests {
                         type_templates: HashMap::default(),
                     };
 
-                    CheckingState { symbol_table }
+                    CheckingState {
+                        symbol_table,
+                        ..Default::default()
+                    }
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),

@@ -94,6 +94,7 @@ mod test {
     fn check_mult() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let mut ctx = TypingContext::default();
         ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));

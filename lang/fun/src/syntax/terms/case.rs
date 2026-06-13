@@ -194,6 +194,7 @@ mod test {
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let mut state = CheckingState {
             symbol_table: symbol_table_list_template(),
+            ..Default::default()
         };
         let result = Case {
             span: dummy_span(),
@@ -269,6 +270,7 @@ mod test {
         ctx_names.bindings.push("y".to_string());
         let mut state = CheckingState {
             symbol_table: symbol_table_list_template(),
+            ..Default::default()
         };
         let result = Case {
             span: dummy_span(),

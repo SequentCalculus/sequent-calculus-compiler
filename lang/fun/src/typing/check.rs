@@ -21,6 +21,7 @@ use super::{errors::Error, symbol_table::SymbolTable};
 #[derive(Debug, Default)]
 pub struct CheckingState {
     pub symbol_table: SymbolTable,
+    pub nonlinear_continuations: bool,
 }
 
 /// This trait defines a method for typechecking against an expected type. The expected type will
@@ -231,6 +232,7 @@ mod check_tests {
     fn check_arg_list() {
         let mut state = CheckingState {
             symbol_table: symbol_table_list(),
+            ..Default::default()
         };
         let result = check_args(
             &dummy_span(),
@@ -293,6 +295,7 @@ mod check_tests {
     fn check_arg_covar() {
         let mut state = CheckingState {
             symbol_table: symbol_table_fun(),
+            ..Default::default()
         };
         let result = check_args(
             &dummy_span(),

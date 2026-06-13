@@ -85,6 +85,7 @@ mod compile_tests {
         let term = parse_term!("new { fst => 1, snd => 2 }");
         let mut state = CheckingState {
             symbol_table: symbol_table_lpair(),
+            ..Default::default()
         };
         let term_typed = term
             .check(
