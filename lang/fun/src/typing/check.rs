@@ -181,6 +181,7 @@ mod check_tests {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],
+            nonlinear_continuations: false,
         };
         assert_eq!(result, expected)
     }

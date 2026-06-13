@@ -104,6 +104,7 @@ mod compile_tests {
             defs: vec![],
             data_types: vec![],
             codata_types: vec![],
+            nonlinear_continuations: false,
         }
     }
 
@@ -112,6 +113,7 @@ mod compile_tests {
             defs: vec![example_def1().into(), example_def2().into()],
             data_types: vec![],
             codata_types: vec![],
+            nonlinear_continuations: false,
         }
     }
 

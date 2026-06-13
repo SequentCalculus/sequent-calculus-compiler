@@ -22,6 +22,8 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
+    /// Flag whether the program contains nonlinear continuations (through label/goto)
+    pub nonlinear_continuations: bool,
 }
 
 impl Program {
@@ -130,6 +132,7 @@ impl Program {
             data_types,
             codata_types,
             defs,
+            nonlinear_continuations: state.nonlinear_continuations,
         })
     }
 
