@@ -68,6 +68,13 @@ impl CodeStatement for Switch {
         // the `load`s performed by `code_clauses` expect the pointer to memory to be in the first
         // temporary after the current context, so we pop the corresponding binding here
         context.bindings.pop();
-        code_clauses::<Backend, _, _, _>(&context, self.clauses, &fresh_label, types, instructions);
+        code_clauses::<Backend, _, _, _>(
+            &context,
+            self.clauses,
+            &fresh_label,
+            types,
+            todo!(),
+            instructions,
+        );
     }
 }
