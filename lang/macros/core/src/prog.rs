@@ -11,13 +11,18 @@ pub fn prog(input: TokenStream) -> TokenStream {
             "Data Declarations",
             "Codata Declarations",
             "Max Used Identifier Id",
+            "Nonlinear Continuations Annotation",
         ],
-        &[(3, parse_str("0").unwrap())],
+        &[
+            (3, parse_str("0").unwrap()),
+            (4, parse_str("false").unwrap()),
+        ],
     );
     let def_list = expr_to_array(&args[0], 0);
     let data_list = expr_to_array(&args[1], 1);
     let codata_list = expr_to_array(&args[2], 2);
     let max_id = &args[3];
+    let nonlinear_continuations = &args[4];
     quote! {
         core_lang::syntax::program::Prog{
             defs: ::std::vec::Vec::from([
@@ -29,7 +34,8 @@ pub fn prog(input: TokenStream) -> TokenStream {
             codata_types: ::std::vec::Vec::from([
                 #(#codata_list),*
             ]),
-            max_id: #max_id
+            max_id: #max_id,
+            nonlinear_continuations: #nonlinear_continuations,
         }
     }
     .into()
