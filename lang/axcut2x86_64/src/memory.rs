@@ -773,8 +773,10 @@ impl Memory<Code, Temporary> for Backend {
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        linear: bool,
         instructions: &mut Vec<Code>,
     ) {
+        todo!("linearity");
         store_fields(
             to_store,
             remaining_context,
@@ -786,8 +788,10 @@ impl Memory<Code, Temporary> for Backend {
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
+        linear: bool,
         instructions: &mut Vec<Code>,
     ) {
+        todo!("linearity");
         #[allow(clippy::vec_init_then_push)]
         fn load_register(
             memory_block: Register,
