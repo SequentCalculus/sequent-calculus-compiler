@@ -15,12 +15,14 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the binding of an xtor in AxCut. It consists of a variable to which to bind
-/// the xtor, its type, the name of the xtor, its arguments, and the remaining statement. Moreover,
-/// the free variables of the remaining statement can be annotated.
+/// the xtor, its type, whether it's known to be used linearly, the name of the xtor, its arguments,
+/// and the remaining statement. Moreover, the free variables of the remaining statement can be
+/// annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Let {
     pub var: Identifier,
     pub ty: Ty,
+    pub linear: bool,
     pub tag: Identifier,
     pub args: TypingContext,
     pub next: Rc<Statement>,
@@ -50,6 +52,11 @@ impl Print for Let {
 
         alloc
             .keyword(LET)
+            .append(if self.linear {
+                alloc.keyword("1")
+            } else {
+                alloc.nil()
+            })
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(COLON)

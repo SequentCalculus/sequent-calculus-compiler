@@ -335,6 +335,7 @@ fn shrink_critical_pairs(
                             axcut::syntax::statements::Let {
                                 var,
                                 ty: translated_ty.clone(),
+                                linear: !state.nonlinear_continuations && is_codata,
                                 tag: shrink_identifier(xtor),
                                 args: env,
                                 next,
@@ -642,8 +643,17 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            )
-            | (
+            ) => axcut::syntax::statements::Let {
+                var: shrink_identifier(variable),
+                ty: shrink_ty(self.ty),
+                linear: false,
+                tag: shrink_identifier(name),
+                args: shrink_context(args, state.codata),
+                next: statement.shrink(state),
+                free_vars_next: None,
+            }
+            .into(),
+            (
                 FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
@@ -659,6 +669,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Let {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 tag: shrink_identifier(name),
                 args: shrink_context(args, state.codata),
                 next: statement.shrink(state),
