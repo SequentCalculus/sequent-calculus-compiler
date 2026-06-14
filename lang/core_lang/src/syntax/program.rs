@@ -19,6 +19,8 @@ pub struct Prog<D = Def> {
     pub codata_types: Vec<CodataDeclaration>,
     /// Highest [`ID`] currently used for [`Identifier`]s in the program
     pub max_id: ID,
+    /// Flag whether the program contains nonlinear continuations.
+    pub nonlinear_continuations: bool,
 }
 
 pub type FsProg = Prog<FsDef>;
@@ -38,6 +40,7 @@ impl Prog {
             data_types: self.data_types,
             codata_types: self.codata_types,
             max_id,
+            nonlinear_continuations: self.nonlinear_continuations,
         }
     }
 

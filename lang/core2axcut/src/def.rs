@@ -23,6 +23,7 @@ pub fn shrink_def(
     codata_types: &[CodataDeclaration],
     used_labels: &mut HashSet<Identifier>,
     max_id: &mut ID,
+    nonlinear_continuations: bool,
 ) -> VecDeque<axcut::syntax::Def> {
     // we sometimes create new top-level labels during the translation, so we need to collect them
     let mut def_plus_lifted_statements = VecDeque::new();
@@ -34,6 +35,7 @@ pub fn shrink_def(
         used_labels,
         current_label: &def.name.name,
         lifted_statements: &mut def_plus_lifted_statements,
+        nonlinear_continuations,
     });
 
     def_plus_lifted_statements.push_front(axcut::syntax::Def {

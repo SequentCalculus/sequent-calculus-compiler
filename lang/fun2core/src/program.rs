@@ -50,6 +50,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         data_types,
         codata_types,
         max_id: 0,
+        nonlinear_continuations: prog.nonlinear_continuations,
     }
 }
 
