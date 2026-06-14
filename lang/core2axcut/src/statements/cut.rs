@@ -229,6 +229,7 @@ fn shrink_critical_pairs(
         Ty::I64 => axcut::syntax::statements::Create {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
+            linear: !state.nonlinear_continuations,
             // ... so we turn the tilde-mu-binding into a continuation closure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
@@ -249,6 +250,7 @@ fn shrink_critical_pairs(
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            let is_codata = ty.is_codata(state.codata);
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
@@ -257,7 +259,7 @@ fn shrink_critical_pairs(
                 _,
                 _,
                 _,
-            ) = if ty.is_codata(state.codata) {
+            ) = if is_codata {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -348,6 +350,7 @@ fn shrink_critical_pairs(
             axcut::syntax::statements::Create {
                 var: shrink_identifier(var_keep),
                 ty: axcut::syntax::Ty::Decl(shrink_identifier(name)),
+                linear: !state.nonlinear_continuations && !is_codata,
                 context: None,
                 clauses,
                 free_vars_clauses: None,
@@ -751,6 +754,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Create {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 context: None,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
@@ -773,6 +777,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Create {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: false,
                 context: None,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,

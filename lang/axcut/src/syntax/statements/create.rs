@@ -16,14 +16,15 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the creation of a closure in AxCut. It consists of a variable to which to
-/// bind the closure, its type, a list of clauses (one for each xtor in the type declaration), and
-/// the remaining statement. Moreover, the closure environment can be annotated as is done by the
-/// linearization procedure. Additionally, the free variables of the clauses and of the remaining
-/// statement can be annotated.
+/// bind the closure, its type, whether it's known to be used linearly, a list of clauses (one for
+/// each xtor in the type declaration), and the remaining statement. Moreover, the closure
+/// environment can be annotated as is done by the linearization procedure. Additionally, the
+/// free variables of the clauses and of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Create {
     pub var: Identifier,
     pub ty: Ty,
+    pub linear: bool,
     /// Closure environment
     pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
@@ -55,6 +56,11 @@ impl Print for Create {
 
         alloc
             .keyword(CREATE)
+            .append(if self.linear {
+                alloc.keyword("1")
+            } else {
+                alloc.nil()
+            })
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(COLON)
