@@ -1,14 +1,20 @@
 //! This module defines programs in Core.
 
+use std::collections::HashSet;
+
 use printer::*;
 
 use crate::{
+    bail,
     mono::{
         constraints::{ConstraintCollector, FlowConstraintSet},
         errors::MonoError,
     },
     syntax::*,
-    typing::{check::Checked, errors::LocatedTypeError},
+    typing::{
+        check::Checked,
+        errors::{LocatedTypeError, TypeError},
+    },
 };
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
@@ -129,6 +135,43 @@ impl Checked for Prog {
         codata_declarations: &[CodataDeclaration],
         defs: &[Def],
     ) -> Result<(), LocatedTypeError> {
+        let mut seen_types: HashSet<&str> = HashSet::new();
+        let mut seen_defs: HashSet<&str> = HashSet::new();
+        let mut seen_xtors: HashSet<&str> = HashSet::new();
+
+        // check for duplicate type names in data declarations
+        for data in &self.data_types {
+            if !seen_types.insert(&data.name.name) {
+                bail!(TypeError::DuplicateTypeName(data.name.name.clone()));
+            }
+            // check for duplicate xtor names in data declarations
+            for ctor in &data.xtors {
+                if !seen_xtors.insert(&ctor.name.name) {
+                    bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
+                }
+            }
+        }
+
+        // check for duplicate type names in codata declarations
+        for codata in &self.codata_types {
+            if !seen_types.insert(&codata.name.name) {
+                bail!(TypeError::DuplicateTypeName(codata.name.name.clone()));
+            }
+            // check for duplicate xtor names in codata declarations
+            for ctor in &codata.xtors {
+                if !seen_xtors.insert(&ctor.name.name) {
+                    bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
+                }
+            }
+        }
+
+        // check for duplicate function names in defs
+        for def in &self.defs {
+            if !seen_defs.insert(&def.name.name) {
+                bail!(TypeError::DuplicateDefName(def.name.name.clone()));
+            }
+        }
+
         for data in &self.data_types {
             data.check(
                 &data.type_params,
@@ -162,8 +205,8 @@ mod program_tests {
     use crate::typing::check::Checked;
     extern crate self as core_lang;
     use core_macros::{
-        bind, cns, covar, ctor_sig, cut, data, def, exit, fs_cut, fs_def, id, lit, prd, prog, tvar,
-        ty, var,
+        bind, cns, codata, covar, ctor_sig, cut, data, def, dtor_sig, exit, fs_cut, fs_def, id,
+        lit, prd, prog, tvar, ty, var,
     };
 
     fn example_def2_var() -> FsDef {
@@ -336,6 +379,59 @@ mod program_tests {
             )
             .is_err(),
             "expected arity mismatch for type application in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_type_name_in_prog() {
+        // two data declarations with the same name
+        let list1 = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list2 = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list1, list2],
+            []
+        );
+
+        assert!(
+            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
+                .is_err(),
+            "expected error for duplicate type name in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_def_name_in_prog() {
+        // two defs with the same name
+        let def1 = def!(id!("my_func"), [], exit!(lit!(1), ty!("int")));
+        let def2 = def!(id!("my_func"), [], exit!(lit!(2), ty!("int")));
+
+        let prog = prog!([def1, def2], [], []);
+
+        assert!(
+            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
+                .is_err(),
+            "expected error for duplicate function name in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_xtor_name_in_prog() {
+        // two xtors with the same name across data and codata declarations
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let stream = codata!(id!("Stream"), [dtor_sig!(id!("Nil"), [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            [stream]
+        );
+
+        assert!(
+            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
+                .is_err(),
+            "expected error for duplicate xtor name in program"
         );
     }
 }

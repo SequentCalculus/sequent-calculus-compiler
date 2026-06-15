@@ -71,6 +71,15 @@ pub enum TypeError {
     /// A referenced function was not defined.
     UndefinedFunction(String),
 
+    /// A type name was declared more than once in the program.
+    DuplicateTypeName(String),
+
+    /// A function name was declared more than once in the program.
+    DuplicateDefName(String),
+
+    /// An xtor name was declared more than once across all data/codata declarations.
+    DuplicateXtorName(String),
+
     /// Generic wrapper for other errors with contextual message.
     Contextual { msg: String },
 }
@@ -123,6 +132,11 @@ impl fmt::Display for TypeError {
                 type_name, xtor_name
             ),
             TypeError::UndefinedFunction(name) => write!(f, "Undefined function: '{}'", name),
+            TypeError::DuplicateTypeName(name) => write!(f, "Duplicate type name: '{}'", name),
+            TypeError::DuplicateDefName(name) => write!(f, "Duplicate function name: '{}'", name),
+            TypeError::DuplicateXtorName(name) => {
+                write!(f, "Duplicate xtor name: '{}'", name,)
+            }
             TypeError::Contextual { msg } => write!(f, "{}", msg),
         }
     }
