@@ -89,9 +89,10 @@ fn shrink_unknown_cuts(
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            let is_codata = ty.is_codata(state.codata);
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
-            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
+            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if is_codata {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -153,6 +154,7 @@ fn shrink_unknown_cuts(
             axcut::syntax::statements::Switch {
                 var: shrink_identifier(var_keep),
                 ty: translated_ty,
+                linear: !state.nonlinear_continuations && is_codata,
                 clauses,
                 free_vars_clauses: None,
             }
@@ -726,6 +728,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Switch {
                 var: shrink_identifier(var),
                 ty: shrink_ty(self.ty),
+                linear: false,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
             }
@@ -744,6 +747,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Switch {
                 var: shrink_identifier(var),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
             }
