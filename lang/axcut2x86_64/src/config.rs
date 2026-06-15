@@ -161,7 +161,7 @@ pub const NEXT_ELEMENT_OFFSET: Immediate = address(1);
 /// - `field` is the logical offset of the field in the memory block. It must be between `0` and
 ///   [`FIELDS_PER_BLOCK`].
 /// - `linear` is a flag to omit the header offset if used to calculate an offset for a linearly
-/// used memory block.
+///   used memory block.
 #[allow(clippy::cast_possible_wrap)]
 pub const fn field_offset(number: TemporaryNumber, i: usize, linear: bool) -> Immediate {
     let header = if linear { 0 } else { 2 };
