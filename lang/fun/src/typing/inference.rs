@@ -268,7 +268,7 @@ impl Solution {
         (self.var_name, self.ty)
     }
 
-    fn get_constraints_with_choice(&self, new_solution: &Solution) -> Option<Constraint> {
+    fn get_new_constraints_with_choice(&self, new_solution: &Solution) -> Option<Constraint> {
         if self.choices.iter().all(|(choice_id, signature_id)| {
             new_solution
                 .choices
@@ -279,19 +279,7 @@ impl Solution {
             let mut combined_choice = self.choices.clone();
             combined_choice.extend(new_solution.choices.iter());
 
-            let ty1 = if new_solution.var_name == self.var_name
-            {
-                // if the names are the same, the first ty in the equation
-                // is the type from the solution
-                new_solution.ty.clone()
-            } else {
-                // else the name of the current solution is used as a type var
-                Ty::mk_ty_var(&self.var_name)
-            };
-
-            let ty2 = self.ty.clone().subst_ty(&HashMap::from([(new_solution.var_name.clone(), new_solution.ty.clone())]));
-
-            Some(Constraint::Equality(ty1, ty2, combined_choice))
+            Some(Constraint::Equality(new_solution.ty.clone(), self.ty.clone(), combined_choice))
         } else {
             // if there are conflicting choices, no new Constraint is created
             None
@@ -306,14 +294,15 @@ fn integrate_new_solution(
     solutions: &mut SolutionCache,
     new_solution: Solution,
 ) {
-    let related_solutions = solutions.get(&new_solution.var_name);
-    // all solutions that have the same TypeVar as the new solution are selected
-    let new_constraints = related_solutions
-        .iter()
-        .filter_map(|s| s.get_constraints_with_choice(&new_solution));
-    // all solutions are converted to constraints with the new choices added
+    if let Some(related_solutions) = solutions.get(&new_solution.var_name) {
+        // all solutions that have the same var_name as the new solution are selected
+        let new_constraints = related_solutions
+            .iter()
+            .filter_map(|s| s.get_new_constraints_with_choice(&new_solution));
+        // all solutions are converted to constraints with the new choices added
 
-    equations.extend(new_constraints);
+        equations.extend(new_constraints);
+    }
 
     solutions.add_solution(new_solution);
 }
@@ -410,54 +399,32 @@ pub fn constraint_unification(
 }
 
 pub struct SolutionCache {
-    mapping: HashMap<Name, Vec<usize>>,
-    pool: Vec<Solution>,
+    mapping: HashMap<Name, Vec<Solution>>,
 }
 
 impl SolutionCache {
     pub fn new() -> Self {
         Self {
             mapping: HashMap::new(),
-            pool: Vec::new(),
         }
     }
 
     pub fn add_solution(&mut self, solution: Solution) {
-        let new_index = self.pool.len();
-
         // adding an entry for the solution var name
         if let Some(entries) = self.mapping.get_mut(&solution.var_name) {
-            entries.push(new_index);
+            entries.push(solution);
         } else {
             self.mapping
-                .insert(solution.var_name.clone(), vec![new_index]);
+                .insert(solution.var_name.clone(), vec![solution]);
         }
-
-        // adding an entry for the possible type var
-        if let Ty::TypeVar { name, .. } = &solution.ty {
-            if let Some(entries) = self.mapping.get_mut(name) {
-                entries.push(new_index);
-            } else {
-                self.mapping.insert(name.clone(), vec![new_index]);
-            }
-        }
-
-        self.pool.push(solution);
     }
 
-    pub fn get(&self, var_name: &Name) -> Vec<&Solution> {
-        if let Some(indices) = self.mapping.get(var_name) {
-            indices
-                .iter()
-                .filter_map(|index| self.pool.get(*index))
-                .collect()
-        } else {
-            Vec::new()
-        }
+    pub fn get(&self, var_name: &Name) -> Option<&Vec<Solution>> {
+        self.mapping.get(var_name)
     }
 
     pub fn all_solutions(self) -> Vec<Solution> {
-        self.pool
+        self.mapping.into_values().flatten().collect()
     }
 }
 
@@ -465,7 +432,6 @@ impl Default for SolutionCache {
     fn default() -> Self {
         Self {
             mapping: Default::default(),
-            pool: Default::default(),
         }
     }
 }
@@ -495,11 +461,11 @@ mod test {
         let current_entries_b = solution_cache.get(&"b".to_string());
         let current_entries_c = solution_cache.get(&"c".to_string());
 
-        let expected_entries_a = vec![&solution_1, &solution_2];
+        let expected_entries_a = Some(&vec![solution_1, solution_2.clone()]);
 
-        let expected_entries_b = vec![&solution_2];
+        let expected_entries_b = Some(&vec![solution_2]);
 
-        let expected_entries_c = vec![&solution_3];
+        let expected_entries_c = Some(&vec![solution_3]);
 
         assert_eq!(current_entries_a, expected_entries_a);
         assert_eq!(current_entries_b, expected_entries_b);
