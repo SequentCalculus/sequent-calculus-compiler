@@ -8,6 +8,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
@@ -278,23 +279,16 @@ impl<C: Chi> Checked for Term<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         match self {
-            Term::XVar(var) => var.check(type_params, data_declarations, codata_declarations, defs),
-            Term::Literal(lit) => {
-                lit.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Term::Op(op) => op.check(type_params, data_declarations, codata_declarations, defs),
-            Term::Mu(mu) => mu.check(type_params, data_declarations, codata_declarations, defs),
-            Term::Xtor(xtor) => {
-                xtor.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Term::XCase(xcase) => {
-                xcase.check(type_params, data_declarations, codata_declarations, defs)
-            }
+            Term::XVar(var) => var.check(type_params, context, env),
+            Term::Literal(lit) => lit.get_type().check(type_params, context, env),
+            Term::Op(op) => op.check(type_params, context, env),
+            Term::Mu(mu) => mu.check(type_params, context, env),
+            Term::Xtor(xtor) => xtor.check(type_params, context, env),
+            Term::XCase(xcase) => xcase.check(type_params, context, env),
         }
     }
 }

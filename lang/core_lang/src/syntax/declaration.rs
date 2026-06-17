@@ -1,11 +1,12 @@
 //! This module defines user-declared data and codata types in Core.
 
 use crate::typing::check::Checked;
-use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
-use crate::{bail, syntax::*};
+use crate::syntax::*;
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.
@@ -204,27 +205,12 @@ impl<P: Polarity> Checked for TypeDeclaration<P> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        // check existence of type declaration
-        if self.dat.is_data() {
-            if !data_declarations.iter().any(|data| data.name == self.name) {
-                bail!(TypeError::UndeclaredType(self.name.name.clone()));
-            }
-        } else {
-            if !codata_declarations
-                .iter()
-                .any(|codata| codata.name == self.name)
-            {
-                bail!(TypeError::UndeclaredType(self.name.name.clone()));
-            }
-        }
-
         // check xtors
         for xtor in &self.xtors {
-            xtor.check(type_params, data_declarations, codata_declarations, defs)?;
+            xtor.check(type_params, context, env)?;
         }
         Ok(())
     }
@@ -234,18 +220,19 @@ impl<P: Polarity> Checked for XtorSig<P> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.args
-            .check(type_params, data_declarations, codata_declarations, defs)
+        self.args.check(type_params, context, env)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::typing::check::Checked;
+    use crate::{
+        syntax::TypingContext,
+        typing::{check::Checked, env::GlobalEnv},
+    };
     extern crate self as core_lang;
     use core_macros::{bind, ctor_sig, data, id, prd, ty};
 
@@ -257,12 +244,24 @@ mod tests {
         // well-formed: List[i64]
         let ty_good = ty!(id!("List"), [ty!("int")]);
 
-        assert!(ty_good.check(&[], &[list.clone()], &[], &[]).is_ok());
+        assert!(
+            ty_good
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&[list.clone()], &[], &[])
+                )
+                .is_ok()
+        );
 
         // arity mismatch: List[] against List[A]
         let ty_bad = ty!(id!("List"));
 
-        let res = ty_bad.check(&[], &[list.clone()], &[], &[]);
+        let res = ty_bad.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[list.clone()], &[], &[]),
+        );
         assert!(res.is_err());
     }
 
@@ -279,10 +278,17 @@ mod tests {
         );
 
         // xtor signature check
-        assert!(decl.check(&[], &[decl.clone()], &[], &[]).is_ok());
+        assert!(
+            decl.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[decl.clone()], &[], &[])
+            )
+            .is_ok()
+        );
 
         // missing declaration (empty declarations list)
-        let res = decl.check(&[], &[], &[], &[]);
+        let res = decl.check(&[], &TypingContext::default(), &GlobalEnv::default());
         assert!(res.is_err());
     }
 }

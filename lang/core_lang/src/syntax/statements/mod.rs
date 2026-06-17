@@ -8,6 +8,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
@@ -149,26 +150,15 @@ impl Checked for Statement {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         match self {
-            Statement::Cut(cut) => {
-                cut.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Statement::IfC(ifc) => {
-                ifc.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Statement::PrintI64(print) => {
-                print.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Statement::Call(call) => {
-                call.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Statement::Exit(exit) => {
-                exit.check(type_params, data_declarations, codata_declarations, defs)
-            }
+            Statement::Cut(cut) => cut.check(type_params, context, env),
+            Statement::IfC(ifc) => ifc.check(type_params, context, env),
+            Statement::PrintI64(print) => print.check(type_params, context, env),
+            Statement::Call(call) => call.check(type_params, context, env),
+            Statement::Exit(exit) => exit.check(type_params, context, env),
         }
     }
 }

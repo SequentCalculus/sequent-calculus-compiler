@@ -7,8 +7,6 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::check::Checked;
-use crate::typing::errors::LocatedTypeError;
 
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -66,20 +64,6 @@ impl ConstraintCollector for Literal {
         _codata_declarations: &[CodataDeclaration],
     ) -> Result<FlowConstraintSet, MonoError> {
         Ok(FlowConstraintSet::new())
-    }
-}
-
-impl Checked for Literal {
-    fn check(
-        &self,
-        type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
-    ) -> Result<(), LocatedTypeError> {
-        self.get_type()
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        Ok(())
     }
 }
 

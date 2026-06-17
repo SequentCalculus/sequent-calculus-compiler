@@ -7,6 +7,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
@@ -222,9 +223,8 @@ impl Checked for Op {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check that both operands of the binary operator have type i64
         if self.fst.get_type() != Ty::I64 {
@@ -243,10 +243,8 @@ impl Checked for Op {
             });
         }
 
-        self.fst
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.snd
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.fst.check(type_params, context, env)?;
+        self.snd.check(type_params, context, env)?;
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 use crate::{
-    syntax::{CodataDeclaration, DataDeclaration, Def, Identifier, Ty, types::TypeArgs},
-    typing::errors::LocatedTypeError,
+    syntax::{Identifier, Ty, TypingContext, types::TypeArgs},
+    typing::{env::GlobalEnv, errors::LocatedTypeError},
 };
 
 /// This trait defines the type checking behavior for all syntax elements in core. The `check` method takes the current context of type parameters, data declarations, codata declarations, and function definitions, and returns an error if the syntax element is not well-typed.
@@ -8,9 +8,8 @@ pub trait Checked: Sized {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError>;
 }
 

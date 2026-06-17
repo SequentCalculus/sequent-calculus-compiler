@@ -13,6 +13,7 @@ use crate::{
     syntax::*,
     typing::{
         check::Checked,
+        env::GlobalEnv,
         errors::{LocatedTypeError, TypeError},
     },
 };
@@ -97,24 +98,11 @@ impl ConstraintCollector for Prog {
         data_declarations: &[DataDeclaration],
         codata_declarations: &[CodataDeclaration],
     ) -> Result<FlowConstraintSet, MonoError> {
-        // collect all type parameters from the data and codata declarations in the program
-        let type_params: Vec<Identifier> = self
-            .data_types
-            .iter()
-            .flat_map(|data| data.type_params.clone())
-            .chain(
-                self.codata_types
-                    .iter()
-                    .flat_map(|codata| codata.type_params.clone()),
-            )
-            .collect();
-
         // type check the program before collecting constraints, to ensure that all type annotations in the program are well-formed
         self.check(
-            &type_params,
-            data_declarations,
-            codata_declarations,
-            &self.defs,
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&self.data_types, &self.codata_types, &self.defs),
         )
         .unwrap();
 
@@ -123,6 +111,7 @@ impl ConstraintCollector for Prog {
         for def in &self.defs {
             constraints.extend(def.collect_constraints(data_declarations, codata_declarations)?);
         }
+
         Ok(constraints)
     }
 }
@@ -131,9 +120,8 @@ impl Checked for Prog {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         let mut seen_types: HashSet<&str> = HashSet::new();
         let mut seen_defs: HashSet<&str> = HashSet::new();
@@ -173,23 +161,13 @@ impl Checked for Prog {
         }
 
         for data in &self.data_types {
-            data.check(
-                &data.type_params,
-                data_declarations,
-                codata_declarations,
-                defs,
-            )?;
+            data.check(&data.type_params, context, env)?;
         }
         for codata in &self.codata_types {
-            codata.check(
-                &codata.type_params,
-                data_declarations,
-                codata_declarations,
-                defs,
-            )?;
+            codata.check(&codata.type_params, context, env)?;
         }
         for def in &self.defs {
-            def.check(type_params, data_declarations, codata_declarations, defs)?;
+            def.check(type_params, context, env)?;
         }
         Ok(())
     }
@@ -203,6 +181,7 @@ mod program_tests {
     use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
     use crate::typing::check::Checked;
+    use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
     use core_macros::{
         bind, cns, codata, covar, ctor_sig, cut, data, def, dtor_sig, exit, fs_cut, fs_def, id,
@@ -291,23 +270,11 @@ mod program_tests {
             []
         );
 
-        let type_params: Vec<Identifier> = prog
-            .data_types
-            .iter()
-            .flat_map(|data| data.type_params.clone())
-            .chain(
-                prog.codata_types
-                    .iter()
-                    .flat_map(|codata| codata.type_params.clone()),
-            )
-            .collect();
-
         assert!(
             prog.check(
-                &type_params,
-                &prog.data_types,
-                &prog.codata_types,
-                &prog.defs
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
             )
             .is_err(),
             "expected error for undeclared type in program"
@@ -325,23 +292,11 @@ mod program_tests {
             []
         );
 
-        let type_params: Vec<Identifier> = prog
-            .data_types
-            .iter()
-            .flat_map(|data| data.type_params.clone())
-            .chain(
-                prog.codata_types
-                    .iter()
-                    .flat_map(|codata| codata.type_params.clone()),
-            )
-            .collect();
-
         assert!(
             prog.check(
-                &type_params,
-                &prog.data_types,
-                &prog.codata_types,
-                &prog.defs
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
             )
             .is_ok(),
             "expected declared type annotation to be accepted"
@@ -373,9 +328,8 @@ mod program_tests {
         assert!(
             prog.check(
                 &type_params,
-                &prog.data_types,
-                &prog.codata_types,
-                &prog.defs
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
             )
             .is_err(),
             "expected arity mismatch for type application in program"
@@ -395,8 +349,12 @@ mod program_tests {
         );
 
         assert!(
-            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
-                .is_err(),
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
             "expected error for duplicate type name in program"
         );
     }
@@ -410,8 +368,12 @@ mod program_tests {
         let prog = prog!([def1, def2], [], []);
 
         assert!(
-            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
-                .is_err(),
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
             "expected error for duplicate function name in program"
         );
     }
@@ -429,8 +391,12 @@ mod program_tests {
         );
 
         assert!(
-            prog.check(&[], &prog.data_types, &prog.codata_types, &prog.defs)
-                .is_err(),
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
             "expected error for duplicate xtor name in program"
         );
     }

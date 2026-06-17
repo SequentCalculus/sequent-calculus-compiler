@@ -9,6 +9,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
@@ -276,14 +277,25 @@ impl<C: Chi> Checked for Mu<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.statement
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.ty.check(type_params, context, env)?;
+
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+
+        let mut extended_context = context.clone();
+        extended_context.bindings.push(ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
+
+        self.statement.check(type_params, &extended_context, env)?;
 
         Ok(())
     }

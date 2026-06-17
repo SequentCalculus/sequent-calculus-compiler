@@ -8,6 +8,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
@@ -233,14 +234,20 @@ impl<C: Chi> Checked for Clause<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.context
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.body
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.context.check(type_params, context, env)?;
+
+        // extend the context of the clause with the bindings of the clause
+        let mut extended_context = context.clone();
+        for binding in &self.context.bindings {
+            extended_context.bindings.push(binding.clone());
+        }
+
+        // check the body of the clause under the extended context of the clause
+        self.body.check(type_params, &extended_context, env)?;
+
         Ok(())
     }
 }

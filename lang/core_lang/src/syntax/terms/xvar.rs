@@ -2,13 +2,16 @@
 
 use printer::*;
 
+use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 
@@ -152,12 +155,15 @@ impl<C: Chi> Checked for XVar<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)
+        self.ty.check(type_params, context, env)?;
+        if context.lookup(&self.var).is_none() {
+            bail!(TypeError::UndeclaredVariable(self.var.name.clone()));
+        }
+
+        Ok(())
     }
 }
 

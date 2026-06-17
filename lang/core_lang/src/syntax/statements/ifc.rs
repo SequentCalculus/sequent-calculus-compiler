@@ -7,6 +7,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
@@ -257,9 +258,8 @@ impl Checked for IfC {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         if let Ty::I64 = self.fst.get_type() {
         } else {
@@ -283,15 +283,12 @@ impl Checked for IfC {
         }
 
         // check well-formedness of the terms
-        self.fst
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.fst.check(type_params, context, env)?;
         if let Some(ref snd) = self.snd {
-            snd.check(type_params, data_declarations, codata_declarations, defs)?;
+            snd.check(type_params, context, env)?;
         }
-        self.thenc
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.elsec
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.thenc.check(type_params, context, env)?;
+        self.elsec.check(type_params, context, env)?;
 
         Ok(())
     }
@@ -399,7 +396,10 @@ mod transform_tests {
 #[cfg(test)]
 mod check_tests {
 
-    use crate::{syntax::Statement, typing::check::Checked};
+    use crate::{
+        syntax::{Statement, TypingContext},
+        typing::{check::Checked, env::GlobalEnv},
+    };
     extern crate self as core_lang;
     use core_macros::{ctor, ctor_sig, data, exit, id, ife, lit, ty};
 
@@ -412,7 +412,10 @@ mod check_tests {
             exit!(lit!(2), ty!("int"))
         )
         .into();
-        assert!(stmt.check(&[], &[], &[], &[]).is_ok());
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_ok()
+        );
     }
 
     #[test]
@@ -424,12 +427,14 @@ mod check_tests {
             exit!(lit!(2), ty!("int"))
         )
         .into();
-        assert!(stmt.check(&[], &[], &[], &[]).is_err());
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
     }
 
     #[test]
     fn ifc_check_fst_not_i64() {
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
         let fst = ctor!(id!("Nil"), [], ty!(id!("List")));
         let stmt: Statement = ife!(
             fst,
@@ -438,7 +443,10 @@ mod check_tests {
             exit!(lit!(0), ty!("int"))
         )
         .into();
-        assert!(stmt.check(&[], &[list], &[], &[]).is_err());
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
     }
 
     #[test]
@@ -452,6 +460,13 @@ mod check_tests {
             exit!(lit!(0), ty!("int"))
         )
         .into();
-        assert!(stmt.check(&[], &[list], &[], &[]).is_err());
+        assert!(
+            stmt.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&vec![list], &vec![], &vec![])
+            )
+            .is_err()
+        );
     }
 }

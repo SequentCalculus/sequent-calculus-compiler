@@ -3,15 +3,14 @@
 use printer::tokens::DEF;
 use printer::*;
 
-use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
-use crate::typing::errors::TypeError;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), a typing context defining the parameters, and the body statement. The
@@ -130,28 +129,29 @@ impl Checked for Def {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        // check existence of the function name in the program
-        if !defs.iter().any(|def| def.name == self.name) {
-            bail!(TypeError::UndefinedFunction(self.name.name.clone()));
+        // check well-formedness of the context
+        self.context.check(type_params, context, env)?;
+
+        // extend the context of the clause with the bindings of the definition
+        let mut extended_context = context.clone();
+        for binding in &self.context.bindings {
+            extended_context.bindings.push(binding.clone());
         }
 
-        // check well-formedness of the context
-        self.context
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-
-        // check the body of the function
-        self.body
-            .check(type_params, data_declarations, codata_declarations, defs)
+        // check the body of the function under the context of the function
+        self.body.check(type_params, &extended_context, env)
     }
 }
 
 #[cfg(test)]
 mod def_tests {
-    use crate::typing::check::Checked;
+    use crate::{
+        syntax::TypingContext,
+        typing::{check::Checked, env::GlobalEnv},
+    };
     extern crate self as core_lang;
     use core_macros::{def, exit, id, lit, ty};
 
@@ -159,14 +159,24 @@ mod def_tests {
     fn check_def_present() {
         // def that refers to itself in defs -> should be ok
         let def = def!(id!("f"), [], exit!(lit!(0), ty!("int")));
-        let defs = vec![def.clone()];
-        assert!(def.check(&[], &[], &[], &defs).is_ok());
+        assert!(
+            def.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[], &[], &[def.clone()])
+            )
+            .is_ok()
+        );
     }
 
     #[test]
     fn check_def_missing() {
         // missing def in defs -> error
         let missing = def!(id!("g"), [], exit!(lit!(0), ty!("int")));
-        assert!(missing.check(&[], &[], &[], &[]).is_err());
+        assert!(
+            missing
+                .check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
     }
 }

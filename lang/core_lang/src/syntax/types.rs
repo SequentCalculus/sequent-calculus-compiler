@@ -7,6 +7,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_t
 use crate::mono::errors::MonoError;
 use crate::syntax::declaration::lookup_type_declaration;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
@@ -42,9 +43,8 @@ impl Checked for Ty {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        _defs: &[Def],
+        _context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         match self {
             Ty::I64 => Ok(()),
@@ -58,12 +58,14 @@ impl Checked for Ty {
             }
             Ty::Decl { name, type_args } => {
                 // check that the type name is declared as a data or codata type
-                let declaration_type_params = if let Some(declaration) = data_declarations
+                let declaration_type_params = if let Some(declaration) = env
+                    .data_decls
                     .iter()
                     .find(|declaration| declaration.name == *name)
                 {
                     &declaration.type_params
-                } else if let Some(declaration) = codata_declarations
+                } else if let Some(declaration) = env
+                    .codata_decls
                     .iter()
                     .find(|declaration| declaration.name == *name)
                 {
@@ -82,7 +84,7 @@ impl Checked for Ty {
 
                 // check that all type arguments are well-formed
                 for arg in &type_args.args {
-                    arg.check(type_params, data_declarations, codata_declarations, _defs)?;
+                    arg.check(type_params, _context, env)?;
                 }
                 Ok(())
             }
@@ -166,7 +168,10 @@ impl Print for TypeArgs {
 #[cfg(test)]
 mod type_tests {
     use super::{Identifier, Ty, TypeArgs};
-    use crate::typing::check::Checked;
+    use crate::{
+        syntax::TypingContext,
+        typing::{check::Checked, env::GlobalEnv},
+    };
     use printer::Print;
     extern crate self as core_lang;
     use core_macros::{data, id, tvar, ty};
@@ -205,7 +210,7 @@ mod type_tests {
     fn check_fails_for_undeclared_type_var() {
         let t = tvar!(id!("A", 1));
 
-        let res = t.check(&[], &[], &[], &[]);
+        let res = t.check(&[], &TypingContext::default(), &GlobalEnv::default());
         assert!(res.is_err());
     }
 
@@ -213,7 +218,11 @@ mod type_tests {
     fn check_succeeds_for_declared_type_var() {
         let t = tvar!(id!("A", 1));
 
-        let res = t.check(&[id!("A", 1)], &[], &[], &[]);
+        let res = t.check(
+            &[id!("A", 1)],
+            &TypingContext::default(),
+            &GlobalEnv::default(),
+        );
         assert!(res.is_ok());
     }
 
@@ -224,7 +233,7 @@ mod type_tests {
             type_args: TypeArgs { args: vec![] },
         };
 
-        let res = ty_decl.check(&[], &[], &[], &[]);
+        let res = ty_decl.check(&[], &TypingContext::default(), &GlobalEnv::default());
         assert!(res.is_err());
     }
 
@@ -236,7 +245,11 @@ mod type_tests {
         // arity mismatch: List[] against List[A]
         let ty_bad = ty!(id!("List"));
 
-        let res = ty_bad.check(&[], &[list.clone()], &[], &[]);
+        let res = ty_bad.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[list], &[], &[]),
+        );
         assert!(res.is_err());
     }
 
@@ -248,7 +261,11 @@ mod type_tests {
         // List[A] where A is a type variable declared in the current context
         let ty_var_arg = ty!(id!("List"), [tvar!(id!("A", 1))]);
 
-        let res = ty_var_arg.check(&[id!("A", 1)], &[list.clone()], &[], &[]);
+        let res = ty_var_arg.check(
+            &[id!("A", 1)],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[list], &[], &[]),
+        );
         assert!(res.is_ok());
     }
 }

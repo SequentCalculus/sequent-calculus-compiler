@@ -6,6 +6,7 @@ use printer::*;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{HashSet, VecDeque};
@@ -94,6 +95,14 @@ impl TypingContext {
         }
         vars
     }
+
+    /// This function looks up a variable in the context and returns its binding, if it exists.
+    pub fn lookup(&self, name: &Identifier) -> Option<&ContextBinding> {
+        self.bindings
+            .iter()
+            .rev()
+            .find(|binding| &binding.var == name)
+    }
 }
 
 impl From<Vec<ContextBinding>> for TypingContext {
@@ -141,15 +150,12 @@ impl Checked for TypingContext {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check that all types in the context are well-formed
         for binding in &self.bindings {
-            binding
-                .ty
-                .check(type_params, data_declarations, codata_declarations, defs)?;
+            binding.ty.check(type_params, context, env)?;
         }
         Ok(())
     }

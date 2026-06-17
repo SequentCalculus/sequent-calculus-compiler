@@ -5,9 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
-use crate::syntax::declaration::{Polarity, TypeDeclaration, lookup_type_declaration};
+use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
 use crate::typing::check::{Checked, instantiate_type_params};
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
@@ -168,13 +169,11 @@ impl<C: Chi> Checked for XCase<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check well-formedness of the type
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.ty.check(type_params, context, env)?;
 
         // check that the type is a declaration type and get the declaration
         let (type_name, concrete_type_args) = match &self.ty {
@@ -186,44 +185,44 @@ impl<C: Chi> Checked for XCase<C> {
 
         // branch on whether we have a case or a new and check against the corresponding declaration
         if self.prdcns.is_prd() {
-            let decl = lookup_type_declaration(type_name, codata_declarations);
+            let Some(decl) = env.lookup_codata_decl(type_name) else {
+                bail!(TypeError::UndeclaredType(type_name.name.clone()));
+            };
             check_xcase_against_decl(
                 self,
                 decl,
                 type_name,
                 type_params,
+                context,
                 concrete_type_args,
-                data_declarations,
-                codata_declarations,
-                defs,
+                env,
             )
         } else {
-            let decl = lookup_type_declaration(type_name, data_declarations);
+            let Some(decl) = env.lookup_data_decl(type_name) else {
+                bail!(TypeError::UndeclaredType(type_name.name.clone()));
+            };
             check_xcase_against_decl(
                 self,
                 decl,
                 type_name,
                 type_params,
+                context,
                 concrete_type_args,
-                data_declarations,
-                codata_declarations,
-                defs,
+                env,
             )
         }
     }
 }
 
 /// Checks that the given case or cocase is well-typed against the given type declaration. This includes checking that the type arguments match the type parameters of the declaration, that for each clause, the xtor exists in the declaration, and that the context of each clause matches the argument types of the corresponding xtor in the declaration.
-#[allow(clippy::too_many_arguments)]
 fn check_xcase_against_decl<P: Polarity, C: Chi>(
     xcase: &XCase<C>,
     decl: &TypeDeclaration<P>,
     type_name: &Identifier,
     type_params: &[Identifier],
+    context: &TypingContext,
     concrete_type_args: &[Ty],
-    data_declarations: &[DataDeclaration],
-    codata_declarations: &[CodataDeclaration],
-    defs: &[Def],
+    env: &GlobalEnv,
 ) -> Result<(), LocatedTypeError> {
     // check that the number of type arguments matches the number of type parameters
     if decl.type_params.len() != concrete_type_args.len() {
@@ -235,7 +234,7 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
     for clause in &xcase.clauses {
         // check well-formedness of the clause
-        clause.check(type_params, data_declarations, codata_declarations, defs)?;
+        clause.check(type_params, context, env)?;
 
         // check that the xtor exists in the declaration and get its signature
         let Some(sig) = decl.xtors.iter().find(|xt| xt.name == clause.xtor) else {
@@ -290,14 +289,14 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
 #[cfg(test)]
 mod tests {
-    use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
+    use crate::{syntax::*, typing::env::GlobalEnv};
     extern crate self as core_lang;
     use crate::typing::check::Checked;
     use core_macros::{
-        bind, case, clause, cns, cocase, covar, ctor_sig, cut, data, fs_clause, fs_cut, id, prd,
-        ty, var,
+        bind, case, clause, cns, cocase, covar, ctor_sig, cut, data, exit, fs_clause, fs_cut, id,
+        lit, prd, ty, var,
     };
 
     #[test]
@@ -401,16 +400,18 @@ mod tests {
         let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
 
         let good_case: XCase<Cns> = case!(
-            [clause!(
-                Cns,
-                id!("Nil"),
-                [],
-                cut!(var!(id!("x")), covar!(id!("a")))
-            )],
+            [clause!(Cns, id!("Nil"), [], exit!(lit!(0)))],
             ty!(id!("List"))
         )
         .into();
-        assert!(good_case.check(&[], &[list.clone()], &[], &[]).is_ok());
+
+        good_case
+            .check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[list], &[], &[]),
+            )
+            .unwrap();
     }
 
     #[test]
@@ -427,6 +428,14 @@ mod tests {
             ty!(id!("NonExistent"))
         )
         .into();
-        assert!(wrong.check(&[], &[list.clone()], &[], &[]).is_err());
+        assert!(
+            wrong
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&[list], &[], &[])
+                )
+                .is_err()
+        );
     }
 }

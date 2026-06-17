@@ -7,6 +7,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use core::panic;
@@ -213,14 +214,12 @@ impl<C: Chi> Checked for Xtor<C> {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.args
-            .check(type_params, data_declarations, codata_declarations, defs)
+        self.ty.check(type_params, context, env)?;
+        self.args.check(type_params, context, env)?;
+        Ok(())
     }
 }
 

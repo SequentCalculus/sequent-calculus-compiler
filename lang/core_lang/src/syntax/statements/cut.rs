@@ -7,6 +7,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
@@ -220,13 +221,11 @@ impl Checked for Cut {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check well-formedness of the type
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.ty.check(type_params, context, env)?;
 
         // check that the producer and consumer have the same type as the cut itself
         if self.producer.get_type() != self.ty {
@@ -246,10 +245,8 @@ impl Checked for Cut {
         }
 
         // check well-formedness of the producer and the consumer
-        self.producer
-            .check(type_params, data_declarations, codata_declarations, defs)?;
-        self.consumer
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.producer.check(type_params, context, env)?;
+        self.consumer.check(type_params, context, env)?;
 
         Ok(())
     }

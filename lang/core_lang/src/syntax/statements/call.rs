@@ -9,6 +9,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
 
@@ -148,16 +149,14 @@ impl Checked for Call {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check well-formedness of the type
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.ty.check(type_params, context, env)?;
 
         // Check that the called function is defined
-        let Some(def) = defs.iter().find(|def| def.name == self.name) else {
+        let Some(def) = env.lookup_def(&self.name) else {
             bail!(TypeError::UndefinedFunction(
                 self.name.clone().name.to_string()
             ));
@@ -181,8 +180,7 @@ impl Checked for Call {
                 });
             }
         }
-        self.args
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.args.check(type_params, context, env)?;
 
         Ok(())
     }
@@ -190,7 +188,10 @@ impl Checked for Call {
 
 #[cfg(test)]
 mod check_tests {
-    use crate::{syntax::Statement, typing::check::Checked};
+    use crate::{
+        syntax::{Statement, TypingContext},
+        typing::{check::Checked, env::GlobalEnv},
+    };
     extern crate self as core_lang;
     use core_macros::{bind, call, def, exit, id, lit, prd, ty, var};
 
@@ -204,20 +205,40 @@ mod check_tests {
         let defs = vec![def.clone()];
 
         let call_ok_stmt: Statement = call!(id!("f"), [lit!(1)]).into();
-        assert!(call_ok_stmt.check(&[], &[], &[], &defs).is_ok());
+        assert!(
+            call_ok_stmt
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                )
+                .is_ok()
+        );
     }
 
     #[test]
     fn call_check_undefined() {
         let call_undef: Statement = call!(id!("g"), []).into();
-        assert!(call_undef.check(&[], &[], &[], &[]).is_err());
+        assert!(
+            call_undef
+                .check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
     }
 
     #[test]
     fn call_check_arity_mismatch() {
         let call_arity: Statement = call!(id!("f"), [lit!(1)]).into();
         let def_no_args = def!(id!("f"), [], exit!(lit!(0), ty!("int")));
-        assert!(call_arity.check(&[], &[], &[], &[def_no_args]).is_err());
+        assert!(
+            call_arity
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &vec![def_no_args])
+                )
+                .is_err()
+        );
     }
 
     #[test]
@@ -230,7 +251,11 @@ mod check_tests {
         let call_type_mismatch: Statement = call!(id!("h"), [lit!(42)]).into();
         assert!(
             call_type_mismatch
-                .check(&[], &[], &[], &[def_param_other])
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &vec![def_param_other])
+                )
                 .is_err()
         );
     }

@@ -10,6 +10,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
 
@@ -152,13 +153,11 @@ impl Checked for Exit {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // check well-formedness of the type
-        self.ty
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.ty.check(type_params, context, env)?;
 
         // check that the argument of the exit statement has type i64
         if self.arg.get_type() != Ty::I64 {
@@ -169,8 +168,7 @@ impl Checked for Exit {
             });
         }
         // check the argument of the exit statement
-        self.arg
-            .check(type_params, data_declarations, codata_declarations, defs)?;
+        self.arg.check(type_params, context, env)?;
 
         Ok(())
     }

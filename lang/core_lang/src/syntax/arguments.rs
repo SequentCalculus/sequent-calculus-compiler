@@ -8,6 +8,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{BTreeSet, VecDeque};
@@ -126,17 +127,12 @@ impl Checked for Argument {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         match self {
-            Argument::Producer(term) => {
-                term.check(type_params, data_declarations, codata_declarations, defs)
-            }
-            Argument::Consumer(term) => {
-                term.check(type_params, data_declarations, codata_declarations, defs)
-            }
+            Argument::Producer(term) => term.check(type_params, context, env),
+            Argument::Consumer(term) => term.check(type_params, context, env),
         }
     }
 }
@@ -233,12 +229,11 @@ impl Checked for Arguments {
     fn check(
         &self,
         type_params: &[Identifier],
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-        defs: &[Def],
+        context: &TypingContext,
+        env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.entries.iter().try_for_each(|arg| {
-            arg.check(type_params, data_declarations, codata_declarations, defs)
-        })
+        self.entries
+            .iter()
+            .try_for_each(|arg| arg.check(type_params, context, env))
     }
 }
