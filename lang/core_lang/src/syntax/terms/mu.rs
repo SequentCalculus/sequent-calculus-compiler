@@ -288,6 +288,7 @@ impl<C: Chi> Checked for Mu<C> {
             Chirality::Prd
         };
 
+        // extend the context with the new bindings introduced by the mu
         let mut extended_context = context.clone();
         extended_context.bindings.push(ContextBinding {
             var: self.variable.clone(),

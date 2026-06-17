@@ -159,8 +159,17 @@ impl<C: Chi> Checked for XVar<C> {
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         self.ty.check(type_params, context, env)?;
-        if context.lookup(&self.var).is_none() {
+        let Some(binding) = context.lookup(&self.var) else {
             bail!(TypeError::UndeclaredVariable(self.var.name.clone()));
+        };
+
+        // check the type of the (co)var against the type of the (co)var in the context
+        if binding.ty != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: binding.ty.print_to_string(None),
+                got: self.ty.print_to_string(None),
+                msg: None
+            })
         }
 
         Ok(())

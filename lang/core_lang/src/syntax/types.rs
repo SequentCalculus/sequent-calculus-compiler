@@ -6,7 +6,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
 use crate::syntax::declaration::lookup_type_declaration;
-use crate::typing::check::Checked;
+use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
@@ -53,34 +53,17 @@ impl Checked for Ty {
                 if type_params.iter().any(|type_param| type_param == param) {
                     Ok(())
                 } else {
-                    bail!(TypeError::UndeclaredType(param.print_to_string(None)))
+                    bail!(TypeError::UndeclaredType(param.name.clone()))
                 }
             }
             Ty::Decl { name, type_args } => {
-                // check that the type name is declared as a data or codata type
-                let declaration_type_params = if let Some(declaration) = env
-                    .data_decls
-                    .iter()
-                    .find(|declaration| declaration.name == *name)
-                {
-                    &declaration.type_params
-                } else if let Some(declaration) = env
-                    .codata_decls
-                    .iter()
-                    .find(|declaration| declaration.name == *name)
-                {
-                    &declaration.type_params
-                } else {
-                    bail!(TypeError::UndeclaredType(name.print_to_string(None)));
+                // check that the type name is declared as a data or codata type and get the type params
+                let Some(declaration_type_params) = env.lookup_type_params(name) else {
+                    bail!(TypeError::UndeclaredType(name.name.clone()))
                 };
 
                 // check that the number of type arguments matches the number of type parameters in the declaration
-                if declaration_type_params.len() != type_args.args.len() {
-                    bail!(TypeError::ArityMismatch {
-                        expected: declaration_type_params.len(),
-                        got: type_args.args.len(),
-                    });
-                }
+                check_arity(declaration_type_params.len(), type_args.args.len())?;
 
                 // check that all type arguments are well-formed
                 for arg in &type_args.args {

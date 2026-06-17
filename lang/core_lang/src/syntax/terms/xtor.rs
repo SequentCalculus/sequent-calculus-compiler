@@ -4,11 +4,11 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
-use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::check::Checked;
+use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use core::panic;
 use std::collections::BTreeSet;
@@ -219,6 +219,42 @@ impl<C: Chi> Checked for Xtor<C> {
     ) -> Result<(), LocatedTypeError> {
         self.ty.check(type_params, context, env)?;
         self.args.check(type_params, context, env)?;
+
+        let Ty::Decl { name, .. } = &self.ty else {
+            bail!(TypeError::Contextual {
+                msg: "Expected TypeDeclaration".to_string()
+            })
+        };
+
+        // lookup the type declaration and check that the name of the xtor is defined on this declaration
+        if self.prdcns.is_prd() {
+            let data_decl = env.lookup_data_decl(name).ok_or_else(|| {
+                LocatedTypeError::new(TypeError::UndeclaredType(name.name.clone()))
+            })?;
+
+            let Some(xtor) = data_decl.xtors.iter().find(|xtor| xtor.name == self.name) else {
+                bail!(TypeError::UndeclaredXtor {
+                    type_name: name.name.clone(),
+                    xtor_name: self.name.name.clone()
+                })
+            };
+
+            check_arity(xtor.args.bindings.len(), self.args.entries.len())?;
+        } else {
+            let codata_decl = env.lookup_codata_decl(name).ok_or_else(|| {
+                LocatedTypeError::new(TypeError::UndeclaredType(name.name.clone()))
+            })?;
+
+            let Some(xtor) = codata_decl.xtors.iter().find(|xtor| xtor.name == self.name) else {
+                bail!(TypeError::UndeclaredXtor {
+                    type_name: name.name.clone(),
+                    xtor_name: self.name.name.clone()
+                })
+            };
+
+            check_arity(xtor.args.bindings.len(), self.args.entries.len())?;
+        }
+
         Ok(())
     }
 }

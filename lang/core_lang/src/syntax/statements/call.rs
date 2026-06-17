@@ -9,6 +9,7 @@ use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
+use crate::typing::check::check_arity;
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
@@ -157,18 +158,10 @@ impl Checked for Call {
 
         // Check that the called function is defined
         let Some(def) = env.lookup_def(&self.name) else {
-            bail!(TypeError::UndefinedFunction(
-                self.name.clone().name.to_string()
-            ));
+            bail!(TypeError::UndefinedFunction(self.name.name.clone()));
         };
 
-        // check arity
-        if def.context.bindings.len() != self.args.entries.len() {
-            bail!(TypeError::ArityMismatch {
-                expected: def.context.bindings.len(),
-                got: self.args.entries.len(),
-            });
-        }
+        check_arity(def.context.bindings.len(), self.args.entries.len())?;
 
         // check that the types of the arguments match the types of the parameters
         for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {

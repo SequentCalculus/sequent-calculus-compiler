@@ -7,12 +7,12 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
-use crate::typing::check::{Checked, instantiate_type_params};
+use crate::typing::check::{Checked, check_arity, instantiate_type_params};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines pattern and copattern matches in Core. It consists of the information that
 /// determines whether it is a match (if `C` is instantiated with [`Cns`]) or a comatch
@@ -232,7 +232,19 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
         });
     }
 
+    let mut seen_xtors = HashSet::new();
+
     for clause in &xcase.clauses {
+        // uniqueness check
+        if !seen_xtors.insert(clause.xtor.name.clone()) {
+            bail!(TypeError::Contextual {
+                msg: format!(
+                    "Duplicate clause for constructor/destructor '{}' in '{}' match",
+                    clause.xtor.name, type_name.name
+                ),
+            });
+        }
+
         // check well-formedness of the clause
         clause.check(type_params, context, env)?;
 
@@ -245,12 +257,7 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
         };
 
         // check that the number of binders in the clause matches the number of arguments in the xtor signature
-        if sig.args.bindings.len() != clause.context.bindings.len() {
-            bail!(TypeError::ArityMismatch {
-                expected: sig.args.bindings.len(),
-                got: clause.context.bindings.len(),
-            });
-        }
+        check_arity(sig.args.bindings.len(), clause.context.bindings.len())?;
 
         // check that the types of the binders in the clause match the types of the arguments in the xtor signature, after instantiating the type parameters with the concrete type arguments
         for (expected_binding, actual_binding) in
@@ -282,6 +289,24 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
                 });
             }
         }
+    }
+
+    // exhaustiveness check: are all possible cases covered
+    if seen_xtors.len() != decl.xtors.len() {
+        let missing: Vec<String> = decl
+            .xtors
+            .iter()
+            .filter(|xt| !seen_xtors.contains(&xt.name.name))
+            .map(|xt| xt.name.name.clone())
+            .collect();
+
+        bail!(TypeError::Contextual {
+            msg: format!(
+                "Non-exhaustive match for type '{}': missing clauses for [{}]",
+                type_name.name,
+                missing.join(", ")
+            ),
+        });
     }
 
     Ok(())
@@ -437,5 +462,59 @@ mod tests {
                 )
                 .is_err()
         );
+    }
+
+    #[test]
+    fn check_duplicate_clause() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+
+        let bad_case: XCase<Cns> = case!(
+            [
+                clause!(Cns, id!("Nil"), [], exit!(lit!(0))),
+                clause!(Cns, id!("Nil"), [], exit!(lit!(1)))
+            ],
+            ty!(id!("List"))
+        )
+        .into();
+
+        let result = bad_case.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[list], &[], &[]),
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn check_non_exhaustive_match() {
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("List")))
+                    ]
+                )
+            ],
+            []
+        );
+
+        let incomplete_case: XCase<Cns> = case!(
+            [clause!(Cns, id!("Nil"), [], exit!(lit!(0)))],
+            ty!(id!("List"))
+        )
+        .into();
+
+        let result = incomplete_case.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[list], &[], &[]),
+        );
+
+        assert!(result.is_err());
     }
 }
