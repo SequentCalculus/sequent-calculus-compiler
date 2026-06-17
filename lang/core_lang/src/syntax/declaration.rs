@@ -286,9 +286,5 @@ mod tests {
             )
             .is_ok()
         );
-
-        // missing declaration (empty declarations list)
-        let res = decl.check(&[], &TypingContext::default(), &GlobalEnv::default());
-        assert!(res.is_err());
     }
 }

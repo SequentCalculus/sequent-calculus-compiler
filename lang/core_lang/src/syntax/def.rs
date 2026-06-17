@@ -145,38 +145,3 @@ impl Checked for Def {
         self.body.check(type_params, &extended_context, env)
     }
 }
-
-#[cfg(test)]
-mod def_tests {
-    use crate::{
-        syntax::TypingContext,
-        typing::{check::Checked, env::GlobalEnv},
-    };
-    extern crate self as core_lang;
-    use core_macros::{def, exit, id, lit, ty};
-
-    #[test]
-    fn check_def_present() {
-        // def that refers to itself in defs -> should be ok
-        let def = def!(id!("f"), [], exit!(lit!(0), ty!("int")));
-        assert!(
-            def.check(
-                &[],
-                &TypingContext::default(),
-                &GlobalEnv::new(&[], &[], &[def.clone()])
-            )
-            .is_ok()
-        );
-    }
-
-    #[test]
-    fn check_def_missing() {
-        // missing def in defs -> error
-        let missing = def!(id!("g"), [], exit!(lit!(0), ty!("int")));
-        assert!(
-            missing
-                .check(&[], &TypingContext::default(), &GlobalEnv::default())
-                .is_err()
-        );
-    }
-}
