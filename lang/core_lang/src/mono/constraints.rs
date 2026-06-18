@@ -10,9 +10,9 @@ use crate::syntax::{CodataDeclaration, DataDeclaration, Ty};
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct FlowConstraint {
     /// The concrete type that reaches the polymorphic type parameter.
-    pub from: Ty,
+    pub from: Vec<Ty>,
     /// The name of the polymorphic type parameter.
-    pub to: Ty,
+    pub to: Vec<Ty>,
 }
 impl Print for FlowConstraint {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
@@ -104,23 +104,35 @@ pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet
             (_, Ty::Var(param)) => {
                 let target = Ty::Var(param.clone());
                 constraints.insert(FlowConstraint {
-                    from: actual.clone(),
-                    to: target.clone(),
+                    from: vec![actual.clone()],
+                    to: vec![target.clone()],
                 });
-
-                if let Ty::Decl { type_args, .. } = actual {
-                    for arg in &type_args.args {
-                        collect_type_flow_into(arg, &target, constraints)?;
-                    }
-                }
                 Ok(())
             }
             (Ty::I64, Ty::I64) => Ok(()),
-            (Ty::Decl { .. }, Ty::Decl { .. }) => Err(MonoError::TypeMismatch {
-                expected: expected.print_to_string(None),
-                got: actual.print_to_string(None),
-                msg: Some("Expected a polymorphic type parameter on the right-hand side of the flow constraint, but got a concrete type declaration.".to_string()),
-            }),
+            (
+                Ty::Decl {
+                    name: name_act,
+                    type_args: args_act,
+                },
+                Ty::Decl {
+                    name: name_exp,
+                    type_args: args_exp,
+                },
+            ) => {
+                if name_act != name_exp {
+                    return Err(MonoError::TypeMismatch {
+                        expected: expected.print_to_string(None),
+                        got: actual.print_to_string(None),
+                        msg: Some("Type constructor mismatch".to_string()),
+                    });
+                }
+
+                for (act_arg, exp_arg) in args_act.args.iter().zip(&args_exp.args) {
+                    collect_type_flow_into(act_arg, exp_arg, constraints)?;
+                }
+                Ok(())
+            }
             _ => Err(MonoError::TypeMismatch {
                 expected: expected.print_to_string(None),
                 got: actual.print_to_string(None),

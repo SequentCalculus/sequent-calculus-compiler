@@ -129,21 +129,17 @@ pub struct TypeArgs {
 
 impl Print for TypeArgs {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let sep = if cfg.allow_linebreaks {
-            alloc.line_()
-        } else {
-            alloc.nil()
-        };
-
         if self.args.is_empty() {
             alloc.nil()
         } else {
-            sep.clone()
-                .append(self.args.print(cfg, alloc))
-                .nest(cfg.indent)
-                .append(sep)
-                .brackets()
-                .group()
+            let mut args_printed = alloc.nil();
+            for (i, arg) in self.args.iter().enumerate() {
+                if i > 0 {
+                    args_printed = args_printed.append(alloc.text(", "));
+                }
+                args_printed = args_printed.append(arg.print(cfg, alloc));
+            }
+            args_printed.brackets()
         }
     }
 }

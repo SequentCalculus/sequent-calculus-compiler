@@ -341,11 +341,11 @@ mod xtor_tests {
 
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
-                from: Ty::I64,
-                to: Ty::Var(Identifier {
+                from: vec![Ty::I64],
+                to: vec![Ty::Var(Identifier {
                     name: "A".to_string(),
                     id: 1,
-                }),
+                })],
             }]),
         };
 
@@ -392,14 +392,14 @@ mod xtor_tests {
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![
                 FlowConstraint {
-                    from: Ty::I64,
-                    to: Ty::Var(Identifier {
+                    from: vec![Ty::I64],
+                    to: vec![Ty::Var(Identifier {
                         name: "A".to_string(),
                         id: 1,
-                    }),
+                    })],
                 },
                 FlowConstraint {
-                    from: Ty::Decl {
+                    from: vec![Ty::Decl {
                         name: Identifier {
                             name: "List".to_string(),
                             id: 0,
@@ -407,11 +407,11 @@ mod xtor_tests {
                         type_args: TypeArgs {
                             args: vec![Ty::I64],
                         },
-                    },
-                    to: Ty::Var(Identifier {
+                    }],
+                    to: vec![Ty::Var(Identifier {
                         name: "A".to_string(),
                         id: 1,
-                    }),
+                    })],
                 },
             ]),
         };
@@ -431,11 +431,11 @@ mod xtor_tests {
             constraints,
             FlowConstraintSet {
                 constraints: HashSet::from_iter(vec![FlowConstraint {
-                    from: Ty::I64,
-                    to: Ty::Var(Identifier {
+                    from: vec![Ty::I64],
+                    to: vec![Ty::Var(Identifier {
                         name: "A".to_string(),
                         id: 1
-                    })
+                    })]
                 }])
             }
         )
@@ -465,11 +465,11 @@ mod xtor_tests {
 
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
-                from: Ty::I64,
-                to: Ty::Var(Identifier {
+                from: vec![Ty::I64],
+                to: vec![Ty::Var(Identifier {
                     name: "A".to_string(),
                     id: 1,
-                }),
+                })],
             }]),
         };
 
