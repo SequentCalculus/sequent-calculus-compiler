@@ -256,3 +256,164 @@ pub fn is_ground(ty: &Ty) -> bool {
         Ty::Decl { type_args, .. } => type_args.args.iter().all(is_ground),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{VarLocations, is_ground};
+    use crate::mono::{
+        constraint_graph::ConstraintGraph,
+        constraints::{FlowConstraint, FlowConstraintSet},
+    };
+    extern crate self as core_lang;
+    use core_macros::{id, tvar, ty};
+
+    #[test]
+    fn non_growing_cycle() {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint {
+            from: vec![ty!("int")],
+            to: vec![tvar!(id!("A", 1))],
+        });
+        set.insert(FlowConstraint {
+            from: vec![tvar!(id!("A", 1))],
+            to: vec![tvar!(id!("B", 2))],
+        });
+        set.insert(FlowConstraint {
+            from: vec![tvar!(id!("B", 2))],
+            to: vec![tvar!(id!("A", 1))],
+        });
+
+        let graph = ConstraintGraph::from(set);
+
+        let node_a = vec![id!("A", 1)];
+        let node_b = vec![id!("B", 2)];
+
+        // validate registry nodes
+        assert!(graph.nodes.contains(&node_a));
+        assert!(graph.nodes.contains(&node_b));
+        assert_eq!(graph.nodes.len(), 2);
+
+        // validate seeds
+        assert!(graph.seeds.contains_key(&node_a));
+        assert!(!graph.seeds.contains_key(&node_b));
+        assert_eq!(graph.seeds[&node_a].len(), 1);
+
+        // validate seed is ground
+        let seed_vector = graph.seeds[&node_a].iter().next().unwrap();
+        assert!(is_ground(&seed_vector[0]));
+
+        // validate flat edges
+        let outgoing_a = graph.outgoing(&node_a);
+        assert_eq!(outgoing_a.len(), 1);
+        assert_eq!(outgoing_a[0].into, node_b);
+        assert!(
+            !outgoing_a[0].has_constructor_position(),
+            "A -> B sollte flach sein"
+        );
+
+        let outgoing_b = graph.outgoing(&node_b);
+        assert_eq!(outgoing_b.len(), 1);
+        assert_eq!(outgoing_b[0].into, node_a);
+        assert!(
+            !outgoing_b[0].has_constructor_position(),
+            "B -> A sollte flach sein"
+        );
+    }
+
+    #[test]
+    fn transitive_flow() {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint {
+            from: vec![ty!("int")],
+            to: vec![tvar!(id!("A", 1))],
+        });
+        set.insert(FlowConstraint {
+            from: vec![ty!(id!("bool"))],
+            to: vec![tvar!(id!("A", 1))],
+        });
+        set.insert(FlowConstraint {
+            from: vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("A", 1))])],
+            to: vec![tvar!(id!("B", 2))],
+        });
+
+        let graph = ConstraintGraph::from(set);
+
+        let node_a = vec![id!("A", 1)];
+        let node_b = vec![id!("B", 2)];
+
+        assert_eq!(graph.seeds[&node_a].len(), 2);
+
+        let outgoing_a = graph.outgoing(&node_a);
+        assert_eq!(outgoing_a.len(), 1);
+        assert_eq!(outgoing_a[0].into, node_b);
+        assert!(
+            outgoing_a[0].has_constructor_position(),
+            "Kante sollte Constructor-Position enthalten"
+        );
+
+        assert!(graph.outgoing(&node_b).is_empty());
+    }
+
+    #[test]
+    fn test_var_locations_registry() {
+        let mut locations = VarLocations::default();
+        let node_pair = vec![id!("A", 1), id!("B", 2)];
+
+        locations.register(&node_pair);
+
+        assert_eq!(locations.node_of(&id!("A", 1)), node_pair);
+        assert_eq!(locations.index_of(&id!("A", 1)), 0);
+
+        assert_eq!(locations.node_of(&id!("B", 2)), node_pair);
+        assert_eq!(locations.index_of(&id!("B", 2)), 1);
+
+        let unregistered = id!("C", 3);
+        assert_eq!(locations.node_of(&unregistered), vec![unregistered.clone()]);
+        assert_eq!(locations.index_of(&unregistered), 0);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "registered with inconsistent node groupings")]
+    fn test_var_locations_inconsistent_grouping_panic() {
+        let mut locations = VarLocations::default();
+        locations.register(&vec![id!("A", 1), id!("B", 2)]);
+        locations.register(&vec![id!("A", 1), id!("C", 3)]); 
+    }
+
+    #[test]
+    fn test_edge_multiple_source_dependencies() {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint {
+            from: vec![ty!("int")],
+            to: vec![tvar!(id!("A", 1))],
+        });
+        set.insert(FlowConstraint {
+            from: vec![ty!("int")],
+            to: vec![tvar!(id!("B", 2))],
+        });
+
+        set.insert(FlowConstraint {
+            from: vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("B", 2))])],
+            to: vec![tvar!(id!("C", 3))],
+        });
+
+        let graph = ConstraintGraph::from(set);
+
+        let node_a = vec![id!("A", 1)];
+        let node_b = vec![id!("B", 2)];
+        let node_c = vec![id!("C", 3)];
+
+        let outgoing_a = graph.outgoing(&node_a);
+        let outgoing_b = graph.outgoing(&node_b);
+
+        assert_eq!(outgoing_a.len(), 1);
+        assert_eq!(outgoing_a[0].into, node_c);
+
+        assert_eq!(outgoing_b.len(), 1);
+        assert_eq!(outgoing_b[0].into, node_c);
+
+        assert!(outgoing_a[0].has_constructor_position());
+        assert!(outgoing_b[0].has_constructor_position());
+    }
+}
