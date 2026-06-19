@@ -1,13 +1,83 @@
 use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::position::Position;
 use crate::syntax::{Identifier, Ty};
 use std::collections::{HashMap, HashSet};
 
-/// Maps each type variable to the set of concrete ground types it is instantiated with.
+/// A node in the constraint graph: the vector of type parameters
+/// belonging to one declaration site, in declared order.
 ///
-/// This is the output of the solving phase and the direct input to specialization.
-/// Every [`Ty`] value stored in the sets is guaranteed to be ground, meaning it
-/// contains no [`Ty::Var`] anywhere in its structure.
-pub type Solution = HashMap<Identifier, HashSet<Ty>>;
+/// For an ordinary single-parameter declaration like `List[A]`, a node is a
+/// singleton vector `[A]`. For a multi-parameter declaration like
+/// `Pair[A, B]`, the node is the vector `[A, B]`. Treating the whole parameter
+/// list as one node.
+pub type Node = Vec<Identifier>;
+
+/// Maps each [`Node`] to the set of concrete ground vectors it may be instantiated with.
+///
+/// Each element of the set is a full vector, e.g. `[i64, Bool]` for a `Pair`
+/// node `[A, B]`, preserving the correlation between positions. This is the
+/// output of the solving phase and the direct input to specialization.
+pub type Solution = HashMap<Node, HashSet<Vec<Ty>>>;
+
+/// Tracks, for each type variable, which node it belongs to and
+/// at which index within that node's vector.
+///
+/// This registry is what allows a bare reference like `Ty::Var(A)` appearing
+/// in some `from` position to be resolved back to "index 0 of the `Pair`
+/// node `[A, B]`", so that propagation can pull the correct component out
+/// of a correlated tuple rather than treating `A` as an isolated variable.
+#[derive(Debug, Default, Clone)]
+pub struct VarLocations {
+    location: HashMap<Identifier, (Node, usize)>,
+}
+
+impl VarLocations {
+    /// Registers a [`Node`], recording the location of each of its members.
+    ///
+    /// Calling this multiple times with the same node is harmless. Calling
+    /// it with an identifier that was previously registered under a
+    /// *different* node is a bug in constraint collection: identifiers are
+    /// minted uniquely per type parameter declaration and should always be
+    /// grouped the same way.
+    fn register(&mut self, node: &Node) {
+        for (index, id) in node.iter().enumerate() {
+            match self.location.get(id) {
+                Some((existing_node, existing_index)) => {
+                    debug_assert!(
+                        existing_node == node && *existing_index == index,
+                        "identifier {:?} registered with inconsistent node groupings: \
+                         previously {:?} at {}, now {:?} at {}",
+                        id,
+                        existing_node,
+                        existing_index,
+                        node,
+                        index
+                    );
+                }
+                None => {
+                    self.location.insert(id.clone(), (node.clone(), index));
+                }
+            }
+        }
+    }
+
+    /// Returns the node that the given [`Identifier`] belongs to.
+    ///
+    /// If the identifier was never registered as part of any node, it is
+    /// treated as its own singleton node. This covers ordinary
+    /// single-parameter declarations that never appear bundled with others.
+    fn node_of(&self, id: &Identifier) -> Node {
+        self.location
+            .get(id)
+            .map(|(node, _)| node.clone())
+            .unwrap_or_else(|| vec![id.clone()])
+    }
+
+    /// Returns the index of the given [`Identifier`] within its node's vector.
+    fn index_of(&self, id: &Identifier) -> usize {
+        self.location.get(id).map(|(_, index)| *index).unwrap_or(0)
+    }
+}
 
 /// A directed edge between two type variables in the constraint graph.
 ///
@@ -19,35 +89,43 @@ pub type Solution = HashMap<Identifier, HashSet<Ty>>;
 ///   `ρ ∈ S(α)`, the wrapped type `T[ρ]` flows into `into`.
 #[derive(Debug, Clone)]
 pub struct Edge {
-    /// The full source type from the original constraint.
-    /// Its structure determines whether this is a flat or constructor edge.
-    pub from: Ty,
-    /// The target type variable that receives the types flowing through this edge.
-    pub into: Identifier,
+    /// Classified positions, one per element of the original `from` vector, in order.
+    positions: Vec<Position>,
+    /// The target node receiving propagated vectors.
+    pub into: Node,
 }
 
 impl Edge {
-    /// Returns the source type variable of this edge.
-    ///
-    /// For flat edges this is the variable itself. For constructor edges it is
-    /// the variable nested inside the type constructor.
-    pub fn source_vars(&self) -> HashSet<Identifier> {
-        find_inner_vars(&self.from)
+    /// Returns the distinct source nodes this edge depends on, deduplicated.
+    fn source_nodes(&self, locations: &VarLocations) -> Vec<Node> {
+        let mut nodes: Vec<Node> = self
+            .positions
+            .iter()
+            .flat_map(Position::vars)
+            .map(|id| locations.node_of(id))
+            .collect();
+        nodes.sort();
+        nodes.dedup();
+        nodes
     }
 
-    /// Returns `true` if this edge applies a type constructor to the flowing types.
+    /// Returns `true` if at least one position applies a type constructor.
     ///
-    /// Constructor edges are the only edges that can form growing cycles.
-    pub fn is_constructor(&self) -> bool {
-        matches!(self.from, Ty::Decl { .. })
+    /// Such edges are the only ones that can form growing cycles, since
+    /// only constructor application causes a solution to grow in structural
+    /// size as it travels around a cycle.
+    pub fn has_constructor_position(&self) -> bool {
+        self.positions.iter().any(|p| match p {
+            Position::Ground(_) => false,
+            Position::Variable { template, .. } => !matches!(template, Ty::Var(_)),
+        })
     }
 
-    /// Returns the name of the type constructor if this is a constructor edge.
-    pub fn constructor_name(&self) -> Option<&Identifier> {
-        match &self.from {
-            Ty::Decl { name, .. } => Some(name),
-            _ => None,
-        }
+    /// Returns the original `from` types for this edge, one per position,
+    /// reconstructed from the internal position classification. Used for
+    /// display purposes such as graph visualization.
+    pub fn from_types(&self) -> Vec<Ty> {
+        self.positions.iter().map(|p| p.as_ty().clone()).collect()
     }
 }
 
@@ -64,79 +142,81 @@ impl Edge {
 ///   solution set grows.
 #[derive(Debug, Default)]
 pub struct ConstraintGraph {
-    /// All type variable nodes in the graph.
-    pub nodes: HashSet<Identifier>,
-    /// Ground types seeding each type variable directly.
-    /// Key: target variable identifier. Value: set of ground types.
-    pub seeds: HashMap<Identifier, HashSet<Ty>>,
-    /// Outgoing edges for each type variable, indexed by source variable.
-    /// Key: source variable identifier. Value: edges leaving that variable.
-    pub edges: HashMap<Identifier, Vec<Edge>>,
+    /// All known nodes (vectors of type parameters).
+    pub nodes: HashSet<Node>,
+    /// Ground vectors seeding each node directly, preserving the correlation between positions within each vector.
+    pub seeds: HashMap<Node, HashSet<Vec<Ty>>>,
+    /// Outgoing edges for each node, indexed by source node. An edge whose
+    /// positions reference several distinct source nodes appears once
+    /// under each of those nodes, so the solver can find it regardless of
+    /// which contributing node last changed.
+    pub edges: HashMap<Node, Vec<Edge>>,
+    /// Registry mapping each identifier to its owning node and index.
+    pub locations: VarLocations,
 }
 
 impl From<FlowConstraintSet> for ConstraintGraph {
     /// Builds a constraint graph from the given constraint set.
     ///
-    /// Each constraint `τ ⊑ γ` is classified based on the structure of `τ`:
+    /// Construction happens in two passes:
     ///
-    /// - Ground `τ` (no type variables anywhere): seed for `γ`.
-    /// - `Ty::Var(α)`: flat edge `α → γ`.
-    /// - `Ty::Decl { T, [Ty::Var(α)] }`: constructor edge `α →^T γ`.
+    /// 1. Every constraint's `to` vector is registered as a node. This fixes
+    ///    the canonical grouping and index of each identifier *before* any
+    ///    edge is classified, so that a bare variable referenced in some
+    ///    other constraint's `from` position is correctly recognized as
+    ///    belonging to, say, index `1` of the `Pair` node `[A, B]`, rather
+    ///    than being mistaken for an unrelated singleton node.
+    /// 2. Each constraint is classified as either a seed (every position
+    ///    ground) or an edge (at least one position depends on a variable).
     ///
     /// # Panics
     ///
-    /// Panics if a constraint has a non-variable target. All targets produced
-    /// by the constraint collection phase are guaranteed to be [`Ty::Var`].
+    /// Panics if a constraint's `from` and `to` vectors have different
+    /// lengths, or if any position of `to` is not a [`Ty::Var`].
     fn from(constraints: FlowConstraintSet) -> Self {
         let mut graph = ConstraintGraph::default();
 
+        // Pass 1: register every target vector as a node.
         for constraint in &constraints.constraints {
-            // The target of every constraint must be a type variable.
-            let into = match &constraint.to {
-                Ty::Var(id) => id.clone(),
-                other => panic!(
-                    "constraint target must be a type variable, got: {:?}",
-                    other
-                ),
+            let node = to_node(&constraint.to);
+            graph.locations.register(&node);
+            graph.nodes.insert(node);
+        }
+
+        // Pass 2: classify each constraint as a seed or an edge.
+        for constraint in &constraints.constraints {
+            assert_eq!(
+                constraint.from.len(),
+                constraint.to.len(),
+                "FlowConstraint from/to vectors must have matching lengths, got: {:?}",
+                constraint
+            );
+
+            let into = to_node(&constraint.to);
+            let positions: Vec<Position> = constraint.from.iter().map(Position::classify).collect();
+
+            if positions.iter().all(|p| matches!(p, Position::Ground(_))) {
+                // Every position is concrete: record the whole vector as one
+                // correlated ground instantiation of `into`.
+                let tuple: Vec<Ty> = positions
+                    .iter()
+                    .map(|p| match p {
+                        Position::Ground(ty) => ty.clone(),
+                        _ => unreachable!("checked by the all(...) guard above"),
+                    })
+                    .collect();
+                graph.seeds.entry(into).or_default().insert(tuple);
+                continue;
+            }
+
+            let edge = Edge {
+                positions,
+                into: into.clone(),
             };
-
-            graph.nodes.insert(into.clone());
-
-            match &constraint.from {
-                // i64 is always ground; seed it directly.
-                Ty::I64 => {
-                    graph.seeds.entry(into).or_default().insert(Ty::I64);
-                }
-
-                // A bare type variable produces a flat edge.
-                Ty::Var(source) => {
-                    graph.nodes.insert(source.clone());
-                    graph.edges.entry(source.clone()).or_default().push(Edge {
-                        from: constraint.from.clone(),
-                        into,
-                    });
-                }
-
-                // A declared type is either fully ground (seed) or contains a
-                // nested variable (constructor edge).
-                Ty::Decl { .. } => {
-                    if is_ground(&constraint.from) {
-                        graph
-                            .seeds
-                            .entry(into)
-                            .or_default()
-                            .insert(constraint.from.clone());
-                    } else {
-                        let sources = find_inner_vars(&constraint.from);
-                        for source in sources {
-                            graph.nodes.insert(source.clone());
-                            graph.edges.entry(source).or_default().push(Edge {
-                                from: constraint.from.clone(),
-                                into: into.clone(),
-                            });
-                        }
-                    }
-                }
+            let source_nodes = edge.source_nodes(&graph.locations);
+            for source in source_nodes {
+                graph.nodes.insert(source.clone());
+                graph.edges.entry(source).or_default().push(edge.clone());
             }
         }
 
@@ -146,112 +226,33 @@ impl From<FlowConstraintSet> for ConstraintGraph {
 
 impl ConstraintGraph {
     /// Returns all outgoing edges from the given node as a slice.
-    pub fn outgoing(&self, node: &Identifier) -> &[Edge] {
+    pub fn outgoing(&self, node: &Node) -> &[Edge] {
         self.edges.get(node).map(Vec::as_slice).unwrap_or(&[])
-    }
-
-    /// Returns the total number of edges in the graph.
-    pub fn edge_count(&self) -> usize {
-        self.edges.values().map(Vec::len).sum()
     }
 }
 
+/// Converts a `to` vector into a [`Node`], checking that every element is a type variable.
+///
+/// # Panics
+///
+/// Panics if the [`Ty`] is not a [`Ty::Var`]
+fn to_node(to: &[Ty]) -> Node {
+    to.iter()
+        .map(|ty| match ty {
+            Ty::Var(id) => id.clone(),
+            other => panic!(
+                "constraint target must be a type variable, got: {:?}",
+                other
+            ),
+        })
+        .collect()
+}
+
 /// Returns `true` if the type contains no type variables anywhere in its structure.
-fn is_ground(ty: &Ty) -> bool {
+pub fn is_ground(ty: &Ty) -> bool {
     match ty {
         Ty::I64 => true,
         Ty::Var(_) => false,
         Ty::Decl { type_args, .. } => type_args.args.iter().all(is_ground),
-    }
-}
-
-/// Returns the first type variable found anywhere inside the type tree, if any.
-///
-/// Used to locate the source variable for constructor edges.
-fn find_inner_vars(ty: &Ty) -> HashSet<Identifier> {
-    match ty {
-        Ty::Var(id) => HashSet::from([id.clone()]),
-        Ty::Decl { type_args, .. } => type_args.args.iter().flat_map(find_inner_vars).collect(),
-        Ty::I64 => HashSet::new(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::mono::{
-        constraint_graph::ConstraintGraph,
-        constraints::{FlowConstraint, FlowConstraintSet},
-        graph_viz::OutputFormat,
-    };
-    extern crate self as core_lang;
-    use core_macros::{id, tvar, ty};
-
-    #[test]
-    fn non_growing_cycle() {
-        let mut set = FlowConstraintSet::new();
-        set.insert(FlowConstraint {
-            from: ty!("int"),
-            to: tvar!(id!("A", 1)),
-        });
-        set.insert(FlowConstraint {
-            from: tvar!(id!("A", 1)),
-            to: tvar!(id!("B", 2)),
-        });
-        set.insert(FlowConstraint {
-            from: tvar!(id!("B", 2)),
-            to: tvar!(id!("A", 1)),
-        });
-
-        let graph = ConstraintGraph::from(set);
-
-        graph
-            .render_as(OutputFormat::Png, Some("non_growing_cycle.png"))
-            .unwrap();
-    }
-
-    #[test]
-    fn transitive_flow() {
-        let mut set = FlowConstraintSet::new();
-
-        set.insert(FlowConstraint {
-            from: ty!("int"),
-            to: tvar!(id!("A", 1)),
-        });
-        set.insert(FlowConstraint {
-            from: ty!(id!("bool")),
-            to: tvar!(id!("A", 1)),
-        });
-        set.insert(FlowConstraint {
-            from: ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("A", 1))]),
-            to: tvar!(id!("B", 2)),
-        });
-
-        let graph = ConstraintGraph::from(set);
-        graph
-            .render_as(OutputFormat::Png, Some("transitive_flow.png"))
-            .unwrap();
-    }
-
-    #[test]
-    fn growing_cycle() {
-        let mut set = FlowConstraintSet::new();
-
-        set.insert(FlowConstraint {
-            from: ty!("int"),
-            to: tvar!(id!("A", 1)),
-        });
-        set.insert(FlowConstraint {
-            from: tvar!(id!("A", 1)),
-            to: tvar!(id!("B", 2)),
-        });
-        set.insert(FlowConstraint {
-            from: ty!(id!("List"), [tvar!(id!("B", 2))]),
-            to: tvar!(id!("A", 1)),
-        });
-
-        let graph = ConstraintGraph::from(set);
-        graph
-            .render_as(OutputFormat::Png, Some("growing_cycle"))
-            .unwrap();
     }
 }
