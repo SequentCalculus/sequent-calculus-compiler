@@ -10,6 +10,8 @@ pub mod constraint_graph;
 pub mod constraints;
 pub mod errors;
 pub mod graph_viz;
+pub mod position;
+// pub mod growing_cycle;
 
 pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
     let constraints = program
@@ -28,5 +30,7 @@ pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
         constraints.print_to_colored_string(Some(&forced_set_cfg))
     );
 
-    ConstraintGraph::from(constraints)
+    let graph = ConstraintGraph::from(constraints);
+    dbg!(&graph);
+    graph
 }
