@@ -12,13 +12,6 @@ use std::collections::{HashMap, HashSet};
 /// list as one node.
 pub type Node = Vec<Identifier>;
 
-/// Maps each [`Node`] to the set of concrete ground vectors it may be instantiated with.
-///
-/// Each element of the set is a full vector, e.g. `[i64, Bool]` for a `Pair`
-/// node `[A, B]`, preserving the correlation between positions. This is the
-/// output of the solving phase and the direct input to specialization.
-pub type Solution = HashMap<Node, HashSet<Vec<Ty>>>;
-
 /// Tracks, for each type variable, which node it belongs to and
 /// at which index within that node's vector.
 ///
@@ -39,7 +32,7 @@ impl VarLocations {
     /// *different* node is a bug in constraint collection: identifiers are
     /// minted uniquely per type parameter declaration and should always be
     /// grouped the same way.
-    fn register(&mut self, node: &Node) {
+    pub fn register(&mut self, node: &Node) {
         for (index, id) in node.iter().enumerate() {
             match self.location.get(id) {
                 Some((existing_node, existing_index)) => {
@@ -66,7 +59,7 @@ impl VarLocations {
     /// If the identifier was never registered as part of any node, it is
     /// treated as its own singleton node. This covers ordinary
     /// single-parameter declarations that never appear bundled with others.
-    fn node_of(&self, id: &Identifier) -> Node {
+    pub fn node_of(&self, id: &Identifier) -> Node {
         self.location
             .get(id)
             .map(|(node, _)| node.clone())
@@ -74,7 +67,7 @@ impl VarLocations {
     }
 
     /// Returns the index of the given [`Identifier`] within its node's vector.
-    fn index_of(&self, id: &Identifier) -> usize {
+    pub fn index_of(&self, id: &Identifier) -> usize {
         self.location.get(id).map(|(_, index)| *index).unwrap_or(0)
     }
 }
@@ -90,14 +83,14 @@ impl VarLocations {
 #[derive(Debug, Clone)]
 pub struct Edge {
     /// Classified positions, one per element of the original `from` vector, in order.
-    positions: Vec<Position>,
+    pub positions: Vec<Position>,
     /// The target node receiving propagated vectors.
     pub into: Node,
 }
 
 impl Edge {
     /// Returns the distinct source nodes this edge depends on, deduplicated.
-    fn source_nodes(&self, locations: &VarLocations) -> Vec<Node> {
+    pub fn source_nodes(&self, locations: &VarLocations) -> Vec<Node> {
         let mut nodes: Vec<Node> = self
             .positions
             .iter()
@@ -378,7 +371,7 @@ mod tests {
     fn test_var_locations_inconsistent_grouping_panic() {
         let mut locations = VarLocations::default();
         locations.register(&vec![id!("A", 1), id!("B", 2)]);
-        locations.register(&vec![id!("A", 1), id!("C", 3)]); 
+        locations.register(&vec![id!("A", 1), id!("C", 3)]);
     }
 
     #[test]

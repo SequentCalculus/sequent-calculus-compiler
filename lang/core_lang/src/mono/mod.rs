@@ -10,8 +10,8 @@ pub mod constraint_graph;
 pub mod constraints;
 pub mod errors;
 pub mod graph_viz;
+pub mod growing_cycle;
 pub mod position;
-// pub mod growing_cycle;
 
 pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
     let constraints = program
