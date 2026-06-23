@@ -178,7 +178,7 @@ impl Driver {
         let parsed = self.parsed(path)?;
         let checked = parsed.check(false).map_err(DriverError::TypeError)?;
         let compiled = compile_prog_poly(checked);
-        let graph = core_lang::mono::monomorphize_program(compiled);
+        let (_, graph) = core_lang::mono::monomorphize_program(compiled);
         if let Some(path) = viz {
             graph
                 .render_as(core_lang::mono::graph_viz::OutputFormat::Png, path)

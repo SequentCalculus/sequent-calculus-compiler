@@ -3,7 +3,11 @@
 use printer::{Print, PrintCfg};
 
 use crate::{
-    mono::{constraint_graph::ConstraintGraph, constraints::ConstraintCollector},
+    mono::{
+        constraint_graph::ConstraintGraph,
+        constraints::ConstraintCollector,
+        solver::{Solution, solve},
+    },
     syntax::program::Prog,
 };
 pub mod constraint_graph;
@@ -12,8 +16,9 @@ pub mod errors;
 pub mod graph_viz;
 pub mod growing_cycle;
 pub mod position;
+pub mod solver;
 
-pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
+pub fn monomorphize_program(program: Prog) -> (Solution, ConstraintGraph) {
     let constraints = program
         .collect_constraints(&program.data_types, &program.codata_types)
         .unwrap();
@@ -31,6 +36,7 @@ pub fn monomorphize_program(program: Prog) -> ConstraintGraph {
     );
 
     let graph = ConstraintGraph::from(constraints);
-    dbg!(&graph);
-    graph
+    let solution = solve(&graph).unwrap();
+    println!("{}", solution.print_to_string(Some(&forced_set_cfg)));
+    (solution, graph)
 }
