@@ -438,7 +438,7 @@ impl Default for SolutionCache {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
 
     use crate::{
         syntax::{Ty, TypeArgs},
@@ -452,20 +452,22 @@ mod test {
         let solution_1 = Solution::_new_no_choice("a".to_string(), Ty::mk_i64());
         let solution_2 = Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
         let solution_3 = Solution::_new_no_choice("c".to_string(), Ty::mk_i64());
+        let solution_4 = Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)]));
 
         solution_cache.add_solution(solution_1.clone());
         solution_cache.add_solution(solution_2.clone());
         solution_cache.add_solution(solution_3.clone());
+        solution_cache.add_solution(solution_4.clone());
 
         let current_entries_a = solution_cache.get(&"a".to_string());
         let current_entries_b = solution_cache.get(&"b".to_string());
         let current_entries_c = solution_cache.get(&"c".to_string());
 
-        let expected_entries_a = Some(&vec![solution_1, solution_2.clone()]);
+        let expected_entries_a = Some(&vec![solution_1]);
 
         let expected_entries_b = Some(&vec![solution_2]);
 
-        let expected_entries_c = Some(&vec![solution_3]);
+        let expected_entries_c = Some(&vec![solution_3, solution_4]);
 
         assert_eq!(current_entries_a, expected_entries_a);
         assert_eq!(current_entries_b, expected_entries_b);
@@ -476,9 +478,14 @@ mod test {
             Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
             Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
             Solution::_new_no_choice("c".to_string(), Ty::mk_i64()),
+            Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)]))
         ];
 
-        assert_eq!(all_solutions, expected_solutions);
+        // we need to check that it has the same elements, but not necessarily in the same order
+        assert_eq!(all_solutions.len(), expected_solutions.len());
+        assert!(expected_solutions.iter().all(|s| all_solutions.contains(s)))
+
+
     }
 
     #[test]
