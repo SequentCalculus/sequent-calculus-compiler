@@ -15,6 +15,7 @@ pub mod constraints;
 pub mod errors;
 pub mod graph_viz;
 pub mod growing_cycle;
+pub mod naming_table;
 pub mod position;
 pub mod solver;
 
@@ -38,5 +39,9 @@ pub fn monomorphize_program(program: Prog) -> (Solution, ConstraintGraph) {
     let graph = ConstraintGraph::from(constraints);
     let solution = solve(&graph).unwrap();
     println!("{}", solution.print_to_string(Some(&forced_set_cfg)));
+
+    let naming_table = naming_table::NamingTable::build(&solution);
+    println!("{:?}", naming_table);
+
     (solution, graph)
 }
