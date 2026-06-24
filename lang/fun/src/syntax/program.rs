@@ -37,8 +37,6 @@ impl Program {
             possible_choices: Default::default(),
         };
 
-        let mut data_types = Vec::new();
-        let mut codata_types = Vec::new();
         let mut defs = Vec::new();
         let mut overloaded_defs_counter = HashMap::new();
         
@@ -46,11 +44,9 @@ impl Program {
             match decl {
                 Declaration::Data(data) => {
                     data.check(&constraint_bank.symbol_table)?;
-                    data_types.push(data);
                 }
                 Declaration::Codata(codata) => {
                     codata.check(&constraint_bank.symbol_table)?;
-                    codata_types.push(codata);
                 }
                 Declaration::Def(mut def) => {
                     def.gather_constraints(&mut constraint_bank)?;
@@ -126,6 +122,71 @@ impl Program {
 
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
+        }
+
+        // collect all instances of type templates from the symbol table
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+        for (name, (pol, type_args, xtors)) in symbol_table.types {
+            match pol {
+                Polarity::Data => {
+                    let ctors = xtors
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let args = symbol_table
+                                .ctors
+                                .get(&full_name)
+                                .unwrap_or_else(|| {
+                                    panic!("Couldn't find constructor {full_name} in symbol_table.")
+                                })
+                                .clone();
+                            CtorSig {
+                                span: None,
+                                // keep base name for xtor in all instances
+                                name: base_name,
+                                args,
+                            }
+                        })
+                        .collect();
+                    let declaration = Data {
+                        span: None,
+                        name,
+                        type_params: TypeContext::default(),
+                        ctors,
+                    };
+                    data_types.push(declaration);
+                }
+                Polarity::Codata => {
+                    let dtors = xtors
+                        .into_iter()
+                        .map(|base_name| {
+                            let full_name = base_name.clone() + &type_args.print_to_string(None);
+                            let (args, cont_ty) = symbol_table
+                                .dtors
+                                .get(&full_name)
+                                .unwrap_or_else(|| {
+                                    panic!("Couldn't find destructor {full_name} in symbol_table.")
+                                })
+                                .clone();
+                            DtorSig {
+                                span: None,
+                                // keep base name for xtor in all instances
+                                name: base_name,
+                                args,
+                                cont_ty,
+                            }
+                        })
+                        .collect();
+                    let declaration = Codata {
+                        span: None,
+                        name,
+                        type_params: TypeContext::default(),
+                        dtors,
+                    };
+                    codata_types.push(declaration);
+                }
+            }
         }
 
         Ok(CheckedProgram { data_types, codata_types, defs })

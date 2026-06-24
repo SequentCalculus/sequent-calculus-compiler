@@ -438,7 +438,7 @@ impl Default for SolutionCache {
 
 #[cfg(test)]
 mod test {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
     use crate::{
         syntax::{Ty, TypeArgs},
