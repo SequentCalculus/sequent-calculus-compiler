@@ -14,6 +14,7 @@ use crate::typing::*;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::iter::zip;
 
 /// This struct defines a copattern match of a codata type. It consists of a list of clauses, and
 /// after typechecking also of the inferred type.
@@ -58,23 +59,37 @@ impl From<New> for Term {
 
 impl Inference for New {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-        
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
         if let Some(first_clause) = self.clauses.first() {
             let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
             self.ty = Some(new_type_var.clone());
-            constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+            constraint_bank
+                .constraints
+                .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
-            let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&first_clause.xtor) {
+            let data_type_name = match constraint_bank
+                .symbol_table
+                .find_xdata_type_name(&first_clause.xtor)
+            {
                 Some(type_name) => type_name,
-                None => {return Err(Error::Undefined { span: Some(self.span), name: first_clause.xtor.clone()})},
+                None => {
+                    return Err(Error::Undefined {
+                        span: Some(self.span),
+                        name: first_clause.xtor.clone(),
+                    });
+                }
             };
 
-            let (chirality, general_type_vars, needed_clauses) = constraint_bank.symbol_table.type_templates.get(&data_type_name).unwrap().clone();
+            let (chirality, general_type_vars, needed_clauses) = constraint_bank
+                .symbol_table
+                .type_templates
+                .get(&data_type_name)
+                .unwrap()
+                .clone();
 
             let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
 
@@ -88,7 +103,10 @@ impl Inference for New {
             // the mapping is created now, to ensure that the new type varibales in this new-Block stay consistent
             let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
             for type_var in &general_type_vars.bindings {
-                type_var_mapping.insert(type_var.clone(), constraint_bank.var_name_generator.get_new_ty_var());
+                type_var_mapping.insert(
+                    type_var.clone(),
+                    constraint_bank.var_name_generator.get_new_ty_var(),
+                );
             }
 
             // Since the Codata Type has to be the same for all clauses, the type is instanciated once
@@ -98,61 +116,96 @@ impl Inference for New {
 
             // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
             for clause in &mut self.clauses {
-                match constraint_bank.symbol_table.find_xdata_type_name(&clause.xtor) {
+                match constraint_bank
+                    .symbol_table
+                    .find_xdata_type_name(&clause.xtor)
+                {
                     Some(type_name) => {
                         if type_name != data_type_name {
-                            return Err(Error::Mismatch { span: self.span, expected: format!("a clause of Type {data_type_name}"), got: format!("a clause of Type {type_name}") });
+                            return Err(Error::Mismatch {
+                                span: self.span,
+                                expected: format!("a clause of Type {data_type_name}"),
+                                got: format!("a clause of Type {type_name}"),
+                            });
                         }
-                    },
+                    }
                     None => {
-                    return Err(Error::Undefined { span: Some(self.span), name: clause.xtor.clone() });
+                        return Err(Error::Undefined {
+                            span: Some(self.span),
+                            name: clause.xtor.clone(),
+                        });
                     }
                 };
 
                 used_clauses.insert(&clause.xtor);
 
                 // the new arg types and out type are replaced
-                let (arg_types, out_type) = match constraint_bank.symbol_table.dtor_templates.get(&clause.xtor) {
+                let (mut instantiated_arg_types, out_type) = match constraint_bank
+                    .symbol_table
+                    .dtor_templates
+                    .get(&clause.xtor)
+                {
                     Some((arg_types, out_type)) => {
                         let new_arg_types = arg_types.clone().subst_ty(&type_var_mapping);
                         let new_out_type = out_type.clone().subst_ty(&type_var_mapping);
 
                         (new_arg_types, new_out_type)
-                    },
+                    }
                     None => {
                         return Err(Error::Undefined {
-                        span: Some(self.span),
-                        name: clause.xtor.clone(),
-                    })},
+                            span: Some(self.span),
+                            name: clause.xtor.clone(),
+                        });
+                    }
                 };
 
-                // the arguments are added to the context, variable that are shadowed, are replaced by the new var
-                let mut clause_context = context.clone();
-                for (template_arg_type, arg_name) in arg_types.bindings.iter().zip(&clause.context_names.bindings) {
-                    if let Some(index) = clause_context.bindings.iter().position(|bind| bind.var == *arg_name) {
-                        clause_context.bindings.swap_remove(index);
+                // renaming the arguments to fit with the name bindings from the clause
+                for (new_name, arg_binding) in zip(
+                    clause.context_names.bindings.iter(),
+                    instantiated_arg_types.bindings.iter_mut(),
+                ) {
+                    arg_binding.var = new_name.clone();
+                }
+
+                clause.context = instantiated_arg_types.clone();
+
+                // The outer context is expanded with the bindings from the clause
+                let mut full_clause_context = context.clone();
+                for arg_binding in instantiated_arg_types.bindings {
+                    // if the name of a binding is already in the Context it is shadowed by the new variable
+                    if let Some(index) = full_clause_context
+                        .bindings
+                        .iter()
+                        .position(|bind| bind.var == *arg_binding.var)
+                    {
+                        full_clause_context.bindings[index] = arg_binding;
+                    } else {
+                        full_clause_context.bindings.push(arg_binding);
                     }
-                    clause_context.add_var(arg_name, template_arg_type.ty.clone());
                 }
 
                 //the argument types are now compared to the expected type of the body of the clause
-                clause.body.gather_constraints(constraint_bank, &clause_context, out_type)?;
-            
+                clause
+                    .body
+                    .gather_constraints(constraint_bank, &full_clause_context, out_type)?;
             }
 
-            let unused_clauses: HashSet<&String> = needed_clauses_set.difference(&used_clauses).copied().collect();
+            let unused_clauses: HashSet<&String> = needed_clauses_set
+                .difference(&used_clauses)
+                .copied()
+                .collect();
 
             if !unused_clauses.is_empty() {
-                return Err(Error::MissingDtorInNew { span: self.span, dtor: unused_clauses.iter().next().unwrap().to_string()});
+                return Err(Error::MissingDtorInNew {
+                    span: self.span,
+                    dtor: unused_clauses.iter().next().unwrap().to_string(),
+                });
             }
-
 
             // creating the expected type for the new-block
             let mut general_arg_types = Vec::new();
             for ty_var_name in &general_type_vars.bindings {
-                general_arg_types.push(
-                    type_var_mapping.get(ty_var_name).unwrap().clone()
-                );
+                general_arg_types.push(type_var_mapping.get(ty_var_name).unwrap().clone());
             }
 
             let resulting_codata_type = Ty::Decl {
@@ -160,33 +213,34 @@ impl Inference for New {
                 name: data_type_name,
                 type_args: TypeArgs {
                     span: Some(self.span),
-                    args: general_arg_types
-                }
+                    args: general_arg_types,
+                },
             };
 
-            constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, resulting_codata_type));
-            
-
+            constraint_bank
+                .constraints
+                .push(Constraint::mk_only_ty(ty_var, resulting_codata_type));
         } else {
             // the clauses are empty, aborting the type inference
             return Err(Error::Mismatch {
                 span: self.span,
                 expected: "At least one Clause in New Block".to_string(),
-                got: "No clause".to_string()
+                got: "No clause".to_string(),
             });
         }
         Ok(())
-
     }
 
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
         for clause in &mut self.clauses {
-            clause.body.insert_inferred_type(mappings, symbol_table, choices)?;
+            clause
+                .body
+                .insert_inferred_type(mappings, symbol_table, choices)?;
             for ctx_binding in &mut clause.context.bindings {
                 ctx_binding.ty.mut_subst_ty(mappings);
                 ctx_binding.ty.check(&clause.context.span, symbol_table)?;
@@ -197,11 +251,13 @@ impl Inference for New {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
-    
 }
 
 impl UsedBinders for New {
@@ -250,28 +306,36 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_lpair(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let lpair_type = Some(Ty::mk_decl(
-                "LPair",
-                TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
-            ));
+            "LPair",
+            TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
+        ));
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), lpair_type.clone().unwrap())
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), lpair_type.clone().unwrap()),
         ];
-        
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
         assert_eq!(result, expected);
@@ -295,30 +359,39 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_fun(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
-        let expected_codata_type = Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]));
+        let expected_codata_type = Ty::mk_decl(
+            "Fun",
+            TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
+        );
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_ty_var("2")),
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type)
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
         assert_eq!(result, expected);
-
-        
     }
 
     #[test]
@@ -333,7 +406,7 @@ mod test {
                     xtor: "head".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
-                    body: Lit::mk(1).into()
+                    body: Lit::mk(1).into(),
                 },
                 Clause {
                     span: dummy_span(),
@@ -341,13 +414,13 @@ mod test {
                     xtor: "tail".to_owned(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
-                    body: XVar::mk("y").into()
-                }
+                    body: XVar::mk("y").into(),
+                },
             ],
-            ty: None
+            ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_stream(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
@@ -356,9 +429,13 @@ mod test {
 
         let mut ctx = TypingContext::default();
         // to make it a smaller test, the recursive call of the Stream is put into the variable y with the Stream[y], hence the type argument is already instantiated
-        ctx.add_var("y", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")])));
+        ctx.add_var(
+            "y",
+            Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")])),
+        );
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
 
         let expected_codata_type = Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("1")]));
 
@@ -366,16 +443,20 @@ mod test {
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), expected_codata_type.clone()),
-            Constraint::mk_only_ty(expected_codata_type.clone(), Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")]))),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type)
+            Constraint::mk_only_ty(
+                expected_codata_type.clone(),
+                Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")])),
+            ),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")))
-
-        
     }
 
     #[test]
@@ -407,22 +488,25 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table,
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        let result = term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x"));
-        assert!(result.is_err_and(|f| matches!(f, Error::Mismatch{..})))
-
+        let result = term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        );
+        assert!(result.is_err_and(|f| matches!(f, Error::Mismatch { .. })))
     }
 
     #[test]
     /// testing, that a missing clause causes an error
     fn inference_missing_clause() {
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_lpair(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
@@ -431,50 +515,57 @@ mod test {
 
         let result = New {
             span: dummy_span(),
-            clauses: vec![
-                Clause {
-                    span: dummy_span(),
-                    pol: Polarity::Codata,
-                    xtor: "fst".to_owned(),
-                    context_names: NameContext::default(),
-                    context: TypingContext::default(),
-                    body: Lit::mk(1).into(),
-                },
-            ],
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "fst".to_owned(),
+                context_names: NameContext::default(),
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
             ty: None,
-        }.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x"));
+        }
+        .gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        );
 
-        assert!(result.is_err_and(|e| matches!(e, Error::MissingDtorInNew { dtor, .. } if dtor == "snd")));
+        assert!(
+            result
+                .is_err_and(|e| matches!(e, Error::MissingDtorInNew { dtor, .. } if dtor == "snd"))
+        );
     }
 
     #[test]
     /// this test checks that an unknown xtor returns an "undefined" error
     fn inference_unknown_clause() {
-
         // unknown type in an empty symbol table
         let mut term = New {
             span: dummy_span(),
-            clauses: vec![
-                Clause {
-                    span: dummy_span(),
-                    pol: Polarity::Codata,
-                    xtor: "fst".to_owned(),
-                    context_names: NameContext::default(),
-                    context: TypingContext::default(),
-                    body: Lit::mk(1).into(),
-                },
-            ],
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "fst".to_owned(),
+                context_names: NameContext::default(),
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        let result = term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x"));
+        let result = term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        );
 
         assert!(result.is_err_and(|f| matches!(f, Error::Undefined { .. })));
     }
