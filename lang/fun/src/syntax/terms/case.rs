@@ -112,8 +112,6 @@ impl Inference for Case {
                 .unwrap()
                 .clone();
 
-            let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
-
             if chirality == Polarity::Codata {
                 return Err(Error::ExpectedTermGotCovariable { span: self.span });
             }
@@ -152,10 +150,10 @@ impl Inference for Case {
                 });
             }
 
-            let mut used_clauses = HashSet::new();
+            let mut used_clauses = Vec::new();
 
             for clause in &mut self.clauses {
-                used_clauses.insert(&clause.xtor);
+                used_clauses.push(&clause.xtor);
 
                 // checking that that type of the clause is the same for all clauses
                 match constraint_bank
@@ -235,17 +233,23 @@ impl Inference for Case {
                 )?;
             }
 
-            let unused_clauses: HashSet<&String> = needed_clauses_set
-                .difference(&used_clauses)
-                .copied()
-                .collect();
-
-            if !unused_clauses.is_empty() {
-                return Err(Error::MissingCtorInCase {
-                    span: self.span,
-                    ctor: unused_clauses.iter().next().unwrap().to_string(),
-                });
+            // check that all clauses were also used
+            for clause_name in needed_clauses.iter() {
+                if !used_clauses.contains(&clause_name) {
+                    return Err(Error::MissingCtorInCase {
+                        span: self.span,
+                        ctor: clause_name.clone(),
+                    });
+                }
             }
+
+            // later stages in the pipeline expect the clauses in the same order as in the Data definition
+            self.clauses.sort_by_key(|c| {
+                needed_clauses
+                    .iter()
+                    .position(|name| &c.xtor == name)
+                    .unwrap_or(usize::MAX)
+            });
 
             let scutinee_type_args = TypeArgs::mk(
                 general_type_vars

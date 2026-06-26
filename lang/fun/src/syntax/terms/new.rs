@@ -91,8 +91,6 @@ impl Inference for New {
                 .unwrap()
                 .clone();
 
-            let needed_clauses_set: HashSet<&String> = needed_clauses.iter().collect();
-
             if chirality == Polarity::Data {
                 return Err(Error::ExpectedCovariableGotTerm { span: self.span });
             }
@@ -112,7 +110,7 @@ impl Inference for New {
             // Since the Codata Type has to be the same for all clauses, the type is instanciated once
             // all following clauses are checked against this type.
 
-            let mut used_clauses = HashSet::new();
+            let mut used_clauses = Vec::new();
 
             // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
             for clause in &mut self.clauses {
@@ -137,7 +135,7 @@ impl Inference for New {
                     }
                 };
 
-                used_clauses.insert(&clause.xtor);
+                used_clauses.push(&clause.xtor);
 
                 // the new arg types and out type are replaced
                 let (mut instantiated_arg_types, out_type) = match constraint_bank
@@ -190,17 +188,23 @@ impl Inference for New {
                     .gather_constraints(constraint_bank, &full_clause_context, out_type)?;
             }
 
-            let unused_clauses: HashSet<&String> = needed_clauses_set
-                .difference(&used_clauses)
-                .copied()
-                .collect();
-
-            if !unused_clauses.is_empty() {
-                return Err(Error::MissingDtorInNew {
-                    span: self.span,
-                    dtor: unused_clauses.iter().next().unwrap().to_string(),
-                });
+            // check that all clauses were also used
+            for clause_name in needed_clauses.iter() {
+                if !used_clauses.contains(&clause_name) {
+                    return Err(Error::MissingCtorInCase {
+                        span: self.span,
+                        ctor: clause_name.clone(),
+                    });
+                }
             }
+
+            // later stages in the pipeline expect the clauses in the same order as in the Data definition
+            self.clauses.sort_by_key(|c| {
+                needed_clauses
+                    .iter()
+                    .position(|name| &c.xtor == name)
+                    .unwrap_or(usize::MAX)
+            });
 
             // creating the expected type for the new-block
             let mut general_arg_types = Vec::new();
