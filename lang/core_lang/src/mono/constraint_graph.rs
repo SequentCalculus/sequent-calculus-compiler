@@ -171,7 +171,7 @@ impl From<FlowConstraintSet> for ConstraintGraph {
 
         // Pass 1: register every target vector as a node.
         for constraint in &constraints.constraints {
-            let node = to_node(&constraint.to);
+            let node = constraint.to.clone();
             graph.locations.register(&node);
             graph.nodes.insert(node);
         }
@@ -185,7 +185,7 @@ impl From<FlowConstraintSet> for ConstraintGraph {
                 constraint
             );
 
-            let into = to_node(&constraint.to);
+            let into = constraint.to.clone();
             let positions: Vec<Position> = constraint.from.iter().map(Position::classify).collect();
 
             if positions.iter().all(|p| matches!(p, Position::Ground(_))) {
@@ -224,23 +224,6 @@ impl ConstraintGraph {
     }
 }
 
-/// Converts a `to` vector into a [`Node`], checking that every element is a type variable.
-///
-/// # Panics
-///
-/// Panics if the [`Ty`] is not a [`Ty::Var`]
-fn to_node(to: &[Ty]) -> Node {
-    to.iter()
-        .map(|ty| match ty {
-            Ty::Var(id) => id.clone(),
-            other => panic!(
-                "constraint target must be a type variable, got: {:?}",
-                other
-            ),
-        })
-        .collect()
-}
-
 /// Returns `true` if the type contains no type variables anywhere in its structure.
 pub fn is_ground(ty: &Ty) -> bool {
     match ty {
@@ -265,15 +248,15 @@ mod tests {
         let mut set = FlowConstraintSet::new();
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
         set.insert(FlowConstraint {
             from: vec![tvar!(id!("A", 1))],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
         set.insert(FlowConstraint {
             from: vec![tvar!(id!("B", 2))],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -318,15 +301,15 @@ mod tests {
         let mut set = FlowConstraintSet::new();
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
         set.insert(FlowConstraint {
             from: vec![ty!(id!("bool"))],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
         set.insert(FlowConstraint {
             from: vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("A", 1))])],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -379,16 +362,16 @@ mod tests {
         let mut set = FlowConstraintSet::new();
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         set.insert(FlowConstraint {
             from: vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("B", 2))])],
-            to: vec![tvar!(id!("C", 3))],
+            to: vec![id!("C", 3)],
         });
 
         let graph = ConstraintGraph::from(set);

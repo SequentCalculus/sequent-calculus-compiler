@@ -4,7 +4,7 @@ use printer::tokens::COMMA;
 use printer::{Alloc, Anno, Builder, DocAllocator, Print, PrintCfg};
 
 use crate::mono::errors::MonoError;
-use crate::syntax::{CodataDeclaration, DataDeclaration, Ty};
+use crate::syntax::{CodataDeclaration, DataDeclaration, Identifier, Ty};
 
 /// A flow constraint describing how a concrete type reaches a polymorphic type parameter.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -12,14 +12,27 @@ pub struct FlowConstraint {
     /// The concrete type that reaches the polymorphic type parameter.
     pub from: Vec<Ty>,
     /// The name of the polymorphic type parameter.
-    pub to: Vec<Ty>,
+    pub to: Vec<Identifier>,
 }
 impl Print for FlowConstraint {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.from
-            .print(cfg, alloc)
-            .append(alloc.text(" ⊑ "))
-            .append(self.to.print(cfg, alloc))
+        let sep = || alloc.text(",").append(alloc.space());
+
+        let from_body = alloc.intersperse(self.from.iter().map(|t| t.print(cfg, alloc)), sep());
+        let from_part = alloc
+            .text("[")
+            .append(from_body)
+            .append(alloc.text("]"))
+            .group();
+
+        let to_body = alloc.intersperse(self.to.iter().map(|id| id.print(cfg, alloc)), sep());
+        let to_part = alloc
+            .text("[")
+            .append(to_body)
+            .append(alloc.text("]"))
+            .group();
+
+        from_part.append(alloc.text(" ⊑ ")).append(to_part)
     }
 }
 
@@ -94,54 +107,28 @@ pub trait ConstraintCollector {
 }
 
 /// This function collects flow constraints from a concrete type reaching a polymorphic type parameter. It is used as a helper function in the implementation of the `ConstraintCollector` trait for various syntax elements.
-pub fn collect_type_flow(actual: &Ty, expected: &Ty) -> Result<FlowConstraintSet, MonoError> {
-    fn collect_type_flow_into(
-        actual: &Ty,
-        expected: &Ty,
-        constraints: &mut FlowConstraintSet,
-    ) -> Result<(), MonoError> {
-        match (actual, expected) {
-            (_, Ty::Var(param)) => {
-                let target = Ty::Var(param.clone());
-                constraints.insert(FlowConstraint {
-                    from: vec![actual.clone()],
-                    to: vec![target.clone()],
-                });
-                Ok(())
-            }
-            (Ty::I64, Ty::I64) => Ok(()),
-            (
-                Ty::Decl {
-                    name: name_act,
-                    type_args: args_act,
-                },
-                Ty::Decl {
-                    name: name_exp,
-                    type_args: args_exp,
-                },
-            ) => {
-                if name_act != name_exp {
-                    return Err(MonoError::TypeMismatch {
-                        expected: expected.print_to_string(None),
-                        got: actual.print_to_string(None),
-                        msg: Some("Type constructor mismatch".to_string()),
-                    });
-                }
+pub fn collect_type_flow(
+    sources: &[Ty],
+    targets: &[Identifier],
+) -> Result<FlowConstraintSet, MonoError> {
+    let mut constraints = FlowConstraintSet::new();
 
-                for (act_arg, exp_arg) in args_act.args.iter().zip(&args_exp.args) {
-                    collect_type_flow_into(act_arg, exp_arg, constraints)?;
-                }
-                Ok(())
-            }
-            _ => Err(MonoError::TypeMismatch {
-                expected: expected.print_to_string(None),
-                got: actual.print_to_string(None),
-                msg: None,
-            }),
-        }
+    if sources.len() != targets.len() {
+        return Err(MonoError::TypeMismatch {
+            expected: format!("Sequence of {} types", targets.len()),
+            got: format!("Sequence of {} types", sources.len()),
+            msg: Some("Arity mismatch in type sequences".to_string()),
+        });
     }
 
-    let mut constraints = FlowConstraintSet::new();
-    collect_type_flow_into(actual, expected, &mut constraints)?;
+    // avoid generating constraints for empty source types, as they do not contribute to the flow.
+    if sources.is_empty() {
+        return Ok(constraints);
+    }
+
+    constraints.insert(FlowConstraint {
+        from: sources.to_vec(),
+        to: targets.to_vec(),
+    });
     Ok(constraints)
 }

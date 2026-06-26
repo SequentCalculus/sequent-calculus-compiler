@@ -342,10 +342,7 @@ mod xtor_tests {
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
-                to: vec![Ty::Var(Identifier {
-                    name: "A".to_string(),
-                    id: 1,
-                })],
+                to: vec![id!("A", 1)],
             }]),
         };
 
@@ -393,10 +390,7 @@ mod xtor_tests {
             constraints: HashSet::from_iter(vec![
                 FlowConstraint {
                     from: vec![Ty::I64],
-                    to: vec![Ty::Var(Identifier {
-                        name: "A".to_string(),
-                        id: 1,
-                    })],
+                    to: vec![id!("A", 1)],
                 },
                 FlowConstraint {
                     from: vec![Ty::Decl {
@@ -408,10 +402,7 @@ mod xtor_tests {
                             args: vec![Ty::I64],
                         },
                     }],
-                    to: vec![Ty::Var(Identifier {
-                        name: "A".to_string(),
-                        id: 1,
-                    })],
+                    to: vec![id!("A", 1)],
                 },
             ]),
         };
@@ -432,10 +423,7 @@ mod xtor_tests {
             FlowConstraintSet {
                 constraints: HashSet::from_iter(vec![FlowConstraint {
                     from: vec![Ty::I64],
-                    to: vec![Ty::Var(Identifier {
-                        name: "A".to_string(),
-                        id: 1
-                    })]
+                    to: vec![id!("A", 1)]
                 }])
             }
         )
@@ -466,10 +454,7 @@ mod xtor_tests {
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
-                to: vec![Ty::Var(Identifier {
-                    name: "A".to_string(),
-                    id: 1,
-                })],
+                to: vec![id!("A", 1)],
             }]),
         };
 

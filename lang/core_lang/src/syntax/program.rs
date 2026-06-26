@@ -247,10 +247,7 @@ mod program_tests {
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
-                to: vec![Ty::Var(Identifier {
-                    name: "A".to_string(),
-                    id: 1,
-                })],
+                to: vec![id!("A", 1)],
             }]),
         };
 

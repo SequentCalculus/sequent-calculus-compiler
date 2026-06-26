@@ -87,7 +87,7 @@ mod tests {
 
         set.insert(FlowConstraint {
             from: vec![ty!(id!("List"), [tvar!(id!("A", 1))])],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -105,7 +105,7 @@ mod tests {
 
         set.insert(FlowConstraint {
             from: vec![ty!(id!("List"), [tvar!(id!("A", 1))])],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -124,12 +124,12 @@ mod tests {
 
         set.insert(FlowConstraint {
             from: vec![ty!(id!("Option"), [tvar!(id!("A", 1))])],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         set.insert(FlowConstraint {
             from: vec![tvar!(id!("B", 2))],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         let graph = ConstraintGraph::from(set);

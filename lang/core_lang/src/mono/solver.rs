@@ -64,9 +64,15 @@ impl Print for Solution {
                     alloc.text(", "),
                 );
 
-                node.print(cfg, alloc)
-                    .append(alloc.text(" -> "))
-                    .append(solutions_disp)
+                let mut inline_cfg = cfg.clone();
+                inline_cfg.allow_linebreaks = false;
+
+                let key_disp = alloc
+                    .text("[")
+                    .append(node.print(&inline_cfg, alloc))
+                    .append(alloc.text("]"));
+
+                key_disp.append(alloc.text(" -> ")).append(solutions_disp)
             }),
             alloc.line(),
         );
@@ -79,7 +85,6 @@ impl Print for Solution {
             .group()
     }
 }
-
 /// Runs the worklist fixpoint solver over the constraint graph.
 ///
 /// Starts from the seed vectors and repeatedly propagates vectors through
@@ -264,12 +269,12 @@ mod tests {
 
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         set.insert(FlowConstraint {
             from: vec![tvar!(id!("A", 1))],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -294,27 +299,27 @@ mod tests {
         // Provide multiple types for A (Node 1)
         set.insert(FlowConstraint {
             from: vec![ty!("int")],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
         set.insert(FlowConstraint {
             from: vec![ty!(id!("float"))],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         // Provide multiple types for B (Node 2)
         set.insert(FlowConstraint {
             from: vec![ty!(id!("bool"))],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
         set.insert(FlowConstraint {
             from: vec![ty!(id!("string"))],
-            to: vec![tvar!(id!("B", 2))],
+            to: vec![id!("B", 2)],
         });
 
         // Combine them into Pair[A, B] -> C
         set.insert(FlowConstraint {
             from: vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("B", 2))])],
-            to: vec![tvar!(id!("C", 3))],
+            to: vec![id!("C", 3)],
         });
 
         let graph = ConstraintGraph::from(set);
@@ -346,7 +351,7 @@ mod tests {
 
         set.insert(FlowConstraint {
             from: vec![ty!(id!("List"), [tvar!(id!("A", 1))])],
-            to: vec![tvar!(id!("A", 1))],
+            to: vec![id!("A", 1)],
         });
 
         let graph = ConstraintGraph::from(set);

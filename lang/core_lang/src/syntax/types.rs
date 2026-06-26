@@ -87,22 +87,12 @@ impl ConstraintCollector for Ty {
             Ty::Decl { name, type_args } => {
                 if self.is_codata(codata_declarations) {
                     let template = lookup_type_declaration(name, codata_declarations);
-                    type_args.args.iter().zip(&template.type_params).try_fold(
-                        FlowConstraintSet::new(),
-                        |mut acc, (arg, param)| {
-                            acc.extend(collect_type_flow(arg, &Ty::Var(param.clone()))?);
-                            Ok(acc)
-                        },
-                    )
+
+                    collect_type_flow(&type_args.args, &template.type_params.as_slice())
                 } else {
                     let template = lookup_type_declaration(name, data_declarations);
-                    type_args.args.iter().zip(&template.type_params).try_fold(
-                        FlowConstraintSet::new(),
-                        |mut acc, (arg, param)| {
-                            acc.extend(collect_type_flow(arg, &Ty::Var(param.clone()))?);
-                            Ok(acc)
-                        },
-                    )
+
+                    collect_type_flow(&type_args.args, &template.type_params.as_slice())
                 }
             }
         }
