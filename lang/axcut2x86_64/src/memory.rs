@@ -1053,7 +1053,6 @@ impl Memory<Code, Temporary> for Backend {
             memory_block: Register,
             to_load: TypingContext,
             existing_context: &TypingContext,
-            linear: bool,
             instructions: &mut Vec<Code>,
         ) {
             // tracks whether a register for memory blocks in a spill position has been freed
@@ -1070,7 +1069,7 @@ impl Memory<Code, Temporary> for Backend {
                 existing_context,
                 BlockPosition::Last,
                 LoadMode::Release,
-                linear,
+                false,
                 &mut register_freed,
                 &mut then_branch,
             );
@@ -1095,7 +1094,7 @@ impl Memory<Code, Temporary> for Backend {
                 existing_context,
                 BlockPosition::Last,
                 LoadMode::Share,
-                linear,
+                false,
                 &mut register_freed,
                 &mut else_branch,
             );
@@ -1135,7 +1134,6 @@ impl Memory<Code, Temporary> for Backend {
                         memory_block_register,
                         to_load,
                         existing_context,
-                        linear,
                         instructions,
                     ),
                     Temporary::Spill(memory_block_position) => {
@@ -1144,7 +1142,7 @@ impl Memory<Code, Temporary> for Backend {
                             STACK,
                             stack_offset(memory_block_position),
                         ));
-                        load_register(TEMP, to_load, existing_context, linear, instructions);
+                        load_register(TEMP, to_load, existing_context, instructions);
                     }
                 }
             }
