@@ -77,17 +77,17 @@ impl Ty {
     /// This function checks the well-formedness of a type within a type template during
     /// typechecking. For a user-declared type this means that a template with its name must exist
     /// or it must be one of the type parameters of the template.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during typechecking.
     /// - `type_params` is the list of type parameters of the template.
     pub fn check_template(
         &self,
         span: Option<SourceSpan>,
-        symbol_table: &SymbolTable,
+        state: &CheckingState,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         match self {
             Ty::I64 { .. } => Ok(()),
-            Ty::Decl { name, .. } => match symbol_table.type_templates.get(name) {
+            Ty::Decl { name, .. } => match state.symbol_table.type_templates.get(name) {
                 Some(_) => Ok(()),
                 None => {
                     if type_params.bindings.contains(name) {

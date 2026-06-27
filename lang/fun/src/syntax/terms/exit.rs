@@ -49,11 +49,11 @@ impl From<Exit> for Term {
 impl Check for Exit {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.arg = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
+        self.arg = self.arg.check(state, context, &Ty::mk_i64())?;
 
         self.ty = Some(expected.clone());
         Ok(self)

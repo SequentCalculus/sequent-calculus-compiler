@@ -69,17 +69,23 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{ctor, id, lit, ty};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
-        typing::check::Check,
+        parse_term,
+        syntax::context::TypingContext,
+        test_common::symbol_table_list,
+        typing::{CheckingState, check::Check},
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_cons() {
         let term = parse_term!("Cons(1,Nil)");
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let term_typed = term
             .check(
-                &mut symbol_table_list(),
+                &mut state,
                 &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_decl(
                     "List",

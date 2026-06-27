@@ -89,9 +89,10 @@ fn shrink_unknown_cuts(
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            let is_codata = ty.is_codata(state.codata);
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
-            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
+            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if is_codata {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -153,6 +154,7 @@ fn shrink_unknown_cuts(
             axcut::syntax::statements::Switch {
                 var: shrink_identifier(var_keep),
                 ty: translated_ty,
+                linear: !state.nonlinear_continuations && is_codata,
                 clauses,
                 free_vars_clauses: None,
             }
@@ -229,6 +231,7 @@ fn shrink_critical_pairs(
         Ty::I64 => axcut::syntax::statements::Create {
             var: shrink_identifier(var_prd),
             ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
+            linear: !state.nonlinear_continuations,
             // ... so we turn the tilde-mu-binding into a continuation closure
             context: None,
             clauses: vec![axcut::syntax::statements::Clause {
@@ -249,6 +252,7 @@ fn shrink_critical_pairs(
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
         Ty::Decl(name) => {
+            let is_codata = ty.is_codata(state.codata);
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
@@ -257,7 +261,7 @@ fn shrink_critical_pairs(
                 _,
                 _,
                 _,
-            ) = if ty.is_codata(state.codata) {
+            ) = if is_codata {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -333,6 +337,7 @@ fn shrink_critical_pairs(
                             axcut::syntax::statements::Let {
                                 var,
                                 ty: translated_ty.clone(),
+                                linear: !state.nonlinear_continuations && is_codata,
                                 tag: shrink_identifier(xtor),
                                 args: env,
                                 next,
@@ -348,6 +353,7 @@ fn shrink_critical_pairs(
             axcut::syntax::statements::Create {
                 var: shrink_identifier(var_keep),
                 ty: axcut::syntax::Ty::Decl(shrink_identifier(name)),
+                linear: !state.nonlinear_continuations && !is_codata,
                 context: None,
                 clauses,
                 free_vars_clauses: None,
@@ -639,8 +645,17 @@ impl Shrinking for FsCut {
                     statement,
                     ..
                 }),
-            )
-            | (
+            ) => axcut::syntax::statements::Let {
+                var: shrink_identifier(variable),
+                ty: shrink_ty(self.ty),
+                linear: false,
+                tag: shrink_identifier(name),
+                args: shrink_context(args, state.codata),
+                next: statement.shrink(state),
+                free_vars_next: None,
+            }
+            .into(),
+            (
                 FsTerm::Mu(Mu {
                     prdcns: Prd,
                     variable,
@@ -656,6 +671,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Let {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 tag: shrink_identifier(name),
                 args: shrink_context(args, state.codata),
                 next: statement.shrink(state),
@@ -712,6 +728,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Switch {
                 var: shrink_identifier(var),
                 ty: shrink_ty(self.ty),
+                linear: false,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
             }
@@ -730,6 +747,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Switch {
                 var: shrink_identifier(var),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
             }
@@ -751,6 +769,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Create {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: !state.nonlinear_continuations,
                 context: None,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,
@@ -773,6 +792,7 @@ impl Shrinking for FsCut {
             ) => axcut::syntax::statements::Create {
                 var: shrink_identifier(variable),
                 ty: shrink_ty(self.ty),
+                linear: false,
                 context: None,
                 clauses: clauses.shrink(state),
                 free_vars_clauses: None,

@@ -9,6 +9,7 @@ pub fn create(input: TokenStream) -> TokenStream {
         [
             "Variable",
             "Type",
+            "Linearity Annotation",
             "Context",
             "Clauses",
             "Free Vars Clauses",
@@ -16,16 +17,18 @@ pub fn create(input: TokenStream) -> TokenStream {
             "Free Vars Next",
         ],
         &[
-            (2, parse_str("::std::option::Option::None").unwrap()),
-            (4, parse_str("::std::option::Option::None").unwrap()),
-            (6, parse_str("::std::option::Option::None").unwrap()),
+            (3, parse_str("::std::option::Option::None").unwrap()),
+            (2, parse_str("false").unwrap()),
+            (5, parse_str("::std::option::Option::None").unwrap()),
+            (7, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
 
     let var = &args[0];
     let ty = &args[1];
-    let context = quote_option(&args[2], |expr| {
-        let bindings = expr_to_array(expr, 2);
+    let linear = &args[2];
+    let context = quote_option(&args[3], |expr| {
+        let bindings = expr_to_array(expr, 3);
         quote! {
         axcut::syntax::context::TypingContext{
             bindings: ::std::vec::Vec::from([
@@ -33,9 +36,9 @@ pub fn create(input: TokenStream) -> TokenStream {
             ])
         }}
     });
-    let clauses = expr_to_array(&args[3], 3);
-    let free_vars_clauses = quote_option(&args[4], |expr| {
-        let free_vars_clauses = expr_to_array(expr, 4)
+    let clauses = expr_to_array(&args[4], 4);
+    let free_vars_clauses = quote_option(&args[5], |expr| {
+        let free_vars_clauses = expr_to_array(expr, 5)
             .into_iter()
             .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
@@ -45,9 +48,9 @@ pub fn create(input: TokenStream) -> TokenStream {
             ])
         }
     });
-    let next = &args[5];
-    let free_vars_next = quote_option(&args[6], |expr| {
-        let free_vars_next = expr_to_array(expr, 6)
+    let next = &args[6];
+    let free_vars_next = quote_option(&args[7], |expr| {
+        let free_vars_next = expr_to_array(expr, 7)
             .into_iter()
             .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
@@ -62,6 +65,7 @@ pub fn create(input: TokenStream) -> TokenStream {
         axcut::syntax::statements::create::Create{
             var: #var,
             ty: #ty,
+            linear: #linear,
             context: #context,
             clauses: std::vec::Vec::from([
                 #(#clauses),*

@@ -83,27 +83,32 @@ impl From<Destructor> for Term {
 impl Check for Destructor {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         // the name of the constructor in the symbol table for the instantiated data type
         let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
-        let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
+        let ty = match state
+            .symbol_table
+            .lookup_ty_for_dtor(&self.span, &dtor_name)
+        {
             Ok(ty) => ty,
             // if there is no instance yet, we create an instance from the template
-            Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
+            Err(_) => state
+                .symbol_table
+                .lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
         };
 
-        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
+        self.scrutinee = self.scrutinee.check(state, context, &ty)?;
 
-        match symbol_table.dtors.get(&dtor_name) {
+        match state.symbol_table.dtors.get(&dtor_name) {
             Some(signature) => {
                 let (types, ret_ty) = signature.clone();
 
-                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
+                self.args = check_args(&self.span, state, context, self.args, &types)?;
 
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+                check_equality(&self.span, state, expected, &ret_ty)?;
 
                 self.ty = Some(expected.clone());
                 Ok(self)
@@ -142,7 +147,10 @@ mod destructor_tests {
             "x",
             Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
-        let mut symbol_table = symbol_table_lpair();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_lpair(),
+            ..Default::default()
+        };
         let result = Destructor {
             span: dummy_span(),
             id: "fst".to_owned(),
@@ -151,7 +159,7 @@ mod destructor_tests {
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .check(&mut symbol_table, &ctx, &Ty::mk_i64())
+        .check(&mut state, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: dummy_span(),
@@ -183,7 +191,10 @@ mod destructor_tests {
             Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
         );
         ctx.add_covar("a", Ty::mk_i64());
-        let mut symbol_table = symbol_table_fun_template();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_fun_template(),
+            ..Default::default()
+        };
         let result = Destructor {
             span: dummy_span(),
             id: "apply".to_owned(),
@@ -192,7 +203,7 @@ mod destructor_tests {
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .check(&mut symbol_table, &ctx, &Ty::mk_i64())
+        .check(&mut state, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Destructor {
             span: dummy_span(),
@@ -238,7 +249,7 @@ mod destructor_tests {
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

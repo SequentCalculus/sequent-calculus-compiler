@@ -33,10 +33,10 @@ pub struct CtorSig {
 impl CtorSig {
     /// This function checks the well-formedness of the constructor by checking the argument
     /// context.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
-    fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
+    fn check(&self, state: &CheckingState, type_params: &TypeContext) -> Result<(), Error> {
+        self.args.check_template(state, type_params)?;
         Ok(())
     }
 }
@@ -79,9 +79,9 @@ pub struct Data {
 impl Data {
     /// This function checks the well-formedness of the data type template by checking each
     /// constructor.
-    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, state: &CheckingState) -> Result<(), Error> {
         for ctor in &self.ctors {
-            ctor.check(symbol_table, &self.type_params)?;
+            ctor.check(state, &self.type_params)?;
         }
         Ok(())
     }
@@ -125,7 +125,7 @@ mod data_tests {
 
     use crate::{
         test_common::data_list,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
 
     #[test]
@@ -137,9 +137,9 @@ mod data_tests {
 
     #[test]
     fn data_check() {
-        let mut symbol_table = SymbolTable::default();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = data_list().check(&mut symbol_table);
+        let mut state = CheckingState::default();
+        data_list().build(&mut state.symbol_table).unwrap();
+        let result = data_list().check(&mut state);
         assert!(result.is_ok())
     }
 }

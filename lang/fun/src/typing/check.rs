@@ -17,18 +17,25 @@ use crate::syntax::{
 
 use super::{errors::Error, symbol_table::SymbolTable};
 
+/// This struct defines the state of the type checking of [Fun](fun).
+#[derive(Debug, Default)]
+pub struct CheckingState {
+    pub symbol_table: SymbolTable,
+    pub nonlinear_continuations: bool,
+}
+
 /// This trait defines a method for typechecking against an expected type. The expected type will
 /// be annotated in the checked term.
 pub trait Check: Sized {
     /// This method performs typechecking with a given symbol table and typing context against an
     /// expected type. The expected type will be annotated in the checked term.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during type checking.
     /// - `context` is the current typing context containing bindings for the (co)variables in
     ///   scope.
     /// - `expected` is the expected type.
     fn check(
         self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error>;
@@ -37,11 +44,11 @@ pub trait Check: Sized {
 impl<T: Check + Clone> Check for Rc<T> {
     fn check(
         self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let self_checked = Rc::unwrap_or_clone(self).check(symbol_table, context, expected)?;
+        let self_checked = Rc::unwrap_or_clone(self).check(state, context, expected)?;
         Ok(Rc::new(self_checked))
     }
 }
@@ -49,13 +56,13 @@ impl<T: Check + Clone> Check for Rc<T> {
 impl<T: Check> Check for Option<T> {
     fn check(
         self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         match self {
             None => Ok(None),
-            Some(t) => Ok(Some(t.check(symbol_table, context, expected)?)),
+            Some(t) => Ok(Some(t.check(state, context, expected)?)),
         }
     }
 }
@@ -63,13 +70,13 @@ impl<T: Check> Check for Option<T> {
 /// This function typechecks arguments against a signature, i.e.,
 /// against the types in a list of bindings.
 /// - `span` is the source location of the arguments.
-/// - `symbol_table` is the symbol table during typechecking.
+/// - `state` is the [state](CheckingState) during typechecking.
 /// - `context` is the current typing context.
 /// - `args` are the arguments to check.
 /// - `types` is the list of bindings against whose types the arguments are checked.
 pub fn check_args(
     span: &SourceSpan,
-    symbol_table: &mut SymbolTable,
+    state: &mut CheckingState,
     context: &TypingContext,
     args: Arguments,
     types: &TypingContext,
@@ -95,10 +102,10 @@ pub fn check_args(
 
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
                     if let Some(ty) = variable.ty {
-                        check_equality(&variable.span, symbol_table, &ty, &found_ty)?;
+                        check_equality(&variable.span, state, &ty, &found_ty)?;
                     }
 
-                    check_equality(&variable.span, symbol_table, &binding.ty, &found_ty)?;
+                    check_equality(&variable.span, state, &binding.ty, &found_ty)?;
 
                     variable.ty = Some(found_ty);
                     variable.chi = Some(Cns);
@@ -107,9 +114,9 @@ pub fn check_args(
                 _ => return Err(Error::ExpectedCovariableGotTerm { span: *span }),
             }
         } else {
-            binding.ty.check(&types.span, symbol_table)?;
+            binding.ty.check(&types.span, &mut state.symbol_table)?;
 
-            let arg_checked = arg.check(symbol_table, context, &binding.ty)?;
+            let arg_checked = arg.check(state, context, &binding.ty)?;
             new_args.push(arg_checked);
         }
     }
@@ -121,12 +128,12 @@ pub fn check_args(
 /// types, which creates instances if needed. The two types hence must not be type parameters.
 pub fn check_equality(
     span: &SourceSpan,
-    symbol_table: &mut SymbolTable,
+    state: &mut CheckingState,
     expected: &Ty,
     got: &Ty,
 ) -> Result<(), Error> {
-    expected.check(&Some(*span), symbol_table)?;
-    got.check(&Some(*span), symbol_table)?;
+    expected.check(&Some(*span), &mut state.symbol_table)?;
+    got.check(&Some(*span), &mut state.symbol_table)?;
     if expected != got {
         return Err(Error::Mismatch {
             span: *span,
@@ -155,7 +162,7 @@ mod check_tests {
             codata_stream, data_list, data_list_i64, def_mult, def_mult_typed, symbol_table_fun,
             symbol_table_list,
         },
-        typing::symbol_table::SymbolTable,
+        typing::{check::CheckingState, symbol_table::SymbolTable},
     };
 
     #[test]
@@ -174,6 +181,7 @@ mod check_tests {
             defs: vec![def_mult_typed()],
             data_types: vec![data_list_i64()],
             codata_types: vec![],
+            nonlinear_continuations: false,
         };
         assert_eq!(result, expected)
     }
@@ -203,7 +211,7 @@ mod check_tests {
     fn equality_check() {
         let result = check_equality(
             &dummy_span(),
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &Ty::mk_i64(),
             &Ty::mk_i64(),
         );
@@ -214,7 +222,7 @@ mod check_tests {
     fn equality_check_fail() {
         let result = check_equality(
             &dummy_span(),
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &Ty::mk_i64(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );
@@ -223,10 +231,13 @@ mod check_tests {
 
     #[test]
     fn check_arg_list() {
-        let mut symbol_table = symbol_table_list();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let result = check_args(
             &dummy_span(),
-            &mut symbol_table,
+            &mut state,
             &TypingContext {
                 span: None,
                 bindings: vec![],
@@ -283,9 +294,13 @@ mod check_tests {
 
     #[test]
     fn check_arg_covar() {
+        let mut state = CheckingState {
+            symbol_table: symbol_table_fun(),
+            ..Default::default()
+        };
         let result = check_args(
             &dummy_span(),
-            &mut symbol_table_fun(),
+            &mut state,
             &TypingContext {
                 span: None,
                 bindings: vec![
@@ -346,7 +361,7 @@ mod check_tests {
     fn check_fail() {
         let result = check_args(
             &dummy_span(),
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext {
                 span: None,
                 bindings: vec![],

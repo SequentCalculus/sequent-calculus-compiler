@@ -16,12 +16,13 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the pattern matching on an xtor in AxCut. It consists of the variable to
-/// match on, its type, and a list of clauses (one for each xtor in the type declaration).
-/// Moreover, the free variables of the clauses can be annotated.
+/// match on, its type, whether it's known to be used linearly, and a list of clauses (one for
+/// each xtor in the type declaration). Moreover, the free variables of the clauses can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Switch {
     pub var: Identifier,
     pub ty: Ty,
+    pub linear: bool,
     pub clauses: Vec<Clause>,
     pub free_vars_clauses: Option<HashSet<ID>>,
 }
@@ -34,6 +35,11 @@ impl Print for Switch {
     ) -> printer::Builder<'a> {
         alloc
             .keyword(SWITCH)
+            .append(if self.linear {
+                alloc.keyword("1")
+            } else {
+                alloc.nil()
+            })
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(alloc.space())

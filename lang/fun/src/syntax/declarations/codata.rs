@@ -35,12 +35,11 @@ pub struct DtorSig {
 impl DtorSig {
     /// This function checks the well-formedness of the dstructor by checking the argument context
     /// and the return type.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
-    fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
-        self.cont_ty
-            .check_template(self.span, symbol_table, type_params)?;
+    fn check(&self, state: &CheckingState, type_params: &TypeContext) -> Result<(), Error> {
+        self.args.check_template(state, type_params)?;
+        self.cont_ty.check_template(self.span, state, type_params)?;
         Ok(())
     }
 }
@@ -88,9 +87,9 @@ pub struct Codata {
 impl Codata {
     /// This function checks the well-formedness of the codata type template by checking each
     /// destructor.
-    pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+    pub fn check(&self, state: &CheckingState) -> Result<(), Error> {
         for dtor in &self.dtors {
-            dtor.check(symbol_table, &self.type_params)?;
+            dtor.check(state, &self.type_params)?;
         }
         Ok(())
     }
@@ -132,7 +131,7 @@ impl Print for Codata {
 mod codata_tests {
     use crate::{
         test_common::codata_stream,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
     use printer::Print;
 
@@ -145,9 +144,9 @@ mod codata_tests {
 
     #[test]
     fn codata_check() {
-        let mut symbol_table = SymbolTable::default();
-        codata_stream().build(&mut symbol_table).unwrap();
-        let result = codata_stream().check(&mut symbol_table);
+        let mut state = CheckingState::default();
+        codata_stream().build(&mut state.symbol_table).unwrap();
+        let result = codata_stream().check(&mut state);
         assert!(result.is_ok())
     }
 }

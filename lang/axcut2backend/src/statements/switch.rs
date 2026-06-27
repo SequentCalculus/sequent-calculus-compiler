@@ -29,7 +29,11 @@ impl CodeStatement for Switch {
             + ParallelMoves<Code, Temporary>
             + Utils<Temporary>,
     {
-        let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var.print_to_string(None));
+        let comment = format!(
+            "{SWITCH}{} {} \\{{ ... \\}};",
+            if self.linear { "1" } else { "" },
+            self.var.print_to_string(None)
+        );
         instructions.push(Backend::comment(comment));
 
         let fresh_label = format!(
@@ -68,6 +72,13 @@ impl CodeStatement for Switch {
         // the `load`s performed by `code_clauses` expect the pointer to memory to be in the first
         // temporary after the current context, so we pop the corresponding binding here
         context.bindings.pop();
-        code_clauses::<Backend, _, _, _>(&context, self.clauses, &fresh_label, types, instructions);
+        code_clauses::<Backend, _, _, _>(
+            &context,
+            self.clauses,
+            &fresh_label,
+            types,
+            self.linear,
+            instructions,
+        );
     }
 }

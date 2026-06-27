@@ -98,17 +98,15 @@ impl TypingContext {
 
     /// This function checks whether all types in the typing context within (an xtor of) a
     /// template are well-formed.
-    /// - `symbol_table` is the symbol table during typechecking.
+    /// - `state` is the [state](CheckingState) during typechecking.
     /// - `type_params` is the list of type parameters of the template.
     pub fn check_template(
         &self,
-        symbol_table: &SymbolTable,
+        state: &CheckingState,
         type_params: &TypeContext,
     ) -> Result<(), Error> {
         for binding in &self.bindings {
-            binding
-                .ty
-                .check_template(self.span, symbol_table, type_params)?;
+            binding.ty.check_template(self.span, state, type_params)?;
         }
         Ok(())
     }
