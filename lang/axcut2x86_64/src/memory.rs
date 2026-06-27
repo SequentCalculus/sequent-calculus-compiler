@@ -345,7 +345,9 @@ fn store_value(
     // values of external types like integers occupy only the second temporary, so we zero the
     // first slot to indicate that there is no pointer to another memory block in this field
     if to_store.chi == Chirality::Ext {
-        store_zero(memory_block, offset, linear, instructions);
+        if !linear {
+            store_zero(memory_block, offset, linear, instructions);
+        }
     } else {
         store_slot(
             Fst,
