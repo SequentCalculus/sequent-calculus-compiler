@@ -48,13 +48,8 @@ mod parser_tests {
     use super::*;
     use crate::{
         syntax::{
-            context::TypingContext,
-            program::Program,
-            terms::{Lit, Paren, Term, XVar},
-            types::Ty,
-            util::dummy_span,
-        },
-        test_common::{codata_stream, data_list, def_mult},
+            Codata, CtorSig, Data, DtorSig, TypeArgs, TypeContext, context::TypingContext, program::Program, terms::{Lit, Paren, Term, XVar}, types::Ty, util::dummy_span,
+        }, test_common::{codata_stream, data_list, def_mult},
     };
 
     #[test]
@@ -98,13 +93,69 @@ mod parser_tests {
         assert_eq!(parser.parse("(x : i64, a:cns i64)"), Ok(ctx))
     }
 
+    /// the parser still produces the old style of Type Vars: Type Declaration with no argument.
+    /// They are converted later in the type checking. To enable testing of the parser this function is nice to have.
+    fn make_old_type_var(name: &str) -> Ty {
+        Ty::mk_decl(name, TypeArgs::default())
+    }
+
     #[test]
     fn parse_prog() {
         let parser = fun::ProgParser::new();
+        let mut ctx_cons = TypingContext::default();
+        ctx_cons.add_var("x", make_old_type_var("A"));
+        ctx_cons.add_var(
+            "xs",
+            Ty::mk_decl(
+                "List",
+                TypeArgs::mk(vec![make_old_type_var("A")]),
+            ),
+        );
+        let data_list = Data {
+            span: None,
+            name: "List".to_owned(),
+            type_params: TypeContext::mk(&vec!["A"]),
+            ctors: vec![
+                CtorSig {
+                    span: None,
+                    name: "Nil".to_owned(),
+                    args: TypingContext::default(),
+                },
+                CtorSig {
+                    span: None,
+                    name: "Cons".to_owned(),
+                    args: ctx_cons,
+                },
+            ],
+        };
+
+        let codata_stream = Codata {
+            span: None,
+            name: "Stream".to_owned(),
+            type_params: TypeContext::mk(&vec!["A"]),
+            dtors: vec![
+                DtorSig {
+                    span: None,
+                    name: "head".to_owned(),
+                    args: TypingContext::default(),
+                    cont_ty: make_old_type_var("A"),
+                },
+                DtorSig {
+                    span: None,
+                    name: "tail".to_owned(),
+                    args: TypingContext::default(),
+                    cont_ty: Ty::mk_decl(
+                        "Stream",
+                        TypeArgs::mk(vec![make_old_type_var("A")]),
+                    ),
+                },
+            ],
+        };
+
         let expected = Program {
             declarations: vec![
-                data_list().into(),
-                codata_stream().into(),
+                data_list.into(),
+                codata_stream.into(),
                 def_mult().into(),
             ],
         };
