@@ -49,7 +49,7 @@ mod parser_tests {
     use crate::{
         syntax::{
             Codata, CtorSig, Data, DtorSig, TypeArgs, TypeContext, context::TypingContext, program::Program, terms::{Lit, Paren, Term, XVar}, types::Ty, util::dummy_span,
-        }, test_common::{codata_stream, data_list, def_mult},
+        }, test_common::def_mult,
     };
 
     #[test]

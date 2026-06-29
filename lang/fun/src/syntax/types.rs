@@ -114,8 +114,8 @@ impl Ty {
                     }
                 }
             },
-            Ty::TypeVar { name, .. } => {
-                panic!("The type variable {} was encounterd while checking a type.", name);
+            Ty::TypeVar { .. } => {
+                Ok(())
             }
         }
     }

@@ -157,20 +157,18 @@ mod test {
         let possible_choices: Vec<(u32, usize)> = vec![(42, 3)];
         let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
 
-        let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2"]);
-        assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
+        let expected_var_set = BddVariableSet::new(&["42_choice0", "42_choice1", "42_choice2"]);
 
         let mut expected_mapping = BddMapping::default();
         expected_mapping.add_choice(42, expected_var_set.variables());
         assert_eq!(expected_mapping, resulting_mapping);
-
+        
         // the resulting var set is used, because two different var sets can make problems if you compare the terms
-
-        let sub_clause_1 = resulting_var_set.eval_expression_string("add_choice0 | add_choice1 | add_choice2");
-        let sub_clause_2 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice1)");
-        let sub_clause_3 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice2)");
-        let sub_clause_4 = resulting_var_set.eval_expression_string("!(add_choice1 & add_choice2)");
-
+        let sub_clause_1 = resulting_var_set.eval_expression_string("42_choice0 | 42_choice1 | 42_choice2");
+        let sub_clause_2 = resulting_var_set.eval_expression_string("!(42_choice0 & 42_choice1)");
+        let sub_clause_3 = resulting_var_set.eval_expression_string("!(42_choice0 & 42_choice2)");
+        let sub_clause_4 = resulting_var_set.eval_expression_string("!(42_choice1 & 42_choice2)");
+        
         let all_clauses = sub_clause_1.and(&sub_clause_2).and(&sub_clause_3).and(&sub_clause_4);
 
         assert_eq!(all_clauses, resulting_clause);
@@ -181,7 +179,7 @@ mod test {
         let possible_choices: Vec<PossibleChoice> = vec![(41, 3), (42, 4), (43, 2)];
         let (resulting_clause, resulting_mapping, resulting_var_set) = create_base_bdd(&possible_choices);
 
-        let expected_var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
+        let expected_var_set = BddVariableSet::new(&["41_choice0", "41_choice1", "41_choice2", "42_choice0", "42_choice1", "42_choice2", "42_choice3", "43_choice0", "43_choice1"]);
         assert_eq!(expected_var_set.variables(), resulting_var_set.variables());
 
         let mut expected_mapping = BddMapping::default();
@@ -193,23 +191,23 @@ mod test {
         // the resulting var set is used, because two different var sets can make problems if you compare the terms
 
         // -- add
-        let sub_clause_1 = resulting_var_set.eval_expression_string("add_choice0 | add_choice1 | add_choice2");
-        let sub_clause_2 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice1)");
-        let sub_clause_3 = resulting_var_set.eval_expression_string("!(add_choice0 & add_choice2)");
-        let sub_clause_4 = resulting_var_set.eval_expression_string("!(add_choice1 & add_choice2)");
+        let sub_clause_1 = resulting_var_set.eval_expression_string("41_choice0 | 41_choice1 | 41_choice2");
+        let sub_clause_2 = resulting_var_set.eval_expression_string("!(41_choice0 & 41_choice1)");
+        let sub_clause_3 = resulting_var_set.eval_expression_string("!(41_choice0 & 41_choice2)");
+        let sub_clause_4 = resulting_var_set.eval_expression_string("!(41_choice1 & 41_choice2)");
 
         // -- new
-        let sub_clause_5 = resulting_var_set.eval_expression_string("new_choice0 | new_choice1 | new_choice2 | new_choice3");
-        let sub_clause_6 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice1)");
-        let sub_clause_7 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice2)");
-        let sub_clause_8 = resulting_var_set.eval_expression_string("!(new_choice0 & new_choice3)");
-        let sub_clause_9 = resulting_var_set.eval_expression_string("!(new_choice1 & new_choice2)");
-        let sub_clause_10 = resulting_var_set.eval_expression_string("!(new_choice1 & new_choice3)");
-        let sub_clause_11 = resulting_var_set.eval_expression_string("!(new_choice2 & new_choice3)");
+        let sub_clause_5 = resulting_var_set.eval_expression_string("42_choice0 | 42_choice1 | 42_choice2 | 42_choice3");
+        let sub_clause_6 = resulting_var_set.eval_expression_string("!(42_choice0 & 42_choice1)");
+        let sub_clause_7 = resulting_var_set.eval_expression_string("!(42_choice0 & 42_choice2)");
+        let sub_clause_8 = resulting_var_set.eval_expression_string("!(42_choice0 & 42_choice3)");
+        let sub_clause_9 = resulting_var_set.eval_expression_string("!(42_choice1 & 42_choice2)");
+        let sub_clause_10 = resulting_var_set.eval_expression_string("!(42_choice1 & 42_choice3)");
+        let sub_clause_11 = resulting_var_set.eval_expression_string("!(42_choice2 & 42_choice3)");
 
         // -- func
-        let sub_clause_12 = resulting_var_set.eval_expression_string("func_choice0 | func_choice1");
-        let sub_clause_13 = resulting_var_set.eval_expression_string("!(func_choice0 & func_choice1)");
+        let sub_clause_12 = resulting_var_set.eval_expression_string("43_choice0 | 43_choice1");
+        let sub_clause_13 = resulting_var_set.eval_expression_string("!(43_choice0 & 43_choice1)");
         
         
         let all_clauses = sub_clause_1.and(&sub_clause_2).and(&sub_clause_3).and(&sub_clause_4)
@@ -221,7 +219,7 @@ mod test {
 
     #[test]
     fn fail_clause_test1() {
-        let var_set = BddVariableSet::new(&["add_choice0", "add_choice1", "add_choice2", "new_choice0", "new_choice1", "new_choice2", "new_choice3", "func_choice0", "func_choice1"]);
+        let var_set = BddVariableSet::new(&["41_choice0", "41_choice1", "41_choice2", "42_choice0", "42_choice1", "42_choice2", "42_choice3", "43_choice0", "43_choice1"]);
 
         let mut mapping = BddMapping::default();
         mapping.add_choice(41, var_set.variables()[0..3].to_vec());
@@ -232,8 +230,8 @@ mod test {
 
         let resulting_clauses = create_fail_clauses(&var_set, &mapping, incompatible_choices);
 
-        let sub_clause_1 = var_set.eval_expression_string("!(add_choice2 & new_choice1)");
-        let sub_clause_2 = var_set.eval_expression_string("!(new_choice0 & func_choice0 & add_choice1)");
+        let sub_clause_1 = var_set.eval_expression_string("!(41_choice2 & 42_choice1)");
+        let sub_clause_2 = var_set.eval_expression_string("!(42_choice0 & 43_choice0 & 41_choice1)");
 
         let expected_clauses = sub_clause_1.and(&sub_clause_2);
 

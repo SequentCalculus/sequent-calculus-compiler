@@ -191,9 +191,9 @@ impl Inference for New {
             // check that all clauses were also used
             for clause_name in needed_clauses.iter() {
                 if !used_clauses.contains(&clause_name) {
-                    return Err(Error::MissingCtorInCase {
+                    return Err(Error::MissingDtorInNew {
                         span: self.span,
-                        ctor: clause_name.clone(),
+                        dtor: clause_name.clone(),
                     });
                 }
             }

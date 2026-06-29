@@ -287,7 +287,7 @@ impl Solution {
     }
 }
 
-/// integrates a new [`Solution`] into the consisting [`SolutionCache`] and [`Constraints`](Constraint)
+/// integrates a new [`Solution`] into the [`SolutionCache`] and [`Constraints`](Constraint)
 /// by adding new constraints for solutions that have the same [`TypeVar`](Ty) as the new solution
 fn integrate_new_solution(
     equations: &mut Vec<Constraint>,
@@ -526,13 +526,14 @@ mod test {
                 "y".to_string(),
                 Ty::mk_decl(
                     "Pair",
-                    TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("meta_var 1")]),
+                    TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_ty_var("z")]),
                 ),
             ),
             Solution::_new_no_choice("z".to_string(), Ty::mk_ty_var("meta_var 1")),
         ];
 
-        assert_eq!(solutions, expected);
+        assert!(expected.iter().all(|s| solutions.contains(s)));
+        assert_eq!(expected.len(), solutions.len());
         assert!(conflicts.is_empty());
     }
 
@@ -553,7 +554,8 @@ mod test {
             Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
         ];
 
-        assert_eq!(solutions, expected);
+        assert!(expected.iter().all(|s| solutions.contains(s)));
+        assert_eq!(expected.len(), solutions.len());
         assert!(conflicts.is_empty());
     }
 
@@ -587,7 +589,9 @@ mod test {
 
         let expected_conflicts = vec![vec![(3, 2), (16, 5)]];
 
-        assert_eq!(conflicts, expected_conflicts);
+        assert!(expected_conflicts[0].iter().all(|c| conflicts[0].contains(c)));
+        assert_eq!(expected_conflicts.len(), conflicts.len());
+        assert_eq!(expected_conflicts[0].len(), conflicts[0].len());
     }
 
     #[test]

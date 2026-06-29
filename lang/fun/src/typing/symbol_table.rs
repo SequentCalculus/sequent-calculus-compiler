@@ -396,7 +396,7 @@ mod symbol_table_tests {
         let mut expected = symbol_table_list_template();
         expected.combine(symbol_table_stream_template());
         expected.defs.insert(
-            "mult".to_owned(),
+            "mult_0".to_owned(),
             (
                 TypingContext {
                     span: None,
@@ -408,6 +408,18 @@ mod symbol_table_tests {
                 },
                 Ty::mk_i64(),
             ),
+        );
+        expected.variational_defs.insert("mult".to_owned(),
+            vec![(
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "l".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+                    }],
+                },
+                Ty::mk_i64())],
         );
         assert_eq!(symbol_table, expected)
     }
@@ -434,7 +446,7 @@ mod symbol_table_tests {
         def_mult().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.defs.insert(
-            "mult".to_owned(),
+            "mult_0".to_owned(),
             (
                 TypingContext {
                     span: None,
@@ -446,6 +458,18 @@ mod symbol_table_tests {
                 },
                 Ty::mk_i64(),
             ),
+        );
+        expected.variational_defs.insert("mult".to_owned(),
+            vec![(
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "l".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+                    }],
+                },
+                Ty::mk_i64())],
         );
         assert_eq!(symbol_table, expected)
     }
