@@ -42,11 +42,13 @@ impl Program {
         let mut defs = Vec::new();
         let mut data_types = Vec::new();
         let mut codata_types = Vec::new();
+
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
                     data.check(&symbol_table)?;
+
                     data_types.push(data);
                 }
                 Declaration::Codata(codata) => {
@@ -64,9 +66,23 @@ impl Program {
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
+        // collect all uninstantiated type names from the symbol table, which are exactly this once which are actually used in the program
+        let used_types: HashSet<&str> = symbol_table
+            .types
+            .keys()
+            .map(|name| name.split_once("[").map_or(name.as_str(), |x| x.0))
+            .collect();
+
+        // filter out all unused type templates
         let checked = CheckedProgram {
-            data_types,
-            codata_types,
+            data_types: data_types
+                .into_iter()
+                .filter(|data| used_types.contains(data.name.as_str()))
+                .collect(),
+            codata_types: codata_types
+                .into_iter()
+                .filter(|codata| used_types.contains(codata.name.as_str()))
+                .collect(),
             defs,
             is_mono: false,
         };
