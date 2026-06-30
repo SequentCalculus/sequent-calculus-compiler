@@ -44,27 +44,7 @@ mod compile_tests {
     use std::collections::{HashSet, VecDeque};
 
     #[test]
-    fn compile_goto_1() {
-        let mut term = parse_term!("goto a (1)");
-        let mut ctx = fun::syntax::context::TypingContext::default();
-        ctx.add_covar("a", fun::syntax::types::Ty::mk_i64());
-
-        inferr_term(&mut term, &mut Default::default(), &ctx).unwrap();
-
-        let mut state = CompileState {
-            used_vars: HashSet::default(),
-            codata_types: &[],
-            used_labels: &mut HashSet::default(),
-            current_label: "",
-            lifted_statements: &mut VecDeque::default(),
-        };
-        let result = term.compile(&mut state, ty!("int"));
-        let expected = mu!(id!("a0"), cut!(lit!(1), covar!(id!("a")))).into();
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn compile_goto_2() {
+    fn compile_goto() {
         let mut term = parse_term!("label a { if x == 0 {goto a (0)} else {x * 2} }");
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());

@@ -231,7 +231,7 @@ pub mod inferr_helper {
 
         // generating a type and choice mapping, either with overload resolution or without
         // overload resolution is only done, if there are any overloads to resolve
-        let (type_mapping, choices_map): (HashMap<String, Ty>, HashMap<u32, usize>) = if possible_choices.len() > 0 {
+        let (mut type_mapping, choices_map): (HashMap<String, Ty>, HashMap<u32, usize>) = if possible_choices.len() > 0 {
             let selected_world = crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?;
 
             let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
@@ -253,6 +253,27 @@ pub mod inferr_helper {
             (solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), Default::default())
         };
 
+        // the type mapping is applied on it self, to get the complete transitive hull
+        let reference_mapping = type_mapping.clone();
+
+        for (_, ty) in type_mapping.iter_mut() {
+            loop {
+                let var_names = ty.collect_var_names();
+
+                if var_names.is_empty() {
+                    break;
+                }
+
+                if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
+                    let missing_names: Vec<String> = ty.collect_var_names().into_iter().filter(|k| !reference_mapping.contains_key(k)).collect();
+                    panic!("Missing type var names in the final type mapping: {:?}", missing_names);
+                }
+
+                ty.mut_subst_ty(&reference_mapping);
+            }            
+        }
+
+        println!("Term before insertion: {:?}", term);
         term.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)
     }
 }

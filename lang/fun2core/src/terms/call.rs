@@ -53,20 +53,30 @@ mod compile_tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let symbol_table = &mut {
-                    let mut funs = HashMap::new();
-                    funs.insert("fac".to_owned(), (ctx.clone(), fun::syntax::types::Ty::mk_i64()));
+            let mut funs = HashMap::new();
+            funs.insert(
+                "fac_0".to_owned(),
+                (ctx.clone(), fun::syntax::types::Ty::mk_i64()),
+            );
 
-                    SymbolTable {
-                        ctors: HashMap::default(),
-                        dtors: HashMap::default(),
-                        variational_defs: HashMap::default(),
-                        defs: funs,
-                        types: HashMap::default(),
-                        ctor_templates: HashMap::default(),
-                        dtor_templates: HashMap::default(),
-                        type_templates: HashMap::default(),
-                    }
-                };
+            let mut var_defs = HashMap::new();
+            var_defs.insert("fac".to_owned(),
+            vec![(
+                ctx.clone(),
+                fun::syntax::types::Ty::mk_i64())],
+        );
+
+            SymbolTable {
+                ctors: HashMap::default(),
+                dtors: HashMap::default(),
+                variational_defs: var_defs,
+                defs: funs,
+                types: HashMap::default(),
+                ctor_templates: HashMap::default(),
+                dtor_templates: HashMap::default(),
+                type_templates: HashMap::default(),
+            }
+        };
 
         inferr_term(&mut term, symbol_table, &ctx).unwrap();
 
