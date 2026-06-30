@@ -5,6 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::declaration::lookup_type_declaration;
 use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
@@ -35,6 +36,28 @@ impl Ty {
                 .iter()
                 .any(|declaration| declaration.name == *name),
             Ty::Var(_) => false,
+        }
+    }
+
+    /// This function substitutes type variables in a type with their corresponding concrete types according to the provided substitution mapping.
+    /// - `subst` is an optional tuple containing a reference to the list of type parameters and their corresponding concrete types for the current substitution context.
+    pub fn substitute(&self, subst: Option<(&[Identifier], &[Ty])>) -> Self {
+        match self {
+            Ty::I64 => Ty::I64,
+            Ty::Var(param) => {
+                if let Some((params, args)) = subst {
+                    if let Some(pos) = params.iter().position(|p| p == param) {
+                        return args[pos].clone();
+                    }
+                }
+                Ty::Var(param.clone())
+            }
+            Ty::Decl { name, type_args } => Ty::Decl {
+                name: name.clone(),
+                type_args: TypeArgs {
+                    args: type_args.args.iter().map(|a| a.substitute(subst)).collect(),
+                },
+            },
         }
     }
 }
@@ -111,7 +134,7 @@ impl Print for Ty {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Default)]
 pub struct TypeArgs {
     /// The type arguments
     pub args: Vec<Ty>,
