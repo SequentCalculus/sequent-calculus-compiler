@@ -37,15 +37,10 @@ pub use var::*;
 use printer::Print;
 
 use crate::{
-    syntax::names::Var,
-    traits::used_binders::UsedBinders,
-    typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
+    syntax::names::Var, traits::{OptTyped, used_binders::UsedBinders}, typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
 };
 
-use super::{
-    context::TypingContext,
-    types::{OptTyped, Ty},
-};
+use super::{context::TypingContext, types::Ty};
 
 use std::collections::{HashMap, HashSet};
 

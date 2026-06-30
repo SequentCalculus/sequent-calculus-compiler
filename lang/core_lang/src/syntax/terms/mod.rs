@@ -103,6 +103,34 @@ impl<C: Chi> Print for Term<C> {
     }
 }
 
+impl IsValue for Term<Prd> {
+    fn is_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        if self.get_type().is_codata(codata_types) {
+            true
+        } else {
+            match self {
+                Term::Op(_) | Term::Mu(_) => false,
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::XVar(_) | Term::Literal(_) | Term::XCase(_) => true,
+            }
+        }
+    }
+}
+impl IsCovalue for Term<Cns> {
+    fn is_covalue(&self, codata_types: &[CodataDeclaration]) -> bool {
+        if !self.get_type().is_codata(codata_types) {
+            true
+        } else {
+            match self {
+                Term::Mu(_) => false,
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::XVar(_) | Term::XCase(_) => true,
+                Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
+            }
+        }
+    }
+}
+
 impl Subst for Term<Prd> {
     type Target = Term<Prd>;
     fn subst_sim(

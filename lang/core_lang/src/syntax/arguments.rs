@@ -37,6 +37,24 @@ impl From<Term<Cns>> for Argument {
     }
 }
 
+impl Typed for Argument {
+    fn get_type(&self) -> Ty {
+        match self {
+            Argument::Producer(prd) => prd.get_type(),
+            Argument::Consumer(cns) => cns.get_type(),
+        }
+    }
+}
+
+impl IsCoValue for Argument {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        match self {
+            Argument::Producer(prd) => prd.is_value(codata_types),
+            Argument::Consumer(cns) => cns.is_covalue(codata_types),
+        }
+    }
+}
+
 impl Subst for Argument {
     type Target = Argument;
     fn subst_sim(
@@ -112,8 +130,22 @@ impl Print for Arguments {
 }
 
 impl From<Arguments> for VecDeque<Argument> {
-    fn from(s: Arguments) -> VecDeque<Argument> {
-        s.entries.into()
+    fn from(args: Arguments) -> VecDeque<Argument> {
+        args.entries.into()
+    }
+}
+
+impl From<VecDeque<Argument>> for Arguments {
+    fn from(args: VecDeque<Argument>) -> Arguments {
+        Arguments {
+            entries: args.into(),
+        }
+    }
+}
+
+impl IsCoValue for Arguments {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+        self.entries.is_co_value(codata_types)
     }
 }
 

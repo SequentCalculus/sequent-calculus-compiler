@@ -94,6 +94,12 @@ impl TypingContext {
     }
 }
 
+impl From<Vec<ContextBinding>> for TypingContext {
+    fn from(bindings: Vec<ContextBinding>) -> TypingContext {
+        TypingContext { bindings }
+    }
+}
+
 impl From<VecDeque<ContextBinding>> for TypingContext {
     fn from(bindings: VecDeque<ContextBinding>) -> TypingContext {
         TypingContext {

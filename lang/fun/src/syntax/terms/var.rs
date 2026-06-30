@@ -7,6 +7,7 @@ use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::OptTyped;
 use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 

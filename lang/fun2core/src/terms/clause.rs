@@ -10,7 +10,7 @@ use core_lang::syntax::{
     names::Identifier,
     terms::{Cns, Prd},
 };
-use fun::syntax::types::OptTyped;
+use fun::traits::OptTyped;
 
 use std::rc::Rc;
 
