@@ -119,6 +119,8 @@ pub fn args_constraint_equations(
                     }
 
                     let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
+                    variable.chi = Some(Cns);
+
                     if let Some(ty) = &variable.ty {
                         constraint_bank
                             .constraints
