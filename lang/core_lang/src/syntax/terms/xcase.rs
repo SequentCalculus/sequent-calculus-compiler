@@ -314,14 +314,12 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
 #[cfg(test)]
 mod tests {
+    use crate::syntax::*;
     use crate::test_common::example_subst;
     use crate::traits::*;
-    use crate::{syntax::*, typing::env::GlobalEnv};
     extern crate self as core_lang;
-    use crate::typing::check::Checked;
     use core_macros::{
-        bind, case, clause, cns, cocase, covar, ctor_sig, cut, data, exit, fs_clause, fs_cut, id,
-        lit, prd, ty, var,
+        bind, case, clause, cns, cocase, covar, cut, fs_clause, fs_cut, id, prd, ty, var,
     };
 
     #[test]
@@ -419,6 +417,16 @@ mod tests {
         );
         assert_eq!(result, expected)
     }
+}
+#[cfg(test)]
+mod check_tests {
+
+    use crate::{syntax::*, typing::env::GlobalEnv};
+    extern crate self as core_lang;
+    use crate::typing::check::Checked;
+    use core_macros::{
+        bind, case, clause, covar, ctor_sig, cut, data, exit, id, lit, prd, ty, var,
+    };
 
     #[test]
     fn check_against_declaration() {

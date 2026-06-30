@@ -175,18 +175,10 @@ impl Checked for Prog {
 
 #[cfg(test)]
 mod program_tests {
-
-    use std::collections::HashSet;
-
-    use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
-    use crate::typing::check::Checked;
-    use crate::typing::env::GlobalEnv;
+
     extern crate self as core_lang;
-    use core_macros::{
-        bind, cns, codata, covar, ctor_sig, cut, data, def, dtor_sig, exit, fs_cut, fs_def, id,
-        lit, prd, prog, tvar, ty, var,
-    };
+    use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, id, prd, prog, var};
 
     fn example_def2_var() -> FsDef {
         fs_def!(
@@ -212,6 +204,16 @@ mod program_tests {
         let expected = prog!([example_def2_var()], [], [], 2);
         assert_eq!(result, expected)
     }
+}
+#[cfg(test)]
+mod constraint_tests {
+
+    use std::collections::HashSet;
+
+    use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{bind, ctor_sig, data, def, exit, id, lit, prd, prog, tvar, ty};
 
     #[test]
     fn collect_constraints_prog() {
@@ -253,6 +255,16 @@ mod program_tests {
 
         assert_eq!(constraints, expected)
     }
+}
+
+#[cfg(test)]
+mod check_tests {
+
+    use crate::syntax::*;
+    use crate::typing::check::Checked;
+    use crate::typing::env::GlobalEnv;
+    extern crate self as core_lang;
+    use core_macros::{codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prog, ty};
 
     #[test]
     fn check_undeclared_type_in_prog() {

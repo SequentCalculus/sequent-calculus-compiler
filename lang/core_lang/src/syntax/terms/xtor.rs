@@ -261,42 +261,20 @@ impl<C: Chi> Checked for Xtor<C> {
 
 #[cfg(test)]
 mod xtor_tests {
-    use std::collections::HashSet;
-
     use printer::Print;
 
     use super::Subst;
-    use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
-    use crate::syntax::types::TypeArgs;
+
+    use crate::syntax::*;
     use crate::test_common::example_subst;
-    use crate::{mono::constraints::ConstraintCollector, syntax::*};
     extern crate self as core_lang;
-    use core_macros::{
-        bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tvar, ty, var,
-    };
+    use core_macros::{ctor, id, ty, var};
 
     fn example() -> Xtor<Prd> {
         ctor!(
             id!("Cons"),
             [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
-        )
-    }
-
-    fn example_list() -> DataDeclaration {
-        data!(
-            id!("List"),
-            [
-                ctor_sig!(id!("Nil"), []),
-                ctor_sig!(
-                    id!("Cons"),
-                    [
-                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
-                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
-                    ]
-                )
-            ],
-            [id!("A", 1)]
         )
     }
 
@@ -315,6 +293,35 @@ mod xtor_tests {
             ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod constraint_tests {
+    use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
+    use crate::syntax::types::TypeArgs;
+    use crate::{mono::constraints::ConstraintCollector, syntax::*};
+    use std::collections::HashSet;
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tvar, ty,
+    };
+
+    fn example_list() -> DataDeclaration {
+        data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [id!("A", 1)]
+        )
     }
 
     #[test]

@@ -228,7 +228,7 @@ impl<P: Polarity> Checked for XtorSig<P> {
 }
 
 #[cfg(test)]
-mod tests {
+mod check_tests {
     use crate::{
         syntax::TypingContext,
         typing::{check::Checked, env::GlobalEnv},
