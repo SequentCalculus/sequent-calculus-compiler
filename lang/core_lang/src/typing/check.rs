@@ -1,6 +1,6 @@
 use crate::{
     bail,
-    syntax::{Identifier, Ty, TypingContext, types::TypeArgs},
+    syntax::{Identifier, TypingContext},
     typing::{
         env::GlobalEnv,
         errors::{LocatedTypeError, TypeError},
@@ -17,49 +17,9 @@ pub trait Checked: Sized {
     ) -> Result<(), LocatedTypeError>;
 }
 
-// instantiate declaration template types with concrete type arguments.
-pub fn instantiate_type_params(ty: &Ty, params: &[Identifier], args: &[Ty]) -> Ty {
-    match ty {
-        Ty::I64 => Ty::I64,
-        Ty::Var(id) => {
-            if let Some(idx) = params.iter().position(|p| p == id) {
-                args[idx].clone()
-            } else {
-                Ty::Var(id.clone())
-            }
-        }
-        Ty::Decl { name, type_args } => Ty::Decl {
-            name: name.clone(),
-            type_args: TypeArgs {
-                args: type_args
-                    .args
-                    .iter()
-                    .map(|a| instantiate_type_params(a, params, args))
-                    .collect(),
-            },
-        },
-    }
-}
-
 pub fn check_arity(expected: usize, got: usize) -> Result<(), LocatedTypeError> {
     if expected != got {
         bail!(TypeError::ArityMismatch { expected, got })
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    extern crate self as core_lang;
-    use core_macros::{id, tvar, ty};
-
-    // instantiate_type_params: simple substitution
-    #[test]
-    fn instantiate_type_params_replaces_type_var() {
-        let template = ty!(id!("List"), [tvar!(id!("A", 1))]);
-
-        let res = instantiate_type_params(&template, &[id!("A", 1)], &[ty!("int")]);
-        assert_eq!(res, ty!(id!("List"), [ty!("int")]));
-    }
 }

@@ -5,9 +5,10 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
-use crate::typing::check::{Checked, check_arity, instantiate_type_params};
+use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
@@ -272,11 +273,9 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
                 });
             }
 
-            let expected_ty = instantiate_type_params(
-                &expected_binding.ty,
-                &decl.type_params,
-                concrete_type_args,
-            );
+            let expected_ty = expected_binding
+                .ty
+                .substitute(Some((&decl.type_params, concrete_type_args)));
 
             if actual_binding.ty != expected_ty {
                 bail!(TypeError::TypeMismatch {
