@@ -5,6 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -216,6 +217,16 @@ impl ConstraintCollector for Op {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Specialize for Op {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Op {
+            fst: self.fst.specialize(context),
+            op: self.op.clone(),
+            snd: self.snd.specialize(context),
+        }
     }
 }
 

@@ -7,6 +7,8 @@ use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -146,6 +148,15 @@ impl ConstraintCollector for Exit {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl Specialize for Exit {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Exit {
+            arg: self.arg.specialize(context),
+            ty: self.ty.specialize(context),
+        }
     }
 }
 

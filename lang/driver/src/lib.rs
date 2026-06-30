@@ -11,6 +11,7 @@ use std::{
     process::Command,
 };
 
+use core_lang::syntax::Prog;
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
@@ -174,17 +175,18 @@ impl Driver {
         &mut self,
         path: &PathBuf,
         viz: Option<Option<PathBuf>>,
-    ) -> Result<(), DriverError> {
+    ) -> Result<Prog, DriverError> {
         let parsed = self.parsed(path)?;
         let checked = parsed.check(false).map_err(DriverError::TypeError)?;
         let compiled = compile_prog_poly(checked);
-        let (_, graph) = core_lang::mono::monomorphize_program(compiled);
+        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled);
         if let Some(path) = viz {
             graph
                 .render_as(core_lang::mono::graph_viz::OutputFormat::Png, path)
                 .unwrap();
         }
-        Ok(())
+
+        Ok(mono_prog)
     }
 
     /// This function returns the uniquified version of the [Core](core_lang) code.
@@ -194,6 +196,7 @@ impl Driver {
         }
 
         let mut compiled = self.compiled(path)?;
+        // let mut compiled = self.monomorphized(path, None)?;
         compiled.uniquify();
         self.uniquified.insert(path.clone(), compiled.clone());
         Ok(compiled)

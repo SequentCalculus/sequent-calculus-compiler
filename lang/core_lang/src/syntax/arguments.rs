@@ -5,6 +5,8 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -123,6 +125,15 @@ impl ConstraintCollector for Argument {
     }
 }
 
+impl Specialize for Argument {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        match self {
+            Argument::Producer(term) => Argument::Producer(term.specialize(context)),
+            Argument::Consumer(term) => Argument::Consumer(term.specialize(context)),
+        }
+    }
+}
+
 impl Checked for Argument {
     fn check(
         &self,
@@ -222,6 +233,14 @@ impl ConstraintCollector for Arguments {
             constraints.extend(arg.collect_constraints(data_declarations, codata_declarations)?);
         }
         Ok(constraints)
+    }
+}
+
+impl Specialize for Arguments {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Arguments {
+            entries: self.entries.specialize(context),
+        }
     }
 }
 

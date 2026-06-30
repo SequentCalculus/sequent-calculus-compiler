@@ -20,7 +20,7 @@ use crate::{
 /// Each element of the set is a full vector, e.g. `[i64, Bool]` for a `Pair`
 /// node `[A, B]`, preserving the correlation between positions. This is the
 /// output of the solving phase and the direct input to specialization.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Solution {
     pub map: HashMap<Node, HashSet<Vec<Ty>>>,
 }
@@ -85,6 +85,7 @@ impl Print for Solution {
             .group()
     }
 }
+
 /// Runs the worklist fixpoint solver over the constraint graph.
 ///
 /// Starts from the seed vectors and repeatedly propagates vectors through

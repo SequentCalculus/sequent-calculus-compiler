@@ -5,6 +5,8 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -272,6 +274,19 @@ impl<C: Chi> ConstraintCollector for Term<C> {
                 .extend(xcase.collect_constraints(data_declarations, codata_declarations)?),
         }
         Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Term<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        match self {
+            Term::XVar(var) => var.specialize(context).into(),
+            Term::Literal(_) => self.clone(),
+            Term::Op(op) => op.specialize(context).into(),
+            Term::Mu(mu) => mu.specialize(context).into(),
+            Term::Xtor(xtor) => xtor.specialize(context).into(),
+            Term::XCase(xcase) => xcase.specialize(context).into(),
+        }
     }
 }
 

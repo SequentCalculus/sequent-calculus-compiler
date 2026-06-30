@@ -166,6 +166,16 @@ impl<C: Chi> ConstraintCollector for XCase<C> {
     }
 }
 
+impl<C: Chi> Specialize for XCase<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        XCase {
+            prdcns: self.prdcns.clone(),
+            clauses: self.clauses.specialize(context),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
 impl<C: Chi> Checked for XCase<C> {
     fn check(
         &self,

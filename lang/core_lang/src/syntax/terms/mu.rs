@@ -6,6 +6,8 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -270,6 +272,17 @@ impl<C: Chi> ConstraintCollector for Mu<C> {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Mu<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Mu {
+            prdcns: self.prdcns.clone(),
+            variable: self.variable.clone(),
+            statement: self.statement.specialize(context),
+            ty: self.ty.specialize(context),
+        }
     }
 }
 

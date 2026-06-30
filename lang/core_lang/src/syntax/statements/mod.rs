@@ -5,6 +5,7 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -143,6 +144,18 @@ impl ConstraintCollector for Statement {
             }
         };
         Ok(constraints)
+    }
+}
+
+impl Specialize for Statement {
+    fn specialize(&self, context: crate::mono::specialize::SpecializeContext) -> Self {
+        match self {
+            Statement::Cut(cut) => cut.specialize(context).into(),
+            Statement::IfC(ifc) => ifc.specialize(context).into(),
+            Statement::PrintI64(print) => print.specialize(context).into(),
+            Statement::Call(call) => call.specialize(context).into(),
+            Statement::Exit(exit) => exit.specialize(context).into(),
+        }
     }
 }
 

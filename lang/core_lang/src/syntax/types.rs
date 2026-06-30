@@ -111,11 +111,11 @@ impl ConstraintCollector for Ty {
                 if self.is_codata(codata_declarations) {
                     let template = lookup_type_declaration(name, codata_declarations);
 
-                    collect_type_flow(&type_args.args, &template.type_params.as_slice())
+                    collect_type_flow(&type_args.args, template.type_params.as_slice())
                 } else {
                     let template = lookup_type_declaration(name, data_declarations);
 
-                    collect_type_flow(&type_args.args, &template.type_params.as_slice())
+                    collect_type_flow(&type_args.args, template.type_params.as_slice())
                 }
             }
         }
@@ -130,6 +130,40 @@ impl Print for Ty {
                 alloc.typ(&name.name).append(type_args.print(cfg, alloc))
             }
             Ty::Var(name) => alloc.typ(&name.print_to_string(None)),
+        }
+    }
+}
+
+impl Specialize for Ty {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        match self {
+            Ty::I64 => Ty::I64,
+
+            Ty::Var(param) => match context.subst {
+                Some((params, args)) => {
+                    let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
+                        panic!("type variable {} not found in substitution", param.name)
+                    });
+                    args[pos].specialize(SpecializeContext::ground(context.table))
+                }
+                None => panic!(
+                    "encountered unresolved type variable {} with no active substitution",
+                    param.name
+                ),
+            },
+
+            Ty::Decl { name, type_args } => {
+                let ground_args: Vec<Ty> = type_args
+                    .args
+                    .iter()
+                    .map(|a| a.substitute(context.subst))
+                    .collect();
+                let mangled = context.table.lookup(name, &ground_args).clone();
+                Ty::Decl {
+                    name: mangled,
+                    type_args: TypeArgs { args: vec![] },
+                }
+            }
         }
     }
 }
@@ -160,13 +194,7 @@ impl Print for TypeArgs {
 #[cfg(test)]
 mod type_tests {
     use super::{Identifier, Ty, TypeArgs};
-    use crate::{
-        syntax::TypingContext,
-        typing::{check::Checked, env::GlobalEnv},
-    };
     use printer::Print;
-    extern crate self as core_lang;
-    use core_macros::{data, id, tvar, ty};
 
     #[test]
     fn display_i64() {
@@ -197,6 +225,17 @@ mod type_tests {
         };
         assert_eq!(ty.print_to_string(None), "List[A_1]");
     }
+}
+
+#[cfg(test)]
+mod check_tests {
+    use super::{Identifier, Ty, TypeArgs};
+    use crate::{
+        syntax::TypingContext,
+        typing::{check::Checked, env::GlobalEnv},
+    };
+    extern crate self as core_lang;
+    use core_macros::{data, id, tvar, ty};
 
     #[test]
     fn check_fails_for_undeclared_type_var() {
@@ -259,5 +298,90 @@ mod type_tests {
             &GlobalEnv::new(&[list], &[], &[]),
         );
         assert!(res.is_ok());
+    }
+}
+
+#[cfg(test)]
+mod specialize_tests {
+    use std::collections::{HashMap, HashSet};
+
+    use crate::{
+        mono::{
+            naming_table::NamingTable,
+            solver::Solution,
+            specialize::{Specialize, SpecializeContext},
+        },
+        syntax::{Ty, types::TypeArgs},
+    };
+    extern crate self as core_lang;
+    use core_macros::{data, id, tvar, ty};
+
+    #[test]
+    fn specialize_ground_i64_is_identity() {
+        let solution = Solution::default();
+        let table = NamingTable::build(&solution, &[], &[]);
+        let ctx = SpecializeContext::ground(&table);
+
+        let result = Ty::I64.specialize(ctx);
+        assert_eq!(result, Ty::I64);
+    }
+
+    #[test]
+    fn specialize_type_variable_via_subst() {
+        // A -> i64 under an active substitution, as happens while
+        // specializing the body of a polymorphic declaration.
+        let solution = Solution::default();
+        let table = NamingTable::build(&solution, &[], &[]);
+
+        let params = vec![id!("A", 1)];
+        let args = vec![ty!("int")];
+        let ctx = SpecializeContext::with_subst(&table, &params, &args);
+
+        let result = tvar!(id!("A", 1)).specialize(ctx);
+        assert_eq!(result, ty!("int"));
+    }
+
+    #[test]
+    fn specialize_decl_type_resolves_via_naming_table() {
+        // List[i64] should resolve to the mangled name recorded in the
+        // solution for List's node under instantiation [i64].
+        let list_node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            list_node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let table = NamingTable::build(&solution, &[list.clone()], &[]);
+        let ctx = SpecializeContext::ground(&table);
+
+        let input = ty!(id!("List"), [ty!("int")]);
+        let result = input.specialize(ctx);
+
+        let expected_name = table.lookup(&list.name, &[ty!("int")]).clone();
+        assert_eq!(
+            result,
+            Ty::Decl {
+                name: expected_name,
+                type_args: TypeArgs { args: vec![] }
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "no specialized name recorded")]
+    fn specialize_decl_type_panics_for_unsolved_instantiation() {
+        let list_node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            list_node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let table = NamingTable::build(&solution, &[list.clone()], &[]);
+        let ctx = SpecializeContext::ground(&table);
+
+        let input = ty!(id!("List"), [ty!(id!("Bool"))]);
+        let _ = input.specialize(ctx);
     }
 }

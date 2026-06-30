@@ -3,6 +3,7 @@
 use printer::tokens::{CNS, COLON, PRD};
 use printer::*;
 
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -60,6 +61,16 @@ impl SubstVar for ContextBinding {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> ContextBinding {
         self.var = self.var.subst_sim(subst);
         self
+    }
+}
+
+impl Specialize for ContextBinding {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        ContextBinding {
+            var: self.var.clone(),
+            chi: self.chi.clone(),
+            ty: self.ty.specialize(context),
+        }
     }
 }
 
@@ -158,5 +169,13 @@ impl Checked for TypingContext {
             binding.ty.check(type_params, context, env)?;
         }
         Ok(())
+    }
+}
+
+impl Specialize for TypingContext {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        TypingContext {
+            bindings: self.bindings.specialize(context),
+        }
     }
 }

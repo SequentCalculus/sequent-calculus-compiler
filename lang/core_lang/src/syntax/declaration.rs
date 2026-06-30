@@ -1,5 +1,6 @@
 //! This module defines user-declared data and codata types in Core.
 
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
@@ -96,6 +97,16 @@ impl<P: Polarity> Print for XtorSig<P> {
             alloc
                 .dtor(&self.name.print_to_string(Some(cfg)))
                 .append(args.group())
+        }
+    }
+}
+
+impl<P: Polarity + Clone> Specialize for XtorSig<P> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        XtorSig {
+            xtor: self.xtor.clone(),
+            name: self.name.clone(),
+            args: self.args.specialize(context),
         }
     }
 }

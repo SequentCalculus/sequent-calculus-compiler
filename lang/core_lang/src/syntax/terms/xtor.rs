@@ -4,6 +4,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
@@ -207,6 +208,17 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
                 .collect_constraints(data_declarations, codata_declarations)?,
         );
         Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Xtor<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: self.name.clone(),
+            args: self.args.specialize(context),
+            ty: self.ty.specialize(context),
+        }
     }
 }
 

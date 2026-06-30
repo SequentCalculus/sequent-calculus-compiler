@@ -5,6 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -227,6 +228,17 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
         // collect constraints from the body of the clause
         self.body
             .collect_constraints(data_declarations, codata_declarations)
+    }
+}
+
+impl<C: Chi> Specialize for Clause<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        Clause {
+            prdcns: self.prdcns.clone(),
+            xtor: self.xtor.clone(),
+            context: self.context.specialize(context),
+            body: self.body.specialize(context),
+        }
     }
 }
 

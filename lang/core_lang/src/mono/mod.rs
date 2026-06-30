@@ -4,9 +4,8 @@ use printer::{Print, PrintCfg};
 
 use crate::{
     mono::{
-        constraint_graph::ConstraintGraph,
-        constraints::ConstraintCollector,
-        solver::{Solution, solve},
+        constraint_graph::ConstraintGraph, constraints::ConstraintCollector, solver::solve,
+        specialize::specialize_program,
     },
     syntax::program::Prog,
 };
@@ -18,8 +17,9 @@ pub mod growing_cycle;
 pub mod naming_table;
 pub mod position;
 pub mod solver;
+pub mod specialize;
 
-pub fn monomorphize_program(program: Prog) -> (Solution, ConstraintGraph) {
+pub fn monomorphize_program(program: Prog) -> (Prog, ConstraintGraph) {
     let constraints = program
         .collect_constraints(&program.data_types, &program.codata_types)
         .unwrap();
@@ -40,8 +40,7 @@ pub fn monomorphize_program(program: Prog) -> (Solution, ConstraintGraph) {
     let solution = solve(&graph).unwrap();
     println!("{}", solution.print_to_string(Some(&forced_set_cfg)));
 
-    let naming_table = naming_table::NamingTable::build(&solution);
-    println!("{:?}", naming_table);
+    let mono_prog = specialize_program(&program, &solution);
 
-    (solution, graph)
+    (mono_prog, graph)
 }

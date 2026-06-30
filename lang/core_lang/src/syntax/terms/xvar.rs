@@ -6,6 +6,8 @@ use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -148,6 +150,16 @@ impl<C: Chi> ConstraintCollector for XVar<C> {
     ) -> Result<FlowConstraintSet, MonoError> {
         self.ty
             .collect_constraints(data_declarations, codata_declarations)
+    }
+}
+
+impl<C: Chi> Specialize for XVar<C> {
+    fn specialize(&self, context: SpecializeContext) -> Self {
+        XVar {
+            prdcns: self.prdcns.clone(),
+            var: self.var.clone(),
+            ty: self.ty.specialize(context),
+        }
     }
 }
 
