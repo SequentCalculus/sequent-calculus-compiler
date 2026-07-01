@@ -9,7 +9,7 @@ use lsp_server::{
 use lsp_types::{Diagnostic, Position, PublishDiagnosticsParams, Range, Uri};
 use miette::SourceSpan;
 use serde_json::Error as SerdeErr;
-use std::{fmt, io::Error as IOErr};
+use std::{fmt::{self, write}, io::Error as IOErr};
 
 #[derive(Debug)]
 pub enum Error {
@@ -17,7 +17,6 @@ pub enum Error {
     InvalidPosition(Position),
     UndefinedIdentifier(String),
     BadRequest(Method, String),
-
     Parse {
         err: ParseError,
         loc: Option<(usize, usize)>,
@@ -33,6 +32,10 @@ pub enum Error {
     ExtractReq(ExtractError<Request>),
     ExtractNot(ExtractError<Notification>),
     Send(SendError<Message>),
+    //neu
+    PrimitiveType(String),
+    Keyword(String),
+
 }
 
 impl Error {
@@ -94,6 +97,9 @@ impl fmt::Display for Error {
             }
             Error::UndefinedIdentifier(ident) => write!(f, "Undefined identifier {ident}"),
             Error::BadRequest(method, msg) => write!(f, "Bad request with method {method}: {msg}"),
+            //neu
+            Error::PrimitiveType(ident) => write!(f, "Build-in type: {ident}"),
+            Error::Keyword(ident) => write!(f, "Keyword: {ident}"),
         }
     }
 }

@@ -1,6 +1,7 @@
 use crate::errors::Error;
 use fun::{parser::parse_module, syntax::program::CheckedProgram};
 use log::info;
+use lsp_server::Response;
 use lsp_types::{Location, Position, Range, Uri};
 //use serde_json::to_string;
 use printer::Print;
@@ -118,6 +119,24 @@ impl Document {
     }
 
     fn find_data(&self, ident: &str) -> Option<(Position, Position)> {
+        for data in &self.module.data_types {
+            if data.name == ident {
+                let mut start = self.ind_to_pos(data.span?.offset());
+                start.character +=5;
+                let end = self.ind_to_pos(data.span?.offset() + data.span?.len());
+                return Some((start, end));
+            }
+            if let Some(ctor) = data.ctors.iter().find(|ctor| ctor.name == ident) {
+                if let Some(span) = ctor.span {
+                    let start = self.ind_to_pos(span.offset());
+                    let end = self.ind_to_pos(span.offset() + span.len());
+                    return Some((start, end));
+                }
+            }          
+        }
+        None
+        
+       /* 
         let span = self.module.data_types.iter().find_map(|data| {
             (data.name == ident || data.ctors.iter().any(|ctor| ctor.name == ident))
                 .then_some(data.span)
@@ -126,10 +145,29 @@ impl Document {
         // "data "
         start.character += 5;
         let end = self.ind_to_pos(span.offset() + span.len());
-        Some((start, end))
+        Some((start, end)) */
     }
 
+
     fn find_codata(&self, ident: &str) -> Option<(Position, Position)> {
+        for cod in &self.module.codata_types {
+            if cod.name == ident {
+                let mut start = self.ind_to_pos(cod.span?.offset());
+                start.character +=7;
+                let end = self.ind_to_pos(cod.span?.offset() + cod.span?.len());
+                return Some((start, end));
+            }
+            if let Some(dtor) = cod.dtors.iter().find(|dtor| dtor.name == ident) {
+                if let Some(span) = dtor.span {
+                    let start = self.ind_to_pos(span.offset());
+                    let end = self.ind_to_pos(span.offset() + span.len());
+                    return Some((start, end));
+                }
+            }          
+        }
+        None
+    }
+   /*/ fn find_codata(&self, ident: &str) -> Option<(Position, Position)> {
         let span = self.module.codata_types.iter().find_map(|cod| {
             (cod.name == ident || cod.dtors.iter().any(|dtor| dtor.name == ident))
                 .then_some(cod.span)
@@ -139,10 +177,41 @@ impl Document {
         start.character += 7;
         let end = self.ind_to_pos(span.offset() + span.len());
         Some((start, end))
-    }
+    }*/
+
+    pub fn is_local(&self, ident: &str, pos:Position, uri: Uri) -> Option<Location>{
+        let cursor_ind = self.pos_to_ind(pos);
+        let this_def = self.module.defs.iter().find(|def| {
+            let start = def.span.offset();
+            let end = def.span.offset() + def.span.len();
+            cursor_ind >= start && cursor_ind <= end
+        })?;
+
+        let def_start = this_def.span.offset();
+        let def_end = def_start + this_def.span.len();
+        let def_text = &self.source[def_start..def_end];
+        let local_offset = def_text.find(ident)?;
+        let abs_offset = def_start + local_offset;
+        let start = self.ind_to_pos(abs_offset);
+        let end = self. ind_to_pos(abs_offset + ident.len());
+
+        Some(Location::new(uri, Range {start, end}))
+    } 
 
     //bearbeitet auch selbstprüfend jetzt
-    pub fn find_ident(&self, ident: String, uri: Uri) -> Result<Location, Error> {
+    pub fn find_ident(&self, ident: String, pos: Position, uri: Uri) -> Result<Location, Error> {
+        if ident == "i64"{
+            return Err(Error::PrimitiveType(ident));
+        }
+        
+        if matches!(ident.as_str(), "new" | "case" | "codata" | "data" | "def") {
+        return Err(Error::Keyword(ident));
+        }
+
+        if let Some(loc) = self.is_local(&ident, pos, uri.clone()) {
+            return Ok(loc);
+        } 
+
         if let Some((start, end)) = self
             .find_def(&ident)
             .or_else(|| self.find_data(&ident))
@@ -244,33 +313,21 @@ impl Document {
             .nth(pos.line as usize)
             .ok_or(Error::InvalidPosition(pos))?;
 
-        let mut following = line
-            .chars()
-            .nth(pos.character as usize)
-            .ok_or(Error::InvalidPosition(pos))?;
-        let mut end_pos = pos.character as usize;
-        while following.is_alphanumeric() || following == '_' {
-            end_pos += 1;
-            if end_pos == line.len() {
-                break;
-            }
-            following = line.chars().nth(end_pos).unwrap();
+        let chars: Vec<char> = line.chars().collect();
+        let area_pos = pos.character as usize;
+
+        if area_pos >= chars.len() || (!chars[area_pos].is_alphanumeric() && chars[area_pos] != '_') {
+            return Err(Error::InvalidPosition(pos));
         }
 
-        let mut prev = line
-            .chars()
-            .nth(pos.character as usize)
-            .ok_or(Error::InvalidPosition(pos))?;
-        let mut start_pos = pos.character as usize;
-        while prev.is_alphanumeric() || following == '_' {
-            start_pos -= 1;
-            if start_pos == 0 {
-                break;
-            }
-            prev = line.chars().nth(start_pos).unwrap();
+        let mut end_pos = area_pos;
+        while end_pos < chars.len() && (chars[end_pos].is_alphanumeric() || chars[end_pos] == '_') {
+            end_pos += 1;            
         }
-        if start_pos > 0 {
-            start_pos += 1
+
+        let mut start_pos = area_pos;
+        while start_pos > 0 && (chars[start_pos - 1].is_alphanumeric() || chars[start_pos] == '_') {
+            start_pos -= 1;            
         }
 
         Ok(Range {
@@ -430,6 +487,63 @@ impl Document {
     pub fn module(&self) -> &CheckedProgram {
         &self.module
     }
+
+    
+    //eigener Code
+    //getter für die erste funktion die vor der stelle des Cursors ist
+    pub fn get_fnc_before_cursor(&self, pos: lsp_types:: Position) -> Option<String> {
+        let text = self.get_text();
+        let all_lines: Vec<&str> = text.lines().collect();
+        let line = all_lines.get(pos.line as usize)?;
+
+        //teil der Zeile vor dem Cursor auswählen
+        let cursor_idx = pos.character as usize;
+        let pre_cursor: String = line.chars().take(cursor_idx).collect();
+
+        //Letze öffnende Klammer finden und Wort vor Klammer extrahieren
+        if let Some(bracket_idx) = pre_cursor.rfind('(') {
+            let before_bracket = &pre_cursor[.. bracket_idx].trim_end();
+
+            return before_bracket
+                .split_terminator(|c: char| !c.is_alphanumeric() && c != '_')
+                .last().map(|s| s
+                .to_string());
+        }
+        None
+    }
+
+    //eigener Code
+    //Find active parameter(commas after '(')
+    pub fn get_active_parameter_idx(&self, pos: lsp_types::Position) -> usize {
+        let text = self.get_text();
+        let lines: Vec<&str> = text.lines().collect();
+        
+        if let Some(line) = lines.get(pos.line as usize){
+            let cursor_pos = pos.character as usize;
+            let pre_cursor: String = line.chars().take(cursor_pos).collect();
+            if let Some(bracket_idx) = pre_cursor.rfind('('){
+                let post_bracket_text = &pre_cursor[bracket_idx..];
+                return post_bracket_text.chars().filter(|&c| c == ',').count();
+            }
+        }
+        0
+    }
+
+    //eigener Code
+    //
+    pub fn get_function_parameter_info(&self, ident:&str) -> Vec<lsp_types::ParameterInformation> {
+        if let Some(def) = self.module.defs.iter().find(|d| d.name == ident) {
+            def.context.bindings.iter().map(|b| {
+                lsp_types::ParameterInformation {
+                    label: lsp_types::ParameterLabel::Simple(format!("{}: {}", b.var, b.ty.print_to_string(None))),
+                    documentation :None,
+                }
+            }).collect()
+        }else {
+            vec![]
+        }
+    }
+
     //eigener Code
     //determine signature information
     pub fn get_signature_information(&self, ident: &str) -> Result<String, Error> {
@@ -556,6 +670,13 @@ impl Document {
         }
         Ok(appearences)
     }
+
+    //eigener Code
+    //
+
+
+
+
 }
 
 impl Default for Document {

@@ -1,5 +1,8 @@
+use std::fmt::format;
+
 use super::{document::Document, method::Method};
 use crate::errors::Error;
+use crate::server::document;
 use log::info;
 use lsp_server::{Message, Notification, Request, RequestId, Response};
 //use lsp_types::request::GotoImplementationResponse;
@@ -10,7 +13,7 @@ use lsp_types::request::{
     GotoDeclarationResponse,
 };
 use lsp_types::{
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Documentation, GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents, MarkupContent, MarkupKind, ParameterInformation, ParameterLabel, PublishDiagnosticsParams, RenameParams, SignatureHelp, SignatureInformation, TextEdit, Uri, WorkspaceEdit
+    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Documentation, GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents, Location, MarkupContent, MarkupKind, ParameterInformation, ParameterLabel, PublishDiagnosticsParams, RenameParams, SignatureHelp, SignatureInformation, TextEdit, Uri, WorkspaceEdit
 };
 use printer::Print;
 pub struct MessageHandler {
@@ -162,27 +165,104 @@ impl MessageHandler {
         }
     }
 
-    fn goto_definition(&mut self, id: RequestId, params: GotoDefinitionParams) -> Response {
+    /*fn goto_definition(&mut self, id: RequestId, params: GotoDefinitionParams) -> Response {
         let uri = params.text_document_position_params.text_document.uri;
         let pos = params.text_document_position_params.position;
 
-        let ident = match self.doc.get_ident(pos) {
+        /*let ident = match self.doc.get_ident(pos) {
             Ok(id) => id,
             Err(err) => return err.to_response(id),
+        };*/
+
+        let ident = match self.doc.get_ident(pos) {
+            Ok(id) => id,
+            Err(_) => {
+                return Response {
+                    id,
+                    result: Some(serde_json::to_value(Option::<Location>::None).unwrap()),
+                    error: None,
+                };
+            }
         };
 
-        let loc = match self.doc.find_ident(ident, uri) {
+        match self.doc.find_ident(ident, uri) {
+            Ok(loc) => {
+                let result = Some(GotoDefinitionResponse::Scalar(loc));
+                Response {
+                    id,
+                    result: Some(serde_json::to_value(&result).unwrap()),
+                    error:None,
+                }
+            }
+            Err(Error::PrimitiveType(_) | Error::Keyword(_)) => {
+                Response{
+                    id,
+                    result:Some(serde_json::to_value(Option::<Location>::None).unwrap()),
+                    error: None,
+                }
+            }
+            Err(err) => err.to_response(id),
+        }
+        
+        /*let loc = match self.doc.find_ident(ident, uri) {
             Ok(loc) => loc,
             Err(err) => return err.to_response(id),
         };
-
+       
         let result = Some(GotoDefinitionResponse::Scalar(loc));
         let result = serde_json::to_value(&result).unwrap();
         Response {
             id,
             result: Some(result),
             error: None,
+        } */
+    }*/
+    fn goto_definition(&mut self, id: RequestId, params: GotoDefinitionParams) -> Response {
+        let uri = params.text_document_position_params.text_document.uri;
+        let pos = params.text_document_position_params.position;
+
+        let ident = match self.doc.get_ident(pos) {
+            Ok(id) => id,
+            Err(_) => {
+                return Response {
+                    id,
+                    result: Some(serde_json::to_value(Option::<Location>::None).unwrap()),
+                    error: None,
+                };
+            }
+        };
+
+        match self.doc.find_ident(ident, pos, uri) {
+            Ok(loc) => {
+                let result = Some(GotoDefinitionResponse::Scalar(loc));
+                Response {
+                    id,
+                    result: Some(serde_json::to_value(&result).unwrap()),
+                    error:None,
+                }
+            }
+            Err(Error::PrimitiveType(_) | Error::Keyword(_)) => {
+                Response{
+                    id,
+                    result:Some(serde_json::to_value(Option::<Location>::None).unwrap()),
+                    error: None,
+                }
+            }
+            Err(err) => err.to_response(id),
         }
+        
+        /*let loc = match self.doc.find_ident(ident, uri) {
+            Ok(loc) => loc,
+            Err(err) => return err.to_response(id),
+        };
+       
+        let result = Some(GotoDefinitionResponse::Scalar(loc));
+        let result = serde_json::to_value(&result).unwrap();
+        Response {
+            id,
+            result: Some(result),
+            error: None,
+        } */
     }
 
     //eigener Code
@@ -427,7 +507,7 @@ impl MessageHandler {
                     line_content = line_content.chars().take(end_char).collect();
                 }
 
-                if i == range.start.character as usize {
+                if i == range.start.line as usize {
                     let start_char = range.start.character as usize;
                     line_content = line_content.chars().skip(start_char).collect();
                 }
@@ -504,20 +584,40 @@ impl MessageHandler {
     }
 
     //eigener Code
+    //response for empty answer for signature
+    fn empty_signature_response(&self, id: RequestId) -> Response {
+        Response { 
+            id,
+            result: Some(serde_json::to_value(Option::<lsp_types::SignatureHelp>::None).unwrap()), 
+            error: None,
+        }
+    }
+
+    //eigener Code
     fn signature_help(&mut self, id: RequestId, params: lsp_types::SignatureHelpParams) -> Response {
         let pos = params.text_document_position_params.position;
 
-        let ident = match self.doc.get_ident(pos) {
-            Ok(id) => id,
-            Err(err) => return err.to_response(id),
+        let ident = match self.doc.get_fnc_before_cursor(pos) {
+            Some(name) => name,
+            None => return self.empty_signature_response(id),
         };
+        let active_param_idx = self.doc.get_active_parameter_idx(pos);
+        let parameter_information = self.doc.get_function_parameter_info(&ident);
+        
+        let signature_doc = self.doc.get_signature_information(&ident).ok();
 
-        let signature_information = match self.doc.get_signature_information(&ident) {
+        let documentation = signature_doc.map(|v|{
+            lsp_types::Documentation::MarkupContent(lsp_types::MarkupContent {
+                kind: lsp_types::MarkupKind:: Markdown,
+                value: v,
+            })
+        });
+        /*
+                    let signature_information = match self.doc.get_signature_information(&ident) {
             Ok(info) => info, 
             Err(err) => return err.to_response(id),
         };
-
-        let parameter: Vec<ParameterInformation> = if let Some(def) =  
+            let parameter: Vec<ParameterInformation> = if let Some(def) =  
             self.doc.module().defs.iter().find(|d| d.name == ident) {
             if def.context.bindings.is_empty(){
                 vec![ParameterInformation{
@@ -535,24 +635,27 @@ impl MessageHandler {
             label: ParameterLabel::Simple("unknown function". to_string()),
             documentation: None,
         }]
+        };*/
+        let signature_information = lsp_types::SignatureInformation{
+            label:format!("{}(...)", ident),
+            documentation,//Some(Documentation::MarkupContent(MarkupContent { kind: MarkupKind::Markdown, value: signature_information })),
+            parameters: Some(parameter_information),
+            active_parameter:Some(active_param_idx as u32),
         };
-        let signature_info = SignatureInformation{
-            label:ident.clone(),
-            documentation:Some(Documentation::MarkupContent(MarkupContent { kind: MarkupKind::Markdown, value: signature_information })),
-            parameters: Some(parameter),
-            active_parameter:Some(0),
-        };
-        let signature_help = SignatureHelp{
+        /*let signature_help = SignatureHelp{
             signatures: vec![signature_info],
             active_signature: Some(0),
             active_parameter: Some(0),
-        };
+        };*/
         
-        let result  = serde_json::to_value(&signature_help).unwrap();
-
+        let result  = lsp_types::SignatureHelp{
+            signatures: vec![signature_information],
+            active_signature: Some(0),
+            active_parameter: Some(active_param_idx as u32),
+        };
         Response {
             id,
-            result: Some(result),
+            result: Some(serde_json::to_value(&result).unwrap()),
             error: None,
         } 
     }
