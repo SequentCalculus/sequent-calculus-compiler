@@ -93,6 +93,11 @@ pub fn specialize_declaration<P: Polarity + Clone>(
     table: &NamingTable,
 ) -> Vec<TypeDeclaration<P>> {
     let node = &decl.type_params;
+    if node.is_empty() {
+        // This is already a monomorphic declaration, so we can just return it as-is.
+        return vec![decl.clone()];
+    }
+
     let Some(tuples) = solution.map.get(node) else {
         // No instantiation was ever observed for this declaration -- it is
         // unused in the program and can be dropped from monomorphic Core.
