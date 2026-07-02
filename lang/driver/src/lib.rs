@@ -18,7 +18,7 @@ use fun::{
     parser::parse_module,
     syntax::program::{CheckedProgram, Program},
 };
-use fun2core::program::compile_prog_poly;
+use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
@@ -124,7 +124,7 @@ impl Driver {
         }
 
         let checked = self.checked(path)?;
-        let compiled = compile_prog_poly(checked);
+        let compiled = compile_prog(checked);
 
         self.compiled.insert(path.clone(), compiled.clone());
         dbg!(&compiled);

@@ -3,9 +3,9 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    arguments::{compile_subst, compile_subst_poly},
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    arguments::compile_subst,
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -22,30 +22,9 @@ impl Compile for fun::syntax::terms::Call {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst(self.args, state);
-        args.entries.push(cont.into());
-        core_lang::syntax::statements::Call {
-            name: Identifier::new(self.name),
-            args,
-            ty: compile_ty(
-                &self
-                    .ret_ty
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Call {
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst_poly(self.args, state, type_params.clone());
+        let mut args = compile_subst(self.args, state, type_params.clone());
         args.entries.push(cont.into());
         core_lang::syntax::statements::Call {
             name: Identifier::new(self.name),
@@ -70,7 +49,10 @@ mod compile_tests {
         syntax::context::TypingContext,
         typing::{check::Check, symbol_table::SymbolTable},
     };
-    use std::collections::{HashMap, HashSet, VecDeque};
+    use std::{
+        collections::{HashMap, HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_fac() {
@@ -105,7 +87,7 @@ mod compile_tests {
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(id!("a0"), call!(id!("fac"), [lit!(3), covar!(id!("a0"))])).into();
         assert_eq!(result, expected)

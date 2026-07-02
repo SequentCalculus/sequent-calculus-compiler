@@ -1,8 +1,8 @@
 //! This module defines the translation of let-bindings.
 
 use crate::{
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -21,37 +21,6 @@ impl Compile for fun::syntax::terms::Let {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        let ty = compile_ty(&self.var_ty);
-        // new continuation: μ~x.〚t_2 〛_{c}
-        let new_cont = core_lang::syntax::terms::Mu {
-            prdcns: Cns,
-            variable: Identifier::new(self.variable),
-            ty: ty.clone(),
-            statement: Rc::new(self.in_term.compile_with_cont(cont, state)),
-        }
-        .into();
-
-        if ty.is_codata(state.codata_types) {
-            // <〚t_1 〛| new_cont>
-            core_lang::syntax::statements::Cut {
-                producer: Rc::new(self.bound_term.compile(state, ty.clone())),
-                ty,
-                consumer: Rc::new(new_cont),
-            }
-            .into()
-        } else {
-            // 〚t_1 〛_{new_cont}
-            self.bound_term.compile_with_cont(new_cont, state)
-        }
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Let {
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty_poly(&self.var_ty, type_params.clone());
@@ -60,18 +29,17 @@ impl CompilePoly for fun::syntax::terms::Let {
             prdcns: Cns,
             variable: Identifier::new(self.variable),
             ty: ty.clone(),
-            statement: Rc::new(self.in_term.compile_with_cont_poly(
-                cont,
-                state,
-                type_params.clone(),
-            )),
+            statement: Rc::new(
+                self.in_term
+                    .compile_with_cont(cont, state, type_params.clone()),
+            ),
         }
         .into();
 
         if ty.is_codata(state.codata_types) {
             // <〚t_1 〛| new_cont>
             core_lang::syntax::statements::Cut {
-                producer: Rc::new(self.bound_term.compile_poly(state, ty.clone(), type_params)),
+                producer: Rc::new(self.bound_term.compile(state, ty.clone(), type_params)),
                 ty,
                 consumer: Rc::new(new_cont),
             }
@@ -79,7 +47,7 @@ impl CompilePoly for fun::syntax::terms::Let {
         } else {
             // 〚t_1 〛_{new_cont}
             self.bound_term
-                .compile_with_cont_poly(new_cont, state, type_params)
+                .compile_with_cont(new_cont, state, type_params)
         }
     }
 }
@@ -89,7 +57,10 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, ctor, cut, id, lit, mu, mutilde, prod, ty, var};
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_let1() {
@@ -109,7 +80,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -148,28 +119,35 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
+        let result = term_typed.compile(
+            &mut state,
+            ty!(id!("List"), vec![ty!("int")]),
+            Rc::default(),
+        );
 
         let expected = mu!(
             id!("a0"),
             cut!(
                 ctor!(
                     id!("Cons"),
-                    [var!(id!("x")), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
-                    ty!(id!("List[i64]"))
+                    [
+                        var!(id!("x")),
+                        ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+                    ],
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
                 mutilde!(
                     id!("x"),
                     cut!(
-                        var!(id!("x"), ty!(id!("List[i64]"))),
-                        covar!(id!("a0"), ty!(id!("List[i64]"))),
-                        ty!(id!("List[i64]"))
+                        var!(id!("x"), ty!(id!("List"), vec![ty!("int")])),
+                        covar!(id!("a0"), ty!(id!("List"), vec![ty!("int")])),
+                        ty!(id!("List"), vec![ty!("int")])
                     ),
-                    ty!(id!("List[i64]"))
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
-                ty!(id!("List[i64]"))
+                ty!(id!("List"), vec![ty!("int")])
             ),
-            ty!(id!("List[i64]"))
+            ty!(id!("List"), vec![ty!("int")])
         )
         .into();
 

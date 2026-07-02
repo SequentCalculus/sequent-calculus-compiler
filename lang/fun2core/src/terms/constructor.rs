@@ -1,9 +1,9 @@
 //! This module defines the translation of a constructor.
 
 use crate::{
-    arguments::{compile_subst, compile_subst_poly},
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    arguments::compile_subst,
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{
     Ty,
@@ -22,15 +22,21 @@ impl Compile for fun::syntax::terms::Constructor {
     /// # Panics
     ///
     /// A panic is caused if the types are not annotated in the program.
-    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    fn compile(
+        self,
+        state: &mut CompileState,
+        _ty: Ty,
+        type_params: Rc<HashMap<String, Identifier>>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
             name: Identifier::new(self.id),
-            args: compile_subst(self.args, state),
-            ty: compile_ty(
+            args: compile_subst(self.args, state, type_params.clone()),
+            ty: compile_ty_poly(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
+                type_params,
             ),
         }
         .into()
@@ -48,47 +54,6 @@ impl Compile for fun::syntax::terms::Constructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        let ty = compile_ty(
-            &self
-                .ty
-                .clone()
-                .expect("Types should be annotated before translation"),
-        );
-        core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile(state, ty.clone())),
-            ty,
-            consumer: Rc::new(cont),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Constructor {
-    fn compile_poly(
-        self,
-        state: &mut CompileState,
-        _ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
-    ) -> core_lang::syntax::terms::Term<Prd> {
-        core_lang::syntax::terms::Xtor {
-            prdcns: Prd,
-            name: Identifier::new(self.id),
-            args: compile_subst_poly(self.args, state, type_params.clone()),
-            ty: compile_ty_poly(
-                &self
-                    .ty
-                    .expect("Types should be annotated before translation"),
-                type_params,
-            ),
-        }
-        .into()
-    }
-
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty_poly(
@@ -99,7 +64,7 @@ impl CompilePoly for fun::syntax::terms::Constructor {
             type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),
+            producer: Rc::new(self.compile(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }
@@ -115,7 +80,10 @@ mod compile_tests {
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_cons() {
@@ -138,12 +106,19 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
+        let result = term_typed.compile(
+            &mut state,
+            ty!(id!("List"), vec![ty!("int")]),
+            Rc::default(),
+        );
 
         let expected = ctor!(
             id!("Cons"),
-            [lit!(1), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
-            ty!(id!("List[i64]"))
+            [
+                lit!(1),
+                ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+            ],
+            ty!(id!("List"), vec![ty!("int")])
         )
         .into();
         assert_eq!(result, expected)

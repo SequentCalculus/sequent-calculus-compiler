@@ -2,8 +2,8 @@
 //! [Core](core_lang) program.
 
 use crate::{
-    declaration::{compile_ctor, compile_ctor_poly, compile_dtor, compile_dtor_poly},
-    def::{compile_def, compile_def_poly, compile_main, compile_main_poly},
+    declaration::{compile_ctor, compile_dtor},
+    def::{compile_def, compile_main},
     types::compile_type_params,
 };
 use core_lang::syntax::names::Identifier;
@@ -11,55 +11,9 @@ use std::{collections::HashMap, rc::Rc};
 
 use std::collections::VecDeque;
 
-/// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program.
-/// - `program` is the typechecked [Fun](fun) program.
-pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
-    let mut data_types = Vec::new();
-    let mut codata_types = Vec::new();
-
-    for data in prog.data_types {
-        data_types.push(core_lang::syntax::declaration::TypeDeclaration {
-            dat: core_lang::syntax::declaration::Data,
-            name: Identifier::new(data.name),
-            xtors: data.ctors.into_iter().map(compile_ctor).collect(),
-            type_params: vec![],
-        });
-    }
-    for codata in prog.codata_types {
-        codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
-            dat: core_lang::syntax::declaration::Codata,
-            name: Identifier::new(codata.name),
-            xtors: codata.dtors.into_iter().map(compile_dtor).collect(),
-            type_params: vec![],
-        });
-    }
-
-    let mut used_labels = prog.defs.iter().map(|def| def.name.clone()).collect();
-    let mut defs_translated = VecDeque::new();
-    for def in prog.defs {
-        if def.name == "main" {
-            for def_main in compile_main(def, codata_types.as_slice(), &mut used_labels)
-                .into_iter()
-                .rev()
-            {
-                defs_translated.push_front(def_main);
-            }
-        } else {
-            defs_translated.extend(compile_def(def, codata_types.as_slice(), &mut used_labels));
-        }
-    }
-
-    core_lang::syntax::Prog {
-        defs: defs_translated.into(),
-        data_types,
-        codata_types,
-        max_id: 0,
-    }
-}
-
 /// This function translates a typechecked [Fun](fun) program into a [Core](core_lang) program. Additionally, it replaces type parameters in the program with fresh core identifiers.
 /// - `program` is the typechecked [Fun](fun) program.
-pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
+pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::syntax::Prog {
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
     let mut max_id = 0;
@@ -76,7 +30,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
             xtors: data
                 .ctors
                 .into_iter()
-                .map(|ctor| compile_ctor_poly(ctor, Rc::new(type_param_subst.clone())))
+                .map(|ctor| compile_ctor(ctor, Rc::new(type_param_subst.clone())))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -91,7 +45,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
             xtors: codata
                 .dtors
                 .into_iter()
-                .map(|dtor| compile_dtor_poly(dtor, Rc::new(type_param_subst.clone())))
+                .map(|dtor| compile_dtor(dtor, Rc::new(type_param_subst.clone())))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -101,7 +55,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
     let mut defs_translated = VecDeque::new();
     for def in prog.defs {
         if def.name == "main" {
-            for def_main in compile_main_poly(
+            for def_main in compile_main(
                 def,
                 codata_types.as_slice(),
                 &mut used_labels,
@@ -113,7 +67,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
                 defs_translated.push_front(def_main);
             }
         } else {
-            defs_translated.extend(compile_def_poly(
+            defs_translated.extend(compile_def(
                 def,
                 codata_types.as_slice(),
                 &mut used_labels,
@@ -136,11 +90,8 @@ fn build_type_param_subst(names: &[String], params: &[Identifier]) -> HashMap<St
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::{
-        def::{compile_def, compile_main},
-        program::compile_prog,
-        program::compile_prog_poly,
-    };
+    use crate::def::{compile_def, compile_main};
+    use crate::program::compile_prog;
     use core_macros::{
         bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tvar, ty, var,
     };
@@ -153,7 +104,8 @@ mod compile_tests {
         types::{Ty, TypeArgs},
         util::dummy_span,
     };
-    use std::collections::HashSet;
+    use std::collections::{HashMap, HashSet};
+    use std::rc::Rc;
 
     fn example_def1() -> Def {
         let mut ctx = fun::syntax::context::TypingContext::default();
@@ -260,6 +212,7 @@ mod compile_tests {
             example_def1(),
             &[],
             &mut HashSet::from(["main".to_string()]),
+            Rc::new(HashMap::new()),
         );
         let expected = def!(
             id!("main"),
@@ -274,7 +227,12 @@ mod compile_tests {
 
     #[test]
     fn compile_def2() {
-        let result = compile_def(example_def2(), &[], &mut HashSet::from(["id".to_string()]));
+        let result = compile_def(
+            example_def2(),
+            &[],
+            &mut HashSet::from(["id".to_string()]),
+            Rc::new(HashMap::new()),
+        );
         let expected = def!(
             id!("id"),
             [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
@@ -322,7 +280,7 @@ mod compile_tests {
             data_types: vec![example_list_poly()],
             codata_types: vec![],
         };
-        let result = compile_prog_poly(checked);
+        let result = compile_prog(checked);
         assert_eq!(result.data_types.len(), 1);
 
         // Expected: data List[A_1] with Nil and Cons(x: prd A_1, xs: prd List[A_1])
@@ -363,7 +321,7 @@ mod compile_tests {
                     id!("Cons"),
                     [
                         bind!(id!("x"), prd!()),
-                        bind!(id!("xs"), prd!(), ty!(id!("List[i64]"))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), vec![ty!("int")])),
                     ]
                 )
             ],

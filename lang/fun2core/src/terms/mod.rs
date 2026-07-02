@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, rc::Rc};
 
-use crate::compile::{Compile, CompilePoly, CompileState};
+use crate::compile::{Compile, CompileState};
 use core_lang::syntax::{Identifier, Ty};
 
 pub mod call;
@@ -28,23 +28,24 @@ impl Compile for fun::syntax::terms::Term {
         self,
         state: &mut CompileState,
         ty: Ty,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<core_lang::syntax::terms::Prd> {
         match self {
-            fun::syntax::terms::Term::XVar(var) => var.compile(state, ty),
-            fun::syntax::terms::Term::Lit(lit) => lit.compile(state, ty),
-            fun::syntax::terms::Term::Op(op) => op.compile(state, ty),
-            fun::syntax::terms::Term::IfC(ifc) => ifc.compile(state, ty),
-            fun::syntax::terms::Term::PrintI64(print) => print.compile(state, ty),
-            fun::syntax::terms::Term::Let(r#let) => r#let.compile(state, ty),
-            fun::syntax::terms::Term::Call(call) => call.compile(state, ty),
-            fun::syntax::terms::Term::Constructor(ctor) => ctor.compile(state, ty),
-            fun::syntax::terms::Term::Destructor(dtor) => dtor.compile(state, ty),
-            fun::syntax::terms::Term::Case(case) => case.compile(state, ty),
-            fun::syntax::terms::Term::New(new) => new.compile(state, ty),
-            fun::syntax::terms::Term::Goto(goto) => goto.compile(state, ty),
-            fun::syntax::terms::Term::Label(label) => label.compile(state, ty),
-            fun::syntax::terms::Term::Exit(exit) => exit.compile(state, ty),
-            fun::syntax::terms::Term::Paren(paren) => paren.compile(state, ty),
+            fun::syntax::terms::Term::XVar(var) => var.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Lit(lit) => lit.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Op(op) => op.compile(state, ty, type_params),
+            fun::syntax::terms::Term::IfC(ifc) => ifc.compile(state, ty, type_params),
+            fun::syntax::terms::Term::PrintI64(print) => print.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Let(r#let) => r#let.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Call(call) => call.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Constructor(ctor) => ctor.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Destructor(dtor) => dtor.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Case(case) => case.compile(state, ty, type_params),
+            fun::syntax::terms::Term::New(new) => new.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Goto(goto) => goto.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Label(label) => label.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Exit(exit) => exit.compile(state, ty, type_params),
+            fun::syntax::terms::Term::Paren(paren) => paren.compile(state, ty, type_params),
         }
     }
 
@@ -52,104 +53,43 @@ impl Compile for fun::syntax::terms::Term {
         self,
         cont: core_lang::syntax::terms::Term<core_lang::syntax::terms::Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        match self {
-            fun::syntax::terms::Term::XVar(var) => var.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::IfC(ifc) => ifc.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::PrintI64(print) => print.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Let(r#let) => r#let.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Call(call) => call.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Constructor(ctor) => ctor.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Case(case) => case.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::New(new) => new.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Goto(goto) => goto.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Label(label) => label.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Exit(exit) => exit.compile_with_cont(cont, state),
-            fun::syntax::terms::Term::Paren(paren) => paren.compile_with_cont(cont, state),
-        }
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Term {
-    fn compile_poly(
-        self,
-        state: &mut CompileState,
-        ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
-    ) -> core_lang::syntax::terms::Term<core_lang::syntax::terms::Prd> {
-        match self {
-            fun::syntax::terms::Term::XVar(var) => var.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Lit(lit) => lit.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Op(op) => op.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::IfC(ifc) => ifc.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::PrintI64(print) => print.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Let(r#let) => r#let.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Call(call) => call.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Constructor(ctor) => {
-                ctor.compile_poly(state, ty, type_params)
-            }
-            fun::syntax::terms::Term::Destructor(dtor) => dtor.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Case(case) => case.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::New(new) => new.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Goto(goto) => goto.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Label(label) => label.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Exit(exit) => exit.compile_poly(state, ty, type_params),
-            fun::syntax::terms::Term::Paren(paren) => paren.compile_poly(state, ty, type_params),
-        }
-    }
-
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<core_lang::syntax::terms::Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         match self {
-            fun::syntax::terms::Term::XVar(var) => {
-                var.compile_with_cont_poly(cont, state, type_params)
-            }
-            fun::syntax::terms::Term::Lit(lit) => {
-                lit.compile_with_cont_poly(cont, state, type_params)
-            }
-            fun::syntax::terms::Term::Op(op) => op.compile_with_cont_poly(cont, state, type_params),
-            fun::syntax::terms::Term::IfC(ifc) => {
-                ifc.compile_with_cont_poly(cont, state, type_params)
-            }
+            fun::syntax::terms::Term::XVar(var) => var.compile_with_cont(cont, state, type_params),
+            fun::syntax::terms::Term::Lit(lit) => lit.compile_with_cont(cont, state, type_params),
+            fun::syntax::terms::Term::Op(op) => op.compile_with_cont(cont, state, type_params),
+            fun::syntax::terms::Term::IfC(ifc) => ifc.compile_with_cont(cont, state, type_params),
             fun::syntax::terms::Term::PrintI64(print) => {
-                print.compile_with_cont_poly(cont, state, type_params)
+                print.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Let(r#let) => {
-                r#let.compile_with_cont_poly(cont, state, type_params)
+                r#let.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Call(call) => {
-                call.compile_with_cont_poly(cont, state, type_params)
+                call.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Constructor(ctor) => {
-                ctor.compile_with_cont_poly(cont, state, type_params)
+                ctor.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Destructor(dtor) => {
-                dtor.compile_with_cont_poly(cont, state, type_params)
+                dtor.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Case(case) => {
-                case.compile_with_cont_poly(cont, state, type_params)
+                case.compile_with_cont(cont, state, type_params)
             }
-            fun::syntax::terms::Term::New(new) => {
-                new.compile_with_cont_poly(cont, state, type_params)
-            }
+            fun::syntax::terms::Term::New(new) => new.compile_with_cont(cont, state, type_params),
             fun::syntax::terms::Term::Goto(goto) => {
-                goto.compile_with_cont_poly(cont, state, type_params)
+                goto.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Label(label) => {
-                label.compile_with_cont_poly(cont, state, type_params)
+                label.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Exit(exit) => {
-                exit.compile_with_cont_poly(cont, state, type_params)
+                exit.compile_with_cont(cont, state, type_params)
             }
             fun::syntax::terms::Term::Paren(paren) => {
-                paren.compile_with_cont_poly(cont, state, type_params)
+                paren.compile_with_cont(cont, state, type_params)
             }
         }
     }

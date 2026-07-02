@@ -3,9 +3,9 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    arguments::{compile_subst, compile_subst_poly},
-    compile::{Compile, CompilePoly, CompileState, bind_many},
-    types::{compile_ty, compile_ty_poly},
+    arguments::compile_subst,
+    compile::{Compile, CompileState, bind_many},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 use fun::traits::OptTyped;
@@ -23,43 +23,10 @@ impl Compile for fun::syntax::terms::Destructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        bind_many(
-            // 〚t_1, ...〛
-            compile_subst(self.args, state).into(),
-            Box::new(|mut bindings, state| {
-                bindings.push_back(cont.into());
-                // new continuation: D(as, c)
-                let new_cont = core_lang::syntax::terms::Xtor {
-                    prdcns: Cns,
-                    name: Identifier::new(self.id),
-                    args: bindings.into(),
-                    ty: compile_ty(
-                        &self
-                            .scrutinee
-                            .get_type()
-                            .expect("Types should be annotated before translation"),
-                    ),
-                }
-                .into();
-
-                // 〚t〛_{new_cont}
-                self.scrutinee.compile_with_cont(new_cont, state)
-            }),
-            state,
-        )
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Destructor {
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         bind_many(
-            compile_subst_poly(self.args, state, type_params.clone()).into(),
+            compile_subst(self.args, state, type_params.clone()).into(),
             Box::new(move |mut bindings, state| {
                 bindings.push_back(cont.into());
                 // new continuation: D(〚t_1〛, ..., c)
@@ -79,7 +46,7 @@ impl CompilePoly for fun::syntax::terms::Destructor {
 
                 // 〚t〛_{new_cont}
                 self.scrutinee
-                    .compile_with_cont_poly(new_cont, state, type_params)
+                    .compile_with_cont(new_cont, state, type_params)
             }),
             state,
         )
@@ -92,7 +59,10 @@ mod compile_tests {
     use core_lang::syntax::terms::Prd;
     use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, id, lit, mu, ty};
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_fst() {
@@ -112,7 +82,8 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result =
+            term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64, Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -132,10 +103,14 @@ mod compile_tests {
                             cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
-                    ty!(id!("LPair[i64, i64]"))
+                    ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
                 ),
-                dtor!(id!("fst"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
-                ty!(id!("LPair[i64, i64]"))
+                dtor!(
+                    id!("fst"),
+                    [covar!(id!("a0"))],
+                    ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
+                ),
+                ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
             )
         )
         .into();
@@ -160,7 +135,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -180,10 +155,14 @@ mod compile_tests {
                             cut!(lit!(2), covar!(id!("a2")))
                         )
                     ],
-                    ty!(id!("LPair[i64, i64]"))
+                    ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
                 ),
-                dtor!(id!("snd"), [covar!(id!("a0"))], ty!(id!("LPair[i64, i64]"))),
-                ty!(id!("LPair[i64, i64]"))
+                dtor!(
+                    id!("snd"),
+                    [covar!(id!("a0"))],
+                    ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
+                ),
+                ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
             )
         )
         .into();

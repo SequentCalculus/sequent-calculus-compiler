@@ -60,10 +60,12 @@ pub trait Compile: Sized {
     /// administrative redexes
     /// - `consumer` is the consumer input.
     /// - `state` is the [state](CompileState) threaded through the translation.
+    /// - `type_params` is a mapping from type parameter names to their corresponding identifiers.
     fn compile_with_cont(
         self,
         consumer: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement;
 
     /// This method translates a term from the surface language [Fun](fun) into the intermediate
@@ -82,57 +84,14 @@ pub trait Compile: Sized {
     /// 〚5〛= μ a. 〚5〛_{a} = μ a. < 5 | a > =η 5
     /// ```
     /// Therefore, an optimized version of this function is implemented for non-computations.
-    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        let new_covar = state.fresh_covar();
-        let new_statement = self.compile_with_cont(
-            core_lang::syntax::terms::XVar {
-                prdcns: Cns,
-                var: Identifier::new(new_covar.clone()),
-                ty: ty.clone(),
-            }
-            .into(),
-            state,
-        );
-        Mu {
-            prdcns: Prd,
-            variable: Identifier::new(new_covar),
-            ty,
-            statement: Rc::new(new_statement),
-        }
-        .into()
-    }
-}
-
-impl<T: Compile + Clone> Compile for Rc<T> {
-    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        Rc::unwrap_or_clone(self).compile(state, ty)
-    }
-
-    fn compile_with_cont(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
-    }
-}
-
-pub trait CompilePoly: Sized {
-    fn compile_with_cont_poly(
-        self,
-        consumer: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
-    ) -> core_lang::syntax::Statement;
-
-    fn compile_poly(
+    fn compile(
         self,
         state: &mut CompileState,
         ty: Ty,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
-        let new_statement = self.compile_with_cont_poly(
+        let new_statement = self.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
                 var: Identifier::new(new_covar.clone()),
@@ -152,23 +111,23 @@ pub trait CompilePoly: Sized {
     }
 }
 
-impl<T: CompilePoly + Clone> CompilePoly for Rc<T> {
-    fn compile_poly(
+impl<T: Compile + Clone> Compile for Rc<T> {
+    fn compile(
         self,
         state: &mut CompileState,
         ty: Ty,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
-        Rc::unwrap_or_clone(self).compile_poly(state, ty, type_params)
+        Rc::unwrap_or_clone(self).compile(state, ty, type_params)
     }
 
-    fn compile_with_cont_poly(
+    fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        Rc::unwrap_or_clone(self).compile_with_cont_poly(cont, state, type_params)
+        Rc::unwrap_or_clone(self).compile_with_cont(cont, state, type_params)
     }
 }
 

@@ -3,8 +3,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -21,31 +21,9 @@ impl Compile for fun::syntax::terms::Goto {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        self.term.compile_with_cont(
-            core_lang::syntax::terms::XVar {
-                prdcns: Cns,
-                var: Identifier::new(self.target),
-                ty: compile_ty(
-                    &self
-                        .ty
-                        .expect("Types should be annotated before translation"),
-                ),
-            }
-            .into(),
-            state,
-        )
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Goto {
-    fn compile_with_cont_poly(
-        self,
-        _: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        self.term.compile_with_cont_poly(
+        self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
                 var: Identifier::new(self.target),
@@ -68,7 +46,10 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, ife, lit, mu, prod, ty, var};
     use fun::{parse_term, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_goto_1() {
@@ -89,7 +70,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
         let expected = mu!(id!("a0"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
@@ -114,7 +95,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a"),

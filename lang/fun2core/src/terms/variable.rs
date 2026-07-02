@@ -1,9 +1,6 @@
 //! This module defines the translation for variables.
 
-use crate::{
-    compile::{Compile, CompilePoly},
-    types::{compile_ty, compile_ty_poly},
-};
+use crate::{compile::Compile, types::compile_ty_poly};
 use core_lang::syntax::{
     Ty,
     names::Identifier,
@@ -25,57 +22,6 @@ impl Compile for fun::syntax::terms::XVar {
         self,
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
-    ) -> core_lang::syntax::terms::Term<Prd> {
-        core_lang::syntax::terms::XVar {
-            prdcns: Prd,
-            var: Identifier::new(self.var),
-            ty: compile_ty(
-                &self
-                    .ty
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into()
-    }
-
-    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
-    /// ```text
-    /// 〚v 〛_{c} = ⟨v | c⟩
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// A panic is caused if the types are not annotated in the program.
-    fn compile_with_cont(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        _state: &mut crate::compile::CompileState,
-    ) -> core_lang::syntax::Statement {
-        let ty = compile_ty(
-            &self
-                .ty
-                .expect("Types should be annotated before translation"),
-        );
-        let new_var: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::XVar {
-            prdcns: Prd,
-            var: Identifier::new(self.var),
-            ty: ty.clone(),
-        }
-        .into();
-        core_lang::syntax::statements::Cut {
-            producer: Rc::new(new_var),
-            ty,
-            consumer: Rc::new(cont),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::XVar {
-    fn compile_poly(
-        self,
-        _state: &mut crate::compile::CompileState,
-        _ty: Ty,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XVar {
@@ -91,7 +37,15 @@ impl CompilePoly for fun::syntax::terms::XVar {
         .into()
     }
 
-    fn compile_with_cont_poly(
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
+    /// ```text
+    /// 〚v 〛_{c} = ⟨v | c⟩
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         _state: &mut crate::compile::CompileState,

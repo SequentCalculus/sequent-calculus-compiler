@@ -1,9 +1,9 @@
 //! This module defines the translation of a pattern match.
 
 use crate::{
-    compile::{Compile, CompilePoly, CompileState, share},
-    terms::clause::{compile_clause, compile_clause_poly},
-    types::{compile_ty, compile_ty_poly},
+    compile::{Compile, CompileState, share},
+    terms::clause::compile_clause,
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{Identifier, terms::Cns};
 use fun::traits::OptTyped;
@@ -23,51 +23,6 @@ impl Compile for fun::syntax::terms::Case {
     ///
     /// A panic is caused if the types are not annotated in the program.
     fn compile_with_cont(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        // if there is more than one clause and the consumer is a not a leaf, we share it by
-        // lifting it to the top level to avoid exponential blowup
-        let cont = if self.clauses.len() <= 1
-            || matches!(
-                cont,
-                core_lang::syntax::Term::XVar(_)
-            )
-            // check if consumer is μ~x.exit p with p a leaf
-            || matches!(&cont, core_lang::syntax::Term::Mu(core_lang::syntax::terms::Mu { statement, .. })
-                if (matches!(&**statement, core_lang::syntax::Statement::Exit(core_lang::syntax::statements::Exit { arg, .. })
-                    if matches!(**arg, core_lang::syntax::Term::XVar(_)) || matches!(**arg, core_lang::syntax::Term::Literal(_))))
-            ) {
-            cont
-        } else {
-            share(cont, state)
-        };
-
-        // new continuation: case{ K_1(x_11,...) => 〚t_1〛_{cont}, ... }
-        let new_cont = core_lang::syntax::terms::XCase {
-            prdcns: Cns,
-            clauses: self
-                .clauses
-                .into_iter()
-                .map(|clause| compile_clause(clause, cont.clone(), state))
-                .collect(),
-            ty: compile_ty(
-                &self
-                    .scrutinee
-                    .get_type()
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into();
-
-        // 〚t〛_{new_cont}
-        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state)
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Case {
-    fn compile_with_cont_poly(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
@@ -96,7 +51,7 @@ impl CompilePoly for fun::syntax::terms::Case {
             clauses: self
                 .clauses
                 .into_iter()
-                .map(|clause| compile_clause_poly(clause, cont.clone(), state, type_params.clone()))
+                .map(|clause| compile_clause(clause, cont.clone(), state, type_params.clone()))
                 .collect(),
             ty: compile_ty_poly(
                 &self
@@ -109,7 +64,7 @@ impl CompilePoly for fun::syntax::terms::Case {
         .into();
 
         // 〚t〛_{new_cont}
-        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont_poly(new_cont, state, type_params)
+        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state, type_params)
     }
 }
 
@@ -123,7 +78,10 @@ mod compile_tests {
         typing::check::Check,
     };
 
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_list() {
@@ -143,15 +101,18 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
             cut!(
                 ctor!(
                     id!("Cons"),
-                    [lit!(1), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
-                    ty!(id!("List[i64]"))
+                    [
+                        lit!(1),
+                        ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+                    ],
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
                 case!(
                     [
@@ -169,15 +130,15 @@ mod compile_tests {
                                 bind!(
                                     id!("xs"),
                                     core_syntax::Chirality::Prd,
-                                    ty!(id!("List[i64]"))
+                                    ty!(id!("List"), vec![ty!("int")])
                                 )
                             ],
                             cut!(var!(id!("x")), covar!(id!("a0")))
                         )
                     ],
-                    ty!(id!("List[i64]"))
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
-                ty!(id!("List[i64]"))
+                ty!(id!("List"), vec![ty!("int")])
             )
         )
         .into();

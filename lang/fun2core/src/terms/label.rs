@@ -1,16 +1,16 @@
 //! This module defines the translation for the goto control operator.
 
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{
     Ty,
     names::Identifier,
     terms::{Cns, Prd},
 };
-
-use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Label {
     /// This implementation of [Compile::compile] proceeds as follows.
@@ -21,58 +21,7 @@ impl Compile for fun::syntax::terms::Label {
     /// # Panics
     ///
     /// A panic is caused if the types are not annotated in the program.
-    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        let var_ty = compile_ty(
-            &self
-                .ty
-                .expect("Types should be annotated before translation"),
-        );
-        let cont = core_lang::syntax::terms::XVar {
-            prdcns: Cns,
-            var: Identifier::new(self.label.clone()),
-            ty: var_ty.clone(),
-        }
-        .into();
-
-        core_lang::syntax::terms::Mu {
-            prdcns: Prd,
-            variable: Identifier::new(self.label),
-            ty: var_ty,
-            statement: Rc::new(self.term.compile_with_cont(cont, state)),
-        }
-        .into()
-    }
-
-    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
-    /// ```text
-    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// A panic is caused if the types are not annotated in the program.
-    fn compile_with_cont(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        let ty = compile_ty(
-            &self
-                .ty
-                .clone()
-                .expect("Types should be annotated before translation"),
-        );
-        core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile(state, ty.clone())),
-            ty,
-            consumer: Rc::new(cont),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Label {
-    fn compile_poly(
+    fn compile(
         self,
         state: &mut CompileState,
         _ty: Ty,
@@ -95,12 +44,20 @@ impl CompilePoly for fun::syntax::terms::Label {
             prdcns: Prd,
             variable: Identifier::new(self.label),
             ty: var_ty,
-            statement: Rc::new(self.term.compile_with_cont_poly(cont, state, type_params)),
+            statement: Rc::new(self.term.compile_with_cont(cont, state, type_params)),
         }
         .into()
     }
 
-    fn compile_with_cont_poly(
+    /// This implementation of [Compile::compile_with_cont] proceeds as follows.
+    /// ```text
+    /// 〚label a {t} 〛_{c} = ⟨μa. 〚t 〛_{a} | c⟩
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the types are not annotated in the program.
+    fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
@@ -114,7 +71,7 @@ impl CompilePoly for fun::syntax::terms::Label {
             type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),
+            producer: Rc::new(self.compile(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }
@@ -127,7 +84,10 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, lit, mu, ty};
     use fun::{parse_term, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_label1() {
@@ -147,7 +107,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
@@ -171,7 +131,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)

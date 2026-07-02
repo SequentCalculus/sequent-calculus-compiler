@@ -1,8 +1,8 @@
 //! This module defines the translation for the exit term.
 
 use crate::{
-    compile::{Compile, CompilePoly, CompileState},
-    types::{compile_ty, compile_ty_poly},
+    compile::{Compile, CompileState},
+    types::compile_ty_poly,
 };
 use core_lang::syntax::{Identifier, Ty, terms::Cns};
 
@@ -21,28 +21,10 @@ impl Compile for fun::syntax::terms::Exit {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        core_lang::syntax::statements::Exit {
-            arg: Rc::new(self.arg.compile(state, Ty::I64)),
-            ty: compile_ty(
-                &self
-                    .ty
-                    .expect("Types should be annotated before translation"),
-            ),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Exit {
-    fn compile_with_cont_poly(
-        self,
-        _: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::Exit {
-            arg: Rc::new(self.arg.compile_poly(state, Ty::I64, type_params.clone())),
+            arg: Rc::new(self.arg.compile(state, Ty::I64, type_params.clone())),
             ty: compile_ty_poly(
                 &self
                     .ty

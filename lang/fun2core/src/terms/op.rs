@@ -1,6 +1,6 @@
 //! This module defines the translation of arithmetic binary operations.
 
-use crate::compile::{Compile, CompilePoly, CompileState};
+use crate::compile::{Compile, CompileState};
 use core_lang::syntax::{
     Identifier, Ty,
     terms::{Cns, Prd},
@@ -29,15 +29,15 @@ impl Compile for fun::syntax::terms::Op {
         self,
         state: &mut crate::compile::CompileState,
         _ty: Ty,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile(state, Ty::I64)),
+            fst: Rc::new(self.fst.compile(state, Ty::I64, type_params.clone())),
             op: compile_op(&self.op),
-            snd: Rc::new(self.snd.compile(state, Ty::I64)),
+            snd: Rc::new(self.snd.compile(state, Ty::I64, type_params)),
         }
         .into()
     }
-
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚t_1 * t_2 〛_{c} = ⟨*( 〚t_1〛, 〚t_2〛) | c⟩
@@ -46,47 +46,12 @@ impl Compile for fun::syntax::terms::Op {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-    ) -> core_lang::syntax::Statement {
-        let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            op: compile_op(&self.op),
-            snd: Rc::new(self.snd.compile(state, Ty::I64)),
-        }
-        .into();
-        core_lang::syntax::statements::Cut {
-            producer: Rc::new(new_op),
-            ty: Ty::I64,
-            consumer: Rc::new(cont),
-        }
-        .into()
-    }
-}
-
-impl CompilePoly for fun::syntax::terms::Op {
-    fn compile_poly(
-        self,
-        state: &mut crate::compile::CompileState,
-        _ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
-    ) -> core_lang::syntax::terms::Term<Prd> {
-        core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params.clone())),
-            op: compile_op(&self.op),
-            snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
-        }
-        .into()
-    }
-
-    fn compile_with_cont_poly(
-        self,
-        cont: core_lang::syntax::terms::Term<Cns>,
-        state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params.clone())),
+            fst: Rc::new(self.fst.compile(state, Ty::I64, type_params.clone())),
             op: compile_op(&self.op),
-            snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
+            snd: Rc::new(self.snd.compile(state, Ty::I64, type_params)),
         }
         .into();
         core_lang::syntax::statements::Cut {
@@ -104,7 +69,10 @@ mod compile_tests {
     use core_macros::{id, lit, prod, sub, ty, var};
     use fun::{parse_term, typing::check::Check};
 
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashMap, HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_op1() {
@@ -117,7 +85,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"), Rc::new(HashMap::default()));
 
         let expected = sub!(lit!(2), lit!(1),).into();
         assert_eq!(result, expected);
@@ -143,7 +111,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::new(HashMap::default()));
 
         let expected = prod!(var!(id!("x")), sub!(var!(id!("x")), lit!(1))).into();
         assert_eq!(result, expected);
