@@ -33,8 +33,6 @@ pub struct Prog<D = Def> {
     pub codata_types: Vec<CodataDeclaration>,
     /// Highest [`ID`] currently used for [`Identifier`]s in the program
     pub max_id: ID,
-    /// This field is used to determine whether the program contains monomorphic type instances
-    pub is_mono: bool,
 }
 
 pub type FsProg = Prog<FsDef>;
@@ -54,7 +52,6 @@ impl Prog {
             data_types: self.data_types,
             codata_types: self.codata_types,
             max_id,
-            is_mono: self.is_mono,
         }
     }
 

@@ -111,7 +111,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = parsed.check(false).map_err(DriverError::TypeError)?;
+        let checked = parsed.check().map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -127,7 +127,7 @@ impl Driver {
         let compiled = compile_prog_poly(checked);
 
         self.compiled.insert(path.clone(), compiled.clone());
-
+        dbg!(&compiled);
         Ok(compiled)
     }
 

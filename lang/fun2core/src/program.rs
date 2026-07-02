@@ -54,7 +54,6 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         data_types,
         codata_types,
         max_id: 0,
-        is_mono: prog.is_mono,
     }
 }
 
@@ -128,7 +127,6 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
         data_types,
         codata_types,
         max_id,
-        is_mono: prog.is_mono,
     }
 }
 
@@ -191,7 +189,6 @@ mod compile_tests {
             defs: vec![],
             data_types: vec![],
             codata_types: vec![],
-            is_mono: true,
         }
     }
 
@@ -200,7 +197,6 @@ mod compile_tests {
             defs: vec![example_def1().into(), example_def2().into()],
             data_types: vec![],
             codata_types: vec![],
-            is_mono: true,
         }
     }
 
@@ -325,10 +321,8 @@ mod compile_tests {
             defs: vec![],
             data_types: vec![example_list_poly()],
             codata_types: vec![],
-            is_mono: false,
         };
         let result = compile_prog_poly(checked);
-        assert!(!result.is_mono);
         assert_eq!(result.data_types.len(), 1);
 
         // Expected: data List[A_1] with Nil and Cons(x: prd A_1, xs: prd List[A_1])
@@ -356,10 +350,8 @@ mod compile_tests {
             defs: vec![],
             data_types: vec![example_list_mono()],
             codata_types: vec![],
-            is_mono: true,
         };
         let result = compile_prog(checked);
-        assert!(result.is_mono);
         assert_eq!(result.data_types.len(), 1);
 
         // Expected: monomorphic List[i64]

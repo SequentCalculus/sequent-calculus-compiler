@@ -30,7 +30,6 @@ pub fn prog(input: TokenStream) -> TokenStream {
                 #(#codata_list),*
             ]),
             max_id: #max_id,
-            is_mono: true,
         }
     }
     .into()

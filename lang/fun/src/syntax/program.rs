@@ -22,20 +22,14 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
-    /// This field is used to determine whether the program contains monomorphic type instances
-    pub is_mono: bool,
 }
 
 impl Program {
     /// This function typechecks all declarations in a module, creating a checked module with
-    /// monomorphic type instances.
-    pub fn check(self, mono_in_fun: bool) -> Result<CheckedProgram, Error> {
+    /// polymorphic type instances.
+    pub fn check(self) -> Result<CheckedProgram, Error> {
         let symbol_table = build_symbol_table(&self)?;
-        if mono_in_fun {
-            self.check_with_table(symbol_table)
-        } else {
-            self.check_with_table_poly(symbol_table)
-        }
+        self.check_with_table_poly(symbol_table)
     }
 
     fn check_with_table_poly(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
@@ -84,107 +78,9 @@ impl Program {
                 .filter(|codata| used_types.contains(codata.name.as_str()))
                 .collect(),
             defs,
-            is_mono: false,
         };
 
         Ok(checked)
-    }
-
-    /// This function typechecks a module, creating a checked module with monomorphic type
-    /// instances, with given symbol table.
-    fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
-        let mut defs = Vec::new();
-        // we check the well-formedness of type declarations first
-        for decl in self.declarations {
-            match decl {
-                Declaration::Data(data) => {
-                    data.check(&symbol_table)?;
-                }
-                Declaration::Codata(codata) => {
-                    codata.check(&symbol_table)?;
-                }
-                Declaration::Def(def) => {
-                    defs.push(def);
-                }
-            }
-        }
-
-        let defs = defs
-            .into_iter()
-            .map(|def| def.check(&mut symbol_table))
-            .collect::<Result<_, Error>>()?;
-
-        // collect all instances of type templates from the symbol table
-        let mut data_types = Vec::new();
-        let mut codata_types = Vec::new();
-        for (name, (pol, type_args, xtors)) in symbol_table.types {
-            match pol {
-                Polarity::Data => {
-                    let ctors = xtors
-                        .into_iter()
-                        .map(|base_name| {
-                            let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let args = symbol_table
-                                .ctors
-                                .get(&full_name)
-                                .unwrap_or_else(|| {
-                                    panic!("Couldn't find constructor {full_name} in symbol_table.")
-                                })
-                                .clone();
-                            CtorSig {
-                                span: None,
-                                // keep base name for xtor in all instances
-                                name: base_name,
-                                args,
-                            }
-                        })
-                        .collect();
-                    let declaration = Data {
-                        span: None,
-                        name,
-                        type_params: TypeContext::default(),
-                        ctors,
-                    };
-                    data_types.push(declaration);
-                }
-                Polarity::Codata => {
-                    let dtors = xtors
-                        .into_iter()
-                        .map(|base_name| {
-                            let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let (args, cont_ty) = symbol_table
-                                .dtors
-                                .get(&full_name)
-                                .unwrap_or_else(|| {
-                                    panic!("Couldn't find destructor {full_name} in symbol_table.")
-                                })
-                                .clone();
-                            DtorSig {
-                                span: None,
-                                // keep base name for xtor in all instances
-                                name: base_name,
-                                args,
-                                cont_ty,
-                            }
-                        })
-                        .collect();
-                    let declaration = Codata {
-                        span: None,
-                        name,
-                        type_params: TypeContext::default(),
-                        dtors,
-                    };
-                    codata_types.push(declaration);
-                }
-            }
-        }
-
-        Ok(CheckedProgram {
-            data_types,
-            codata_types,
-            defs,
-            is_mono: true,
-        })
     }
 
     /// This function returns the names of all data type templates in a module.

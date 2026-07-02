@@ -82,7 +82,6 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
         data_types,
         codata_types,
         max_id: prog.max_id,
-        is_mono: true,
     }
 }
 
@@ -401,15 +400,10 @@ mod specialize_tests {
             data_types: vec![list.clone()],
             codata_types: vec![],
             max_id: 0,
-            is_mono: false,
         };
 
         let specialized_prog = specialize_program(&prog, &solution);
 
-        assert!(
-            specialized_prog.is_mono,
-            "Expected the specialized program to be marked as monomorphic"
-        );
         assert_eq!(
             specialized_prog.data_types.len(),
             1,
