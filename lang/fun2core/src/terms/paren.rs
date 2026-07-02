@@ -27,7 +27,7 @@ impl CompilePoly for fun::syntax::terms::Paren {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         self.inner.compile_poly(state, ty, type_params)
     }
