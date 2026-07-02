@@ -19,6 +19,7 @@ pub mod position;
 pub mod solver;
 pub mod specialize;
 
+/// Monomorphizes a program and returns the monomorphized program along with the constraint graph.
 pub fn monomorphize_program(program: Prog) -> (Prog, ConstraintGraph) {
     let constraints = program
         .collect_constraints(&program.data_types, &program.codata_types)

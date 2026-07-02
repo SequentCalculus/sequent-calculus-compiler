@@ -89,6 +89,6 @@ enum Command {
     Texify(texify::Args),
     /// Generate completion scripts for various shells
     GenerateCompletion(gen_completions::Args),
-
+    /// Monomorphize a file
     Monomorphize(monomorphize::Args),
 }

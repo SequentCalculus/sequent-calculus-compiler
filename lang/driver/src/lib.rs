@@ -18,7 +18,7 @@ use fun::{
     parser::parse_module,
     syntax::program::{CheckedProgram, Program},
 };
-use fun2core::program::{compile_prog, compile_prog_poly};
+use fun2core::program::compile_prog_poly;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
@@ -111,7 +111,7 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
-        let checked = parsed.check(true).map_err(DriverError::TypeError)?;
+        let checked = parsed.check(false).map_err(DriverError::TypeError)?;
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -124,12 +124,7 @@ impl Driver {
         }
 
         let checked = self.checked(path)?;
-        // dispatch to the correct compile function based on whether the program is monomorphic or polymorphic. If the program is polymorphic this triggers all subsequent compilation steps to handle the substitution of type parameters with fresh core identifiers. Monomorphization is then deferred into a separate step in the core IR.
-        let compiled = if checked.is_mono {
-            compile_prog(checked)
-        } else {
-            compile_prog_poly(checked)
-        };
+        let compiled = compile_prog_poly(checked);
 
         self.compiled.insert(path.clone(), compiled.clone());
 
@@ -176,9 +171,10 @@ impl Driver {
         path: &PathBuf,
         viz: Option<Option<PathBuf>>,
     ) -> Result<Prog, DriverError> {
-        let parsed = self.parsed(path)?;
-        let checked = parsed.check(false).map_err(DriverError::TypeError)?;
-        let compiled = compile_prog_poly(checked);
+        // let parsed = self.parsed(path)?;
+        // let checked = parsed.check(false).map_err(DriverError::TypeError)?;
+        // let compiled = compile_prog_poly(checked);
+        let compiled = self.compiled(path)?;
         let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled);
         if let Some(path) = viz {
             graph
@@ -195,11 +191,11 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let mut compiled = self.compiled(path)?;
-        // let mut compiled = self.monomorphized(path, None)?;
-        compiled.uniquify();
-        self.uniquified.insert(path.clone(), compiled.clone());
-        Ok(compiled)
+        // let mut compiled = self.compiled(path)?;
+        let mut monomorphized = self.monomorphized(path, None)?;
+        monomorphized.uniquify();
+        self.uniquified.insert(path.clone(), monomorphized.clone());
+        Ok(monomorphized)
     }
 
     pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
@@ -244,8 +240,9 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let focused = compiled.focus();
+        // let compiled = self.compiled(path)?;
+        let monomorphized = self.monomorphized(path, None)?;
+        let focused = monomorphized.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }
