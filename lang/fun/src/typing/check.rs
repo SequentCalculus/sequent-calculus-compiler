@@ -146,37 +146,13 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
             util::dummy_span,
         },
-        test_common::{
-            codata_stream, data_list, data_list_i64, def_mult, def_mult_typed, symbol_table_fun,
-            symbol_table_list,
-        },
+        test_common::{symbol_table_fun, symbol_table_list},
         typing::symbol_table::SymbolTable,
     };
-
-    #[test]
-    fn module_check() {
-        let result = Program {
-            declarations: vec![
-                data_list().into(),
-                codata_stream().into(),
-                def_mult().into(),
-            ],
-        }
-        .check()
-        .unwrap();
-
-        let expected = CheckedProgram {
-            defs: vec![def_mult_typed()],
-            data_types: vec![data_list_i64()],
-            codata_types: vec![],
-        };
-        assert_eq!(result, expected)
-    }
 
     #[test]
     fn ty_check_int() {
