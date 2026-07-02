@@ -69,12 +69,12 @@ impl CompilePoly for fun::syntax::terms::Constructor {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
             name: Identifier::new(self.id),
-            args: compile_subst_poly(self.args, state, type_params),
+            args: compile_subst_poly(self.args, state, type_params.clone()),
             ty: compile_ty_poly(
                 &self
                     .ty
@@ -89,14 +89,14 @@ impl CompilePoly for fun::syntax::terms::Constructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty_poly(
             &self
                 .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
-            type_params,
+            type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),

@@ -1,6 +1,6 @@
 //! This module defines the translation of parenthesized terms.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::compile::{Compile, CompilePoly, CompileState};
 use core_lang::syntax::{
@@ -27,7 +27,7 @@ impl CompilePoly for fun::syntax::terms::Paren {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>
     ) -> core_lang::syntax::terms::Term<Prd> {
         self.inner.compile_poly(state, ty, type_params)
     }
@@ -36,7 +36,7 @@ impl CompilePoly for fun::syntax::terms::Paren {
         self,
         c: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         self.inner.compile_with_cont_poly(c, state, type_params)
     }

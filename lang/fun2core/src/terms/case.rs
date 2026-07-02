@@ -71,7 +71,7 @@ impl CompilePoly for fun::syntax::terms::Case {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         // if there is more than one clause and the consumer is a not a leaf, we share it by
         // lifting it to the top level to avoid exponential blowup
@@ -96,14 +96,14 @@ impl CompilePoly for fun::syntax::terms::Case {
             clauses: self
                 .clauses
                 .into_iter()
-                .map(|clause| compile_clause_poly(clause, cont.clone(), state, type_params))
+                .map(|clause| compile_clause_poly(clause, cont.clone(), state, type_params.clone()))
                 .collect(),
             ty: compile_ty_poly(
                 &self
                     .scrutinee
                     .get_type()
                     .expect("Types should be annotated before translation"),
-                type_params,
+                type_params.clone(),
             ),
         }
         .into();

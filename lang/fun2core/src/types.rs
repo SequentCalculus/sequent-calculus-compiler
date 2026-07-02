@@ -2,7 +2,7 @@
 
 use core_lang::syntax::{ID, fresh_identifier, names::Identifier};
 use printer::Print;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 /// This function converts [types in Fun](fun::syntax::types::Ty) to
 /// [types in Core](core_lang::syntax::types::Ty).
@@ -28,7 +28,7 @@ pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_ty_poly(
     ty: &fun::syntax::types::Ty,
-    type_params: &HashMap<String, Identifier>,
+    type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
@@ -46,7 +46,7 @@ pub fn compile_ty_poly(
             let translated_args = type_args
                 .args
                 .iter()
-                .map(|arg| compile_ty_poly(arg, type_params))
+                .map(|arg| compile_ty_poly(arg, type_params.clone()))
                 .collect::<Vec<_>>();
 
             core_lang::syntax::types::Ty::Decl {
@@ -78,7 +78,7 @@ mod compile_tests {
     use core_lang::syntax::names::Identifier;
     use core_macros::{id, tvar, ty};
     use fun::syntax::types::{Ty, TypeArgs};
-    use std::collections::HashMap;
+    use std::{collections::HashMap, rc::Rc};
 
     #[test]
     fn compile_ty_with_subst_rewrites_nested_type_arguments() {
@@ -98,7 +98,7 @@ mod compile_tests {
             },
         )]);
 
-        let result = compile_ty_poly(&ty, &subst);
+        let result = compile_ty_poly(&ty, Rc::new(subst));
 
         let expected = ty!(id!("List"), [ty!(id!("List"), [tvar!(id!("A", 1))])]);
 

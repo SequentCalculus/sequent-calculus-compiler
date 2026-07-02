@@ -7,7 +7,7 @@ use crate::{
     types::compile_type_params,
 };
 use core_lang::syntax::names::Identifier;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use std::collections::VecDeque;
 
@@ -77,7 +77,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
             xtors: data
                 .ctors
                 .into_iter()
-                .map(|ctor| compile_ctor_poly(ctor, &type_param_subst))
+                .map(|ctor| compile_ctor_poly(ctor, Rc::new(type_param_subst.clone())))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -92,7 +92,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
             xtors: codata
                 .dtors
                 .into_iter()
-                .map(|dtor| compile_dtor_poly(dtor, &type_param_subst))
+                .map(|dtor| compile_dtor_poly(dtor, Rc::new(type_param_subst.clone())))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -106,7 +106,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
                 def,
                 codata_types.as_slice(),
                 &mut used_labels,
-                &global_type_param_subst,
+                Rc::new(global_type_param_subst.clone()),
             )
             .into_iter()
             .rev()
@@ -118,7 +118,7 @@ pub fn compile_prog_poly(prog: fun::syntax::program::CheckedProgram) -> core_lan
                 def,
                 codata_types.as_slice(),
                 &mut used_labels,
-                &global_type_param_subst,
+                Rc::new(global_type_param_subst.clone()),
             ));
         }
     }

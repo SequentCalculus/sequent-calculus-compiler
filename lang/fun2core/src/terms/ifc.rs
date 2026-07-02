@@ -68,7 +68,7 @@ impl CompilePoly for fun::syntax::terms::IfC {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         // if the consumer is a not a leaf, we share it by lifting it to the top level to avoid
         // exponential blowup
@@ -103,14 +103,15 @@ impl CompilePoly for fun::syntax::terms::IfC {
                     core_lang::syntax::statements::IfSort::GreaterOrEqual
                 }
             },
-            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params.clone())),
             snd: self
                 .snd
-                .map(|term| Rc::new(term.compile_poly(state, Ty::I64, type_params))),
-            thenc: Rc::new(
-                self.thenc
-                    .compile_with_cont_poly(cont.clone(), state, type_params),
-            ),
+                .map(|term| Rc::new(term.compile_poly(state, Ty::I64, type_params.clone()))),
+            thenc: Rc::new(self.thenc.compile_with_cont_poly(
+                cont.clone(),
+                state,
+                type_params.clone(),
+            )),
             elsec: Rc::new(self.elsec.compile_with_cont_poly(cont, state, type_params)),
         }
         .into()

@@ -4,9 +4,9 @@ use crate::{
     compile::{Compile, CompilePoly, CompileState},
     types::{compile_ty, compile_ty_poly},
 };
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Exit {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -39,10 +39,10 @@ impl CompilePoly for fun::syntax::terms::Exit {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &std::collections::HashMap<String, core_lang::syntax::names::Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::Exit {
-            arg: Rc::new(self.arg.compile_poly(state, Ty::I64, type_params)),
+            arg: Rc::new(self.arg.compile_poly(state, Ty::I64, type_params.clone())),
             ty: compile_ty_poly(
                 &self
                     .ty

@@ -1,7 +1,7 @@
 //! This module defines the translation into [Core](core_lang) for each term the surface language
 //! [Fun](fun).
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::compile::{Compile, CompilePoly, CompileState};
 use core_lang::syntax::{Identifier, Ty};
@@ -78,7 +78,7 @@ impl CompilePoly for fun::syntax::terms::Term {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<core_lang::syntax::terms::Prd> {
         match self {
             fun::syntax::terms::Term::XVar(var) => var.compile_poly(state, ty, type_params),
@@ -105,7 +105,7 @@ impl CompilePoly for fun::syntax::terms::Term {
         self,
         cont: core_lang::syntax::terms::Term<core_lang::syntax::terms::Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         match self {
             fun::syntax::terms::Term::XVar(var) => {

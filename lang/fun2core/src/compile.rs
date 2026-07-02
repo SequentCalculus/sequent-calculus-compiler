@@ -122,14 +122,14 @@ pub trait CompilePoly: Sized {
         self,
         consumer: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement;
 
     fn compile_poly(
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont_poly(
@@ -157,7 +157,7 @@ impl<T: CompilePoly + Clone> CompilePoly for Rc<T> {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         Rc::unwrap_or_clone(self).compile_poly(state, ty, type_params)
     }
@@ -166,7 +166,7 @@ impl<T: CompilePoly + Clone> CompilePoly for Rc<T> {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont_poly(cont, state, type_params)
     }

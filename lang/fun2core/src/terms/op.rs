@@ -67,10 +67,10 @@ impl CompilePoly for fun::syntax::terms::Op {
         self,
         state: &mut crate::compile::CompileState,
         _ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params.clone())),
             op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
         }
@@ -81,10 +81,10 @@ impl CompilePoly for fun::syntax::terms::Op {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
-            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params)),
+            fst: Rc::new(self.fst.compile_poly(state, Ty::I64, type_params.clone())),
             op: compile_op(&self.op),
             snd: Rc::new(self.snd.compile_poly(state, Ty::I64, type_params)),
         }

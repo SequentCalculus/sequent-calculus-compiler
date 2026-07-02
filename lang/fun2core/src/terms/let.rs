@@ -52,18 +52,19 @@ impl CompilePoly for fun::syntax::terms::Let {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(&self.var_ty, type_params);
+        let ty = compile_ty_poly(&self.var_ty, type_params.clone());
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,
             variable: Identifier::new(self.variable),
             ty: ty.clone(),
-            statement: Rc::new(
-                self.in_term
-                    .compile_with_cont_poly(cont, state, type_params),
-            ),
+            statement: Rc::new(self.in_term.compile_with_cont_poly(
+                cont,
+                state,
+                type_params.clone(),
+            )),
         }
         .into();
 

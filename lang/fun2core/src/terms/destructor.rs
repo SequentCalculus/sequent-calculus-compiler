@@ -1,6 +1,6 @@
 //! This module defines the translation of a destructor.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     arguments::{compile_subst, compile_subst_poly},
@@ -56,28 +56,33 @@ impl CompilePoly for fun::syntax::terms::Destructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst_poly(self.args, state, type_params);
-        args.entries.push(cont.into());
-        // new continuation: D(〚t_1〛, ..., c)
-        let new_cont = core_lang::syntax::terms::Xtor {
-            prdcns: Cns,
-            name: Identifier::new(self.id),
-            args,
-            ty: compile_ty_poly(
-                &self
-                    .scrutinee
-                    .get_type()
-                    .expect("Types should be annotated before translation"),
-                type_params,
-            ),
-        }
-        .into();
+        bind_many(
+            compile_subst_poly(self.args, state, type_params.clone()).into(),
+            Box::new(move |mut bindings, state| {
+                bindings.push_back(cont.into());
+                // new continuation: D(〚t_1〛, ..., c)
+                let new_cont = core_lang::syntax::terms::Xtor {
+                    prdcns: Cns,
+                    name: Identifier::new(self.id),
+                    args: bindings.into(),
+                    ty: compile_ty_poly(
+                        &self
+                            .scrutinee
+                            .get_type()
+                            .expect("Types should be annotated before translation"),
+                        type_params.clone(),
+                    ),
+                }
+                .into();
 
-        // 〚t〛_{new_cont}
-        self.scrutinee
-            .compile_with_cont_poly(new_cont, state, type_params)
+                // 〚t〛_{new_cont}
+                self.scrutinee
+                    .compile_with_cont_poly(new_cont, state, type_params)
+            }),
+            state,
+        )
     }
 }
 

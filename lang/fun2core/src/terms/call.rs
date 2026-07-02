@@ -1,6 +1,6 @@
 //! This module defines the translation for the call of a top-level function.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     arguments::{compile_subst, compile_subst_poly},
@@ -43,9 +43,9 @@ impl CompilePoly for fun::syntax::terms::Call {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let mut args = compile_subst_poly(self.args, state, type_params);
+        let mut args = compile_subst_poly(self.args, state, type_params.clone());
         args.entries.push(cont.into());
         core_lang::syntax::statements::Call {
             name: Identifier::new(self.name),

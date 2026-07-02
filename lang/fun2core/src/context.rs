@@ -2,7 +2,7 @@
 
 use crate::types::{compile_ty, compile_ty_poly};
 use core_lang::syntax::names::Identifier;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 /// This function converts [chirality in Fun](fun::syntax::context::Chirality) to
 /// [chirality in Core](core_lang::syntax::context::Chirality).
@@ -38,7 +38,7 @@ pub fn compile_context(
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_context_poly(
     context: fun::syntax::context::TypingContext,
-    type_params: &HashMap<String, Identifier>,
+    type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::context::TypingContext {
     core_lang::syntax::context::TypingContext {
         bindings: context
@@ -47,7 +47,7 @@ pub fn compile_context_poly(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
-                ty: compile_ty_poly(&binding.ty, type_params),
+                ty: compile_ty_poly(&binding.ty, type_params.clone()),
             })
             .collect(),
     }

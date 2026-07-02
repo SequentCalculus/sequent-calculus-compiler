@@ -1,9 +1,9 @@
 //! This module defines the translation for printing an integer.
 
 use crate::compile::{Compile, CompilePoly, CompileState};
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::PrintI64 {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -29,11 +29,11 @@ impl CompilePoly for fun::syntax::terms::PrintI64 {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &std::collections::HashMap<String, core_lang::syntax::names::Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::PrintI64 {
             newline: self.newline,
-            arg: Rc::new(self.arg.compile_poly(state, Ty::I64, type_params)),
+            arg: Rc::new(self.arg.compile_poly(state, Ty::I64, type_params.clone())),
             next: Rc::new(
                 self.next
                     .compile_with_cont_poly(cont.clone(), state, type_params),

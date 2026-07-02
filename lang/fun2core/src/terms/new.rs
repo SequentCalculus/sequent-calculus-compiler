@@ -72,14 +72,14 @@ impl CompilePoly for fun::syntax::terms::New {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: self
                 .clauses
                 .into_iter()
-                .map(|clause| compile_coclause_poly(clause, state, type_params))
+                .map(|clause| compile_coclause_poly(clause, state, type_params.clone()))
                 .collect(),
             ty: compile_ty_poly(
                 &self
@@ -95,14 +95,14 @@ impl CompilePoly for fun::syntax::terms::New {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &HashMap<String, Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty_poly(
             &self
                 .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
-            type_params,
+            type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
             producer: Rc::new(self.compile_poly(state, ty.clone(), type_params)),

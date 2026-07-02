@@ -6,6 +6,7 @@ use crate::types::{compile_ty, compile_ty_poly};
 use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 /// This function converts [constructors in Fun](fun::syntax::declarations::CtorSig) to
 /// [constructors in Core](core_lang::syntax::declaration::XtorSig).
@@ -26,7 +27,7 @@ pub fn compile_ctor(
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_ctor_poly(
     ctor: fun::syntax::declarations::CtorSig,
-    type_params: &HashMap<String, Identifier>,
+    type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Data,
@@ -64,10 +65,10 @@ pub fn compile_dtor(
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_dtor_poly(
     dtor: fun::syntax::declarations::DtorSig,
-    type_params: &HashMap<String, Identifier>,
+    type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
-    let mut new_args = compile_context_poly(dtor.args, type_params);
+    let mut new_args = compile_context_poly(dtor.args, type_params.clone());
 
     new_args
         .bindings

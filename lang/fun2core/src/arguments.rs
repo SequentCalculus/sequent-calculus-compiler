@@ -1,6 +1,6 @@
 //! This module defines the translation of arguments.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     compile::{Compile, CompilePoly, CompileState},
@@ -53,7 +53,7 @@ pub fn compile_subst(
 pub fn compile_subst_poly(
     arguments: fun::syntax::arguments::Arguments,
     state: &mut CompileState,
-    type_params: &HashMap<String, Identifier>,
+    type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::arguments::Arguments {
     core_lang::syntax::arguments::Arguments {
         entries: arguments
@@ -71,7 +71,7 @@ pub fn compile_subst_poly(
                         var: Identifier::new(var),
                         ty: compile_ty_poly(
                             &ty.expect("Types should be annotated before translation"),
-                            type_params,
+                            type_params.clone(),
                         ),
                     }
                     .into(),
@@ -81,12 +81,12 @@ pub fn compile_subst_poly(
                         &term
                             .get_type()
                             .expect("Types should be annotated before translation"),
-                        type_params,
+                        type_params.clone(),
                     );
                     core_lang::syntax::arguments::Argument::Producer(term.compile_poly(
                         state,
                         ty,
-                        type_params,
+                        type_params.clone(),
                     ))
                 }
             })

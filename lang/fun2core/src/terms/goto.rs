@@ -1,5 +1,7 @@
 //! This module defines the translation for the goto control operator.
 
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
     compile::{Compile, CompilePoly, CompileState},
     types::{compile_ty, compile_ty_poly},
@@ -41,7 +43,7 @@ impl CompilePoly for fun::syntax::terms::Goto {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: &std::collections::HashMap<String, core_lang::syntax::names::Identifier>,
+        type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
         self.term.compile_with_cont_poly(
             core_lang::syntax::terms::XVar {
@@ -51,7 +53,7 @@ impl CompilePoly for fun::syntax::terms::Goto {
                     &self
                         .ty
                         .expect("Types should be annotated before translation"),
-                    type_params,
+                    type_params.clone(),
                 ),
             }
             .into(),
