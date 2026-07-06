@@ -281,7 +281,11 @@ impl Solution {
             let mut combined_choice = self.choices.clone();
             combined_choice.extend(new_solution.choices.iter());
 
-            Some(Constraint::Equality(new_solution.ty.clone(), self.ty.clone(), combined_choice))
+            Some(Constraint::Equality(
+                new_solution.ty.clone(),
+                self.ty.clone(),
+                combined_choice,
+            ))
         } else {
             // if there are conflicting choices, no new Constraint is created
             None
@@ -454,7 +458,8 @@ mod test {
         let solution_1 = Solution::_new_no_choice("a".to_string(), Ty::mk_i64());
         let solution_2 = Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
         let solution_3 = Solution::_new_no_choice("c".to_string(), Ty::mk_i64());
-        let solution_4 = Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)]));
+        let solution_4 =
+            Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)]));
 
         solution_cache.add_solution(solution_1.clone());
         solution_cache.add_solution(solution_2.clone());
@@ -480,14 +485,12 @@ mod test {
             Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
             Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
             Solution::_new_no_choice("c".to_string(), Ty::mk_i64()),
-            Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)]))
+            Solution::new("c".to_string(), Ty::mk_ty_var("4"), HashMap::from([(5, 4)])),
         ];
 
         // we need to check that it has the same elements, but not necessarily in the same order
         assert_eq!(all_solutions.len(), expected_solutions.len());
         assert!(expected_solutions.iter().all(|s| all_solutions.contains(s)))
-
-
     }
 
     #[test]
@@ -591,7 +594,11 @@ mod test {
 
         let expected_conflicts = vec![vec![(3, 2), (16, 5)]];
 
-        assert!(expected_conflicts[0].iter().all(|c| conflicts[0].contains(c)));
+        assert!(
+            expected_conflicts[0]
+                .iter()
+                .all(|c| conflicts[0].contains(c))
+        );
         assert_eq!(expected_conflicts.len(), conflicts.len());
         assert_eq!(expected_conflicts[0].len(), conflicts[0].len());
     }
