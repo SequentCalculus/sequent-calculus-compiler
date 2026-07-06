@@ -44,6 +44,8 @@ impl Def {
             constraint_bank: &mut ConstraintBank
         ) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
+        self.ret_ty.check(&Some(self.span), &mut constraint_bank.symbol_table)?;
+        self.context.check(&mut constraint_bank.symbol_table)?;
 
         self.body.gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
     }
