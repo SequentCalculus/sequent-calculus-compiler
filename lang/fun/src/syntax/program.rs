@@ -25,12 +25,33 @@ pub struct CheckedProgram {
     pub defs: Vec<Def>,
 }
 
+impl CheckedProgram {
+    pub fn print_all(&mut self) {
+        self.data_types.sort_by_key(|data| data.name.clone());
+        println!("Data:");
+        for data in self.data_types.iter() {
+            println!("\t{:?}", data);
+        }
+
+        self.codata_types.sort_by_key(|codata| codata.name.clone());
+        println!("Codata:");
+        for codata in self.codata_types.iter() {
+            println!("\t{:?}", codata);
+        }
+
+        self.defs.sort_by_key(|defs| defs.name.clone());
+        println!("Defs:");
+        for def in self.defs.iter() {
+            println!("\t{:?}", def);
+        }
+    }
+}
+
 impl Program {
-    
     /// the main function for type inference. It consumes the (uncheckd)[`Program`] and returns a [`CheckedProgram`] with
     /// the all types inferred and overloading resolved.
-    pub fn inference_types(self) -> Result<CheckedProgram, Error>{
-        let mut constraint_bank = ConstraintBank{
+    pub fn inference_types(self) -> Result<CheckedProgram, Error> {
+        let mut constraint_bank = ConstraintBank {
             symbol_table: build_symbol_table(&self)?,
             var_name_generator: Default::default(),
             constraints: Default::default(),
@@ -39,7 +60,7 @@ impl Program {
 
         let mut defs = Vec::new();
         let mut overloaded_defs_counter = HashMap::new();
-        
+
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
@@ -53,7 +74,6 @@ impl Program {
 
                     // the names of overloaded functions are replaced with a unique name.
                     if constraint_bank.symbol_table.variational_defs[&def.name].len() > 1 {
-
                         // the name consists of the index of the definition, so they are counted in the overloaded defs counter
                         if let Some(counter) = overloaded_defs_counter.get_mut(&def.name) {
                             def.name = symbol_table::build_unique_def_name(&def.name, counter);
@@ -69,35 +89,57 @@ impl Program {
         }
 
         // recovering the properties from the ConstraintBank
-        let ConstraintBank { mut symbol_table, constraints, possible_choices, .. } = constraint_bank;
+        let ConstraintBank {
+            mut symbol_table,
+            constraints,
+            possible_choices,
+            ..
+        } = constraint_bank;
 
         let (solutions, conflicts) = constraint_unification(constraints);
 
-
-        // generating a type and choice mapping, either with overload resolution or without
-        // overload resolution is only done, if there are any overloads to resolve
-        let (mut type_mapping, choices_map): (HashMap<Name, Ty>, HashMap<u32, usize>) = if possible_choices.len() > 0 {
-            let selected_world = crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?;
-
-            let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
-
-            // now all solutions that are part of the selected world are filtered.
-            let mut selected_solutions = solutions;
-            for (choice_id, signature_id) in selected_world {
-                selected_solutions.retain(|s| match s.choices.get(&choice_id) {
-                    Some(id) => signature_id == *id,
-
-                    // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                    None => true
-                });
-            }
-
-            // the solutions are converted to a HashMap and then they are inserted in the program
-            (selected_solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), choices_map)
+        // if there are no choices, world resolving is skipped
+        let selected_world = if possible_choices.len() > 0 {
+            crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?
+        } else if conflicts.len() > 0 {
+            // there is only one world, but there are also conflicts. So there is no solution
+            // todo!("Better Error")
+            return Err(Error::NotExactlyOneWorld { number_worlds: 0.0 });
         } else {
-            (solutions.into_iter().map(crate::typing::inference::Solution::get_only_solution).collect(), Default::default())
+            Vec::new()
         };
 
+        let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
+
+        // now all solutions that are part of the selected world are filtered.
+        let mut selected_solutions = solutions;
+        for (choice_id, signature_id) in selected_world {
+            selected_solutions.retain(|s| match s.choices.get(&choice_id) {
+                Some(id) => signature_id == *id,
+
+                // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
+                None => true,
+            });
+        }
+
+        let mut type_mapping: HashMap<String, Ty> = HashMap::new();
+
+        /*
+        There could be several solutions for one type var.
+        The best solution is chosen
+        This "best" is the solution with the least type vars in the ty.
+        There could also be several solutions with different choice annotations
+        but they are non conflicting, since this would be found by the unification.
+        */
+        for solution in selected_solutions {
+            if let Some(subst_ty) = type_mapping.get_mut(&solution.var_name) {
+                if solution.ty.collect_var_names().len() < subst_ty.collect_var_names().len() {
+                    *subst_ty = solution.ty;
+                }
+            } else {
+                type_mapping.insert(solution.var_name, solution.ty);
+            }
+        }
 
         // the type mapping is applied on it self, to get the complete transitive hull
         let reference_mapping = type_mapping.clone();
@@ -111,18 +153,28 @@ impl Program {
                 }
 
                 if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
-                    let missing_names: Vec<String> = ty.collect_var_names().into_iter().filter(|k| !reference_mapping.contains_key(k)).collect();
-                    panic!("Missing type var names in the final type mapping: {:?}", missing_names);
+                    let missing_names: Vec<String> = ty
+                        .collect_var_names()
+                        .into_iter()
+                        .filter(|k| !reference_mapping.contains_key(k))
+                        .collect();
+                    panic!(
+                        "Missing type var names in the final type mapping: {:?}",
+                        missing_names
+                    );
                 }
 
                 ty.mut_subst_ty(&reference_mapping);
-            }            
+            }
         }
 
+        println!("self apply done");
 
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
         }
+
+        println!("insertion done");
 
         // collect all instances of type templates from the symbol table
         let mut data_types = Vec::new();
@@ -189,7 +241,11 @@ impl Program {
             }
         }
 
-        Ok(CheckedProgram { data_types, codata_types, defs })
+        Ok(CheckedProgram {
+            data_types,
+            codata_types,
+            defs,
+        })
     }
 
     /// This function returns the names of all data type templates in a module.
