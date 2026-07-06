@@ -350,14 +350,14 @@ pub fn constraint_unification(
             }
             Constraint::Equality(
                 Ty::Decl {
-                    span: _,
+                    span: span_l,
                     name: name_l,
                     type_args: type_args_l,
                 },
                 Ty::Decl {
+                    span: span_r,
                     name: name_r,
                     type_args: type_args_r,
-                    ..
                 },
                 choices,
             ) => {
@@ -375,7 +375,8 @@ pub fn constraint_unification(
                         // theoretically impossible branch, where the type name is the same, but for some reason one Decl has more Type Arguments than the other
                         // this should already be covered by the constraint collection
                         panic!(
-                            "Two instances of the same (co-)datatype have different number of arguments"
+                            "Two instances of the same (co-)datatype have different number of arguments. {}{:?}:{:?} = {}{:?}:{:?}",
+                            name_l, type_args_l.args, span_l, name_r, type_args_r.args, span_r
                         );
                     }
                 } else {
@@ -404,6 +405,7 @@ pub fn constraint_unification(
     (solutions.all_solutions(), conflicts)
 }
 
+/// The [`SolutionCache`] can store solutions for multiple choices
 pub struct SolutionCache {
     mapping: HashMap<Name, Vec<Solution>>,
 }
@@ -415,13 +417,14 @@ impl SolutionCache {
         }
     }
 
-    pub fn add_solution(&mut self, solution: Solution) {
+    /// adding a new solution to the cache
+    pub fn add_solution(&mut self, new_solution: Solution) {
         // adding an entry for the solution var name
-        if let Some(entries) = self.mapping.get_mut(&solution.var_name) {
-            entries.push(solution);
+        if let Some(entries) = self.mapping.get_mut(&new_solution.var_name) {
+                entries.push(new_solution);
         } else {
             self.mapping
-                .insert(solution.var_name.clone(), vec![solution]);
+                .insert(new_solution.var_name.clone(), vec![new_solution]);
         }
     }
 

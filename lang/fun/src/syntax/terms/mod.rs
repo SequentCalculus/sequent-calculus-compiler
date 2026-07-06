@@ -267,8 +267,6 @@ pub mod inferr_helper {
                 ty.mut_subst_ty(&reference_mapping);
             }            
         }
-
-        println!("Term before insertion: {:?}", term);
         term.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)
     }
 }
