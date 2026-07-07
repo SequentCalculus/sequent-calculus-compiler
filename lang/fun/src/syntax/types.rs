@@ -240,6 +240,14 @@ impl Ty {
             }
     }
 
+    pub fn get_span(&self) -> Option<SourceSpan> {
+        match self {
+            Ty::I64 { span } => span.clone(),
+            Ty::Decl { span, .. } => span.clone(),
+            Ty::TypeVar { span, .. } => span.clone()            
+        }
+    }
+
 }
 
 /// This function creates a monomorphic instance of a type template and inserts it into the symbol

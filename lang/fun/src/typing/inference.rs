@@ -2,6 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use derivative::Derivative;
 use miette::SourceSpan;
+use printer::Print;
 
 use crate::{
     syntax::{
@@ -196,7 +197,12 @@ impl Default for VarNameGenerator {
 }
 
 // todo: make an incompatible choices struct with the Error explaining why this whould be impossible
-pub type IncompatibleChoices = Vec<(u32, usize)>;
+#[derive(Derivative, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
+pub struct IncompatibleChoices {
+    pub choices: Vec<(u32, usize)>,
+    pub error: Error,
+}
 
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
@@ -224,10 +230,10 @@ impl Constraint {
     }
 
     /// Creates an impossible world constraint for a choice that is generally not viable
-    pub fn mk_impossible_world(choice_id: u32, signature_id: usize) -> Self {
+    pub fn mk_impossible_world(choice_id: u32, signature_id: usize, error: Error) -> Self {
         let mut choices = Vec::new();
         choices.push((choice_id, signature_id));
-        Constraint::ImpossibleWorld(choices)
+        Constraint::ImpossibleWorld(IncompatibleChoices { choices, error })
     }
 
     pub fn add_choice(&mut self, choice_id: u32, signature_id: usize) {
@@ -385,16 +391,54 @@ pub fn constraint_unification(
                         .into_iter()
                         .map(|(choice_id, signature_id)| (choice_id, signature_id))
                         .collect();
-                    conflicts.push(impossible_world);
+
+                    let mut expected_type_l = name_l;
+                    expected_type_l.push_str(&type_args_l.print_to_string(None));
+
+                    let mut expected_type_r = name_r;
+                    expected_type_r.push_str(&type_args_r.print_to_string(None));
+
+                    let best_span = if let Some(span) = span_l {
+                        Some(span)
+                    } else if let Some(span) = span_r {
+                        Some(span)
+                    } else {
+                        None
+                    };
+
+                    conflicts.push(IncompatibleChoices {
+                        choices: impossible_world,
+                        error: Error::ConflictingTypeConstraints {
+                            span_l: best_span,
+                            expected_type_l,
+                            expected_type_r,
+                        },
+                    });
                 }
             }
-            Constraint::Equality(_, _, choices) => {
+            Constraint::Equality(ty1, ty2, choices) => {
                 // two types, neither a type variable nor two declerations, which means a literal type and a declaration -> impossible to unify the equation
                 let impossible_world = choices
                     .into_iter()
                     .map(|(choice_id, signature_id)| (choice_id, signature_id))
                     .collect();
-                conflicts.push(impossible_world);
+
+                let best_span = if let Some(span) = ty1.get_span() {
+                    Some(span)
+                } else if let Some(span) = ty2.get_span() {
+                    Some(span)
+                } else {
+                    None
+                };
+
+                conflicts.push(IncompatibleChoices {
+                    choices: impossible_world,
+                    error: Error::ConflictingTypeConstraints {
+                        span_l: best_span,
+                        expected_type_l: ty1.print_to_string(None),
+                        expected_type_r: ty2.print_to_string(None),
+                    },
+                });
             }
             Constraint::ImpossibleWorld(choices) => {
                 conflicts.push(choices);
@@ -421,7 +465,7 @@ impl SolutionCache {
     pub fn add_solution(&mut self, new_solution: Solution) {
         // adding an entry for the solution var name
         if let Some(entries) = self.mapping.get_mut(&new_solution.var_name) {
-                entries.push(new_solution);
+            entries.push(new_solution);
         } else {
             self.mapping
                 .insert(new_solution.var_name.clone(), vec![new_solution]);
@@ -447,12 +491,16 @@ impl Default for SolutionCache {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
+    use printer::Print;
 
+    use crate::typing::Error;
     use crate::{
         syntax::{Ty, TypeArgs},
-        typing::inference::{Constraint, Solution, SolutionCache, constraint_unification},
+        typing::inference::{
+            Constraint, IncompatibleChoices, Solution, SolutionCache, constraint_unification,
+        },
     };
+    use std::collections::HashMap;
 
     #[test]
     fn solution_cache_test1() {
@@ -577,7 +625,15 @@ mod test {
 
         let (_, conflicts) = constraint_unification(constraints);
 
-        let expected_conflict = vec![vec![(5, 1)]];
+        let expected_conflict = vec![IncompatibleChoices {
+            choices: vec![(5, 1)],
+            error: Error::ConflictingTypeConstraints {
+                span_l: None,
+                expected_type_l: Ty::mk_i64().print_to_string(None),
+                expected_type_r: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")]))
+                    .print_to_string(None),
+            },
+        }];
 
         assert_eq!(conflicts, expected_conflict);
     }
@@ -593,17 +649,28 @@ mod test {
             HashMap::from([(3, 2), (16, 5)]),
         )];
 
-        let (_, conflicts) = constraint_unification(constraints);
+        let (_, mut conflicts) = constraint_unification(constraints);
 
-        let expected_conflicts = vec![vec![(3, 2), (16, 5)]];
+        let expected_error = Error::ConflictingTypeConstraints {
+            span_l: None,
+            expected_type_l: Ty::mk_decl(
+                "Pair",
+                TypeArgs::mk(vec![Ty::mk_ty_var("a"), Ty::mk_ty_var("b")]),
+            )
+            .print_to_string(None),
+            expected_type_r: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("a")]))
+                .print_to_string(None),
+        };
 
-        assert!(
-            expected_conflicts[0]
-                .iter()
-                .all(|c| conflicts[0].contains(c))
-        );
-        assert_eq!(expected_conflicts.len(), conflicts.len());
-        assert_eq!(expected_conflicts[0].len(), conflicts[0].len());
+        let expected_choices = vec![(3, 2), (16, 5)];
+
+        assert_eq!(conflicts.len(), 1);
+
+        let IncompatibleChoices { choices, error } = conflicts.swap_remove(0);
+
+        assert!(expected_choices.iter().all(|c| choices.contains(c)));
+        assert_eq!(expected_choices.len(), choices.len());
+        assert_eq!(expected_error, error);
     }
 
     #[test]
@@ -619,8 +686,18 @@ mod test {
             ),
         )];
 
-        let (_, conflicts) = constraint_unification(constraints);
+        let (_, mut conflicts) = constraint_unification(constraints);
 
-        assert_eq!(conflicts, vec![vec![]]);
+        let IncompatibleChoices { choices, error } = conflicts.swap_remove(0);
+
+        let expected_error = Error::ConflictingTypeConstraints {
+            span_l: None,
+            expected_type_l: Ty::mk_i64().print_to_string(None),
+            expected_type_r: Ty::mk_decl("Optional", TypeArgs::mk(vec![Ty::mk_ty_var("a")]))
+                .print_to_string(None),
+        };
+
+        assert!(choices.is_empty());
+        assert_eq!(expected_error, error);
     }
 }

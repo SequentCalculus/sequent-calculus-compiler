@@ -104,7 +104,7 @@ impl Program {
         } else if conflicts.len() > 0 {
             // there is only one world, but there are also conflicts. So there is no solution
             // todo!("Better Error")
-            return Err(Error::NotExactlyOneWorld { number_worlds: 0.0 });
+            return Err(conflicts[0].error.clone());
         } else {
             Vec::new()
         };
@@ -168,13 +168,9 @@ impl Program {
             }
         }
 
-        println!("self apply done");
-
         for def in &mut defs {
             def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
         }
-
-        println!("insertion done");
 
         // collect all instances of type templates from the symbol table
         let mut data_types = Vec::new();

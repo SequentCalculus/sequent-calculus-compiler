@@ -117,10 +117,10 @@ impl Inference for Call {
                     }
 
                     match args_constraint_equations(&mut self.args, &types, context, constraint_bank, self.span) {
-                        Err(Error::WrongNumberOfArguments { .. }) => {
+                        Err(Error::WrongNumberOfArguments { span, expected, got }) => {
                             // The wrong number of Arguments Error only indicates that this version of the function won't work,
                             // others could still work, so the error is catched and marked as an impossible world
-                            constraint_bank.constraints.push(Constraint::mk_impossible_world(new_choice_id, signature_idx));
+                            constraint_bank.constraints.push(Constraint::mk_impossible_world(new_choice_id, signature_idx, Error::WrongNumberOfArguments { span, expected, got }));
                         },
                         Err(other_err) => {
                             return Err(other_err);

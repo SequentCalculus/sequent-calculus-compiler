@@ -4,13 +4,15 @@
 
 //! This module defines the errors that cann occur during typechecking.
 
+use derivative::Derivative;
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
 use crate::syntax::names::{Covar, Name, Var};
 
 /// This enum defines the errors that can occur during typechecking.
-#[derive(Error, Diagnostic, Debug, Clone)]
+#[derive(Derivative, Error, Diagnostic, Debug, Clone)]
+#[derivative(PartialEq, Eq)]
 pub enum Error {
     /// Name was defined multiple times
     #[error("{name} was defined multiple times.")]
@@ -18,6 +20,7 @@ pub enum Error {
     DefinedMultipleTimes {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The name that was defined multiple times
         name: Name,
@@ -28,6 +31,7 @@ pub enum Error {
     Undefined {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The undefined name
         name: Name,
@@ -38,6 +42,7 @@ pub enum Error {
     Mismatch {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// What was expected
         expected: String,
@@ -50,6 +55,7 @@ pub enum Error {
     UnboundVariable {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The unbound variable
         var: Var,
@@ -60,6 +66,7 @@ pub enum Error {
     UnboundCovariable {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The unbound covariable
         covar: Covar,
@@ -70,6 +77,7 @@ pub enum Error {
     WrongNumberOfArguments {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The expected number of arguments
         expected: usize,
@@ -82,6 +90,7 @@ pub enum Error {
     ExpectedTermGotCovariable {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
     /// Found a term where a covariable was expected
@@ -90,6 +99,7 @@ pub enum Error {
     ExpectedCovariableGotTerm {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
     /// Found a pattern match with no patterns
@@ -98,6 +108,7 @@ pub enum Error {
     EmptyMatch {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
     /// A missing destructor pattern in a copattern match
@@ -106,6 +117,7 @@ pub enum Error {
     MissingDtorInNew {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The destructor name
         dtor: String,
@@ -116,6 +128,7 @@ pub enum Error {
     ExpectedI64ForNew {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
     /// Expected data type but found a different type
@@ -124,6 +137,7 @@ pub enum Error {
     ExpectedDataForNew {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The data type that was expected
         data: Name,
@@ -134,6 +148,7 @@ pub enum Error {
     WrongNumberOfBinders {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The expected number of arguments
         expected: usize,
@@ -146,6 +161,7 @@ pub enum Error {
     TypingContextMismatch {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// What was expected
         expected: String,
@@ -158,6 +174,7 @@ pub enum Error {
     MissingCtorInCase {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The missing constructor name
         ctor: String,
@@ -168,6 +185,7 @@ pub enum Error {
     UnexpectedCtorsInCase {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The extra constructor name(s)
         ctors: String,
@@ -178,6 +196,7 @@ pub enum Error {
     UnexpectedDtorsInNew {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The extra destructor name(s)
         dtors: String,
@@ -188,6 +207,7 @@ pub enum Error {
     VarBoundMultipleTimes {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The variable that was bound multiple times
         var: Var,
@@ -200,6 +220,7 @@ pub enum Error {
     CovarBoundMultipleTimes {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The covariable that was bound multiple times
         covar: Covar,
@@ -212,6 +233,7 @@ pub enum Error {
     TypeParameterBoundMultipleTimes {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The type parameter that was bound multiple times
         param: Name,
@@ -224,6 +246,7 @@ pub enum Error {
     ExpectedI64ForConstructor {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
         /// The constructor name
         name: Name,
@@ -234,6 +257,7 @@ pub enum Error {
     WrongNumberOfTypeArguments {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The expected number of arguments
         expected: usize,
@@ -246,6 +270,7 @@ pub enum Error {
     UndefinedWrongTypeArguments {
         /// The source location
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         /// The undefined name
         name: Name,
@@ -258,7 +283,8 @@ pub enum Error {
     ConflictingTypeConstraints {
         // source location of type l
         #[label]
-        span_l: SourceSpan,
+        #[derivative(PartialEq = "ignore")]
+        span_l: Option<SourceSpan>,
         /// left type
         expected_type_l: Name,
         /// right type
@@ -270,6 +296,7 @@ pub enum Error {
     MissingTypeConstraints {
         // source location of type l
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
     /// The Type Checker expects Type annotations everywhere
@@ -278,13 +305,21 @@ pub enum Error {
     MissingTypeAnnotation {
         // source location of the missing annotation
         #[label]
+        #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
-    /// The world resolution failed, with the wrong number of possible Worlds
-    #[error("Type Inference failed because there is not exactly one overloading resolution. Instead the are {number_worlds} possible overloading combinations")]
+    /// The world resolution failed, with too many possible Worlds
+    #[error("Type Inference failed because there more than one overloading resolution. Instead the are {number_worlds} possible overloading combinations")]
     #[diagnostic(code("T-027"))]
-    NotExactlyOneWorld {
+    MoreThanOneWorld {
         /// number of found worlds
-        number_worlds: f64
-    }
+        number_worlds: u32
+    },
+    /// The world resolution failed, with the wrong number of possible Worlds
+    #[error("Type Inference failed because there is no valid overloading resolution.")]
+    #[diagnostic(code("T-028"))]
+    NoPossibleoWorld {
+    },
+
+
 }
