@@ -23,6 +23,8 @@ use crate::typing::errors::LocatedTypeError;
 pub struct Def<S = Statement> {
     /// The name of the definition
     pub name: Identifier,
+    /// The type parameters
+    pub type_params: Vec<Identifier>,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
@@ -36,6 +38,7 @@ impl Def {
     pub fn focus(self, max_id: &mut ID) -> FsDef {
         FsDef {
             name: self.name,
+            type_params: self.type_params,
             context: self.context,
             body: self.body.focus(max_id),
         }
@@ -102,6 +105,7 @@ impl<S: Print> Print for Def<S> {
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
+            .append(self.type_params.print(cfg, alloc))
             .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space());
 
@@ -152,6 +156,7 @@ impl Specialize for Def {
     fn specialize(&self, context: SpecializeContext) -> Self {
         Def {
             name: self.name.clone(),
+            type_params: self.type_params.clone(),
             context: self.context.specialize(context),
             body: self.body.specialize(context),
         }

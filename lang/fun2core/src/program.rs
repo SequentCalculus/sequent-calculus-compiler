@@ -113,6 +113,7 @@ mod compile_tests {
         Def {
             span: dummy_span(),
             name: "main".to_string(),
+            type_params: TypeContext::default(),
             context: ctx,
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_i64(),
@@ -124,6 +125,7 @@ mod compile_tests {
         Def {
             span: dummy_span(),
             name: "id".to_string(),
+            type_params: TypeContext::default(),
             context: ctx,
             body: XVar {
                 span: dummy_span(),

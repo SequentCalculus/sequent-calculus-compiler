@@ -8,6 +8,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::syntax::types::TypeArgs;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -24,6 +25,8 @@ use std::collections::BTreeSet;
 pub struct Call {
     /// The name of the top-level function being called
     pub name: Identifier,
+    /// The type arguments
+    pub type_args: TypeArgs,
     /// The arguments
     pub args: Arguments,
     /// The type (which is the return type of the definition)
@@ -40,6 +43,7 @@ impl Print for Call {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
+            .append(self.type_args.print(cfg, alloc))
             .append(self.args.print(cfg, alloc).parens().group())
     }
 }
@@ -84,6 +88,7 @@ impl Focusing for Call {
             Box::new(|bindings, _: &mut ID| {
                 FsCall {
                     name: self.name,
+                    type_args: self.type_args,
                     args: bindings.into(),
                 }
                 .into()
@@ -98,6 +103,8 @@ impl Focusing for Call {
 pub struct FsCall {
     /// The name of the top-level function being called
     pub name: Identifier,
+    /// The type arguments
+    pub type_args: TypeArgs,
     /// The arguments (only (co)variables here)
     pub args: TypingContext,
 }
@@ -152,6 +159,7 @@ impl Specialize for Call {
     fn specialize(&self, context: SpecializeContext) -> Self {
         Call {
             name: self.name.clone(),
+            type_args: self.type_args.clone(),
             args: self.args.specialize(context),
             ty: self.ty.specialize(context),
         }
