@@ -52,20 +52,33 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .keyword(LET)
-            .append(alloc.space())
-            .append(self.variable.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.var_ty.print(cfg, alloc))
-            .append(alloc.space())
-            .append(EQ)
-            .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc).group())
-            .append(SEMI)
-            .append(alloc.hardline())
-            .append(self.in_term.print(cfg, alloc).group())
+        if let Some(_) = &self.var_ty {
+            alloc
+                .keyword(LET)
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(COLON)
+                .append(alloc.space())
+                .append(self.var_ty.print(cfg, alloc))
+                .append(alloc.space())
+                .append(EQ)
+                .append(alloc.space())
+                .append(self.bound_term.print(cfg, alloc).group())
+                .append(SEMI)
+                .append(alloc.hardline())
+                .append(self.in_term.print(cfg, alloc).group())
+        } else {
+            alloc
+                .keyword(LET)
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(EQ)
+                .append(alloc.space())
+                .append(self.bound_term.print(cfg, alloc).group())
+                .append(SEMI)
+                .append(alloc.hardline())
+                .append(self.in_term.print(cfg, alloc).group())
+        }
     }
 }
 
@@ -77,61 +90,72 @@ impl From<Let> for Term {
 
 impl Inference for Let {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-            // adding a new type var as the type of the term for easier lookup after unification
-            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-            self.ty = Some(new_type_var.clone());
-            constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        // adding a new type var as the type of the term for easier lookup after unification
+        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
-            // if the bound term has an annotation it is used, else a type variable is substituted
-            let bound_term_type = match &self.var_ty {
-                Some(ty) => ty.clone(),
-                None => {
-                    let new_ty = constraint_bank.var_name_generator.get_new_ty_var();
-                    self.var_ty = Some(new_ty.clone());
-                    new_ty                    
-                }
-            };
+        // if the bound term has an annotation it is used, else a type variable is substituted
+        let bound_term_type = match &self.var_ty {
+            Some(ty) => ty.clone(),
+            None => {
+                let new_ty = constraint_bank.var_name_generator.get_new_ty_var();
+                self.var_ty = Some(new_ty.clone());
+                new_ty
+            }
+        };
 
-            self.bound_term.gather_constraints(constraint_bank, context, bound_term_type.clone())?;
+        self.bound_term
+            .gather_constraints(constraint_bank, context, bound_term_type.clone())?;
 
-            let mut new_context = context.clone();
-            new_context.add_var(&self.variable, bound_term_type);
-            self.in_term.gather_constraints(constraint_bank, &new_context, ty_var)?;
+        let mut new_context = context.clone();
+        new_context.add_var(&self.variable, bound_term_type);
+        self.in_term
+            .gather_constraints(constraint_bank, &new_context, ty_var)?;
 
-            Ok(())
+        Ok(())
     }
 
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.bound_term.insert_inferred_type(mappings, symbol_table, choices)?;
-        self.in_term.insert_inferred_type(mappings, symbol_table, choices)?;
+        self.bound_term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.in_term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
 
         match &mut self.var_ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)?;
-            },
-            None => panic!("The Type of the bound term of the Let Term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the bound term of the Let Term {:?} is not set after type inference",
+                self
+            ),
         };
 
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
-    
 }
 
 impl UsedBinders for Let {
@@ -166,23 +190,31 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1"))
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
@@ -199,23 +231,31 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
