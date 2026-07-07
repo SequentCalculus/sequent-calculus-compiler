@@ -181,8 +181,8 @@ Lit: Lit = {
 }
 
 Call: Term = {
-    <l: @L> <v: Name> <args: Arguments> <r: @R> =>
-      Call { span: span(l, r), name: v, args, ret_ty: None, }.into(),
+    <l: @L> <v: Name> <type_args: OptTypeArgs> <args: Arguments> <r: @R> =>
+      Call { span: span(l, r), name: v, type_args, args, ret_ty: None, }.into(),
 }
 
 Label: Label = {
@@ -418,10 +418,11 @@ Dtor: DtorSig = {
 }
 
 Def: Def = {
-    <l: @L> "def" <name: Name> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+    <l: @L> "def" <name: Name> <type_params: OptTypeContext> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Def {
             span: span(l, r),
             name,
+            type_params,
             context,
             body,
             ret_ty,

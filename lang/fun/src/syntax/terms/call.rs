@@ -23,6 +23,8 @@ pub struct Call {
     pub span: SourceSpan,
     /// The name of the top-level function being called
     pub name: Name,
+    /// The type arguments
+    pub type_args: TypeArgs,
     /// The arguments
     pub args: Arguments,
     /// The (inferred) return type
@@ -39,6 +41,7 @@ impl Print for Call {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
+            .append(self.type_args.print(cfg, alloc))
             .append(self.args.print(cfg, alloc).parens().group())
     }
 }
@@ -111,6 +114,7 @@ mod test {
         let result = Call {
             span: dummy_span(),
             name: "main".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
             ret_ty: None,
         }
@@ -129,7 +133,18 @@ mod test {
         Call {
             span: dummy_span(),
             name: "foo".to_string(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
+            ret_ty: None,
+        }
+    }
+
+    fn example_id() -> Call {
+        Call {
+            span: dummy_span(),
+            name: "id".to_string(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![XVar::mk("x").into()].into(),
             ret_ty: None,
         }
     }
@@ -143,15 +158,30 @@ mod test {
     }
 
     #[test]
+    fn display_id() {
+        assert_eq!(
+            example_id().print_to_string(Default::default()),
+            "id[i64](x)"
+        )
+    }
+
+    #[test]
     fn parse_simple() {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("foo()"), Ok(example_simple().into()));
+    }
+
+    #[test]
+    fn parse_id() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("id[i64](x)"), Ok(example_id().into()));
     }
 
     fn example_extended() -> Call {
         Call {
             span: dummy_span(),
             name: "foo".to_string(),
+            type_args: TypeArgs::default(),
             args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,
         }

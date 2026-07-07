@@ -393,6 +393,7 @@ pub mod test_common {
         Def {
             span: dummy_span(),
             name: "mult".to_owned(),
+            type_params: TypeContext::default(),
             context: context_mult(),
             body: Case {
                 span: dummy_span(),
@@ -421,6 +422,7 @@ pub mod test_common {
                                 Call {
                                     span: dummy_span(),
                                     name: "mult".to_owned(),
+                                    type_args: TypeArgs::default(),
                                     args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
                                 }
@@ -441,6 +443,7 @@ pub mod test_common {
         Def {
             span: dummy_span(),
             name: "mult".to_owned(),
+            type_params: TypeContext::default(),
             context: context_mult(),
             ret_ty: Ty::mk_i64(),
             body: Case {
@@ -486,6 +489,7 @@ pub mod test_common {
                                 Call {
                                     span: dummy_span(),
                                     name: "mult".to_owned(),
+                                    type_args: TypeArgs::default(),
                                     args: vec![
                                         XVar {
                                             span: dummy_span(),

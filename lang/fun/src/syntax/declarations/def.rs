@@ -26,6 +26,8 @@ pub struct Def {
     pub span: SourceSpan,
     /// The name of the definition
     pub name: Name,
+    /// The type parameters
+    pub type_params: TypeContext,
     /// The parameters
     pub context: TypingContext,
     /// The return type
@@ -55,6 +57,7 @@ impl Print for Def {
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
+            .append(self.type_params.print(cfg, alloc))
             .append(self.context.print(cfg, alloc).parens())
             .append(COLON)
             .append(alloc.space())
@@ -85,7 +88,8 @@ mod def_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
+            Chirality, TypeArgs, TypeContext, XVar,
+            context::{ContextBinding, TypingContext},
             program::Program,
             terms::{Lit, Term},
             types::Ty,
@@ -102,12 +106,31 @@ mod def_tests {
         Def {
             span: dummy_span(),
             name: "x".to_string(),
+            type_params: TypeContext::default(),
             context: TypingContext {
                 span: None,
                 bindings: vec![],
             },
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_i64(),
+        }
+    }
+
+    fn id_def() -> Def {
+        Def {
+            span: dummy_span(),
+            name: "id".to_string(),
+            type_params: TypeContext::mk(&["A"]),
+            context: TypingContext {
+                span: None,
+                bindings: vec![ContextBinding {
+                    var: "x".to_string(),
+                    chi: Chirality::Prd,
+                    ty: Ty::mk_decl("A", TypeArgs::default()),
+                }],
+            },
+            body: Term::XVar(XVar::mk("x")),
+            ret_ty: Ty::mk_decl("A", TypeArgs::default()),
         }
     }
 
@@ -120,12 +143,30 @@ mod def_tests {
     }
 
     #[test]
+    fn display_id() {
+        assert_eq!(
+            id_def().print_to_string(Default::default()),
+            "def id[A](x: A): A {\n    x\n}".to_string()
+        )
+    }
+
+    #[test]
     fn parse_simple() {
         let parser = fun::ProgParser::new();
         let module = Program {
             declarations: vec![simple_def().into()],
         };
         assert_eq!(parser.parse("def x(): i64 { 4 }"), Ok(module));
+    }
+
+    #[test]
+    fn parse_poly_def() {
+        let parser = fun::ProgParser::new();
+        let module = Program {
+            declarations: vec![id_def().into()],
+        };
+        println!("{}", id_def().print_to_string(None));
+        assert_eq!(parser.parse("def id[A](x: A): A { x }"), Ok(module));
     }
 
     #[test]

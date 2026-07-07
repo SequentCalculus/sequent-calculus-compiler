@@ -135,14 +135,8 @@ mod program_tests {
     use printer::Print;
 
     use crate::{
-        parser::fun,
-        syntax::{
-            context::TypingContext,
-            declarations::Def,
-            program::Program,
-            terms::{Lit, Term},
-            types::Ty,
-            util::dummy_span,
+        parser::fun, syntax::{
+            TypeContext, context::TypingContext, declarations::Def, program::Program, terms::{Lit, Term}, types::Ty, util::dummy_span,
         },
     };
     use std::collections::HashSet;
@@ -157,6 +151,7 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "x".to_string(),
+                    type_params: TypeContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -210,6 +205,7 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "f".to_string(),
+                    type_params: TypeContext::default(),
                     context: ctx,
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -244,6 +240,7 @@ mod program_tests {
         let d1 = Def {
             span: dummy_span(),
             name: "f".to_string(),
+            type_params: TypeContext::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_i64(),
@@ -252,6 +249,7 @@ mod program_tests {
         let d2 = Def {
             span: dummy_span(),
             name: "g".to_string(),
+            type_params: TypeContext::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_i64(),
