@@ -65,10 +65,10 @@ impl Inference for Call {
             ty_var: Ty
         ) -> Result<(), Error> {
         match constraint_bank.symbol_table.variational_defs.get(&self.name) {
-            Some(ref signatures) if signatures.len() == 0 => {
+            Some(signatures) if signatures.is_empty() => {
                 panic!("encountered a function definition with no signature")
             },
-            Some(ref signatures) if signatures.len() == 1 => {
+            Some(signatures) if signatures.len() == 1 => {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
                 let signature = signatures[0].clone();
 

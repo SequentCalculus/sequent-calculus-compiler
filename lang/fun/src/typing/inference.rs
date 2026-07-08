@@ -231,8 +231,7 @@ impl Constraint {
 
     /// Creates an impossible world constraint for a choice that is generally not viable
     pub fn mk_impossible_world(choice_id: u32, signature_id: usize, error: Error) -> Self {
-        let mut choices = Vec::new();
-        choices.push((choice_id, signature_id));
+        let choices = vec![(choice_id, signature_id)];
         Constraint::ImpossibleWorld(IncompatibleChoices { choices, error })
     }
 
@@ -389,7 +388,6 @@ pub fn constraint_unification(
                     // two different (co-)datatypes are in a constraint -> impossible to unify the equation
                     let impossible_world = choices
                         .into_iter()
-                        .map(|(choice_id, signature_id)| (choice_id, signature_id))
                         .collect();
 
                     let mut expected_type_l = name_l;
@@ -400,10 +398,8 @@ pub fn constraint_unification(
 
                     let best_span = if let Some(span) = span_l {
                         Some(span)
-                    } else if let Some(span) = span_r {
-                        Some(span)
                     } else {
-                        None
+                        span_r
                     };
 
                     conflicts.push(IncompatibleChoices {
@@ -420,15 +416,12 @@ pub fn constraint_unification(
                 // two types, neither a type variable nor two declerations, which means a literal type and a declaration -> impossible to unify the equation
                 let impossible_world = choices
                     .into_iter()
-                    .map(|(choice_id, signature_id)| (choice_id, signature_id))
                     .collect();
 
                 let best_span = if let Some(span) = ty1.get_span() {
                     Some(span)
-                } else if let Some(span) = ty2.get_span() {
-                    Some(span)
                 } else {
-                    None
+                    ty2.get_span()
                 };
 
                 conflicts.push(IncompatibleChoices {
@@ -450,6 +443,7 @@ pub fn constraint_unification(
 }
 
 /// The [`SolutionCache`] can store solutions for multiple choices
+#[derive(Default)]
 pub struct SolutionCache {
     mapping: HashMap<Name, Vec<Solution>>,
 }
@@ -478,14 +472,6 @@ impl SolutionCache {
 
     pub fn all_solutions(self) -> Vec<Solution> {
         self.mapping.into_values().flatten().collect()
-    }
-}
-
-impl Default for SolutionCache {
-    fn default() -> Self {
-        Self {
-            mapping: Default::default(),
-        }
     }
 }
 

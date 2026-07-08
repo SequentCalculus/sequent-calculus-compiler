@@ -77,9 +77,9 @@ impl Program {
         let (solutions, conflicts) = constraint_unification(constraints);
 
         // if there are no choices, world resolving is skipped
-        let selected_world = if possible_choices.len() > 0 {
+        let selected_world = if !possible_choices.is_empty() {
             crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?
-        } else if conflicts.len() > 0 {
+        } else if !conflicts.is_empty() {
             // there is only one world, but there are also conflicts. So there is no solution
             // todo!("Better Error")
             return Err(conflicts[0].error.clone());

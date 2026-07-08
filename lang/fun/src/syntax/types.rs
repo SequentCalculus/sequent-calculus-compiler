@@ -66,7 +66,7 @@ impl Ty {
                     Some(_) => Ok(()),
                     None => match symbol_table.type_templates.get(name) {
                         None => {
-                            return Err(Error::Undefined {
+                            Err(Error::Undefined {
                             span: span.to_miette(),
                             name: name.clone(),
                         })},
@@ -227,7 +227,7 @@ impl Ty {
         match self {
                 Ty::I64 { .. } => {},
                 Ty::Decl { span, name, type_args } => {
-                    if type_params.contains_binding(&name) {
+                    if type_params.contains_binding(name) {
                         // this decleration is actually a Type Variable
                         *self = Ty::TypeVar { name: name.to_string(), span: *span }
                     } else {
@@ -242,9 +242,9 @@ impl Ty {
 
     pub fn get_span(&self) -> Option<SourceSpan> {
         match self {
-            Ty::I64 { span } => span.clone(),
-            Ty::Decl { span, .. } => span.clone(),
-            Ty::TypeVar { span, .. } => span.clone()            
+            Ty::I64 { span } => *span,
+            Ty::Decl { span, .. } => *span,
+            Ty::TypeVar { span, .. } => *span
         }
     }
 

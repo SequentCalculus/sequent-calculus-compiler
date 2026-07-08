@@ -7,7 +7,7 @@ type PossibleChoice = (u32, usize);
 
 /// Since the choices are represented with several variables, the mapping between BDD Variables and Choice Variables is stored here.
 /// In the first iteration, the choices are one-hot encoded
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct BddMapping {
     /// Maps each choice variable to its bit variables (logarithmic encoding)
     choice_bit_vars: HashMap<u32, Vec<BddVariable>>,
@@ -27,15 +27,6 @@ impl BddMapping {
     }
 }
 
-impl Default for BddMapping {
-    fn default() -> Self {
-        Self {
-            choice_bit_vars: HashMap::default(),
-            variable_resolving: HashMap::default(),
-        }
-    }
-}
-
 fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariableSet) {
     let mut builder = BddVariableSetBuilder::new();
     let mut mapping = BddMapping::default();
@@ -46,7 +37,7 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
             .map(|bit| builder.make_variable(&format!("{}_choice{}", cvar, bit)))
             .collect();
 
-        mapping.add_choice(cvar.clone(), bit_vars);
+        mapping.add_choice(*cvar, bit_vars);
     }
 
     let var_set = builder.build();
@@ -105,7 +96,7 @@ fn create_fail_clauses(
         for (choice_id, bit_idx) in world.choices.clone() {
             if let Some(bit_var) = mapping
                 .get_bit_vars(&choice_id)
-                .expect(&format!("choice {} could not be found", choice_id))
+                .unwrap_or_else(|| panic!("choice {} could not be found", choice_id))
                 .get(bit_idx)
             {
                 let bdd_var = var_set.mk_var(*bit_var);
@@ -165,11 +156,10 @@ pub fn resolve_worlds(
         let selected_choices = selected_variables
             .iter()
             .map(|(bdd_var, _)| {
-                mapping
+                *mapping
                     .variable_resolving
                     .get(bdd_var)
                     .expect("BDDVariable could not be found")
-                    .clone()
             })
             .collect();
 

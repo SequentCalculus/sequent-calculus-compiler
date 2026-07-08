@@ -52,7 +52,7 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        if let Some(_) = &self.var_ty {
+        if self.var_ty.is_some() {
             alloc
                 .keyword(LET)
                 .append(alloc.space())
