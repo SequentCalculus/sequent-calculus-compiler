@@ -4,6 +4,7 @@ use printer::*;
 
 use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraint;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
@@ -142,6 +143,19 @@ impl ConstraintCollector for Call {
         let mut constraints = self.ty.collect_constraints(env)?;
 
         constraints.extend(self.args.collect_constraints(env)?);
+        constraints.extend(self.type_args.collect_constraints(env)?);
+
+        let Some(def) = env.lookup_def(&self.name) else {
+            return Err(MonoError::UndefinedFunction(self.name.name.clone()));
+        };
+
+        for (param, arg) in def.type_params.iter().zip(&self.type_args.args) {
+            constraints.insert(FlowConstraint {
+                from: vec![arg.clone()],
+                to: vec![param.clone()],
+            });
+        }
+
         Ok(constraints)
     }
 }
@@ -371,5 +385,69 @@ mod transform_tests {
         )
         .into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod collect_tests {
+    use crate::{
+        mono::{
+            constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet},
+            errors::MonoError,
+        },
+        typing::env::GlobalEnv,
+    };
+    extern crate self as core_lang;
+    use core_macros::{bind, call, def, exit, id, lit, prd, tvar, ty, var};
+
+    #[test]
+    fn collect_constraints_mono_ok() {
+        let def = def!(
+            id!("f"),
+            [bind!(id!("x"), prd!(), ty!("int"))],
+            exit!(var!(id!("x")), ty!("int"))
+        );
+
+        let call = call!(id!("f"), [lit!(1)]);
+
+        let res: Result<FlowConstraintSet, MonoError> =
+            call.collect_constraints(&GlobalEnv::new(&[], &[], &[def]));
+        assert!(res.is_ok());
+        assert!(res.unwrap().constraints.is_empty());
+    }
+
+    #[test]
+    fn collect_constraints_poly_instantiation() {
+        let poly_def = def!(
+            id!("identity"),
+            [id!("A")],
+            [bind!(id!("x"), prd!(), tvar!(id!("A")))],
+            exit!(var!(id!("x")), tvar!(id!("A")))
+        );
+
+        let call = call!(id!("identity"), [ty!("int")], [lit!(42)]);
+
+        let constraints = call
+            .collect_constraints(&GlobalEnv::new(&vec![], &vec![], &vec![poly_def]))
+            .unwrap();
+
+        let expected_constraint = FlowConstraint {
+            from: vec![ty!("int")],
+            to: vec![(id!("A"))],
+        };
+
+        assert!(constraints.constraints.contains(&expected_constraint));
+    }
+
+    #[test]
+    fn collect_constraints_undefined_function() {
+        let call_expr = call!(id!("ghost"), []);
+
+        let res = call_expr.collect_constraints(&GlobalEnv::default());
+
+        assert!(matches!(
+            res,
+            Err(MonoError::UndefinedFunction(name)) if name == "ghost"
+        ));
     }
 }

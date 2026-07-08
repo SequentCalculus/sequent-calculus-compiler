@@ -173,6 +173,16 @@ pub struct TypeArgs {
     pub args: Vec<Ty>,
 }
 
+impl ConstraintCollector for TypeArgs {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::new();
+        for arg in &self.args {
+            constraints.extend(arg.collect_constraints(env)?);
+        }
+        Ok(constraints)
+    }
+}
+
 impl Print for TypeArgs {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         if self.args.is_empty() {

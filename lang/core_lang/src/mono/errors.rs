@@ -20,6 +20,9 @@ pub enum MonoError {
     /// A referenced variable/covariable was not declared in the current scope.
     UndeclaredVariable(String),
 
+    /// A referenced function was not declared in the program.
+    UndefinedFunction(String),
+
     /// The number of provided type arguments (or xtor args) does not match
     /// the declared arity.
     ArityMismatch { expected: usize, got: usize },
@@ -57,6 +60,7 @@ impl fmt::Display for MonoError {
             }
             MonoError::UndeclaredType(name) => write!(f, "Undeclared type: '{}'", name),
             MonoError::UndeclaredVariable(name) => write!(f, "Undeclared variable: '{}'", name),
+            MonoError::UndefinedFunction(name) => write!(f, "Undefined function: '{}'", name),
             MonoError::ArityMismatch { expected, got } => write!(
                 f,
                 "Arity mismatch: expected {} arguments but got {}",

@@ -127,7 +127,6 @@ impl Driver {
         let compiled = compile_prog(checked);
 
         self.compiled.insert(path.clone(), compiled.clone());
-        dbg!(&compiled);
         Ok(compiled)
     }
 
