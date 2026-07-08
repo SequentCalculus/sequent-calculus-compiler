@@ -1,5 +1,6 @@
 //! This module defines top-level functions in Core.
 
+use printer::tokens::COMMA;
 use printer::tokens::DEF;
 use printer::*;
 
@@ -105,7 +106,21 @@ impl<S: Print> Print for Def<S> {
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
-            .append(self.type_params.print(cfg, alloc))
+            .append(if self.type_params.is_empty() {
+                alloc.nil()
+            } else {
+                alloc
+                    .text("[")
+                    .append(
+                        alloc.intersperse(
+                            self.type_params
+                                .iter()
+                                .map(|param| alloc.typ(&param.print_to_string(Some(cfg)))),
+                            alloc.text(COMMA).append(alloc.space()),
+                        ),
+                    )
+                    .append(alloc.text("]"))
+            })
             .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space());
 
