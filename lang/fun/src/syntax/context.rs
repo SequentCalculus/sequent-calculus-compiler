@@ -205,7 +205,6 @@ impl TypingContext {
         self
     }
 
-
     /// The in-place mutable borrow variant of subst_ty.
     /// It substitutes type parameters with concrete types in all types found in the
     /// context bindings.
@@ -338,7 +337,6 @@ impl TypeContext {
         }
         Ok(())
     }
-
 
     /// checks if a name is bound in this [`TypeContext`]
     pub fn contains_binding(&self, name: &Name) -> bool {

@@ -61,7 +61,12 @@ mod compile_tests {
     fn compile_fst() {
         let mut term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
 
-        inferr_term(&mut term, &mut symbol_table_lpair(), &fun::syntax::context::TypingContext::default()).unwrap();
+        inferr_term(
+            &mut term,
+            &mut symbol_table_lpair(),
+            &fun::syntax::context::TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
@@ -103,7 +108,12 @@ mod compile_tests {
     #[test]
     fn compile_snd() {
         let mut term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
-        inferr_term(&mut term, &mut symbol_table_lpair(), &fun::syntax::context::TypingContext::default()).unwrap();
+        inferr_term(
+            &mut term,
+            &mut symbol_table_lpair(),
+            &fun::syntax::context::TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),

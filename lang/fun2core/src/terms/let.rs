@@ -89,7 +89,7 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
 
-        inferr_term(&mut term, &mut symbol_table_list(), &ctx,).unwrap();
+        inferr_term(&mut term, &mut symbol_table_list(), &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),

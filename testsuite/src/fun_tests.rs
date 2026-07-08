@@ -1,6 +1,6 @@
 use super::{end_to_end_tests::EndToEndTest, errors::Error, load_tests::AllTests};
 
-use fun::{parser::fun::ProgParser};
+use fun::parser::fun::ProgParser;
 use printer::Print;
 
 use std::{collections::HashSet, fmt};

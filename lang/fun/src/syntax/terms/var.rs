@@ -63,11 +63,11 @@ impl From<XVar> for Term {
 
 impl Inference for XVar {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
         // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
@@ -79,8 +79,12 @@ impl Inference for XVar {
 
         self.ty = Some(new_type_var.clone());
         self.chi = Some(Prd);
-        constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
-        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, found_ty));
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, found_ty));
         Ok(())
     }
 
@@ -88,14 +92,17 @@ impl Inference for XVar {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        _choices: &HashMap<u32, usize>
+        _choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }
@@ -110,7 +117,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
@@ -119,11 +126,21 @@ mod test {
 
         let mut term = XVar::mk("x");
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_i64()).unwrap();
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_i64())
+            .unwrap();
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert!(matches!(term.ty, Some(Ty::TypeVar { name, ..}) if name == "0"));
-        assert_eq!(result, vec![Constraint::mk_only_ty(Ty::mk_ty_var("0" ), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())])
+        assert_eq!(
+            result,
+            vec![
+                Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+                Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
+            ]
+        )
     }
 }

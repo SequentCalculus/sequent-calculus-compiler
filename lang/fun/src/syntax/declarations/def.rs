@@ -38,25 +38,27 @@ pub struct Def {
 }
 
 impl Def {
-
     pub fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank
-        ) -> Result<(), Error> {
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+    ) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
-        self.ret_ty.check(&Some(self.span), &mut constraint_bank.symbol_table)?;
+        self.ret_ty
+            .check(&Some(self.span), &mut constraint_bank.symbol_table)?;
         self.context.check(&mut constraint_bank.symbol_table)?;
 
-        self.body.gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
+        self.body
+            .gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
     }
 
     pub fn insert_inferred_type(
         &mut self,
         mappings: &std::collections::HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.body.insert_inferred_type(mappings, symbol_table, choices)
+        self.body
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
@@ -101,7 +103,7 @@ mod def_tests {
             terms::{Lit, Term},
             types::Ty,
             util::dummy_span,
-        }
+        },
     };
 
     use super::Def;

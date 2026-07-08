@@ -243,7 +243,6 @@ impl BuildSymbolTable for Def {
 
         // looking up if a definition with the same name was already registered
         if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name) {
-            
             // checking if the signature is unique (per overlaoded name)
             if signature_list
                 .iter()

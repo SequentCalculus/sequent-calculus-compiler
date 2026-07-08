@@ -69,38 +69,45 @@ impl From<Label> for Term {
 
 impl Inference for Label {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-            let mut new_context = context.clone();
-            new_context.add_covar(&self.label, ty_var.clone());
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        let mut new_context = context.clone();
+        new_context.add_covar(&self.label, ty_var.clone());
 
-            // adding a new type var as the type of the term for easier lookup after unification
-            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-            self.ty = Some(new_type_var.clone());
-            constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        // adding a new type var as the type of the term for easier lookup after unification
+        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
+        self.ty = Some(new_type_var.clone());
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
-            self.term.gather_constraints(constraint_bank, &new_context, ty_var)?;
+        self.term
+            .gather_constraints(constraint_bank, &new_context, ty_var)?;
 
-            Ok(())
+        Ok(())
     }
 
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.term.insert_inferred_type(mappings, symbol_table, choices)?;
+        self.term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
 
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }
@@ -132,21 +139,29 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

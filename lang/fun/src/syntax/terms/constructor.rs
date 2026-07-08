@@ -62,71 +62,99 @@ impl From<Constructor> for Term {
 
 impl Inference for Constructor {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
         // creating a new type var to link the type of the current term to the future result after unification
         let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
         self.ty = Some(new_type_var.clone());
-        constraint_bank.constraints.push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
 
         let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
-                return Err(Error::Undefined { span: Some(self.span), name: self.id.clone() });
+                return Err(Error::Undefined {
+                    span: Some(self.span),
+                    name: self.id.clone(),
+                });
             }
         };
 
-        let (chirality, general_type_vars, _) = constraint_bank.symbol_table.type_templates.get(&data_type_name).unwrap();
+        let (chirality, general_type_vars, _) = constraint_bank
+            .symbol_table
+            .type_templates
+            .get(&data_type_name)
+            .unwrap();
 
         if chirality == &Polarity::Codata {
-            return Err(Error::ExpectedDataForNew { span: self.span, data: data_type_name });
+            return Err(Error::ExpectedDataForNew {
+                span: self.span,
+                data: data_type_name,
+            });
         }
 
-        
         // this instance of the Data Type is instanciated, whith replacing the general type vars
         // with instance type variables eg. (A -> a1)
 
         let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
         for type_var in &general_type_vars.bindings {
-            type_var_mapping.insert(type_var.clone(), constraint_bank.var_name_generator.get_new_ty_var());
+            type_var_mapping.insert(
+                type_var.clone(),
+                constraint_bank.var_name_generator.get_new_ty_var(),
+            );
         }
 
-        let expected_type = Ty::Decl { span: Some(self.span), name: data_type_name, type_args: TypeArgs {
+        let expected_type = Ty::Decl {
             span: Some(self.span),
-            args: general_type_vars.bindings.iter().map(|name| type_var_mapping.get(name).unwrap().clone()).collect()
-        }};
+            name: data_type_name,
+            type_args: TypeArgs {
+                span: Some(self.span),
+                args: general_type_vars
+                    .bindings
+                    .iter()
+                    .map(|name| type_var_mapping.get(name).unwrap().clone())
+                    .collect(),
+            },
+        };
 
-        let instanciated_template = match constraint_bank.symbol_table.ctor_templates.get(&self.id) {
+        let instanciated_template = match constraint_bank.symbol_table.ctor_templates.get(&self.id)
+        {
             Some(ctor_template) => ctor_template.clone().subst_ty(&type_var_mapping),
             None => {
                 return Err(Error::Undefined {
-                span: Some(self.span),
-                name: self.id.clone(),
-            })}
-
+                    span: Some(self.span),
+                    name: self.id.clone(),
+                });
+            }
         };
 
         if instanciated_template.bindings.len() != self.args.entries.len() {
             return Err(Error::WrongNumberOfArguments {
                 span: self.span,
                 expected: instanciated_template.bindings.len(),
-                got: self.args.entries.len()});
+                got: self.args.entries.len(),
+            });
         }
 
+        args_constraint_equations(
+            &mut self.args,
+            &instanciated_template,
+            context,
+            constraint_bank,
+            self.span,
+        )?;
 
-        args_constraint_equations(&mut self.args, &instanciated_template, context, constraint_bank, self.span)?;
-
-        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, expected_type));
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, expected_type));
 
         Ok(())
-
     }
 
-    
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
@@ -139,12 +167,14 @@ impl Inference for Constructor {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }
-
 
 impl UsedBinders for Constructor {
     fn used_binders(&self, used: &mut HashSet<Var>) {
@@ -164,7 +194,6 @@ mod test {
     use crate::typing::inference::ConstraintBank;
     use crate::typing::inference::Inference;
 
-    
     #[test]
     fn inference_nil() {
         let mut term = Constructor {
@@ -174,21 +203,32 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_list(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
-        
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+            Constraint::mk_only_ty(
+                Ty::mk_ty_var("x"),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+            ),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
@@ -215,31 +255,40 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: symbol_table_list(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
-        
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
+
         let expected = vec![
             Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-
             // cons
             Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
-
             // nil
-            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")]))),
-            Constraint::mk_only_ty(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("4")]))),
-
-
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])))
+            Constraint::mk_only_ty(
+                Ty::mk_ty_var("3"),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+            ),
+            Constraint::mk_only_ty(
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("4")])),
+            ),
+            Constraint::mk_only_ty(
+                Ty::mk_ty_var("x"),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+            ),
         ];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));

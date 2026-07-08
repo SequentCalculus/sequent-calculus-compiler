@@ -60,11 +60,10 @@ mod compile_tests {
             );
 
             let mut var_defs = HashMap::new();
-            var_defs.insert("fac".to_owned(),
-            vec![(
-                ctx.clone(),
-                fun::syntax::types::Ty::mk_i64())],
-        );
+            var_defs.insert(
+                "fac".to_owned(),
+                vec![(ctx.clone(), fun::syntax::types::Ty::mk_i64())],
+            );
 
             SymbolTable {
                 ctors: HashMap::default(),

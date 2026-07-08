@@ -54,12 +54,14 @@ impl From<Lit> for Term {
 
 impl Inference for Lit {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            _context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        _context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
 
         Ok(())
     }
@@ -68,7 +70,7 @@ impl Inference for Lit {
         &mut self,
         _mappings: &HashMap<Name, Ty>,
         _symbol_table: &mut SymbolTable,
-        _choices: &HashMap<u32, usize>
+        _choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -83,18 +85,26 @@ mod test {
     fn inference_lit() {
         let mut term = Lit::mk(15);
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
         let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
     }

@@ -69,14 +69,21 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{ctor, id, lit, ty};
     use fun::{
-        parse_term, syntax::{context::TypingContext, inferr_helper::inferr_term}, test_common::symbol_table_list,
+        parse_term,
+        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        test_common::symbol_table_list,
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_cons() {
         let mut term = parse_term!("Cons(1,Nil)");
-        inferr_term(&mut term, &mut symbol_table_list(), &TypingContext::default()).unwrap();
+        inferr_term(
+            &mut term,
+            &mut symbol_table_list(),
+            &TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),

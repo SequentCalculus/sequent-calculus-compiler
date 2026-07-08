@@ -26,10 +26,7 @@ pub mod test_common {
         ctx_cons.add_var("x", Ty::mk_ty_var(type_param));
         ctx_cons.add_var(
             "xs",
-            Ty::mk_decl(
-                "List",
-                TypeArgs::mk(vec![Ty::mk_ty_var(type_param)]),
-            ),
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var(type_param)])),
         );
         ctx_cons
     }
@@ -156,10 +153,7 @@ pub mod test_common {
                     span: None,
                     name: "tail".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl(
-                        "Stream",
-                        TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
-                    ),
+                    cont_ty: Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("A")])),
                 },
             ],
         }
@@ -177,19 +171,13 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "head".to_owned(),
-            (
-                TypingContext::default(),
-                Ty::mk_ty_var("A"),
-            ),
+            (TypingContext::default(), Ty::mk_ty_var("A")),
         );
         table.dtor_templates.insert(
             "tail".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl(
-                    "Stream",
-                    TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
-                ),
+                Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("A")])),
             ),
         );
         table
@@ -207,19 +195,13 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "head".to_owned(),
-            (
-                TypingContext::default(),
-                Ty::mk_ty_var("A"),
-            ),
+            (TypingContext::default(), Ty::mk_ty_var("A")),
         );
         table.dtor_templates.insert(
             "tail".to_owned(),
             (
                 TypingContext::default(),
-                Ty::mk_decl(
-                    "Stream",
-                    TypeArgs::mk(vec![Ty::mk_ty_var("A")]),
-                ),
+                Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("A")])),
             ),
         );
         table.types.insert(
@@ -352,17 +334,11 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "fst".to_owned(),
-            (
-                TypingContext::default(),
-                Ty::mk_ty_var("A"),
-            ),
+            (TypingContext::default(), Ty::mk_ty_var("A")),
         );
         table.dtor_templates.insert(
             "snd".to_owned(),
-            (
-                TypingContext::default(),
-                Ty::mk_ty_var("B"),
-            ),
+            (TypingContext::default(), Ty::mk_ty_var("B")),
         );
         table.types.insert(
             "LPair[i64, i64]".to_owned(),
@@ -423,7 +399,7 @@ pub mod test_common {
                                     name: "mult".to_owned(),
                                     args: vec![XVar::mk("xs").into()].into(),
                                     ret_ty: None,
-                                    choice_id: None
+                                    choice_id: None,
                                 }
                                 .into(),
                             ),
@@ -501,7 +477,7 @@ pub mod test_common {
                                     ]
                                     .into(),
                                     ret_ty: Some(Ty::mk_i64()),
-                                    choice_id: None
+                                    choice_id: None,
                                 }
                                 .into(),
                             ),

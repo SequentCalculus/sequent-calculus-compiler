@@ -278,7 +278,9 @@ pub enum Error {
         type_args: String,
     },
     /// Conflicting Type for Type Inference
-    #[error("Cannot infere the type for constraint created by {expected_type_l} and {expected_type_r}")]
+    #[error(
+        "Cannot infere the type for constraint created by {expected_type_l} and {expected_type_r}"
+    )]
     #[diagnostic(code("T-024"))]
     ConflictingTypeConstraints {
         // source location of type l
@@ -288,7 +290,7 @@ pub enum Error {
         /// left type
         expected_type_l: Name,
         /// right type
-        expected_type_r: Name
+        expected_type_r: Name,
     },
     /// Too few Type constraints to infere the type
     #[error("Cannot infere the type: too few constraints")]
@@ -309,19 +311,22 @@ pub enum Error {
         span: SourceSpan,
     },
     /// The world resolution failed, with too many possible Worlds
-    #[error("Type Inference failed because there more than one overloading resolution. Instead the are {number_worlds} possible overloading combinations")]
+    #[error(
+        "Type Inference failed because there more than one overloading resolution. Instead the are {number_worlds} possible overloading combinations"
+    )]
     #[diagnostic(code("T-027"))]
     MoreThanOneWorld {
         /// number of found worlds
-        number_worlds: u32
+        number_worlds: u32,
     },
     /// The world resolution failed, with the wrong number of possible Worlds
     #[error("Type Inference failed because there is no valid overloading resolution.")]
     #[diagnostic(code("T-028"))]
-    NoPossibleoWorld {
-    },
+    NoPossibleoWorld {},
     /// An overloaded function was defined with the same signture
-    #[error("The Function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures.")]
+    #[error(
+        "The Function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures."
+    )]
     #[diagnostic(code("T-029"))]
     SharedOverloadSignature {
         // source location of the second def
@@ -329,8 +334,6 @@ pub enum Error {
         #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
         // The name of the definition
-        name: String
+        name: String,
     },
-
-
 }

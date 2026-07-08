@@ -48,8 +48,14 @@ mod parser_tests {
     use super::*;
     use crate::{
         syntax::{
-            Codata, CtorSig, Data, DtorSig, TypeArgs, TypeContext, context::TypingContext, program::Program, terms::{Lit, Paren, Term, XVar}, types::Ty, util::dummy_span,
-        }, test_common::def_mult,
+            Codata, CtorSig, Data, DtorSig, TypeArgs, TypeContext,
+            context::TypingContext,
+            program::Program,
+            terms::{Lit, Paren, Term, XVar},
+            types::Ty,
+            util::dummy_span,
+        },
+        test_common::def_mult,
     };
 
     #[test]
@@ -106,10 +112,7 @@ mod parser_tests {
         ctx_cons.add_var("x", make_old_type_var("A"));
         ctx_cons.add_var(
             "xs",
-            Ty::mk_decl(
-                "List",
-                TypeArgs::mk(vec![make_old_type_var("A")]),
-            ),
+            Ty::mk_decl("List", TypeArgs::mk(vec![make_old_type_var("A")])),
         );
         let data_list = Data {
             span: None,
@@ -144,20 +147,13 @@ mod parser_tests {
                     span: None,
                     name: "tail".to_owned(),
                     args: TypingContext::default(),
-                    cont_ty: Ty::mk_decl(
-                        "Stream",
-                        TypeArgs::mk(vec![make_old_type_var("A")]),
-                    ),
+                    cont_ty: Ty::mk_decl("Stream", TypeArgs::mk(vec![make_old_type_var("A")])),
                 },
             ],
         };
 
         let expected = Program {
-            declarations: vec![
-                data_list.into(),
-                codata_stream.into(),
-                def_mult().into(),
-            ],
+            declarations: vec![data_list.into(), codata_stream.into(), def_mult().into()],
         };
         let result = parser.parse(
             "data List[A] { Nil, Cons(x:A,xs:List[A]) }

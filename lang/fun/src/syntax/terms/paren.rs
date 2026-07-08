@@ -61,22 +61,23 @@ impl From<Paren> for Term {
 
 impl Inference for Paren {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-        self.inner.gather_constraints(constraint_bank, context, ty_var)
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.inner
+            .gather_constraints(constraint_bank, context, ty_var)
     }
 
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-
-        self.inner.insert_inferred_type(mappings, symbol_table, choices)
+        self.inner
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 

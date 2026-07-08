@@ -51,30 +51,35 @@ impl From<Exit> for Term {
 
 impl Inference for Exit {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-            self.ty = Some(ty_var);
-            
-            self.arg.gather_constraints(constraint_bank, context, Ty::mk_i64())
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.ty = Some(ty_var);
+
+        self.arg
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())
     }
 
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.arg.insert_inferred_type(mappings, symbol_table, choices)?;
+        self.arg
+            .insert_inferred_type(mappings, symbol_table, choices)?;
 
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }

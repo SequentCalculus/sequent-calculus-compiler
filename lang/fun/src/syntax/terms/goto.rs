@@ -73,31 +73,36 @@ impl From<Goto> for Term {
 
 impl Inference for Goto {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-            let continuation_type = context.lookup_covar(&self.target, &self.span)?;
-            self.ty = Some(ty_var);
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        let continuation_type = context.lookup_covar(&self.target, &self.span)?;
+        self.ty = Some(ty_var);
 
-            self.term.gather_constraints(constraint_bank, context, continuation_type)
-        }
-    
+        self.term
+            .gather_constraints(constraint_bank, context, continuation_type)
+    }
+
     fn insert_inferred_type(
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.term.insert_inferred_type(mappings, symbol_table, choices)?;
+        self.term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
 
         match &mut self.ty {
             Some(ty_var) => {
                 ty_var.mut_subst_ty(mappings);
                 ty_var.check(&Some(self.span), symbol_table)
-            },
-            None => panic!("The Type of the term {:?} is not set after type inference", self)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }
@@ -120,7 +125,7 @@ mod test {
     use crate::typing::inference::Inference;
 
     use std::rc::Rc;
-    
+
     #[test]
     fn inference_goto() {
         let mut ctx = TypingContext::default();
@@ -132,20 +137,22 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x")).unwrap();
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
 
-        let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
-        ];
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())];
 
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected)
     }

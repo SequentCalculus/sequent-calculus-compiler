@@ -111,13 +111,13 @@ fn create_fail_clauses(
         }
         if !clause_parts.is_empty() {
             let completed_clause = clause_parts
-            .iter()
-            .skip(1)
-            .fold(clause_parts[0].clone(), |acc, next| acc.and(next))
-            .not();
+                .iter()
+                .skip(1)
+                .fold(clause_parts[0].clone(), |acc, next| acc.and(next))
+                .not();
 
-        clauses.push(completed_clause);
-        }        
+            clauses.push(completed_clause);
+        }
     }
 
     clauses
@@ -276,13 +276,13 @@ mod test {
 
     fn mk_inc_choice(choices: Vec<(u32, usize)>) -> IncompatibleChoices {
         IncompatibleChoices {
-                choices,
-                error: crate::typing::Error::ConflictingTypeConstraints {
-                    span_l: None,
-                    expected_type_l: "Test".to_string(),
-                    expected_type_r: "Test".to_string(),
-                },
-            }
+            choices,
+            error: crate::typing::Error::ConflictingTypeConstraints {
+                span_l: None,
+                expected_type_l: "Test".to_string(),
+                expected_type_r: "Test".to_string(),
+            },
+        }
     }
 
     #[test]

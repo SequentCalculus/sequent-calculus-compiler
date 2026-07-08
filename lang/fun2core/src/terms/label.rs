@@ -82,7 +82,7 @@ mod compile_tests {
     fn compile_label1() {
         let mut term = parse_term!("label a { 1 }");
 
-        inferr_term(&mut term, &mut Default::default(),&Default::default()).unwrap();
+        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),

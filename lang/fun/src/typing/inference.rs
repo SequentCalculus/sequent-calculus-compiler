@@ -386,9 +386,7 @@ pub fn constraint_unification(
                     }
                 } else {
                     // two different (co-)datatypes are in a constraint -> impossible to unify the equation
-                    let impossible_world = choices
-                        .into_iter()
-                        .collect();
+                    let impossible_world = choices.into_iter().collect();
 
                     let mut expected_type_l = name_l;
                     expected_type_l.push_str(&type_args_l.print_to_string(None));
@@ -414,9 +412,7 @@ pub fn constraint_unification(
             }
             Constraint::Equality(ty1, ty2, choices) => {
                 // two types, neither a type variable nor two declerations, which means a literal type and a declaration -> impossible to unify the equation
-                let impossible_world = choices
-                    .into_iter()
-                    .collect();
+                let impossible_world = choices.into_iter().collect();
 
                 let best_span = if let Some(span) = ty1.get_span() {
                     Some(span)

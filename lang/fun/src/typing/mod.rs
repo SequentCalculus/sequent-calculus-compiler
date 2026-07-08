@@ -6,8 +6,8 @@
 //! invocations.
 
 pub mod errors;
-pub mod symbol_table;
 pub mod inference;
+pub mod symbol_table;
 pub mod world_resolution;
 
 pub use errors::Error;

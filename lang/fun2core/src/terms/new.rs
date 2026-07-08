@@ -73,14 +73,21 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
     use fun::{
-        parse_term, syntax::{context::TypingContext, inferr_helper::inferr_term}, test_common::symbol_table_lpair
+        parse_term,
+        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        test_common::symbol_table_lpair,
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_lpair() {
         let mut term = parse_term!("new { fst => 1, snd => 2 }");
-        inferr_term(&mut term, &mut symbol_table_lpair(), &TypingContext::default(),).unwrap();
+        inferr_term(
+            &mut term,
+            &mut symbol_table_lpair(),
+            &TypingContext::default(),
+        )
+        .unwrap();
 
         let lpair_declaration = codata!(id!("LPair"), []);
 

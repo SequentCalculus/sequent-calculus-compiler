@@ -72,7 +72,9 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
     use fun::{
-        parse_term, syntax::{context::TypingContext, inferr_helper::inferr_term}, test_common::symbol_table_list
+        parse_term,
+        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        test_common::symbol_table_list,
     };
 
     use std::collections::{HashSet, VecDeque};
@@ -80,8 +82,13 @@ mod compile_tests {
     #[test]
     fn compile_list() {
         let mut term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
-        
-        inferr_term(&mut term, &mut symbol_table_list(), &TypingContext::default()).unwrap();
+
+        inferr_term(
+            &mut term,
+            &mut symbol_table_list(),
+            &TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),

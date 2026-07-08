@@ -82,15 +82,19 @@ impl From<Op> for Term {
 
 impl Inference for Op {
     fn gather_constraints(
-            &mut self,
-            constraint_bank: &mut ConstraintBank,
-            context: &TypingContext,
-            ty_var: Ty
-        ) -> Result<(), Error> {
-        constraint_bank.constraints.push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
 
-        self.fst.gather_constraints(constraint_bank, context, Ty::mk_i64())?;
-        self.snd.gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.fst
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.snd
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
 
         Ok(())
     }
@@ -99,10 +103,12 @@ impl Inference for Op {
         &mut self,
         mappings: &HashMap<Name, Ty>,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>
+        choices: &HashMap<u32, usize>,
     ) -> Result<(), Error> {
-        self.fst.insert_inferred_type(mappings, symbol_table, choices)?;
-        self.snd.insert_inferred_type(mappings, symbol_table, choices)
+        self.fst
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.snd
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
@@ -133,19 +139,30 @@ mod test {
             snd: Rc::new(Lit::mk(3).into()),
         };
 
-        let mut constraint_bank = ConstraintBank{
+        let mut constraint_bank = ConstraintBank {
             symbol_table: Default::default(),
             var_name_generator: Default::default(),
             constraints: Default::default(),
             possible_choices: Default::default(),
         };
 
+        term.gather_constraints(
+            &mut constraint_bank,
+            &TypingContext::default(),
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
 
-        term.gather_constraints(&mut constraint_bank, &TypingContext::default(), Ty::mk_ty_var("x")).unwrap();
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+        ];
 
-        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()), Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())];
-
-        let ConstraintBank { constraints: result, .. } = constraint_bank;
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
 
         assert_eq!(result, expected);
     }
