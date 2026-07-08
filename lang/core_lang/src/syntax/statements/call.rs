@@ -181,18 +181,30 @@ impl Checked for Call {
             bail!(TypeError::UndefinedFunction(self.name.name.clone()));
         };
 
+        // Check that the arity of the type arguments and the arity of the arguments match the definition
+        check_arity(def.type_params.len(), self.type_args.args.len())?;
         check_arity(def.context.bindings.len(), self.args.entries.len())?;
 
-        // check that the types of the arguments match the types of the parameters
+        for ty_arg in &self.type_args.args {
+            ty_arg.check(type_params, context, env)?;
+        }
+
+        // build the substitution mapping for the type parameters and type arguments
+        let subst = (def.type_params.as_slice(), self.type_args.args.as_slice());
+
+        // check that the types of the arguments match the types of the parameters after substitution
         for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {
-            if binding.ty != arg.get_type() {
+            let expected_substituted_ty = binding.ty.substitute(subst);
+
+            if expected_substituted_ty != arg.get_type() {
                 bail!(TypeError::TypeMismatch {
-                    expected: binding.ty.print_to_string(None),
+                    expected: expected_substituted_ty.print_to_string(None),
                     got: arg.get_type().print_to_string(None),
                     msg: None,
                 });
             }
         }
+
         self.args.check(type_params, context, env)?;
 
         Ok(())
@@ -206,7 +218,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{bind, call, def, exit, id, lit, prd, ty, var};
+    use core_macros::{bind, call, def, exit, id, lit, prd, tvar, ty, var};
 
     #[test]
     fn call_check_ok() {
@@ -226,6 +238,77 @@ mod check_tests {
                     &GlobalEnv::new(&vec![], &vec![], &defs)
                 )
                 .is_ok()
+        );
+    }
+
+    #[test]
+    fn call_check_poly_ok() {
+        let poly_def = def!(
+            id!("identity"),
+            [id!("A")],
+            [bind!(id!("x"), prd!(), tvar!(id!("A")))],
+            exit!(var!(id!("x")), tvar!(id!("A")))
+        );
+        let defs = vec![poly_def];
+
+        let call_stmt: Statement = call!(id!("identity"), [ty!("int")], [lit!(42)]).into();
+
+        assert!(
+            call_stmt
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &defs),
+                )
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn call_check_poly_type_mismatch() {
+        let poly_def = def!(
+            id!("identity"),
+            [id!("A")],
+            [bind!(id!("x"), prd!(), tvar!(id!("A")))],
+            exit!(var!(id!("x")), tvar!(id!("A")))
+        );
+        let defs = vec![poly_def];
+
+        let call_mismatch_stmt: Statement =
+            call!(id!("identity"), [ty!(id!("Bool"))], [lit!(42)]).into();
+
+        assert!(
+            call_mismatch_stmt
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                )
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn call_check_poly_arity_mismatch() {
+        let poly_def = def!(
+            id!("identity"),
+            [id!("A")],
+            [bind!(id!("x"), prd!(), tvar!(id!("A")))],
+            exit!(var!(id!("x")), tvar!(id!("A")))
+        );
+        let defs = vec![poly_def];
+
+        let call_arity_stmt: Statement =
+            call!(id!("identity"), [ty!("int"), ty!("int")], [lit!(42)]).into();
+
+        assert!(
+            call_arity_stmt
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                )
+                .is_err()
         );
     }
 

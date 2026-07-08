@@ -138,8 +138,11 @@ impl Checked for Def {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // extend the type parameters of the clause with the type parameters of the definition
+        let extended_type_params = [type_params, &self.type_params].concat();
+
         // check well-formedness of the context
-        self.context.check(type_params, context, env)?;
+        self.context.check(&extended_type_params, context, env)?;
 
         // extend the context of the clause with the bindings of the definition
         let mut extended_context = context.clone();
@@ -148,7 +151,8 @@ impl Checked for Def {
         }
 
         // check the body of the function under the context of the function
-        self.body.check(type_params, &extended_context, env)
+        self.body
+            .check(&extended_type_params, &extended_context, env)
     }
 }
 

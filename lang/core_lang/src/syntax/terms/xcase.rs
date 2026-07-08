@@ -285,7 +285,7 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
             let expected_ty = expected_binding
                 .ty
-                .substitute(Some((&decl.type_params, concrete_type_args)));
+                .substitute((&decl.type_params, concrete_type_args));
 
             if actual_binding.ty != expected_ty {
                 bail!(TypeError::TypeMismatch {

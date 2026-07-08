@@ -41,13 +41,14 @@ impl Ty {
 
     /// This function substitutes type variables in a type with their corresponding concrete types according to the provided substitution mapping.
     /// - `subst` is an optional tuple containing a reference to the list of type parameters and their corresponding concrete types for the current substitution context.
-    pub fn substitute(&self, subst: Option<(&[Identifier], &[Ty])>) -> Self {
+    pub fn substitute(&self, subst: (&[Identifier], &[Ty])) -> Self {
         match self {
             Ty::I64 => Ty::I64,
             Ty::Var(param) => {
-                if let Some((params, args)) = subst {
-                    if let Some(pos) = params.iter().position(|p| p == param) {
-                        return args[pos].clone();
+                let (params, args) = subst;
+                if let Some(pos) = params.iter().position(|p| p == param) {
+                    if let Some(concrete_ty) = args.get(pos) {
+                        return concrete_ty.clone();
                     }
                 }
                 Ty::Var(param.clone())
@@ -139,18 +140,17 @@ impl Specialize for Ty {
         match self {
             Ty::I64 => Ty::I64,
 
-            Ty::Var(param) => match context.subst {
-                Some((params, args)) => {
-                    let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
-                        panic!("type variable {} not found in substitution", param.name)
-                    });
-                    args[pos].specialize(SpecializeContext::ground(context.table))
+            Ty::Var(param) => {
+                let (params, args) = context.subst;
+                let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
+                    panic!("type variable {} not found in substitution", param.name)
+                });
+                if let Some(concrete_ty) = args.get(pos) {
+                    concrete_ty.specialize(SpecializeContext::ground(context.table))
+                } else {
+                    panic!("type variable {} not found in substitution", param.name)
                 }
-                None => panic!(
-                    "encountered unresolved type variable {} with no active substitution",
-                    param.name
-                ),
-            },
+            }
 
             Ty::Decl { name, type_args } => {
                 let ground_args: Vec<Ty> = type_args

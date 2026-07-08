@@ -13,20 +13,23 @@ use crate::{
 #[derive(Clone, Copy)]
 pub struct SpecializeContext<'a> {
     pub table: &'a NamingTable,
-    pub subst: Option<(&'a [Identifier], &'a [Ty])>,
+    pub subst: (&'a [Identifier], &'a [Ty]),
 }
 
 impl<'a> SpecializeContext<'a> {
     /// A context for specializing already-ground terms, with no active variable substitution.
     pub fn ground(table: &'a NamingTable) -> Self {
-        SpecializeContext { table, subst: None }
+        SpecializeContext {
+            table,
+            subst: (&[], &[]),
+        }
     }
 
     /// A context for specializing one instantiation of a polymorphic declaration body.
     pub fn with_subst(table: &'a NamingTable, params: &'a [Identifier], args: &'a [Ty]) -> Self {
         SpecializeContext {
             table,
-            subst: Some((params, args)),
+            subst: (params, args),
         }
     }
 }
