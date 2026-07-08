@@ -2,7 +2,7 @@
 
 use crate::{
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::Let {
         state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(&self.var_ty, type_params.clone());
+        let ty = compile_ty(&self.var_ty, type_params.clone());
         // new continuation: μ~x.〚t_2 〛_{c}
         let new_cont = core_lang::syntax::terms::Mu {
             prdcns: Cns,

@@ -3,7 +3,7 @@
 use crate::{
     arguments::compile_subst,
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     Ty,
@@ -32,7 +32,7 @@ impl Compile for fun::syntax::terms::Constructor {
             prdcns: Prd,
             name: Identifier::new(self.id),
             args: compile_subst(self.args, state, type_params.clone()),
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
@@ -56,7 +56,7 @@ impl Compile for fun::syntax::terms::Constructor {
         state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(
+        let ty = compile_ty(
             &self
                 .ty
                 .clone()

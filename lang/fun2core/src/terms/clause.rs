@@ -3,7 +3,7 @@
 use crate::{
     compile::{Compile, CompileState},
     context::compile_context,
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     Chirality, ContextBinding, Statement,
@@ -41,7 +41,7 @@ pub fn compile_coclause(
     state: &mut CompileState,
     type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::terms::Clause<Prd, Statement> {
-    let ty = compile_ty_poly(
+    let ty = compile_ty(
         &clause
             .get_type()
             .expect("Types should be annotated before translation"),

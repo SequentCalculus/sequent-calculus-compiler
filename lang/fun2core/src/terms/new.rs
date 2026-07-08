@@ -3,7 +3,7 @@
 use crate::{
     compile::{Compile, CompileState},
     terms::clause::compile_coclause,
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     Identifier, Ty,
@@ -34,7 +34,7 @@ impl Compile for fun::syntax::terms::New {
                 .into_iter()
                 .map(|clause| compile_coclause(clause, state, type_params.clone()))
                 .collect(),
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
@@ -59,7 +59,7 @@ impl Compile for fun::syntax::terms::New {
         state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(
+        let ty = compile_ty(
             &self
                 .ty
                 .clone()

@@ -5,7 +5,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     arguments::compile_subst,
     compile::{Compile, CompileState, bind_many},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 use fun::traits::OptTyped;
@@ -34,7 +34,7 @@ impl Compile for fun::syntax::terms::Destructor {
                     prdcns: Cns,
                     name: Identifier::new(self.id),
                     args: bindings.into(),
-                    ty: compile_ty_poly(
+                    ty: compile_ty(
                         &self
                             .scrutinee
                             .get_type()

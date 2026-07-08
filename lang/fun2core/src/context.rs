@@ -1,6 +1,6 @@
 //! This module defines the trivial translation of typing contexts.
 
-use crate::types::compile_ty_poly;
+use crate::types::compile_ty;
 use core_lang::syntax::names::Identifier;
 use std::{collections::HashMap, rc::Rc};
 
@@ -29,7 +29,7 @@ pub fn compile_context(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
-                ty: compile_ty_poly(&binding.ty, type_params.clone()),
+                ty: compile_ty(&binding.ty, type_params.clone()),
             })
             .collect(),
     }

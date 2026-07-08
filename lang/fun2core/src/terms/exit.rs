@@ -2,7 +2,7 @@
 
 use crate::{
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{Identifier, Ty, terms::Cns};
 
@@ -25,7 +25,7 @@ impl Compile for fun::syntax::terms::Exit {
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::Exit {
             arg: Rc::new(self.arg.compile(state, Ty::I64, type_params.clone())),
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),

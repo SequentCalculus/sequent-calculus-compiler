@@ -3,7 +3,7 @@
 use crate::{
     compile::{Compile, CompileState, share},
     terms::clause::compile_clause,
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{Identifier, terms::Cns};
 use fun::traits::OptTyped;
@@ -53,7 +53,7 @@ impl Compile for fun::syntax::terms::Case {
                 .into_iter()
                 .map(|clause| compile_clause(clause, cont.clone(), state, type_params.clone()))
                 .collect(),
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .scrutinee
                     .get_type()

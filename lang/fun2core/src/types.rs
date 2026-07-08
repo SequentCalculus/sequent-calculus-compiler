@@ -1,32 +1,14 @@
 //! This module defines the trivial translation on types.
 
 use core_lang::syntax::{ID, fresh_identifier, names::Identifier};
-use printer::Print;
 use std::{collections::HashMap, rc::Rc};
-
-/// This function converts [types in Fun](fun::syntax::types::Ty) to
-/// [types in Core](core_lang::syntax::types::Ty).
-pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
-    match ty {
-        fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
-        fun::syntax::types::Ty::Decl { .. } => {
-            core_lang::syntax::types::Ty::Decl {
-                name: Identifier::new(ty.print_to_string(None)),
-                type_args: core_lang::syntax::types::TypeArgs {
-                    // Just pass empty type arguments since monomorphization already happened in the fun IR.
-                    args: vec![],
-                },
-            }
-        }
-    }
-}
 
 /// This function converts [types in Fun](fun::syntax::types::Ty) to
 /// [types in Core](core_lang::syntax::types::Ty), replacing type parameters with the given core
 /// identifiers.
 /// - `ty` is the Fun type to translate.
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
-pub fn compile_ty_poly(
+pub fn compile_ty(
     ty: &fun::syntax::types::Ty,
     type_params: Rc<HashMap<String, Identifier>>,
 ) -> core_lang::syntax::types::Ty {
@@ -46,7 +28,7 @@ pub fn compile_ty_poly(
             let translated_args = type_args
                 .args
                 .iter()
-                .map(|arg| compile_ty_poly(arg, type_params.clone()))
+                .map(|arg| compile_ty(arg, type_params.clone()))
                 .collect::<Vec<_>>();
 
             core_lang::syntax::types::Ty::Decl {
@@ -74,7 +56,7 @@ pub fn compile_type_params(
 
 #[cfg(test)]
 mod compile_tests {
-    use super::compile_ty_poly;
+    use super::compile_ty;
     use core_lang::syntax::names::Identifier;
     use core_macros::{id, tvar, ty};
     use fun::syntax::types::{Ty, TypeArgs};
@@ -98,7 +80,7 @@ mod compile_tests {
             },
         )]);
 
-        let result = compile_ty_poly(&ty, Rc::new(subst));
+        let result = compile_ty(&ty, Rc::new(subst));
 
         let expected = ty!(id!("List"), [ty!(id!("List"), [tvar!(id!("A", 1))])]);
 

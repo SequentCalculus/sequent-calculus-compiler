@@ -3,7 +3,7 @@
 use crate::{
     compile::{Compile, CompileState},
     context::compile_context,
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{CodataDeclaration, names::Identifier};
 use fun::{
@@ -47,7 +47,7 @@ pub fn compile_def(
     };
 
     let new_covar = state.fresh_covar();
-    let ty = compile_ty_poly(
+    let ty = compile_ty(
         &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
@@ -65,7 +65,7 @@ pub fn compile_def(
         .push(core_lang::syntax::context::ContextBinding {
             var: Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty_poly(&def.ret_ty, type_params_subst),
+            ty: compile_ty(&def.ret_ty, type_params_subst),
         });
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
@@ -111,7 +111,7 @@ pub fn compile_main(
     };
 
     let new_var = state.fresh_var();
-    let ty = compile_ty_poly(
+    let ty = compile_ty(
         &def.body
             .get_type()
             .expect("Types should be annotated before translation"),

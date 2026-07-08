@@ -4,7 +4,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 use fun::traits::OptTyped;
@@ -34,7 +34,7 @@ pub fn compile_subst(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var: Identifier::new(var),
-                        ty: compile_ty_poly(
+                        ty: compile_ty(
                             &ty.expect("Types should be annotated before translation"),
                             type_params.clone(),
                         ),
@@ -42,7 +42,7 @@ pub fn compile_subst(
                     .into(),
                 ),
                 term => {
-                    let ty = compile_ty_poly(
+                    let ty = compile_ty(
                         &term
                             .get_type()
                             .expect("Types should be annotated before translation"),

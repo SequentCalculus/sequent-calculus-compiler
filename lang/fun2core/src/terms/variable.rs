@@ -1,6 +1,6 @@
 //! This module defines the translation for variables.
 
-use crate::{compile::Compile, types::compile_ty_poly};
+use crate::{compile::Compile, types::compile_ty};
 use core_lang::syntax::{
     Ty,
     names::Identifier,
@@ -27,7 +27,7 @@ impl Compile for fun::syntax::terms::XVar {
         core_lang::syntax::terms::XVar {
             prdcns: Prd,
             var: Identifier::new(self.var),
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
@@ -51,7 +51,7 @@ impl Compile for fun::syntax::terms::XVar {
         _state: &mut crate::compile::CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(
+        let ty = compile_ty(
             &self
                 .ty
                 .expect("Types should be annotated before translation"),

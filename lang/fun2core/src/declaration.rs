@@ -2,7 +2,7 @@
 //! declarations.
 
 use crate::context::compile_context;
-use crate::types::compile_ty_poly;
+use crate::types::compile_ty;
 use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
@@ -41,7 +41,7 @@ pub fn compile_dtor(
         .push(core_lang::syntax::context::ContextBinding {
             var: core_lang::syntax::names::Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty_poly(&dtor.cont_ty, type_params),
+            ty: compile_ty(&dtor.cont_ty, type_params),
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,

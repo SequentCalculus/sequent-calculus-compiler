@@ -4,7 +4,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{
     Ty,
@@ -27,7 +27,7 @@ impl Compile for fun::syntax::terms::Label {
         _ty: Ty,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
-        let var_ty = compile_ty_poly(
+        let var_ty = compile_ty(
             &self
                 .ty
                 .expect("Types should be annotated before translation"),
@@ -63,7 +63,7 @@ impl Compile for fun::syntax::terms::Label {
         state: &mut CompileState,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::Statement {
-        let ty = compile_ty_poly(
+        let ty = compile_ty(
             &self
                 .ty
                 .clone()

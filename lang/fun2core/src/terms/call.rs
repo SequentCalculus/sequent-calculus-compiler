@@ -5,7 +5,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     arguments::compile_subst,
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -33,11 +33,11 @@ impl Compile for fun::syntax::terms::Call {
                     .type_args
                     .args
                     .iter()
-                    .map(|arg| compile_ty_poly(arg, type_params.clone()))
+                    .map(|arg| compile_ty(arg, type_params.clone()))
                     .collect::<Vec<_>>(),
             },
             args,
-            ty: compile_ty_poly(
+            ty: compile_ty(
                 &self
                     .ret_ty
                     .expect("Types should be annotated before translation"),

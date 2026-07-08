@@ -4,7 +4,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     compile::{Compile, CompileState},
-    types::compile_ty_poly,
+    types::compile_ty,
 };
 use core_lang::syntax::{names::Identifier, terms::Cns};
 
@@ -27,7 +27,7 @@ impl Compile for fun::syntax::terms::Goto {
             core_lang::syntax::terms::XVar {
                 prdcns: Cns,
                 var: Identifier::new(self.target),
-                ty: compile_ty_poly(
+                ty: compile_ty(
                     &self
                         .ty
                         .expect("Types should be annotated before translation"),
