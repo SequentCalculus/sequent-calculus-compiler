@@ -90,23 +90,14 @@ impl<D: Print> Print for Prog<D> {
 }
 
 impl ConstraintCollector for Prog {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         // type check the program before collecting constraints, to ensure that all type annotations in the program are well-formed
-        self.check(
-            &[],
-            &TypingContext::default(),
-            &GlobalEnv::new(&self.data_types, &self.codata_types, &self.defs),
-        )
-        .unwrap();
+        self.check(&[], &TypingContext::default(), env).unwrap();
 
         let mut constraints = FlowConstraintSet::new();
 
         for def in &self.defs {
-            constraints.extend(def.collect_constraints(data_declarations, codata_declarations)?);
+            constraints.extend(def.collect_constraints(env)?);
         }
 
         Ok(constraints)
@@ -209,6 +200,7 @@ mod constraint_tests {
 
     use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
+    use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
     use core_macros::{bind, ctor_sig, data, def, exit, id, lit, prd, prog, tvar, ty};
 
@@ -240,7 +232,11 @@ mod constraint_tests {
         );
 
         let constraints = prog
-            .collect_constraints(&prog.data_types, &prog.codata_types)
+            .collect_constraints(&GlobalEnv::new(
+                &prog.data_types,
+                &prog.codata_types,
+                &prog.defs,
+            ))
             .unwrap();
 
         let expected = FlowConstraintSet {

@@ -4,7 +4,8 @@ use printer::tokens::COMMA;
 use printer::{Alloc, Anno, Builder, DocAllocator, Print, PrintCfg};
 
 use crate::mono::errors::MonoError;
-use crate::syntax::{CodataDeclaration, DataDeclaration, Identifier, Ty};
+use crate::syntax::{Identifier, Ty};
+use crate::typing::env::GlobalEnv;
 
 /// A flow constraint describing how a concrete type reaches a polymorphic type parameter.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -99,11 +100,7 @@ impl Print for FlowConstraintSet {
 
 /// This trait defines the interface for collecting flow constraints from a syntax element.
 pub trait ConstraintCollector {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError>;
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError>;
 }
 
 /// This function collects flow constraints from a concrete type reaching a polymorphic type parameter. It is used as a helper function in the implementation of the `ConstraintCollector` trait for various syntax elements.

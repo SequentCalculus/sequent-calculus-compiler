@@ -220,14 +220,9 @@ impl<C: Chi> Focusing for Clause<C> {
 }
 
 impl<C: Chi> ConstraintCollector for Clause<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         // collect constraints from the body of the clause
-        self.body
-            .collect_constraints(data_declarations, codata_declarations)
+        self.body.collect_constraints(env)
     }
 }
 

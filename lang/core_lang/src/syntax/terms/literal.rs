@@ -7,6 +7,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::env::GlobalEnv;
 
 /// This struct defines integer literals in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,11 +59,7 @@ impl Bind for Literal {
 }
 
 impl ConstraintCollector for Literal {
-    fn collect_constraints(
-        &self,
-        _data_declarations: &[DataDeclaration],
-        _codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, _env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         Ok(FlowConstraintSet::new())
     }
 }

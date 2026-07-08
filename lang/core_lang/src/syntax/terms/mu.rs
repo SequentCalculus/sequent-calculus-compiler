@@ -259,18 +259,9 @@ impl Bind for Mu<Cns> {
 }
 
 impl<C: Chi> ConstraintCollector for Mu<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self
-            .ty
-            .collect_constraints(data_declarations, codata_declarations)?;
-        constraints.extend(
-            self.statement
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        constraints.extend(self.statement.collect_constraints(env)?);
         Ok(constraints)
     }
 }

@@ -6,7 +6,6 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
-use crate::syntax::declaration::lookup_type_declaration;
 use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -100,21 +99,21 @@ impl Checked for Ty {
 }
 
 impl ConstraintCollector for Ty {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         match self {
             Ty::I64 => Ok(FlowConstraintSet::new()),
             Ty::Var(_) => Ok(FlowConstraintSet::new()),
             Ty::Decl { name, type_args } => {
-                if self.is_codata(codata_declarations) {
-                    let template = lookup_type_declaration(name, codata_declarations);
+                if self.is_codata(env.codata_decls) {
+                    let Some(template) = env.lookup_codata_decl(name) else {
+                        return Err(MonoError::UndeclaredType(name.name.clone()));
+                    };
 
                     collect_type_flow(&type_args.args, template.type_params.as_slice())
                 } else {
-                    let template = lookup_type_declaration(name, data_declarations);
+                    let Some(template) = env.lookup_data_decl(name) else {
+                        return Err(MonoError::UndeclaredType(name.name.clone()));
+                    };
 
                     collect_type_flow(&type_args.args, template.type_params.as_slice())
                 }

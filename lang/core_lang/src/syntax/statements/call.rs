@@ -138,19 +138,10 @@ impl TypedFreeVars for FsCall {
 }
 
 impl ConstraintCollector for Call {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self
-            .ty
-            .collect_constraints(data_declarations, codata_declarations)?;
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
 
-        constraints.extend(
-            self.args
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+        constraints.extend(self.args.collect_constraints(env)?);
         Ok(constraints)
     }
 }

@@ -121,27 +121,13 @@ impl Focusing for Statement {
 }
 
 impl ConstraintCollector for Statement {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let constraints = match self {
-            Statement::Cut(cut) => {
-                cut.collect_constraints(data_declarations, codata_declarations)?
-            }
-            Statement::IfC(ifc) => {
-                ifc.collect_constraints(data_declarations, codata_declarations)?
-            }
-            Statement::PrintI64(print) => {
-                print.collect_constraints(data_declarations, codata_declarations)?
-            }
-            Statement::Call(call) => {
-                call.collect_constraints(data_declarations, codata_declarations)?
-            }
-            Statement::Exit(exit) => {
-                exit.collect_constraints(data_declarations, codata_declarations)?
-            }
+            Statement::Cut(cut) => cut.collect_constraints(env)?,
+            Statement::IfC(ifc) => ifc.collect_constraints(env)?,
+            Statement::PrintI64(print) => print.collect_constraints(env)?,
+            Statement::Call(call) => call.collect_constraints(env)?,
+            Statement::Exit(exit) => exit.collect_constraints(env)?,
         };
         Ok(constraints)
     }

@@ -202,20 +202,10 @@ impl Bind for Op {
 }
 
 impl ConstraintCollector for Op {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = FlowConstraintSet::new();
-        constraints.extend(
-            self.fst
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
-        constraints.extend(
-            self.snd
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+        constraints.extend(self.fst.collect_constraints(env)?);
+        constraints.extend(self.snd.collect_constraints(env)?);
         Ok(constraints)
     }
 }

@@ -141,19 +141,10 @@ impl Focusing for PrintI64 {
 }
 
 impl ConstraintCollector for PrintI64 {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self
-            .arg
-            .collect_constraints(data_declarations, codata_declarations)?;
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.arg.collect_constraints(env)?;
 
-        constraints.extend(
-            self.next
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+        constraints.extend(self.next.collect_constraints(env)?);
         Ok(constraints)
     }
 }

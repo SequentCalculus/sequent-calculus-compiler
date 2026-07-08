@@ -8,6 +8,7 @@ use crate::{
         specialize::specialize_program,
     },
     syntax::program::Prog,
+    typing::env::GlobalEnv,
 };
 pub mod constraint_graph;
 pub mod constraints;
@@ -22,7 +23,11 @@ pub mod specialize;
 /// Monomorphizes a program and returns the monomorphized program along with the constraint graph.
 pub fn monomorphize_program(program: Prog) -> (Prog, ConstraintGraph) {
     let constraints = program
-        .collect_constraints(&program.data_types, &program.codata_types)
+        .collect_constraints(&GlobalEnv::new(
+            &program.data_types,
+            &program.codata_types,
+            &program.defs,
+        ))
         .unwrap();
 
     let forced_set_cfg = PrintCfg {

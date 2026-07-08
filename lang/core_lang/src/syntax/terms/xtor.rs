@@ -195,18 +195,9 @@ impl Bind for Xtor<Cns> {
 }
 
 impl<C: Chi> ConstraintCollector for Xtor<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self
-            .ty
-            .collect_constraints(data_declarations, codata_declarations)?;
-        constraints.extend(
-            self.args
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        constraints.extend(self.args.collect_constraints(env)?);
         Ok(constraints)
     }
 }
@@ -312,6 +303,7 @@ mod xtor_tests {
 mod constraint_tests {
     use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
     use crate::syntax::types::TypeArgs;
+    use crate::typing::env::GlobalEnv;
     use crate::{mono::constraints::ConstraintCollector, syntax::*};
     use std::collections::HashSet;
     extern crate self as core_lang;
@@ -356,7 +348,9 @@ mod constraint_tests {
             ty!(id!("List"), [ty!("int")])
         );
 
-        let constraints = cons.collect_constraints(&[list], &[]).unwrap();
+        let constraints = cons
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
 
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {
@@ -404,7 +398,9 @@ mod constraint_tests {
             ty!(id!("List"), [ty!("int")])
         );
 
-        let constraints = cons.collect_constraints(&[list], &[]).unwrap();
+        let constraints = cons
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![
                 FlowConstraint {
@@ -435,7 +431,9 @@ mod constraint_tests {
 
         let nil: Xtor<Prd> = ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]));
 
-        let constraints = nil.collect_constraints(&[list], &[]).unwrap();
+        let constraints = nil
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
 
         assert_eq!(
             constraints,
@@ -468,7 +466,9 @@ mod constraint_tests {
 
         let dtor: Xtor<Cns> = dtor!(id!("Head"), [lit!(1)], ty!(id!("List"), [ty!("int")]));
 
-        let constraints = dtor.collect_constraints(&[], &[list]).unwrap();
+        let constraints = dtor
+            .collect_constraints(&GlobalEnv::new(&[], &[list], &[]))
+            .unwrap();
 
         let expected = FlowConstraintSet {
             constraints: HashSet::from_iter(vec![FlowConstraint {

@@ -231,26 +231,14 @@ impl Focusing for IfC {
 }
 
 impl ConstraintCollector for IfC {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         // collect constraints from the first term, then the second term if it exists, then the then-branch and else-branch
-        let mut constraints = self
-            .fst
-            .collect_constraints(data_declarations, codata_declarations)?;
+        let mut constraints = self.fst.collect_constraints(env)?;
         if let Some(ref snd) = self.snd {
-            constraints.extend(snd.collect_constraints(data_declarations, codata_declarations)?);
+            constraints.extend(snd.collect_constraints(env)?);
         }
-        constraints.extend(
-            self.thenc
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
-        constraints.extend(
-            self.elsec
-                .collect_constraints(data_declarations, codata_declarations)?,
-        );
+        constraints.extend(self.thenc.collect_constraints(env)?);
+        constraints.extend(self.elsec.collect_constraints(env)?);
         Ok(constraints)
     }
 }

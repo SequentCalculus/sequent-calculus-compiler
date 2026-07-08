@@ -143,13 +143,8 @@ impl<C: Chi> SubstVar for XVar<C> {
 }
 
 impl<C: Chi> ConstraintCollector for XVar<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        self.ty
-            .collect_constraints(data_declarations, codata_declarations)
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        self.ty.collect_constraints(env)
     }
 }
 

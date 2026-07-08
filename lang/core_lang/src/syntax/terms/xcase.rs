@@ -145,18 +145,12 @@ impl<C: Chi> TypedFreeVars for FsXCase<C> {
 }
 
 impl<C: Chi> ConstraintCollector for XCase<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self
-            .ty
-            .collect_constraints(data_declarations, codata_declarations)?;
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
         constraints.extend(
             self.clauses
                 .iter()
-                .map(|clause| clause.collect_constraints(data_declarations, codata_declarations))
+                .map(|clause| clause.collect_constraints(env))
                 .try_fold(FlowConstraintSet::new(), |mut acc, res| {
                     acc.extend(res?);
                     Ok(acc)

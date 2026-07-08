@@ -109,18 +109,10 @@ impl Bind for Argument {
 }
 
 impl ConstraintCollector for Argument {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         match self {
-            Argument::Producer(term) => {
-                term.collect_constraints(data_declarations, codata_declarations)
-            }
-            Argument::Consumer(term) => {
-                term.collect_constraints(data_declarations, codata_declarations)
-            }
+            Argument::Producer(term) => term.collect_constraints(env),
+            Argument::Consumer(term) => term.collect_constraints(env),
         }
     }
 }
@@ -223,14 +215,10 @@ impl Uniquify for Arguments {
 }
 
 impl ConstraintCollector for Arguments {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = FlowConstraintSet::new();
         for arg in &self.entries {
-            constraints.extend(arg.collect_constraints(data_declarations, codata_declarations)?);
+            constraints.extend(arg.collect_constraints(env)?);
         }
         Ok(constraints)
     }

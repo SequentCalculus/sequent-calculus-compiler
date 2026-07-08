@@ -249,29 +249,15 @@ impl Bind for Term<Cns> {
 }
 
 impl<C: Chi> ConstraintCollector for Term<C> {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = FlowConstraintSet::new();
         match self {
-            Term::XVar(var) => {
-                constraints.extend(var.collect_constraints(data_declarations, codata_declarations)?)
-            }
-            Term::Literal(lit) => {
-                constraints.extend(lit.collect_constraints(data_declarations, codata_declarations)?)
-            }
-            Term::Op(op) => {
-                constraints.extend(op.collect_constraints(data_declarations, codata_declarations)?)
-            }
-            Term::Mu(mu) => {
-                constraints.extend(mu.collect_constraints(data_declarations, codata_declarations)?)
-            }
-            Term::Xtor(xtor) => constraints
-                .extend(xtor.collect_constraints(data_declarations, codata_declarations)?),
-            Term::XCase(xcase) => constraints
-                .extend(xcase.collect_constraints(data_declarations, codata_declarations)?),
+            Term::XVar(var) => constraints.extend(var.collect_constraints(env)?),
+            Term::Literal(lit) => constraints.extend(lit.collect_constraints(env)?),
+            Term::Op(op) => constraints.extend(op.collect_constraints(env)?),
+            Term::Mu(mu) => constraints.extend(mu.collect_constraints(env)?),
+            Term::Xtor(xtor) => constraints.extend(xtor.collect_constraints(env)?),
+            Term::XCase(xcase) => constraints.extend(xcase.collect_constraints(env)?),
         }
         Ok(constraints)
     }

@@ -121,13 +121,8 @@ impl<S: Print> Print for Def<S> {
 }
 
 impl ConstraintCollector for Def {
-    fn collect_constraints(
-        &self,
-        data_declarations: &[DataDeclaration],
-        codata_declarations: &[CodataDeclaration],
-    ) -> Result<FlowConstraintSet, MonoError> {
-        self.body
-            .collect_constraints(data_declarations, codata_declarations)
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        self.body.collect_constraints(env)
     }
 }
 
