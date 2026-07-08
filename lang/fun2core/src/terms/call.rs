@@ -54,7 +54,7 @@ mod compile_tests {
     use core_macros::{call, covar, id, lit, mu, tvar, ty};
     use fun::{
         parse_term,
-        syntax::context::TypingContext,
+        syntax::{TypeContext, context::TypingContext},
         typing::{check::Check, symbol_table::SymbolTable},
     };
     use std::{
@@ -71,7 +71,14 @@ mod compile_tests {
             .check(
                 &mut {
                     let mut funs = HashMap::new();
-                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
+                    funs.insert(
+                        "fac".to_owned(),
+                        (
+                            TypeContext::default(),
+                            ctx,
+                            fun::syntax::types::Ty::mk_i64(),
+                        ),
+                    );
 
                     SymbolTable {
                         ctors: HashMap::default(),
@@ -108,7 +115,14 @@ mod compile_tests {
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
 
         let mut defs = HashMap::new();
-        defs.insert("id".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
+        defs.insert(
+            "id".to_owned(),
+            (
+                TypeContext::default(),
+                ctx,
+                fun::syntax::types::Ty::mk_i64(),
+            ),
+        );
 
         let term_typed = term
             .check(
@@ -159,7 +173,14 @@ mod compile_tests {
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
 
         let mut defs = HashMap::new();
-        defs.insert("id".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
+        defs.insert(
+            "id".to_owned(),
+            (
+                TypeContext::default(),
+                ctx,
+                fun::syntax::types::Ty::mk_i64(),
+            ),
+        );
 
         let term_typed = term
             .check(

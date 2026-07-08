@@ -29,7 +29,7 @@ use crate::parser::util::ToMiette;
 pub struct SymbolTable {
     /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
     /// and return type.
-    pub defs: HashMap<Name, (TypingContext, Ty)>,
+    pub defs: HashMap<Name, (TypeContext, TypingContext, Ty)>,
     /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
     /// list.
     pub ctors: HashMap<Name, TypingContext>,
@@ -53,6 +53,36 @@ pub struct SymbolTable {
 }
 
 impl SymbolTable {
+    /// This function instantiates the signature of a top-level definition with given type
+    /// arguments.
+    pub fn instantiate_def_signature(
+        &mut self,
+        span: Option<SourceSpan>,
+        name: &Name,
+        type_args: &TypeArgs,
+    ) -> Result<(TypingContext, Ty), Error> {
+        let Some((type_params, context_template, ret_ty_template)) = self.defs.get(name).cloned()
+        else {
+            return Err(Error::Undefined {
+                span,
+                name: name.clone(),
+            });
+        };
+
+        type_args.is_instance(&type_params, self)?;
+        let mappings: HashMap<Name, Ty> = type_params
+            .bindings
+            .iter()
+            .cloned()
+            .zip(type_args.args.clone())
+            .collect();
+
+        Ok((
+            context_template.subst_ty(&mappings),
+            ret_ty_template.subst_ty(&mappings),
+        ))
+    }
+
     /// This function returns the monomorphic type of a monomorphic destructor from its name.
     pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
         for (name, (pol, type_args, xtors)) in &self.types {
@@ -172,6 +202,19 @@ impl SymbolTable {
                 }
             }
         }
+
+        for (name, (type_params, _, _)) in &self.defs {
+            type_params.no_dups(name)?;
+            for param in &type_params.bindings {
+                if self.type_templates.contains_key(param) {
+                    return Err(Error::DefinedMultipleTimes {
+                        span: type_params.span.to_miette(),
+                        name: param.clone(),
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -230,7 +273,11 @@ impl BuildSymbolTable for Def {
         }
         symbol_table.defs.insert(
             self.name.clone(),
-            (self.context.clone(), self.ret_ty.clone()),
+            (
+                self.type_params.clone(),
+                self.context.clone(),
+                self.ret_ty.clone(),
+            ),
         );
         Ok(())
     }
@@ -319,7 +366,7 @@ mod symbol_table_tests {
     use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         syntax::{
-            context::{Chirality::Prd, ContextBinding, TypingContext},
+            context::{Chirality::Prd, ContextBinding, TypeContext, TypingContext},
             program::Program,
             types::{Ty, TypeArgs},
             util::dummy_span,
@@ -347,6 +394,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
@@ -385,6 +433,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

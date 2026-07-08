@@ -37,16 +37,39 @@ pub struct Def {
 }
 
 impl Def {
+    fn push_type_param_scope(&self, symbol_table: &mut SymbolTable) -> Vec<Name> {
+        let mut inserted = vec![];
+        for param in &self.type_params.bindings {
+            symbol_table.type_templates.insert(
+                param.clone(),
+                (Polarity::Data, TypeContext::default(), vec![]),
+            );
+            inserted.push(param.clone());
+        }
+        inserted
+    }
+
+    fn pop_type_param_scope(inserted: &[Name], symbol_table: &mut SymbolTable) {
+        for param in inserted {
+            symbol_table.type_templates.remove(param);
+            symbol_table.types.remove(param);
+        }
+    }
+
     /// This function checks the well-formedness of the top-level function. This consists of
     /// checking the well-formedness of the paramater list and return type, and typechecking the
     /// body in the context given by the parameters.
     pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+        self.type_params.no_dups(&self.name)?;
         self.context.no_dups(&self.name)?;
+
+        let inserted = self.push_type_param_scope(symbol_table);
+
         self.context.check(symbol_table)?;
         self.ret_ty.check(&Some(self.span), symbol_table)?;
-
         self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
 
+        Self::pop_type_param_scope(&inserted, symbol_table);
         Ok(self)
     }
 }
@@ -177,5 +200,24 @@ mod def_tests {
         let result = def_mult().check(&mut symbol_table).unwrap();
         let expected = def_mult_typed();
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn poly_def_body_mismatch_fails() {
+        let mut symbol_table = SymbolTable::default();
+        let bad = Def {
+            span: dummy_span(),
+            name: "bad".to_string(),
+            type_params: TypeContext::mk(&["A"]),
+            context: TypingContext {
+                span: None,
+                bindings: vec![],
+            },
+            body: Term::Lit(Lit::mk(4)),
+            ret_ty: Ty::mk_decl("A", TypeArgs::default()),
+        };
+
+        let result = bad.check(&mut symbol_table);
+        assert!(result.is_err());
     }
 }
