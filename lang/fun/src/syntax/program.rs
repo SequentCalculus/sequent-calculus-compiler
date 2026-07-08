@@ -25,28 +25,6 @@ pub struct CheckedProgram {
     pub defs: Vec<Def>,
 }
 
-impl CheckedProgram {
-    pub fn print_all(&mut self) {
-        self.data_types.sort_by_key(|data| data.name.clone());
-        println!("Data:");
-        for data in self.data_types.iter() {
-            println!("\t{:?}", data);
-        }
-
-        self.codata_types.sort_by_key(|codata| codata.name.clone());
-        println!("Codata:");
-        for codata in self.codata_types.iter() {
-            println!("\t{:?}", codata);
-        }
-
-        self.defs.sort_by_key(|defs| defs.name.clone());
-        println!("Defs:");
-        for def in self.defs.iter() {
-            println!("\t{:?}", def);
-        }
-    }
-}
-
 impl Program {
     /// the main function for type inference. It consumes the (uncheckd)[`Program`] and returns a [`CheckedProgram`] with
     /// the all types inferred and overloading resolved.
