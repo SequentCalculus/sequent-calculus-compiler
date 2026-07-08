@@ -240,21 +240,37 @@ impl BuildSymbolTable for Declaration {
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
         // a definition can be overloaded, so they are stored in a vec.
-        
+
         // looking up if a definition with the same name was already registered
-        if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name){
-            // adding the new definition to the List of (variational)defs
-            signature_list.push((self.context.clone(), self.ret_ty.clone()));
-            let def_index = signature_list.len() - 1;
-            let def_name = build_unique_def_name(&self.name, &def_index);
-            symbol_table.defs.insert(def_name, (self.context.clone(), self.ret_ty.clone()));
+        if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name) {
+            
+            // checking if the signature is unique (per overlaoded name)
+            if signature_list
+                .iter()
+                .any(|(context, ret_ty)| self.context.eq(context) && self.ret_ty.eq(ret_ty))
+            {
+                return Err(Error::SharedOverloadSignature {
+                    span: Some(self.span),
+                    name: self.name.clone(),
+                });
+            } else {
+                // adding the new definition to the List of (variational) defs
+                signature_list.push((self.context.clone(), self.ret_ty.clone()));
+                let def_index = signature_list.len() - 1;
+                let def_name = build_unique_def_name(&self.name, &def_index);
+                symbol_table
+                    .defs
+                    .insert(def_name, (self.context.clone(), self.ret_ty.clone()));
+            }
         } else {
             symbol_table.variational_defs.insert(
                 self.name.clone(),
                 vec![(self.context.clone(), self.ret_ty.clone())],
             );
             let def_name = build_unique_def_name(&self.name, &0);
-            symbol_table.defs.insert(def_name, (self.context.clone(), self.ret_ty.clone()));
+            symbol_table
+                .defs
+                .insert(def_name, (self.context.clone(), self.ret_ty.clone()));
         }
         Ok(())
     }
@@ -285,7 +301,11 @@ impl BuildSymbolTable for Data {
 }
 
 impl CtorSig {
-    fn build(&self, symbol_table: &mut SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
+    fn build(
+        &self,
+        symbol_table: &mut SymbolTable,
+        type_params: &TypeContext,
+    ) -> Result<(), Error> {
         if symbol_table.ctor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
@@ -335,7 +355,11 @@ impl BuildSymbolTable for Codata {
 }
 
 impl DtorSig {
-    fn build(&self, symbol_table: &mut SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
+    fn build(
+        &self,
+        symbol_table: &mut SymbolTable,
+        type_params: &TypeContext,
+    ) -> Result<(), Error> {
         if symbol_table.dtor_templates.contains_key(&self.name) {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span.to_miette(),
@@ -409,7 +433,8 @@ mod symbol_table_tests {
                 Ty::mk_i64(),
             ),
         );
-        expected.variational_defs.insert("mult".to_owned(),
+        expected.variational_defs.insert(
+            "mult".to_owned(),
             vec![(
                 TypingContext {
                     span: None,
@@ -419,7 +444,8 @@ mod symbol_table_tests {
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },
-                Ty::mk_i64())],
+                Ty::mk_i64(),
+            )],
         );
         assert_eq!(symbol_table, expected)
     }
@@ -459,7 +485,8 @@ mod symbol_table_tests {
                 Ty::mk_i64(),
             ),
         );
-        expected.variational_defs.insert("mult".to_owned(),
+        expected.variational_defs.insert(
+            "mult".to_owned(),
             vec![(
                 TypingContext {
                     span: None,
@@ -469,7 +496,8 @@ mod symbol_table_tests {
                         ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                     }],
                 },
-                Ty::mk_i64())],
+                Ty::mk_i64(),
+            )],
         );
         assert_eq!(symbol_table, expected)
     }

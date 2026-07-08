@@ -320,6 +320,17 @@ pub enum Error {
     #[diagnostic(code("T-028"))]
     NoPossibleoWorld {
     },
+    /// An overloaded function was defined with the same signture
+    #[error("The Function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures.")]
+    #[diagnostic(code("T-029"))]
+    SharedOverloadSignature {
+        // source location of the second def
+        #[label]
+        #[derivative(PartialEq = "ignore")]
+        span: Option<SourceSpan>,
+        // The name of the definition
+        name: String
+    },
 
 
 }
