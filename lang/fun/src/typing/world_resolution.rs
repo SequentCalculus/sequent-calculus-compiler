@@ -118,14 +118,15 @@ fn create_fail_clauses(
                 )
             }
         }
-
-        let completed_clause = clause_parts
+        if !clause_parts.is_empty() {
+            let completed_clause = clause_parts
             .iter()
             .skip(1)
             .fold(clause_parts[0].clone(), |acc, next| acc.and(next))
             .not();
 
         clauses.push(completed_clause);
+        }        
     }
 
     clauses
