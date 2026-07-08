@@ -188,6 +188,7 @@ pub fn share(
 
     state.lifted_statements.push_front(core_lang::syntax::Def {
         name: Identifier::new(name.clone()),
+        type_params: vec![],
         context,
         body,
     });
@@ -196,6 +197,7 @@ pub fn share(
         var,
         core_lang::syntax::statements::Call {
             name: Identifier::new(name),
+            type_args: core_lang::syntax::types::TypeArgs { args: vec![] },
             args,
             ty: ty.clone(),
         }

@@ -28,11 +28,12 @@ pub fn compile_def(
     def: fun::syntax::declarations::Def,
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params_subst: Rc<HashMap<String, Identifier>>,
+    type_params: Vec<Identifier>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
 
-    let mut context = compile_context(def.context, type_params.clone());
+    let mut context = compile_context(def.context, type_params_subst.clone());
 
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
@@ -50,13 +51,13 @@ pub fn compile_def(
         &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
-        type_params.clone(),
+        type_params_subst.clone(),
     );
 
     let body = def.body.compile_with_cont(
         core_lang::syntax::terms::XVar::covar(Identifier::new(new_covar.clone()), ty).into(),
         &mut state,
-        type_params.clone(),
+        type_params_subst.clone(),
     );
 
     context
@@ -64,11 +65,12 @@ pub fn compile_def(
         .push(core_lang::syntax::context::ContextBinding {
             var: Identifier::new(new_covar),
             chi: core_lang::syntax::context::Chirality::Cns,
-            ty: compile_ty_poly(&def.ret_ty, type_params),
+            ty: compile_ty_poly(&def.ret_ty, type_params_subst),
         });
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
         name: Identifier::new(def.name),
+        type_params,
         context,
         body,
     });
@@ -135,6 +137,7 @@ pub fn compile_main(
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {
         name: Identifier::new(def.name),
+        type_params: vec![],
         context,
         body,
     });

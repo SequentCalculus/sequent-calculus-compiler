@@ -67,11 +67,18 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
                 defs_translated.push_front(def_main);
             }
         } else {
+            let type_params = compile_type_params(&def.type_params, &mut max_id);
+            let type_param_subst = build_type_param_subst(&def.type_params.bindings, &type_params);
+
+            let mut local_subst = global_type_param_subst.clone();
+            local_subst.extend(type_param_subst);
+
             defs_translated.extend(compile_def(
                 def,
                 codata_types.as_slice(),
                 &mut used_labels,
-                Rc::new(global_type_param_subst.clone()),
+                Rc::new(local_subst),
+                type_params,
             ));
         }
     }
@@ -92,6 +99,7 @@ fn build_type_param_subst(names: &[String], params: &[Identifier]) -> HashMap<St
 mod compile_tests {
     use crate::def::{compile_def, compile_main};
     use crate::program::compile_prog;
+    use core_lang::syntax::Identifier;
     use core_macros::{
         bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tvar, ty, var,
     };
@@ -208,6 +216,25 @@ mod compile_tests {
         }
     }
 
+    fn example_def_poly() -> Def {
+        let mut ctx = fun::syntax::context::TypingContext::default();
+        ctx.add_var("x", Ty::mk_decl("A", TypeArgs::default()));
+        Def {
+            span: dummy_span(),
+            name: "id_poly".to_string(),
+            type_params: TypeContext::mk(&["A"]),
+            context: ctx,
+            body: XVar {
+                span: dummy_span(),
+                var: "x".to_owned(),
+                ty: Some(Ty::mk_decl("A", TypeArgs::default())),
+                chi: Some(Chirality::Prd),
+            }
+            .into(),
+            ret_ty: Ty::mk_decl("A", TypeArgs::default()),
+        }
+    }
+
     #[test]
     fn compile_def1() {
         let result = compile_main(
@@ -234,6 +261,7 @@ mod compile_tests {
             &[],
             &mut HashSet::from(["id".to_string()]),
             Rc::new(HashMap::new()),
+            vec![],
         );
         let expected = def!(
             id!("id"),
@@ -331,5 +359,57 @@ mod compile_tests {
         );
 
         assert_eq!(result.data_types[0], expected);
+    }
+
+    #[test]
+    fn compile_poly_def() {
+        let fresh_param = id!("A", 1);
+        let mut subst = HashMap::new();
+        subst.insert("A".to_string(), fresh_param.clone());
+
+        let result = compile_def(
+            example_def_poly(),
+            &[],
+            &mut HashSet::from(["id_poly".to_string()]),
+            Rc::new(subst),
+            vec![fresh_param.clone()],
+        );
+
+        assert_eq!(result.len(), 1);
+        let compiled = &result[0];
+        compiled.context.bindings.iter().for_each(|binding| {
+            if binding.var.name == "x" {
+                assert_eq!(binding.ty, tvar!(id!("A", 1)));
+            }
+        });
+
+        assert_eq!(compiled.name, Identifier::new("id_poly".to_string()));
+        assert_eq!(compiled.type_params, vec![fresh_param]);
+
+        assert_eq!(compiled.context.bindings.len(), 2);
+    }
+
+    #[test]
+    fn compile_prog_poly_def() {
+        let checked = CheckedProgram {
+            defs: vec![example_def_poly().into()],
+            data_types: vec![],
+            codata_types: vec![],
+        };
+
+        let result = compile_prog(checked);
+        assert_eq!(result.defs.len(), 1);
+
+        let compiled_def = &result.defs[0];
+        compiled_def.context.bindings.iter().for_each(|binding| {
+            if binding.var.name == "x" {
+                assert_eq!(binding.ty, tvar!(id!("A", 1)));
+            }
+        });
+
+        assert_eq!(compiled_def.name, Identifier::new("id_poly".to_string()));
+        assert_eq!(compiled_def.type_params.len(), 1);
+
+        assert!(result.max_id > 0);
     }
 }

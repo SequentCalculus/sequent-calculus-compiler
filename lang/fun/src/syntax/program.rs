@@ -135,8 +135,15 @@ mod program_tests {
     use printer::Print;
 
     use crate::{
-        parser::fun, syntax::{
-            TypeContext, context::TypingContext, declarations::Def, program::Program, terms::{Lit, Term}, types::Ty, util::dummy_span,
+        parser::fun,
+        syntax::{
+            TypeContext,
+            context::TypingContext,
+            declarations::Def,
+            program::Program,
+            terms::{Lit, Term},
+            types::Ty,
+            util::dummy_span,
         },
     };
     use std::collections::HashSet;
