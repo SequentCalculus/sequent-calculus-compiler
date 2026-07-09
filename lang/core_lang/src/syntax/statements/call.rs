@@ -19,6 +19,7 @@ use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
+use std::vec;
 
 /// This struct defines the call of a top-level function in Core. It consists of the name of the
 /// top-level function to call, the arguments, and the type.
@@ -162,9 +163,23 @@ impl ConstraintCollector for Call {
 
 impl Specialize for Call {
     fn specialize(&self, context: SpecializeContext) -> Self {
+        let ground_type_args: Vec<Ty> = self
+            .type_args
+            .args
+            .iter()
+            .map(|ty| ty.substitute(context.subst))
+            .collect();
+
+        let specialized_name = if ground_type_args.is_empty() {
+            // monomorphic call site: use the original name
+            self.name.clone()
+        } else {
+            // polymorphic call site: look up the specialized name in the naming table
+            context.table.lookup(&self.name, &ground_type_args).clone()
+        };
         Call {
-            name: self.name.clone(),
-            type_args: self.type_args.clone(),
+            name: specialized_name,
+            type_args: TypeArgs::default(),
             args: self.args.specialize(context),
             ty: self.ty.specialize(context),
         }

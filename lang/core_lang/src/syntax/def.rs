@@ -7,8 +7,6 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::Specialize;
-use crate::mono::specialize::SpecializeContext;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -163,16 +161,5 @@ impl Checked for Def {
         // check the body of the function under the context of the function
         self.body
             .check(&extended_type_params, &extended_context, env)
-    }
-}
-
-impl Specialize for Def {
-    fn specialize(&self, context: SpecializeContext) -> Self {
-        Def {
-            name: self.name.clone(),
-            type_params: self.type_params.clone(),
-            context: self.context.specialize(context),
-            body: self.body.specialize(context),
-        }
     }
 }

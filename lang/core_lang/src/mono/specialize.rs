@@ -1,7 +1,7 @@
 use crate::{
     mono::{naming_table::NamingTable, solver::Solution},
     syntax::{
-        Identifier, Prog, Ty,
+        Def, Identifier, Prog, Ty,
         declaration::{Polarity, TypeDeclaration},
     },
 };
@@ -60,7 +60,7 @@ impl<X: Specialize> Specialize for std::rc::Rc<X> {
 
 /// This function is the entry point for specializing a program from polymorphic to monomorphic form. It takes a reference to a [`Solution`] produced by the constraint solving process, and returns a new program where all polymorphic type parameters have been replaced with their corresponding concrete types according to the solution.
 pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
-    let table = NamingTable::build(solution, &prog.data_types, &prog.codata_types);
+    let table = NamingTable::build(solution, &prog.data_types, &prog.codata_types, &prog.defs);
 
     let data_types = prog
         .data_types
@@ -77,7 +77,7 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
     let defs: Vec<_> = prog
         .defs
         .iter()
-        .map(|def| def.specialize(SpecializeContext::ground(&table)))
+        .flat_map(|def| specialize_def(def, solution, &table))
         .collect();
 
     Prog {
@@ -120,6 +120,47 @@ pub fn specialize_declaration<P: Polarity + Clone>(
         .collect()
 }
 
+/// Specialization of polymorphic function definitions into monomorphic ones
+pub fn specialize_def(def: &Def, solution: &Solution, table: &NamingTable) -> Vec<Def> {
+    let node = &def.type_params;
+
+    if node.is_empty() {
+        // This function has no type parameters of its own, so it produces
+        // exactly one monomorphic copy. However, the body still
+        // needs to be traversed with a ground context, because it may
+        // contain calls to polymorphic functions or constructors that must
+        // be rewritten to their specialized names.
+        let ctx = SpecializeContext::ground(table);
+        return vec![Def {
+            name: def.name.clone(),
+            type_params: vec![],
+            context: def.context.specialize(ctx),
+            body: def.body.specialize(ctx),
+        }];
+    }
+
+    let Some(tuples) = solution.map.get(node) else {
+        // This function is polymorphic but was never instantiated -- it is
+        // dead code and can be dropped from monomorphic Core.
+        return vec![];
+    };
+
+    tuples
+        .iter()
+        .map(|tuple| {
+            // For each observed instantiation, produce one specialized copy
+            // with the type parameters substituted throughout body and context.
+            let ctx = SpecializeContext::with_subst(table, node, tuple);
+            Def {
+                name: table.lookup(&def.name, tuple).clone(),
+                type_params: vec![],
+                context: def.context.specialize(ctx),
+                body: def.body.specialize(ctx),
+            }
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod specialize_tests {
     use std::collections::{HashMap, HashSet};
@@ -129,20 +170,20 @@ mod specialize_tests {
             naming_table::NamingTable,
             solver::Solution,
             specialize::{
-                Specialize, SpecializeContext, specialize_declaration, specialize_program,
+                Specialize, SpecializeContext, specialize_declaration, specialize_def,
+                specialize_program,
             },
         },
-        syntax::{Prog, Ty, types::TypeArgs},
+        syntax::{DataDeclaration, Def, Prog, Statement, Ty, types::TypeArgs},
+        traits::Typed,
     };
     extern crate self as core_lang;
-    use core_macros::{bind, ctor, ctor_sig, data, id, lit, prd, tvar, ty};
+    use core_macros::{
+        bind, call, cns, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tvar, ty, var,
+    };
 
-    #[test]
-    fn specialize_data_declaration_produces_one_copy_per_instantiation() {
-        // data List[A] { Nil, Cons(x: A, xs: List[A]) }
-        // instantiated at both i64 and Bool. Expect two monomorphic
-        // copies, each with A correctly substituted throughout.
-        let list = data!(
+    fn list_decl() -> DataDeclaration {
+        return data!(
             id!("List"),
             [
                 ctor_sig!(id!("Nil"), []),
@@ -156,12 +197,51 @@ mod specialize_tests {
             ],
             [id!("A", 1)]
         );
+    }
 
-        let bool = data!(
+    fn bool_decl() -> DataDeclaration {
+        return data!(
             id!("Bool"),
             [ctor_sig!(id!("True"), []), ctor_sig!(id!("False"), [])],
             []
         );
+    }
+
+    fn pair_decl() -> DataDeclaration {
+        return data!(
+            id!("Pair"),
+            [ctor_sig!(
+                id!("mkPair"),
+                [
+                    bind!(id!("x"), prd!(), tvar!(id!("A", 2))),
+                    bind!(id!("y"), prd!(), tvar!(id!("B", 3)))
+                ]
+            )],
+            [id!("A", 2), id!("B", 3)]
+        );
+    }
+
+    fn identity_def() -> Def {
+        return def!(
+            id!("identity"),
+            [id!("A", 1)],
+            [
+                bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                bind!(id!("ret"), cns!(), tvar!(id!("A", 1)))
+            ],
+            cut!(
+                var!(id!("x"), tvar!(id!("A", 1))),
+                covar!(id!("ret"), tvar!(id!("A", 1))),
+                tvar!(id!("A", 1))
+            )
+        );
+    }
+
+    #[test]
+    fn specialize_data_declaration_produces_one_copy_per_instantiation() {
+        // data List[A] { Nil, Cons(x: A, xs: List[A]) }
+        // instantiated at both i64 and Bool. Expect two monomorphic
+        // copies, each with A correctly substituted throughout.
 
         let node = vec![id!("A", 1)];
         let solution = Solution::from(HashMap::from([(
@@ -169,8 +249,8 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[list.clone(), bool.clone()], &[]);
-        let copies = specialize_declaration(&list, &solution, &table);
+        let table = NamingTable::build(&solution, &[list_decl(), bool_decl()], &[], &[]);
+        let copies = specialize_declaration(&list_decl(), &solution, &table);
 
         assert_eq!(
             copies.len(),
@@ -196,32 +276,15 @@ mod specialize_tests {
         // Only the correlated tuple [i64, Bool] was ever observed -- not
         // the full cross product. Specialization must produce exactly one
         // monomorphic copy, not four.
-        let pair = data!(
-            id!("Pair"),
-            [ctor_sig!(
-                id!("mkPair"),
-                [
-                    bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
-                    bind!(id!("y"), prd!(), tvar!(id!("B", 2)))
-                ]
-            )],
-            [id!("A", 1), id!("B", 2)]
-        );
 
-        let bool = data!(
-            id!("Bool"),
-            [ctor_sig!(id!("True"), []), ctor_sig!(id!("False"), [])],
-            []
-        );
-
-        let node = vec![id!("A", 1), id!("B", 2)];
+        let node = vec![id!("A", 2), id!("B", 3)];
         let solution = Solution::from(HashMap::from([(
             node.clone(),
             HashSet::from([vec![ty!("int"), ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[pair.clone(), bool.clone()], &[]);
-        let copies = specialize_declaration(&pair, &solution, &table);
+        let table = NamingTable::build(&solution, &[pair_decl(), bool_decl()], &[], &[]);
+        let copies = specialize_declaration(&pair_decl(), &solution, &table);
 
         assert_eq!(
             copies.len(),
@@ -242,27 +305,13 @@ mod specialize_tests {
         // Cons(1, Nil) : List[i64], fully ground as it would appear after
         // type checking. No substitution is active; the naming table alone
         // resolves List[i64] to its mangled name.
-        let list = data!(
-            id!("List"),
-            [
-                ctor_sig!(id!("Nil"), []),
-                ctor_sig!(
-                    id!("Cons"),
-                    [
-                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
-                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
-                    ]
-                )
-            ],
-            [id!("A", 1)]
-        );
 
         let node = vec![id!("A", 1)];
         let solution = Solution::from(HashMap::from([(
             node.clone(),
             HashSet::from([vec![ty!("int")]]),
         )]));
-        let table = NamingTable::build(&solution, &[list.clone()], &[]);
+        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
         let ctx = SpecializeContext::ground(&table);
 
         let term = ctor!(
@@ -276,7 +325,7 @@ mod specialize_tests {
 
         let result = term.specialize(ctx);
 
-        let expected_name = table.lookup(&list.name, &[ty!("int")]).clone();
+        let expected_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
         assert_eq!(
             result.ty,
             Ty::Decl {
@@ -295,34 +344,9 @@ mod specialize_tests {
         // Verifies that the Pair node and the List node are specialized
         // independently and consistently, with the inner Pair instantiation
         // correctly nested inside the outer List instantiation's lookup.
-        let pair = data!(
-            id!("Pair"),
-            [ctor_sig!(
-                id!("mkPair"),
-                [
-                    bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
-                    bind!(id!("y"), prd!(), tvar!(id!("B", 2)))
-                ]
-            )],
-            [id!("A", 1), id!("B", 2)]
-        );
-        let list = data!(
-            id!("List"),
-            [
-                ctor_sig!(id!("Nil"), []),
-                ctor_sig!(
-                    id!("Cons"),
-                    [
-                        bind!(id!("x"), prd!(), tvar!(id!("C", 3))),
-                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("C", 3))]))
-                    ]
-                )
-            ],
-            [id!("C", 3)]
-        );
 
-        let pair_node = vec![id!("A", 1), id!("B", 2)];
-        let list_node = vec![id!("C", 3)];
+        let pair_node = vec![id!("A", 2), id!("B", 3)];
+        let list_node = vec![id!("A", 1)];
         let pair_ty = ty!(id!("Pair"), [ty!("int"), ty!("int")]);
 
         let solution = Solution::from(HashMap::from([
@@ -333,10 +357,10 @@ mod specialize_tests {
             (list_node.clone(), HashSet::from([vec![pair_ty.clone()]])),
         ]));
 
-        let table = NamingTable::build(&solution, &[pair.clone(), list.clone()], &[]);
+        let table = NamingTable::build(&solution, &[pair_decl(), list_decl()], &[], &[]);
 
-        let pair_copies = specialize_declaration(&pair, &solution, &table);
-        let list_copies = specialize_declaration(&list, &solution, &table);
+        let pair_copies = specialize_declaration(&pair_decl(), &solution, &table);
+        let list_copies = specialize_declaration(&list_decl(), &solution, &table);
 
         assert_eq!(pair_copies.len(), 1);
         assert_eq!(list_copies.len(), 1);
@@ -346,8 +370,10 @@ mod specialize_tests {
         // field must reference the *same* mangled Pair name produced for
         // the Pair declaration above -- consistency across two independent
         // top-level specializations.
-        let list_name = table.lookup(&list.name, &[pair_ty.clone()]).clone();
-        let pair_name = table.lookup(&pair.name, &[ty!("int"), ty!("int")]).clone();
+        let list_name = table.lookup(&list_decl().name, &[pair_ty.clone()]).clone();
+        let pair_name = table
+            .lookup(&pair_decl().name, &[ty!("int"), ty!("int")])
+            .clone();
 
         assert_eq!(list_copies[0].name, list_name);
         assert_eq!(pair_copies[0].name, pair_name);
@@ -377,20 +403,6 @@ mod specialize_tests {
     fn test_specialize_program_end_to_end() {
         // data List[A] { Nil, Cons(x: A, xs: List[A]) }
         // instantiated at i64. Expect one monomorphic copy, with A correctly substituted throughout.
-        let list = data!(
-            id!("List"),
-            [
-                ctor_sig!(id!("Nil"), []),
-                ctor_sig!(
-                    id!("Cons"),
-                    [
-                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
-                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
-                    ]
-                )
-            ],
-            [id!("A", 1)]
-        );
 
         let node = vec![id!("A", 1)];
         let solution = Solution::from(HashMap::from([(
@@ -400,7 +412,7 @@ mod specialize_tests {
 
         let prog = Prog {
             defs: vec![],
-            data_types: vec![list.clone()],
+            data_types: vec![list_decl()],
             codata_types: vec![],
             max_id: 0,
         };
@@ -414,8 +426,8 @@ mod specialize_tests {
         );
         assert_eq!(specialized_prog.codata_types.len(), 0);
 
-        let table = NamingTable::build(&solution, &[list.clone()], &[]);
-        let expected_name = table.lookup(&list.name, &[ty!("int")]).clone();
+        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
+        let expected_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
 
         let specialized_list = &specialized_prog.data_types[0];
 
@@ -432,5 +444,451 @@ mod specialize_tests {
             .find(|x| x.name == id!("Cons"))
             .unwrap();
         assert_eq!(cons.args.bindings[0].ty, Ty::I64);
+    }
+
+    #[test]
+    fn specialize_monomorphic_def_traverses_body() {
+        // def main() { ⟨ Cons(1, Nil) | a ⟩ }
+        //
+        // main has no type parameters of its own, so it produces exactly one
+        // copy. However, its body contains List[i64] at the call site and that
+        // type must be rewritten to the mangled name -- the body traversal must
+        // happen even though no substitution is active.
+
+        let main_def = def!(
+            id!("main"),
+            [],
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            cut!(
+                ctor!(
+                    id!("Cons"),
+                    [
+                        lit!(1),
+                        ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                    ],
+                    ty!(id!("List"), [ty!("int")])
+                ),
+                covar!(id!("ret"), ty!("int")),
+                ty!("int")
+            )
+        );
+
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[list_decl()], &[], &[main_def.clone()]);
+        let copies = specialize_def(&main_def, &solution, &table);
+
+        // Exactly one copy of main, no multiplication.
+        assert_eq!(copies.len(), 1);
+        assert_eq!(copies[0].name, id!("main"));
+        assert!(copies[0].type_params.is_empty());
+
+        // The body's Xtor type must have been rewritten to the mangled List name.
+        let expected_list_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
+        let Statement::Cut(cut) = &copies[0].body else {
+            panic!("expected a cut statement in main's body");
+        };
+        assert_eq!(
+            cut.producer.get_type(),
+            Ty::Decl {
+                name: expected_list_name,
+                type_args: TypeArgs { args: vec![] }
+            }
+        );
+    }
+
+    #[test]
+    fn specialize_polymorphic_def_produces_one_copy_per_instantiation() {
+        // def identity[A](x: A, ret: cns A) { ⟨ x | ret ⟩ }
+        //
+        // Instantiated at i64 and Bool. Expect two monomorphic copies, each
+        // with A substituted, an empty type_params list, and a name that
+        // encodes the instantiation.
+
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[bool_decl()], &[], &[identity_def()]);
+        let copies = specialize_def(&identity_def(), &solution, &table);
+
+        assert_eq!(copies.len(), 2, "expected one copy per instantiation");
+
+        for copy in &copies {
+            assert!(copy.type_params.is_empty());
+
+            // Context bindings must be ground, no Ty::Var remaining.
+            for binding in &copy.context.bindings {
+                assert!(
+                    !matches!(binding.ty, Ty::Var(_)),
+                    "expected ground type in context, got: {:?}",
+                    binding.ty
+                );
+            }
+
+            // The cut's type in the body must be ground as well.
+            let Statement::Cut(cut) = &copy.body else {
+                panic!("expected a cut statement in identity's body");
+            };
+            assert!(!matches!(cut.ty, Ty::Var(_)));
+        }
+
+        // Both expected instantiations must be present.
+        let name_int = table.lookup(&identity_def().name, &[ty!("int")]).clone();
+        let name_bool = table
+            .lookup(&identity_def().name, &[ty!(id!("Bool"))])
+            .clone();
+        let copy_names: Vec<_> = copies.iter().map(|d| d.name.clone()).collect();
+        assert!(copy_names.contains(&name_int));
+        assert!(copy_names.contains(&name_bool));
+    }
+
+    #[test]
+    fn specialize_unused_polymorphic_def_is_dropped() {
+        // A polymorphic function that appears in the program but is never
+        // called (and therefore never appears in the solution) must be
+        // silently dropped from monomorphic Core rather than producing a copy
+        // that retains unresolved type variables.
+
+        let unused = def!(
+            id!("unused"),
+            [id!("A", 1)],
+            [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))],
+            cut!(
+                var!(id!("x"), tvar!(id!("A", 1))),
+                covar!(id!("ret", 2), tvar!(id!("A", 1))),
+                tvar!(id!("A", 1))
+            )
+        );
+
+        // Empty solution: no instantiation was ever observed for this def.
+        let solution = Solution::from(HashMap::new());
+        let table = NamingTable::build(&solution, &[], &[], &[unused.clone()]);
+        let copies = specialize_def(&unused, &solution, &table);
+
+        assert!(
+            copies.is_empty(),
+            "expected an unused polymorphic def to be dropped, got: {:?}",
+            copies
+        );
+    }
+
+    #[test]
+    fn specialize_def_using_polymorphic_data_type_consistent_names() {
+        // data List[A] { Nil, Cons(x: A, xs: List[A]) }
+        // def singleton[A](x: A, ret: cns List[A]) { ⟨ Cons(x, Nil) | ret ⟩ }
+        //
+        // The List[i64] reference inside singleton's body must resolve to the
+        // *same* mangled name that specialize_declaration produces for List
+        // when instantiated at i64. Consistency between declaration and
+        // call-site specialization is the core invariant being tested here.
+
+        let singleton = def!(
+            id!("singleton"),
+            [id!("A", 1)],
+            [
+                bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                bind!(id!("ret"), cns!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+            ],
+            cut!(
+                ctor!(
+                    id!("Cons"),
+                    [
+                        var!(id!("x"), tvar!(id!("A", 1))),
+                        ctor!(id!("Nil"), [], ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ],
+                    ty!(id!("List"), [tvar!(id!("A", 1))])
+                ),
+                covar!(id!("ret"), ty!(id!("List"), [tvar!(id!("A", 1))])),
+                ty!(id!("List"), [tvar!(id!("A", 1))])
+            )
+        );
+
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[list_decl()], &[], &[singleton.clone()]);
+
+        let list_copies = specialize_declaration(&list_decl(), &solution, &table);
+        let def_copies = specialize_def(&singleton, &solution, &table);
+
+        assert_eq!(list_copies.len(), 1);
+        assert_eq!(def_copies.len(), 1);
+
+        // The mangled List name used inside the def's body must match the
+        // declaration's own specialized name exactly.
+        let expected_list_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
+
+        // Check the context binding: ret: List[i64] -> ret: List_i64 (or equivalent)
+        let ret_binding = def_copies[0]
+            .context
+            .bindings
+            .iter()
+            .find(|b| b.var == id!("ret"))
+            .unwrap();
+        assert_eq!(
+            ret_binding.ty,
+            Ty::Decl {
+                name: expected_list_name.clone(),
+                type_args: TypeArgs { args: vec![] }
+            }
+        );
+
+        // Check the cut's type in the body
+        let Statement::Cut(cut) = &def_copies[0].body else {
+            panic!("expected a cut statement in singleton's body");
+        };
+        assert_eq!(
+            cut.ty,
+            Ty::Decl {
+                name: expected_list_name.clone(),
+                type_args: TypeArgs { args: vec![] }
+            }
+        );
+
+        // The specialized declaration's name must match what the def sees.
+        assert_eq!(list_copies[0].name, expected_list_name);
+    }
+
+    #[test]
+    fn specialize_def_with_multiple_type_params_correlated() {
+        // def swap[A, B](x: A, y: B, ret_a: cns A, ret_b: cns B) { ⟨ x | ret_a ⟩ }
+        //
+        // Instantiated only at the correlated tuple [i64, Bool] -- not at all
+        // four combinations of {i64, Bool} × {i64, Bool}. Verifies that
+        // multi-parameter defs are handled like multi-parameter data
+        // declarations: one copy per correlated tuple in the solution, not
+        // a cross product of independent single-variable solution sets.
+
+        let swap = def!(
+            id!("swap"),
+            [id!("A", 1), id!("B", 2)],
+            [
+                bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                bind!(id!("y"), prd!(), tvar!(id!("B", 2))),
+                bind!(id!("ret_a"), cns!(), tvar!(id!("A", 1))),
+                bind!(id!("ret_b"), cns!(), tvar!(id!("B", 2)))
+            ],
+            cut!(
+                var!(id!("x"), tvar!(id!("A", 1))),
+                covar!(id!("ret_a"), tvar!(id!("A", 1))),
+                tvar!(id!("A", 1))
+            )
+        );
+
+        // Only the single correlated instantiation [i64, Bool] was observed.
+        let node = vec![id!("A", 1), id!("B", 2)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int"), ty!(id!("Bool"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[bool_decl()], &[], &[swap.clone()]);
+        let copies = specialize_def(&swap, &solution, &table);
+
+        assert_eq!(
+            copies.len(),
+            1,
+            "expected exactly one correlated copy, not a cross product: got {:?}",
+            copies.iter().map(|d| &d.name).collect::<Vec<_>>()
+        );
+
+        let copy = &copies[0];
+        assert!(copy.type_params.is_empty());
+
+        // x must have been resolved to i64, y to Bool.
+        let x_ty = &copy
+            .context
+            .bindings
+            .iter()
+            .find(|b| b.var == id!("x"))
+            .unwrap()
+            .ty;
+        let y_ty = &copy
+            .context
+            .bindings
+            .iter()
+            .find(|b| b.var == id!("y"))
+            .unwrap()
+            .ty;
+        assert_eq!(*x_ty, Ty::I64, "expected x: i64 after substitution");
+        assert_eq!(
+            *y_ty,
+            Ty::Decl {
+                name: id!("Bool"),
+                type_args: TypeArgs { args: vec![] }
+            },
+            "expected y: Bool after substitution"
+        );
+
+        // The mangled name must encode both instantiated positions.
+        let expected_name = table
+            .lookup(&swap.name, &[ty!("int"), ty!(id!("Bool"))])
+            .clone();
+        assert_eq!(copy.name, expected_name);
+    }
+
+    #[test]
+    fn specialize_program_with_data_and_def_end_to_end() {
+        // Full program round-trip through specialize_program:
+        //
+        //   data List[A] { Nil, Cons(x: A, xs: List[A]) }
+        //   def main(ret: cns i64) { ⟨ Cons(1, Nil) | a ⟩ }   -- uses List[i64]
+        //
+        // After specialization the program must contain exactly one data
+        // declaration (List_i64 or equivalent), exactly one def (main,
+        // unchanged name), and no Ty::Var anywhere in either.
+
+        let main_def = def!(
+            id!("main"),
+            [],
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            cut!(
+                ctor!(
+                    id!("Cons"),
+                    [
+                        lit!(1),
+                        ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                    ],
+                    ty!(id!("List"), [ty!("int")])
+                ),
+                covar!(id!("ret"), ty!("int")),
+                ty!("int")
+            )
+        );
+
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let prog = Prog {
+            defs: vec![main_def],
+            data_types: vec![list_decl().clone()],
+            codata_types: vec![],
+            max_id: 0,
+        };
+
+        let result = specialize_program(&prog, &solution);
+
+        // One monomorphic List copy, one main def.
+        assert_eq!(result.data_types.len(), 1);
+        assert_eq!(result.defs.len(), 1);
+        assert!(result.data_types[0].type_params.is_empty());
+        assert!(result.defs[0].type_params.is_empty());
+        assert_eq!(result.defs[0].name, id!("main"));
+
+        // No Ty::Var must survive in the output data declaration.
+        for xtor in &result.data_types[0].xtors {
+            for binding in &xtor.args.bindings {
+                assert!(
+                    !matches!(binding.ty, Ty::Var(_)),
+                    "Ty::Var survived specialization in data declaration: {:?}",
+                    binding.ty
+                );
+            }
+        }
+
+        // No Ty::Var must survive in main's context or body type.
+        for binding in &result.defs[0].context.bindings {
+            assert!(!matches!(binding.ty, Ty::Var(_)));
+        }
+        let Statement::Cut(cut) = &result.defs[0].body else {
+            panic!("expected a cut in main's body");
+        };
+        assert!(!matches!(cut.ty, Ty::Var(_)));
+        assert!(!matches!(cut.producer.get_type(), Ty::Var(_)));
+    }
+
+    #[test]
+    fn specialize_def_that_calls_another_polymorphic_def() {
+        // def identity[A](x: A, ret: cns A) { ⟨ x | ret ⟩ }
+        // def wrap[A](x: A, ret: cns A) { identity[A](x, ret) }
+        //
+        // wrap calls identity, forwarding its own type parameter A as the
+        // type argument. After specialization at i64, the call site inside
+        // wrap's body must reference the specialized identity name (not the
+        // polymorphic one), and wrap itself must have an empty type_params.
+        // This is the key test for call-site rewriting when a def's own type
+        // variable flows into another def's type argument.
+
+        let wrap = def!(
+            id!("wrap"),
+            [id!("A", 1)],
+            [
+                bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                bind!(id!("ret"), cns!(), tvar!(id!("A", 1)))
+            ],
+            // wrap's body wird jetzt elegant über das call!-Macro erzeugt
+            call!(
+                id!("identity"),
+                [tvar!(id!("A", 1))],
+                [
+                    var!(id!("x"), tvar!(id!("A", 1))),
+                    covar!(id!("ret"), tvar!(id!("A", 1)))
+                ]
+            )
+        );
+
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[], &[], &[identity_def(), wrap.clone()]);
+
+        let identity_copies = specialize_def(&identity_def(), &solution, &table);
+        let wrap_copies = specialize_def(&wrap, &solution, &table);
+
+        assert_eq!(identity_copies.len(), 1);
+        assert_eq!(wrap_copies.len(), 1);
+
+        let identity_copy = &identity_copies[0];
+        let wrap_copy = &wrap_copies[0];
+
+        // Both must be monomorphic after specialization.
+        assert!(identity_copy.type_params.is_empty());
+        assert!(wrap_copy.type_params.is_empty());
+
+        // The call inside wrap's body must now reference the specialized
+        // identity name, not the original polymorphic "identity".
+        let expected_identity_name = table.lookup(&identity_def().name, &[ty!("int")]).clone();
+
+        let Statement::Call(call) = &wrap_copy.body else {
+            panic!(
+                "expected a Call statement in wrap's body, got: {:?}",
+                wrap_copy.body
+            );
+        };
+
+        assert_eq!(
+            call.name, expected_identity_name,
+            "wrap's body must call the specialized identity, not the polymorphic one"
+        );
+
+        // The call's type argument must be fully ground -- no Ty::Var remaining.
+        for arg_ty in &call.type_args.args {
+            assert!(
+                !matches!(arg_ty, Ty::Var(_)),
+                "Ty::Var survived in call type args: {:?}",
+                arg_ty
+            );
+        }
+        assert!(call.type_args.args.is_empty());
+
+        // The wrap copy's own name must be the specialized one.
+        let expected_wrap_name = table.lookup(&wrap.name, &[ty!("int")]).clone();
+        assert_eq!(wrap_copy.name, expected_wrap_name);
     }
 }
