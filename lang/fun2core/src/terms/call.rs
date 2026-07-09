@@ -118,7 +118,7 @@ mod compile_tests {
         defs.insert(
             "id".to_owned(),
             (
-                TypeContext::default(),
+                TypeContext::mk(&["A"]),
                 ctx,
                 fun::syntax::types::Ty::mk_i64(),
             ),
@@ -176,7 +176,7 @@ mod compile_tests {
         defs.insert(
             "id".to_owned(),
             (
-                TypeContext::default(),
+                TypeContext::mk(&["A"]),
                 ctx,
                 fun::syntax::types::Ty::mk_i64(),
             ),
