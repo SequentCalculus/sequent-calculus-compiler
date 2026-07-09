@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     mono::solver::Solution,
-    syntax::{CodataDeclaration, DataDeclaration, Identifier, Ty},
+    syntax::{CodataDeclaration, DataDeclaration, Def, Identifier, Ty},
 };
 
 /// A mapping from polymorphic type parameters to their corresponding concrete types as string representations after monomorphization.
@@ -21,6 +21,7 @@ impl NamingTable {
         solution: &Solution,
         data_decls: &[DataDeclaration],
         codata_decls: &[CodataDeclaration],
+        defs: &[Def],
     ) -> Self {
         let mut names = HashMap::new();
 
@@ -30,7 +31,7 @@ impl NamingTable {
                 names.insert((decl.name.clone(), vec![]), decl.name.clone());
             } else if let Some(tuples) = solution.map.get(&decl.type_params) {
                 for tuple in tuples {
-                    let mangled = mangle(&decl.name, tuple);
+                    let mangled = mangle_ty_declaration(&decl.name, tuple);
                     names.insert((decl.name.clone(), tuple.clone()), Identifier::new(mangled));
                 }
             }
@@ -42,8 +43,20 @@ impl NamingTable {
                 names.insert((decl.name.clone(), vec![]), decl.name.clone());
             } else if let Some(tuples) = solution.map.get(&decl.type_params) {
                 for tuple in tuples {
-                    let mangled = mangle(&decl.name, tuple);
+                    let mangled = mangle_ty_declaration(&decl.name, tuple);
                     names.insert((decl.name.clone(), tuple.clone()), Identifier::new(mangled));
+                }
+            }
+        }
+
+        for def in defs {
+            if def.type_params.is_empty() {
+                // If there are no type parameters, we can just use the original name
+                names.insert((def.name.clone(), vec![]), def.name.clone());
+            } else if let Some(tuples) = solution.map.get(&def.type_params) {
+                for tuple in tuples {
+                    let mangled = mangle_def_declaration(&def.name, tuple);
+                    names.insert((def.name.clone(), tuple.clone()), Identifier::new(mangled));
                 }
             }
         }
@@ -57,7 +70,7 @@ impl NamingTable {
             .get(&(name.clone(), tuple.to_vec()))
             .unwrap_or_else(|| {
                 panic!(
-                    "no specialized name recorded for type {} with instantiation {:?} -- \
+                    "no specialized name recorded for {} with instantiation {:?} -- \
                      this indicates a bug in constraint collection or solving",
                     name.name, tuple
                 )
@@ -66,12 +79,22 @@ impl NamingTable {
 }
 
 /// Generates a mangled name for a type declaration given its base name and the concrete types it is instantiated with.
-fn mangle(base_name: &Identifier, tuple: &[Ty]) -> String {
+fn mangle_ty_declaration(base_name: &Identifier, tuple: &[Ty]) -> String {
     if tuple.is_empty() {
         base_name.name.clone()
     } else {
         let args: Vec<String> = tuple.iter().map(mangle_ty).collect();
         format!("{}[{}]", base_name.name, args.join(", "))
+    }
+}
+
+/// Generates a mangled name for a function declaration given its base name and the concrete types it is instantiated with.
+fn mangle_def_declaration(base_name: &Identifier, tuple: &[Ty]) -> String {
+    if tuple.is_empty() {
+        base_name.name.clone()
+    } else {
+        let args: Vec<String> = tuple.iter().map(mangle_ty).collect();
+        format!("{}_{}", base_name.name, args.join("_"))
     }
 }
 
