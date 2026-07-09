@@ -69,7 +69,13 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                let label = call.label.print_to_string(None) + "_";
+                let label = call
+                    .label
+                    .print_to_string(None)
+                    .replace('[', "_")
+                    .replace(", ", "_")
+                    .replace(']', "")
+                    + "_";
                 let comment = call.label.print_to_string(None) + "(...)";
                 instructions.push(Backend::comment(comment));
 
