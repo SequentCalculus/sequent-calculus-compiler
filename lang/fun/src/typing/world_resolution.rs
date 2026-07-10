@@ -1,4 +1,4 @@
-use biodivine_lib_bdd::{Bdd, BddVariable, BddVariableSet, BddVariableSetBuilder};
+use biodivine_lib_bdd::{Bdd, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder};
 use std::collections::HashMap;
 
 use crate::typing::{Error, inference::IncompatibleChoices};
@@ -126,6 +126,20 @@ fn create_fail_clauses(
         .fold(clauses[0].clone(), |acc, next| acc.and(next))
 }
 
+fn bddvaluation_2_choices(solution: BddValuation, mapping: &BddMapping) -> Vec<(u32, usize)> {
+    solution
+        .to_values()
+        .into_iter()
+        .filter(|(_, truth_value)| *truth_value)
+        .map(|(bdd_var, _)| {
+            *mapping
+                .variable_resolving
+                .get(&bdd_var)
+                .expect("BDDVariable could not be found")
+        })
+        .collect()
+}
+
 pub fn resolve_worlds(
     choices: &Vec<PossibleChoice>,
     incompatible_choices: Vec<IncompatibleChoices>,
@@ -139,6 +153,29 @@ pub fn resolve_worlds(
     let possible_worlds = combined_formular.cardinality();
 
     if possible_worlds > 1.0 {
+        let possible_choices: Vec<Vec<(u32, usize)>> = combined_formular
+            .sat_valuations()
+            .map(|valuation| bddvaluation_2_choices(valuation, &mapping))
+            .collect();
+
+        let mut choice_maps: Vec<HashMap<u32, usize>> = possible_choices
+            .into_iter()
+            .map(HashMap::from_iter)
+            .collect();
+
+        let first_map = choice_maps[0].clone();
+
+        for (choice_id, signature_idx) in first_map {
+            if choice_maps
+                .iter()
+                .all(|mapping| mapping.get(&choice_id) == Some(&signature_idx))
+            {
+                for mapping in choice_maps.iter_mut() {
+                    mapping.remove(&choice_id);
+                }
+            }
+        }
+
         return Err(Error::MoreThanOneWorld {
             number_worlds: possible_worlds as u32,
         });
@@ -147,21 +184,7 @@ pub fn resolve_worlds(
     }
 
     if let Some(solution) = combined_formular.sat_valuations().next() {
-        let selected_variables: Vec<(BddVariable, bool)> = solution
-            .to_values()
-            .into_iter()
-            .filter(|(_, truth_value)| *truth_value)
-            .collect();
-
-        let selected_choices = selected_variables
-            .iter()
-            .map(|(bdd_var, _)| {
-                *mapping
-                    .variable_resolving
-                    .get(bdd_var)
-                    .expect("BDDVariable could not be found")
-            })
-            .collect();
+        let selected_choices = bddvaluation_2_choices(solution, &mapping);
 
         Ok(selected_choices)
     } else {

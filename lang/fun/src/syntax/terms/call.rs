@@ -70,7 +70,7 @@ impl Inference for Call {
             .get(&self.name)
         {
             Some(signatures) if signatures.is_empty() => {
-                panic!("encountered a function definition with no signature")
+                panic!("encountered a function definition with no signature(s)")
             }
             Some(signatures) if signatures.len() == 1 => {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
@@ -117,72 +117,119 @@ impl Inference for Call {
 
                 self.choice_id = Some(new_choice_id);
 
+                // creating type variables for each argument.
+                // They are later used to link them and the choice to the parameter type of the overloaded function
+                let mut arg_type_vars = Vec::with_capacity(self.args.entries.len());
+
+                for _ in 0..self.args.entries.len() {
+                    let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
+                    arg_type_vars.push(new_type_var.clone());
+                }
+
                 // the constraints are created for every choice, and marked with the choice made
-                for (signature_idx, signature) in signatures.clone().iter().enumerate() {
-                    let (mut types, ret_ty) = signature.clone();
+                for (signature_idx, (types, ret_ty)) in signatures.clone().iter().enumerate() {
+                    // marking impossible overloads because of the arity mismatch
+                    if self.args.entries.len() != types.bindings.len() {
+                        constraint_bank
+                            .constraints
+                            .push(Constraint::mk_impossible_world(
+                                new_choice_id,
+                                signature_idx,
+                                Error::WrongNumberOfArguments {
+                                    span: self.span,
+                                    expected: types.bindings.len(),
+                                    got: self.args.entries.len(),
+                                },
+                            ));
+                        continue;
+                    }
+
+                    // each parameter binding is now linked to the type variable of the argument together
+                    // with the choice made by selecting this overload of the function
+                    for ((arg, expected_type), arg_ty) in self
+                        .args
+                        .entries
+                        .iter_mut()
+                        .zip(types.bindings.iter())
+                        .zip(arg_type_vars.clone())
+                    {
+                        // special case for covariables
+                        if expected_type.chi == Cns {
+                            match arg {
+                                Term::XVar(variable) => {
+                                    debug_assert!(
+                                        variable.chi.is_some(),
+                                        "The variable {} has no Chirality selected",
+                                        variable.var
+                                    );
+                                    if variable.chi == Some(Prd) {
+                                        constraint_bank.constraints.push(
+                                            Constraint::mk_impossible_world(
+                                                new_choice_id,
+                                                signature_idx,
+                                                Error::ExpectedCovariableGotTerm {
+                                                    span: self.span,
+                                                },
+                                            ),
+                                        );
+                                    } else {
+                                        let found_ty =
+                                            context.lookup_covar(&variable.var, &variable.span)?;
+
+                                        constraint_bank.constraints.push(
+                                            Constraint::mk_single_choice(
+                                                expected_type.ty.clone(),
+                                                found_ty.clone(),
+                                                new_choice_id,
+                                                signature_idx,
+                                            ),
+                                        );
+                                    }
+                                }
+                                _ => {
+                                    constraint_bank.constraints.push(
+                                        Constraint::mk_impossible_world(
+                                            new_choice_id,
+                                            signature_idx,
+                                            Error::ExpectedCovariableGotTerm { span: self.span },
+                                        ),
+                                    );
+                                }
+                            }
+                        } else {
+                            // if the function does not expect a covar, simply link the paramter and argument type
+                            // together with the choice of the function
+                            constraint_bank
+                                .constraints
+                                .push(Constraint::mk_single_choice(
+                                    arg_ty.clone(),
+                                    expected_type.ty.clone(),
+                                    new_choice_id,
+                                    signature_idx,
+                                ));
+                        }
+                    }
 
                     // the return type is linked to the choice
                     constraint_bank
                         .constraints
                         .push(Constraint::mk_single_choice(
                             ty_var.clone(),
-                            ret_ty,
+                            ret_ty.clone(),
                             new_choice_id,
                             signature_idx,
                         ));
+                }
 
-                    // the argument types are replaced by type variables to enable linking the choice to the argument types
-                    for binding in types.bindings.iter_mut() {
-                        let old_type = &binding.ty;
-                        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-                        constraint_bank
-                            .constraints
-                            .push(Constraint::mk_single_choice(
-                                old_type.clone(),
-                                new_type_var.clone(),
-                                new_choice_id,
-                                signature_idx,
-                            ));
-                        binding.ty = new_type_var;
-                    }
-
-                    match args_constraint_equations(
-                        &mut self.args,
-                        &types,
-                        context,
-                        constraint_bank,
-                        self.span,
-                    ) {
-                        Err(Error::WrongNumberOfArguments {
-                            span,
-                            expected,
-                            got,
-                        }) => {
-                            // The wrong number of Arguments Error only indicates that this version of the function won't work,
-                            // others could still work, so the error is catched and marked as an impossible world
-                            constraint_bank
-                                .constraints
-                                .push(Constraint::mk_impossible_world(
-                                    new_choice_id,
-                                    signature_idx,
-                                    Error::WrongNumberOfArguments {
-                                        span,
-                                        expected,
-                                        got,
-                                    },
-                                ));
-                        }
-                        Err(other_err) => {
-                            return Err(other_err);
-                        }
-                        _ => {}
-                    }
+                // finally the constraints of the actual arguments are gather linked to their type variables
+                for (arg, arg_ty) in self.args.entries.iter_mut().zip(arg_type_vars) {
+                    arg.gather_constraints(constraint_bank, context, arg_ty)?;
                 }
 
                 Ok(())
             }
             None => Err(Error::Undefined {
-                span: None,
+                span: Some(self.span),
                 name: self.name.clone(),
             }),
         }
