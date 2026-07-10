@@ -39,4 +39,5 @@ def main(): i64 {
     );
 
     println_i64(totalSum);
+    0
 }
