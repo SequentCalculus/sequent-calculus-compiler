@@ -122,7 +122,7 @@ impl Program {
         // the type mapping is applied on it self, to get the complete transitive hull
         let reference_mapping = type_mapping.clone();
 
-        for (_, ty) in type_mapping.iter_mut() {
+        for ty in type_mapping.values_mut() {
             loop {
                 let var_names = ty.collect_var_names();
 
