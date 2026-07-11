@@ -94,7 +94,7 @@ impl NamingTable {
                 }
 
                 if success && choices_per_param.len() == def.type_params.len() {
-                    let instantiated_tuples = Self::cartesian_product(&choices_per_param);
+                    let instantiated_tuples = cartesian_product(&choices_per_param);
                     for tuple in instantiated_tuples {
                         let mangled = mangle_def_declaration(&def.name, &tuple);
                         names.insert((def.name.clone(), tuple), Identifier::new(mangled));
@@ -104,25 +104,6 @@ impl NamingTable {
         }
 
         Self { names }
-    }
-
-    /// Computes the cartesian product of a list of lists of types.
-    fn cartesian_product(lists: &[Vec<Ty>]) -> Vec<Vec<Ty>> {
-        let mut result = vec![vec![]];
-
-        for list in lists {
-            let mut next_result = Vec::new();
-            for current in &result {
-                for item in list {
-                    let mut new_combination = current.clone();
-                    new_combination.push(item.clone());
-                    next_result.push(new_combination);
-                }
-            }
-            result = next_result;
-        }
-
-        result
     }
 
     /// Looks up the mangled name for a given type and its instantiation.
@@ -137,6 +118,34 @@ impl NamingTable {
                 )
             })
     }
+
+    /// Returns all concrete type instantiation tuples recorded for a given identifier.
+    pub fn instantiations_for(&self, name: &Identifier) -> Vec<Vec<Ty>> {
+        self.names
+            .keys()
+            .filter(|(id, _)| id == name)
+            .map(|(_, tuple)| tuple.clone())
+            .collect()
+    }
+}
+
+/// Computes the cartesian product of a list of lists of types.
+fn cartesian_product(lists: &[Vec<Ty>]) -> Vec<Vec<Ty>> {
+    let mut result = vec![vec![]];
+
+    for list in lists {
+        let mut next_result = Vec::new();
+        for current in &result {
+            for item in list {
+                let mut new_combination = current.clone();
+                new_combination.push(item.clone());
+                next_result.push(new_combination);
+            }
+        }
+        result = next_result;
+    }
+
+    result
 }
 
 /// Generates a mangled name for a type declaration given its base name and the concrete types it is instantiated with.

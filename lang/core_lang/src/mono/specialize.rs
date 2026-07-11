@@ -65,19 +65,19 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
     let data_types = prog
         .data_types
         .iter()
-        .flat_map(|data_decl| specialize_declaration(data_decl, solution, &table))
+        .flat_map(|data_decl| specialize_declaration(data_decl, &table))
         .collect::<Vec<_>>();
 
     let codata_types = prog
         .codata_types
         .iter()
-        .flat_map(|codata_decl| specialize_declaration(codata_decl, solution, &table))
+        .flat_map(|codata_decl| specialize_declaration(codata_decl, &table))
         .collect::<Vec<_>>();
 
     let defs: Vec<_> = prog
         .defs
         .iter()
-        .flat_map(|def| specialize_def(def, solution, &table))
+        .flat_map(|def| specialize_def(def, &table))
         .collect();
 
     Prog {
@@ -91,7 +91,6 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
 /// Specialization of polymorphic type declarations into monomorphic ones
 pub fn specialize_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
-    solution: &Solution,
     table: &NamingTable,
 ) -> Vec<TypeDeclaration<P>> {
     let node = &decl.type_params;
@@ -100,11 +99,10 @@ pub fn specialize_declaration<P: Polarity + Clone>(
         return vec![decl.clone()];
     }
 
-    let Some(tuples) = solution.map.get(node) else {
-        // No instantiation was ever observed for this declaration -- it is
-        // unused in the program and can be dropped from monomorphic Core.
+    let tuples = table.instantiations_for(&decl.name);
+    if tuples.is_empty() {
         return vec![];
-    };
+    }
 
     tuples
         .iter()
@@ -121,7 +119,7 @@ pub fn specialize_declaration<P: Polarity + Clone>(
 }
 
 /// Specialization of polymorphic function definitions into monomorphic ones
-pub fn specialize_def(def: &Def, solution: &Solution, table: &NamingTable) -> Vec<Def> {
+pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
     let node = &def.type_params;
 
     if node.is_empty() {
@@ -139,7 +137,8 @@ pub fn specialize_def(def: &Def, solution: &Solution, table: &NamingTable) -> Ve
         }];
     }
 
-    let Some(tuples) = solution.map.get(node) else {
+    let tuples = table.instantiations_for(&def.name);
+    if tuples.is_empty() {
         // This function is polymorphic but was never instantiated -- it is
         // dead code and can be dropped from monomorphic Core.
         return vec![];
@@ -250,7 +249,7 @@ mod specialize_tests {
         )]));
 
         let table = NamingTable::build(&solution, &[list_decl(), bool_decl()], &[], &[]);
-        let copies = specialize_declaration(&list_decl(), &solution, &table);
+        let copies = specialize_declaration(&list_decl(), &table);
 
         assert_eq!(
             copies.len(),
@@ -284,7 +283,7 @@ mod specialize_tests {
         )]));
 
         let table = NamingTable::build(&solution, &[pair_decl(), bool_decl()], &[], &[]);
-        let copies = specialize_declaration(&pair_decl(), &solution, &table);
+        let copies = specialize_declaration(&pair_decl(), &table);
 
         assert_eq!(
             copies.len(),
@@ -359,8 +358,8 @@ mod specialize_tests {
 
         let table = NamingTable::build(&solution, &[pair_decl(), list_decl()], &[], &[]);
 
-        let pair_copies = specialize_declaration(&pair_decl(), &solution, &table);
-        let list_copies = specialize_declaration(&list_decl(), &solution, &table);
+        let pair_copies = specialize_declaration(&pair_decl(), &table);
+        let list_copies = specialize_declaration(&list_decl(), &table);
 
         assert_eq!(pair_copies.len(), 1);
         assert_eq!(list_copies.len(), 1);
@@ -480,7 +479,7 @@ mod specialize_tests {
         )]));
 
         let table = NamingTable::build(&solution, &[list_decl()], &[], &[main_def.clone()]);
-        let copies = specialize_def(&main_def, &solution, &table);
+        let copies = specialize_def(&main_def, &table);
 
         // Exactly one copy of main, no multiplication.
         assert_eq!(copies.len(), 1);
@@ -516,7 +515,7 @@ mod specialize_tests {
         )]));
 
         let table = NamingTable::build(&solution, &[bool_decl()], &[], &[identity_def()]);
-        let copies = specialize_def(&identity_def(), &solution, &table);
+        let copies = specialize_def(&identity_def(), &table);
 
         assert_eq!(copies.len(), 2, "expected one copy per instantiation");
 
@@ -570,7 +569,7 @@ mod specialize_tests {
         // Empty solution: no instantiation was ever observed for this def.
         let solution = Solution::from(HashMap::new());
         let table = NamingTable::build(&solution, &[], &[], &[unused.clone()]);
-        let copies = specialize_def(&unused, &solution, &table);
+        let copies = specialize_def(&unused, &table);
 
         assert!(
             copies.is_empty(),
@@ -618,8 +617,8 @@ mod specialize_tests {
 
         let table = NamingTable::build(&solution, &[list_decl()], &[], &[singleton.clone()]);
 
-        let list_copies = specialize_declaration(&list_decl(), &solution, &table);
-        let def_copies = specialize_def(&singleton, &solution, &table);
+        let list_copies = specialize_declaration(&list_decl(), &table);
+        let def_copies = specialize_def(&singleton, &table);
 
         assert_eq!(list_copies.len(), 1);
         assert_eq!(def_copies.len(), 1);
@@ -693,7 +692,7 @@ mod specialize_tests {
         )]));
 
         let table = NamingTable::build(&solution, &[bool_decl()], &[], &[swap.clone()]);
-        let copies = specialize_def(&swap, &solution, &table);
+        let copies = specialize_def(&swap, &table);
 
         assert_eq!(
             copies.len(),
@@ -848,8 +847,8 @@ mod specialize_tests {
 
         let table = NamingTable::build(&solution, &[], &[], &[identity_def(), wrap.clone()]);
 
-        let identity_copies = specialize_def(&identity_def(), &solution, &table);
-        let wrap_copies = specialize_def(&wrap, &solution, &table);
+        let identity_copies = specialize_def(&identity_def(), &table);
+        let wrap_copies = specialize_def(&wrap, &table);
 
         assert_eq!(identity_copies.len(), 1);
         assert_eq!(wrap_copies.len(), 1);
