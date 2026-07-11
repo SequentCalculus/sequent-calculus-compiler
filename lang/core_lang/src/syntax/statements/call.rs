@@ -4,8 +4,8 @@ use printer::*;
 
 use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
-use crate::mono::constraints::FlowConstraint;
 use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::constraints::collect_type_flow;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
@@ -19,7 +19,6 @@ use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
-use std::vec;
 
 /// This struct defines the call of a top-level function in Core. It consists of the name of the
 /// top-level function to call, the arguments, and the type.
@@ -150,12 +149,7 @@ impl ConstraintCollector for Call {
             return Err(MonoError::UndefinedFunction(self.name.name.clone()));
         };
 
-        for (param, arg) in def.type_params.iter().zip(&self.type_args.args) {
-            constraints.insert(FlowConstraint {
-                from: vec![arg.clone()],
-                to: vec![param.clone()],
-            });
-        }
+        constraints.extend(collect_type_flow(&self.type_args.args, &def.type_params)?);
 
         Ok(constraints)
     }

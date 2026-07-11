@@ -58,48 +58,6 @@ impl NamingTable {
                     let mangled = mangle_def_declaration(&def.name, tuple);
                     names.insert((def.name.clone(), tuple.clone()), Identifier::new(mangled));
                 }
-            } else {
-                // Fallback: The solver may decompose vector constraints into scalar flows,
-                // causing the combined vector of type parameters (e.g., `[A, B]`) to be
-                // missing from the solution map. Instead, the solved concrete types are
-                // stored independently under their respective singleton keys (e.g., `[A]` and `[B]`).
-                //
-                // To resolve this, we look up the solutions for each type parameter individually.
-                // We then compute the Cartesian product of these singleton solutions to
-                // reconstruct all possible concrete type tuples. While this approach may
-                // introduce over-approximation (generating unused type combinations), it
-                // guarantees completeness and ensures that all actual call-site instantiations
-                // are safely covered in the naming table.
-                let mut choices_per_param: Vec<Vec<Ty>> = Vec::new();
-                let mut success = true;
-
-                for param in &def.type_params {
-                    let singleton_key = vec![param.clone()];
-
-                    if let Some(ground_singletons) = solution.map.get(&singleton_key) {
-                        let tys: Vec<Ty> = ground_singletons
-                            .iter()
-                            .filter_map(|v| v.first().cloned())
-                            .collect();
-
-                        if tys.is_empty() {
-                            success = false;
-                            break;
-                        }
-                        choices_per_param.push(tys);
-                    } else {
-                        success = false;
-                        break;
-                    }
-                }
-
-                if success && choices_per_param.len() == def.type_params.len() {
-                    let instantiated_tuples = cartesian_product(&choices_per_param);
-                    for tuple in instantiated_tuples {
-                        let mangled = mangle_def_declaration(&def.name, &tuple);
-                        names.insert((def.name.clone(), tuple), Identifier::new(mangled));
-                    }
-                }
             }
         }
 
@@ -127,25 +85,6 @@ impl NamingTable {
             .map(|(_, tuple)| tuple.clone())
             .collect()
     }
-}
-
-/// Computes the cartesian product of a list of lists of types.
-fn cartesian_product(lists: &[Vec<Ty>]) -> Vec<Vec<Ty>> {
-    let mut result = vec![vec![]];
-
-    for list in lists {
-        let mut next_result = Vec::new();
-        for current in &result {
-            for item in list {
-                let mut new_combination = current.clone();
-                new_combination.push(item.clone());
-                next_result.push(new_combination);
-            }
-        }
-        result = next_result;
-    }
-
-    result
 }
 
 /// Generates a mangled name for a type declaration given its base name and the concrete types it is instantiated with.
