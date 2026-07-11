@@ -6,9 +6,16 @@ use crate::{
 };
 
 /// A mapping from polymorphic type parameters to their corresponding concrete types as string representations after monomorphization.
+///
+/// This is the single source of truth for specialization: once built, it is
+/// the only structure the specialization passes need. The [`Solution`] used
+/// to build it is not required afterwards.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamingTable {
     names: HashMap<(Identifier, Vec<Ty>), Identifier>,
+    /// All ground instantiation tuples recorded for a given base identifier,
+    /// in the same order the solution produced them.
+    instantiations: HashMap<Identifier, Vec<Vec<Ty>>>,
 }
 
 impl NamingTable {
@@ -23,45 +30,80 @@ impl NamingTable {
         codata_decls: &[CodataDeclaration],
         defs: &[Def],
     ) -> Self {
-        let mut names = HashMap::new();
+        let mut table = NamingTable {
+            names: HashMap::new(),
+            instantiations: HashMap::new(),
+        };
 
         for decl in data_decls {
-            if decl.type_params.is_empty() {
-                // If there are no type parameters, we can just use the original name
-                names.insert((decl.name.clone(), vec![]), decl.name.clone());
-            } else if let Some(tuples) = solution.map.get(&decl.type_params) {
-                for tuple in tuples {
-                    let mangled = mangle_ty_declaration(&decl.name, tuple);
-                    names.insert((decl.name.clone(), tuple.clone()), Identifier::new(mangled));
-                }
-            }
+            table.register(
+                &decl.name,
+                &decl.type_params,
+                solution,
+                mangle_ty_declaration,
+            );
         }
-
         for decl in codata_decls {
-            if decl.type_params.is_empty() {
-                // If there are no type parameters, we can just use the original name
-                names.insert((decl.name.clone(), vec![]), decl.name.clone());
-            } else if let Some(tuples) = solution.map.get(&decl.type_params) {
-                for tuple in tuples {
-                    let mangled = mangle_ty_declaration(&decl.name, tuple);
-                    names.insert((decl.name.clone(), tuple.clone()), Identifier::new(mangled));
-                }
-            }
+            table.register(
+                &decl.name,
+                &decl.type_params,
+                solution,
+                mangle_ty_declaration,
+            );
         }
-
         for def in defs {
-            if def.type_params.is_empty() {
-                // If there are no type parameters, we can just use the original name
-                names.insert((def.name.clone(), vec![]), def.name.clone());
-            } else if let Some(tuples) = solution.map.get(&def.type_params) {
-                for tuple in tuples {
-                    let mangled = mangle_def_declaration(&def.name, tuple);
-                    names.insert((def.name.clone(), tuple.clone()), Identifier::new(mangled));
-                }
-            }
+            table.register(
+                &def.name,
+                &def.type_params,
+                solution,
+                mangle_def_declaration,
+            );
         }
 
-        Self { names }
+        table
+    }
+
+    /// Registers every instantiation of a single declaration (data, codata,
+    /// or def) into both `names` and `instantiations` at once.
+    ///
+    /// If `type_params` is empty, the declaration is already monomorphic and
+    /// keeps its original name under the empty tuple. Otherwise, every
+    /// ground tuple recorded in `solution` for this declaration's node is
+    /// mangled via `mangle` and inserted into both maps.
+    fn register(
+        &mut self,
+        name: &Identifier,
+        type_params: &[Identifier],
+        solution: &Solution,
+        mangle: fn(&Identifier, &[Ty]) -> String,
+    ) {
+        if type_params.is_empty() {
+            // Monomorphic by construction: keep the original name under the
+            // empty tuple, and record that single "instantiation" so
+            // instantiations_for still returns something sensible.
+            self.names.insert((name.clone(), vec![]), name.clone());
+            self.instantiations
+                .entry(name.clone())
+                .or_default()
+                .push(vec![]);
+            return;
+        }
+
+        let Some(tuples) = solution.map.get(type_params) else {
+            // Never instantiated, no entries at all, so instantiations_for
+            // will correctly return an empty Vec via unwrap_or_default.
+            return;
+        };
+
+        for tuple in tuples {
+            let mangled = mangle(name, tuple);
+            self.names
+                .insert((name.clone(), tuple.clone()), Identifier::new(mangled));
+            self.instantiations
+                .entry(name.clone())
+                .or_default()
+                .push(tuple.clone());
+        }
     }
 
     /// Looks up the mangled name for a given type and its instantiation.

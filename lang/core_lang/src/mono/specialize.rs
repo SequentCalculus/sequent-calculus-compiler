@@ -99,12 +99,8 @@ pub fn specialize_declaration<P: Polarity + Clone>(
         return vec![decl.clone()];
     }
 
-    let tuples = table.instantiations_for(&decl.name);
-    if tuples.is_empty() {
-        return vec![];
-    }
-
-    tuples
+    table
+        .instantiations_for(&decl.name)
         .iter()
         .map(|tuple| {
             let ctx = SpecializeContext::with_subst(table, node, tuple);
@@ -137,18 +133,10 @@ pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
         }];
     }
 
-    let tuples = table.instantiations_for(&def.name);
-    if tuples.is_empty() {
-        // This function is polymorphic but was never instantiated -- it is
-        // dead code and can be dropped from monomorphic Core.
-        return vec![];
-    };
-
-    tuples
+    table
+        .instantiations_for(&def.name)
         .iter()
         .map(|tuple| {
-            // For each observed instantiation, produce one specialized copy
-            // with the type parameters substituted throughout body and context.
             let ctx = SpecializeContext::with_subst(table, node, tuple);
             Def {
                 name: table.lookup(&def.name, tuple).clone(),
