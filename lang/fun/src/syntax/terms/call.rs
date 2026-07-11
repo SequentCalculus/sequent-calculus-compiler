@@ -11,10 +11,13 @@ use crate::typing::*;
 use std::collections::HashSet;
 
 /// This struct defines the call of a top-level function in Fun. It consists of the name of the
-/// top-level function to call, the arguments, and after typechecking also the inferred type.
+/// top-level function to call, the type arguments, the arguments, and after typechecking also the inferred type.
 ///
-/// Example:
+/// Examples:
+/// 
 /// `fac(10)`, calls the top-level function `fac` with argument `10`.
+/// 
+/// `id[i64](x)` calls the top-level function `id` with type argument `i64` and argument `x`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Call {

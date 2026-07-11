@@ -14,7 +14,7 @@ use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, and the body statement. The
+/// (unique in the program), optional type parameters, a typing context defining the parameters, and the body statement. The
 /// type parameter `S` determines whether this is the unfocused variant (if `S` is instantiated
 /// with [`Statement`], which is the default) or the focused variant (if `S` is instantiated with
 /// [`FsStatement`]).

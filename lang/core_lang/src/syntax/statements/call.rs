@@ -21,7 +21,7 @@ use crate::typing::errors::TypeError;
 use std::collections::BTreeSet;
 
 /// This struct defines the call of a top-level function in Core. It consists of the name of the
-/// top-level function to call, the arguments, and the type.
+/// top-level function to call,  the type arguments, the arguments, and the type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     /// The name of the top-level function being called

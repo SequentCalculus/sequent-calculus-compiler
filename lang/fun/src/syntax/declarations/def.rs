@@ -9,12 +9,13 @@ use crate::syntax::*;
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, a return type, and the body
+/// (unique in the program), optional type parameters, a typing context defining the parameters, a return type, and the body
 /// term.
 ///
-/// Example:
+/// Examples:
 /// ```text
 /// def fac(n: i64): i64 { if n == 0 { 1 } else { n * fac(n - 1) } }
+/// def id[A](x: A): A { x }
 /// ```
 /// The top-level function named `fac` has a single (producer) parameter of type `i64` and returns
 /// an `i64`. Its body is contained within `{...}`
