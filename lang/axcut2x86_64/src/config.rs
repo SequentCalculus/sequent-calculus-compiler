@@ -94,6 +94,9 @@ pub const RETURN1: Register = Register(4);
 /// The second register in which values are returned according to the standard calling convention.
 pub const RETURN2: Register = Register(5);
 
+/// The last available register.
+pub const LAST: Register = Register(REGISTER_NUM - 1);
+
 /// The variables that do not fit ito registers are spilled to memory. Each spill spot is
 /// represented by a number between `0` and [`SPILL_NUM`]` - 1`. As we do not make use of the stack
 /// otherwise, we use it for spilling.

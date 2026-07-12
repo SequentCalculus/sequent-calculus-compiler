@@ -3,6 +3,7 @@
 use super::config::{
     FIELDS_PER_BLOCK, FREE, HEAP, Register, SPILL_SPACE, STACK, arg, field_offset,
 };
+use super::memory::acquire_block_slow_path;
 use crate::code::Code;
 
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
@@ -108,6 +109,7 @@ pub fn into_x86_64_routine(prog: AssemblyProg<Code>) -> AssemblyProg<Code> {
     all_instructions.push(Code::COMMENT("actual code".to_string()));
     all_instructions.append(&mut instructions);
     all_instructions.append(&mut cleanup());
+    all_instructions.append(&mut acquire_block_slow_path());
     AssemblyProg {
         instructions: all_instructions,
         number_of_arguments,

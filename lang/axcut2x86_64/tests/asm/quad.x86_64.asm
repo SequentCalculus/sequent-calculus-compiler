@@ -48,87 +48,32 @@ main_:
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
-    je lab12
+    je lab4
     ; ####initialize refcount of just acquired block
     mov qword [rsi + 0], 0
-    jmp lab13
+    jmp lab5
 
-lab12:
+lab4:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
-    je lab10
-    ; ####mark linear free list empty
-    mov qword [rbx + 0], 0
-    ; ####erase children of next block
-    ; #####check child 1 for erasure
-    mov rcx, [rbx + 16]
-    cmp rcx, 0
-    je lab3
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab1
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab2
+    je lab2
+    ; ###(2) jump to slow path
+    lea r15, [rel return_from_slow_path1]
+    jmp acquire_block_slow_path
 
-lab1:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
+return_from_slow_path1:
+    jmp lab3
 
 lab2:
-
-lab3:
-    ; #####check child 2 for erasure
-    mov rcx, [rbx + 32]
-    cmp rcx, 0
-    je lab6
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab4
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab5
-
-lab4:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab5:
-
-lab6:
-    ; #####check child 3 for erasure
-    mov rcx, [rbx + 48]
-    cmp rcx, 0
-    je lab9
-    ; ######check refcount
-    cmp qword [rcx + 0], 0
-    je lab7
-    ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
-    jmp lab8
-
-lab7:
-    ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
-    mov rbp, rcx
-
-lab8:
-
-lab9:
-    jmp lab11
-
-lab10:
     ; ###(3) fall back to bump allocation
     mov rbp, rbx
     add rbp, 64
 
-lab11:
+lab3:
 
-lab13:
+lab5:
     ; ##store link to previous block
     mov [rbx + 48], rsi
     ; ##store values
@@ -142,17 +87,114 @@ lab13:
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 0]
     cmp rbx, 0
-    je lab25
+    je lab9
     ; ####initialize refcount of just acquired block
     mov qword [rax + 0], 0
-    jmp lab26
+    jmp lab10
 
-lab25:
+lab9:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
     mov rbp, [rbp + 0]
     cmp rbp, 0
-    je lab23
+    je lab7
+    ; ###(2) jump to slow path
+    lea r15, [rel return_from_slow_path6]
+    jmp acquire_block_slow_path
+
+return_from_slow_path6:
+    jmp lab8
+
+lab7:
+    ; ###(3) fall back to bump allocation
+    mov rbp, rbx
+    add rbp, 64
+
+lab8:
+
+lab10:
+    ; #load tag
+    mov rdx, 0
+    ; switch q_5 \{ ... \};
+    ; #there is only one clause, so we can just fall through
+
+Quad_11:
+
+Quad_11_Q:
+    ; #load from memory
+    ; ##check refcount
+    cmp qword [rax + 0], 0
+    je lab12
+    ; ##either decrement refcount and share children...
+    add qword [rax + 0], -1
+    ; ###load link to next block
+    mov rsi, [rax + 48]
+    ; ###load values
+    mov rdx, [rax + 40]
+    ; ###load values
+    mov r11, [rsi + 56]
+    mov r9, [rsi + 40]
+    mov rdi, [rsi + 24]
+    jmp lab13
+
+lab12:
+    ; ##... or release blocks onto linear free list when loading
+    ; ###release block
+    mov [rax + 0], rbx
+    mov rbx, rax
+    ; ###load link to next block
+    mov rsi, [rax + 48]
+    ; ###load values
+    mov rdx, [rax + 40]
+    ; ###release block
+    mov [rsi + 0], rbx
+    mov rbx, rsi
+    ; ###load values
+    mov r11, [rsi + 56]
+    mov r9, [rsi + 40]
+    mov rdi, [rsi + 24]
+
+lab13:
+    ; lit z_10 <- 7;
+    mov r13, 7
+    ; e_11 <- d_6 + z_10;
+    mov r15, rdx
+    add r15, r13
+    ; println_i64 e_11;
+    ; #save caller-save registers
+    push rdx
+    push rdi
+    push r9
+    push r11
+    sub rsp, 8
+    ; #move argument into place
+    mov rdi, r15
+    call println_i64
+    ; #restore caller-save registers
+    add rsp, 8
+    pop r11
+    pop r9
+    pop rdi
+    pop rdx
+    ; lit ret_12 <- 0;
+    mov qword [rsp + 2024], 0
+    ; exit ret_12
+    mov rax, [rsp + 2024]
+    jmp cleanup
+
+cleanup:
+    ; free space for register spills
+    add rsp, 2048
+    ; restore registers
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+    ret
+
+acquire_block_slow_path:
     ; ####mark linear free list empty
     mov qword [rbx + 0], 0
     ; ####erase children of next block
@@ -213,93 +255,4 @@ lab20:
 lab21:
 
 lab22:
-    jmp lab24
-
-lab23:
-    ; ###(3) fall back to bump allocation
-    mov rbp, rbx
-    add rbp, 64
-
-lab24:
-
-lab26:
-    ; #load tag
-    mov rdx, 0
-    ; switch q_5 \{ ... \};
-    ; #there is only one clause, so we can just fall through
-
-Quad_27:
-
-Quad_27_Q:
-    ; #load from memory
-    ; ##check refcount
-    cmp qword [rax + 0], 0
-    je lab28
-    ; ##either decrement refcount and share children...
-    add qword [rax + 0], -1
-    ; ###load link to next block
-    mov rsi, [rax + 48]
-    ; ###load values
-    mov rdx, [rax + 40]
-    ; ###load values
-    mov r11, [rsi + 56]
-    mov r9, [rsi + 40]
-    mov rdi, [rsi + 24]
-    jmp lab29
-
-lab28:
-    ; ##... or release blocks onto linear free list when loading
-    ; ###release block
-    mov [rax + 0], rbx
-    mov rbx, rax
-    ; ###load link to next block
-    mov rsi, [rax + 48]
-    ; ###load values
-    mov rdx, [rax + 40]
-    ; ###release block
-    mov [rsi + 0], rbx
-    mov rbx, rsi
-    ; ###load values
-    mov r11, [rsi + 56]
-    mov r9, [rsi + 40]
-    mov rdi, [rsi + 24]
-
-lab29:
-    ; lit z_10 <- 7;
-    mov r13, 7
-    ; e_11 <- d_6 + z_10;
-    mov r15, rdx
-    add r15, r13
-    ; println_i64 e_11;
-    ; #save caller-save registers
-    push rdx
-    push rdi
-    push r9
-    push r11
-    sub rsp, 8
-    ; #move argument into place
-    mov rdi, r15
-    call println_i64
-    ; #restore caller-save registers
-    add rsp, 8
-    pop r11
-    pop r9
-    pop rdi
-    pop rdx
-    ; lit ret_12 <- 0;
-    mov qword [rsp + 2024], 0
-    ; exit ret_12
-    mov rax, [rsp + 2024]
-    jmp cleanup
-
-cleanup:
-    ; free space for register spills
-    add rsp, 2048
-    ; restore registers
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop rbp
-    pop rbx
-    ret
+    jmp r15

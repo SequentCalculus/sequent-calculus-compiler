@@ -71,3 +71,66 @@ cleanup:
     pop rbp
     pop rbx
     ret
+
+acquire_block_slow_path:
+    ; ####mark linear free list empty
+    mov qword [rbx + 0], 0
+    ; ####erase children of next block
+    ; #####check child 1 for erasure
+    mov rcx, [rbx + 16]
+    cmp rcx, 0
+    je lab3
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab1
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab2
+
+lab1:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab2:
+
+lab3:
+    ; #####check child 2 for erasure
+    mov rcx, [rbx + 32]
+    cmp rcx, 0
+    je lab6
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab4
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab5
+
+lab4:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab5:
+
+lab6:
+    ; #####check child 3 for erasure
+    mov rcx, [rbx + 48]
+    cmp rcx, 0
+    je lab9
+    ; ######check refcount
+    cmp qword [rcx + 0], 0
+    je lab7
+    ; ######either decrement refcount ...
+    add qword [rcx + 0], -1
+    jmp lab8
+
+lab7:
+    ; ######... or add block to lazy free list
+    mov [rcx + 0], rbp
+    mov rbp, rcx
+
+lab8:
+
+lab9:
+    jmp r15

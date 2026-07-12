@@ -34,8 +34,9 @@
 use super::Backend;
 use super::code::{Code, compare_immediate};
 use super::config::{
-    FIELDS_PER_BLOCK, FREE, HEAP, Immediate, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
-    SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, field_offset, stack_offset,
+    FIELDS_PER_BLOCK, FREE, HEAP, Immediate, LAST, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET,
+    REGISTER_NUM, Register, SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, field_offset,
+    stack_offset,
 };
 
 use TemporaryNumber::{Fst, Snd};
@@ -90,24 +91,10 @@ fn if_zero_then_else(
     instructions.push(Code::LAB(fresh_label_else));
 }
 
-/// This function acquires a memory block for a newly allocated object. To do so, we use the memory
-/// block pointed to by [`super::config::HEAP`] and afterwards restore the invariant that
-/// [`super::config::HEAP`] always points to a free block of memory, with one of the following
-/// possibilities.
-/// 1) If the block just acquired has in its first slot a non-zero pointer to another element,
-///    i.e., the linear free list is not empty, then that next element is used.
-/// 2) Otherwise, if the lazy free list is not empty, which is indicated by the first slot of the
-///    block pointed to by [`super::config::FREE`] containing a non-zero pointer to the next block,
-///    we use the block currently pointed to by [`super::config::FREE`] for [`super::config::HEAP`]
-///    and make [`super::config::FREE`] point to the next block. The fields of the block now
-///    pointed to by [`super::config::HEAP`] have to be erased to make the block directly usable.
-/// 3) Otherwise, the first slot of the memory block pointed to by [`super::config::FREE`] is zero,
-///    which means that the memory block is part of the big chunk of so far unused memory. In this
-///    case we fall back to bump allocation from this big chunk.
-/// - `new_block` is the temporary into which we acquire the new block.
-/// - `instructions` is the list of instructions to which the new instructions are appended.
-#[allow(clippy::vec_init_then_push)]
-fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
+/// This function generates code for the slow path of acquiring a block, where the lazy free list is
+/// checked for blocks (see 2) in [`acquire_block`]). This slow part is outlined to keep the code
+/// size smaller.
+pub fn acquire_block_slow_path() -> Vec<Code> {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
@@ -119,10 +106,54 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
         }
     }
 
+    let mut instructions = Vec::with_capacity(64);
+    instructions.push(Code::LAB("acquire_block_slow_path".to_string()));
+    // at this point `HEAP` points to the block which was the first element of the non-empty lazy
+    // free list, so its first field contained a pointer to the next block in that list; we now
+    // store a zero there to indicate that the linear free list does not contain further blocks
+    instructions.push(Code::COMMENT("####mark linear free list empty".to_string()));
+    instructions.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET, 0.into()));
+    instructions.push(Code::COMMENT(
+        "####erase children of next block".to_string(),
+    ));
+    erase_fields(HEAP, &mut instructions);
+
+    Backend::jump(Temporary::Register(LAST), &mut instructions);
+
+    instructions
+}
+
+/// This function acquires a memory block for a newly allocated object. To do so, we use the memory
+/// block pointed to by [`super::config::HEAP`] and afterwards restore the invariant that
+/// [`super::config::HEAP`] always points to a free block of memory, with one of the following
+/// possibilities.
+/// 1) If the block just acquired has in its first slot a non-zero pointer to another element,
+///    i.e., the linear free list is not empty, then that next element is used.
+/// 2) Otherwise, if the lazy free list is not empty, which is indicated by the first slot of the
+///    block pointed to by [`super::config::FREE`] containing a non-zero pointer to the next block,
+///    we use the block currently pointed to by [`super::config::FREE`] for [`super::config::HEAP`]
+///    and make [`super::config::FREE`] point to the next block. The fields of the block now
+///    pointed to by [`super::config::HEAP`] have to be erased to make the block directly usable.
+///    This slow path is outlined to the end of the code to keep the code size smaller.
+/// 3) Otherwise, the first slot of the memory block pointed to by [`super::config::FREE`] is zero,
+///    which means that the memory block is part of the big chunk of so far unused memory. In this
+///    case we fall back to bump allocation from this big chunk.
+/// - `new_block` is the temporary into which we acquire the new block.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+#[allow(clippy::vec_init_then_push)]
+fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
+    // for returning from the slow path getting the next free memory block, we use the last register
+    let mut last_register_is_used = false;
+
     // we use the block pointed to by heap
     match new_block {
         Temporary::Register(new_block_register) => {
             instructions.push(Code::MOV(new_block_register, HEAP));
+
+            // check if the last register is in use
+            if new_block_register.0 >= REGISTER_NUM - 1 {
+                last_register_is_used = true;
+            }
         }
         Temporary::Spill(new_block_position) => {
             // this moves the memory block both to `TEMP` and to its spill position for better
@@ -130,6 +161,9 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
             // slow path
             instructions.push(Code::MOV(TEMP, HEAP));
             instructions.push(Code::MOVS(HEAP, STACK, stack_offset(new_block_position)));
+
+            // the last register is in use
+            last_register_is_used = true;
         }
     }
 
@@ -152,19 +186,27 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
     then_branch_free.push(Code::MOV(FREE, HEAP));
     then_branch_free.push(Code::ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
 
-    // ... and one for possibility 2) in the else branch
-    let mut else_branch_free = Vec::with_capacity(64);
-    //// at this point `HEAP` points to the block which was the first element of the non-empty lazy
-    //// free list, so its first field contained a pointer to the next block in that list; we now
-    //// store a zero there to indicate that the linear free list does not contain further blocks
-    else_branch_free.push(Code::COMMENT("####mark linear free list empty".to_string()));
-    else_branch_free.push(Code::MOVIM(HEAP, NEXT_ELEMENT_OFFSET, 0.into()));
-    else_branch_free.push(Code::COMMENT(
-        "####erase children of next block".to_string(),
-    ));
-    erase_fields(HEAP, &mut else_branch_free);
+    // ... and one for possibility 2) in the else branch: the slow path
+    let mut else_branch_free = Vec::with_capacity(8);
+    else_branch_free.push(Code::COMMENT("###(2) jump to slow path".to_string()));
+    let fresh_return_label = format!("return_from_slow_path{}", fresh_label());
+    // if the last register is in use, we evacuate it ...
+    if last_register_is_used {
+        else_branch_free.push(Code::MOVS(LAST, STACK, stack_offset(SPILL_TEMP)));
+    }
+    Backend::load_label(
+        Temporary::Register(LAST),
+        fresh_return_label.clone(),
+        &mut else_branch_free,
+    );
+    Backend::jump_label("acquire_block_slow_path".to_string(), &mut else_branch_free);
+    else_branch_free.push(Code::LAB(fresh_return_label));
+    // ... and restore it after the slow path
+    if last_register_is_used {
+        else_branch_free.push(Code::MOVL(LAST, STACK, stack_offset(SPILL_TEMP)));
+    }
 
-    let mut then_branch = Vec::with_capacity(64);
+    let mut then_branch = Vec::with_capacity(16);
     then_branch.push(Code::COMMENT(
         "###(2) check non-linear lazy free list for next block".to_string(),
     ));
