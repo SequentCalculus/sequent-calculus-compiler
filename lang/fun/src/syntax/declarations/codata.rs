@@ -8,13 +8,16 @@ use printer::*;
 use crate::syntax::*;
 use crate::typing::*;
 
-/// This struct defines a codata type destructor. It consists of a name (unique within its type),
+/// This struct defines a codata type destructor. It consists of a name (unique within its type), an optional list of type parameters,
 /// a typing context defining its argument types, and a return type. The latter two can contain
-/// type parameters abstracted by the codata type template.
+/// type parameters abstracted by the codata type template or the signature itself.
 ///
 /// Example:
 /// ```text
 /// apply(x: A): B
+/// ```
+/// ```text
+/// head[B]: B
 /// ```
 /// `apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
 /// where `A` and `B` are type parameter.
@@ -26,6 +29,8 @@ pub struct DtorSig {
     pub span: Option<SourceSpan>,
     /// The dstructor name
     pub name: Name,
+    /// The type parameters instantiating the type parameters of the codata type and the destructor
+    pub type_params: TypeContext,
     /// The argument context
     pub args: TypingContext,
     /// The return type
@@ -55,6 +60,7 @@ impl Print for DtorSig {
 
         alloc
             .dtor(&self.name)
+            .append(self.type_params.print(cfg, alloc))
             .append(args.group())
             .append(COLON)
             .append(alloc.space())

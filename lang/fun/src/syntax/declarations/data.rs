@@ -8,13 +8,16 @@ use printer::*;
 use crate::syntax::*;
 use crate::typing::*;
 
-/// This struct defines a data type constructor. It consists of a name (unique within its type) and
+/// This struct defines a data type constructor. It consists of a name (unique within its type), optional type parameters, and
 /// a typing context defining its argument types. The latter can contain type parameters abstracted
-/// by the data type template.
+/// by the data type template or the signature itself.
 ///
 /// Example:
 /// ```text
 /// Cons(x: A, xs: List[A])
+/// ```
+/// ```text
+/// Pack[B](x: B)
 /// ```
 /// The constructor `Cons` has two producer arguments, one of type `A` and one of `List[A]`,
 /// where `A` is a type parameter.
@@ -26,6 +29,8 @@ pub struct CtorSig {
     pub span: Option<SourceSpan>,
     /// The constructor name
     pub name: Name,
+    /// The type parameters
+    pub type_params: TypeContext,
     /// The argument context
     pub args: TypingContext,
 }
@@ -49,7 +54,10 @@ impl Print for CtorSig {
             self.args.print(cfg, alloc).parens()
         };
 
-        alloc.ctor(&self.name).append(args.group())
+        alloc
+            .ctor(&self.name)
+            .append(self.type_params.print(cfg, alloc))
+            .append(args.group())
     }
 }
 

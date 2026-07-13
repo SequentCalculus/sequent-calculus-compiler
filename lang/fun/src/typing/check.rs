@@ -216,6 +216,7 @@ mod check_tests {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: None,
                 }
@@ -248,6 +249,7 @@ mod check_tests {
             Constructor {
                 span: dummy_span(),
                 id: "Nil".to_owned(),
+                type_args: TypeArgs::default(),
                 args: vec![].into(),
                 ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             }

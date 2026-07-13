@@ -57,11 +57,13 @@ pub mod test_common {
                 CtorSig {
                     span: None,
                     name: "Nil".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_owned(),
+                    type_params: TypeContext::default(),
                     args: context_cons("A"),
                 },
             ],
@@ -77,11 +79,13 @@ pub mod test_common {
                 CtorSig {
                     span: None,
                     name: "Nil".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_owned(),
+                    type_params: TypeContext::default(),
                     args: context_cons_i64(),
                 },
             ],
@@ -149,12 +153,14 @@ pub mod test_common {
                 DtorSig {
                     span: None,
                     name: "head".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: None,
                     name: "tail".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl(
                         "Stream",
@@ -266,6 +272,7 @@ pub mod test_common {
             dtors: vec![DtorSig {
                 span: None,
                 name: "apply".to_owned(),
+                type_params: TypeContext::default(),
                 args: context_ap("A", "B"),
                 cont_ty: Ty::mk_decl("B", TypeArgs::default()),
             }],
@@ -327,12 +334,14 @@ pub mod test_common {
                 DtorSig {
                     span: None,
                     name: "fst".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: None,
                     name: "snd".to_owned(),
+                    type_params: TypeContext::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("B", TypeArgs::default()),
                 },

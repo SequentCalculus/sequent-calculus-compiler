@@ -137,9 +137,9 @@ mod program_tests {
     use crate::{
         parser::fun,
         syntax::{
-            TypeContext,
-            context::TypingContext,
-            declarations::Def,
+            Chirality, CtorSig, DtorSig, TypeArgs, TypeContext,
+            context::{ContextBinding, TypingContext},
+            declarations::{Codata, Data, Def},
             program::Program,
             terms::{Lit, Term},
             types::Ty,
@@ -162,6 +162,61 @@ mod program_tests {
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
+                }
+                .into(),
+            ],
+        }
+    }
+
+    fn existential_data() -> Program {
+        Program {
+            declarations: vec![
+                Data {
+                    span: Some(dummy_span()),
+                    name: "Ex".to_owned(),
+                    type_params: TypeContext::mk(&["A"]),
+                    ctors: vec![CtorSig {
+                        span: Some(dummy_span()),
+                        name: "Mk".to_owned(),
+                        type_params: TypeContext::mk(&["B"]),
+                        args: TypingContext {
+                            span: Some(dummy_span()),
+                            bindings: vec![ContextBinding {
+                                var: "x".to_owned(),
+                                chi: Chirality::Prd,
+                                ty: Ty::mk_decl("B", TypeArgs::default()),
+                            }],
+                        },
+                    }]
+                    .into(),
+                }
+                .into(),
+            ],
+        }
+    }
+
+    fn existential_codata() -> Program {
+        Program {
+            declarations: vec![
+                Codata {
+                    span: Some(dummy_span()),
+                    name: "Ex".to_owned(),
+                    type_params: TypeContext::mk(&["A"]),
+                    dtors: vec![DtorSig {
+                        span: Some(dummy_span()),
+                        name: "unmk".to_owned(),
+                        type_params: TypeContext::mk(&["B"]),
+                        args: TypingContext {
+                            span: Some(dummy_span()),
+                            bindings: vec![ContextBinding {
+                                var: "x".to_owned(),
+                                chi: Chirality::Prd,
+                                ty: Ty::mk_decl("B", TypeArgs::default()),
+                            }],
+                        },
+                        cont_ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }]
+                    .into(),
                 }
                 .into(),
             ],
@@ -280,6 +335,41 @@ mod program_tests {
         assert_eq!(
             parser.parse("def f(): i64 { 2 }\n def g(): i64 { 4 }"),
             Ok(example_two().into())
+        )
+    }
+
+    #[test]
+    fn parse_existential_data() {
+        let parser = fun::ProgParser::new();
+        assert_eq!(
+            parser.parse("data Ex[A] { Mk[B](x: B) }"),
+            Ok(existential_data())
+        );
+    }
+
+    #[test]
+    fn parse_existential_codata() {
+        let parser = fun::ProgParser::new();
+
+        assert_eq!(
+            parser.parse("codata Ex[A] { unmk[B](x: B): B }"),
+            Ok(existential_codata())
+        );
+    }
+
+    #[test]
+    fn display_existential_data() {
+        assert_eq!(
+            existential_data().print_to_string(Default::default()),
+            "data Ex[A] { Mk[B](x: B) }".to_string()
+        )
+    }
+
+    #[test]
+    fn display_existential_codata() {
+        assert_eq!(
+            existential_codata().print_to_string(Default::default()),
+            "codata Ex[A] { unmk[B](x: B): B }".to_string()
         )
     }
 }

@@ -306,8 +306,8 @@ Let: Let = {
 }
 
 Constructor: Constructor = {
-    <l: @L> <id: CtorName> <args: OptArgs> <r: @R> =>
-        Constructor { span: span(l, r), id, args, ty: None, },
+    <l: @L> <id: CtorName> <type_args: OptTypeArgs> <args: OptArgs> <r: @R> =>
+        Constructor { span: span(l, r), id, type_args, args, ty: None, },
 }
 
 Destructor: Destructor = {
@@ -399,19 +399,21 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <l: @L> <name: CtorName> <lc: @L> <args: OptContext> <r: @R> =>
+    <l: @L> <name: CtorName> <lc: @L> <type_params: OptTypeContext> <args: OptContext> <r: @R> =>
         CtorSig{
             span: Some(span(l, r)),
             name,
+            type_params,
             args,
         }
 }
 
 Dtor: DtorSig = {
-    <l: @L> <name: DtorName> <lc: @L> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
+    <l: @L> <name: DtorName> <lc: @L> <type_params: OptTypeContext> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: Some(span(l, r)),
             name,
+            type_params,
             args,
             cont_ty,
         }

@@ -181,11 +181,13 @@ mod compile_tests {
                 CtorSig {
                     span: None,
                     name: "Nil".to_string(),
+                    type_params: TypeContext::default(),
                     args: fun::syntax::context::TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_string(),
+                    type_params: TypeContext::default(),
                     args: cons_ctx,
                 },
             ],
@@ -205,11 +207,13 @@ mod compile_tests {
                 CtorSig {
                     span: None,
                     name: "Nil".to_string(),
+                    type_params: TypeContext::default(),
                     args: fun::syntax::context::TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_string(),
+                    type_params: TypeContext::default(),
                     args: cons_ctx,
                 },
             ],

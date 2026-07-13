@@ -14,9 +14,9 @@ use std::collections::HashSet;
 /// top-level function to call, the type arguments, the arguments, and after typechecking also the inferred type.
 ///
 /// Examples:
-/// 
+///
 /// `fac(10)`, calls the top-level function `fac` with argument `10`.
-/// 
+///
 /// `id[i64](x)` calls the top-level function `id` with type argument `i64` and argument `x`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
