@@ -203,20 +203,26 @@ fn create_instance(
     match pol {
         Polarity::Data => {
             for (base_name, full_name) in &xtor_names {
-                let Some(args_template) = symbol_table.ctor_templates.get(base_name) else {
+                let Some((ctor_type_args, args_template)) =
+                    symbol_table.ctor_templates.get(base_name)
+                else {
                     return Err(Error::Undefined {
                         span,
                         name: base_name.clone(),
                     });
                 };
-                symbol_table
-                    .ctors
-                    .insert(full_name.clone(), args_template.clone().subst_ty(&mappings));
+                symbol_table.ctors.insert(
+                    full_name.clone(),
+                    (
+                        ctor_type_args.clone(),
+                        args_template.clone().subst_ty(&mappings),
+                    ),
+                );
             }
         }
         Polarity::Codata => {
             for (base_name, full_name) in &xtor_names {
-                let Some((args_template, cont_ty_template)) =
+                let Some((dtor_type_args, args_template, cont_ty_template)) =
                     symbol_table.dtor_templates.get(base_name)
                 else {
                     return Err(Error::Undefined {
@@ -227,6 +233,7 @@ fn create_instance(
                 symbol_table.dtors.insert(
                     full_name.clone(),
                     (
+                        dtor_type_args.clone(),
                         args_template.clone().subst_ty(&mappings),
                         cont_ty_template.clone().subst_ty(&mappings),
                     ),

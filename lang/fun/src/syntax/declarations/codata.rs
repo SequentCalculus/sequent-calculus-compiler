@@ -43,9 +43,11 @@ impl DtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
+        let extended_type_params = type_params.extend(self.type_params.clone());
+        self.args
+            .check_template(symbol_table, &extended_type_params)?;
         self.cont_ty
-            .check_template(self.span, symbol_table, type_params)?;
+            .check_template(self.span, symbol_table, &extended_type_params)?;
         Ok(())
     }
 }

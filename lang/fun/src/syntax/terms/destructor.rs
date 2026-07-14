@@ -87,32 +87,47 @@ impl Check for Destructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        // the name of the constructor in the symbol table for the instantiated data type
-        let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
-        let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
-            Ok(ty) => ty,
-            // if there is no instance yet, we create an instance from the template
-            Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
-        };
+        // Resolve the destructor's scrutinee type, argument context, and return type, fully
+        // instantiated by splitting `self.type_args` into the codata type's own type arguments
+        // and the destructor's own (existential) type arguments.
+        let (scrutinee_ty, types, ret_ty) =
+            symbol_table.lookup_dtor_signature(&self.span, &self.id, &self.type_args)?;
 
-        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
+        self.scrutinee = self.scrutinee.check(symbol_table, context, &scrutinee_ty)?;
 
-        match symbol_table.dtors.get(&dtor_name) {
-            Some(signature) => {
-                let (types, ret_ty) = signature.clone();
+        self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
-                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
+        check_equality(&self.span, symbol_table, expected, &ret_ty)?;
 
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+        self.ty = Some(expected.clone());
+        Ok(self)
 
-                self.ty = Some(expected.clone());
-                Ok(self)
-            }
-            None => Err(Error::Undefined {
-                span: Some(self.span),
-                name: self.id.clone(),
-            }),
-        }
+        // // the name of the constructor in the symbol table for the instantiated data type
+        // let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
+        // let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
+        //     Ok(ty) => ty,
+        //     // if there is no instance yet, we create an instance from the template
+        //     Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
+        // };
+
+        // self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
+
+        // match symbol_table.dtors.get(&dtor_name) {
+        //     Some(signature) => {
+        //         let (types, ret_ty) = signature.clone();
+
+        //         self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
+
+        //         check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+
+        //         self.ty = Some(expected.clone());
+        //         Ok(self)
+        //     }
+        //     None => Err(Error::Undefined {
+        //         span: Some(self.span),
+        //         name: self.id.clone(),
+        //     }),
+        // }
     }
 }
 
@@ -128,6 +143,7 @@ mod destructor_tests {
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::context::ContextBinding;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
@@ -310,5 +326,100 @@ mod destructor_tests {
             parser.parse("x.head[i64].head[i64]"),
             Ok(example_2().into())
         );
+    }
+
+    /// Builds a symbol table containing `codata Const[A] { run[B](x: B) : A }`, i.e. a codata type
+    /// with type parameter `A` whose single destructor has its own (universal) type parameter `B`
+    /// for an argument unrelated to the return type.
+    fn symbol_table_const_universal() -> SymbolTable {
+        let mut symbol_table = SymbolTable::default();
+
+        symbol_table.type_templates.insert(
+            "Const".to_owned(),
+            (
+                Polarity::Codata,
+                TypeContext {
+                    span: None,
+                    bindings: vec!["A".to_owned()],
+                },
+                vec!["run".to_owned()],
+            ),
+        );
+
+        symbol_table.dtor_templates.insert(
+            "run".to_owned(),
+            (
+                TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "x".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }],
+                },
+                Ty::mk_decl("A", TypeArgs::default()),
+            ),
+        );
+
+        symbol_table
+    }
+
+    #[test]
+    fn check_universal_dtor() {
+        // "c.run[i64, i64](5)" where the first `i64` instantiates `A` (the codata type's own
+        // parameter) and the second `i64` instantiates `B` (the destructor's own parameter).
+        let mut ctx = TypingContext::default();
+        ctx.add_var("c", Ty::mk_decl("Const", TypeArgs::mk(vec![Ty::mk_i64()])));
+
+        let result = Destructor {
+            span: dummy_span(),
+            id: "run".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![Lit::mk(5).into()].into(),
+            scrutinee: Rc::new(XVar::mk("c").into()),
+            ty: None,
+        }
+        .check(&mut symbol_table_const_universal(), &ctx, &Ty::mk_i64())
+        .unwrap();
+
+        let expected = Destructor {
+            span: dummy_span(),
+            id: "run".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
+            args: vec![Lit::mk(5).into()].into(),
+            scrutinee: Rc::new(
+                XVar {
+                    span: dummy_span(),
+                    var: "c".to_owned(),
+                    ty: Some(Ty::mk_decl("Const", TypeArgs::mk(vec![Ty::mk_i64()]))),
+                    chi: Some(Prd),
+                }
+                .into(),
+            ),
+            ty: Some(Ty::mk_i64()),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_universal_dtor_wrong_arity() {
+        // "c.run[i64](5)" is missing the type argument for the destructor's own parameter `B`.
+        let mut ctx = TypingContext::default();
+        ctx.add_var("c", Ty::mk_decl("Const", TypeArgs::mk(vec![Ty::mk_i64()])));
+
+        let result = Destructor {
+            span: dummy_span(),
+            id: "run".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![Lit::mk(5).into()].into(),
+            scrutinee: Rc::new(XVar::mk("c").into()),
+            ty: None,
+        }
+        .check(&mut symbol_table_const_universal(), &ctx, &Ty::mk_i64());
+        assert!(result.is_err())
     }
 }

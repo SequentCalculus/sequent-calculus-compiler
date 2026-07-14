@@ -41,7 +41,8 @@ impl CtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
+        self.args
+            .check_template(symbol_table, &type_params.extend(self.type_params.clone()))?;
         Ok(())
     }
 }

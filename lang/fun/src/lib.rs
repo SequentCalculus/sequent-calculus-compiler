@@ -102,12 +102,14 @@ pub mod test_common {
                 vec!["Nil".to_owned(), "Cons".to_owned()],
             ),
         );
-        table
-            .ctor_templates
-            .insert("Nil".to_owned(), TypingContext::default());
-        table
-            .ctor_templates
-            .insert("Cons".to_owned(), context_cons("A"));
+        table.ctor_templates.insert(
+            "Nil".to_owned(),
+            (TypeContext::default(), TypingContext::default()),
+        );
+        table.ctor_templates.insert(
+            "Cons".to_owned(),
+            (TypeContext::default(), context_cons("A")),
+        );
         table
     }
 
@@ -121,12 +123,14 @@ pub mod test_common {
                 vec!["Nil".to_owned(), "Cons".to_owned()],
             ),
         );
-        table
-            .ctor_templates
-            .insert("Nil".to_owned(), TypingContext::default());
-        table
-            .ctor_templates
-            .insert("Cons".to_owned(), context_cons("A"));
+        table.ctor_templates.insert(
+            "Nil".to_owned(),
+            (TypeContext::default(), TypingContext::default()),
+        );
+        table.ctor_templates.insert(
+            "Cons".to_owned(),
+            (TypeContext::default(), context_cons("A")),
+        );
         table.types.insert(
             "List[i64]".to_owned(),
             (
@@ -135,12 +139,14 @@ pub mod test_common {
                 vec!["Nil".to_owned(), "Cons".to_owned()],
             ),
         );
-        table
-            .ctors
-            .insert("Nil[i64]".to_owned(), TypingContext::default());
-        table
-            .ctors
-            .insert("Cons[i64]".to_owned(), context_cons_i64());
+        table.ctors.insert(
+            "Nil[i64]".to_owned(),
+            (TypeContext::default(), TypingContext::default()),
+        );
+        table.ctors.insert(
+            "Cons[i64]".to_owned(),
+            (TypeContext::default(), context_cons_i64()),
+        );
         table
     }
 
@@ -184,6 +190,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "head".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
@@ -191,6 +198,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "tail".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl(
                     "Stream",
@@ -214,6 +222,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "head".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
@@ -221,6 +230,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "tail".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl(
                     "Stream",
@@ -238,11 +248,16 @@ pub mod test_common {
         );
         table.dtors.insert(
             "head[i64]".to_owned(),
-            (TypingContext::default(), Ty::mk_i64()),
+            (
+                TypeContext::default(),
+                TypingContext::default(),
+                Ty::mk_i64(),
+            ),
         );
         table.dtors.insert(
             "tail[i64]".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])),
             ),
@@ -291,7 +306,11 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "apply".to_owned(),
-            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+            (
+                TypeContext::default(),
+                context_ap("A", "B"),
+                Ty::mk_decl("B", TypeArgs::default()),
+            ),
         );
         table
     }
@@ -308,7 +327,11 @@ pub mod test_common {
         );
         table.dtor_templates.insert(
             "apply".to_owned(),
-            (context_ap("A", "B"), Ty::mk_decl("B", TypeArgs::default())),
+            (
+                TypeContext::default(),
+                context_ap("A", "B"),
+                Ty::mk_decl("B", TypeArgs::default()),
+            ),
         );
         table.types.insert(
             "Fun[i64, i64]".to_owned(),
@@ -320,7 +343,7 @@ pub mod test_common {
         );
         table.dtors.insert(
             "apply[i64, i64]".to_owned(),
-            (context_ap_i64(), Ty::mk_i64()),
+            (TypeContext::default(), context_ap_i64(), Ty::mk_i64()),
         );
         table
     }
@@ -362,6 +385,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "fst".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
@@ -369,6 +393,7 @@ pub mod test_common {
         table.dtor_templates.insert(
             "snd".to_owned(),
             (
+                TypeContext::default(),
                 TypingContext::default(),
                 Ty::mk_decl("B", TypeArgs::default()),
             ),
@@ -383,11 +408,19 @@ pub mod test_common {
         );
         table.dtors.insert(
             "fst[i64, i64]".to_owned(),
-            (TypingContext::default(), Ty::mk_i64()),
+            (
+                TypeContext::default(),
+                TypingContext::default(),
+                Ty::mk_i64(),
+            ),
         );
         table.dtors.insert(
             "snd[i64, i64]".to_owned(),
-            (TypingContext::default(), Ty::mk_i64()),
+            (
+                TypeContext::default(),
+                TypingContext::default(),
+                Ty::mk_i64(),
+            ),
         );
         table
     }
