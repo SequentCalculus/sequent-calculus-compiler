@@ -51,6 +51,10 @@ impl Ty {
             Ty::Decl {
                 name, type_args, ..
             } => {
+                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains(name) {
+                    return Ok(());
+                }
+
                 let instance_name = name.clone() + &type_args.print_to_string(None);
                 match symbol_table.types.get(&instance_name) {
                     Some(_) => Ok(()),

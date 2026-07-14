@@ -9,6 +9,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
@@ -117,27 +118,51 @@ impl Check for Case {
                     ctor,
                 });
             };
-            match symbol_table.ctors.get(&ctor_name) {
+
+            let (own_type_params, signature) = match symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
                         span: Some(self.span),
                         name: ctor_name.clone(),
                     });
                 }
-                Some(signature) => {
-                    clause.context_names.no_dups(&ctor_name)?;
-                    let context_clause = clause.context_names.add_types(signature)?;
+                Some((own_type_params, signature)) => (own_type_params.clone(), signature.clone()),
+            };
 
-                    let mut new_context = context.clone();
-                    new_context
-                        .bindings
-                        .append(&mut context_clause.bindings.clone());
+            clause.context_names.no_dups(&ctor_name)?;
 
-                    clause.context = context_clause;
-                    clause.body = clause.body.check(symbol_table, &new_context, expected)?;
-                    new_clauses.push(clause);
-                }
+            // The constructor's own type parameters are existentially bound by this clause,
+            // e.g. `B` in `Cons[B](x, xs)`. The user-chosen name is used directly as a rigid,
+            // opaque type variable, valid only within this clause's body.
+            if clause.type_params.bindings.len() != own_type_params.bindings.len() {
+                return Err(Error::WrongNumberOfTypeArguments {
+                    span: Some(clause.span),
+                    expected: own_type_params.bindings.len(),
+                    got: clause.type_params.bindings.len(),
+                });
             }
+            let rigid_args = symbol_table.push_abstract_vars(&clause.span, &clause.type_params)?;
+
+            let mappings: HashMap<Name, Ty> = own_type_params
+                .bindings
+                .iter()
+                .cloned()
+                .zip(rigid_args)
+                .collect();
+            let signature = signature.subst_ty(&mappings);
+            let context_clause = clause.context_names.add_types(&signature)?;
+
+            let mut new_context = context.clone();
+            new_context
+                .bindings
+                .append(&mut context_clause.bindings.clone());
+
+            clause.context = context_clause;
+            clause.body = clause.body.check(symbol_table, &new_context, expected)?;
+
+            symbol_table.pop_abstract_vars(&clause.type_params);
+
+            new_clauses.push(clause);
         }
 
         if !self.clauses.is_empty() {
@@ -170,6 +195,7 @@ mod test {
     use printer::*;
 
     use crate::parser::fun;
+    use crate::syntax::context::ContextBinding;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
@@ -195,6 +221,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -203,6 +230,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: ctx_case_names.clone(),
                     context: TypingContext::default(),
                     body: XVar::mk("x").into(),
@@ -221,6 +249,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Nil".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -229,6 +258,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Data,
                     xtor: "Cons".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: ctx_case_names,
                     context: ctx_case,
                     body: XVar {
@@ -267,6 +297,7 @@ mod test {
                 span: dummy_span(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
+                type_params: TypeContext::default(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
                 body: XVar::mk("x").into(),
@@ -301,6 +332,7 @@ mod test {
                 span: dummy_span(),
                 pol: Polarity::Data,
                 xtor: "Tup".to_owned(),
+                type_params: TypeContext::default(),
                 context_names: ctx_names,
                 context: TypingContext::default(),
                 body: Term::Lit(Lit::mk(2)),
@@ -338,5 +370,133 @@ mod test {
             parser.parse("x.case[i64,i64] { Tup(x,y) => 2 }"),
             Ok(example_tup().into())
         );
+    }
+
+    /// Builds a symbol table containing a template `data Any { Mk[B](x: B) }`, i.e. a data type
+    /// without its own type parameters whose single constructor has its own existential type
+    /// parameter `B`.
+    fn symbol_table_any_existential_template() -> SymbolTable {
+        let mut symbol_table = SymbolTable::default();
+
+        symbol_table.type_templates.insert(
+            "Any".to_owned(),
+            (
+                Polarity::Data,
+                TypeContext::default(),
+                vec!["Mk".to_owned()],
+            ),
+        );
+
+        symbol_table.ctor_templates.insert(
+            "Mk".to_owned(),
+            (
+                TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "x".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }],
+                },
+            ),
+        );
+
+        symbol_table
+    }
+
+    #[test]
+    fn check_existential_ctor_in_case() {
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+
+        let mut ctx = TypingContext::default();
+        ctx.add_var("y", Ty::mk_decl("Any", TypeArgs::default()));
+
+        let mut symbol_table = symbol_table_any_existential_template();
+        let result = Case {
+            span: dummy_span(),
+            scrutinee: Rc::new(XVar::mk("y").into()),
+            type_args: TypeArgs::default(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Data,
+                xtor: "Mk".to_owned(),
+                // "B" is bound by the clause itself, as in `Mk[B](x) => ...`
+                type_params: TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                context_names: ctx_names.clone(),
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
+            ty: None,
+        }
+        .check(&mut symbol_table, &ctx, &Ty::mk_i64())
+        .unwrap();
+
+        let mut expected_clause_ctx = TypingContext::default();
+        expected_clause_ctx.add_var("x", Ty::mk_decl("B", TypeArgs::default()));
+
+        let expected = Case {
+            span: dummy_span(),
+            scrutinee: Rc::new(
+                XVar {
+                    span: dummy_span(),
+                    var: "y".to_owned(),
+                    ty: Some(Ty::mk_decl("Any", TypeArgs::default())),
+                    chi: Some(Prd),
+                }
+                .into(),
+            ),
+            type_args: TypeArgs::default(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Data,
+                xtor: "Mk".to_owned(),
+                type_params: TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                context_names: ctx_names,
+                context: expected_clause_ctx,
+                body: Lit::mk(1).into(),
+            }],
+            ty: Some(Ty::mk_i64()),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_existential_ctor_wrong_arity_in_case() {
+        // "Mk(x) => 1" is missing the required binder for the constructor's own type parameter `B`.
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+
+        let mut ctx = TypingContext::default();
+        ctx.add_var("y", Ty::mk_decl("Any", TypeArgs::default()));
+
+        let mut symbol_table = symbol_table_any_existential_template();
+        let result = Case {
+            span: dummy_span(),
+            scrutinee: Rc::new(XVar::mk("y").into()),
+            type_args: TypeArgs::default(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Data,
+                xtor: "Mk".to_owned(),
+                type_params: TypeContext::default(),
+                context_names: ctx_names,
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
+            ty: None,
+        }
+        .check(&mut symbol_table, &ctx, &Ty::mk_i64());
+        assert!(result.is_err())
     }
 }

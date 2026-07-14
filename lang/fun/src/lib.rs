@@ -446,6 +446,7 @@ pub mod test_common {
                         span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
+                        type_params: TypeContext::default(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
                         body: Lit::mk(1).into(),
@@ -454,6 +455,7 @@ pub mod test_common {
                         span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
+                        type_params: TypeContext::default(),
                         context_names: context_cons_i64_names(),
                         context: TypingContext::default(),
                         body: Op {
@@ -505,6 +507,7 @@ pub mod test_common {
                         span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Nil".to_owned(),
+                        type_params: TypeContext::default(),
                         context_names: NameContext::default(),
                         context: TypingContext::default(),
                         body: Lit::mk(1).into(),
@@ -513,6 +516,7 @@ pub mod test_common {
                         span: dummy_span(),
                         pol: Polarity::Data,
                         xtor: "Cons".to_owned(),
+                        type_params: TypeContext::default(),
                         context_names: context_cons_i64_names(),
                         context: context_cons_i64(),
                         body: Op {

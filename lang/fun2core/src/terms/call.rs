@@ -88,6 +88,7 @@ mod compile_tests {
                         ctor_templates: HashMap::default(),
                         dtor_templates: HashMap::default(),
                         type_templates: HashMap::default(),
+                        abstract_type_vars: HashSet::default(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),
@@ -134,6 +135,7 @@ mod compile_tests {
                     ctor_templates: HashMap::default(),
                     dtor_templates: HashMap::default(),
                     type_templates: HashMap::default(),
+                    abstract_type_vars: HashSet::default(),
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
@@ -192,6 +194,7 @@ mod compile_tests {
                     ctor_templates: HashMap::default(),
                     dtor_templates: HashMap::default(),
                     type_templates: HashMap::default(),
+                    abstract_type_vars: HashSet::default(),
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),

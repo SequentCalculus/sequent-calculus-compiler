@@ -1,6 +1,6 @@
 //! This module define the symbol table used during typechecking.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use miette::SourceSpan;
 use printer::Print;
@@ -52,6 +52,12 @@ pub struct SymbolTable {
     /// their [polarity](Polarity) determining whether they are data or codata, to their type
     /// parameters, and to their name of xtors.
     pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
+    /// Names of type variables that are currently in scope as abstract type variables,
+    /// e.g. bound by an existential constructor pattern in a `case` clause (`Cons[B](x, xs)`) or
+    /// a universal destructor parameter in a `new` clause (`head[B]`). Such names are treated as
+    /// valid, opaque monomorphic types without requiring an instance or template to exist for
+    /// them.
+    pub abstract_type_vars: HashSet<Name>,
 }
 
 impl SymbolTable {
@@ -369,6 +375,55 @@ impl SymbolTable {
         self.ctor_templates.extend(other.ctor_templates);
         self.dtor_templates.extend(other.dtor_templates);
         self.type_templates.extend(other.type_templates);
+    }
+
+    /// This function brings the given names into scope as abstract type variables, e.g.
+    /// the type parameters bound by a `case`/`new` clause. It returns the corresponding list of
+    /// opaque types (one `Ty::Decl` per name, in order), so callers can use them directly for
+    /// substitution.
+    ///
+    /// Fails if any of the given names already denotes a declared data/codata type template, or
+    /// is already in scope as a rigid variable (e.g. due to a nested clause shadowing an outer
+    /// one), since that would silently shadow an existing type and lead to confusing errors
+    /// elsewhere.
+    /// - `span` is the source location of the clause introducing the names.
+    /// - `names` are the type parameter names to bring into scope.
+    pub fn push_abstract_vars(
+        &mut self,
+        span: &SourceSpan,
+        names: &TypeContext,
+    ) -> Result<Vec<Ty>, Error> {
+        let mut result = vec![];
+        for name in &names.bindings {
+            if self.type_templates.contains_key(name) {
+                return Err(Error::DefinedMultipleTimes {
+                    span: Some(*span),
+                    name: name.clone(),
+                });
+            }
+            if self.abstract_type_vars.contains(name) {
+                return Err(Error::DefinedMultipleTimes {
+                    span: Some(*span),
+                    name: name.clone(),
+                });
+            }
+            self.abstract_type_vars.insert(name.clone());
+            result.push(Ty::Decl {
+                span: None,
+                name: name.clone(),
+                type_args: TypeArgs::default(),
+            });
+        }
+        Ok(result)
+    }
+
+    /// This function removes the given names from the set of abstract type variables again, e.g.
+    /// after typechecking the clause body that bound them, so that they cannot leak into later,
+    /// unrelated clauses.
+    pub fn pop_abstract_vars(&mut self, names: &TypeContext) {
+        for name in &names.bindings {
+            self.abstract_type_vars.remove(name);
+        }
     }
 }
 
