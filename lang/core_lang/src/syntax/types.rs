@@ -76,13 +76,13 @@ impl Checked for Ty {
                 if type_params.iter().any(|type_param| type_param == param) {
                     Ok(())
                 } else {
-                    bail!(TypeError::UndeclaredType(param.name.clone()))
+                    bail!(TypeError::UndeclaredType(param.print_to_string(None)))
                 }
             }
             Ty::Decl { name, type_args } => {
                 // check that the type name is declared as a data or codata type and get the type params
                 let Some(declaration_type_params) = env.lookup_type_params(name) else {
-                    bail!(TypeError::UndeclaredType(name.name.clone()))
+                    bail!(TypeError::UndeclaredType(name.print_to_string(None)))
                 };
 
                 // check that the number of type arguments matches the number of type parameters in the declaration
@@ -106,13 +106,13 @@ impl ConstraintCollector for Ty {
             Ty::Decl { name, type_args } => {
                 if self.is_codata(env.codata_decls) {
                     let Some(template) = env.lookup_codata_decl(name) else {
-                        return Err(MonoError::UndeclaredType(name.name.clone()));
+                        return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
                     collect_type_flow(&type_args.args, template.type_params.as_slice())
                 } else {
                     let Some(template) = env.lookup_data_decl(name) else {
-                        return Err(MonoError::UndeclaredType(name.name.clone()));
+                        return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
                     collect_type_flow(&type_args.args, template.type_params.as_slice())
