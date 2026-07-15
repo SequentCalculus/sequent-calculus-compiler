@@ -173,9 +173,10 @@ mod specialize_tests {
         return data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
@@ -189,7 +190,10 @@ mod specialize_tests {
     fn bool_decl() -> DataDeclaration {
         return data!(
             id!("Bool"),
-            [ctor_sig!(id!("True"), []), ctor_sig!(id!("False"), [])],
+            [
+                ctor_sig!(id!("True"), [], []),
+                ctor_sig!(id!("False"), [], [])
+            ],
             []
         );
     }
@@ -199,6 +203,7 @@ mod specialize_tests {
             id!("Pair"),
             [ctor_sig!(
                 id!("mkPair"),
+                [],
                 [
                     bind!(id!("x"), prd!(), tvar!(id!("A", 2))),
                     bind!(id!("y"), prd!(), tvar!(id!("B", 3)))
@@ -303,9 +308,10 @@ mod specialize_tests {
 
         let term = ctor!(
             id!("Cons"),
+            [],
             [
                 lit!(1),
-                ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))
             ],
             ty!(id!("List"), [ty!("int")])
         );
@@ -449,9 +455,10 @@ mod specialize_tests {
             cut!(
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         lit!(1),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))
                     ],
                     ty!(id!("List"), [ty!("int")])
                 ),
@@ -586,9 +593,10 @@ mod specialize_tests {
             cut!(
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         var!(id!("x"), tvar!(id!("A", 1))),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), [tvar!(id!("A", 1))]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), [tvar!(id!("A", 1))]))
                     ],
                     ty!(id!("List"), [tvar!(id!("A", 1))])
                 ),
@@ -742,9 +750,10 @@ mod specialize_tests {
             cut!(
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         lit!(1),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))
                     ],
                     ty!(id!("List"), [ty!("int")])
                 ),

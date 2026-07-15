@@ -27,6 +27,8 @@ pub struct Clause<C: Chi, S = Statement> {
     pub prdcns: C,
     /// The name of the xtor
     pub xtor: Identifier,
+    /// The type parameters of the xtor
+    pub type_params: Vec<Identifier>,
     /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
     /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
@@ -213,6 +215,7 @@ impl<C: Chi> Focusing for Clause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
+            type_params: self.type_params,
             context: self.context,
             body: self.body.focus(max_id),
         }
@@ -231,6 +234,7 @@ impl<C: Chi> Specialize for Clause<C> {
         Clause {
             prdcns: self.prdcns.clone(),
             xtor: self.xtor.clone(),
+            type_params: self.type_params.clone(),
             context: self.context.specialize(context),
             body: self.body.specialize(context),
         }

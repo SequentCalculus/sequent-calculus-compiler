@@ -537,6 +537,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -556,6 +557,7 @@ impl Shrinking for FsCut {
                     prdcns: Cns,
                     name,
                     args,
+                    type_args: _,
                     ty: _,
                 }),
             ) => shrink_known_cuts(&name, args.vec_vars(), clauses.as_slice(), state),
@@ -639,6 +641,7 @@ impl Shrinking for FsCut {
                     prdcns: Prd,
                     name,
                     args,
+                    type_args: _,
                     ty: _,
                 }),
                 FsTerm::Mu(Mu {
@@ -658,6 +661,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -676,6 +680,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -694,6 +699,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),

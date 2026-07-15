@@ -137,6 +137,7 @@ impl Focusing for Cut {
                         FsXtor {
                             prdcns: constructor.prdcns,
                             name: constructor.name,
+                            type_args: constructor.type_args,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -156,6 +157,7 @@ impl Focusing for Cut {
                         FsXtor {
                             prdcns: destructor.prdcns,
                             name: destructor.name,
+                            type_args: destructor.type_args,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -267,7 +269,8 @@ mod tests {
         let result = cut!(
             ctor!(
                 id!("Cons"),
-                [lit!(1), ctor!(id!("Nil"), [], ty!(id!("ListInt")))],
+                [],
+                [lit!(1), ctor!(id!("Nil"), [], [], ty!(id!("ListInt")))],
                 ty!(id!("ListInt"))
             ),
             covar!(id!("a", 1), ty!(id!("ListInt"))),
@@ -280,12 +283,13 @@ mod tests {
             fs_mutilde!(
                 id!("x", 2),
                 fs_cut!(
-                    fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
+                    fs_ctor!(id!("Nil"), [], [], ty!(id!("ListInt"))),
                     fs_mutilde!(
                         id!("x", 3),
                         fs_cut!(
                             fs_ctor!(
                                 id!("Cons"),
+                                [],
                                 [
                                     bind!(id!("x", 2), prd!()),
                                     bind!(id!("x", 3), prd!(), ty!(id!("ListInt")))
@@ -312,6 +316,7 @@ mod tests {
             var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             dtor!(
                 id!("apply"),
+                [],
                 [var!(id!("y")), covar!(id!("a"))],
                 ty!(id!("Fun[i64, i64]"))
             ),
@@ -323,6 +328,7 @@ mod tests {
             var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             fs_dtor!(
                 id!("apply"),
+                [],
                 [bind!(id!("y"), prd!()), bind!(id!("a"), cns!())],
                 ty!(id!("Fun[i64, i64]"))
             ),

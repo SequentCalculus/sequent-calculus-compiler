@@ -436,7 +436,7 @@ mod check_tests {
 
     #[test]
     fn ifc_check_fst_not_i64() {
-        let fst = ctor!(id!("Nil"), [], ty!(id!("List")));
+        let fst = ctor!(id!("Nil"), [], [], ty!(id!("List")));
         let stmt: Statement = ife!(
             fst,
             lit!(1),
@@ -452,8 +452,8 @@ mod check_tests {
 
     #[test]
     fn ifc_check_snd_not_i64() {
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
-        let snd = ctor!(id!("Nil"), [], ty!(id!("List")));
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let snd = ctor!(id!("Nil"), [], [], ty!(id!("List")));
         let stmt: Statement = ife!(
             lit!(1),
             snd,

@@ -330,6 +330,7 @@ mod tests {
         let result = clause!(
             Prd,
             id!("apply"),
+            [],
             [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
             cut!(var!(id!("x")), covar!(id!("a")))
         )
@@ -337,6 +338,7 @@ mod tests {
         let expected = fs_clause!(
             Prd,
             id!("apply"),
+            [],
             [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
             fs_cut!(var!(id!("x")), covar!(id!("a")))
         );
@@ -349,10 +351,17 @@ mod tests {
                 clause!(
                     Prd,
                     id!("fst"),
+                    [],
                     [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
                     cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, id!("snd"), [], cut!(var!(id!("x")), covar!(id!("a"))))
+                clause!(
+                    Prd,
+                    id!("snd"),
+                    [],
+                    [],
+                    cut!(var!(id!("x")), covar!(id!("a")))
+                )
             ],
             ty!(id!("LPairIntInt"))
         )
@@ -362,10 +371,17 @@ mod tests {
     fn example_case() -> XCase<Cns> {
         case!(
             [
-                clause!(Cns, id!("Nil"), [], cut!(var!(id!("x")), covar!(id!("a")))),
+                clause!(
+                    Cns,
+                    id!("Nil"),
+                    [],
+                    [],
+                    cut!(var!(id!("x")), covar!(id!("a")))
+                ),
                 clause!(
                     Cns,
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!()),
                         bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
@@ -385,10 +401,17 @@ mod tests {
         let result = example_case().subst_sim(&subst.0, &subst.1);
         let expected = case!(
             [
-                clause!(Cns, id!("Nil"), [], cut!(var!(id!("y")), covar!(id!("b")))),
+                clause!(
+                    Cns,
+                    id!("Nil"),
+                    [],
+                    [],
+                    cut!(var!(id!("y")), covar!(id!("b")))
+                ),
                 clause!(
                     Cns,
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!()),
                         bind!(id!("xs"), prd!(), ty!(id!("ListInt"))),
@@ -411,10 +434,17 @@ mod tests {
                 clause!(
                     Prd,
                     id!("fst"),
+                    [],
                     [bind!(id!("x"), prd!()), bind!(id!("a"), cns!())],
                     cut!(var!(id!("x")), covar!(id!("a")))
                 ),
-                clause!(Prd, id!("snd"), [], cut!(var!(id!("y")), covar!(id!("b"))))
+                clause!(
+                    Prd,
+                    id!("snd"),
+                    [],
+                    [],
+                    cut!(var!(id!("y")), covar!(id!("b")))
+                )
             ],
             ty!(id!("LPairIntInt"))
         );
@@ -433,10 +463,10 @@ mod check_tests {
 
     #[test]
     fn check_against_declaration() {
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
 
         let good_case: XCase<Cns> = case!(
-            [clause!(Cns, id!("Nil"), [], exit!(lit!(0)))],
+            [clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)))],
             ty!(id!("List"))
         )
         .into();
@@ -452,12 +482,13 @@ mod check_tests {
 
     #[test]
     fn check_undeclared_type() {
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
 
         let wrong: XCase<Cns> = case!(
             [clause!(
                 Cns,
                 id!("Nil"),
+                [],
                 [],
                 cut!(var!(id!("x")), covar!(id!("a")))
             )],
@@ -477,12 +508,12 @@ mod check_tests {
 
     #[test]
     fn check_duplicate_clause() {
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
 
         let bad_case: XCase<Cns> = case!(
             [
-                clause!(Cns, id!("Nil"), [], exit!(lit!(0))),
-                clause!(Cns, id!("Nil"), [], exit!(lit!(1)))
+                clause!(Cns, id!("Nil"), [], [], exit!(lit!(0))),
+                clause!(Cns, id!("Nil"), [], [], exit!(lit!(1)))
             ],
             ty!(id!("List"))
         )
@@ -502,20 +533,21 @@ mod check_tests {
         let list = data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!()),
                         bind!(id!("xs"), prd!(), ty!(id!("List")))
-                    ]
+                    ],
                 )
             ],
             []
         );
 
         let incomplete_case: XCase<Cns> = case!(
-            [clause!(Cns, id!("Nil"), [], exit!(lit!(0)))],
+            [clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)))],
             ty!(id!("List"))
         )
         .into();

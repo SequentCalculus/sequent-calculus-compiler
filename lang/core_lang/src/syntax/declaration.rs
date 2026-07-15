@@ -59,7 +59,7 @@ impl Polarity for Codata {
 }
 
 /// This struct defines an xtor, i.e., a constructor or destructor. It consists of a name (unique
-/// within its type) and a typing context defining its parameters. The type parameter `P`
+/// within its type), type arguments, and a typing context defining its parameters. The type parameter `P`
 /// determines whether this is a constructor (if `P` is instantiated with [`Data`]) or destructor
 /// (if `P` is instantiated with [`Codata`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,6 +68,8 @@ pub struct XtorSig<P: Polarity> {
     pub xtor: P,
     /// The xtor name
     pub name: Identifier,
+    /// The type parameters of the xtor
+    pub type_params: Vec<Identifier>,
     /// The argument context
     pub args: TypingContext,
 }
@@ -89,13 +91,21 @@ impl<P: Polarity> Print for XtorSig<P> {
             self.args.print(cfg, alloc).parens()
         };
 
+        let type_params = if self.type_params.is_empty() {
+            alloc.nil()
+        } else {
+            self.type_params.print(cfg, alloc).brackets()
+        };
+
         if self.xtor.is_data() {
             alloc
                 .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(type_params)
                 .append(args.group())
         } else {
             alloc
                 .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(type_params)
                 .append(args.group())
         }
     }
@@ -106,6 +116,7 @@ impl<P: Polarity + Clone> Specialize for XtorSig<P> {
         XtorSig {
             xtor: self.xtor.clone(),
             name: self.name.clone(),
+            type_params: self.type_params.clone(),
             args: self.args.specialize(context),
         }
     }
@@ -200,6 +211,7 @@ pub fn cont_int() -> DataDeclaration {
         xtors: vec![CtorSig {
             xtor: Data,
             name: Identifier::new("Ret".to_string()),
+            type_params: vec![],
             args: TypingContext {
                 bindings: vec![ContextBinding {
                     var: Identifier::new("x".to_string()),
@@ -283,6 +295,7 @@ mod check_tests {
             id!("List"),
             [ctor_sig!(
                 id!("Cons"),
+                [],
                 [bind!(id!("x"), prd!(), ty!("int"))]
             )],
             []

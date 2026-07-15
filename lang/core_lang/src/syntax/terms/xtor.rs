@@ -5,6 +5,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::syntax::types::TypeArgs;
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
@@ -16,7 +17,7 @@ use std::collections::BTreeSet;
 
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `C` is instantiated with [`Prd`]) or a destructor
-/// (if `C` is instantiated with [`Cns`]), a name for the xtor, the arguments of the xtor, and of
+/// (if `C` is instantiated with [`Cns`]), a name for the xtor, the type arguments of the xtor, the arguments of the xtor, and of
 /// the type. The type parameter `A` determines whether this is the unfocused variant (if `A` is
 /// instantiated with [`Arguments`], which is the default) or the focused variant (if `A` is
 /// instantiated with [`TypingContext`]).
@@ -26,6 +27,8 @@ pub struct Xtor<C: Chi, A = Arguments> {
     pub prdcns: C,
     /// The xtor name
     pub name: Identifier,
+    /// The type arguments of the xtor
+    pub type_args: TypeArgs,
     /// The arguments of the xtor
     pub args: A,
     /// The type of the xtor
@@ -51,10 +54,12 @@ impl<C: Chi> Print for Xtor<C> {
         if self.prdcns.is_prd() {
             alloc
                 .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         } else {
             alloc
                 .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         }
     }
@@ -70,10 +75,12 @@ impl<C: Chi> Print for FsXtor<C> {
         if self.prdcns.is_prd() {
             alloc
                 .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args)
         } else {
             alloc
                 .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args)
         }
     }
@@ -153,6 +160,7 @@ impl Bind for Xtor<Prd> {
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         name: self.name,
+                        type_args: self.type_args,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
@@ -182,6 +190,7 @@ impl Bind for Xtor<Cns> {
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         name: self.name,
+                        type_args: self.type_args,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
@@ -207,6 +216,7 @@ impl<C: Chi> Specialize for Xtor<C> {
         Xtor {
             prdcns: self.prdcns.clone(),
             name: self.name.clone(),
+            type_args: self.type_args.clone(),
             args: self.args.specialize(context),
             ty: self.ty.specialize(context),
         }
@@ -276,6 +286,7 @@ mod xtor_tests {
     fn example() -> Xtor<Prd> {
         ctor!(
             id!("Cons"),
+            [],
             [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
         )
@@ -292,6 +303,7 @@ mod xtor_tests {
         let result = example().subst_sim(&subst.0, &subst.1);
         let expected = ctor!(
             id!("Cons"),
+            [],
             [var!(id!("y")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
         );
@@ -315,9 +327,10 @@ mod constraint_tests {
         data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
@@ -334,13 +347,15 @@ mod constraint_tests {
 
         let cons: Xtor<Prd> = ctor!(
             id!("Cons"),
+            [],
             [
                 lit!(1),
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         lit!(2),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))
                     ],
                     ty!(id!("List"), [ty!("int")])
                 )
@@ -367,9 +382,10 @@ mod constraint_tests {
         let list = data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))])),
@@ -386,11 +402,13 @@ mod constraint_tests {
 
         let cons: Xtor<Prd> = ctor!(
             id!("Cons"),
+            [],
             [
                 lit!(1),
-                ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")])),
+                ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")])),
                 ctor!(
                     id!("Nil"),
+                    [],
                     [],
                     ty!(id!("List"), [ty!(id!("List"), [ty!("int")])])
                 )
@@ -429,7 +447,7 @@ mod constraint_tests {
     fn collect_constraint_nil() {
         let list = example_list();
 
-        let nil: Xtor<Prd> = ctor!(id!("Nil"), [], ty!(id!("List"), [ty!("int")]));
+        let nil: Xtor<Prd> = ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]));
 
         let constraints = nil
             .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
@@ -451,9 +469,14 @@ mod constraint_tests {
         let list = codata!(
             id!("List"),
             [
-                dtor_sig!(id!("Head"), [bind!(id!("h"), cns!(), tvar!(id!("A", 1)))]),
+                dtor_sig!(
+                    id!("Head"),
+                    [],
+                    [bind!(id!("h"), cns!(), tvar!(id!("A", 1)))]
+                ),
                 dtor_sig!(
                     id!("Tail"),
+                    [],
                     [bind!(
                         id!("t"),
                         cns!(),
@@ -464,7 +487,7 @@ mod constraint_tests {
             [id!("A", 1)]
         );
 
-        let dtor: Xtor<Cns> = dtor!(id!("Head"), [lit!(1)], ty!(id!("List"), [ty!("int")]));
+        let dtor: Xtor<Cns> = dtor!(id!("Head"), [], [lit!(1)], ty!(id!("List"), [ty!("int")]));
 
         let constraints = dtor
             .collect_constraints(&GlobalEnv::new(&[], &[list], &[]))

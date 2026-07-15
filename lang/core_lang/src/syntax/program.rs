@@ -209,9 +209,10 @@ mod constraint_tests {
         let list = data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
@@ -286,7 +287,7 @@ mod check_tests {
     #[test]
     fn check_declared_type_annotation_ok() {
         // declared type exists and is used as an annotation on an exit statement
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
@@ -308,7 +309,7 @@ mod check_tests {
     #[test]
     fn check_type_arity_mismatch_in_prog() {
         // data declaration with one type parameter but used without arguments in a def
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], [id!("A", 1)]);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], [id!("A", 1)]);
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
@@ -341,8 +342,8 @@ mod check_tests {
     #[test]
     fn check_duplicate_type_name_in_prog() {
         // two data declarations with the same name
-        let list1 = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
-        let list2 = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
+        let list1 = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let list2 = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
@@ -383,8 +384,8 @@ mod check_tests {
     #[test]
     fn check_duplicate_xtor_name_in_prog() {
         // two xtors with the same name across data and codata declarations
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [])], []);
-        let stream = codata!(id!("Stream"), [dtor_sig!(id!("Nil"), [])], []);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let stream = codata!(id!("Stream"), [dtor_sig!(id!("Nil"), [], [])], []);
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
