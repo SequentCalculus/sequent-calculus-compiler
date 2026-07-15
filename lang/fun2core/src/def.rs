@@ -30,6 +30,7 @@ pub fn compile_def(
     used_labels: &mut HashSet<Name>,
     type_params_subst: Rc<HashMap<String, Identifier>>,
     type_params: Vec<Identifier>,
+    max_id: &mut usize,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
 
@@ -44,6 +45,7 @@ pub fn compile_def(
         used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
+        max_id,
     };
 
     let new_covar = state.fresh_covar();
@@ -95,6 +97,7 @@ pub fn compile_main(
     codata_types: &'_ [CodataDeclaration],
     used_labels: &mut HashSet<Name>,
     type_params: Rc<HashMap<String, Identifier>>,
+    max_id: &mut usize,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
     let context = compile_context(def.context, type_params.clone());
@@ -108,6 +111,7 @@ pub fn compile_main(
         used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
+        max_id,
     };
 
     let new_var = state.fresh_var();

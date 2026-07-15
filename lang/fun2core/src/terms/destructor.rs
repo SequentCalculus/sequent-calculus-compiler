@@ -5,9 +5,9 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     arguments::compile_subst,
     compile::{Compile, CompileState, bind_many},
-    types::compile_ty,
+    types::{compile_ty, compile_type_args},
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, types::TypeArgs};
 use fun::traits::OptTyped;
 
 impl Compile for fun::syntax::terms::Destructor {
@@ -29,10 +29,22 @@ impl Compile for fun::syntax::terms::Destructor {
             compile_subst(self.args, state, type_params.clone()).into(),
             Box::new(move |mut bindings, state| {
                 bindings.push_back(cont.into());
+                // split the type arguments into the ones for the destructor and the ones for the codata type
+                let type_args = if self.type_args.args.is_empty() {
+                    TypeArgs::default()
+                } else {
+                    TypeArgs {
+                        args: compile_type_args(&self.type_args, type_params.clone())
+                            .args
+                            .split_off(self.type_args.args.len()),
+                    }
+                };
+
                 // new continuation: D(〚t_1〛, ..., c)
                 let new_cont = core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
                     name: Identifier::new(self.id),
+                    type_args,
                     args: bindings.into(),
                     ty: compile_ty(
                         &self
@@ -81,6 +93,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result =
             term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64, Rc::default());
@@ -93,12 +106,14 @@ mod compile_tests {
                         clause!(
                             Prd,
                             id!("fst"),
+                            [],
                             [bind!(id!("a1"), cns!())],
                             cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
                             id!("snd"),
+                            [],
                             [bind!(id!("a2"), cns!())],
                             cut!(lit!(2), covar!(id!("a2")))
                         )
@@ -107,6 +122,7 @@ mod compile_tests {
                 ),
                 dtor!(
                     id!("fst"),
+                    [],
                     [covar!(id!("a0"))],
                     ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
                 ),
@@ -134,6 +150,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -145,12 +162,14 @@ mod compile_tests {
                         clause!(
                             Prd,
                             id!("fst"),
+                            [],
                             [bind!(id!("a1"), cns!())],
                             cut!(lit!(1), covar!(id!("a1")))
                         ),
                         clause!(
                             Prd,
                             id!("snd"),
+                            [],
                             [bind!(id!("a2"), cns!())],
                             cut!(lit!(2), covar!(id!("a2")))
                         )
@@ -159,6 +178,7 @@ mod compile_tests {
                 ),
                 dtor!(
                     id!("snd"),
+                    [],
                     [covar!(id!("a0"))],
                     ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
                 ),

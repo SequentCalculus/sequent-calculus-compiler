@@ -106,6 +106,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -130,6 +131,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 

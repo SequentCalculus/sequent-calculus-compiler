@@ -54,6 +54,21 @@ pub fn compile_type_params(
         .collect()
 }
 
+/// This function converts [type arguments in Fun](fun::syntax::types::TypeArgs) to
+/// [type arguments in Core](core_lang::syntax::types::TypeArgs).
+pub fn compile_type_args(
+    args: &fun::syntax::types::TypeArgs,
+    type_params: Rc<HashMap<String, Identifier>>,
+) -> core_lang::syntax::types::TypeArgs {
+    core_lang::syntax::types::TypeArgs {
+        args: args
+            .args
+            .iter()
+            .map(|arg| compile_ty(arg, type_params.clone()))
+            .collect(),
+    }
+}
+
 #[cfg(test)]
 mod compile_tests {
     use super::compile_ty;

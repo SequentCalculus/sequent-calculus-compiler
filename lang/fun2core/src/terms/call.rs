@@ -102,6 +102,7 @@ mod compile_tests {
             used_labels: &mut HashSet::from(["fac".to_string()]),
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -148,6 +149,7 @@ mod compile_tests {
             used_labels: &mut HashSet::from(["id".to_string()]),
             current_label: "main",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
 
         let continuation = core_lang::syntax::terms::XVar::covar(id!("a0"), ty!("int")).into();
@@ -218,6 +220,7 @@ mod compile_tests {
             used_labels: &mut HashSet::from(["id".to_string()]),
             current_label: "foo",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
 
         // Simulate the type parameter substitution that would normally occur in compile_type_params.

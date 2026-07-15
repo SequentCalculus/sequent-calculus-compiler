@@ -63,7 +63,10 @@ impl Compile for fun::syntax::terms::IfC {
                 self.thenc
                     .compile_with_cont(cont.clone(), state, type_params.clone()),
             ),
-            elsec: Rc::new(self.elsec.compile_with_cont(cont, state, type_params)),
+            elsec: Rc::new(
+                self.elsec
+                    .compile_with_cont(cont, state, type_params.clone()),
+            ),
         }
         .into()
     }
@@ -90,6 +93,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term.compile(&mut state, ty!("int"), Rc::default());
 
@@ -125,6 +129,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -151,6 +156,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term.compile(&mut state, ty!("int"), Rc::default());
 
@@ -185,6 +191,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 

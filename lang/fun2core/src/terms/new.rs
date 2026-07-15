@@ -114,6 +114,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(
             &mut state,
@@ -126,12 +127,14 @@ mod compile_tests {
                 clause!(
                     core_syntax::Prd,
                     id!("fst"),
+                    [],
                     [bind!(id!("a0"), cns!()),],
                     cut!(lit!(1), covar!(id!("a0")))
                 ),
                 clause!(
                     core_syntax::Prd,
                     id!("snd"),
+                    [],
                     [bind!(id!("a1"), cns!())],
                     cut!(lit!(2), covar!(id!("a1")))
                 )

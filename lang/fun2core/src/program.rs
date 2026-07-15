@@ -30,7 +30,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
             xtors: data
                 .ctors
                 .into_iter()
-                .map(|ctor| compile_ctor(ctor, Rc::new(type_param_subst.clone())))
+                .map(|ctor| compile_ctor(ctor, Rc::new(type_param_subst.clone()), &mut max_id))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -45,7 +45,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
             xtors: codata
                 .dtors
                 .into_iter()
-                .map(|dtor| compile_dtor(dtor, Rc::new(type_param_subst.clone())))
+                .map(|dtor| compile_dtor(dtor, Rc::new(type_param_subst.clone()), &mut max_id))
                 .collect(),
             type_params: type_params.clone(),
         });
@@ -60,6 +60,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
                 codata_types.as_slice(),
                 &mut used_labels,
                 Rc::new(global_type_param_subst.clone()),
+                &mut max_id,
             )
             .into_iter()
             .rev()
@@ -79,6 +80,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
                 &mut used_labels,
                 Rc::new(local_subst),
                 type_params,
+                &mut max_id,
             ));
         }
     }
@@ -91,7 +93,10 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     }
 }
 
-fn build_type_param_subst(names: &[String], params: &[Identifier]) -> HashMap<String, Identifier> {
+pub fn build_type_param_subst(
+    names: &[String],
+    params: &[Identifier],
+) -> HashMap<String, Identifier> {
     names.iter().cloned().zip(params.iter().cloned()).collect()
 }
 
@@ -112,6 +117,7 @@ mod compile_tests {
         types::{Ty, TypeArgs},
         util::dummy_span,
     };
+
     use std::collections::{HashMap, HashSet};
     use std::rc::Rc;
 
@@ -239,6 +245,24 @@ mod compile_tests {
         }
     }
 
+    fn example_box() -> Data {
+        Data {
+            span: None,
+            name: "Box".to_owned(),
+            type_params: TypeContext::default(),
+            ctors: vec![CtorSig {
+                span: None,
+                name: "Pack".to_owned(),
+                type_params: TypeContext::mk(&["A"]),
+                args: {
+                    let mut ctx = fun::syntax::context::TypingContext::default();
+                    ctx.add_var("x", Ty::mk_decl("A", TypeArgs::default()));
+                    ctx
+                },
+            }],
+        }
+    }
+
     #[test]
     fn compile_def1() {
         let result = compile_main(
@@ -246,6 +270,7 @@ mod compile_tests {
             &[],
             &mut HashSet::from(["main".to_string()]),
             Rc::new(HashMap::new()),
+            &mut 0,
         );
         let expected = def!(
             id!("main"),
@@ -266,6 +291,7 @@ mod compile_tests {
             &mut HashSet::from(["id".to_string()]),
             Rc::new(HashMap::new()),
             vec![],
+            &mut 0,
         );
         let expected = def!(
             id!("id"),
@@ -321,9 +347,10 @@ mod compile_tests {
         let expected = data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))])),
@@ -350,9 +377,10 @@ mod compile_tests {
         let expected = data!(
             id!("List[i64]"),
             [
-                ctor_sig!(id!("Nil"), []),
+                ctor_sig!(id!("Nil"), [], []),
                 ctor_sig!(
                     id!("Cons"),
+                    [],
                     [
                         bind!(id!("x"), prd!()),
                         bind!(id!("xs"), prd!(), ty!(id!("List"), vec![ty!("int")])),
@@ -377,6 +405,7 @@ mod compile_tests {
             &mut HashSet::from(["id_poly".to_string()]),
             Rc::new(subst),
             vec![fresh_param.clone()],
+            &mut 0,
         );
 
         assert_eq!(result.len(), 1);
@@ -415,5 +444,30 @@ mod compile_tests {
         assert_eq!(compiled_def.type_params.len(), 1);
 
         assert!(result.max_id > 0);
+    }
+
+    #[test]
+    fn compile_prog_box() {
+        let checked = CheckedProgram {
+            defs: vec![],
+            data_types: vec![example_box()],
+            codata_types: vec![],
+        };
+
+        let expected = data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        let result = compile_prog(checked);
+        assert_eq!(result.data_types.len(), 1);
+
+        let compiled_box = &result.data_types[0];
+        assert_eq!(compiled_box, &expected);
     }
 }

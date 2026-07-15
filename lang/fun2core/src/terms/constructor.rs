@@ -3,7 +3,7 @@
 use crate::{
     arguments::compile_subst,
     compile::{Compile, CompileState},
-    types::compile_ty,
+    types::{compile_ty, compile_type_args},
 };
 use core_lang::syntax::{
     Ty,
@@ -31,6 +31,7 @@ impl Compile for fun::syntax::terms::Constructor {
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
             name: Identifier::new(self.id),
+            type_args: compile_type_args(&self.type_args, type_params.clone()),
             args: compile_subst(self.args, state, type_params.clone()),
             ty: compile_ty(
                 &self
@@ -105,6 +106,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(
             &mut state,
@@ -114,9 +116,10 @@ mod compile_tests {
 
         let expected = ctor!(
             id!("Cons"),
+            [],
             [
                 lit!(1),
-                ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+                ctor!(id!("Nil"), [], [], ty!(id!("List"), vec![ty!("int")]))
             ],
             ty!(id!("List"), vec![ty!("int")])
         )

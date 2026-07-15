@@ -79,6 +79,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -118,6 +119,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(
             &mut state,
@@ -130,9 +132,10 @@ mod compile_tests {
             cut!(
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         var!(id!("x")),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), vec![ty!("int")]))
                     ],
                     ty!(id!("List"), vec![ty!("int")])
                 ),

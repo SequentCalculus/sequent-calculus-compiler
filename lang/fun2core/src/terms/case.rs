@@ -100,6 +100,7 @@ mod compile_tests {
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
         let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
@@ -108,9 +109,10 @@ mod compile_tests {
             cut!(
                 ctor!(
                     id!("Cons"),
+                    [],
                     [
                         lit!(1),
-                        ctor!(id!("Nil"), [], ty!(id!("List"), vec![ty!("int")]))
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), vec![ty!("int")]))
                     ],
                     ty!(id!("List"), vec![ty!("int")])
                 ),
@@ -120,11 +122,13 @@ mod compile_tests {
                             core_syntax::Cns,
                             id!("Nil"),
                             [],
+                            [],
                             cut!(lit!(0), covar!(id!("a0")))
                         ),
                         clause!(
                             core_syntax::Cns,
                             id!("Cons"),
+                            [],
                             [
                                 bind!(id!("x"), core_syntax::Chirality::Prd),
                                 bind!(

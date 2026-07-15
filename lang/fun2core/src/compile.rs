@@ -37,6 +37,8 @@ pub struct CompileState<'a> {
     pub current_label: &'a str,
     /// A list of already lifted statements
     pub lifted_statements: &'a mut VecDeque<Def>,
+    /// The maximum identifier used in the program so far, needed for generating fresh identifiers
+    pub max_id: &'a mut usize,
 }
 
 impl CompileState<'_> {
