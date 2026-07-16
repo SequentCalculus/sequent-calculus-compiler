@@ -231,6 +231,10 @@ impl<C: Chi> Checked for Xtor<C> {
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         self.ty.check(type_params, context, env)?;
+        self.type_args
+            .args
+            .iter()
+            .try_for_each(|arg| arg.check(type_params, context, env))?;
         self.args.check(type_params, context, env)?;
 
         let Ty::Decl { name, .. } = &self.ty else {

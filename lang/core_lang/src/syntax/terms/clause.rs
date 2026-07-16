@@ -248,7 +248,9 @@ impl<C: Chi> Checked for Clause<C> {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        self.context.check(type_params, context, env)?;
+        // extend the type parameters with the type parameters of the clause
+        let extended_type_params = [type_params, &self.type_params].concat();
+        self.context.check(&extended_type_params, context, env)?;
 
         // extend the context of the clause with the bindings of the clause
         let mut extended_context = context.clone();
@@ -257,7 +259,8 @@ impl<C: Chi> Checked for Clause<C> {
         }
 
         // check the body of the clause under the extended context of the clause
-        self.body.check(type_params, &extended_context, env)?;
+        self.body
+            .check(&extended_type_params, &extended_context, env)?;
 
         Ok(())
     }

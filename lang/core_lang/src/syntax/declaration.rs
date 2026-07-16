@@ -111,6 +111,19 @@ impl<P: Polarity> Print for XtorSig<P> {
     }
 }
 
+impl<P: Polarity> Checked for XtorSig<P> {
+    fn check(
+        &self,
+        type_params: &[Identifier],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // extend the type parameters with the type parameters of the xtor
+        let extended_type_params = [type_params, &self.type_params].concat();
+        self.args.check(&extended_type_params, context, env)
+    }
+}
+
 impl<P: Polarity + Clone> Specialize for XtorSig<P> {
     fn specialize(&self, context: SpecializeContext) -> Self {
         XtorSig {
@@ -239,17 +252,6 @@ impl<P: Polarity> Checked for TypeDeclaration<P> {
     }
 }
 
-impl<P: Polarity> Checked for XtorSig<P> {
-    fn check(
-        &self,
-        type_params: &[Identifier],
-        context: &TypingContext,
-        env: &GlobalEnv,
-    ) -> Result<(), LocatedTypeError> {
-        self.args.check(type_params, context, env)
-    }
-}
-
 #[cfg(test)]
 mod check_tests {
     use crate::{
@@ -257,7 +259,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{bind, ctor_sig, data, id, prd, ty};
+    use core_macros::{bind, ctor_sig, data, id, prd, tvar, ty};
 
     #[test]
     fn ty_decl_check_arity_and_args() {
@@ -309,6 +311,52 @@ mod check_tests {
                 &GlobalEnv::new(&[decl.clone()], &[], &[])
             )
             .is_ok()
+        );
+    }
+
+    #[test]
+    fn existential_type_decl_ok() {
+        let box_decl = data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        assert!(
+            box_decl
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&[box_decl.clone()], &[], &[]),
+                )
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn existential_type_decl_err() {
+        let box_decl = data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        assert!(
+            box_decl
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(&[box_decl.clone()], &[], &[]),
+                )
+                .is_err()
         );
     }
 }

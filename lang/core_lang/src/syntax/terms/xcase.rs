@@ -261,8 +261,14 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
             });
         };
 
+        // check that the number of type parameter binders in the clause matches the number of the xtor's own (existential/universal) type parameters
+        check_arity(sig.type_params.len(), clause.type_params.len())?;
+
         // check that the number of binders in the clause matches the number of arguments in the xtor signature
         check_arity(sig.args.bindings.len(), clause.context.bindings.len())?;
+
+        // the clause's own freshly bound type parameters play the role of the xtor's own declared type parameters within this clause; treat them as an "identity substitution" (target is another type *variable*, not a concrete type) so that references to the xtor's own parameters in its signature line up with what the clause actually bound
+        let own_type_args: Vec<Ty> = clause.type_params.iter().cloned().map(Ty::Var).collect();
 
         // check that the types of the binders in the clause match the types of the arguments in the xtor signature, after instantiating the type parameters with the concrete type arguments
         for (expected_binding, actual_binding) in
@@ -279,7 +285,8 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
             let expected_ty = expected_binding
                 .ty
-                .substitute((&decl.type_params, concrete_type_args));
+                .substitute((&decl.type_params, concrete_type_args))
+                .substitute((&sig.type_params, &own_type_args));
 
             if actual_binding.ty != expected_ty {
                 bail!(TypeError::TypeMismatch {
@@ -458,8 +465,33 @@ mod check_tests {
     extern crate self as core_lang;
     use crate::typing::check::Checked;
     use core_macros::{
-        bind, case, clause, covar, ctor_sig, cut, data, exit, id, lit, prd, ty, var,
+        bind, case, clause, cocase, codata, covar, ctor_sig, cut, data, dtor_sig, exit, id, lit,
+        prd, tvar, ty, var,
     };
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
+
+    fn runner_decl() -> CodataDeclaration {
+        return codata!(
+            id!("Runner"),
+            [dtor_sig!(
+                id!("Run"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
 
     #[test]
     fn check_against_declaration() {
@@ -559,5 +591,97 @@ mod check_tests {
         );
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn check_existential_data_ok() {
+        let case = case!(
+            [clause!(
+                Cns,
+                id!("Pack"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("B", 2)))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Box"))
+        );
+
+        assert!(
+            case.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[box_decl()], &[], &[]),
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn check_existential_data_err() {
+        let case = case!(
+            [clause!(
+                Cns,
+                id!("Pack"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), ty!("int"))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Box"))
+        );
+
+        assert!(
+            case.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[box_decl()], &[], &[]),
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn check_universal_codata_ok() {
+        let case = cocase!(
+            [clause!(
+                Prd,
+                id!("Run"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("B", 2)))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Runner"))
+        );
+
+        assert!(
+            case.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[], &[runner_decl()], &[]),
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn check_universal_codata_err() {
+        let case = cocase!(
+            [clause!(
+                Prd,
+                id!("Run"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), ty!("int"))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Runner"))
+        );
+
+        assert!(
+            case.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[], &[runner_decl()], &[]),
+            )
+            .is_err()
+        );
     }
 }

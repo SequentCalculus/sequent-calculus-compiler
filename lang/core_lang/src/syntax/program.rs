@@ -258,7 +258,9 @@ mod check_tests {
     use crate::typing::check::Checked;
     use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
-    use core_macros::{codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prog, ty};
+    use core_macros::{
+        bind, cns, codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prd, prog, tvar, ty,
+    };
 
     #[test]
     fn check_undeclared_type_in_prog() {
@@ -401,6 +403,75 @@ mod check_tests {
             )
             .is_err(),
             "expected error for duplicate xtor name in program"
+        );
+    }
+
+    #[test]
+    fn check_existential_and_universal_ok() {
+        let exists_any = data!(
+            id!("ExistsAny"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("val"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        let forall_id = codata!(
+            id!("ForallId"),
+            [dtor_sig!(
+                id!("Inst"),
+                [id!("A", 1)],
+                [
+                    bind!(id!("arg"), prd!(), tvar!(id!("A", 1))),
+                    bind!(id!("cont"), cns!(), tvar!(id!("A", 1)))
+                ]
+            )],
+            []
+        );
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!("int")))],
+            [exists_any],
+            [forall_id]
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn check_existential_unbound_type_variable() {
+        let exists_err = data!(
+            id!("ExistsErr"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("val"), prd!(), tvar!(id!("B", 2)))]
+            )],
+            []
+        );
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!("int")))],
+            [exists_err],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err()
         );
     }
 }
