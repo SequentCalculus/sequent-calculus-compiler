@@ -29,15 +29,27 @@ impl Compile for fun::syntax::terms::Destructor {
             compile_subst(self.args, state, type_params.clone()).into(),
             Box::new(move |mut bindings, state| {
                 bindings.push_back(cont.into());
-                // split the type arguments into the ones for the destructor and the ones for the codata type
-                let type_args = if self.type_args.args.is_empty() {
-                    TypeArgs::default()
-                } else {
-                    TypeArgs {
-                        args: compile_type_args(&self.type_args, type_params.clone())
-                            .args
-                            .split_off(self.type_args.args.len()),
-                    }
+
+                let scrutinee_ty = self
+                    .scrutinee
+                    .get_type()
+                    .expect("Types should be annotated before translation");
+
+                // The number of type arguments belonging to the codata type itself (as opposed to
+                // the destructor's own type arguments) equals the number of type arguments the
+                // scrutinee's type is instantiated with.
+                let codata_arity = match &scrutinee_ty {
+                    fun::syntax::types::Ty::Decl { type_args, .. } => type_args.args.len(),
+                    fun::syntax::types::Ty::I64 { .. } => 0,
+                };
+
+                // Split off the leading type arguments (belonging to the codata type, already
+                // reflected in `ty` below) from the trailing type arguments belonging to the
+                // destructor itself.
+                let type_args = TypeArgs {
+                    args: compile_type_args(&self.type_args, type_params.clone())
+                        .args
+                        .split_off(codata_arity),
                 };
 
                 // new continuation: D(〚t_1〛, ..., c)
