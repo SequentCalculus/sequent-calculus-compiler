@@ -2,7 +2,7 @@
 
 use printer::*;
 
-use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::types::TypeArgs;
@@ -206,6 +206,17 @@ impl Bind for Xtor<Cns> {
 impl<C: Chi> ConstraintCollector for Xtor<C> {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self.ty.collect_constraints(env)?;
+        let xtor_params = if self.prdcns.is_prd() {
+            env.lookup_xtor_for_data_decl(&self.name)?
+                .type_params
+                .clone()
+        } else {
+            env.lookup_xtor_for_codata_decl(&self.name)?
+                .type_params
+                .clone()
+        };
+
+        constraints.extend(collect_type_flow(&self.type_args.args, &xtor_params)?);
         constraints.extend(self.args.collect_constraints(env)?);
         Ok(constraints)
     }
@@ -288,12 +299,12 @@ mod xtor_tests {
     use core_macros::{ctor, id, ty, var};
 
     fn example() -> Xtor<Prd> {
-        ctor!(
+        return ctor!(
             id!("Cons"),
             [],
             [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
-        )
+        );
     }
 
     #[test]
@@ -328,7 +339,7 @@ mod constraint_tests {
     };
 
     fn example_list() -> DataDeclaration {
-        data!(
+        return data!(
             id!("List"),
             [
                 ctor_sig!(id!("Nil"), [], []),
@@ -342,7 +353,43 @@ mod constraint_tests {
                 )
             ],
             [id!("A", 1)]
-        )
+        );
+    }
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
+
+    fn runner_decl() -> CodataDeclaration {
+        return codata!(
+            id!("Runner"),
+            [dtor_sig!(
+                id!("Run"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
+
+    fn container_decl() -> CodataDeclaration {
+        return codata!(
+            id!("Container"),
+            [dtor_sig!(
+                id!("Wrap"),
+                [id!("S", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("S", 2)))]
+            )],
+            [id!("T", 1)]
+        );
     }
 
     #[test]
@@ -502,6 +549,98 @@ mod constraint_tests {
                 from: vec![Ty::I64],
                 to: vec![id!("A", 1)],
             }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_existential_ctor() {
+        let box_decl = box_decl();
+
+        let pack: Xtor<Prd> = ctor!(
+            id!("Pack"),
+            [ty!(id!("List"), [ty!("int")])],
+            [ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))],
+            ty!(id!("Box"))
+        );
+
+        let constraints = pack
+            .collect_constraints(&GlobalEnv::new(&[box_decl, example_list()], &[], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::Decl {
+                        name: id!("List"),
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    }],
+                    to: vec![id!("A", 1)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_universal_dtor() {
+        let runner = runner_decl();
+
+        let run: Xtor<Cns> = dtor!(id!("Run"), [ty!("int")], [lit!(1)], ty!(id!("Runner")));
+
+        let constraints = run
+            .collect_constraints(&GlobalEnv::new(&[], &[runner], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::I64],
+                to: vec![id!("A", 1)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_dtor_with_decl_and_own_type_params() {
+        let container = container_decl();
+
+        let wrap: Xtor<Cns> = dtor!(
+            id!("Wrap"),
+            [ty!("int")],
+            [lit!(1)],
+            ty!(id!("Container"), [ty!(id!("List"), [ty!("int")])])
+        );
+
+        let constraints = wrap
+            .collect_constraints(&GlobalEnv::new(&[], &[container], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::Decl {
+                        name: id!("List"),
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    }],
+                    to: vec![id!("T", 1)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("S", 2)],
+                },
+            ]),
         };
 
         assert_eq!(constraints, expected)

@@ -685,3 +685,99 @@ mod check_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod constraint_tests {
+    use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
+    use crate::syntax::*;
+    use crate::typing::env::GlobalEnv;
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, case, clause, cocase, codata, ctor_sig, data, dtor_sig, exit, id, lit, prd, tvar, ty,
+    };
+    use std::collections::HashSet;
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
+
+    fn runner_decl() -> CodataDeclaration {
+        return codata!(
+            id!("Runner"),
+            [dtor_sig!(
+                id!("Run"),
+                [id!("A", 1)],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+    }
+
+    #[test]
+    fn collect_constraint_existential_case() {
+        let box_decl = box_decl();
+
+        let matched: XCase<Cns> = case!(
+            [clause!(
+                Cns,
+                id!("Pack"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("B", 2)))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Box"))
+        )
+        .into();
+
+        let constraints = matched
+            .collect_constraints(&GlobalEnv::new(&[box_decl], &[], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::Var(id!("A", 1))],
+                to: vec![id!("B", 2)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_universal_new() {
+        let runner = runner_decl();
+
+        let matched: XCase<Prd> = cocase!(
+            [clause!(
+                Prd,
+                id!("Run"),
+                [id!("B", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("B", 2)))],
+                exit!(lit!(0))
+            )],
+            ty!(id!("Runner"))
+        )
+        .into();
+
+        let constraints = matched
+            .collect_constraints(&GlobalEnv::new(&[], &[runner], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: HashSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::Var(id!("A", 1))],
+                to: vec![id!("B", 2)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+}

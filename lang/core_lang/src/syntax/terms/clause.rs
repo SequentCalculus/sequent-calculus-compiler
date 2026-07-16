@@ -3,7 +3,7 @@
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
-use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::*;
@@ -224,8 +224,25 @@ impl<C: Chi> Focusing for Clause<C> {
 
 impl<C: Chi> ConstraintCollector for Clause<C> {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let xtor_params: Vec<Ty> = if self.prdcns.is_cns() {
+            env.lookup_xtor_for_data_decl(&self.xtor)?
+                .type_params
+                .into_iter()
+                .map(Ty::Var)
+                .collect()
+        } else {
+            env.lookup_xtor_for_codata_decl(&self.xtor)?
+                .type_params
+                .into_iter()
+                .map(Ty::Var)
+                .collect()
+        };
+
+        let mut constraints = collect_type_flow(&xtor_params, &self.type_params)?;
+
         // collect constraints from the body of the clause
-        self.body.collect_constraints(env)
+        constraints.extend(self.body.collect_constraints(env)?);
+        Ok(constraints)
     }
 }
 

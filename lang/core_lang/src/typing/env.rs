@@ -1,4 +1,7 @@
-use crate::syntax::{CodataDeclaration, DataDeclaration, Def, Identifier};
+use crate::{
+    mono::errors::MonoError,
+    syntax::{CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier},
+};
 
 /// Global environment holding immutable references to all top-level program declarations used during type checking.
 #[derive(Default)]
@@ -30,6 +33,28 @@ impl<'a> GlobalEnv<'a> {
     /// Looks up a [`CodataDeclaration`] by its identifier.
     pub fn lookup_codata_decl(&self, name: &Identifier) -> Option<&CodataDeclaration> {
         self.codata_decls.iter().find(|d| d.name == *name)
+    }
+
+    /// Looks up a constructor signature ([`CtorSig`]) by its identifier.
+    pub fn lookup_xtor_for_data_decl(&self, name: &Identifier) -> Result<CtorSig, MonoError> {
+        self.data_decls
+            .iter()
+            .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == *name).cloned())
+            .ok_or_else(|| MonoError::UndeclaredXtor {
+                type_name: "unknown".to_owned(),
+                xtor_name: name.name.clone(),
+            })
+    }
+
+    /// Looks up a destructor signature ([`DtorSig`]) by its identifier.
+    pub fn lookup_xtor_for_codata_decl(&self, name: &Identifier) -> Result<DtorSig, MonoError> {
+        self.codata_decls
+            .iter()
+            .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == *name).cloned())
+            .ok_or_else(|| MonoError::UndeclaredXtor {
+                type_name: "unknown".to_owned(),
+                xtor_name: name.name.clone(),
+            })
     }
 
     /// Looks up a top-level function definition ([`Def`]) by its identifier.
