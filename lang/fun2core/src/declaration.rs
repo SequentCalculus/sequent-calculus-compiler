@@ -50,7 +50,6 @@ pub fn compile_dtor(
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
-    let mut new_args = compile_context(dtor.args, type_params.clone());
 
     let dtor_type_params = compile_type_params(&dtor.type_params, max_id);
     let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
@@ -63,6 +62,8 @@ pub fn compile_dtor(
             ))
             .collect(),
     );
+
+    let mut new_args = compile_context(dtor.args, type_params_subst.clone());
 
     new_args
         .bindings
