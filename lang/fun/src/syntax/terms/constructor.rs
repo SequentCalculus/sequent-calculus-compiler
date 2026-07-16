@@ -90,37 +90,6 @@ impl Check for Constructor {
 
         self.ty = Some(expected.clone());
         Ok(self)
-
-        // let type_args = match expected {
-        //     Ty::Decl { type_args, .. } => type_args,
-        //     Ty::I64 { .. } => {
-        //         return Err(Error::ExpectedI64ForConstructor {
-        //             span: self.span,
-        //             name: self.id,
-        //         });
-        //     }
-        // };
-
-        // // the name of the constructor in the symbol table for the instantiated data type, the
-        // // instance must exists already
-        // let name = self.id.clone() + &type_args.print_to_string(None);
-        // match symbol_table.ctors.get(&name) {
-        //     Some(types) => {
-        //         let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span, &name)?;
-
-        //         self.args =
-        //             check_args(&self.span, symbol_table, context, self.args, &types.clone())?;
-
-        //         check_equality(&self.span, symbol_table, expected, &ty)?;
-
-        //         self.ty = Some(expected.clone());
-        //         Ok(self)
-        //     }
-        //     None => Err(Error::Undefined {
-        //         span: Some(self.span),
-        //         name: self.id.clone(),
-        //     }),
-        //}
     }
 }
 

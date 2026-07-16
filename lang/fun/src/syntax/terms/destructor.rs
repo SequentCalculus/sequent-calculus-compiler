@@ -101,33 +101,6 @@ impl Check for Destructor {
 
         self.ty = Some(expected.clone());
         Ok(self)
-
-        // // the name of the constructor in the symbol table for the instantiated data type
-        // let dtor_name = self.id.clone() + &self.type_args.print_to_string(None);
-        // let ty = match symbol_table.lookup_ty_for_dtor(&self.span, &dtor_name) {
-        //     Ok(ty) => ty,
-        //     // if there is no instance yet, we create an instance from the template
-        //     Err(_) => symbol_table.lookup_ty_template_for_dtor(&self.id, &self.type_args)?,
-        // };
-
-        // self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
-
-        // match symbol_table.dtors.get(&dtor_name) {
-        //     Some(signature) => {
-        //         let (types, ret_ty) = signature.clone();
-
-        //         self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
-
-        //         check_equality(&self.span, symbol_table, expected, &ret_ty)?;
-
-        //         self.ty = Some(expected.clone());
-        //         Ok(self)
-        //     }
-        //     None => Err(Error::Undefined {
-        //         span: Some(self.span),
-        //         name: self.id.clone(),
-        //     }),
-        // }
     }
 }
 
