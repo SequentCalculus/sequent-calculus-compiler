@@ -6,6 +6,7 @@ use printer::tokens::{CODATA, COLON, COMMA};
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::check::check_overlapping_type_params;
 use crate::typing::*;
 
 /// This struct defines a codata type destructor. It consists of a name (unique within its type), an optional list of type parameters,
@@ -95,8 +96,27 @@ pub struct Codata {
 
 impl Codata {
     /// This function checks the well-formedness of the codata type template by checking each
-    /// destructor.
+    /// destructor and checks for overlapping type parameters.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        let dtor_params: Vec<String> = self
+            .dtors
+            .iter()
+            .flat_map(|dtor| dtor.type_params.bindings.clone())
+            .collect();
+
+        if let Some(overlapps) =
+            check_overlapping_type_params(&self.type_params.bindings, &dtor_params)
+        {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span,
+                name: overlapps
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            });
+        }
+
         for dtor in &self.dtors {
             dtor.check(symbol_table, &self.type_params)?;
         }
@@ -139,8 +159,9 @@ impl Print for Codata {
 #[cfg(test)]
 mod codata_tests {
     use crate::{
+        syntax::{Codata, DtorSig, Ty, TypeArgs, TypeContext, TypingContext},
         test_common::codata_stream,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::symbol_table::{self, BuildSymbolTable, SymbolTable},
     };
     use printer::Print;
 
@@ -157,5 +178,31 @@ mod codata_tests {
         codata_stream().build(&mut symbol_table).unwrap();
         let result = codata_stream().check(&mut symbol_table);
         assert!(result.is_ok())
+    }
+
+    #[test]
+    fn check_overlapping_type_params() {
+        let data = Codata {
+            span: None,
+            name: "Box".to_owned(),
+            type_params: TypeContext {
+                span: None,
+                bindings: vec!["A".to_owned()].into(),
+            },
+            dtors: vec![DtorSig {
+                span: None,
+                name: "Pack".to_owned(),
+                type_params: TypeContext {
+                    span: None,
+                    bindings: vec!["A".to_owned()].into(),
+                },
+                args: TypingContext::default(),
+                cont_ty: Ty::mk_decl(&"A", TypeArgs::default()),
+            }],
+        };
+
+        let mut symbol_table = symbol_table::SymbolTable::default();
+        data.build(&mut symbol_table).unwrap();
+        assert!(data.check(&symbol_table).is_err());
     }
 }

@@ -1,6 +1,6 @@
 //! This module defines a trait with a method for typechecking.
 
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 use miette::SourceSpan;
 use printer::Print;
@@ -135,6 +135,26 @@ pub fn check_equality(
         });
     }
     Ok(())
+}
+
+/// This function checks for overlapping type parameters between two lists of type parameters. If there are overlapping type parameters, it returns a vector of the overlapping type parameter names. Otherwise, it returns None.
+pub fn check_overlapping_type_params(
+    fst_params: &[String],
+    snd_params: &[String],
+) -> Option<Vec<String>> {
+    let set_b: HashSet<&str> = snd_params.iter().map(|s| s.as_str()).collect();
+
+    let overlapps: Vec<String> = fst_params
+        .iter()
+        .filter(|p| set_b.contains(p.as_str()))
+        .cloned()
+        .collect();
+
+    if overlapps.is_empty() {
+        None
+    } else {
+        Some(overlapps)
+    }
 }
 
 #[cfg(test)]
