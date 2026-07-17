@@ -1,8 +1,10 @@
+use std::vec;
+
 use crate::{
     mono::{naming_table::NamingTable, solver::Solution},
     syntax::{
         Def, Identifier, Prog, Ty,
-        declaration::{Polarity, TypeDeclaration},
+        declaration::{Polarity, TypeDeclaration, XtorSig},
     },
 };
 
@@ -10,10 +12,10 @@ use crate::{
 ///
 /// `table` is a reference to the naming table that maps polymorphic type parameters to their corresponding concrete types.
 /// `subst` is an optional tuple containing a reference to the list of type parameters and their corresponding concrete types for the current specialization context.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct SpecializeContext<'a> {
     pub table: &'a NamingTable,
-    pub subst: (&'a [Identifier], &'a [Ty]),
+    pub subst: (Vec<Identifier>, Vec<Ty>),
 }
 
 impl<'a> SpecializeContext<'a> {
@@ -21,7 +23,7 @@ impl<'a> SpecializeContext<'a> {
     pub fn ground(table: &'a NamingTable) -> Self {
         SpecializeContext {
             table,
-            subst: (&[], &[]),
+            subst: (vec![], vec![]),
         }
     }
 
@@ -29,7 +31,21 @@ impl<'a> SpecializeContext<'a> {
     pub fn with_subst(table: &'a NamingTable, params: &'a [Identifier], args: &'a [Ty]) -> Self {
         SpecializeContext {
             table,
-            subst: (params, args),
+            subst: (params.to_vec(), args.to_vec()),
+        }
+    }
+
+    /// Extends the current specialization context with additional type parameters and their corresponding concrete types, returning a new `SpecializeContext` that combines the existing substitution with the new one.
+    pub fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
+        let mut extended_params = self.subst.0.clone();
+        extended_params.extend_from_slice(new_params);
+
+        let mut extended_args = self.subst.1.clone();
+        extended_args.extend_from_slice(new_args);
+
+        SpecializeContext {
+            table: self.table,
+            subst: (extended_params, extended_args),
         }
     }
 }
@@ -37,23 +53,23 @@ impl<'a> SpecializeContext<'a> {
 /// A trait for types that can be specialized from polymorphic to monomorphic forms.
 pub trait Specialize {
     /// Specializes the current instance using the provided specialization context, returning a new instance with all polymorphic type parameters replaced by their corresponding concrete types.
-    fn specialize(&self, context: SpecializeContext) -> Self;
+    fn specialize(&self, context: &SpecializeContext) -> Self;
 }
 
 impl<X: Specialize> Specialize for Vec<X> {
-    fn specialize(&self, ctx: SpecializeContext) -> Self {
+    fn specialize(&self, ctx: &SpecializeContext) -> Self {
         self.iter().map(|x| x.specialize(ctx)).collect()
     }
 }
 
 impl<X: Specialize> Specialize for Option<X> {
-    fn specialize(&self, ctx: SpecializeContext) -> Self {
+    fn specialize(&self, ctx: &SpecializeContext) -> Self {
         self.as_ref().map(|x| x.specialize(ctx))
     }
 }
 
 impl<X: Specialize> Specialize for std::rc::Rc<X> {
-    fn specialize(&self, ctx: SpecializeContext) -> Self {
+    fn specialize(&self, ctx: &SpecializeContext) -> Self {
         std::rc::Rc::new(self.as_ref().specialize(ctx))
     }
 }
@@ -93,22 +109,69 @@ pub fn specialize_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     table: &NamingTable,
 ) -> Vec<TypeDeclaration<P>> {
-    let node = &decl.type_params;
-    if node.is_empty() {
-        // This is already a monomorphic declaration, so we can just return it as-is.
-        return vec![decl.clone()];
+    let params = &decl.type_params;
+    if params.is_empty() {
+        if decl.xtors.is_empty() || decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
+            // This is already a monomorphic declaration, so we can return it as-is
+            return vec![decl.clone()];
+        }
+        // This is already a monomorphic declaration, so we only need to specialize its xtors.
+        return vec![TypeDeclaration {
+            dat: decl.dat.clone(),
+            name: decl.name.clone(),
+            xtors: decl
+                .xtors
+                .iter()
+                .flat_map(|xtor| specialize_xtor_sig(xtor, &SpecializeContext::ground(table)))
+                .collect(),
+            type_params: vec![],
+        }];
     }
 
     table
         .instantiations_for(&decl.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, node, tuple);
+            let ctx = SpecializeContext::with_subst(table, params, tuple);
             TypeDeclaration {
                 dat: decl.dat.clone(),
                 name: table.lookup(&decl.name, tuple).clone(),
-                xtors: decl.xtors.specialize(ctx),
+                xtors: decl
+                    .xtors
+                    .iter()
+                    .flat_map(|xtor| specialize_xtor_sig(xtor, &ctx))
+                    .collect(),
                 type_params: vec![],
+            }
+        })
+        .collect()
+}
+
+/// Specialization of polymorphic constructor/destructor signatures into monomorphic ones
+fn specialize_xtor_sig<P: Polarity + Clone>(
+    xtor_sig: &XtorSig<P>,
+    ctx: &SpecializeContext,
+) -> Vec<XtorSig<P>> {
+    let params = &xtor_sig.type_params;
+    // This is already a monomorphic declaration, so we can return it as-is
+    if params.is_empty() {
+        return vec![XtorSig {
+            xtor: xtor_sig.xtor.clone(),
+            name: xtor_sig.name.clone(),
+            type_params: vec![],
+            args: xtor_sig.args.specialize(ctx),
+        }];
+    }
+    ctx.table
+        .instantiations_for(&xtor_sig.name)
+        .iter()
+        .map(|tuple| {
+            let extended_ctx = ctx.extend_with_substs(params, tuple);
+            XtorSig {
+                xtor: xtor_sig.xtor.clone(),
+                name: extended_ctx.table.lookup(&xtor_sig.name, tuple).clone(),
+                type_params: vec![],
+                args: xtor_sig.args.specialize(&extended_ctx),
             }
         })
         .collect()
@@ -116,9 +179,9 @@ pub fn specialize_declaration<P: Polarity + Clone>(
 
 /// Specialization of polymorphic function definitions into monomorphic ones
 pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
-    let node = &def.type_params;
+    let params = &def.type_params;
 
-    if node.is_empty() {
+    if params.is_empty() {
         // This function has no type parameters of its own, so it produces
         // exactly one monomorphic copy. However, the body still
         // needs to be traversed with a ground context, because it may
@@ -128,8 +191,8 @@ pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
         return vec![Def {
             name: def.name.clone(),
             type_params: vec![],
-            context: def.context.specialize(ctx),
-            body: def.body.specialize(ctx),
+            context: def.context.specialize(&ctx),
+            body: def.body.specialize(&ctx),
         }];
     }
 
@@ -137,12 +200,12 @@ pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
         .instantiations_for(&def.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, node, tuple);
+            let ctx = SpecializeContext::with_subst(table, params, tuple);
             Def {
                 name: table.lookup(&def.name, tuple).clone(),
                 type_params: vec![],
-                context: def.context.specialize(ctx),
-                body: def.body.specialize(ctx),
+                context: def.context.specialize(&ctx),
+                body: def.body.specialize(&ctx),
             }
         })
         .collect()
@@ -304,7 +367,7 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
         let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
-        let ctx = SpecializeContext::ground(&table);
+        let ctx = &SpecializeContext::ground(&table);
 
         let term = ctor!(
             id!("Cons"),

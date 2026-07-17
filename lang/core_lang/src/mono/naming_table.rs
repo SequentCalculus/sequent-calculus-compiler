@@ -42,7 +42,17 @@ impl NamingTable {
                 solution,
                 mangle_ty_declaration,
             );
+
+            decl.xtors.iter().for_each(|xtor| {
+                table.register(
+                    &xtor.name,
+                    &xtor.type_params,
+                    solution,
+                    mangle_ty_declaration,
+                );
+            });
         }
+
         for decl in codata_decls {
             table.register(
                 &decl.name,
@@ -50,7 +60,17 @@ impl NamingTable {
                 solution,
                 mangle_ty_declaration,
             );
+
+            decl.xtors.iter().for_each(|xtor| {
+                table.register(
+                    &xtor.name,
+                    &xtor.type_params,
+                    solution,
+                    mangle_ty_declaration,
+                );
+            });
         }
+
         for def in defs {
             table.register(
                 &def.name,

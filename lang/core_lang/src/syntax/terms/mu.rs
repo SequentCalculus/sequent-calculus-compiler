@@ -267,7 +267,7 @@ impl<C: Chi> ConstraintCollector for Mu<C> {
 }
 
 impl<C: Chi> Specialize for Mu<C> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Mu {
             prdcns: self.prdcns.clone(),
             variable: self.variable.clone(),

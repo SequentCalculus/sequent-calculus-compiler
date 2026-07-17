@@ -209,7 +209,7 @@ impl ConstraintCollector for Cut {
 }
 
 impl Specialize for Cut {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Cut {
             producer: self.producer.specialize(context),
             consumer: self.consumer.specialize(context),

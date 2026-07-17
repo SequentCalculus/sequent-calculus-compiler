@@ -65,7 +65,7 @@ impl SubstVar for ContextBinding {
 }
 
 impl Specialize for ContextBinding {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         ContextBinding {
             var: self.var.clone(),
             chi: self.chi.clone(),
@@ -173,7 +173,7 @@ impl Checked for TypingContext {
 }
 
 impl Specialize for TypingContext {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         TypingContext {
             bindings: self.bindings.specialize(context),
         }

@@ -143,7 +143,7 @@ impl ConstraintCollector for Exit {
 }
 
 impl Specialize for Exit {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Exit {
             arg: self.arg.specialize(context),
             ty: self.ty.specialize(context),

@@ -244,7 +244,7 @@ impl ConstraintCollector for IfC {
 }
 
 impl Specialize for IfC {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         IfC {
             sort: self.sort,
             fst: self.fst.specialize(context),

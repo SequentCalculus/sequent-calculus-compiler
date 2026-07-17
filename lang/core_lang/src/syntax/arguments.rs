@@ -118,7 +118,7 @@ impl ConstraintCollector for Argument {
 }
 
 impl Specialize for Argument {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         match self {
             Argument::Producer(term) => Argument::Producer(term.specialize(context)),
             Argument::Consumer(term) => Argument::Consumer(term.specialize(context)),
@@ -225,7 +225,7 @@ impl ConstraintCollector for Arguments {
 }
 
 impl Specialize for Arguments {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Arguments {
             entries: self.entries.specialize(context),
         }

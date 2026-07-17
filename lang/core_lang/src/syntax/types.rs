@@ -135,17 +135,17 @@ impl Print for Ty {
 }
 
 impl Specialize for Ty {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         match self {
             Ty::I64 => Ty::I64,
 
             Ty::Var(param) => {
-                let (params, args) = context.subst;
+                let (params, args) = &context.subst;
                 let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
                     panic!("type variable {} not found in substitution", param.name)
                 });
                 if let Some(concrete_ty) = args.get(pos) {
-                    concrete_ty.specialize(SpecializeContext::ground(context.table))
+                    concrete_ty.specialize(&SpecializeContext::ground(context.table))
                 } else {
                     panic!("type variable {} not found in substitution", param.name)
                 }
@@ -155,7 +155,7 @@ impl Specialize for Ty {
                 let ground_args: Vec<Ty> = type_args
                     .args
                     .iter()
-                    .map(|a| a.substitute(context.subst))
+                    .map(|a| a.substitute((&context.subst.0, &context.subst.1)))
                     .collect();
                 let mangled = context.table.lookup(name, &ground_args).clone();
                 Ty::Decl {
@@ -329,7 +329,7 @@ mod specialize_tests {
     fn specialize_ground_i64_is_identity() {
         let solution = Solution::default();
         let table = NamingTable::build(&solution, &[], &[], &[]);
-        let ctx = SpecializeContext::ground(&table);
+        let ctx = &SpecializeContext::ground(&table);
 
         let result = Ty::I64.specialize(ctx);
         assert_eq!(result, Ty::I64);
@@ -344,7 +344,7 @@ mod specialize_tests {
 
         let params = vec![id!("A", 1)];
         let args = vec![ty!("int")];
-        let ctx = SpecializeContext::with_subst(&table, &params, &args);
+        let ctx = &SpecializeContext::with_subst(&table, &params, &args);
 
         let result = tvar!(id!("A", 1)).specialize(ctx);
         assert_eq!(result, ty!("int"));
@@ -362,7 +362,7 @@ mod specialize_tests {
 
         let list = data!(id!("List"), [], [id!("A", 1)]);
         let table = NamingTable::build(&solution, &[list.clone()], &[], &[]);
-        let ctx = SpecializeContext::ground(&table);
+        let ctx = &SpecializeContext::ground(&table);
 
         let input = ty!(id!("List"), [ty!("int")]);
         let result = input.specialize(ctx);
@@ -388,7 +388,7 @@ mod specialize_tests {
 
         let list = data!(id!("List"), [], [id!("A", 1)]);
         let table = NamingTable::build(&solution, &[list.clone()], &[], &[]);
-        let ctx = SpecializeContext::ground(&table);
+        let ctx = &SpecializeContext::ground(&table);
 
         let input = ty!(id!("List"), [ty!(id!("Bool"))]);
         let _ = input.specialize(ctx);

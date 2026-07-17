@@ -149,7 +149,7 @@ impl<C: Chi> ConstraintCollector for XVar<C> {
 }
 
 impl<C: Chi> Specialize for XVar<C> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         XVar {
             prdcns: self.prdcns.clone(),
             var: self.var.clone(),

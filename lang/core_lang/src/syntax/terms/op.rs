@@ -211,7 +211,7 @@ impl ConstraintCollector for Op {
 }
 
 impl Specialize for Op {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Op {
             fst: self.fst.specialize(context),
             op: self.op.clone(),

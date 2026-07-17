@@ -125,7 +125,7 @@ impl<P: Polarity> Checked for XtorSig<P> {
 }
 
 impl<P: Polarity + Clone> Specialize for XtorSig<P> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         XtorSig {
             xtor: self.xtor.clone(),
             name: self.name.clone(),

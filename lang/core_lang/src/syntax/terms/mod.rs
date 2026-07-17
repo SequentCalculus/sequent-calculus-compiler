@@ -264,7 +264,7 @@ impl<C: Chi> ConstraintCollector for Term<C> {
 }
 
 impl<C: Chi> Specialize for Term<C> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         match self {
             Term::XVar(var) => var.specialize(context).into(),
             Term::Literal(_) => self.clone(),

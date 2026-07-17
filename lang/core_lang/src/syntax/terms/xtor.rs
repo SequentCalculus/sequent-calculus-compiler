@@ -223,7 +223,7 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
 }
 
 impl<C: Chi> Specialize for Xtor<C> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Xtor {
             prdcns: self.prdcns.clone(),
             name: self.name.clone(),

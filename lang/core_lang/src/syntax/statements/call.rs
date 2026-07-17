@@ -156,12 +156,12 @@ impl ConstraintCollector for Call {
 }
 
 impl Specialize for Call {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         let ground_type_args: Vec<Ty> = self
             .type_args
             .args
             .iter()
-            .map(|ty| ty.substitute(context.subst))
+            .map(|ty| ty.substitute((&context.subst.0, &context.subst.1)))
             .collect();
 
         let specialized_name = if ground_type_args.is_empty() {

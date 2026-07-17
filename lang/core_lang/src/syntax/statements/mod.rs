@@ -134,7 +134,7 @@ impl ConstraintCollector for Statement {
 }
 
 impl Specialize for Statement {
-    fn specialize(&self, context: crate::mono::specialize::SpecializeContext) -> Self {
+    fn specialize(&self, context: &crate::mono::specialize::SpecializeContext) -> Self {
         match self {
             Statement::Cut(cut) => cut.specialize(context).into(),
             Statement::IfC(ifc) => ifc.specialize(context).into(),

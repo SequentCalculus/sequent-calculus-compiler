@@ -150,7 +150,7 @@ impl ConstraintCollector for PrintI64 {
 }
 
 impl Specialize for PrintI64 {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         PrintI64 {
             newline: self.newline,
             arg: self.arg.specialize(context),

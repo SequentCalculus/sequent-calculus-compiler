@@ -247,7 +247,7 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
 }
 
 impl<C: Chi> Specialize for Clause<C> {
-    fn specialize(&self, context: SpecializeContext) -> Self {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
         Clause {
             prdcns: self.prdcns.clone(),
             xtor: self.xtor.clone(),
