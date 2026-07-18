@@ -5,7 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -164,7 +164,11 @@ impl<C: Chi> Specialize for XCase<C> {
     fn specialize(&self, context: &SpecializeContext) -> Self {
         XCase {
             prdcns: self.prdcns.clone(),
-            clauses: self.clauses.specialize(context),
+            clauses: self
+                .clauses
+                .iter()
+                .flat_map(|clause| specialize_clause(clause, context))
+                .collect(),
             ty: self.ty.specialize(context),
         }
     }

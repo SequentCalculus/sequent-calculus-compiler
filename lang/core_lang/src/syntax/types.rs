@@ -142,12 +142,18 @@ impl Specialize for Ty {
             Ty::Var(param) => {
                 let (params, args) = &context.subst;
                 let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
-                    panic!("type variable {} not found in substitution", param.name)
+                    panic!(
+                        "type variable {} not found in substitution",
+                        param.print_to_string(None)
+                    )
                 });
                 if let Some(concrete_ty) = args.get(pos) {
                     concrete_ty.specialize(&SpecializeContext::ground(context.table))
                 } else {
-                    panic!("type variable {} not found in substitution", param.name)
+                    panic!(
+                        "type variable {} not found in substitution",
+                        param.print_to_string(None)
+                    )
                 }
             }
 

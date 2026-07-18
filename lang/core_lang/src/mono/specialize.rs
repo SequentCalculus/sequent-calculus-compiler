@@ -3,7 +3,7 @@ use std::vec;
 use crate::{
     mono::{naming_table::NamingTable, solver::Solution},
     syntax::{
-        Def, Identifier, Prog, Ty,
+        Chi, Clause, Def, Identifier, Prog, Ty,
         declaration::{Polarity, TypeDeclaration, XtorSig},
     },
 };
@@ -36,7 +36,7 @@ impl<'a> SpecializeContext<'a> {
     }
 
     /// Extends the current specialization context with additional type parameters and their corresponding concrete types, returning a new `SpecializeContext` that combines the existing substitution with the new one.
-    pub fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
+    fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
         let mut extended_params = self.subst.0.clone();
         extended_params.extend_from_slice(new_params);
 
@@ -105,7 +105,7 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
 }
 
 /// Specialization of polymorphic type declarations into monomorphic ones
-pub fn specialize_declaration<P: Polarity + Clone>(
+fn specialize_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     table: &NamingTable,
 ) -> Vec<TypeDeclaration<P>> {
@@ -177,6 +177,38 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
         .collect()
 }
 
+/// Specialization of polymorphic clauses into monomorphic ones.
+pub fn specialize_clause<C: Chi>(clause: &Clause<C>, ctx: &SpecializeContext) -> Vec<Clause<C>> {
+    let params = &clause.type_params;
+
+    if params.is_empty() {
+        // No own type parameters bound by this clause. The xtor name is looked up under the
+        // already-established decl-level substitution only.
+        return vec![Clause {
+            prdcns: clause.prdcns.clone(),
+            xtor: clause.xtor.clone(),
+            type_params: vec![],
+            context: clause.context.specialize(ctx),
+            body: clause.body.specialize(ctx),
+        }];
+    }
+
+    ctx.table
+        .instantiations_for(&clause.xtor)
+        .iter()
+        .map(|tuple| {
+            let extended_ctx = ctx.extend_with_substs(params, tuple);
+            Clause {
+                prdcns: clause.prdcns.clone(),
+                xtor: extended_ctx.table.lookup(&clause.xtor, tuple).clone(),
+                type_params: vec![],
+                context: clause.context.specialize(&extended_ctx),
+                body: clause.body.specialize(&extended_ctx),
+            }
+        })
+        .collect()
+}
+
 /// Specialization of polymorphic function definitions into monomorphic ones
 pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
     let params = &def.type_params;
@@ -220,16 +252,20 @@ mod specialize_tests {
             naming_table::NamingTable,
             solver::Solution,
             specialize::{
-                Specialize, SpecializeContext, specialize_declaration, specialize_def,
-                specialize_program,
+                Specialize, SpecializeContext, specialize_clause, specialize_declaration,
+                specialize_def, specialize_program,
             },
         },
-        syntax::{DataDeclaration, Def, Prog, Statement, Ty, types::TypeArgs},
+        syntax::{
+            Clause, Cns, CodataDeclaration, DataDeclaration, Def, Prog, Statement, Ty,
+            types::TypeArgs,
+        },
         traits::Typed,
     };
     extern crate self as core_lang;
     use core_macros::{
-        bind, call, cns, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tvar, ty, var,
+        bind, call, clause, cns, codata, covar, ctor, ctor_sig, cut, data, def, dtor_sig, exit, id,
+        lit, prd, tvar, ty, var,
     };
 
     fn list_decl() -> DataDeclaration {
@@ -289,6 +325,47 @@ mod specialize_tests {
                 covar!(id!("ret"), tvar!(id!("A", 1))),
                 tvar!(id!("A", 1))
             )
+        );
+    }
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [id!("E", 2)],
+                [bind!(id!("x"), prd!(), tvar!(id!("E", 2)))]
+            )],
+            []
+        );
+    }
+
+    fn container_decl() -> CodataDeclaration {
+        return codata!(
+            id!("Container"),
+            [dtor_sig!(
+                id!("wrap"),
+                [id!("S", 2)],
+                [
+                    bind!(id!("x"), prd!(), tvar!(id!("S", 2))),
+                    bind!(id!("tag"), prd!(), tvar!(id!("T", 1)))
+                ]
+            )],
+            [id!("T", 1)]
+        );
+    }
+
+    fn nil_clause() -> Clause<Cns> {
+        return clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)));
+    }
+
+    fn pack_clause() -> Clause<Cns> {
+        return clause!(
+            Cns,
+            id!("Pack"),
+            [id!("G", 4)],
+            [bind!(id!("x"), prd!(), tvar!(id!("G", 4)))],
+            exit!(lit!(0))
         );
     }
 
@@ -949,5 +1026,153 @@ mod specialize_tests {
         // The wrap copy's own name must be the specialized one.
         let expected_wrap_name = table.lookup(&wrap.name, &[ty!("int")]).clone();
         assert_eq!(wrap_copy.name, expected_wrap_name);
+    }
+
+    #[test]
+    fn specialize_xtor_with_own_type_params_produces_one_signature_per_instantiation() {
+        // Box itself has no type parameters, but its constructor Pack has its
+        // own existential type parameter E, instantiated at both i64 and Bool.
+        // Expect exactly one Box declaration (unparameterized) whose xtors list
+        // contains two monomorphic Pack signatures, one per instantiation.
+
+        let node = vec![id!("E", 2)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl(), bool_decl()], &[], &[]);
+        let copies = specialize_declaration(&box_decl(), &table);
+
+        assert_eq!(
+            copies.len(),
+            1,
+            "Box itself has no type parameters, so it must not be duplicated"
+        );
+        assert!(copies[0].type_params.is_empty());
+        assert_eq!(
+            copies[0].xtors.len(),
+            2,
+            "expected one monomorphic Pack signature per instantiation of E"
+        );
+
+        for pack in &copies[0].xtors {
+            assert!(pack.type_params.is_empty());
+            let x_ty = &pack.args.bindings[0].ty;
+            assert!(matches!(x_ty, Ty::I64) || matches!(x_ty, Ty::Decl { .. }));
+        }
+
+        // Names must be distinct and match the naming table's own mangling.
+        let name_int = table.lookup(&id!("Pack"), &[ty!("int")]).clone();
+        let name_bool = table.lookup(&id!("Pack"), &[ty!(id!("Bool"))]).clone();
+        let names: Vec<_> = copies[0].xtors.iter().map(|p| p.name.clone()).collect();
+        assert!(names.contains(&name_int));
+        assert!(names.contains(&name_bool));
+    }
+
+    #[test]
+    fn specialize_declaration_and_xtor_both_with_own_type_params() {
+        // Container[T] { wrap[S](x: S, tag: T) }
+        // Both the declaration (T) and its destructor (S) have their own type
+        // parameter. Container is instantiated only at i64, and wrap's own S
+        // is only ever observed instantiated at Bool. Expect one monomorphic
+        // Container copy whose single wrap signature has both x: Bool and
+        // tag: i64 correctly substituted.
+
+        let decl_node = vec![id!("T", 1)];
+        let xtor_node = vec![id!("S", 2)];
+        let solution = Solution::from(HashMap::from([
+            (decl_node.clone(), HashSet::from([vec![ty!("int")]])),
+            (xtor_node.clone(), HashSet::from([vec![ty!(id!("Bool"))]])),
+        ]));
+
+        let table = NamingTable::build(&solution, &[bool_decl()], &[container_decl()], &[]);
+        let copies = specialize_declaration(&container_decl(), &table);
+
+        assert_eq!(copies.len(), 1, "Container[T] instantiated only at i64");
+        assert!(copies[0].type_params.is_empty());
+        assert_eq!(
+            copies[0].xtors.len(),
+            1,
+            "wrap's S was only ever observed instantiated at Bool"
+        );
+
+        let wrap = &copies[0].xtors[0];
+        assert!(wrap.type_params.is_empty());
+
+        assert_eq!(
+            wrap.args.bindings[0].ty, // x: S -> Bool
+            Ty::Decl {
+                name: id!("Bool"),
+                type_args: TypeArgs { args: vec![] }
+            }
+        );
+        assert_eq!(wrap.args.bindings[1].ty, Ty::I64); // tag: T -> i64
+    }
+
+    #[test]
+    fn specialize_clause_without_own_type_params_produces_single_copy() {
+        let node = vec![id!("A", 1)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
+        let ctx = SpecializeContext::ground(&table);
+
+        let copies = specialize_clause(&nil_clause(), &ctx);
+
+        assert_eq!(copies.len(), 1);
+        assert_eq!(copies[0].xtor, id!("Nil"));
+        assert!(copies[0].type_params.is_empty());
+    }
+
+    #[test]
+    fn specialize_clause_with_own_type_params_produces_one_copy_per_instantiation() {
+        // "Pack[G](x) => 0"
+        //
+        // Pack's own type parameter is instantiated at both i64 and Bool,
+        // mirroring the constructor declaration. Expect two clauses, each with
+        // the binder's type fully resolved and the xtor name mangled to match
+        // exactly what specialize_declaration produces for Box's Pack
+        // signatures -- consistency between clause- and declaration-level
+        // specialization is the core invariant being tested here.
+
+        let node = vec![id!("E", 2)];
+        let solution = Solution::from(HashMap::from([(
+            node.clone(),
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl(), bool_decl()], &[], &[]);
+        let ctx = SpecializeContext::ground(&table);
+
+        let copies = specialize_clause(&pack_clause(), &ctx);
+        assert_eq!(copies.len(), 2);
+
+        let decl_copies = specialize_declaration(&box_decl(), &table);
+        let expected_names: Vec<_> = decl_copies[0]
+            .xtors
+            .iter()
+            .map(|x| x.name.clone())
+            .collect();
+
+        for clause in &copies {
+            assert!(clause.type_params.is_empty());
+            assert!(
+                expected_names.contains(&clause.xtor),
+                "clause's mangled xtor name must match one produced for the Pack declaration"
+            );
+            assert!(
+                !matches!(clause.context.bindings[0].ty, Ty::Var(_)),
+                "binder type must be fully ground after specialization"
+            );
+        }
+
+        // The two clauses must specialize to two *different* concrete types.
+        assert_ne!(
+            copies[0].context.bindings[0].ty,
+            copies[1].context.bindings[0].ty
+        );
     }
 }
