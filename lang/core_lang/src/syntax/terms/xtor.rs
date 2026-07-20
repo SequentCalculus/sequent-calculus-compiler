@@ -224,10 +224,23 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
 
 impl<C: Chi> Specialize for Xtor<C> {
     fn specialize(&self, context: &SpecializeContext) -> Self {
+        let ground_type_args: Vec<Ty> = self
+            .type_args
+            .args
+            .iter()
+            .map(|a| a.substitute((&context.subst.0, &context.subst.1)))
+            .collect();
+
+        let mangled_name = if ground_type_args.is_empty() {
+            self.name.clone()
+        } else {
+            context.table.lookup(&self.name, &ground_type_args).clone()
+        };
+
         Xtor {
             prdcns: self.prdcns.clone(),
-            name: self.name.clone(),
-            type_args: self.type_args.clone(),
+            name: mangled_name,
+            type_args: TypeArgs { args: vec![] },
             args: self.args.specialize(context),
             ty: self.ty.specialize(context),
         }
