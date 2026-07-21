@@ -169,12 +169,13 @@ impl Driver {
         &mut self,
         path: &PathBuf,
         viz: Option<Option<PathBuf>>,
+        debug: bool,
     ) -> Result<Prog, DriverError> {
         // let parsed = self.parsed(path)?;
         // let checked = parsed.check(false).map_err(DriverError::TypeError)?;
         // let compiled = compile_prog_poly(checked);
         let compiled = self.compiled(path)?;
-        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled);
+        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled, debug);
         if let Some(path) = viz {
             graph
                 .render_as(core_lang::mono::graph_viz::OutputFormat::Png, path)
@@ -191,7 +192,7 @@ impl Driver {
         }
 
         // let mut compiled = self.compiled(path)?;
-        let mut monomorphized = self.monomorphized(path, None)?;
+        let mut monomorphized = self.monomorphized(path, None, false)?;
         monomorphized.uniquify();
         self.uniquified.insert(path.clone(), monomorphized.clone());
         Ok(monomorphized)
@@ -240,7 +241,7 @@ impl Driver {
         }
 
         // let compiled = self.compiled(path)?;
-        let monomorphized = self.monomorphized(path, None)?;
+        let monomorphized = self.monomorphized(path, None, false)?;
         let focused = monomorphized.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)

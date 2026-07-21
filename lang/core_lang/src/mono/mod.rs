@@ -21,7 +21,7 @@ pub mod solver;
 pub mod specialize;
 
 /// Monomorphizes a program and returns the monomorphized program along with the constraint graph.
-pub fn monomorphize_program(program: Prog) -> (Prog, ConstraintGraph) {
+pub fn monomorphize_program(program: Prog, debug: bool) -> (Prog, ConstraintGraph) {
     let constraints = program
         .collect_constraints(&GlobalEnv::new(
             &program.data_types,
@@ -37,14 +37,19 @@ pub fn monomorphize_program(program: Prog) -> (Prog, ConstraintGraph) {
         ..PrintCfg::default()
     };
 
-    println!(
-        "{}",
-        constraints.print_to_colored_string(Some(&forced_set_cfg))
-    );
-
-    let graph = ConstraintGraph::from(constraints);
+    let graph = ConstraintGraph::from(constraints.clone());
     let solution = solve(&graph).unwrap();
-    println!("{}", solution.print_to_string(Some(&forced_set_cfg)));
+
+    if debug {
+        println!(
+            "Flow Constraints: \n{}",
+            constraints.print_to_colored_string(Some(&forced_set_cfg))
+        );
+        println!(
+            "\nSolution: \n{}",
+            solution.print_to_string(Some(&forced_set_cfg))
+        );
+    }
 
     let mono_prog = specialize_program(&program, &solution);
 

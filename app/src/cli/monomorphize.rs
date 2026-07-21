@@ -9,13 +9,15 @@ use crate::cli::print_stdout;
 #[derive(clap::Args)]
 pub struct Args {
     filepath: PathBuf,
-    #[arg(long = "viz", num_args(0..=1))]
+    #[arg(long = "viz", num_args(0..=1), require_equals = true)]
     viz: Option<Option<PathBuf>>,
+    #[arg(long = "debug")]
+    debug: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
-    let monomorphized = drv.monomorphized(&cmd.filepath, cmd.viz);
+    let monomorphized = drv.monomorphized(&cmd.filepath, cmd.viz, cmd.debug);
     let monomorphized = match monomorphized {
         Ok(mono_prog) => mono_prog,
         Err(err) => {
