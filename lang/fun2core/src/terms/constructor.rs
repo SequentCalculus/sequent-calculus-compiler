@@ -28,9 +28,20 @@ impl Compile for fun::syntax::terms::Constructor {
         _ty: Ty,
         type_params: Rc<HashMap<String, Identifier>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
+        // lookup the concret name of the constructor in the data types
+        let Some(name) = state.data_types.iter().find_map(|data_decl| {
+            data_decl
+                .xtors
+                .iter()
+                .find(|ctor| ctor.name.name == self.id)
+                .map(|ctor| ctor.name.clone())
+        }) else {
+            panic!("Constructor {} not found in data types", self.id);
+        };
+
         core_lang::syntax::terms::Xtor {
             prdcns: Prd,
-            name: Identifier::new(self.id),
+            name,
             type_args: compile_type_args(&self.type_args, type_params.clone()),
             args: compile_subst(self.args, state, type_params.clone()),
             ty: compile_ty(
@@ -76,7 +87,7 @@ impl Compile for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{ctor, id, lit, ty};
+    use core_macros::{bind, ctor, ctor_sig, data, id, lit, prd, tvar, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -100,9 +111,26 @@ mod compile_tests {
             )
             .unwrap();
 
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [id!("A", 1)]
+        );
+
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[],
+            data_types: &[list],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),

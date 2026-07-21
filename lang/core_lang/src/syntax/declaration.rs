@@ -98,12 +98,12 @@ impl<P: Polarity> Print for XtorSig<P> {
 
         if self.xtor.is_data() {
             alloc
-                .ctor(&self.name.print_to_string(Some(cfg)))
+                .ctor(&self.name.name.print_to_string(Some(cfg)))
                 .append(type_params)
                 .append(args.group())
         } else {
             alloc
-                .dtor(&self.name.print_to_string(Some(cfg)))
+                .dtor(&self.name.name.print_to_string(Some(cfg)))
                 .append(type_params)
                 .append(args.group())
         }

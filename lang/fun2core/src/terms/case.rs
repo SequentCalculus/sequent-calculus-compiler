@@ -71,8 +71,10 @@ impl Compile for fun::syntax::terms::Case {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
-    use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
+    use core_lang::syntax::{self as core_syntax};
+    use core_macros::{
+        bind, case, clause, covar, ctor, ctor_sig, cut, data, id, lit, mu, prd, tvar, ty, var,
+    };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -94,9 +96,26 @@ mod compile_tests {
             )
             .unwrap();
 
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [id!("A", 1)]
+        );
+
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
             codata_types: &[],
+            data_types: &[list],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
@@ -108,11 +127,11 @@ mod compile_tests {
             id!("a0"),
             cut!(
                 ctor!(
-                    id!("Cons"),
+                    id!("Cons", 0),
                     [],
                     [
                         lit!(1),
-                        ctor!(id!("Nil"), [], [], ty!(id!("List"), vec![ty!("int")]))
+                        ctor!(id!("Nil", 0), [], [], ty!(id!("List"), vec![ty!("int")]))
                     ],
                     ty!(id!("List"), vec![ty!("int")])
                 ),
@@ -120,14 +139,14 @@ mod compile_tests {
                     [
                         clause!(
                             core_syntax::Cns,
-                            id!("Nil"),
+                            id!("Nil", 0),
                             [],
                             [],
                             cut!(lit!(0), covar!(id!("a0")))
                         ),
                         clause!(
                             core_syntax::Cns,
-                            id!("Cons"),
+                            id!("Cons", 0),
                             [],
                             [
                                 bind!(id!("x"), core_syntax::Chirality::Prd),

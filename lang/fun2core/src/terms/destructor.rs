@@ -52,10 +52,21 @@ impl Compile for fun::syntax::terms::Destructor {
                         .split_off(codata_arity),
                 };
 
+                // lookup the concret name of the destructor in the codata types
+                let Some(name) = state.codata_types.iter().find_map(|codata_decl| {
+                    codata_decl
+                        .xtors
+                        .iter()
+                        .find(|dtor| dtor.name.name == self.id)
+                        .map(|dtor| dtor.name.clone())
+                }) else {
+                    panic!("Destructor {} not found in codata types", self.id);
+                };
+
                 // new continuation: D(〚t_1〛, ..., c)
                 let new_cont = core_lang::syntax::terms::Xtor {
                     prdcns: Cns,
-                    name: Identifier::new(self.id),
+                    name,
                     type_args,
                     args: bindings.into(),
                     ty: compile_ty(
@@ -80,13 +91,34 @@ impl Compile for fun::syntax::terms::Destructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax::terms::Prd;
-    use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, id, lit, mu, ty};
+    use core_lang::syntax::{CodataDeclaration, terms::Prd};
+    use core_macros::{
+        bind, clause, cns, cocase, codata, covar, cut, dtor, dtor_sig, id, lit, mu, prd, tvar, ty,
+    };
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use std::{
         collections::{HashSet, VecDeque},
         rc::Rc,
     };
+
+    fn pair() -> CodataDeclaration {
+        return codata!(
+            id!("LPair"),
+            [
+                dtor_sig!(
+                    id!("fst"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("A", 1)))]
+                ),
+                dtor_sig!(
+                    id!("snd"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("B", 2)))]
+                )
+            ],
+            [id!("A", 1), id!("B", 2)]
+        );
+    }
 
     #[test]
     fn compile_fst() {
@@ -101,7 +133,8 @@ mod compile_tests {
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
-            codata_types: &[],
+            codata_types: &[pair()],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
@@ -158,7 +191,8 @@ mod compile_tests {
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
-            codata_types: &[],
+            codata_types: &[pair()],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),

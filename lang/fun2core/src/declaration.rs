@@ -4,6 +4,7 @@
 use crate::context::compile_context;
 use crate::program::build_type_param_subst;
 use crate::types::{compile_ty, compile_type_params};
+use core_lang::syntax::fresh_identifier;
 use core_lang::syntax::names::Identifier;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
@@ -33,7 +34,7 @@ pub fn compile_ctor(
 
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Data,
-        name: Identifier::new(ctor.name),
+        name: fresh_identifier(max_id, &ctor.name),
         type_params: ctor_type_params,
         args: compile_context(ctor.args, type_params_subst),
     }
@@ -74,7 +75,7 @@ pub fn compile_dtor(
         });
     core_lang::syntax::declaration::XtorSig {
         xtor: core_lang::syntax::declaration::Codata,
-        name: Identifier::new(dtor.name),
+        name: fresh_identifier(max_id, &dtor.name),
         type_params: dtor_type_params,
         args: new_args,
     }

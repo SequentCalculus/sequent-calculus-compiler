@@ -55,7 +55,9 @@ impl Compile for fun::syntax::terms::Let {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{covar, ctor, cut, id, lit, mu, mutilde, prod, ty, var};
+    use core_macros::{
+        bind, covar, ctor, ctor_sig, cut, data, id, lit, mu, mutilde, prd, prod, ty, var,
+    };
     use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
     use std::{
         collections::{HashSet, VecDeque},
@@ -76,6 +78,7 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
@@ -113,9 +116,26 @@ mod compile_tests {
             )
             .unwrap();
 
+        let list = data!(
+            id!("List[i64]"),
+            [
+                ctor_sig!(id!("Nil", 1), [], []),
+                ctor_sig!(
+                    id!("Cons", 2),
+                    [],
+                    [
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), vec![ty!("int")])),
+                    ]
+                )
+            ],
+            []
+        );
+
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[list],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
@@ -131,11 +151,11 @@ mod compile_tests {
             id!("a0"),
             cut!(
                 ctor!(
-                    id!("Cons"),
+                    id!("Cons", 2),
                     [],
                     [
                         var!(id!("x")),
-                        ctor!(id!("Nil"), [], [], ty!(id!("List"), vec![ty!("int")]))
+                        ctor!(id!("Nil", 1), [], [], ty!(id!("List"), vec![ty!("int")]))
                     ],
                     ty!(id!("List"), vec![ty!("int")])
                 ),

@@ -35,9 +35,20 @@ pub fn compile_clause(
             .collect(),
     );
 
+    // lookup the concret name of the constructor in the data types
+    let Some(xtor) = state.data_types.iter().find_map(|data_decl| {
+        data_decl
+            .xtors
+            .iter()
+            .find(|ctor| ctor.name.name == clause.xtor)
+            .map(|ctor| ctor.name.clone())
+    }) else {
+        panic!("Constructor {} not found in data types", clause.xtor);
+    };
+
     core_lang::syntax::terms::Clause {
         prdcns: Cns,
-        xtor: Identifier::new(clause.xtor),
+        xtor,
         type_params: clause_type_params,
         context: compile_context(clause.context, type_params_subst.clone()),
         body: Rc::new(
@@ -85,9 +96,20 @@ pub fn compile_coclause(
         ty: ty.clone(),
     });
 
+    // lookup the concret name of the destructor in the codata types
+    let Some(xtor) = state.codata_types.iter().find_map(|codata_decl| {
+        codata_decl
+            .xtors
+            .iter()
+            .find(|dtor| dtor.name.name == clause.xtor)
+            .map(|dtor| dtor.name.clone())
+    }) else {
+        panic!("Destructor {} not found in codata types", clause.xtor);
+    };
+
     core_lang::syntax::terms::Clause {
         prdcns: Prd,
-        xtor: Identifier::new(clause.xtor),
+        xtor,
         type_params: coclause_type_params,
         context: new_context,
         body: Rc::new(

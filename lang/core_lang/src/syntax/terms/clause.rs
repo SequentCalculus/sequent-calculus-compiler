@@ -46,9 +46,9 @@ impl<C: Chi, S: Print> Print for Clause<C, S> {
         };
 
         let xtor = if self.prdcns.is_prd() {
-            alloc.dtor(&self.xtor.print_to_string(Some(cfg)))
+            alloc.dtor(&self.xtor.name.print_to_string(Some(cfg)))
         } else {
-            alloc.ctor(&self.xtor.print_to_string(Some(cfg)))
+            alloc.ctor(&self.xtor.name.print_to_string(Some(cfg)))
         };
         xtor.append(context.group())
             .append(alloc.space())

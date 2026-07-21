@@ -53,12 +53,12 @@ impl<C: Chi> Print for Xtor<C> {
         };
         if self.prdcns.is_prd() {
             alloc
-                .ctor(&self.name.print_to_string(Some(cfg)))
+                .ctor(&self.name.name.print_to_string(Some(cfg)))
                 .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         } else {
             alloc
-                .dtor(&self.name.print_to_string(Some(cfg)))
+                .dtor(&self.name.name.print_to_string(Some(cfg)))
                 .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         }

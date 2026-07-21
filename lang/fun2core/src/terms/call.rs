@@ -99,6 +99,7 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::from(["fac".to_string()]),
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
@@ -146,6 +147,7 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::from(["id".to_string()]),
             current_label: "main",
             lifted_statements: &mut VecDeque::default(),
@@ -217,6 +219,7 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::from(["id".to_string()]),
             current_label: "foo",
             lifted_statements: &mut VecDeque::default(),

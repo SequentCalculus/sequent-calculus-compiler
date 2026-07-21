@@ -5,13 +5,10 @@ use crate::{
     context::compile_context,
     types::compile_ty,
 };
-use core_lang::syntax::{CodataDeclaration, names::Identifier};
-use fun::{
-    syntax::names::Name,
-    traits::{OptTyped, UsedBinders},
-};
+use core_lang::syntax::names::Identifier;
+use fun::traits::{OptTyped, UsedBinders};
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
 /// This function translates a [top-level function in Fun](fun::syntax::declarations::Def) to a
@@ -26,11 +23,9 @@ use std::rc::Rc;
 /// A panic is caused if the types are not annotated in the program.
 pub fn compile_def(
     def: fun::syntax::declarations::Def,
-    codata_types: &'_ [CodataDeclaration],
-    used_labels: &mut HashSet<Name>,
+    state: &mut CompileState,
     type_params_subst: Rc<HashMap<String, Identifier>>,
     type_params: Vec<Identifier>,
-    max_id: &mut usize,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
 
@@ -41,11 +36,12 @@ pub fn compile_def(
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
         used_vars,
-        codata_types,
-        used_labels,
+        codata_types: state.codata_types,
+        data_types: state.data_types,
+        used_labels: state.used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
-        max_id,
+        max_id: state.max_id,
     };
 
     let new_covar = state.fresh_covar();
@@ -94,10 +90,8 @@ pub fn compile_def(
 /// A panic is caused if the types are not annotated in the program
 pub fn compile_main(
     def: fun::syntax::declarations::Def,
-    codata_types: &'_ [CodataDeclaration],
-    used_labels: &mut HashSet<Name>,
+    state: &mut CompileState,
     type_params: Rc<HashMap<String, Identifier>>,
-    max_id: &mut usize,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
     let context = compile_context(def.context, type_params.clone());
@@ -107,11 +101,12 @@ pub fn compile_main(
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
         used_vars,
-        codata_types,
-        used_labels,
+        codata_types: state.codata_types,
+        data_types: state.data_types,
+        used_labels: state.used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
-        max_id,
+        max_id: state.max_id,
     };
 
     let new_var = state.fresh_var();

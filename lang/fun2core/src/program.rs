@@ -2,12 +2,16 @@
 //! [Core](core_lang) program.
 
 use crate::{
+    compile::CompileState,
     declaration::{compile_ctor, compile_dtor},
     def::{compile_def, compile_main},
     types::compile_type_params,
 };
 use core_lang::syntax::names::Identifier;
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use std::collections::VecDeque;
 
@@ -51,24 +55,28 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         });
     }
 
-    let mut used_labels = prog.defs.iter().map(|def| def.name.clone()).collect();
+    let mut used_labels: HashSet<String> = prog.defs.iter().map(|def| def.name.clone()).collect();
+    let mut state = CompileState {
+        used_vars: HashSet::new(),
+        codata_types: &codata_types,
+        data_types: &data_types,
+        used_labels: &mut used_labels,
+        current_label: "",
+        lifted_statements: &mut VecDeque::new(),
+        max_id: &mut max_id,
+    };
+
     let mut defs_translated = VecDeque::new();
     for def in prog.defs {
         if def.name == "main" {
-            for def_main in compile_main(
-                def,
-                codata_types.as_slice(),
-                &mut used_labels,
-                Rc::new(global_type_param_subst.clone()),
-                &mut max_id,
-            )
-            .into_iter()
-            .rev()
+            for def_main in compile_main(def, &mut state, Rc::new(global_type_param_subst.clone()))
+                .into_iter()
+                .rev()
             {
                 defs_translated.push_front(def_main);
             }
         } else {
-            let type_params = compile_type_params(&def.type_params, &mut max_id);
+            let type_params = compile_type_params(&def.type_params, state.max_id);
             let type_param_subst = build_type_param_subst(&def.type_params.bindings, &type_params);
 
             let mut local_subst = global_type_param_subst.clone();
@@ -76,11 +84,9 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
 
             defs_translated.extend(compile_def(
                 def,
-                codata_types.as_slice(),
-                &mut used_labels,
+                &mut state,
                 Rc::new(local_subst),
                 type_params,
-                &mut max_id,
             ));
         }
     }
@@ -102,6 +108,7 @@ pub fn build_type_param_subst(
 
 #[cfg(test)]
 mod compile_tests {
+    use crate::compile::CompileState;
     use crate::def::{compile_def, compile_main};
     use crate::program::compile_prog;
     use core_lang::syntax::Identifier;
@@ -118,7 +125,7 @@ mod compile_tests {
         util::dummy_span,
     };
 
-    use std::collections::{HashMap, HashSet};
+    use std::collections::{HashMap, HashSet, VecDeque};
     use std::rc::Rc;
 
     fn example_def1() -> Def {
@@ -265,13 +272,17 @@ mod compile_tests {
 
     #[test]
     fn compile_def1() {
-        let result = compile_main(
-            example_def1(),
-            &[],
-            &mut HashSet::from(["main".to_string()]),
-            Rc::new(HashMap::new()),
-            &mut 0,
-        );
+        let mut state = CompileState {
+            used_vars: HashSet::new(),
+            codata_types: &[],
+            data_types: &[],
+            used_labels: &mut HashSet::from(["main".to_string()]),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
+        };
+
+        let result = compile_main(example_def1(), &mut state, Rc::new(HashMap::new()));
         let expected = def!(
             id!("main"),
             [bind!(id!("a"), cns!())],
@@ -285,14 +296,16 @@ mod compile_tests {
 
     #[test]
     fn compile_def2() {
-        let result = compile_def(
-            example_def2(),
-            &[],
-            &mut HashSet::from(["id".to_string()]),
-            Rc::new(HashMap::new()),
-            vec![],
-            &mut 0,
-        );
+        let mut state = CompileState {
+            used_vars: HashSet::new(),
+            codata_types: &[],
+            data_types: &[],
+            used_labels: &mut HashSet::from(["id".to_string()]),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
+        };
+        let result = compile_def(example_def2(), &mut state, Rc::new(HashMap::new()), vec![]);
         let expected = def!(
             id!("id"),
             [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
@@ -347,9 +360,9 @@ mod compile_tests {
         let expected = data!(
             id!("List"),
             [
-                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(id!("Nil", 2), [], []),
                 ctor_sig!(
-                    id!("Cons"),
+                    id!("Cons", 3),
                     [],
                     [
                         bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
@@ -377,9 +390,9 @@ mod compile_tests {
         let expected = data!(
             id!("List[i64]"),
             [
-                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(id!("Nil", 1), [], []),
                 ctor_sig!(
-                    id!("Cons"),
+                    id!("Cons", 2),
                     [],
                     [
                         bind!(id!("x"), prd!()),
@@ -399,13 +412,21 @@ mod compile_tests {
         let mut subst = HashMap::new();
         subst.insert("A".to_string(), fresh_param.clone());
 
+        let mut state = CompileState {
+            used_vars: HashSet::new(),
+            codata_types: &[],
+            data_types: &[],
+            used_labels: &mut HashSet::from(["id_poly".to_string()]),
+            current_label: "",
+            lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
+        };
+
         let result = compile_def(
             example_def_poly(),
-            &[],
-            &mut HashSet::from(["id_poly".to_string()]),
+            &mut state,
             Rc::new(subst),
             vec![fresh_param.clone()],
-            &mut 0,
         );
 
         assert_eq!(result.len(), 1);
@@ -457,7 +478,7 @@ mod compile_tests {
         let expected = data!(
             id!("Box"),
             [ctor_sig!(
-                id!("Pack"),
+                id!("Pack", 2),
                 [id!("A", 1)],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],

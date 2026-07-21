@@ -5,7 +5,7 @@
 //! administrative redexes.
 
 use core_lang::syntax::{
-    CodataDeclaration, Def, Statement, Ty,
+    CodataDeclaration, DataDeclaration, Def, Statement, Ty,
     arguments::Argument,
     context::Chirality,
     names::Identifier,
@@ -31,6 +31,8 @@ pub struct CompileState<'a> {
     pub used_vars: HashSet<Var>,
     /// The codata types in the program
     pub codata_types: &'a [CodataDeclaration],
+    /// The data types in the program
+    pub data_types: &'a [DataDeclaration],
     /// The labels for top-level functions used in the program
     pub used_labels: &'a mut HashSet<Name>,
     /// The name of the definition being currently compiled

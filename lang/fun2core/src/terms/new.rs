@@ -79,7 +79,9 @@ impl Compile for fun::syntax::terms::New {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
-    use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
+    use core_macros::{
+        bind, clause, cns, cocase, codata, covar, cut, dtor_sig, id, lit, prd, tvar, ty,
+    };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
@@ -106,11 +108,27 @@ mod compile_tests {
             )
             .unwrap();
 
-        let lpair_declaration = codata!(id!("LPair"), []);
+        let lpair_declaration = codata!(
+            id!("LPair"),
+            [
+                dtor_sig!(
+                    id!("fst"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("A", 1)))]
+                ),
+                dtor_sig!(
+                    id!("snd"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("B", 2)))]
+                )
+            ],
+            [id!("A", 1), id!("B", 2)]
+        );
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[lpair_declaration],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
