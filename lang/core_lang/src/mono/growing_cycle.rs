@@ -67,7 +67,7 @@ impl fmt::Display for GrowingCycle {
     }
 }
 
-/// Searches the constraint graph for a growing cycle.
+/// Searches the constraint graph for all growing cycles.
 ///
 /// An edge is "growing" if it applies a type constructor at some position.
 /// A growing cycle exists if, for some growing edge, its target node can
@@ -76,7 +76,10 @@ impl fmt::Display for GrowingCycle {
 ///
 /// Returns the full path with the applied type constructor recorded at the hop where it was
 /// applied, or `None` if the graph is safe to solve as-is.
-pub fn find_growing_cycle(graph: &ConstraintGraph) -> Option<GrowingCycle> {
+pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
+    let mut cycles = Vec::new();
+    let mut seen_cycle_keys: HashSet<Vec<Node>> = HashSet::new();
+
     for edges in graph.edges.values() {
         for edge in edges {
             if !edge.has_constructor_position() {
@@ -107,12 +110,18 @@ pub fn find_growing_cycle(graph: &ConstraintGraph) -> Option<GrowingCycle> {
                             applied,
                         });
                     }
-                    return Some(GrowingCycle { steps });
+                    let cycle = GrowingCycle { steps };
+
+                    // deduplicate cycles by their canonical node sequence
+                    let key = canonical_cycle_key(&cycle.nodes());
+                    if seen_cycle_keys.insert(key) {
+                        cycles.push(cycle);
+                    }
                 }
             }
         }
     }
-    None
+    cycles
 }
 
 /// Performs a breadth-first search from `start` to `target` over the graph's
@@ -170,6 +179,40 @@ fn edge_applied_template(edge: &Edge) -> Option<Ty> {
     })
 }
 
+/// Computes a canonical key for a cycle of nodes (independent of the starting node).
+///
+/// For example, [A, B, C, A] and [B, C, A, B] will both yield the same minimal
+/// rotated node sequence, e.g., [A, B, C].
+fn canonical_cycle_key(nodes: &[Node]) -> Vec<Node> {
+    if nodes.len() <= 1 {
+        return nodes.to_vec();
+    }
+
+    let elems = if nodes.first() == nodes.last() {
+        &nodes[..nodes.len() - 1]
+    } else {
+        nodes
+    };
+
+    if elems.is_empty() {
+        return Vec::new();
+    }
+
+    let n = elems.len();
+    let mut min_rotation = elems.to_vec();
+
+    for i in 1..n {
+        let mut rotated = Vec::with_capacity(n);
+        rotated.extend_from_slice(&elems[i..]);
+        rotated.extend_from_slice(&elems[..i]);
+        if rotated < min_rotation {
+            min_rotation = rotated;
+        }
+    }
+
+    min_rotation
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -191,10 +234,10 @@ mod tests {
         });
 
         let graph = ConstraintGraph::from(set);
-        let result = find_growing_cycle(&graph);
+        let result = find_all_growing_cycles(&graph);
 
         assert!(
-            result.is_none(),
+            result.is_empty(),
             "graph with no growing cycle incorrectly reported a cycle"
         );
     }
@@ -209,11 +252,11 @@ mod tests {
         });
 
         let graph = ConstraintGraph::from(set);
-        let result = find_growing_cycle(&graph);
+        let result = find_all_growing_cycles(&graph);
 
-        assert!(result.is_some(), "Direct growing cycle was not detected.");
+        assert!(!result.is_empty(), "Direct growing cycle was not detected.");
 
-        let path = result.unwrap();
+        let path = &result[0];
         let node_a = vec![id!("A", 1)];
         assert_eq!(path.nodes(), vec![node_a.clone(), node_a.clone()]);
     }
@@ -233,11 +276,14 @@ mod tests {
         });
 
         let graph = ConstraintGraph::from(set);
-        let result = find_growing_cycle(&graph);
+        let result = find_all_growing_cycles(&graph);
 
-        assert!(result.is_some(), "Indirect growing cycle was not detected.");
+        assert!(
+            !result.is_empty(),
+            "Indirect growing cycle was not detected."
+        );
 
-        let path = result.unwrap();
+        let path = &result[0];
         let node_a = vec![id!("A", 1)];
         let node_b = vec![id!("B", 2)];
 

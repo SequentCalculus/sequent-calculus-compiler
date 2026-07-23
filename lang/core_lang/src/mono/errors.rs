@@ -34,7 +34,7 @@ pub enum MonoError {
     },
 
     /// Detected polymorphic recursion, which is not supported by our monomorphization approach.
-    PolymorphicRecursion { cycle: GrowingCycle },
+    PolymorphicRecursion { cycles: Vec<GrowingCycle> },
 
     /// Generic wrapper for other errors with contextual message.
     Contextual { msg: String },
@@ -75,8 +75,16 @@ impl fmt::Display for MonoError {
                 type_name, xtor_name
             ),
             MonoError::Contextual { msg } => write!(f, "{}", msg),
-            MonoError::PolymorphicRecursion { cycle } => {
-                write!(f, "Polymorphic recursion detected in cycle: {}", cycle)
+            MonoError::PolymorphicRecursion { cycles } => {
+                write!(
+                    f,
+                    "Polymorphic recursion detected in cycles: {}",
+                    cycles
+                        .iter()
+                        .map(|cycle| format!("\n{}", cycle))
+                        .collect::<Vec<String>>()
+                        .join("\n")
+                )
             }
         }
     }

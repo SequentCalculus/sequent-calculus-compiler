@@ -9,7 +9,7 @@ use crate::{
     mono::{
         constraint_graph::{ConstraintGraph, Edge, Node, VarLocations},
         errors::MonoError,
-        growing_cycle::find_growing_cycle,
+        growing_cycle::find_all_growing_cycles,
         position::Position,
     },
     syntax::{Identifier, Ty, types::TypeArgs},
@@ -91,9 +91,10 @@ impl Print for Solution {
 /// Starts from the seed vectors and repeatedly propagates vectors through
 /// edges until no node's solution changes.
 pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
-    if let Some(growing_cycle) = find_growing_cycle(graph) {
+    let growing_cycles = find_all_growing_cycles(graph);
+    if !growing_cycles.is_empty() {
         return Err(MonoError::PolymorphicRecursion {
-            cycle: growing_cycle,
+            cycles: growing_cycles.clone(),
         });
     }
 
@@ -367,13 +368,13 @@ mod tests {
             err
         );
 
-        if let MonoError::PolymorphicRecursion { cycle } = err {
+        if let MonoError::PolymorphicRecursion { cycles } = err {
             let node_a = vec![id!("A", 1)];
             assert_eq!(
-                cycle.nodes(),
+                cycles.iter().flat_map(|c| c.nodes()).collect::<Vec<_>>(),
                 vec![node_a.clone(), node_a.clone()],
                 "Expected cycle to contain only node A, got: {:?}",
-                cycle
+                cycles
             );
         }
     }
