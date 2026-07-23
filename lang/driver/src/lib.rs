@@ -171,11 +171,9 @@ impl Driver {
         viz: Option<Option<PathBuf>>,
         debug: bool,
     ) -> Result<Prog, DriverError> {
-        // let parsed = self.parsed(path)?;
-        // let checked = parsed.check(false).map_err(DriverError::TypeError)?;
-        // let compiled = compile_prog_poly(checked);
         let compiled = self.compiled(path)?;
-        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled, debug);
+        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled, debug)
+            .map_err(DriverError::MonoError)?;
         if let Some(path) = viz {
             graph
                 .render_as(core_lang::mono::graph_viz::OutputFormat::Png, path)

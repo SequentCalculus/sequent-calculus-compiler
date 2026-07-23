@@ -370,8 +370,8 @@ mod tests {
         if let MonoError::PolymorphicRecursion { cycle } = err {
             let node_a = vec![id!("A", 1)];
             assert_eq!(
-                cycle,
-                vec![node_a],
+                cycle.nodes(),
+                vec![node_a.clone(), node_a.clone()],
                 "Expected cycle to contain only node A, got: {:?}",
                 cycle
             );

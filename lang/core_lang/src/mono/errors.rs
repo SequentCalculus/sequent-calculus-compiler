@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::syntax::Identifier;
+use crate::mono::growing_cycle::GrowingCycle;
 
 /// This enum defines the errors that can occur during typechecking and
 /// constraint collection. Variants are designed to be specific and to
@@ -34,7 +34,7 @@ pub enum MonoError {
     },
 
     /// Detected polymorphic recursion, which is not supported by our monomorphization approach.
-    PolymorphicRecursion { cycle: Vec<Vec<Identifier>> },
+    PolymorphicRecursion { cycle: GrowingCycle },
 
     /// Generic wrapper for other errors with contextual message.
     Contextual { msg: String },
@@ -75,22 +75,9 @@ impl fmt::Display for MonoError {
                 type_name, xtor_name
             ),
             MonoError::Contextual { msg } => write!(f, "{}", msg),
-            MonoError::PolymorphicRecursion { cycle } => write!(
-                f,
-                "Polymorphic recursion detected in cycle: {}",
-                cycle
-                    .iter()
-                    .map(|group| format!(
-                        "[{}]",
-                        group
-                            .iter()
-                            .map(|id| id.name.clone())
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    ))
-                    .collect::<Vec<_>>()
-                    .join(" -> ")
-            ),
+            MonoError::PolymorphicRecursion { cycle } => {
+                write!(f, "Polymorphic recursion detected in cycle: {}", cycle)
+            }
         }
     }
 }
