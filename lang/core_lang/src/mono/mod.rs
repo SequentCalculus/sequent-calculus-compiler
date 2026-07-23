@@ -24,7 +24,8 @@ pub mod specialize;
 pub fn monomorphize_program(
     program: Prog,
     debug: bool,
-) -> Result<(Prog, ConstraintGraph), MonoError> {
+    viz_path: Option<Option<std::path::PathBuf>>,
+) -> Result<Prog, MonoError> {
     let constraints = program
         .collect_constraints(&GlobalEnv::new(
             &program.data_types,
@@ -48,6 +49,11 @@ pub fn monomorphize_program(
     }
 
     let graph = ConstraintGraph::from(constraints.clone());
+
+    if let Some(path) = viz_path {
+        graph.render_as(graph_viz::OutputFormat::Png, path).unwrap();
+    }
+
     let solution = solve(&graph)?;
 
     if debug {
@@ -59,5 +65,5 @@ pub fn monomorphize_program(
 
     let mono_prog = specialize_program(&program, &solution);
 
-    Ok((mono_prog, graph))
+    Ok(mono_prog)
 }

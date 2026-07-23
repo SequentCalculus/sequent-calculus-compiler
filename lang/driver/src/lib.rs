@@ -172,13 +172,8 @@ impl Driver {
         debug: bool,
     ) -> Result<Prog, DriverError> {
         let compiled = self.compiled(path)?;
-        let (mono_prog, graph) = core_lang::mono::monomorphize_program(compiled, debug)
+        let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz)
             .map_err(DriverError::MonoError)?;
-        if let Some(path) = viz {
-            graph
-                .render_as(core_lang::mono::graph_viz::OutputFormat::Png, path)
-                .unwrap();
-        }
 
         Ok(mono_prog)
     }
