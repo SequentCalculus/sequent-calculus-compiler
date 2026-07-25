@@ -12,6 +12,7 @@ use crate::{
 };
 pub mod constraint_graph;
 pub mod constraints;
+pub mod erasure;
 pub mod errors;
 pub mod graph_viz;
 pub mod growing_cycle;

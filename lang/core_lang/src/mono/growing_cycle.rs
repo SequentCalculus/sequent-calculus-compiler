@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet, VecDeque},
-    fmt::{self, Display, Formatter},
+    fmt,
 };
 
 use printer::Print;
@@ -10,7 +10,7 @@ use crate::{
         constraint_graph::{ConstraintGraph, Edge, Node},
         position::Position,
     },
-    syntax::Ty,
+    syntax::{Identifier, Ty},
 };
 
 /// One hop in a growing-cycle path: the node reached at this point, and, if the edge taken to
@@ -20,12 +20,6 @@ use crate::{
 pub struct CycleStep {
     pub node: Node,
     pub applied: Option<Ty>,
-}
-
-impl Display for CycleStep {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.node.print_to_string(None))
-    }
 }
 
 /// A growing cycle found in the constraint graph: a path of nodes, starting and ending at the
@@ -40,6 +34,19 @@ impl GrowingCycle {
     /// Returns the nodes in the cycle, in order, without the applied type constructors.
     pub fn nodes(&self) -> Vec<Node> {
         self.steps.iter().map(|step| step.node.clone()).collect()
+    }
+
+    /// Returns the set of declaration names that must be erased to break this cycle: the head
+    /// name of every type constructor application found along the path.
+    pub fn erasure_targets(&self) -> HashSet<Identifier> {
+        self.steps
+            .iter()
+            .filter_map(|step| step.applied.as_ref())
+            .filter_map(|ty| match ty {
+                Ty::Decl { name, .. } => Some(name.clone()),
+                _ => None,
+            })
+            .collect()
     }
 }
 
@@ -214,7 +221,7 @@ fn canonical_cycle_key(nodes: &[Node]) -> Vec<Node> {
 }
 
 #[cfg(test)]
-mod tests {
+mod growing_cycle_tests {
 
     use super::*;
     use crate::mono::{
@@ -288,5 +295,100 @@ mod tests {
         let node_b = vec![id!("B", 2)];
 
         assert_eq!(path.nodes(), vec![node_a.clone(), node_b, node_a.clone()]);
+    }
+
+    #[test]
+    fn no_cycle_for_non_growing_self_reference() {
+        // A flat self-loop (A ⊑ A, no constructor applied) must not be
+        // reported, since it does not require unbounded specializations.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![tvar!(id!("A", 1))],
+            vec![id!("A", 1)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        assert!(find_all_growing_cycles(&graph).is_empty());
+    }
+
+    #[test]
+    fn detects_direct_self_loop_growing_cycle() {
+        // Box[A] ⊑ A -- the classic polymorphic-recursion self-loop.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("A", 1))])],
+            vec![id!("A", 1)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+
+        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles[0].erasure_targets(), HashSet::from([id!("Box")]));
+    }
+
+    #[test]
+    fn non_growing_type_in_cycle_is_not_flagged() {
+        // Box[C] ⊑ C forms a growing cycle, but List[C] ⊑ C, while also a
+        // constructor edge, does not itself close a cycle back into its own
+        // source -- only Box should end up as an erasure target.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("C", 6))])],
+            vec![id!("C", 6)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("List"), [ty!(id!("int"))])],
+            vec![id!("C", 6)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+
+        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles[0].erasure_targets(), HashSet::from([id!("Box")]));
+    }
+
+    #[test]
+    fn finds_multiple_independent_growing_cycles() {
+        // Two entirely separate self-loops, e.g. Box[A] ⊑ A and Bag[D] ⊑ D,
+        // must both be reported.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("A", 1))])],
+            vec![id!("A", 1)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Bag"), [tvar!(id!("D", 4))])],
+            vec![id!("D", 4)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+
+        assert_eq!(cycles.len(), 2);
+        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+        assert_eq!(all_targets, HashSet::from([id!("Box"), id!("Bag")]));
+    }
+
+    #[test]
+    fn cycle_step_records_applied_constructor_at_correct_hop() {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("A", 1))])],
+            vec![id!("A", 1)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+        assert_eq!(cycles.len(), 1);
+
+        let steps = &cycles[0].steps;
+        assert_eq!(steps.len(), 2);
+        assert_eq!(steps[0].applied, None);
+        assert_eq!(
+            steps[1].applied,
+            Some(ty!(id!("Box"), [tvar!(id!("A", 1))]))
+        );
     }
 }

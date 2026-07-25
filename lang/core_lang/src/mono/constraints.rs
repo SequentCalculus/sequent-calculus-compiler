@@ -15,6 +15,13 @@ pub struct FlowConstraint {
     /// The name of the polymorphic type parameter.
     pub to: Vec<Identifier>,
 }
+
+impl From<(Vec<Ty>, Vec<Identifier>)> for FlowConstraint {
+    fn from((from, to): (Vec<Ty>, Vec<Identifier>)) -> Self {
+        FlowConstraint { from, to }
+    }
+}
+
 impl Print for FlowConstraint {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         let sep = || alloc.text(",").append(alloc.space());

@@ -8,6 +8,8 @@ use printer::{Alloc, Builder, DocAllocator, Print, PrintCfg};
 use crate::{
     mono::{
         constraint_graph::{ConstraintGraph, Edge, Node, VarLocations},
+        constraints::FlowConstraintSet,
+        erasure::{ErasedDecls, erase_constraints},
         errors::MonoError,
         growing_cycle::find_all_growing_cycles,
         position::Position,
@@ -87,17 +89,53 @@ impl Print for Solution {
 }
 
 /// Runs the worklist fixpoint solver over the constraint graph.
-///
-/// Starts from the seed vectors and repeatedly propagates vectors through
-/// edges until no node's solution changes.
+/// Returns a [`Solution`] mapping each node to the set of concrete ground vectors it may be instantiated with.
+/// In case of a growing cycle, returns a [`MonoError::PolymorphicRecursion`] with the detected cycles.
 pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
-    let growing_cycles = find_all_growing_cycles(graph);
-    if !growing_cycles.is_empty() {
+    if let Some(growing_cycles) = find_all_growing_cycles(graph).into_iter().next() {
         return Err(MonoError::PolymorphicRecursion {
-            cycles: growing_cycles.clone(),
+            cycles: vec![growing_cycles.clone()],
         });
+    };
+
+    Ok(fixpoint_solve(graph))
+}
+
+/// Performs total monomorphization: detects every growing cycle in the constraint set in one
+/// pass and erases the type parameters of every declaration responsible for one, then computes
+/// the fixpoint solution over the resulting (necessarily acyclic-in-growth) constraint graph.
+///
+/// Unlike [`solve`], this function always succeeds, including for programs with polymorphic
+/// recursion of any kind. A single erasure pass suffices: erasure only removes structure from
+/// constraints (never adds a type-constructor application), so it can only remove growing edges,
+/// never introduce new ones.
+pub fn solve_with_erasure(constraints: FlowConstraintSet) -> (Solution, ErasedDecls) {
+    let graph = ConstraintGraph::from(constraints.clone());
+    let cycles = find_all_growing_cycles(&graph);
+
+    if cycles.is_empty() {
+        return (fixpoint_solve(&graph), ErasedDecls::default());
     }
 
+    let targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+    let erased = ErasedDecls(targets.clone());
+
+    let erased_constraints = erase_constraints(&constraints, &targets);
+    let erased_graph = ConstraintGraph::from(erased_constraints);
+
+    debug_assert!(
+        find_all_growing_cycles(&erased_graph).is_empty(),
+        "single-pass erasure did not eliminate all growing cycles -- this indicates a bug in \
+         growing-cycle detection or erasure, since erasure should only ever remove structure"
+    );
+
+    (fixpoint_solve(&erased_graph), erased)
+}
+
+/// Runs the worklist fixpoint solver over the constraint graph, assuming it is already free of
+/// growing cycles (either because it never had any, or because [`solve_with_erasure`] erased
+/// them).
+fn fixpoint_solve(graph: &ConstraintGraph) -> Solution {
     let mut solution: HashMap<Node, HashSet<Vec<Ty>>> = graph
         .nodes
         .iter()
@@ -133,7 +171,7 @@ pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
         }
     }
 
-    Ok(solution.into())
+    solution.into()
 }
 
 /// Computes the new vector that flow through a single edge given the
@@ -255,7 +293,7 @@ fn lookup_value<'a>(
 }
 
 #[cfg(test)]
-mod tests {
+mod solve_tests {
     use super::*;
     use crate::mono::{
         constraint_graph::ConstraintGraph,
@@ -377,5 +415,107 @@ mod tests {
                 cycles
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod solve_with_erasure_tests {
+    use super::*;
+    use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
+    extern crate self as core_lang;
+    use core_macros::{id, tvar, ty};
+
+    #[test]
+    fn solve_with_erasure_matches_plain_solve_when_acyclic() {
+        // For a program without polymorphic recursion, solve_with_erasure must produce the
+        // exact same solution as the ordinary solver, and erase nothing.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
+        set.insert(FlowConstraint::from((
+            vec![tvar!(id!("A", 1))],
+            vec![id!("B", 2)],
+        )));
+
+        let graph = ConstraintGraph::from(set.clone());
+        let plain = solve(&graph).unwrap();
+
+        let (with_erasure, erased) = solve_with_erasure(set);
+
+        assert_eq!(plain, with_erasure);
+        assert!(erased.0.is_empty());
+    }
+
+    #[test]
+    fn solve_with_erasure_terminates_on_direct_polymorphic_recursion() {
+        // Box[A] ⊑ A, i64 ⊑ A -- the classic case that would otherwise diverge.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("A", 1))])],
+            vec![id!("A", 1)],
+        )));
+        set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
+
+        let (solution, erased) = solve_with_erasure(set);
+
+        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+
+        let node = vec![id!("A", 1)];
+        let sols = solution
+            .map
+            .get(&node)
+            .expect("node A must have a solution");
+        assert!(sols.contains(&vec![ty!("int")]));
+        assert!(sols.contains(&vec![ty!(id!("Box"))]));
+        // No unbounded nesting must survive: exactly these two, not
+        // Box[Box[...]] or similar.
+        assert_eq!(sols.len(), 2);
+    }
+
+    #[test]
+    fn solve_with_erasure_only_erases_the_declaration_causing_the_cycle() {
+        // Box[C] ⊑ C forms a growing cycle; List[i64] ⊑ C and List[Box[i64]] ⊑ C do not.
+        // Only Box should be erased; List's own structure must survive fully.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("C", 6))])],
+            vec![id!("C", 6)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("List"), [ty!("int")])],
+            vec![id!("C", 6)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("List"), [ty!(id!("Box"), [ty!("int")])])],
+            vec![id!("C", 6)],
+        )));
+
+        let (solution, erased) = solve_with_erasure(set);
+
+        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+
+        let node = vec![id!("C", 6)];
+        let sols = solution.map.get(&node).unwrap();
+        // List itself keeps its full, un-erased type argument.
+        assert!(sols.contains(&vec![ty!(id!("List"), [ty!("int")])]));
+        // The nested Box[i64] inside List's argument has been erased to Box.
+        assert!(sols.contains(&vec![ty!(id!("List"), [ty!(id!("Box"))])]));
+    }
+
+    #[test]
+    fn solve_with_erasure_handles_deeply_nested_polymorphic_recursion() {
+        // Box[Box[A]] ⊑ A -- growth by two levels per iteration instead of one; erasure must
+        // still terminate and produce a finite solution.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [ty!(id!("Box"), [tvar!(id!("A", 1))])])],
+            vec![id!("A", 1)],
+        )));
+        set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
+
+        let (solution, erased) = solve_with_erasure(set);
+
+        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+        let node = vec![id!("A", 1)];
+        assert!(solution.map.get(&node).unwrap().len() <= 2);
     }
 }
