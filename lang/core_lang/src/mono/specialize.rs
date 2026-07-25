@@ -1,7 +1,7 @@
 use std::vec;
 
 use crate::{
-    mono::{naming_table::NamingTable, solver::Solution},
+    mono::{erasure::ErasedDecls, naming_table::NamingTable, solver::Solution},
     syntax::{
         Chi, Clause, Def, Identifier, Prog, Ty,
         declaration::{Polarity, TypeDeclaration, XtorSig},
@@ -76,7 +76,13 @@ impl<X: Specialize> Specialize for std::rc::Rc<X> {
 
 /// This function is the entry point for specializing a program from polymorphic to monomorphic form. It takes a reference to a [`Solution`] produced by the constraint solving process, and returns a new program where all polymorphic type parameters have been replaced with their corresponding concrete types according to the solution.
 pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
-    let table = NamingTable::build(solution, &prog.data_types, &prog.codata_types, &prog.defs);
+    let table = NamingTable::build(
+        solution,
+        &prog.data_types,
+        &prog.codata_types,
+        &prog.defs,
+        &ErasedDecls::default(),
+    );
 
     let data_types = prog
         .data_types
@@ -249,6 +255,7 @@ mod specialize_tests {
 
     use crate::{
         mono::{
+            erasure::ErasedDecls,
             naming_table::NamingTable,
             solver::Solution,
             specialize::{
@@ -381,7 +388,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[list_decl(), bool_decl()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[list_decl(), bool_decl()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_declaration(&list_decl(), &table);
 
         assert_eq!(
@@ -415,7 +428,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int"), ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[pair_decl(), bool_decl()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[pair_decl(), bool_decl()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_declaration(&pair_decl(), &table);
 
         assert_eq!(
@@ -443,7 +462,8 @@ mod specialize_tests {
             node.clone(),
             HashSet::from([vec![ty!("int")]]),
         )]));
-        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
+        let table =
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
         let ctx = &SpecializeContext::ground(&table);
 
         let term = ctor!(
@@ -490,7 +510,13 @@ mod specialize_tests {
             (list_node.clone(), HashSet::from([vec![pair_ty.clone()]])),
         ]));
 
-        let table = NamingTable::build(&solution, &[pair_decl(), list_decl()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[pair_decl(), list_decl()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
 
         let pair_copies = specialize_declaration(&pair_decl(), &table);
         let list_copies = specialize_declaration(&list_decl(), &table);
@@ -559,7 +585,8 @@ mod specialize_tests {
         );
         assert_eq!(specialized_prog.codata_types.len(), 0);
 
-        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
+        let table =
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
         let expected_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
 
         let specialized_list = &specialized_prog.data_types[0];
@@ -613,7 +640,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[list_decl()], &[], &[main_def.clone()]);
+        let table = NamingTable::build(
+            &solution,
+            &[list_decl()],
+            &[],
+            &[main_def.clone()],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_def(&main_def, &table);
 
         // Exactly one copy of main, no multiplication.
@@ -649,7 +682,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[bool_decl()], &[], &[identity_def()]);
+        let table = NamingTable::build(
+            &solution,
+            &[bool_decl()],
+            &[],
+            &[identity_def()],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_def(&identity_def(), &table);
 
         assert_eq!(copies.len(), 2, "expected one copy per instantiation");
@@ -703,7 +742,13 @@ mod specialize_tests {
 
         // Empty solution: no instantiation was ever observed for this def.
         let solution = Solution::from(HashMap::new());
-        let table = NamingTable::build(&solution, &[], &[], &[unused.clone()]);
+        let table = NamingTable::build(
+            &solution,
+            &[],
+            &[],
+            &[unused.clone()],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_def(&unused, &table);
 
         assert!(
@@ -751,7 +796,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[list_decl()], &[], &[singleton.clone()]);
+        let table = NamingTable::build(
+            &solution,
+            &[list_decl()],
+            &[],
+            &[singleton.clone()],
+            &ErasedDecls::default(),
+        );
 
         let list_copies = specialize_declaration(&list_decl(), &table);
         let def_copies = specialize_def(&singleton, &table);
@@ -827,7 +878,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int"), ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[bool_decl()], &[], &[swap.clone()]);
+        let table = NamingTable::build(
+            &solution,
+            &[bool_decl()],
+            &[],
+            &[swap.clone()],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_def(&swap, &table);
 
         assert_eq!(
@@ -982,7 +1039,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[], &[], &[identity_def(), wrap.clone()]);
+        let table = NamingTable::build(
+            &solution,
+            &[],
+            &[],
+            &[identity_def(), wrap.clone()],
+            &ErasedDecls::default(),
+        );
 
         let identity_copies = specialize_def(&identity_def(), &table);
         let wrap_copies = specialize_def(&wrap, &table);
@@ -1041,7 +1104,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl(), bool_decl()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[box_decl(), bool_decl()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_declaration(&box_decl(), &table);
 
         assert_eq!(
@@ -1086,7 +1155,13 @@ mod specialize_tests {
             (xtor_node.clone(), HashSet::from([vec![ty!(id!("Bool"))]])),
         ]));
 
-        let table = NamingTable::build(&solution, &[bool_decl()], &[container_decl()], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[bool_decl()],
+            &[container_decl()],
+            &[],
+            &ErasedDecls::default(),
+        );
         let copies = specialize_declaration(&container_decl(), &table);
 
         assert_eq!(copies.len(), 1, "Container[T] instantiated only at i64");
@@ -1117,7 +1192,8 @@ mod specialize_tests {
             node.clone(),
             HashSet::from([vec![ty!("int")]]),
         )]));
-        let table = NamingTable::build(&solution, &[list_decl()], &[], &[]);
+        let table =
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
         let ctx = SpecializeContext::ground(&table);
 
         let copies = specialize_clause(&nil_clause(), &ctx);
@@ -1144,7 +1220,13 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Bool"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl(), bool_decl()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[box_decl(), bool_decl()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let ctx = SpecializeContext::ground(&table);
 
         let copies = specialize_clause(&pack_clause(), &ctx);

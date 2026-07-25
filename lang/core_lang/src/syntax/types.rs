@@ -322,6 +322,7 @@ mod specialize_tests {
 
     use crate::{
         mono::{
+            erasure::ErasedDecls,
             naming_table::NamingTable,
             solver::Solution,
             specialize::{Specialize, SpecializeContext},
@@ -334,7 +335,7 @@ mod specialize_tests {
     #[test]
     fn specialize_ground_i64_is_identity() {
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[]);
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
         let ctx = &SpecializeContext::ground(&table);
 
         let result = Ty::I64.specialize(ctx);
@@ -346,7 +347,7 @@ mod specialize_tests {
         // A -> i64 under an active substitution, as happens while
         // specializing the body of a polymorphic declaration.
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[]);
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
 
         let params = vec![id!("A", 1)];
         let args = vec![ty!("int")];
@@ -367,7 +368,13 @@ mod specialize_tests {
         )]));
 
         let list = data!(id!("List"), [], [id!("A", 1)]);
-        let table = NamingTable::build(&solution, &[list.clone()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[list.clone()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let ctx = &SpecializeContext::ground(&table);
 
         let input = ty!(id!("List"), [ty!("int")]);
@@ -393,7 +400,13 @@ mod specialize_tests {
         )]));
 
         let list = data!(id!("List"), [], [id!("A", 1)]);
-        let table = NamingTable::build(&solution, &[list.clone()], &[], &[]);
+        let table = NamingTable::build(
+            &solution,
+            &[list.clone()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        );
         let ctx = &SpecializeContext::ground(&table);
 
         let input = ty!(id!("List"), [ty!(id!("Bool"))]);

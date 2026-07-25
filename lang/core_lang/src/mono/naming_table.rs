@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    mono::solver::Solution,
-    syntax::{CodataDeclaration, DataDeclaration, Def, Identifier, Ty},
+    mono::{erasure::ErasedDecls, solver::Solution},
+    syntax::{
+        CodataDeclaration, DataDeclaration, Def, Identifier, Ty,
+        declaration::{Polarity, TypeDeclaration},
+    },
 };
 
 /// A mapping from polymorphic type parameters to their corresponding concrete types as string representations after monomorphization.
@@ -29,6 +32,7 @@ impl NamingTable {
         data_decls: &[DataDeclaration],
         codata_decls: &[CodataDeclaration],
         defs: &[Def],
+        erased_decls: &ErasedDecls,
     ) -> Self {
         let mut table = NamingTable {
             names: HashMap::new(),
@@ -36,12 +40,7 @@ impl NamingTable {
         };
 
         for decl in data_decls {
-            table.register(
-                &decl.name,
-                &decl.type_params,
-                solution,
-                mangle_ty_declaration,
-            );
+            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
 
             decl.xtors.iter().for_each(|xtor| {
                 table.register(
@@ -54,12 +53,7 @@ impl NamingTable {
         }
 
         for decl in codata_decls {
-            table.register(
-                &decl.name,
-                &decl.type_params,
-                solution,
-                mangle_ty_declaration,
-            );
+            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
 
             decl.xtors.iter().for_each(|xtor| {
                 table.register(
@@ -83,13 +77,49 @@ impl NamingTable {
         table
     }
 
-    /// Registers every instantiation of a single declaration (data, codata,
-    /// or def) into both `names` and `instantiations` at once.
+    /// Registers a single data or codata declaration and its xtors.
     ///
-    /// If `type_params` is empty, the declaration is already monomorphic and
-    /// keeps its original name under the empty tuple. Otherwise, every
-    /// ground tuple recorded in `solution` for this declaration's node is
-    /// mangled via `mangle` and inserted into both maps.
+    /// If the declaration is erased (widened to a single recursive type), it keeps its name
+    /// unchanged and unduplicated, and each of its xtors is registered under the combination of
+    /// its own type parameters plus the declaration's
+    /// own (now-erased) type parameters, exactly as if the latter had been declared on the xtor
+    /// itself. Otherwise, behavior matches the ordinary (non-erased) path used so far.
+    fn register_decl<P: Polarity>(
+        &mut self,
+        decl: &TypeDeclaration<P>,
+        solution: &Solution,
+        erased_decls: &ErasedDecls,
+        mangle: fn(&Identifier, &[Ty]) -> String,
+    ) {
+        if erased_decls.is_erased(&decl.name) {
+            self.names
+                .insert((decl.name.clone(), vec![]), decl.name.clone());
+            self.instantiations
+                .entry(decl.name.clone())
+                .or_default()
+                .push(vec![]);
+            for xtor in &decl.xtors {
+                self.register_combined(
+                    &xtor.name,
+                    &xtor.type_params,
+                    &decl.type_params,
+                    solution,
+                    mangle,
+                );
+            }
+        } else {
+            self.register(&decl.name, &decl.type_params, solution, mangle);
+            for xtor in &decl.xtors {
+                self.register(&xtor.name, &xtor.type_params, solution, mangle);
+            }
+        }
+    }
+
+    /// Registers a single declaration (data, codata, or def) and its type parameters.
+    ///
+    /// If the declaration has no type parameters, it is registered under its own name.
+    /// Otherwise, for each ground instantiation tuple in the solution, a fresh mangled name
+    /// is generated and registered under that name.
     fn register(
         &mut self,
         name: &Identifier,
@@ -97,10 +127,23 @@ impl NamingTable {
         solution: &Solution,
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) {
-        if type_params.is_empty() {
-            // Monomorphic by construction: keep the original name under the
-            // empty tuple, and record that single "instantiation" so
-            // instantiations_for still returns something sensible.
+        self.register_combined(name, type_params, &[], solution, mangle);
+    }
+
+    /// Registers every instantiation of `name` under the combination of `own_params` (the
+    /// name's own declared parameters) and `extra_params` (any additional parameters pushed down
+    /// from an erased surrounding declaration). If both are non-empty, the solver currently
+    /// tracks them as two independent nodes rather than one correlated one, so we take their
+    /// cartesian product.
+    fn register_combined(
+        &mut self,
+        name: &Identifier,
+        own_params: &[Identifier],
+        extra_params: &[Identifier],
+        solution: &Solution,
+        mangle: fn(&Identifier, &[Ty]) -> String,
+    ) {
+        if own_params.is_empty() && extra_params.is_empty() {
             self.names.insert((name.clone(), vec![]), name.clone());
             self.instantiations
                 .entry(name.clone())
@@ -109,20 +152,44 @@ impl NamingTable {
             return;
         }
 
-        let Some(tuples) = solution.map.get(type_params) else {
-            // Never instantiated, no entries at all, so instantiations_for
-            // will correctly return an empty Vec via unwrap_or_default.
-            return;
+        let tuples: Vec<Vec<Ty>> = if extra_params.is_empty() {
+            solution
+                .get(own_params)
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .collect()
+        } else if own_params.is_empty() {
+            solution
+                .get(extra_params)
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .collect()
+        } else {
+            let own_tuples = solution.get(own_params).cloned().unwrap_or_default();
+            let extra_tuples = solution.get(extra_params).cloned().unwrap_or_default();
+
+            own_tuples
+                .into_iter()
+                .flat_map(|o| {
+                    extra_tuples.iter().map(move |e| {
+                        let mut combined = o.clone();
+                        combined.extend(e.clone());
+                        combined
+                    })
+                })
+                .collect()
         };
 
         for tuple in tuples {
-            let mangled = mangle(name, tuple);
+            let mangeled = mangle(name, &tuple);
             self.names
-                .insert((name.clone(), tuple.clone()), Identifier::new(mangled));
+                .insert((name.clone(), tuple.clone()), Identifier::new(mangeled));
             self.instantiations
                 .entry(name.clone())
                 .or_default()
-                .push(tuple.clone());
+                .push(tuple);
         }
     }
 
