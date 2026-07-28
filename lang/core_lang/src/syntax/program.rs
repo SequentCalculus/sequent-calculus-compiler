@@ -249,10 +249,16 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
-                from: vec![Ty::I64],
-                to: vec![id!("A", 1)],
-            }]),
+            constraints: HashSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+                FlowConstraint {
+                    from: vec![tvar!(id!("A", 1))],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
         };
 
         assert_eq!(constraints, expected)

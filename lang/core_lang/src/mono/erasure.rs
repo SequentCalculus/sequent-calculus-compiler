@@ -29,9 +29,8 @@ impl ErasedDecls {
 }
 
 /// Erases the type arguments of every occurrence of any of the given declaration names within a
-/// constraint set's `from` types, wherever they appear -- including nested inside other type
-/// applications -- returning a new, equivalent constraint set. `to` sides are always bare type
-/// variables and are left untouched, since there is nothing to erase there.
+/// constraint set's `from` types, wherever they appear returning a new, equivalent constraint set.
+/// `to` sides are always bare type variables and are left untouched, since there is nothing to erase there.
 pub fn erase_constraints(
     constraints: &FlowConstraintSet,
     targets: &HashSet<Identifier>,
@@ -52,7 +51,7 @@ pub fn erase_constraints(
 
 /// Recursively erases the type arguments of any occurrence of a declaration name in `targets`
 /// within the given type, returning a new type. If the type is a declaration whose name is in `targets`, its type arguments are dropped to an empty vector; otherwise, the type is returned unchanged, except that any nested type arguments are recursively processed.
-fn erase_ty(ty: &Ty, targets: &HashSet<Identifier>) -> Ty {
+pub fn erase_ty(ty: &Ty, targets: &HashSet<Identifier>) -> Ty {
     match ty {
         Ty::I64 => Ty::I64,
         Ty::Var(id) => Ty::Var(id.clone()),

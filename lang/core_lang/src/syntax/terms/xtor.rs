@@ -3,6 +3,7 @@
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::syntax::types::TypeArgs;
@@ -224,12 +225,38 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
 
 impl<C: Chi> Specialize for Xtor<C> {
     fn specialize(&self, context: &SpecializeContext) -> Self {
-        let ground_type_args: Vec<Ty> = self
+        let specialized_ty = self.ty.specialize(context);
+
+        // If the surrounding declaration was erased, its own type arguments are no longer
+        // reflected in `specialized_ty`, but they're still needed to pick the right
+        // specialized xtor. Surface syntax never carries them explicitly at the call site
+        // (they were always implicit via the expected type), so we recover them from `self.ty`.
+        let extra_args: Vec<Ty> = match &self.ty {
+            Ty::Decl { name, type_args } if context.erased_decls.is_erased(name) => type_args
+                .args
+                .iter()
+                .map(|a| {
+                    erase_ty(
+                        &a.substitute((&context.subst.0, &context.subst.1)),
+                        &context.erased_decls.0,
+                    )
+                })
+                .collect(),
+            _ => vec![],
+        };
+
+        let mut ground_type_args: Vec<Ty> = self
             .type_args
             .args
             .iter()
-            .map(|a| a.substitute((&context.subst.0, &context.subst.1)))
+            .map(|a| {
+                erase_ty(
+                    &a.substitute((&context.subst.0, &context.subst.1)),
+                    &context.erased_decls.0,
+                )
+            })
             .collect();
+        ground_type_args.extend(extra_args);
 
         let mangled_name = if ground_type_args.is_empty() {
             self.name.clone()
@@ -240,9 +267,9 @@ impl<C: Chi> Specialize for Xtor<C> {
         Xtor {
             prdcns: self.prdcns.clone(),
             name: mangled_name,
-            type_args: TypeArgs { args: vec![] },
+            type_args: TypeArgs::default(),
             args: self.args.specialize(context),
-            ty: self.ty.specialize(context),
+            ty: specialized_ty,
         }
     }
 }

@@ -4,6 +4,7 @@ use printer::tokens::I64;
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::typing::check::{Checked, check_arity};
@@ -147,26 +148,36 @@ impl Specialize for Ty {
                         param.print_to_string(None)
                     )
                 });
-                if let Some(concrete_ty) = args.get(pos) {
-                    concrete_ty.specialize(&SpecializeContext::ground(context.table))
-                } else {
-                    panic!(
-                        "type variable {} not found in substitution",
-                        param.print_to_string(None)
-                    )
-                }
+                args[pos].specialize(&SpecializeContext::ground(
+                    context.table,
+                    context.erased_decls,
+                ))
             }
 
             Ty::Decl { name, type_args } => {
-                let ground_args: Vec<Ty> = type_args
+                let substituted: Vec<Ty> = type_args
                     .args
                     .iter()
                     .map(|a| a.substitute((&context.subst.0, &context.subst.1)))
                     .collect();
-                let mangled = context.table.lookup(name, &ground_args).clone();
+                let candidate = Ty::Decl {
+                    name: name.clone(),
+                    type_args: TypeArgs { args: substituted },
+                };
+
+                // Erase the type inline to match the right candidate for the lookup
+                let erased_candidate = erase_ty(&candidate, &context.erased_decls.0);
+                let Ty::Decl {
+                    name: erased_name,
+                    type_args: erased_args,
+                } = &erased_candidate
+                else {
+                    unreachable!("erase_ty always preserves the Decl variant");
+                };
+                let mangled = context.table.lookup(erased_name, &erased_args.args).clone();
                 Ty::Decl {
                     name: mangled,
-                    type_args: TypeArgs { args: vec![] },
+                    type_args: TypeArgs::default(),
                 }
             }
         }
@@ -336,7 +347,8 @@ mod specialize_tests {
     fn specialize_ground_i64_is_identity() {
         let solution = Solution::default();
         let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
-        let ctx = &SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = &SpecializeContext::ground(&table, &erased);
 
         let result = Ty::I64.specialize(ctx);
         assert_eq!(result, Ty::I64);
@@ -348,10 +360,10 @@ mod specialize_tests {
         // specializing the body of a polymorphic declaration.
         let solution = Solution::default();
         let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
-
+        let erased = ErasedDecls::default();
         let params = vec![id!("A", 1)];
         let args = vec![ty!("int")];
-        let ctx = &SpecializeContext::with_subst(&table, &params, &args);
+        let ctx = &SpecializeContext::with_subst(&table, &params, &args, &erased);
 
         let result = tvar!(id!("A", 1)).specialize(ctx);
         assert_eq!(result, ty!("int"));
@@ -375,7 +387,8 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let ctx = &SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = &SpecializeContext::ground(&table, &erased);
 
         let input = ty!(id!("List"), [ty!("int")]);
         let result = input.specialize(ctx);
@@ -407,7 +420,8 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let ctx = &SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = &SpecializeContext::ground(&table, &erased);
 
         let input = ty!(id!("List"), [ty!(id!("Bool"))]);
         let _ = input.specialize(ctx);

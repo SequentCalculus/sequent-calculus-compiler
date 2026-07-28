@@ -109,19 +109,25 @@ pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
 /// recursion of any kind. A single erasure pass suffices: erasure only removes structure from
 /// constraints (never adds a type-constructor application), so it can only remove growing edges,
 /// never introduce new ones.
-pub fn solve_with_erasure(constraints: FlowConstraintSet) -> (Solution, ErasedDecls) {
+pub fn solve_with_erasure(
+    constraints: FlowConstraintSet,
+) -> (Solution, ErasedDecls, FlowConstraintSet) {
     let graph = ConstraintGraph::from(constraints.clone());
     let cycles = find_all_growing_cycles(&graph);
 
     if cycles.is_empty() {
-        return (fixpoint_solve(&graph), ErasedDecls::default());
+        return (
+            fixpoint_solve(&graph),
+            ErasedDecls::default(),
+            FlowConstraintSet::default(),
+        );
     }
 
     let targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
     let erased = ErasedDecls(targets.clone());
 
     let erased_constraints = erase_constraints(&constraints, &targets);
-    let erased_graph = ConstraintGraph::from(erased_constraints);
+    let erased_graph = ConstraintGraph::from(erased_constraints.clone());
 
     debug_assert!(
         find_all_growing_cycles(&erased_graph).is_empty(),
@@ -129,7 +135,7 @@ pub fn solve_with_erasure(constraints: FlowConstraintSet) -> (Solution, ErasedDe
          growing-cycle detection or erasure, since erasure should only ever remove structure"
     );
 
-    (fixpoint_solve(&erased_graph), erased)
+    (fixpoint_solve(&erased_graph), erased, erased_constraints)
 }
 
 /// Runs the worklist fixpoint solver over the constraint graph, assuming it is already free of
@@ -439,7 +445,7 @@ mod solve_with_erasure_tests {
         let graph = ConstraintGraph::from(set.clone());
         let plain = solve(&graph).unwrap();
 
-        let (with_erasure, erased) = solve_with_erasure(set);
+        let (with_erasure, erased, _) = solve_with_erasure(set);
 
         assert_eq!(plain, with_erasure);
         assert!(erased.0.is_empty());
@@ -455,7 +461,7 @@ mod solve_with_erasure_tests {
         )));
         set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
 
-        let (solution, erased) = solve_with_erasure(set);
+        let (solution, erased, _) = solve_with_erasure(set);
 
         assert_eq!(erased.0, HashSet::from([id!("Box")]));
 
@@ -489,7 +495,7 @@ mod solve_with_erasure_tests {
             vec![id!("C", 6)],
         )));
 
-        let (solution, erased) = solve_with_erasure(set);
+        let (solution, erased, _) = solve_with_erasure(set);
 
         assert_eq!(erased.0, HashSet::from([id!("Box")]));
 
@@ -512,7 +518,7 @@ mod solve_with_erasure_tests {
         )));
         set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
 
-        let (solution, erased) = solve_with_erasure(set);
+        let (solution, erased, _) = solve_with_erasure(set);
 
         assert_eq!(erased.0, HashSet::from([id!("Box")]));
         let node = vec![id!("A", 1)];

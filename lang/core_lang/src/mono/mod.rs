@@ -5,7 +5,7 @@ use printer::{Print, PrintCfg};
 use crate::{
     mono::{
         constraint_graph::ConstraintGraph, constraints::ConstraintCollector, errors::MonoError,
-        solver::solve, specialize::specialize_program,
+        solver::solve_with_erasure, specialize::specialize_program,
     },
     syntax::program::Prog,
     typing::env::GlobalEnv,
@@ -49,22 +49,39 @@ pub fn monomorphize_program(
         );
     }
 
+    let (solution, erased_decls, erased_constraints) = solve_with_erasure(constraints.clone());
+
     let graph = ConstraintGraph::from(constraints.clone());
 
     if let Some(path) = viz_path {
         graph.render_as(graph_viz::OutputFormat::Png, path).unwrap();
     }
 
-    let solution = solve(&graph)?;
-
     if debug {
+        if !erased_constraints.constraints.is_empty() {
+            println!(
+                "Erased Constraints: \n{}",
+                erased_constraints.print_to_string(Some(&forced_set_cfg))
+            );
+        }
+        if !erased_decls.0.is_empty() {
+            println!(
+                "Erased Declarations: {}",
+                erased_decls
+                    .0
+                    .iter()
+                    .map(|id| id.print_to_string(Some(&forced_set_cfg)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
         println!(
             "Solution: \n{}",
             solution.print_to_string(Some(&forced_set_cfg))
         );
     }
 
-    let mono_prog = specialize_program(&program, &solution);
+    let mono_prog = specialize_program(&program, &solution, &erased_decls);
 
     Ok(mono_prog)
 }

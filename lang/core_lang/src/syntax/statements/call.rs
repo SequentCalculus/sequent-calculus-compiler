@@ -6,6 +6,7 @@ use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::constraints::collect_type_flow;
+use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
@@ -161,7 +162,12 @@ impl Specialize for Call {
             .type_args
             .args
             .iter()
-            .map(|ty| ty.substitute((&context.subst.0, &context.subst.1)))
+            .map(|ty| {
+                erase_ty(
+                    &ty.substitute((&context.subst.0, &context.subst.1)),
+                    &context.erased_decls.0,
+                )
+            })
             .collect();
 
         let specialized_name = if ground_type_args.is_empty() {

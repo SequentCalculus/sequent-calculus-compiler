@@ -19,6 +19,7 @@ pub struct NamingTable {
     /// All ground instantiation tuples recorded for a given base identifier,
     /// in the same order the solution produced them.
     instantiations: HashMap<Identifier, Vec<Vec<Ty>>>,
+    xtor_extra_params: HashMap<Identifier, Vec<Identifier>>,
 }
 
 impl NamingTable {
@@ -37,32 +38,15 @@ impl NamingTable {
         let mut table = NamingTable {
             names: HashMap::new(),
             instantiations: HashMap::new(),
+            xtor_extra_params: HashMap::new(),
         };
 
         for decl in data_decls {
             table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
-
-            decl.xtors.iter().for_each(|xtor| {
-                table.register(
-                    &xtor.name,
-                    &xtor.type_params,
-                    solution,
-                    mangle_ty_declaration,
-                );
-            });
         }
 
         for decl in codata_decls {
             table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
-
-            decl.xtors.iter().for_each(|xtor| {
-                table.register(
-                    &xtor.name,
-                    &xtor.type_params,
-                    solution,
-                    mangle_ty_declaration,
-                );
-            });
         }
 
         for def in defs {
@@ -99,6 +83,10 @@ impl NamingTable {
                 .or_default()
                 .push(vec![]);
             for xtor in &decl.xtors {
+                // Record the declaration's own type parameters as extra parameters for the xtor.
+                self.xtor_extra_params
+                    .insert(xtor.name.clone(), decl.type_params.clone());
+
                 self.register_combined(
                     &xtor.name,
                     &xtor.type_params,
@@ -214,6 +202,15 @@ impl NamingTable {
             .map(|(_, tuple)| tuple.clone())
             .collect()
     }
+
+    /// Returns any extra type parameters pushed down to this xtor from an erased declaration.
+    /// Returns an empty slice if the xtor belongs to a non-erased declaration.
+    pub fn extra_params_for(&self, xtor: &Identifier) -> &[Identifier] {
+        self.xtor_extra_params
+            .get(xtor)
+            .map(|params| params.as_slice())
+            .unwrap_or(&[])
+    }
 }
 
 /// Generates a mangled name for a type declaration given its base name and the concrete types it is instantiated with.
@@ -249,5 +246,85 @@ fn mangle_ty(ty: &Ty) -> String {
             }
         }
         Ty::Var(_) => unreachable!("mangle_ty called on a non-ground type"),
+    }
+}
+
+#[cfg(test)]
+mod erasure_tests {
+    use super::*;
+    use crate::mono::erasure::ErasedDecls;
+    use std::collections::{HashMap, HashSet};
+    extern crate self as core_lang;
+    use core_macros::{bind, ctor_sig, data, id, prd, tvar, ty};
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Wrap"),
+                [],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            [id!("A", 1)]
+        );
+    }
+
+    #[test]
+    fn erased_decl_keeps_single_unmangled_name() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+
+        // Box itself must remain registered under its own, unchanged name.
+        assert_eq!(table.lookup(&id!("Box"), &[]), &id!("Box"));
+    }
+
+    #[test]
+    fn erased_decl_registers_two_xtor_instantiations() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+
+        let mut tuples = table.instantiations_for(&id!("Wrap"));
+        tuples.sort();
+        assert_eq!(tuples, vec![vec![ty!("int")], vec![ty!(id!("Box"))]]);
+
+        let name_int = table.lookup(&id!("Wrap"), &[ty!("int")]);
+        let name_box = table.lookup(&id!("Wrap"), &[ty!(id!("Box"))]);
+        assert_ne!(name_int, name_box);
+    }
+
+    #[test]
+    fn extra_params_for_returns_declarations_own_params_when_erased() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+
+        assert_eq!(table.extra_params_for(&id!("Wrap")), &[id!("A", 1)]);
+    }
+
+    #[test]
+    fn extra_params_for_is_empty_for_non_erased_xtor() {
+        let erased = ErasedDecls::default();
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+
+        assert!(table.extra_params_for(&id!("Wrap")).is_empty());
     }
 }

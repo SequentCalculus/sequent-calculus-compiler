@@ -16,27 +16,49 @@ use crate::{
 pub struct SpecializeContext<'a> {
     pub table: &'a NamingTable,
     pub subst: (Vec<Identifier>, Vec<Ty>),
+    pub erased_decls: &'a ErasedDecls,
 }
 
 impl<'a> SpecializeContext<'a> {
     /// A context for specializing already-ground terms, with no active variable substitution.
-    pub fn ground(table: &'a NamingTable) -> Self {
+    pub fn ground(table: &'a NamingTable, erased_decls: &'a ErasedDecls) -> Self {
         SpecializeContext {
             table,
             subst: (vec![], vec![]),
+            erased_decls,
         }
     }
 
     /// A context for specializing one instantiation of a polymorphic declaration body.
-    pub fn with_subst(table: &'a NamingTable, params: &'a [Identifier], args: &'a [Ty]) -> Self {
+    pub fn with_subst(
+        table: &'a NamingTable,
+        params: &'a [Identifier],
+        args: &'a [Ty],
+        erased_decls: &'a ErasedDecls,
+    ) -> Self {
+        debug_assert_eq!(
+            params.len(),
+            args.len(),
+            "with_subst called with mismatched lengths: params={:?}, args={:?}",
+            params,
+            args
+        );
         SpecializeContext {
             table,
             subst: (params.to_vec(), args.to_vec()),
+            erased_decls,
         }
     }
 
     /// Extends the current specialization context with additional type parameters and their corresponding concrete types, returning a new `SpecializeContext` that combines the existing substitution with the new one.
     fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
+        debug_assert_eq!(
+            new_params.len(),
+            new_args.len(),
+            "extend_with_substs called with mismatched lengths: new_params={:?}, new_args={:?}",
+            new_params,
+            new_args
+        );
         let mut extended_params = self.subst.0.clone();
         extended_params.extend_from_slice(new_params);
 
@@ -46,6 +68,7 @@ impl<'a> SpecializeContext<'a> {
         SpecializeContext {
             table: self.table,
             subst: (extended_params, extended_args),
+            erased_decls: self.erased_decls,
         }
     }
 }
@@ -75,31 +98,31 @@ impl<X: Specialize> Specialize for std::rc::Rc<X> {
 }
 
 /// This function is the entry point for specializing a program from polymorphic to monomorphic form. It takes a reference to a [`Solution`] produced by the constraint solving process, and returns a new program where all polymorphic type parameters have been replaced with their corresponding concrete types according to the solution.
-pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
+pub fn specialize_program(prog: &Prog, solution: &Solution, erased_decls: &ErasedDecls) -> Prog {
     let table = NamingTable::build(
         solution,
         &prog.data_types,
         &prog.codata_types,
         &prog.defs,
-        &ErasedDecls::default(),
+        erased_decls,
     );
 
     let data_types = prog
         .data_types
         .iter()
-        .flat_map(|data_decl| specialize_declaration(data_decl, &table))
+        .flat_map(|data_decl| specialize_declaration(data_decl, &table, erased_decls))
         .collect::<Vec<_>>();
 
     let codata_types = prog
         .codata_types
         .iter()
-        .flat_map(|codata_decl| specialize_declaration(codata_decl, &table))
+        .flat_map(|codata_decl| specialize_declaration(codata_decl, &table, erased_decls))
         .collect::<Vec<_>>();
 
     let defs: Vec<_> = prog
         .defs
         .iter()
-        .flat_map(|def| specialize_def(def, &table))
+        .flat_map(|def| specialize_def(def, &table, erased_decls))
         .collect();
 
     Prog {
@@ -114,13 +137,20 @@ pub fn specialize_program(prog: &Prog, solution: &Solution) -> Prog {
 fn specialize_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     table: &NamingTable,
+    erased_decls: &ErasedDecls,
 ) -> Vec<TypeDeclaration<P>> {
     let params = &decl.type_params;
-    if params.is_empty() {
-        if decl.xtors.is_empty() || decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
+    let is_erased = erased_decls.is_erased(&decl.name);
+
+    if params.is_empty() || is_erased {
+        if !is_erased && decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
             // This is already a monomorphic declaration, so we can return it as-is
             return vec![decl.clone()];
         }
+
+        let ctx = SpecializeContext::ground(table, erased_decls);
+        let extra_params: &[Identifier] = if is_erased { params } else { &[] };
+
         // This is already a monomorphic declaration, so we only need to specialize its xtors.
         return vec![TypeDeclaration {
             dat: decl.dat.clone(),
@@ -128,7 +158,7 @@ fn specialize_declaration<P: Polarity + Clone>(
             xtors: decl
                 .xtors
                 .iter()
-                .flat_map(|xtor| specialize_xtor_sig(xtor, &SpecializeContext::ground(table)))
+                .flat_map(|xtor| specialize_xtor_sig(xtor, extra_params, &ctx))
                 .collect(),
             type_params: vec![],
         }];
@@ -138,14 +168,14 @@ fn specialize_declaration<P: Polarity + Clone>(
         .instantiations_for(&decl.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, params, tuple);
+            let ctx = SpecializeContext::with_subst(table, params, tuple, erased_decls);
             TypeDeclaration {
                 dat: decl.dat.clone(),
                 name: table.lookup(&decl.name, tuple).clone(),
                 xtors: decl
                     .xtors
                     .iter()
-                    .flat_map(|xtor| specialize_xtor_sig(xtor, &ctx))
+                    .flat_map(|xtor| specialize_xtor_sig(xtor, &[], &ctx))
                     .collect(),
                 type_params: vec![],
             }
@@ -156,9 +186,12 @@ fn specialize_declaration<P: Polarity + Clone>(
 /// Specialization of polymorphic constructor/destructor signatures into monomorphic ones
 fn specialize_xtor_sig<P: Polarity + Clone>(
     xtor_sig: &XtorSig<P>,
+    extra_params: &[Identifier],
     ctx: &SpecializeContext,
 ) -> Vec<XtorSig<P>> {
-    let params = &xtor_sig.type_params;
+    let mut params = xtor_sig.type_params.clone();
+    params.extend_from_slice(extra_params);
+
     // This is already a monomorphic declaration, so we can return it as-is
     if params.is_empty() {
         return vec![XtorSig {
@@ -168,11 +201,12 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
             args: xtor_sig.args.specialize(ctx),
         }];
     }
+
     ctx.table
         .instantiations_for(&xtor_sig.name)
         .iter()
         .map(|tuple| {
-            let extended_ctx = ctx.extend_with_substs(params, tuple);
+            let extended_ctx = ctx.extend_with_substs(&params, tuple);
             XtorSig {
                 xtor: xtor_sig.xtor.clone(),
                 name: extended_ctx.table.lookup(&xtor_sig.name, tuple).clone(),
@@ -184,12 +218,18 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
 }
 
 /// Specialization of polymorphic clauses into monomorphic ones.
-pub fn specialize_clause<C: Chi>(clause: &Clause<C>, ctx: &SpecializeContext) -> Vec<Clause<C>> {
-    let params = &clause.type_params;
+pub fn specialize_clause<C: Chi>(
+    clause: &Clause<C>,
+    ctx: &SpecializeContext,
+    scrutinee_extra_args: Option<&[Ty]>,
+) -> Vec<Clause<C>> {
+    let extra_params = ctx.table.extra_params_for(&clause.xtor);
+    let mut full_params = clause.type_params.clone();
+    full_params.extend_from_slice(extra_params);
 
-    if params.is_empty() {
-        // No own type parameters bound by this clause. The xtor name is looked up under the
-        // already-established decl-level substitution only.
+    if full_params.is_empty() {
+        // No own type parameters bound by this clause and also no extra parameters from erased declarations.
+        // The xtor name is looked up under the already-established decl-level substitution only.
         return vec![Clause {
             prdcns: clause.prdcns.clone(),
             xtor: clause.xtor.clone(),
@@ -202,21 +242,32 @@ pub fn specialize_clause<C: Chi>(clause: &Clause<C>, ctx: &SpecializeContext) ->
     ctx.table
         .instantiations_for(&clause.xtor)
         .iter()
-        .map(|tuple| {
-            let extended_ctx = ctx.extend_with_substs(params, tuple);
-            Clause {
+        .filter_map(|tuple| {
+            let (_own_args, extra_args) = tuple.split_at(clause.type_params.len());
+
+            // If the caller told us which concrete instantiation is actually active at this
+            // match site, only keep clauses whose extra args agree with it exactly.
+            if let Some(active) = scrutinee_extra_args {
+                if extra_args != active {
+                    return None;
+                }
+            }
+
+            let extended_ctx = ctx.extend_with_substs(&full_params, tuple);
+
+            Some(Clause {
                 prdcns: clause.prdcns.clone(),
                 xtor: extended_ctx.table.lookup(&clause.xtor, tuple).clone(),
                 type_params: vec![],
                 context: clause.context.specialize(&extended_ctx),
                 body: clause.body.specialize(&extended_ctx),
-            }
+            })
         })
         .collect()
 }
 
 /// Specialization of polymorphic function definitions into monomorphic ones
-pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
+pub fn specialize_def(def: &Def, table: &NamingTable, erased_decls: &ErasedDecls) -> Vec<Def> {
     let params = &def.type_params;
 
     if params.is_empty() {
@@ -225,7 +276,7 @@ pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
         // needs to be traversed with a ground context, because it may
         // contain calls to polymorphic functions or constructors that must
         // be rewritten to their specialized names.
-        let ctx = SpecializeContext::ground(table);
+        let ctx = SpecializeContext::ground(table, erased_decls);
         return vec![Def {
             name: def.name.clone(),
             type_params: vec![],
@@ -238,7 +289,7 @@ pub fn specialize_def(def: &Def, table: &NamingTable) -> Vec<Def> {
         .instantiations_for(&def.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, params, tuple);
+            let ctx = SpecializeContext::with_subst(table, params, tuple, erased_decls);
             Def {
                 name: table.lookup(&def.name, tuple).clone(),
                 type_params: vec![],
@@ -395,7 +446,7 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let copies = specialize_declaration(&list_decl(), &table);
+        let copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
             copies.len(),
@@ -435,7 +486,7 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let copies = specialize_declaration(&pair_decl(), &table);
+        let copies = specialize_declaration(&pair_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
             copies.len(),
@@ -464,7 +515,8 @@ mod specialize_tests {
         )]));
         let table =
             NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
-        let ctx = &SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = &SpecializeContext::ground(&table, &erased);
 
         let term = ctor!(
             id!("Cons"),
@@ -518,8 +570,8 @@ mod specialize_tests {
             &ErasedDecls::default(),
         );
 
-        let pair_copies = specialize_declaration(&pair_decl(), &table);
-        let list_copies = specialize_declaration(&list_decl(), &table);
+        let pair_copies = specialize_declaration(&pair_decl(), &table, &ErasedDecls::default());
+        let list_copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(pair_copies.len(), 1);
         assert_eq!(list_copies.len(), 1);
@@ -576,7 +628,7 @@ mod specialize_tests {
             max_id: 0,
         };
 
-        let specialized_prog = specialize_program(&prog, &solution);
+        let specialized_prog = specialize_program(&prog, &solution, &ErasedDecls::default());
 
         assert_eq!(
             specialized_prog.data_types.len(),
@@ -647,7 +699,7 @@ mod specialize_tests {
             &[main_def.clone()],
             &ErasedDecls::default(),
         );
-        let copies = specialize_def(&main_def, &table);
+        let copies = specialize_def(&main_def, &table, &ErasedDecls::default());
 
         // Exactly one copy of main, no multiplication.
         assert_eq!(copies.len(), 1);
@@ -689,7 +741,7 @@ mod specialize_tests {
             &[identity_def()],
             &ErasedDecls::default(),
         );
-        let copies = specialize_def(&identity_def(), &table);
+        let copies = specialize_def(&identity_def(), &table, &ErasedDecls::default());
 
         assert_eq!(copies.len(), 2, "expected one copy per instantiation");
 
@@ -749,7 +801,7 @@ mod specialize_tests {
             &[unused.clone()],
             &ErasedDecls::default(),
         );
-        let copies = specialize_def(&unused, &table);
+        let copies = specialize_def(&unused, &table, &ErasedDecls::default());
 
         assert!(
             copies.is_empty(),
@@ -804,8 +856,8 @@ mod specialize_tests {
             &ErasedDecls::default(),
         );
 
-        let list_copies = specialize_declaration(&list_decl(), &table);
-        let def_copies = specialize_def(&singleton, &table);
+        let list_copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
+        let def_copies = specialize_def(&singleton, &table, &ErasedDecls::default());
 
         assert_eq!(list_copies.len(), 1);
         assert_eq!(def_copies.len(), 1);
@@ -885,7 +937,7 @@ mod specialize_tests {
             &[swap.clone()],
             &ErasedDecls::default(),
         );
-        let copies = specialize_def(&swap, &table);
+        let copies = specialize_def(&swap, &table, &ErasedDecls::default());
 
         assert_eq!(
             copies.len(),
@@ -972,7 +1024,7 @@ mod specialize_tests {
             max_id: 0,
         };
 
-        let result = specialize_program(&prog, &solution);
+        let result = specialize_program(&prog, &solution, &ErasedDecls::default());
 
         // One monomorphic List copy, one main def.
         assert_eq!(result.data_types.len(), 1);
@@ -1047,8 +1099,8 @@ mod specialize_tests {
             &ErasedDecls::default(),
         );
 
-        let identity_copies = specialize_def(&identity_def(), &table);
-        let wrap_copies = specialize_def(&wrap, &table);
+        let identity_copies = specialize_def(&identity_def(), &table, &ErasedDecls::default());
+        let wrap_copies = specialize_def(&wrap, &table, &ErasedDecls::default());
 
         assert_eq!(identity_copies.len(), 1);
         assert_eq!(wrap_copies.len(), 1);
@@ -1111,7 +1163,7 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let copies = specialize_declaration(&box_decl(), &table);
+        let copies = specialize_declaration(&box_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
             copies.len(),
@@ -1162,7 +1214,7 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let copies = specialize_declaration(&container_decl(), &table);
+        let copies = specialize_declaration(&container_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(copies.len(), 1, "Container[T] instantiated only at i64");
         assert!(copies[0].type_params.is_empty());
@@ -1194,9 +1246,10 @@ mod specialize_tests {
         )]));
         let table =
             NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
-        let ctx = SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = SpecializeContext::ground(&table, &erased);
 
-        let copies = specialize_clause(&nil_clause(), &ctx);
+        let copies = specialize_clause(&nil_clause(), &ctx, None);
 
         assert_eq!(copies.len(), 1);
         assert_eq!(copies[0].xtor, id!("Nil"));
@@ -1227,12 +1280,13 @@ mod specialize_tests {
             &[],
             &ErasedDecls::default(),
         );
-        let ctx = SpecializeContext::ground(&table);
+        let erased = ErasedDecls::default();
+        let ctx = SpecializeContext::ground(&table, &erased);
 
-        let copies = specialize_clause(&pack_clause(), &ctx);
+        let copies = specialize_clause(&pack_clause(), &ctx, None);
         assert_eq!(copies.len(), 2);
 
-        let decl_copies = specialize_declaration(&box_decl(), &table);
+        let decl_copies = specialize_declaration(&box_decl(), &table, &ErasedDecls::default());
         let expected_names: Vec<_> = decl_copies[0]
             .xtors
             .iter()
@@ -1256,5 +1310,123 @@ mod specialize_tests {
             copies[0].context.bindings[0].ty,
             copies[1].context.bindings[0].ty
         );
+    }
+}
+
+#[cfg(test)]
+mod erasure_tests {
+    use super::*;
+    use crate::{
+        mono::erasure::ErasedDecls,
+        syntax::{DataDeclaration, types::TypeArgs},
+    };
+    use std::collections::{HashMap, HashSet};
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, call, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tvar, ty, var,
+    };
+
+    fn box_decl() -> DataDeclaration {
+        return data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Wrap"),
+                [],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            [id!("A", 1)]
+        );
+    }
+
+    #[test]
+    fn specialize_erased_declaration_keeps_one_copy_with_two_xtor_variants() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let copies = specialize_declaration(&box_decl(), &table, &erased);
+
+        assert_eq!(copies.len(), 1, "erased declaration must not be duplicated");
+        assert!(copies[0].type_params.is_empty());
+        assert_eq!(
+            copies[0].xtors.len(),
+            2,
+            "expected one Wrap variant per instantiation of the erased A"
+        );
+        for xtor in &copies[0].xtors {
+            assert!(xtor.type_params.is_empty());
+        }
+    }
+
+    #[test]
+    fn xtor_specialize_recovers_extra_args_from_ty_when_erased() {
+        // Wrap(123) : Box[i64]
+        // Box is erased, so `type_args` on the Xtor term itself is
+        // empty; the concrete instantiation must be recovere d from `self.ty`.
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")]]),
+        )]));
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let ctx = SpecializeContext::ground(&table, &erased);
+
+        let term = ctor!(id!("Wrap"), [], [lit!(123)], ty!(id!("Box"), [ty!("int")]));
+
+        let result = term.specialize(&ctx);
+
+        let expected_name = table.lookup(&id!("Wrap"), &[ty!("int")]).clone();
+        assert_eq!(result.name, expected_name);
+        assert!(result.type_args.args.is_empty());
+        assert_eq!(
+            result.ty,
+            Ty::Decl {
+                name: id!("Box"),
+                type_args: TypeArgs::default()
+            }
+        );
+    }
+
+    #[test]
+    fn call_specialize_erases_nested_recursive_type_argument() {
+        // nest[Box[C]](...) while specializing nest's own C := Box: after substitution the
+        // call's type argument is Box[Box], which must be erased to bare Box before lookup.
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let mut solution_map = HashMap::new();
+        solution_map.insert(
+            vec![id!("C", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        );
+        let solution = Solution::from(solution_map);
+
+        let nest_def = def!(
+            id!("nest"),
+            [id!("C", 1)],
+            [bind!(id!("x"), prd!(), tvar!(id!("C", 1)))],
+            cut!(
+                var!(id!("x"), tvar!(id!("C", 1))),
+                covar!(id!("ret"), tvar!(id!("C", 1))),
+                tvar!(id!("C", 1))
+            )
+        );
+
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[nest_def.clone()], &erased);
+
+        let params = vec![id!("C", 1)];
+        let args = vec![ty!(id!("Box"))];
+        let ctx = SpecializeContext::with_subst(&table, &params, &args, &erased);
+
+        let call = call!(id!("nest"), [ty!(id!("Box"), [tvar!(id!("C", 1))])], [],);
+
+        let result = call.specialize(&ctx);
+
+        // Box[C] with C := Box, erased to bare Box, must resolve to nest's own Box-instance
+        // name, the very definition of the recursive call closing the loop.
+        let expected_name = table.lookup(&id!("nest"), &[ty!(id!("Box"))]).clone();
+        assert_eq!(result.name, expected_name);
+        assert!(result.type_args.args.is_empty());
     }
 }
