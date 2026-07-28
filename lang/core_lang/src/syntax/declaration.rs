@@ -1,5 +1,7 @@
 //! This module defines user-declared data and codata types in Core.
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
@@ -237,6 +239,18 @@ impl<P: Polarity> Checked for TypeDeclaration<P> {
             xtor.check(type_params, context, env)?;
         }
         Ok(())
+    }
+}
+
+impl<P: Polarity> ConstraintCollector for TypeDeclaration<P> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::default();
+        for xtor in &self.xtors {
+            for binding in xtor.args.bindings.iter() {
+                constraints.extend(binding.ty.collect_constraints(env)?);
+            }
+        }
+        Ok(constraints)
     }
 }
 

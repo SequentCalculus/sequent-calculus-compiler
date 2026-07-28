@@ -100,6 +100,14 @@ impl ConstraintCollector for Prog {
             constraints.extend(def.collect_constraints(env)?);
         }
 
+        for data in &self.data_types {
+            constraints.extend(data.collect_constraints(env)?);
+        }
+
+        for codata in &self.codata_types {
+            constraints.extend(codata.collect_constraints(env)?);
+        }
+
         Ok(constraints)
     }
 }
