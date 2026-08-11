@@ -271,8 +271,8 @@ pub fn specialize_clause<C: Chi>(
                 prdcns: clause.prdcns.clone(),
                 xtor: xtor_name,
                 type_params: vec![],
-                context: context,
-                body: body,
+                context,
+                body,
             }
         })
         .collect()
