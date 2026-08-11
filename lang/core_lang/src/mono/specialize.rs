@@ -1,11 +1,13 @@
-use std::vec;
+use std::{rc::Rc, vec};
 
 use crate::{
     mono::{erasure::ErasedDecls, naming_table::NamingTable, solver::Solution},
     syntax::{
         Chi, Clause, Def, Identifier, Prog, Ty,
         declaration::{Polarity, TypeDeclaration, XtorSig},
+        statements::Unreachable,
     },
+    traits::Typed,
 };
 
 /// A context for specializing polymorphic declarations into monomorphic ones.
@@ -242,26 +244,36 @@ pub fn specialize_clause<C: Chi>(
     ctx.table
         .instantiations_for(&clause.xtor)
         .iter()
-        .filter_map(|tuple| {
+        .map(|tuple| {
             let (_own_args, extra_args) = tuple.split_at(clause.type_params.len());
-
-            // If the caller told us which concrete instantiation is actually active at this
-            // match site, only keep clauses whose extra args agree with it exactly.
-            if let Some(active) = scrutinee_extra_args {
-                if extra_args != active {
-                    return None;
-                }
-            }
-
             let extended_ctx = ctx.extend_with_substs(&full_params, tuple);
+            let xtor_name = extended_ctx.table.lookup(&clause.xtor, tuple).clone();
 
-            Some(Clause {
+            let context = clause.context.specialize(&extended_ctx);
+
+            let reachable = match scrutinee_extra_args {
+                Some(active) => extra_args == active,
+                None => true,
+            };
+
+            let body = if reachable {
+                clause.body.specialize(&extended_ctx)
+            } else {
+                Rc::new(
+                    Unreachable {
+                        ty: clause.body.get_type(),
+                    }
+                    .into(),
+                )
+            };
+
+            Clause {
                 prdcns: clause.prdcns.clone(),
-                xtor: extended_ctx.table.lookup(&clause.xtor, tuple).clone(),
+                xtor: xtor_name,
                 type_params: vec![],
-                context: clause.context.specialize(&extended_ctx),
-                body: clause.body.specialize(&extended_ctx),
-            })
+                context: context,
+                body: body,
+            }
         })
         .collect()
 }

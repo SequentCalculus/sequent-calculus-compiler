@@ -98,6 +98,8 @@ pub enum Code {
     GLOBAL(String),
     /// An assembly comment.
     COMMENT(String),
+    /// Trigger an illegal instruction exception (Trap for unreachable code)
+    UDF,
 }
 
 impl Print for Code {
@@ -378,6 +380,7 @@ impl Print for Code {
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("// {msg}"))),
+            UDF => alloc.text(INDENT).append(alloc.keyword("UDF")),
         }
     }
 }
@@ -1090,5 +1093,9 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
+    }
+
+    fn unreachable(instructions: &mut Vec<Code>) {
+        instructions.push(Code::UDF);
     }
 }

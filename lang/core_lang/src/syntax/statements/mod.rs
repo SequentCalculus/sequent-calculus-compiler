@@ -19,12 +19,14 @@ pub mod cut;
 pub mod exit;
 pub mod ifc;
 pub mod print;
+pub mod unreachable;
 
 pub use call::*;
 pub use cut::*;
 pub use exit::*;
 pub use ifc::*;
 pub use print::*;
+pub use unreachable::*;
 
 /// This enum defines the statements of Core. It contains one variant for each construct which
 /// simply wraps the struct defining the corresponding construct.
@@ -40,6 +42,8 @@ pub enum Statement {
     Call(Call),
     /// Exiting the program
     Exit(Exit),
+    /// Unreachable statement
+    Unreachable(Unreachable),
 }
 
 impl Typed for Statement {
@@ -50,6 +54,7 @@ impl Typed for Statement {
             Statement::PrintI64(print) => print.get_type(),
             Statement::Call(call) => call.get_type(),
             Statement::Exit(exit) => exit.get_type(),
+            Statement::Unreachable(unreachable) => unreachable.get_type(),
         }
     }
 }
@@ -62,6 +67,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
+            Statement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }
@@ -79,6 +85,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(prod_subst, cons_subst).into(),
             Statement::Call(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Exit(exit) => exit.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -91,6 +98,7 @@ impl TypedFreeVars for Statement {
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::Call(call) => call.typed_free_vars(vars),
             Statement::Exit(exit) => exit.typed_free_vars(vars),
+            Statement::Unreachable(_unreachable) => {}
         }
     }
 }
@@ -103,6 +111,7 @@ impl Uniquify for Statement {
             Statement::PrintI64(print) => print.uniquify(max_id).into(),
             Statement::Call(call) => call.uniquify(max_id).into(),
             Statement::Exit(exit) => exit.uniquify(max_id).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -116,6 +125,7 @@ impl Focusing for Statement {
             Statement::PrintI64(print) => print.focus(max_id),
             Statement::Call(call) => call.focus(max_id),
             Statement::Exit(exit) => exit.focus(max_id),
+            Statement::Unreachable(unreachable) => unreachable.focus(max_id),
         }
     }
 }
@@ -128,6 +138,7 @@ impl ConstraintCollector for Statement {
             Statement::PrintI64(print) => print.collect_constraints(env)?,
             Statement::Call(call) => call.collect_constraints(env)?,
             Statement::Exit(exit) => exit.collect_constraints(env)?,
+            Statement::Unreachable(_unreachable) => FlowConstraintSet::new(),
         };
         Ok(constraints)
     }
@@ -141,6 +152,7 @@ impl Specialize for Statement {
             Statement::PrintI64(print) => print.specialize(context).into(),
             Statement::Call(call) => call.specialize(context).into(),
             Statement::Exit(exit) => exit.specialize(context).into(),
+            Statement::Unreachable(_unreachable) => self.clone(),
         }
     }
 }
@@ -158,6 +170,7 @@ impl Checked for Statement {
             Statement::PrintI64(print) => print.check(type_params, context, env),
             Statement::Call(call) => call.check(type_params, context, env),
             Statement::Exit(exit) => exit.check(type_params, context, env),
+            Statement::Unreachable(_unreachable) => Ok(()),
         }
     }
 }
@@ -176,6 +189,8 @@ pub enum FsStatement {
     Call(FsCall),
     /// Exiting the program
     Exit(FsExit),
+    /// Unreachable statement
+    Unreachable(FsUnreachable),
 }
 
 impl Print for FsStatement {
@@ -186,6 +201,7 @@ impl Print for FsStatement {
             FsStatement::PrintI64(print) => print.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
             FsStatement::Exit(exit) => exit.print(cfg, alloc),
+            FsStatement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }
@@ -199,6 +215,7 @@ impl SubstVar for FsStatement {
             FsStatement::PrintI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Exit(exit) => exit.subst_sim(subst).into(),
+            FsStatement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -211,6 +228,7 @@ impl TypedFreeVars for FsStatement {
             FsStatement::PrintI64(print) => print.typed_free_vars(vars),
             FsStatement::Call(call) => call.typed_free_vars(vars),
             FsStatement::Exit(exit) => exit.typed_free_vars(vars),
+            FsStatement::Unreachable(_unreachable) => {}
         }
     }
 }

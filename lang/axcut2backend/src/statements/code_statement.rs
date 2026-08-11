@@ -108,6 +108,9 @@ impl CodeStatement for Statement {
             Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
+            Statement::Unreachable(unreachable) => {
+                unreachable.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
         }
     }
 }

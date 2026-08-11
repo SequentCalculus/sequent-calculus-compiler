@@ -106,6 +106,8 @@ pub enum Code {
     EXTERN(String),
     /// An assembly comment.
     COMMENT(String),
+    /// Trigger an illegal instruction exception (Trap for unreachable code)
+    UD2,
 }
 
 impl Print for Code {
@@ -469,6 +471,7 @@ impl Print for Code {
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("; {msg}"))),
+            UD2 => alloc.text(INDENT).append(alloc.keyword("ud2")),
         }
     }
 }
@@ -1098,5 +1101,9 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::CALL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
+    }
+
+    fn unreachable(instructions: &mut Vec<Code>) {
+        instructions.push(Code::UD2);
     }
 }
