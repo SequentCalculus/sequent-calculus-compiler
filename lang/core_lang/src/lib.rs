@@ -7,6 +7,7 @@ pub mod mono;
 pub mod syntax;
 pub mod traits;
 pub mod typing;
+pub mod splitting;
 
 #[cfg(test)]
 pub mod test_common {
