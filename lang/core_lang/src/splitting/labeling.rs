@@ -1,0 +1,513 @@
+use std::{collections::HashMap, rc::Rc};
+
+use crate::{
+    splitting::union_find::UnionFind,
+    syntax::{
+        Def, Identifier, Prog, Ty,
+        declaration::{Polarity, XtorSig},
+        types::TypeArgs,
+    },
+};
+
+/// A label is a fresh `Identifier` sharing the declared type's name but carrying a unique `id` prefixed with `#`, e.g. `Box#1`
+pub type Label = Identifier;
+
+type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
+
+/// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
+/// union-find, and a memo table mapping each canonical *declaration position* (a `Def`'s n-th
+/// parameter, an `XtorSig`'s n-th field, ...) to its one stable label. Call sites/argument
+/// occurrences look up (or lazily create) this canonical label and union their own fresh label
+/// against it immediately.
+pub struct SplitState {
+    pub uf: UnionFind,
+    /// Canonical labels for declaration-level type positions, keyed by a stable identity for
+    /// that position.
+    decl_labels: HashMap<DeclPos, Ty>,
+    per_name_counters: HashMap<String, usize>,
+}
+
+/// Identifies one type-occurrence position within a declaration (`Def` parameter, `XtorSig`
+/// field, ...) stably across the whole program, so it can be looked up from any call/use site.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DeclPos {
+    DefParam { def: Identifier, index: usize },
+    XtorField { xtor: Identifier, index: usize },
+}
+
+impl SplitState {
+    /// Generates a fresh, globally unique label for `base_name`. The uniqueness is baked
+    /// directly into the label's `name` (e.g. `Box#1`, `Box#2`), rather than relying on the
+    /// `id` field, so that printing a label via `Identifier`'s existing `Print` implementation
+    /// (which only appends a suffix for `id != 0`) shows the label's identity plainly, without
+    /// any additional formatting logic.
+    fn fresh(&mut self, base_name: &str) -> Label {
+        let counter = self
+            .per_name_counters
+            .entry(base_name.to_string())
+            .or_insert(0);
+        *counter += 1;
+        Identifier {
+            name: format!("{base_name}#{counter}"),
+            id: 0,
+        }
+    }
+
+    /// Returns the canonical label for a declaration position, creating and labeling it (via
+    /// `label_ty`) on first reference. Subsequent references reuse the very same label, so every
+    /// call site's argument unifies against one fixed point rather than against each
+    /// other pairwise.
+    fn canonical_label_for(&mut self, pos: DeclPos, declared_ty: &Ty) -> Ty {
+        if let Some(existing) = self.decl_labels.get(&pos) {
+            // Re-derive the same *shape* but reuse the stored root label for the head position;
+            // nested argument positions get their own canonical sub-labels recursively via the
+            // same memoization, keyed by extending `pos`.
+            return existing.clone();
+        }
+
+        let labeled = self.label_ty(declared_ty);
+        self.decl_labels.insert(pos, labeled.clone());
+        labeled
+    }
+
+    /// Labels every `Ty::Decl` occurrence with a fresh label, recursively into type arguments.
+    pub fn label_ty(&mut self, ty: &Ty) -> Ty {
+        match ty {
+            Ty::I64 => Ty::I64,
+            Ty::Var(v) => Ty::Var(v.clone()),
+            Ty::Decl { name, type_args } => Ty::Decl {
+                name: self.fresh(&name.name),
+                type_args: TypeArgs {
+                    args: type_args.args.iter().map(|a| self.label_ty(a)).collect(),
+                },
+            },
+        }
+    }
+
+    /// Unifies two already-labeled types that the type system requires to be equal at this position.
+    pub fn unify_ty(&mut self, a: &Ty, b: &Ty) {
+        if let (
+            Ty::Decl {
+                name: n1,
+                type_args: t1,
+            },
+            Ty::Decl {
+                name: n2,
+                type_args: t2,
+            },
+        ) = (a, b)
+        {
+            self.uf.union(n1, n2);
+            for (x, y) in t1.args.iter().zip(t2.args.iter()) {
+                self.unify_ty(x, y);
+            }
+        }
+    }
+}
+
+/// Labels a `Def`'s own signature using the canonical, memoized labels for
+/// its declaration positions, so that every future call site can unify against these same fixed
+/// labels rather than creating a fresh, unrelated one per call.
+fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
+    def.context
+        .bindings
+        .iter()
+        .enumerate()
+        .map(|(i, b)| {
+            state.canonical_label_for(
+                DeclPos::DefParam {
+                    def: def.name.clone(),
+                    index: i,
+                },
+                &b.ty,
+            )
+        })
+        .collect()
+}
+
+/// Labels an `XtorSig`'s argument types using the canonical, memoized labels for its declaration
+/// positions, so that every future `XCase` clause can unify against these same fixed labels rather than creating a fresh, unrelated one per clause.
+fn label_xtor_signature<P: Polarity>(xtor: &XtorSig<P>, state: &mut SplitState) -> Vec<Ty> {
+    xtor.args
+        .bindings
+        .iter()
+        .enumerate()
+        .map(|(i, b)| {
+            state.canonical_label_for(
+                DeclPos::XtorField {
+                    xtor: xtor.name.clone(),
+                    index: i,
+                },
+                &b.ty,
+            )
+        })
+        .collect()
+}
+
+/// Builds a map from every declared identifier to its labeled signature, so that every call site can look up the canonical labels for the declaration's parameters or an `Xtor`'s fields and unify against them rather than creating a fresh, unrelated label per call.
+pub fn build_def_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatures {
+    let mut sigs = DeclSignatures::new();
+    for def in &prog.defs {
+        let params = label_def_signature(def, state);
+        sigs.insert(def.name.clone(), params);
+    }
+
+    for ctor in prog.data_types.iter().flat_map(|data| &data.xtors) {
+        let field_tys = label_xtor_signature(ctor, state);
+        sigs.insert(ctor.name.clone(), field_tys);
+    }
+
+    for dtor in prog.codata_types.iter().flat_map(|codata| &codata.xtors) {
+        let field_tys = label_xtor_signature(dtor, state);
+        sigs.insert(dtor.name.clone(), field_tys);
+    }
+    sigs
+}
+
+/// This trait assigns fresh labels to every declared-type occurrence within a syntax element and
+/// eagerly unifies label pairs wherever the existing type system already requires
+/// two types to be equal at that position, e.g. a `Cut`'s producer/consumer type, a `Call`'s
+/// argument against the callee's declared parameter type, an `Xtor`'s argument against its
+/// declared field type, or an `XCase` clause's binder against the matched `Xtor`'s declared field.
+///
+/// This is the combined labeling-and-unification pass of type splitting;
+/// running it eagerly during a single tree walk avoids a separate constraint-collection pass, at
+/// the cost of requiring declaration signatures to be labeled once upfront (see
+/// [`SplitState::canonical_label_for`]) so that multiple call/use sites unify against one shared,
+/// stable label rather than against each other pairwise.
+pub trait LabelAndUnify {
+    /// The type of this syntax element after labeling. For a `Term<C>` this is again `Term<C>`;
+    /// generic containers like `Vec<X>`/`Rc<X>` delegate to `X::Target`.
+    type Target;
+
+    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target;
+}
+
+impl<X: LabelAndUnify> LabelAndUnify for Vec<X> {
+    type Target = Vec<X::Target>;
+    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target {
+        self.iter()
+            .map(|x| x.label_and_unify(state, sigs))
+            .collect()
+    }
+}
+
+impl<X: LabelAndUnify> LabelAndUnify for Rc<X> {
+    type Target = Rc<X::Target>;
+    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target {
+        Rc::new(self.as_ref().label_and_unify(state, sigs))
+    }
+}
+
+#[cfg(test)]
+mod split_state_tests {
+    use crate::syntax::statements::Unreachable;
+
+    use super::*;
+    extern crate self as core_lang;
+    use core_macros::{bind, codata, ctor_sig, data, def, dtor_sig, id, prd, tvar, ty};
+
+    fn fresh_state() -> SplitState {
+        SplitState {
+            per_name_counters: HashMap::new(),
+            uf: UnionFind::default(),
+            decl_labels: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn fresh_encodes_uniqueness_in_the_name_not_the_id() {
+        let mut state = fresh_state();
+        let l1 = state.fresh("Box");
+        let l2 = state.fresh("Box");
+
+        assert_eq!(l1.id, 0);
+        assert_eq!(l2.id, 0);
+        assert_ne!(l1.name, l2.name);
+        assert_eq!(l1.name, "Box#1");
+        assert_eq!(l2.name, "Box#2");
+    }
+
+    #[test]
+    fn fresh_labels_for_different_base_names_are_still_distinct() {
+        let mut state = fresh_state();
+        let a = state.fresh("Box");
+        let b = state.fresh("List");
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn label_ty_leaves_i64_and_var_unchanged() {
+        let mut state = fresh_state();
+        assert_eq!(state.label_ty(&Ty::I64), Ty::I64);
+
+        let var = tvar!(id!("A", 1));
+        assert_eq!(state.label_ty(&var), var);
+    }
+
+    #[test]
+    fn label_ty_assigns_a_fresh_label_to_a_bare_decl() {
+        let mut state = fresh_state();
+        let result = state.label_ty(&ty!(id!("Box")));
+
+        let Ty::Decl { name, type_args } = &result else {
+            panic!("expected a Ty::Decl");
+        };
+        assert!(type_args.args.is_empty());
+        assert_eq!(name.name, "Box#1");
+    }
+
+    #[test]
+    fn label_ty_recurses_into_nested_type_arguments() {
+        let mut state = fresh_state();
+        // Box[List[i64]]
+        let input = ty!(id!("Box"), [ty!(id!("List"), [ty!("int")])]);
+        let result = state.label_ty(&input);
+
+        let Ty::Decl {
+            name: outer_name,
+            type_args,
+        } = &result
+        else {
+            panic!("expected a Ty::Decl");
+        };
+        assert_eq!(outer_name.name, "Box#1");
+
+        let Ty::Decl {
+            name: inner_name,
+            type_args: inner_args,
+        } = &type_args.args[0]
+        else {
+            panic!("expected a nested Ty::Decl");
+        };
+        assert_eq!(inner_name.name, "List#1");
+        assert_eq!(inner_args.args[0], Ty::I64);
+    }
+
+    #[test]
+    fn label_ty_gives_two_separate_occurrences_two_distinct_labels() {
+        // Two independent occurrences of the same declared type must never accidentally share a
+        // label -- that is the entire point of type splitting.
+        let mut state = fresh_state();
+        let a = state.label_ty(&ty!(id!("Box")));
+        let b = state.label_ty(&ty!(id!("Box")));
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn unify_ty_merges_the_two_labels_of_decl_types() {
+        let mut state = fresh_state();
+        let a = state.label_ty(&ty!(id!("Box")));
+        let b = state.label_ty(&ty!(id!("Box")));
+
+        let (Ty::Decl { name: n1, .. }, Ty::Decl { name: n2, .. }) = (&a, &b) else {
+            panic!("expected Ty::Decl on both sides");
+        };
+        assert_ne!(state.uf.find(n1), state.uf.find(n2));
+
+        state.unify_ty(&a, &b);
+
+        assert_eq!(state.uf.find(n1), state.uf.find(n2));
+    }
+
+    #[test]
+    fn unify_ty_recursively_unifies_nested_type_arguments() {
+        let mut state = fresh_state();
+        // Box[List[i64]] unified with a second, independently labeled Box[List[i64]] must merge
+        // both the outer Box labels *and* the inner List labels.
+        let a = state.label_ty(&ty!(id!("Box"), [ty!(id!("List"), [ty!("int")])]));
+        let b = state.label_ty(&ty!(id!("Box"), [ty!(id!("List"), [ty!("int")])]));
+
+        state.unify_ty(&a, &b);
+
+        let (
+            Ty::Decl {
+                name: outer_a,
+                type_args: args_a,
+            },
+            Ty::Decl {
+                name: outer_b,
+                type_args: args_b,
+            },
+        ) = (&a, &b)
+        else {
+            panic!("expected Ty::Decl on both sides");
+        };
+        assert_eq!(state.uf.find(outer_a), state.uf.find(outer_b));
+
+        let (Ty::Decl { name: inner_a, .. }, Ty::Decl { name: inner_b, .. }) =
+            (&args_a.args[0], &args_b.args[0])
+        else {
+            panic!("expected nested Ty::Decl on both sides");
+        };
+        assert_eq!(state.uf.find(inner_a), state.uf.find(inner_b));
+    }
+
+    #[test]
+    fn unify_ty_is_transitive_via_repeated_calls() {
+        // unify(a,b) then unify(b,c) must put a and c in the same class too, exercising the
+        // union-find underneath through the higher-level unify_ty entry point.
+        let mut state = fresh_state();
+        let a = state.label_ty(&ty!(id!("Box")));
+        let b = state.label_ty(&ty!(id!("Box")));
+        let c = state.label_ty(&ty!(id!("Box")));
+
+        state.unify_ty(&a, &b);
+        state.unify_ty(&b, &c);
+
+        let (Ty::Decl { name: na, .. }, Ty::Decl { name: nc, .. }) = (&a, &c) else {
+            panic!("expected Ty::Decl");
+        };
+        assert_eq!(state.uf.find(na), state.uf.find(nc));
+    }
+
+    #[test]
+    fn canonical_label_for_returns_the_same_label_on_repeated_reference() {
+        // This is the core invariant multiple call sites depend on: referencing the same
+        // declaration position twice must yield the identical labeled type both times, so that
+        // two call sites unify against one shared, stable label instead of creating two fresh,
+        // unrelated ones.
+        let mut state = fresh_state();
+        let pos = DeclPos::DefParam {
+            def: id!("f"),
+            index: 0,
+        };
+
+        let first = state.canonical_label_for(pos.clone(), &ty!(id!("Box")));
+        let second = state.canonical_label_for(pos, &ty!(id!("Box")));
+
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn canonical_label_for_preserves_nested_labels_on_repeated_reference() {
+        // Regression test for the bug where a second reference would return the cached outer
+        // label but re-attach the *unlabeled* original type arguments. Every nested Ty::Decl
+        // must remain labeled, identically, across repeated lookups of the same position.
+        let mut state = fresh_state();
+        let pos = DeclPos::DefParam {
+            def: id!("f"),
+            index: 0,
+        };
+        let declared = ty!(id!("Box"), [ty!(id!("List"), [ty!("int")])]);
+
+        let first = state.canonical_label_for(pos.clone(), &declared);
+        let second = state.canonical_label_for(pos, &declared);
+
+        assert_eq!(first, second);
+
+        let Ty::Decl { type_args, .. } = &second else {
+            panic!("expected Ty::Decl");
+        };
+        assert!(
+            matches!(type_args.args[0], Ty::Decl { .. }),
+            "nested type argument must still be labeled (a Ty::Decl), got: {:?}",
+            type_args.args[0]
+        );
+    }
+
+    #[test]
+    fn canonical_label_for_different_positions_produce_different_labels() {
+        let mut state = fresh_state();
+        let pos_a = DeclPos::DefParam {
+            def: id!("f"),
+            index: 0,
+        };
+        let pos_b = DeclPos::DefParam {
+            def: id!("f"),
+            index: 1,
+        };
+
+        let a = state.canonical_label_for(pos_a, &ty!(id!("Box")));
+        let b = state.canonical_label_for(pos_b, &ty!(id!("Box")));
+
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn label_def_signature_labels_each_parameter() {
+        let f = def!(
+            id!("f"),
+            [],
+            [
+                bind!(id!("x"), prd!(), ty!(id!("Box"))),
+                bind!(id!("y"), prd!(), ty!("int"))
+            ],
+            // body is irrelevant here; using a placeholder is fine as long as `def!` accepts it
+            Unreachable { ty: ty!("int") }
+        );
+
+        let mut state = fresh_state();
+        let params = label_def_signature(&f, &mut state);
+
+        assert_eq!(params.len(), 2);
+        assert!(matches!(params[0], Ty::Decl { .. }));
+        assert_eq!(params[1], Ty::I64);
+    }
+
+    #[test]
+    fn label_xtor_signature_labels_each_field() {
+        let ctor = ctor_sig!(
+            id!("Cons"),
+            [],
+            [
+                bind!(id!("x"), prd!(), ty!("int")),
+                bind!(id!("xs"), prd!(), ty!(id!("List")))
+            ]
+        );
+
+        let mut state = fresh_state();
+        let fields = label_xtor_signature(&ctor, &mut state);
+
+        assert_eq!(fields.len(), 2);
+        assert_eq!(fields[0], Ty::I64);
+        assert!(matches!(fields[1], Ty::Decl { .. }));
+    }
+
+    #[test]
+    fn build_def_signatures_covers_defs_ctors_and_dtors() {
+        let f = def!(
+            id!("f"),
+            [],
+            [bind!(id!("x"), prd!(), ty!("int"))],
+            Unreachable { ty: ty!("int") }
+        );
+
+        let list = data!(
+            id!("List"),
+            [ctor_sig!(
+                id!("Cons"),
+                [],
+                [bind!(id!("x"), prd!(), ty!("int"))]
+            )],
+            []
+        );
+
+        let stream = codata!(
+            id!("Stream"),
+            [dtor_sig!(
+                id!("head"),
+                [],
+                [bind!(id!("h"), prd!(), ty!("int"))]
+            )],
+            []
+        );
+
+        let prog = Prog {
+            defs: vec![f],
+            data_types: vec![list],
+            codata_types: vec![stream],
+            max_id: 0,
+        };
+
+        let mut state = fresh_state();
+        let sigs = build_def_signatures(&prog, &mut state);
+
+        assert!(sigs.contains_key(&id!("f")));
+        assert!(sigs.contains_key(&id!("Cons")));
+        assert!(sigs.contains_key(&id!("head")));
+        assert_eq!(sigs[&id!("f")].len(), 1);
+        assert_eq!(sigs[&id!("Cons")].len(), 1);
+        assert_eq!(sigs[&id!("head")].len(), 1);
+    }
+}

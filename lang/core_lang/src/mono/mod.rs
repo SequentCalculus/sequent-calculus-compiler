@@ -1,4 +1,4 @@
-//! Core typechecking infrastructure.
+//! Core monomorphization infrastructure.
 
 use printer::{Print, PrintCfg};
 

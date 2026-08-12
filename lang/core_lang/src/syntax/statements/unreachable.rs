@@ -6,7 +6,7 @@ use crate::traits::*;
 /// This struct defines the unreachable statement in Core.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unreachable {
-    pub(crate) ty: Ty,
+    pub ty: Ty,
 }
 
 impl Print for Unreachable {
