@@ -75,13 +75,10 @@ impl Inference for XVar {
         }
 
         let found_ty = context.lookup_var(&self.var, &self.span)?;
-        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
 
-        self.ty = Some(new_type_var.clone());
+        self.ty = Some(ty_var.clone());
         self.chi = Some(Prd);
-        constraint_bank
-            .constraints
-            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        
         constraint_bank
             .constraints
             .push(Constraint::mk_only_ty(ty_var, found_ty));
@@ -126,7 +123,7 @@ mod test {
 
         let mut term = XVar::mk("x");
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_i64())
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let ConstraintBank {
@@ -134,12 +131,11 @@ mod test {
             ..
         } = constraint_bank;
 
-        assert!(matches!(term.ty, Some(Ty::TypeVar { name, ..}) if name == "0"));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
         assert_eq!(
             result,
             vec![
-                Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
-                Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())
+                Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
             ]
         )
     }

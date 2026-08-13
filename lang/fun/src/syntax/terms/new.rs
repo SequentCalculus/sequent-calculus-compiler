@@ -65,11 +65,7 @@ impl Inference for New {
         ty_var: Ty,
     ) -> Result<(), Error> {
         if let Some(first_clause) = self.clauses.first() {
-            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-            self.ty = Some(new_type_var.clone());
-            constraint_bank
-                .constraints
-                .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+            self.ty = Some(ty_var.clone());
 
             let data_type_name = match constraint_bank
                 .symbol_table
@@ -326,13 +322,12 @@ mod test {
 
         let lpair_type = Some(Ty::mk_decl(
             "LPair",
-            TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
+            TypeArgs::mk(vec![Ty::mk_ty_var("0"), Ty::mk_ty_var("1")]),
         ));
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), lpair_type.clone().unwrap()),
         ];
 
@@ -341,7 +336,7 @@ mod test {
             ..
         } = constraint_bank;
 
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
         assert_eq!(result, expected);
     }
 
@@ -379,13 +374,11 @@ mod test {
 
         let expected_codata_type = Ty::mk_decl(
             "Fun",
-            TypeArgs::mk(vec![Ty::mk_ty_var("1"), Ty::mk_ty_var("2")]),
+            TypeArgs::mk(vec![Ty::mk_ty_var("0"), Ty::mk_ty_var("1")]),
         );
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("3"), Ty::mk_ty_var("2")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_ty_var("0")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), expected_codata_type),
         ];
 
@@ -394,7 +387,7 @@ mod test {
             ..
         } = constraint_bank;
 
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
         assert_eq!(result, expected);
     }
 
@@ -441,12 +434,10 @@ mod test {
         term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
-        let expected_codata_type = Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("1")]));
+        let expected_codata_type = Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("0")]));
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), expected_codata_type.clone()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
             Constraint::mk_only_ty(
                 expected_codata_type.clone(),
                 Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_ty_var("y")])),
@@ -460,7 +451,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")))
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")))
     }
 
     #[test]

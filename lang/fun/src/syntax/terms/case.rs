@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -85,12 +85,7 @@ impl Inference for Case {
         ty_var: Ty,
     ) -> Result<(), Error> {
         if let Some(first_clause) = self.clauses.first() {
-            // adding a type variable the type of the case block
-            let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-            self.ty = Some(new_type_var.clone());
-            constraint_bank
-                .constraints
-                .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+            self.ty = Some(ty_var.clone());
 
             let data_type_name = match constraint_bank
                 .symbol_table
@@ -116,7 +111,7 @@ impl Inference for Case {
                 return Err(Error::ExpectedTermGotCovariable { span: self.span });
             }
 
-            // this instance of the Codata Type is instanciated by replacing the general type vars
+            // this instance of the Data Type is instanciated by replacing the general type vars
             // with instance type variables eg. (A -> a1)
 
             let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
@@ -380,19 +375,13 @@ mod test {
             .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             // Nil
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
             // Cons
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
             // scrutinee
             Constraint::mk_only_ty(
-                Ty::mk_ty_var("3"),
-                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
-            ),
-            Constraint::mk_only_ty(
-                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
             ),
         ];
@@ -403,7 +392,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     #[test]
@@ -451,17 +440,11 @@ mod test {
             .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             // Nil
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
             // Cons
-            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
-            // scrutinee
-            Constraint::mk_only_ty(
-                Ty::mk_ty_var("2"),
-                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-            ),
+            // scrutinee,
             Constraint::mk_only_ty(
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
@@ -474,7 +457,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     #[test]

@@ -8,7 +8,6 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Constraint;
 use crate::typing::inference::ConstraintBank;
 use crate::typing::inference::Inference;
 use crate::typing::*;
@@ -77,12 +76,7 @@ impl Inference for Label {
         let mut new_context = context.clone();
         new_context.add_covar(&self.label, ty_var.clone());
 
-        // adding a new type var as the type of the term for easier lookup after unification
-        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-        self.ty = Some(new_type_var.clone());
-        constraint_bank
-            .constraints
-            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        self.ty = Some(ty_var.clone());
 
         self.term
             .gather_constraints(constraint_bank, &new_context, ty_var)?;
@@ -154,7 +148,6 @@ mod test {
         .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
@@ -164,7 +157,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     fn example() -> Label {

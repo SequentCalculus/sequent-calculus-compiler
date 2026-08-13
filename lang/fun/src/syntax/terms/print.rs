@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -78,13 +78,7 @@ impl Inference for PrintI64 {
         context: &TypingContext,
         ty_var: Ty,
     ) -> Result<(), Error> {
-        // the term type is set to a type variable for easy type lookup after the unification algorithm
-        let new_var_type = constraint_bank.var_name_generator.get_new_ty_var();
-        self.ty = Some(new_var_type.clone());
-
-        constraint_bank
-            .constraints
-            .push(Constraint::mk_only_ty(new_var_type, ty_var.clone()));
+        self.ty = Some(ty_var.clone());
 
         self.arg
             .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
@@ -156,7 +150,6 @@ mod test {
             .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
@@ -167,6 +160,6 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 }

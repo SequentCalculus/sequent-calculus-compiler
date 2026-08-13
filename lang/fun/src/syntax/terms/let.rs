@@ -7,7 +7,7 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -95,12 +95,7 @@ impl Inference for Let {
         context: &TypingContext,
         ty_var: Ty,
     ) -> Result<(), Error> {
-        // adding a new type var as the type of the term for easier lookup after unification
-        let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-        self.ty = Some(new_type_var.clone());
-        constraint_bank
-            .constraints
-            .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+        self.ty = Some(ty_var.clone());
 
         // if the bound term has an annotation it is used, else a type variable is substituted
         let bound_term_type = match &self.var_ty {
@@ -205,10 +200,8 @@ mod test {
         .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_ty_var("x")),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
         ];
 
         let ConstraintBank {
@@ -217,7 +210,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     #[test]
@@ -246,9 +239,7 @@ mod test {
         .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
@@ -258,7 +249,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ty, Some(Ty::mk_ty_var("0")));
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     fn example() -> Let {

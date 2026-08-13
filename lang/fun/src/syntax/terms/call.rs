@@ -74,16 +74,9 @@ impl Inference for Call {
             }
             Some(signatures) if signatures.len() == 1 => {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
-                let signature = signatures[0].clone();
+                let (types, ret_ty)= signatures[0].clone();
+                self.ret_ty = Some(ty_var.clone());
 
-                // adding a new type var as the type of the term for easier lookup after unification
-                let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-                self.ret_ty = Some(new_type_var.clone());
-                constraint_bank
-                    .constraints
-                    .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
-
-                let (types, ret_ty) = signature.clone();
                 constraint_bank
                     .constraints
                     .push(Constraint::mk_only_ty(ty_var, ret_ty));
@@ -101,12 +94,7 @@ impl Inference for Call {
             Some(signatures) => {
                 // there are more than one signatures for a function -> it is overloaded
 
-                // adding a new type var as the type of the term for easier lookup after unification
-                let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
-                self.ret_ty = Some(new_type_var.clone());
-                constraint_bank
-                    .constraints
-                    .push(Constraint::mk_only_ty(new_type_var, ty_var.clone()));
+                self.ret_ty = Some(ty_var.clone());
 
                 // setting the choice id to resolve the overload later
                 let new_choice_id = ConstraintBank::get_new_choice_id(
@@ -316,7 +304,6 @@ mod test {
         .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_ty_var("x")),
             Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
             Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
         ];
@@ -327,7 +314,7 @@ mod test {
         } = constraint_bank;
 
         assert_eq!(result, expected);
-        assert_eq!(term.ret_ty, Some(Ty::mk_ty_var("0")))
+        assert_eq!(term.ret_ty, Some(Ty::mk_ty_var("x")))
     }
 
     #[test]

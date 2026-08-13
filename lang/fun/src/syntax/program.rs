@@ -26,7 +26,7 @@ pub struct CheckedProgram {
 }
 
 impl Program {
-    /// the main function for type inference. It consumes the (uncheckd)[`Program`] and returns a [`CheckedProgram`] with
+    /// the main function for type inference. It consumes the (unchecked)[`Program`] and returns a [`CheckedProgram`] with
     /// the all types inferred and overloading resolved.
     pub fn inference_types(self) -> Result<CheckedProgram, Error> {
         let mut constraint_bank = ConstraintBank {
