@@ -212,12 +212,10 @@ mod test {
         )
         .unwrap();
 
-        let expected = vec![
-            Constraint::mk_only_ty(
-                Ty::mk_ty_var("x"),
-                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
-            ),
-        ];
+        let expected = vec![Constraint::mk_only_ty(
+            Ty::mk_ty_var("x"),
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
+        )];
 
         let ConstraintBank {
             constraints: result,

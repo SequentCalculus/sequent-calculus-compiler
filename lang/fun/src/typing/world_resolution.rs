@@ -42,43 +42,43 @@ fn create_base_bdd(choices: &Vec<PossibleChoice>) -> (Bdd, BddMapping, BddVariab
 
     let var_set = builder.build();
 
-    let mut clauses = Vec::new();
+    let mut all_clauses = Vec::new();
 
     for (cvar, _) in choices {
         let bdd_vars = mapping.get_bit_vars(cvar).unwrap();
 
-        let bdd_terms: Vec<Bdd> = bdd_vars.iter().map(|v| var_set.mk_var(*v)).collect();
+        let bdd_var_terms: Vec<Bdd> = bdd_vars.iter().map(|v| var_set.mk_var(*v)).collect();
 
-        let at_least_once_term = bdd_terms
-            .iter()
-            .skip(1)
-            .fold(bdd_terms[0].clone(), |acc, next| acc.or(next));
-        clauses.push(at_least_once_term);
+        let mut choice_clauses = Vec::new();
 
-        let mut at_most_once_terms = Vec::new();
+        for true_index in 0..bdd_var_terms.len() {
+            let mut term = var_set.mk_true();
 
-        for (var_idx, var_term_a) in bdd_terms.iter().enumerate() {
-            for var_term_b in bdd_terms.iter().skip(var_idx + 1) {
-                at_most_once_terms.push(var_term_a.and(var_term_b).not());
+            for (var_index, var) in bdd_var_terms.iter().enumerate() {
+                if var_index == true_index {
+                    term = term.and(var);
+                } else {
+                    term = term.and_not(var);
+                }
             }
+
+            choice_clauses.push(term);
         }
 
-        let combined_at_most_once_term = at_most_once_terms
-            .iter()
-            .skip(1)
-            .fold(at_most_once_terms[0].clone(), |acc, next| acc.and(next));
-
-        clauses.push(combined_at_most_once_term);
+        all_clauses.push(
+            choice_clauses
+                .iter()
+                .fold(var_set.mk_false(), |acc, clause| acc.or(clause)),
+        );
     }
 
-    if clauses.is_empty() {
+    if all_clauses.is_empty() {
         panic!("No base clauses were created")
     }
 
-    let combined_clause = clauses
+    let combined_clause = all_clauses
         .iter()
-        .skip(1)
-        .fold(clauses[0].clone(), |acc, next| acc.and(next));
+        .fold(var_set.mk_true(), |acc, next| acc.and(next));
 
     (combined_clause, mapping, var_set)
 }

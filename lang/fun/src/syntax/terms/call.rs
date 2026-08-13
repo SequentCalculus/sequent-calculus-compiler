@@ -74,7 +74,7 @@ impl Inference for Call {
             }
             Some(signatures) if signatures.len() == 1 => {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
-                let (types, ret_ty)= signatures[0].clone();
+                let (types, ret_ty) = signatures[0].clone();
                 self.ret_ty = Some(ty_var.clone());
 
                 constraint_bank

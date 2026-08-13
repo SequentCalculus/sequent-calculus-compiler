@@ -78,7 +78,7 @@ impl Inference for XVar {
 
         self.ty = Some(ty_var.clone());
         self.chi = Some(Prd);
-        
+
         constraint_bank
             .constraints
             .push(Constraint::mk_only_ty(ty_var, found_ty));
@@ -134,9 +134,7 @@ mod test {
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
         assert_eq!(
             result,
-            vec![
-                Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())
-            ]
+            vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())]
         )
     }
 }

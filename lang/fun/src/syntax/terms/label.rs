@@ -147,9 +147,7 @@ mod test {
         )
         .unwrap();
 
-        let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
-        ];
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
 
         let ConstraintBank {
             constraints: result,
