@@ -14,25 +14,11 @@ pub type Label = Identifier;
 
 type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
 
-/// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
-/// union-find, and a memo table mapping each canonical *declaration position* (a `Def`'s n-th
-/// parameter, an `XtorSig`'s n-th field, ...) to its one stable label. Call sites/argument
-/// occurrences look up (or lazily create) this canonical label and union their own fresh label
-/// against it immediately.
+/// Carries all mutable state through the single label+unify walk: the fresh-id counter and the
+/// union-find.
 pub struct SplitState {
     pub uf: UnionFind,
-    /// Canonical labels for declaration-level type positions, keyed by a stable identity for
-    /// that position.
-    decl_labels: HashMap<DeclPos, Ty>,
     per_name_counters: HashMap<String, usize>,
-}
-
-/// Identifies one type-occurrence position within a declaration (`Def` parameter, `XtorSig`
-/// field, ...) stably across the whole program, so it can be looked up from any call/use site.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum DeclPos {
-    DefParam { def: Identifier, index: usize },
-    XtorField { xtor: Identifier, index: usize },
 }
 
 impl SplitState {
@@ -51,23 +37,6 @@ impl SplitState {
             name: format!("{base_name}#{counter}"),
             id: 0,
         }
-    }
-
-    /// Returns the canonical label for a declaration position, creating and labeling it (via
-    /// `label_ty`) on first reference. Subsequent references reuse the very same label, so every
-    /// call site's argument unifies against one fixed point rather than against each
-    /// other pairwise.
-    fn canonical_label_for(&mut self, pos: DeclPos, declared_ty: &Ty) -> Ty {
-        if let Some(existing) = self.decl_labels.get(&pos) {
-            // Re-derive the same *shape* but reuse the stored root label for the head position;
-            // nested argument positions get their own canonical sub-labels recursively via the
-            // same memoization, keyed by extending `pos`.
-            return existing.clone();
-        }
-
-        let labeled = self.label_ty(declared_ty);
-        self.decl_labels.insert(pos, labeled.clone());
-        labeled
     }
 
     /// Labels every `Ty::Decl` occurrence with a fresh label, recursively into type arguments.
@@ -105,42 +74,25 @@ impl SplitState {
     }
 }
 
-/// Labels a `Def`'s own signature using the canonical, memoized labels for
-/// its declaration positions, so that every future call site can unify against these same fixed
-/// labels rather than creating a fresh, unrelated one per call.
+/// Labels a `Def`'s own signature, so that every future call site can unify against these fixed
+/// labels (looked up via the returned `DeclSignatures`) rather than creating a fresh, unrelated
+/// one per call.
 fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
     def.context
         .bindings
         .iter()
-        .enumerate()
-        .map(|(i, b)| {
-            state.canonical_label_for(
-                DeclPos::DefParam {
-                    def: def.name.clone(),
-                    index: i,
-                },
-                &b.ty,
-            )
-        })
+        .map(|b| state.label_ty(&b.ty))
         .collect()
 }
 
-/// Labels an `XtorSig`'s argument types using the canonical, memoized labels for its declaration
-/// positions, so that every future `XCase` clause can unify against these same fixed labels rather than creating a fresh, unrelated one per clause.
+/// Labels an `XtorSig`'s argument types, so that every future `XCase` clause can unify against
+/// these fixed labels (looked up via the returned `DeclSignatures`) rather than creating a fresh,
+/// unrelated one per clause.
 fn label_xtor_signature<P: Polarity>(xtor: &XtorSig<P>, state: &mut SplitState) -> Vec<Ty> {
     xtor.args
         .bindings
         .iter()
-        .enumerate()
-        .map(|(i, b)| {
-            state.canonical_label_for(
-                DeclPos::XtorField {
-                    xtor: xtor.name.clone(),
-                    index: i,
-                },
-                &b.ty,
-            )
-        })
+        .map(|b| state.label_ty(&b.ty))
         .collect()
 }
 
@@ -173,8 +125,8 @@ pub fn build_def_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatur
 /// This is the combined labeling-and-unification pass of type splitting;
 /// running it eagerly during a single tree walk avoids a separate constraint-collection pass, at
 /// the cost of requiring declaration signatures to be labeled once upfront (see
-/// [`SplitState::canonical_label_for`]) so that multiple call/use sites unify against one shared,
-/// stable label rather than against each other pairwise.
+/// [`build_def_signatures`]) so that multiple call/use sites unify against one shared, stable
+/// label rather than against each other pairwise.
 pub trait LabelAndUnify {
     /// The type of this syntax element after labeling. For a `Term<C>` this is again `Term<C>`;
     /// generic containers like `Vec<X>`/`Rc<X>` delegate to `X::Target`.
@@ -211,7 +163,6 @@ mod split_state_tests {
         SplitState {
             per_name_counters: HashMap::new(),
             uf: UnionFind::default(),
-            decl_labels: HashMap::new(),
         }
     }
 
@@ -359,69 +310,6 @@ mod split_state_tests {
             panic!("expected Ty::Decl");
         };
         assert_eq!(state.uf.find(na), state.uf.find(nc));
-    }
-
-    #[test]
-    fn canonical_label_for_returns_the_same_label_on_repeated_reference() {
-        // This is the core invariant multiple call sites depend on: referencing the same
-        // declaration position twice must yield the identical labeled type both times, so that
-        // two call sites unify against one shared, stable label instead of creating two fresh,
-        // unrelated ones.
-        let mut state = fresh_state();
-        let pos = DeclPos::DefParam {
-            def: id!("f"),
-            index: 0,
-        };
-
-        let first = state.canonical_label_for(pos.clone(), &ty!(id!("Box")));
-        let second = state.canonical_label_for(pos, &ty!(id!("Box")));
-
-        assert_eq!(first, second);
-    }
-
-    #[test]
-    fn canonical_label_for_preserves_nested_labels_on_repeated_reference() {
-        // Regression test for the bug where a second reference would return the cached outer
-        // label but re-attach the *unlabeled* original type arguments. Every nested Ty::Decl
-        // must remain labeled, identically, across repeated lookups of the same position.
-        let mut state = fresh_state();
-        let pos = DeclPos::DefParam {
-            def: id!("f"),
-            index: 0,
-        };
-        let declared = ty!(id!("Box"), [ty!(id!("List"), [ty!("int")])]);
-
-        let first = state.canonical_label_for(pos.clone(), &declared);
-        let second = state.canonical_label_for(pos, &declared);
-
-        assert_eq!(first, second);
-
-        let Ty::Decl { type_args, .. } = &second else {
-            panic!("expected Ty::Decl");
-        };
-        assert!(
-            matches!(type_args.args[0], Ty::Decl { .. }),
-            "nested type argument must still be labeled (a Ty::Decl), got: {:?}",
-            type_args.args[0]
-        );
-    }
-
-    #[test]
-    fn canonical_label_for_different_positions_produce_different_labels() {
-        let mut state = fresh_state();
-        let pos_a = DeclPos::DefParam {
-            def: id!("f"),
-            index: 0,
-        };
-        let pos_b = DeclPos::DefParam {
-            def: id!("f"),
-            index: 1,
-        };
-
-        let a = state.canonical_label_for(pos_a, &ty!(id!("Box")));
-        let b = state.canonical_label_for(pos_b, &ty!(id!("Box")));
-
-        assert_ne!(a, b);
     }
 
     #[test]
