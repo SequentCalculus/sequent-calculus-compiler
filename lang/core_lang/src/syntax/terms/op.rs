@@ -6,6 +6,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -248,6 +249,22 @@ impl Checked for Op {
         self.snd.check(type_params, context, env)?;
 
         Ok(())
+    }
+}
+
+impl LabelAndUnify for Op {
+    type Target = Op;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        Op {
+            fst: self.fst.label_and_unify(state, sigs, scope),
+            op: self.op.clone(),
+            snd: self.snd.label_and_unify(state, sigs, scope),
+        }
     }
 }
 

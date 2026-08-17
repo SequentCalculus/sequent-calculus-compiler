@@ -7,6 +7,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -140,6 +141,25 @@ impl Checked for Argument {
     }
 }
 
+impl LabelAndUnify for Argument {
+    type Target = Argument;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        match self {
+            Argument::Producer(term) => {
+                Argument::Producer(term.label_and_unify(state, sigs, scope))
+            }
+            Argument::Consumer(term) => {
+                Argument::Consumer(term.label_and_unify(state, sigs, scope))
+            }
+        }
+    }
+}
+
 /// This struct defines arguments in Core. They consist of a list of [`Argument`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
@@ -242,5 +262,19 @@ impl Checked for Arguments {
         self.entries
             .iter()
             .try_for_each(|arg| arg.check(type_params, context, env))
+    }
+}
+
+impl LabelAndUnify for Arguments {
+    type Target = Arguments;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        Arguments {
+            entries: self.entries.label_and_unify(state, sigs, scope),
+        }
     }
 }

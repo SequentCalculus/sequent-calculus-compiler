@@ -6,6 +6,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_t
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::types::TypeArgs;
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -327,6 +328,33 @@ impl<C: Chi> Checked for Xtor<C> {
     }
 }
 
+impl<C: Chi> LabelAndUnify for Xtor<C> {
+    type Target = Xtor<C>;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        let args = self.args.label_and_unify(state, sigs, scope);
+
+        let field_tys = sigs
+            .get(&self.name)
+            .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.name.name));
+        for (arg, field_ty) in args.entries.iter().zip(field_tys) {
+            state.unify_ty(&arg.get_type(), field_ty);
+        }
+
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: self.name.clone(),
+            type_args: self.type_args.clone(),
+            args,
+            ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
 #[cfg(test)]
 mod xtor_tests {
     use printer::Print;
@@ -363,6 +391,46 @@ mod xtor_tests {
             ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    use crate::traits::*;
+    extern crate self as core_lang;
+    use core_macros::{ctor, id, ty};
+
+    #[test]
+    fn label_and_unify_merges_argument_with_declared_field() {
+        let mut state = SplitState::default();
+        let field_label = state.label_ty(&ty!(id!("Box")));
+
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(id!("Wrap"), vec![field_label.clone()]);
+        sigs.insert(id!("Pack"), vec![]);
+
+        // the argument is itself a freshly constructed `Box`, independently labeled from the
+        // declared field type in `sigs`
+        let example = ctor!(
+            id!("Wrap"),
+            [],
+            [ctor!(id!("Pack"), [], [], ty!(id!("Box")))],
+            ty!(id!("Wrapper"))
+        );
+
+        let result: Xtor<Prd> = example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let arg_ty = result.args.entries[0].get_type();
+
+        let (Ty::Decl { name: field_name, .. }, Ty::Decl { name: arg_name, .. }) =
+            (&field_label, &arg_ty)
+        else {
+            panic!("expected Ty::Decl on both sides");
+        };
+        assert_eq!(state.uf.find(field_name), state.uf.find(arg_name));
+        // the xtor's own type is freshly labeled, independent of the field-level unification
+        assert!(matches!(result.ty, Ty::Decl { .. }));
     }
 }
 

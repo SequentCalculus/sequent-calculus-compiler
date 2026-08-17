@@ -5,6 +5,7 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::env::GlobalEnv;
@@ -61,6 +62,18 @@ impl Bind for Literal {
 impl ConstraintCollector for Literal {
     fn collect_constraints(&self, _env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         Ok(FlowConstraintSet::new())
+    }
+}
+
+impl LabelAndUnify for Literal {
+    type Target = Literal;
+    fn label_and_unify(
+        &self,
+        _state: &mut SplitState,
+        _sigs: &DeclSignatures,
+        _scope: &TypingContext,
+    ) -> Self::Target {
+        self.clone()
     }
 }
 

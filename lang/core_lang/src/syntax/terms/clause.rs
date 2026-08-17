@@ -5,6 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -267,5 +268,105 @@ impl<C: Chi> Checked for Clause<C> {
             .check(&extended_type_params, &extended_context, env)?;
 
         Ok(())
+    }
+}
+
+impl<C: Chi> LabelAndUnify for Clause<C> {
+    type Target = Clause<C>;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        let field_tys = sigs
+            .get(&self.xtor)
+            .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.xtor.name));
+
+        let labeled_bindings: Vec<ContextBinding> = self
+            .context
+            .bindings
+            .iter()
+            .zip(field_tys)
+            .map(|(binding, field_ty)| {
+                let ty = state.label_ty(&binding.ty);
+                state.unify_ty(&ty, field_ty);
+                ContextBinding {
+                    var: binding.var.clone(),
+                    chi: binding.chi.clone(),
+                    ty,
+                }
+            })
+            .collect();
+
+        let mut extended_scope = scope.clone();
+        extended_scope.bindings.extend(labeled_bindings.clone());
+
+        Clause {
+            prdcns: self.prdcns.clone(),
+            xtor: self.xtor.clone(),
+            type_params: self.type_params.clone(),
+            context: TypingContext {
+                bindings: labeled_bindings,
+            },
+            body: self.body.label_and_unify(state, sigs, &extended_scope),
+        }
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{bind, clause, covar, cut, id, prd, ty, var};
+
+    #[test]
+    fn label_and_unify_merges_binding_with_declared_field() {
+        let mut state = SplitState::default();
+        let field_label = state.label_ty(&ty!(id!("Box")));
+
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(id!("Cons"), vec![field_label.clone()]);
+
+        // `a` is the outer continuation the clause body cuts against; it must already be in
+        // scope, exactly like it would be for a real match's surrounding context.
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("a"),
+            chi: Chirality::Cns,
+            ty: Ty::I64,
+        });
+
+        let example = clause!(
+            Cns,
+            id!("Cons"),
+            [],
+            [bind!(id!("x"), prd!(), ty!(id!("Box")))],
+            cut!(
+                var!(id!("x"), ty!(id!("Box"))),
+                covar!(id!("a")),
+                ty!(id!("Box"))
+            )
+        );
+
+        let result: Clause<Cns> = example.label_and_unify(&mut state, &sigs, &scope);
+        let binding_ty = result.context.bindings[0].ty.clone();
+
+        let (Ty::Decl { name: field_name, .. }, Ty::Decl { name: binding_name, .. }) =
+            (&field_label, &binding_ty)
+        else {
+            panic!("expected Ty::Decl on both sides");
+        };
+        assert_eq!(state.uf.find(field_name), state.uf.find(binding_name));
+
+        // scope threading: the body's occurrence of `x` must carry exactly the binding's label
+        let Statement::Cut(body_cut) = result.body.as_ref() else {
+            panic!("expected a Cut");
+        };
+        let Term::XVar(producer) = body_cut.producer.as_ref() else {
+            panic!("expected an XVar producer");
+        };
+        assert_eq!(producer.ty, binding_ty);
     }
 }

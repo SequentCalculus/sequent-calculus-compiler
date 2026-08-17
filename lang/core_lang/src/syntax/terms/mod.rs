@@ -7,6 +7,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -290,6 +291,27 @@ impl<C: Chi> Checked for Term<C> {
             Term::Mu(mu) => mu.check(type_params, context, env),
             Term::Xtor(xtor) => xtor.check(type_params, context, env),
             Term::XCase(xcase) => xcase.check(type_params, context, env),
+        }
+    }
+}
+
+impl<C: Chi> LabelAndUnify for Term<C> {
+    type Target = Term<C>;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        // Constructed directly (rather than via `.into()`) since `From<Literal> for Term<C>` only
+        // exists for the concrete `Term<Prd>`, not generically over `C`.
+        match self {
+            Term::XVar(var) => Term::XVar(var.label_and_unify(state, sigs, scope)),
+            Term::Literal(lit) => Term::Literal(lit.label_and_unify(state, sigs, scope)),
+            Term::Op(op) => Term::Op(op.label_and_unify(state, sigs, scope)),
+            Term::Mu(mu) => Term::Mu(mu.label_and_unify(state, sigs, scope)),
+            Term::Xtor(xtor) => Term::Xtor(xtor.label_and_unify(state, sigs, scope)),
+            Term::XCase(xcase) => Term::XCase(xcase.label_and_unify(state, sigs, scope)),
         }
     }
 }

@@ -7,6 +7,7 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -243,6 +244,22 @@ impl<C: Chi> Checked for XCase<C> {
                 concrete_type_args,
                 env,
             )
+        }
+    }
+}
+
+impl<C: Chi> LabelAndUnify for XCase<C> {
+    type Target = XCase<C>;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        XCase {
+            prdcns: self.prdcns.clone(),
+            clauses: self.clauses.label_and_unify(state, sigs, scope),
+            ty: state.label_ty(&self.ty),
         }
     }
 }
