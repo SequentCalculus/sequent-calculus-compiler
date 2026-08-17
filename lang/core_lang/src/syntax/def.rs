@@ -7,6 +7,9 @@ use printer::*;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -161,5 +164,43 @@ impl Checked for Def {
         // check the body of the function under the context of the function
         self.body
             .check(&extended_type_params, &extended_context, env)
+    }
+}
+
+impl LabelAndUnify for Def {
+    type Target = Def;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        _scope: &TypingContext,
+    ) -> Def {
+        // ignores the incoming scope: a `Def` is always closed/top-level, so it builds its own
+        // scope from its own already-labeled parameter signature rather than inheriting one
+        let param_labels = sigs
+            .get(&self.name)
+            .unwrap_or_else(|| panic!("missing signature for def: {}", self.name.name));
+        let labeled_bindings: Vec<ContextBinding> = self
+            .context
+            .bindings
+            .iter()
+            .zip(param_labels)
+            .map(|(binding, ty)| ContextBinding {
+                var: binding.var.clone(),
+                chi: binding.chi.clone(),
+                ty: ty.clone(),
+            })
+            .collect();
+        let scope = TypingContext {
+            bindings: labeled_bindings.clone(),
+        };
+        Def {
+            name: self.name.clone(),
+            type_params: self.type_params.clone(),
+            context: TypingContext {
+                bindings: labeled_bindings,
+            },
+            body: self.body.label_and_unify(state, sigs, &scope),
+        }
     }
 }
