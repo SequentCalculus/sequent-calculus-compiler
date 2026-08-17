@@ -3,8 +3,9 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     splitting::union_find::UnionFind,
     syntax::{
-        Def, Identifier, Prog, Ty, TypingContext,
-        declaration::{Polarity, XtorSig},
+        CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
+        TypingContext,
+        declaration::{Polarity, TypeDeclaration, XtorSig},
         types::TypeArgs,
     },
 };
@@ -14,12 +15,15 @@ pub type Label = Identifier;
 
 pub type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
 
-/// Carries all mutable state through the single label+unify walk: the fresh-id counter and the
-/// union-find.
+/// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
+/// union-find, and a record of each label's origin.
 #[derive(Default)]
 pub struct SplitState {
     pub uf: UnionFind,
     per_name_counters: HashMap<String, usize>,
+    /// Maps every minted label back to the original (unlabeled) declaration identifier it was
+    /// derived from, e.g. `Box#3` -> `Box`.
+    pub label_origin: HashMap<Label, Identifier>,
 }
 
 impl SplitState {
@@ -34,10 +38,13 @@ impl SplitState {
             .entry(base_name.to_string())
             .or_insert(0);
         *counter += 1;
-        Identifier {
+        let label = Identifier {
             name: format!("{base_name}#{counter}"),
             id: 0,
-        }
+        };
+        self.label_origin
+            .insert(label.clone(), Identifier::new(base_name.to_string()));
+        label
     }
 
     /// Labels every `Ty::Decl` occurrence with a fresh label, recursively into type arguments.
@@ -86,35 +93,79 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
         .collect()
 }
 
-/// Labels an `XtorSig`'s argument types, so that every future `XCase` clause can unify against
-/// these fixed labels (looked up via the returned `DeclSignatures`) rather than creating a fresh,
-/// unrelated one per clause.
-fn label_xtor_signature<P: Polarity>(xtor: &XtorSig<P>, state: &mut SplitState) -> Vec<Ty> {
-    xtor.args
+/// Labels one `XtorSig`'s argument types and rebuilds the full labeled tree in the same pass.
+fn label_xtor_signature<P: Polarity + Clone>(xtor: &XtorSig<P>, state: &mut SplitState) -> XtorSig<P> {
+    let bindings = xtor
+        .args
         .bindings
         .iter()
-        .map(|b| state.label_ty(&b.ty))
-        .collect()
+        .map(|binding| ContextBinding {
+            var: binding.var.clone(),
+            chi: binding.chi.clone(),
+            ty: state.label_ty(&binding.ty),
+        })
+        .collect();
+    XtorSig {
+        xtor: xtor.xtor.clone(),
+        name: xtor.name.clone(),
+        type_params: xtor.type_params.clone(),
+        args: TypingContext { bindings },
+    }
 }
 
-/// Builds a map from every declared identifier to its labeled signature, so that every call site can look up the canonical labels for the declaration's parameters or an `Xtor`'s fields and unify against them rather than creating a fresh, unrelated label per call.
-pub fn build_def_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatures {
+/// Labels every xtor of one data/codata declaration (see [`label_xtor_sig`]). 
+fn label_typedeclaration_signature<P: Polarity + Clone>(
+    decl: &TypeDeclaration<P>,
+    state: &mut SplitState,
+) -> TypeDeclaration<P> {
+    TypeDeclaration {
+        dat: decl.dat.clone(),
+        name: decl.name.clone(),
+        xtors: decl
+            .xtors
+            .iter()
+            .map(|xtor| label_xtor_signature(xtor, state))
+            .collect(),
+        type_params: decl.type_params.clone(),
+    }
+}
+
+/// Labels every `Def`'s parameter types and every data/codata declaration's xtor field types
+/// exactly once, so that every future call/use site can unify against these fixed labels (looked
+/// up via the returned `DeclSignatures`) rather than creating a fresh, unrelated one per call.
+/// Also returns the fully labeled declaration trees (needed by the rewrite phase to walk and
+/// split them).
+pub fn build_decl_signatures(
+    prog: &Prog,
+    state: &mut SplitState,
+) -> (DeclSignatures, Vec<DataDeclaration>, Vec<CodataDeclaration>) {
     let mut sigs = DeclSignatures::new();
     for def in &prog.defs {
         let params = label_def_signature(def, state);
         sigs.insert(def.name.clone(), params);
     }
 
-    for ctor in prog.data_types.iter().flat_map(|data| &data.xtors) {
-        let field_tys = label_xtor_signature(ctor, state);
-        sigs.insert(ctor.name.clone(), field_tys);
+    let data_types: Vec<DataDeclaration> = prog
+        .data_types
+        .iter()
+        .map(|decl| label_typedeclaration_signature(decl, state))
+        .collect();
+    for xtor in data_types.iter().flat_map(|decl| &decl.xtors) {
+        let field_tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+        sigs.insert(xtor.name.clone(), field_tys);
     }
 
-    for dtor in prog.codata_types.iter().flat_map(|codata| &codata.xtors) {
-        let field_tys = label_xtor_signature(dtor, state);
-        sigs.insert(dtor.name.clone(), field_tys);
+    let codata_types: Vec<CodataDeclaration> = prog
+        .codata_types
+        .iter()
+        .map(|decl| label_typedeclaration_signature(decl, state))
+        .collect();
+    for xtor in codata_types.iter().flat_map(|decl| &decl.xtors) {
+        let field_tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+        sigs.insert(xtor.name.clone(), field_tys);
     }
-    sigs
+
+    (sigs, data_types, codata_types)
 }
 
 /// This trait assigns fresh labels to every declared-type occurrence within a syntax element and
@@ -365,7 +416,7 @@ mod split_state_tests {
     }
 
     #[test]
-    fn label_xtor_signature_labels_each_field() {
+    fn label_xtor_sig_labels_each_field_and_rebuilds_the_tree() {
         let ctor = ctor_sig!(
             id!("Cons"),
             [],
@@ -376,11 +427,12 @@ mod split_state_tests {
         );
 
         let mut state = fresh_state();
-        let fields = label_xtor_signature(&ctor, &mut state);
+        let labeled = label_xtor_signature(&ctor, &mut state);
 
-        assert_eq!(fields.len(), 2);
-        assert_eq!(fields[0], Ty::I64);
-        assert!(matches!(fields[1], Ty::Decl { .. }));
+        assert_eq!(labeled.name, id!("Cons"));
+        assert_eq!(labeled.args.bindings.len(), 2);
+        assert_eq!(labeled.args.bindings[0].ty, Ty::I64);
+        assert!(matches!(labeled.args.bindings[1].ty, Ty::Decl { .. }));
     }
 
     #[test]
@@ -420,7 +472,7 @@ mod split_state_tests {
         };
 
         let mut state = fresh_state();
-        let sigs = build_def_signatures(&prog, &mut state);
+        let (sigs, data_types, codata_types) = build_decl_signatures(&prog, &mut state);
 
         assert!(sigs.contains_key(&id!("f")));
         assert!(sigs.contains_key(&id!("Cons")));
@@ -428,5 +480,17 @@ mod split_state_tests {
         assert_eq!(sigs[&id!("f")].len(), 1);
         assert_eq!(sigs[&id!("Cons")].len(), 1);
         assert_eq!(sigs[&id!("head")].len(), 1);
+
+        // the labeled declaration trees carry the same field types as `sigs`, not a separate copy
+        assert_eq!(data_types.len(), 1);
+        assert_eq!(
+            data_types[0].xtors[0].args.bindings[0].ty,
+            sigs[&id!("Cons")][0]
+        );
+        assert_eq!(codata_types.len(), 1);
+        assert_eq!(
+            codata_types[0].xtors[0].args.bindings[0].ty,
+            sigs[&id!("head")][0]
+        );
     }
 }
