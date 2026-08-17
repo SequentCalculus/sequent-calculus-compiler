@@ -10,6 +10,7 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::types::TypeArgs;
 use crate::syntax::*;
 use crate::traits::*;
@@ -228,6 +229,32 @@ impl Checked for Call {
         self.args.check(type_params, context, env)?;
 
         Ok(())
+    }
+}
+
+impl LabelAndUnify for Call {
+    type Target = Call;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        let args = self.args.label_and_unify(state, sigs, scope);
+
+        let param_tys = sigs
+            .get(&self.name)
+            .unwrap_or_else(|| panic!("missing signature for def: {}", self.name.name));
+        for (arg, param_ty) in args.entries.iter().zip(param_tys) {
+            state.unify_ty(&arg.get_type(), param_ty);
+        }
+
+        Call {
+            name: self.name.clone(),
+            type_args: self.type_args.clone(),
+            args,
+            ty: state.label_ty(&self.ty),
+        }
     }
 }
 
@@ -464,5 +491,41 @@ mod collect_tests {
             res,
             Err(MonoError::UndefinedFunction(name)) if name == "ghost"
         ));
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    use crate::traits::*;
+    extern crate self as core_lang;
+    use core_macros::{call, ctor, id, ty};
+
+    #[test]
+    fn label_and_unify_merges_argument_with_declared_parameter() {
+        let mut state = SplitState::default();
+        let param_label = state.label_ty(&ty!(id!("Box")));
+
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(id!("f"), vec![param_label.clone()]);
+        sigs.insert(id!("Pack"), vec![]);
+
+        // the argument is itself a freshly constructed `Box`, independently labeled from the
+        // declared parameter type in `sigs`
+        let example = call!(
+            id!("f"),
+            [ctor!(id!("Pack"), [], [], ty!(id!("Box")))]
+        );
+
+        let result: Call = example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let arg_ty = result.args.entries[0].get_type();
+
+        let (Ty::Decl { name: param_name, .. }, Ty::Decl { name: arg_name, .. }) =
+            (&param_label, &arg_ty)
+        else {
+            panic!("expected Ty::Decl on both sides");
+        };
+        assert_eq!(state.uf.find(param_name), state.uf.find(arg_name));
     }
 }

@@ -9,6 +9,7 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -173,5 +174,20 @@ impl Checked for Exit {
         self.arg.check(type_params, context, env)?;
 
         Ok(())
+    }
+}
+
+impl LabelAndUnify for Exit {
+    type Target = Exit;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        Exit {
+            arg: self.arg.label_and_unify(state, sigs, scope),
+            ty: state.label_ty(&self.ty),
+        }
     }
 }

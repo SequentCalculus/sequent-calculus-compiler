@@ -6,6 +6,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -178,5 +179,21 @@ impl Checked for PrintI64 {
         self.next.check(type_params, context, env)?;
 
         Ok(())
+    }
+}
+
+impl LabelAndUnify for PrintI64 {
+    type Target = PrintI64;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        PrintI64 {
+            newline: self.newline,
+            arg: self.arg.label_and_unify(state, sigs, scope),
+            next: self.next.label_and_unify(state, sigs, scope),
+        }
     }
 }

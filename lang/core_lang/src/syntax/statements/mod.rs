@@ -6,6 +6,7 @@ use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -175,6 +176,27 @@ impl Checked for Statement {
     }
 }
 
+impl LabelAndUnify for Statement {
+    type Target = Statement;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        match self {
+            Statement::Cut(cut) => cut.label_and_unify(state, sigs, scope).into(),
+            Statement::IfC(ifc) => ifc.label_and_unify(state, sigs, scope).into(),
+            Statement::PrintI64(print) => print.label_and_unify(state, sigs, scope).into(),
+            Statement::Call(call) => call.label_and_unify(state, sigs, scope).into(),
+            Statement::Exit(exit) => exit.label_and_unify(state, sigs, scope).into(),
+            Statement::Unreachable(unreachable) => {
+                unreachable.label_and_unify(state, sigs, scope).into()
+            }
+        }
+    }
+}
+
 /// This struct defines the focused version of [`Statement`]s. In focused statements only
 /// (co)variables can occur in argument positions.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -285,5 +307,70 @@ mod test {
         let result = example_call().subst_sim(&subst.0, &subst.1);
         let expected = call!(id!("main"), [var!(id!("y")), covar!(id!("b"))]).into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::statements::{PrintI64, Unreachable};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{call, covar, cut, exit, id, ife, lit, ty};
+    use std::rc::Rc;
+
+    #[test]
+    fn label_and_unify_dispatches_every_statement_variant() {
+        let mut state = SplitState::default();
+        let sigs = DeclSignatures::new();
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("a"),
+            chi: Chirality::Cns,
+            ty: Ty::I64,
+        });
+
+        let cut_stmt: Statement = cut!(lit!(1), covar!(id!("a"))).into();
+        assert!(matches!(
+            cut_stmt.label_and_unify(&mut state, &sigs, &scope),
+            Statement::Cut(_)
+        ));
+
+        let ifc_stmt: Statement = ife!(lit!(1), exit!(lit!(0)), exit!(lit!(1))).into();
+        assert!(matches!(
+            ifc_stmt.label_and_unify(&mut state, &sigs, &scope),
+            Statement::IfC(_)
+        ));
+
+        let print_stmt: Statement = PrintI64 {
+            newline: false,
+            arg: Rc::new(lit!(1).into()),
+            next: Rc::new(exit!(lit!(0)).into()),
+        }
+        .into();
+        assert!(matches!(
+            print_stmt.label_and_unify(&mut state, &sigs, &scope),
+            Statement::PrintI64(_)
+        ));
+
+        let mut call_sigs = DeclSignatures::new();
+        call_sigs.insert(id!("f"), vec![]);
+        let call_stmt: Statement = call!(id!("f"), []).into();
+        assert!(matches!(
+            call_stmt.label_and_unify(&mut state, &call_sigs, &scope),
+            Statement::Call(_)
+        ));
+
+        let exit_stmt: Statement = exit!(lit!(0)).into();
+        assert!(matches!(
+            exit_stmt.label_and_unify(&mut state, &sigs, &scope),
+            Statement::Exit(_)
+        ));
+
+        let unreachable_stmt: Statement = Unreachable { ty: ty!("int") }.into();
+        assert!(matches!(
+            unreachable_stmt.label_and_unify(&mut state, &sigs, &scope),
+            Statement::Unreachable(_)
+        ));
     }
 }

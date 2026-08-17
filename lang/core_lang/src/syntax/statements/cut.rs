@@ -6,6 +6,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -253,6 +254,29 @@ impl Checked for Cut {
     }
 }
 
+impl LabelAndUnify for Cut {
+    type Target = Cut;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        let producer = self.producer.label_and_unify(state, sigs, scope);
+        let consumer = self.consumer.label_and_unify(state, sigs, scope);
+        let ty = state.label_ty(&self.ty);
+
+        state.unify_ty(&ty, &producer.get_type());
+        state.unify_ty(&ty, &consumer.get_type());
+
+        Cut {
+            producer,
+            ty,
+            consumer,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::syntax::*;
@@ -343,5 +367,61 @@ mod tests {
         let result = cut!(var!(id!("x")), covar!(id!("a"))).focus(&mut Default::default());
         let expected = FsCut::new(var!(id!("x")), covar!(id!("a")), Ty::I64).into();
         assert_eq!(result, expected);
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{covar, cut, id, ty, var};
+
+    #[test]
+    fn label_and_unify_merges_producer_consumer_and_own_type() {
+        let mut state = SplitState::default();
+        // two independently labeled occurrences of `Box`, simulating that the producer and
+        // consumer were bound at two unrelated declaration positions
+        let box_x = state.label_ty(&ty!(id!("Box")));
+        let box_a = state.label_ty(&ty!(id!("Box")));
+        assert_ne!(box_x, box_a);
+
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("x"),
+            chi: Chirality::Prd,
+            ty: box_x,
+        });
+        scope.bindings.push(ContextBinding {
+            var: id!("a"),
+            chi: Chirality::Cns,
+            ty: box_a,
+        });
+
+        let example = cut!(
+            var!(id!("x"), ty!(id!("Box"))),
+            covar!(id!("a"), ty!(id!("Box"))),
+            ty!(id!("Box"))
+        );
+
+        let result: Cut = example.label_and_unify(&mut state, &DeclSignatures::new(), &scope);
+
+        let Term::XVar(producer) = result.producer.as_ref() else {
+            panic!("expected an XVar producer");
+        };
+        let Term::XVar(consumer) = result.consumer.as_ref() else {
+            panic!("expected an XVar consumer");
+        };
+        let (
+            Ty::Decl { name: n_prod, .. },
+            Ty::Decl { name: n_cons, .. },
+            Ty::Decl { name: n_cut, .. },
+        ) = (&producer.ty, &consumer.ty, &result.ty)
+        else {
+            panic!("expected Ty::Decl everywhere");
+        };
+
+        assert_eq!(state.uf.find(n_prod), state.uf.find(n_cons));
+        assert_eq!(state.uf.find(n_prod), state.uf.find(n_cut));
     }
 }
