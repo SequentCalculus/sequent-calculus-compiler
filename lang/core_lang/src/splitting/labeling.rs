@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     splitting::union_find::UnionFind,
     syntax::{
-        Def, Identifier, Prog, Ty,
+        Def, Identifier, Prog, Ty, TypingContext,
         declaration::{Polarity, XtorSig},
         types::TypeArgs,
     },
@@ -12,10 +12,11 @@ use crate::{
 /// A label is a fresh `Identifier` sharing the declared type's name but carrying a unique `id` prefixed with `#`, e.g. `Box#1`
 pub type Label = Identifier;
 
-type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
+pub type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
 
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter and the
 /// union-find.
+#[derive(Default)]
 pub struct SplitState {
     pub uf: UnionFind,
     per_name_counters: HashMap<String, usize>,
@@ -127,27 +128,60 @@ pub fn build_def_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatur
 /// the cost of requiring declaration signatures to be labeled once upfront (see
 /// [`build_def_signatures`]) so that multiple call/use sites unify against one shared, stable
 /// label rather than against each other pairwise.
+///
+/// `scope` maps every locally bound (co)variable (`Mu`'s variable, a `Clause`'s context bindings)
+/// to its already-labeled type, mirroring [`crate::typing::check::Checked::check`]'s
+/// `context: &TypingContext` parameter: it is extended at each binder and looked up at each
+/// `XVar`, so that a variable's binding site and every one of its use sites end up carrying the
+/// identical label.
 pub trait LabelAndUnify {
     /// The type of this syntax element after labeling. For a `Term<C>` this is again `Term<C>`;
-    /// generic containers like `Vec<X>`/`Rc<X>` delegate to `X::Target`.
+    /// generic containers like `Vec<X>`/`Rc<X>`/`Option<X>` delegate to `X::Target`.
     type Target;
 
-    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target;
 }
 
 impl<X: LabelAndUnify> LabelAndUnify for Vec<X> {
     type Target = Vec<X::Target>;
-    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
         self.iter()
-            .map(|x| x.label_and_unify(state, sigs))
+            .map(|x| x.label_and_unify(state, sigs, scope))
             .collect()
     }
 }
 
 impl<X: LabelAndUnify> LabelAndUnify for Rc<X> {
     type Target = Rc<X::Target>;
-    fn label_and_unify(&self, state: &mut SplitState, sigs: &DeclSignatures) -> Self::Target {
-        Rc::new(self.as_ref().label_and_unify(state, sigs))
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        Rc::new(self.as_ref().label_and_unify(state, sigs, scope))
+    }
+}
+
+impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
+    type Target = Option<X::Target>;
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self::Target {
+        self.as_ref().map(|x| x.label_and_unify(state, sigs, scope))
     }
 }
 
@@ -160,10 +194,7 @@ mod split_state_tests {
     use core_macros::{bind, codata, ctor_sig, data, def, dtor_sig, id, prd, tvar, ty};
 
     fn fresh_state() -> SplitState {
-        SplitState {
-            per_name_counters: HashMap::new(),
-            uf: UnionFind::default(),
-        }
+        SplitState::default()
     }
 
     #[test]
