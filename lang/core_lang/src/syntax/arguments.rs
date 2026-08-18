@@ -8,6 +8,8 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -142,13 +144,12 @@ impl Checked for Argument {
 }
 
 impl LabelAndUnify for Argument {
-    type Target = Argument;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         match self {
             Argument::Producer(term) => {
                 Argument::Producer(term.label_and_unify(state, sigs, scope))
@@ -156,6 +157,15 @@ impl LabelAndUnify for Argument {
             Argument::Consumer(term) => {
                 Argument::Consumer(term.label_and_unify(state, sigs, scope))
             }
+        }
+    }
+}
+
+impl Rewrite for Argument {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        match self {
+            Argument::Producer(term) => Argument::Producer(term.rewrite(table)),
+            Argument::Consumer(term) => Argument::Consumer(term.rewrite(table)),
         }
     }
 }
@@ -266,15 +276,22 @@ impl Checked for Arguments {
 }
 
 impl LabelAndUnify for Arguments {
-    type Target = Arguments;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         Arguments {
             entries: self.entries.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for Arguments {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Arguments {
+            entries: self.entries.rewrite(table),
         }
     }
 }

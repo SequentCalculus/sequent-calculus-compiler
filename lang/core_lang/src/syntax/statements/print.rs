@@ -7,6 +7,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -183,17 +185,26 @@ impl Checked for PrintI64 {
 }
 
 impl LabelAndUnify for PrintI64 {
-    type Target = PrintI64;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         PrintI64 {
             newline: self.newline,
             arg: self.arg.label_and_unify(state, sigs, scope),
             next: self.next.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for PrintI64 {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        PrintI64 {
+            newline: self.newline,
+            arg: self.arg.rewrite(table),
+            next: self.next.rewrite(table),
         }
     }
 }

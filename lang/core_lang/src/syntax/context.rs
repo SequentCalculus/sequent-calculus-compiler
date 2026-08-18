@@ -4,6 +4,8 @@ use printer::tokens::{CNS, COLON, PRD};
 use printer::*;
 
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -70,6 +72,16 @@ impl Specialize for ContextBinding {
             var: self.var.clone(),
             chi: self.chi.clone(),
             ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl Rewrite for ContextBinding {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        ContextBinding {
+            var: self.var.clone(),
+            chi: self.chi.clone(),
+            ty: self.ty.rewrite(table),
         }
     }
 }
@@ -176,6 +188,14 @@ impl Specialize for TypingContext {
     fn specialize(&self, context: &SpecializeContext) -> Self {
         TypingContext {
             bindings: self.bindings.specialize(context),
+        }
+    }
+}
+
+impl Rewrite for TypingContext {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        TypingContext {
+            bindings: self.bindings.rewrite(table),
         }
     }
 }

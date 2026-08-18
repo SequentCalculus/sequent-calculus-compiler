@@ -1,6 +1,8 @@
 use printer::*;
 
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 
@@ -36,15 +38,22 @@ impl Focusing for Unreachable {
 }
 
 impl LabelAndUnify for Unreachable {
-    type Target = Unreachable;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         _sigs: &DeclSignatures,
         _scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         Unreachable {
             ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
+impl Rewrite for Unreachable {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Unreachable {
+            ty: self.ty.rewrite(table),
         }
     }
 }

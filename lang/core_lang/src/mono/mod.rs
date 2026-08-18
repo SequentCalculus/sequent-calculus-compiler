@@ -7,6 +7,7 @@ use crate::{
         constraint_graph::ConstraintGraph, constraints::ConstraintCollector, errors::MonoError,
         solver::solve_with_erasure, specialize::specialize_program,
     },
+    splitting::split_program,
     syntax::program::Prog,
     typing::env::GlobalEnv,
 };
@@ -27,6 +28,12 @@ pub fn monomorphize_program(
     debug: bool,
     viz_path: Option<Option<std::path::PathBuf>>,
 ) -> Result<Prog, MonoError> {
+    // Type-splitting preprocessing: refines which physical declaration each occurrence of a
+    // declared type points at (see `crate::splitting`), so the constraint collection/solving below
+    // sees a more finely divided, but still fully polymorphic, program and finds no more, but
+    // possibly fewer, growing cycles.
+    let program = split_program(&program);
+
     let constraints = program
         .collect_constraints(&GlobalEnv::new(
             &program.data_types,
@@ -43,6 +50,11 @@ pub fn monomorphize_program(
     };
 
     if debug {
+        println!(
+            "Typesplit Program: \n{}",
+            program.print_to_colored_string(Some(&forced_set_cfg))
+        );
+
         println!(
             "Flow Constraints: \n{}",
             constraints.print_to_colored_string(Some(&forced_set_cfg))

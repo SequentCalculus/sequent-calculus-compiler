@@ -8,6 +8,8 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::{Rewrite, label_in, rewrite_clause};
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -249,17 +251,31 @@ impl<C: Chi> Checked for XCase<C> {
 }
 
 impl<C: Chi> LabelAndUnify for XCase<C> {
-    type Target = XCase<C>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self.clauses.label_and_unify(state, sigs, scope),
             ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for XCase<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        let owner_label = label_in(&self.ty);
+        XCase {
+            prdcns: self.prdcns.clone(),
+            clauses: self
+                .clauses
+                .iter()
+                .map(|clause| rewrite_clause(clause, table, owner_label))
+                .collect(),
+            ty: self.ty.rewrite(table),
         }
     }
 }

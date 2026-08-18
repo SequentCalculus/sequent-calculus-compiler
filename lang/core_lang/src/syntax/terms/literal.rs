@@ -6,6 +6,8 @@ use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::env::GlobalEnv;
@@ -66,13 +68,18 @@ impl ConstraintCollector for Literal {
 }
 
 impl LabelAndUnify for Literal {
-    type Target = Literal;
     fn label_and_unify(
         &self,
         _state: &mut SplitState,
         _sigs: &DeclSignatures,
         _scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
+        self.clone()
+    }
+}
+
+impl Rewrite for Literal {
+    fn rewrite(&self, _table: &SplitTable) -> Self {
         self.clone()
     }
 }

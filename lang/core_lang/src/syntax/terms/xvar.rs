@@ -9,6 +9,8 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -185,13 +187,12 @@ impl<C: Chi> Checked for XVar<C> {
 }
 
 impl<C: Chi> LabelAndUnify for XVar<C> {
-    type Target = XVar<C>;
     fn label_and_unify(
         &self,
         _state: &mut SplitState,
         _sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         // Reuse the label already assigned at the binding site (looked up by name in `scope`)
         // rather than minting a fresh one, so that every use of a variable shares its binder's
         // label. A missing entry means an unbound variable slipped past type checking.
@@ -204,6 +205,16 @@ impl<C: Chi> LabelAndUnify for XVar<C> {
             prdcns: self.prdcns.clone(),
             var: self.var.clone(),
             ty,
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for XVar<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        XVar {
+            prdcns: self.prdcns.clone(),
+            var: self.var.clone(),
+            ty: self.ty.rewrite(table),
         }
     }
 }

@@ -11,6 +11,8 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::types::TypeArgs;
 use crate::syntax::*;
 use crate::traits::*;
@@ -233,13 +235,12 @@ impl Checked for Call {
 }
 
 impl LabelAndUnify for Call {
-    type Target = Call;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         let args = self.args.label_and_unify(state, sigs, scope);
 
         let param_tys = sigs
@@ -254,6 +255,19 @@ impl LabelAndUnify for Call {
             type_args: self.type_args.clone(),
             args,
             ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
+impl Rewrite for Call {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        // `self.name` refers to a `Def`, which splitting never duplicates -- only its argument
+        // and result types can reference split declarations.
+        Call {
+            name: self.name.clone(),
+            type_args: self.type_args.clone(),
+            args: self.args.rewrite(table),
+            ty: self.ty.rewrite(table),
         }
     }
 }
@@ -513,16 +527,17 @@ mod label_and_unify_tests {
 
         // the argument is itself a freshly constructed `Box`, independently labeled from the
         // declared parameter type in `sigs`
-        let example = call!(
-            id!("f"),
-            [ctor!(id!("Pack"), [], [], ty!(id!("Box")))]
-        );
+        let example = call!(id!("f"), [ctor!(id!("Pack"), [], [], ty!(id!("Box")))]);
 
         let result: Call = example.label_and_unify(&mut state, &sigs, &TypingContext::default());
         let arg_ty = result.args.entries[0].get_type();
 
-        let (Ty::Decl { name: param_name, .. }, Ty::Decl { name: arg_name, .. }) =
-            (&param_label, &arg_ty)
+        let (
+            Ty::Decl {
+                name: param_name, ..
+            },
+            Ty::Decl { name: arg_name, .. },
+        ) = (&param_label, &arg_ty)
         else {
             panic!("expected Ty::Decl on both sides");
         };

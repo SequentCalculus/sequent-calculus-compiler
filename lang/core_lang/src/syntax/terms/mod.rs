@@ -8,6 +8,8 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -296,13 +298,12 @@ impl<C: Chi> Checked for Term<C> {
 }
 
 impl<C: Chi> LabelAndUnify for Term<C> {
-    type Target = Term<C>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         // Constructed directly (rather than via `.into()`) since `From<Literal> for Term<C>` only
         // exists for the concrete `Term<Prd>`, not generically over `C`.
         match self {
@@ -312,6 +313,20 @@ impl<C: Chi> LabelAndUnify for Term<C> {
             Term::Mu(mu) => Term::Mu(mu.label_and_unify(state, sigs, scope)),
             Term::Xtor(xtor) => Term::Xtor(xtor.label_and_unify(state, sigs, scope)),
             Term::XCase(xcase) => Term::XCase(xcase.label_and_unify(state, sigs, scope)),
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Term<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        // Constructed directly, same reason as the `LabelAndUnify` dispatcher above.
+        match self {
+            Term::XVar(var) => Term::XVar(var.rewrite(table)),
+            Term::Literal(lit) => Term::Literal(lit.rewrite(table)),
+            Term::Op(op) => Term::Op(op.rewrite(table)),
+            Term::Mu(mu) => Term::Mu(mu.rewrite(table)),
+            Term::Xtor(xtor) => Term::Xtor(xtor.rewrite(table)),
+            Term::XCase(xcase) => Term::XCase(xcase.rewrite(table)),
         }
     }
 }

@@ -272,13 +272,12 @@ impl<C: Chi> Checked for Clause<C> {
 }
 
 impl<C: Chi> LabelAndUnify for Clause<C> {
-    type Target = Clause<C>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         let field_tys = sigs
             .get(&self.xtor)
             .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.xtor.name));
@@ -353,8 +352,14 @@ mod label_and_unify_tests {
         let result: Clause<Cns> = example.label_and_unify(&mut state, &sigs, &scope);
         let binding_ty = result.context.bindings[0].ty.clone();
 
-        let (Ty::Decl { name: field_name, .. }, Ty::Decl { name: binding_name, .. }) =
-            (&field_label, &binding_ty)
+        let (
+            Ty::Decl {
+                name: field_name, ..
+            },
+            Ty::Decl {
+                name: binding_name, ..
+            },
+        ) = (&field_label, &binding_ty)
         else {
             panic!("expected Ty::Decl on both sides");
         };

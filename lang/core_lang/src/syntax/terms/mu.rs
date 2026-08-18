@@ -9,6 +9,8 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -308,13 +310,12 @@ impl<C: Chi> Checked for Mu<C> {
 }
 
 impl<C: Chi> LabelAndUnify for Mu<C> {
-    type Target = Mu<C>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         let ty = state.label_ty(&self.ty);
 
         let chi = if self.prdcns.is_prd() {
@@ -334,6 +335,17 @@ impl<C: Chi> LabelAndUnify for Mu<C> {
             variable: self.variable.clone(),
             statement: self.statement.label_and_unify(state, sigs, &extended_scope),
             ty,
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Mu<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Mu {
+            prdcns: self.prdcns.clone(),
+            variable: self.variable.clone(),
+            statement: self.statement.rewrite(table),
+            ty: self.ty.rewrite(table),
         }
     }
 }

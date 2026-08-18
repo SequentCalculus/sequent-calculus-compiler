@@ -7,6 +7,8 @@ use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
@@ -177,13 +179,12 @@ impl Checked for Statement {
 }
 
 impl LabelAndUnify for Statement {
-    type Target = Statement;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         match self {
             Statement::Cut(cut) => cut.label_and_unify(state, sigs, scope).into(),
             Statement::IfC(ifc) => ifc.label_and_unify(state, sigs, scope).into(),
@@ -193,6 +194,19 @@ impl LabelAndUnify for Statement {
             Statement::Unreachable(unreachable) => {
                 unreachable.label_and_unify(state, sigs, scope).into()
             }
+        }
+    }
+}
+
+impl Rewrite for Statement {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        match self {
+            Statement::Cut(cut) => cut.rewrite(table).into(),
+            Statement::IfC(ifc) => ifc.rewrite(table).into(),
+            Statement::PrintI64(print) => print.rewrite(table).into(),
+            Statement::Call(call) => call.rewrite(table).into(),
+            Statement::Exit(exit) => exit.rewrite(table).into(),
+            Statement::Unreachable(unreachable) => unreachable.rewrite(table).into(),
         }
     }
 }

@@ -168,7 +168,6 @@ impl Checked for Def {
 }
 
 impl LabelAndUnify for Def {
-    type Target = Def;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
@@ -201,6 +200,17 @@ impl LabelAndUnify for Def {
                 bindings: labeled_bindings,
             },
             body: self.body.label_and_unify(state, sigs, &scope),
+        }
+    }
+}
+
+impl Rewrite for Def {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Def {
+            name: self.name.clone(),
+            type_params: self.type_params.clone(),
+            context: self.context.rewrite(table),
+            body: self.body.rewrite(table),
         }
     }
 }

@@ -7,6 +7,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -253,17 +255,26 @@ impl Checked for Op {
 }
 
 impl LabelAndUnify for Op {
-    type Target = Op;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         Op {
             fst: self.fst.label_and_unify(state, sigs, scope),
             op: self.op.clone(),
             snd: self.snd.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for Op {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Op {
+            fst: self.fst.rewrite(table),
+            op: self.op.clone(),
+            snd: self.snd.rewrite(table),
         }
     }
 }

@@ -7,6 +7,8 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::{Rewrite, label_in};
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::types::TypeArgs;
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -329,13 +331,12 @@ impl<C: Chi> Checked for Xtor<C> {
 }
 
 impl<C: Chi> LabelAndUnify for Xtor<C> {
-    type Target = Xtor<C>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         let args = self.args.label_and_unify(state, sigs, scope);
 
         let field_tys = sigs
@@ -351,6 +352,19 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
             type_args: self.type_args.clone(),
             args,
             ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Xtor<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        let owner_label = label_in(&self.ty);
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: table.resolve_xtor_name(&self.name, owner_label).clone(),
+            type_args: self.type_args.clone(),
+            args: self.args.rewrite(table),
+            ty: self.ty.rewrite(table),
         }
     }
 }
@@ -420,11 +434,16 @@ mod label_and_unify_tests {
             ty!(id!("Wrapper"))
         );
 
-        let result: Xtor<Prd> = example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let result: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
         let arg_ty = result.args.entries[0].get_type();
 
-        let (Ty::Decl { name: field_name, .. }, Ty::Decl { name: arg_name, .. }) =
-            (&field_label, &arg_ty)
+        let (
+            Ty::Decl {
+                name: field_name, ..
+            },
+            Ty::Decl { name: arg_name, .. },
+        ) = (&field_label, &arg_ty)
         else {
             panic!("expected Ty::Decl on both sides");
         };

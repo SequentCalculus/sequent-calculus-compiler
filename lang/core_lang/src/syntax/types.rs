@@ -7,6 +7,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_t
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::typing::check::{Checked, check_arity};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
@@ -184,10 +186,31 @@ impl Specialize for Ty {
     }
 }
 
+impl Rewrite for Ty {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        match self {
+            Ty::I64 => Ty::I64,
+            Ty::Var(v) => Ty::Var(v.clone()),
+            Ty::Decl { name, type_args } => Ty::Decl {
+                name: table.resolve_ty_name(name).clone(),
+                type_args: type_args.rewrite(table),
+            },
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Default)]
 pub struct TypeArgs {
     /// The type arguments
     pub args: Vec<Ty>,
+}
+
+impl Rewrite for TypeArgs {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        TypeArgs {
+            args: self.args.rewrite(table),
+        }
+    }
 }
 
 impl ConstraintCollector for TypeArgs {

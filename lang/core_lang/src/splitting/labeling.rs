@@ -94,7 +94,10 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
 }
 
 /// Labels one `XtorSig`'s argument types and rebuilds the full labeled tree in the same pass.
-fn label_xtor_signature<P: Polarity + Clone>(xtor: &XtorSig<P>, state: &mut SplitState) -> XtorSig<P> {
+fn label_xtor_signature<P: Polarity + Clone>(
+    xtor: &XtorSig<P>,
+    state: &mut SplitState,
+) -> XtorSig<P> {
     let bindings = xtor
         .args
         .bindings
@@ -113,7 +116,7 @@ fn label_xtor_signature<P: Polarity + Clone>(xtor: &XtorSig<P>, state: &mut Spli
     }
 }
 
-/// Labels every xtor of one data/codata declaration (see [`label_xtor_sig`]). 
+/// Labels every xtor of one data/codata declaration (see [`label_xtor_sig`]).
 fn label_typedeclaration_signature<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     state: &mut SplitState,
@@ -186,26 +189,21 @@ pub fn build_decl_signatures(
 /// `XVar`, so that a variable's binding site and every one of its use sites end up carrying the
 /// identical label.
 pub trait LabelAndUnify {
-    /// The type of this syntax element after labeling. For a `Term<C>` this is again `Term<C>`;
-    /// generic containers like `Vec<X>`/`Rc<X>`/`Option<X>` delegate to `X::Target`.
-    type Target;
-
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target;
+    ) -> Self;
 }
 
 impl<X: LabelAndUnify> LabelAndUnify for Vec<X> {
-    type Target = Vec<X::Target>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         self.iter()
             .map(|x| x.label_and_unify(state, sigs, scope))
             .collect()
@@ -213,25 +211,23 @@ impl<X: LabelAndUnify> LabelAndUnify for Vec<X> {
 }
 
 impl<X: LabelAndUnify> LabelAndUnify for Rc<X> {
-    type Target = Rc<X::Target>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         Rc::new(self.as_ref().label_and_unify(state, sigs, scope))
     }
 }
 
 impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
-    type Target = Option<X::Target>;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         self.as_ref().map(|x| x.label_and_unify(state, sigs, scope))
     }
 }

@@ -7,6 +7,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
@@ -255,13 +257,12 @@ impl Checked for Cut {
 }
 
 impl LabelAndUnify for Cut {
-    type Target = Cut;
     fn label_and_unify(
         &self,
         state: &mut SplitState,
         sigs: &DeclSignatures,
         scope: &TypingContext,
-    ) -> Self::Target {
+    ) -> Self {
         let producer = self.producer.label_and_unify(state, sigs, scope);
         let consumer = self.consumer.label_and_unify(state, sigs, scope);
         let ty = state.label_ty(&self.ty);
@@ -273,6 +274,16 @@ impl LabelAndUnify for Cut {
             producer,
             ty,
             consumer,
+        }
+    }
+}
+
+impl Rewrite for Cut {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Cut {
+            producer: self.producer.rewrite(table),
+            ty: self.ty.rewrite(table),
+            consumer: self.consumer.rewrite(table),
         }
     }
 }
