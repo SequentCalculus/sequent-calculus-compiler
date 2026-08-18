@@ -176,14 +176,14 @@ impl LabelAndUnify for Def {
     ) -> Def {
         // ignores the incoming scope: a `Def` is always closed/top-level, so it builds its own
         // scope from its own already-labeled parameter signature rather than inheriting one
-        let param_labels = sigs
+        let sig = sigs
             .get(&self.name)
             .unwrap_or_else(|| panic!("missing signature for def: {}", self.name.name));
         let labeled_bindings: Vec<ContextBinding> = self
             .context
             .bindings
             .iter()
-            .zip(param_labels)
+            .zip(&sig.tys)
             .map(|(binding, ty)| ContextBinding {
                 var: binding.var.clone(),
                 chi: binding.chi.clone(),

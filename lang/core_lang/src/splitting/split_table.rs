@@ -50,7 +50,7 @@ impl SplitTable {
                 });
                 ty_names.insert(
                     label.clone(),
-                    Identifier::new(format!("{}@{idx}", origin.name)),
+                    Identifier::new(format!("{}@{}", origin.name, idx + 1)),
                 );
             }
 
@@ -153,7 +153,7 @@ fn register_xtor_names<P: Polarity>(
             let name = if roots.len() == 1 {
                 xtor.name.clone()
             } else {
-                Identifier::new(format!("{}@{idx}", xtor.name.name))
+                Identifier::new(format!("{}@{}", xtor.name.name, idx + 1))
             };
             xtor_names.insert((xtor.name.clone(), label.clone()), name);
         }

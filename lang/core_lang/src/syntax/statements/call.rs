@@ -241,18 +241,34 @@ impl LabelAndUnify for Call {
         sigs: &DeclSignatures,
         scope: &TypingContext,
     ) -> Self {
+        // Label this call site's own explicit type arguments (instantiating the callee's own
+        // generic type parameters, e.g. `identity[int](42)`) before using them.
+        let type_args = TypeArgs {
+            args: self
+                .type_args
+                .args
+                .iter()
+                .map(|a| state.label_ty(a))
+                .collect(),
+        };
         let args = self.args.label_and_unify(state, sigs, scope);
 
-        let param_tys = sigs
+        let sig = sigs
             .get(&self.name)
             .unwrap_or_else(|| panic!("missing signature for def: {}", self.name.name));
-        for (arg, param_ty) in args.entries.iter().zip(param_tys) {
-            state.unify_ty(&arg.get_type(), param_ty);
+        // Substitute the callee's own type parameters with this call site's labeled type_args
+        // before unifying, otherwise a parameter declared as `Ty::Var(A)` would never unify
+        // with anything, and the concrete type flowing through a generic parameter would
+        // silently escape type splitting.
+        let subst = (sig.type_params.as_slice(), type_args.args.as_slice());
+        for (arg, param_ty) in args.entries.iter().zip(&sig.tys) {
+            let expected = param_ty.substitute(subst);
+            state.unify_ty(&arg.get_type(), &expected);
         }
 
         Call {
             name: self.name.clone(),
-            type_args: self.type_args.clone(),
+            type_args,
             args,
             ty: state.label_ty(&self.ty),
         }
@@ -261,11 +277,11 @@ impl LabelAndUnify for Call {
 
 impl Rewrite for Call {
     fn rewrite(&self, table: &SplitTable) -> Self {
-        // `self.name` refers to a `Def`, which splitting never duplicates -- only its argument
+        // `self.name` refers to a `Def`, which splitting never duplicates, only its argument
         // and result types can reference split declarations.
         Call {
             name: self.name.clone(),
-            type_args: self.type_args.clone(),
+            type_args: self.type_args.rewrite(table),
             args: self.args.rewrite(table),
             ty: self.ty.rewrite(table),
         }
@@ -510,7 +526,7 @@ mod collect_tests {
 
 #[cfg(test)]
 mod label_and_unify_tests {
-    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::splitting::labeling::{DeclSignature, DeclSignatures, LabelAndUnify, SplitState};
     use crate::syntax::*;
     use crate::traits::*;
     extern crate self as core_lang;
@@ -522,8 +538,20 @@ mod label_and_unify_tests {
         let param_label = state.label_ty(&ty!(id!("Box")));
 
         let mut sigs = DeclSignatures::new();
-        sigs.insert(id!("f"), vec![param_label.clone()]);
-        sigs.insert(id!("Pack"), vec![]);
+        sigs.insert(
+            id!("f"),
+            DeclSignature {
+                type_params: vec![],
+                tys: vec![param_label.clone()],
+            },
+        );
+        sigs.insert(
+            id!("Pack"),
+            DeclSignature {
+                type_params: vec![],
+                tys: vec![],
+            },
+        );
 
         // the argument is itself a freshly constructed `Box`, independently labeled from the
         // declared parameter type in `sigs`

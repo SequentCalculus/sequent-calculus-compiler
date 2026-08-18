@@ -13,7 +13,18 @@ use crate::{
 /// A label is a fresh `Identifier` sharing the declared type's name but carrying a unique `id` prefixed with `#`, e.g. `Box#1`
 pub type Label = Identifier;
 
-pub type DeclSignatures = HashMap<Identifier, Vec<Ty>>;
+/// The canonical, labeled signature of one `Def` or `XtorSig`: its own type parameters (Def's own
+/// generics; an xtor's own existential/universal parameters, never a surrounding declaration's),
+/// alongside its labeled parameter/field types. `type_params` is needed at every call/construction
+/// site to substitute the site's own explicit `type_args` into `tys` *before* unifying against the
+/// actual argument, otherwise a field typed `Ty::Var(B)` (`B` being the xtor's own parameter)
+/// would never unify with anything, since `unify_ty` only ever matches `Ty::Decl` pairs.
+pub struct DeclSignature {
+    pub type_params: Vec<Identifier>,
+    pub tys: Vec<Ty>,
+}
+
+pub type DeclSignatures = HashMap<Identifier, DeclSignature>;
 
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
 /// union-find, and a record of each label's origin.
@@ -144,8 +155,14 @@ pub fn build_decl_signatures(
 ) -> (DeclSignatures, Vec<DataDeclaration>, Vec<CodataDeclaration>) {
     let mut sigs = DeclSignatures::new();
     for def in &prog.defs {
-        let params = label_def_signature(def, state);
-        sigs.insert(def.name.clone(), params);
+        let tys = label_def_signature(def, state);
+        sigs.insert(
+            def.name.clone(),
+            DeclSignature {
+                type_params: def.type_params.clone(),
+                tys,
+            },
+        );
     }
 
     let data_types: Vec<DataDeclaration> = prog
@@ -154,8 +171,14 @@ pub fn build_decl_signatures(
         .map(|decl| label_typedeclaration_signature(decl, state))
         .collect();
     for xtor in data_types.iter().flat_map(|decl| &decl.xtors) {
-        let field_tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
-        sigs.insert(xtor.name.clone(), field_tys);
+        let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+        sigs.insert(
+            xtor.name.clone(),
+            DeclSignature {
+                type_params: xtor.type_params.clone(),
+                tys,
+            },
+        );
     }
 
     let codata_types: Vec<CodataDeclaration> = prog
@@ -164,8 +187,14 @@ pub fn build_decl_signatures(
         .map(|decl| label_typedeclaration_signature(decl, state))
         .collect();
     for xtor in codata_types.iter().flat_map(|decl| &decl.xtors) {
-        let field_tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
-        sigs.insert(xtor.name.clone(), field_tys);
+        let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+        sigs.insert(
+            xtor.name.clone(),
+            DeclSignature {
+                type_params: xtor.type_params.clone(),
+                tys,
+            },
+        );
     }
 
     (sigs, data_types, codata_types)
@@ -473,20 +502,20 @@ mod split_state_tests {
         assert!(sigs.contains_key(&id!("f")));
         assert!(sigs.contains_key(&id!("Cons")));
         assert!(sigs.contains_key(&id!("head")));
-        assert_eq!(sigs[&id!("f")].len(), 1);
-        assert_eq!(sigs[&id!("Cons")].len(), 1);
-        assert_eq!(sigs[&id!("head")].len(), 1);
+        assert_eq!(sigs[&id!("f")].tys.len(), 1);
+        assert_eq!(sigs[&id!("Cons")].tys.len(), 1);
+        assert_eq!(sigs[&id!("head")].tys.len(), 1);
 
         // the labeled declaration trees carry the same field types as `sigs`, not a separate copy
         assert_eq!(data_types.len(), 1);
         assert_eq!(
             data_types[0].xtors[0].args.bindings[0].ty,
-            sigs[&id!("Cons")][0]
+            sigs[&id!("Cons")].tys[0]
         );
         assert_eq!(codata_types.len(), 1);
         assert_eq!(
             codata_types[0].xtors[0].args.bindings[0].ty,
-            sigs[&id!("head")][0]
+            sigs[&id!("head")].tys[0]
         );
     }
 }

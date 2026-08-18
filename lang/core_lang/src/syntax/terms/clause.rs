@@ -278,15 +278,18 @@ impl<C: Chi> LabelAndUnify for Clause<C> {
         sigs: &DeclSignatures,
         scope: &TypingContext,
     ) -> Self {
-        let field_tys = sigs
+        let sig = sigs
             .get(&self.xtor)
             .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.xtor.name));
 
+        // `sig.tys` is left unsubstituted here (unlike Xtor/Call): a clause introduces fresh,
+        // abstract names for the matched xtor's own existential/universal type parameters,
+        //it doesn't know a concrete instantiation to substitute in.
         let labeled_bindings: Vec<ContextBinding> = self
             .context
             .bindings
             .iter()
-            .zip(field_tys)
+            .zip(&sig.tys)
             .map(|(binding, field_ty)| {
                 let ty = state.label_ty(&binding.ty);
                 state.unify_ty(&ty, field_ty);
@@ -315,7 +318,7 @@ impl<C: Chi> LabelAndUnify for Clause<C> {
 
 #[cfg(test)]
 mod label_and_unify_tests {
-    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::splitting::labeling::{DeclSignature, DeclSignatures, LabelAndUnify, SplitState};
     use crate::syntax::*;
     extern crate self as core_lang;
     use core_macros::{bind, clause, covar, cut, id, prd, ty, var};
@@ -326,7 +329,13 @@ mod label_and_unify_tests {
         let field_label = state.label_ty(&ty!(id!("Box")));
 
         let mut sigs = DeclSignatures::new();
-        sigs.insert(id!("Cons"), vec![field_label.clone()]);
+        sigs.insert(
+            id!("Cons"),
+            DeclSignature {
+                type_params: vec![],
+                tys: vec![field_label.clone()],
+            },
+        );
 
         // `a` is the outer continuation the clause body cuts against; it must already be in
         // scope, exactly like it would be for a real match's surrounding context.

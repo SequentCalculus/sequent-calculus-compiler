@@ -337,19 +337,35 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
         sigs: &DeclSignatures,
         scope: &TypingContext,
     ) -> Self {
+        // Label this occurrence's own explicit type arguments (instantiating the xtor's own
+        // existential/universal type parameters, e.g. `Pack[List[int]](...)`) before using them.
+        let type_args = TypeArgs {
+            args: self
+                .type_args
+                .args
+                .iter()
+                .map(|a| state.label_ty(a))
+                .collect(),
+        };
         let args = self.args.label_and_unify(state, sigs, scope);
 
-        let field_tys = sigs
+        let sig = sigs
             .get(&self.name)
             .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.name.name));
-        for (arg, field_ty) in args.entries.iter().zip(field_tys) {
-            state.unify_ty(&arg.get_type(), field_ty);
+        // Substitute the xtor's own type parameters with this occurrence's labeled type_args
+        // before unifying, otherwise a field declared as `Ty::Var(B)` would never unify with
+        // anything, and the concrete type flowing through an existential/universal field would
+        // silently escape type splitting.
+        let subst = (sig.type_params.as_slice(), type_args.args.as_slice());
+        for (arg, field_ty) in args.entries.iter().zip(&sig.tys) {
+            let expected = field_ty.substitute(subst);
+            state.unify_ty(&arg.get_type(), &expected);
         }
 
         Xtor {
             prdcns: self.prdcns.clone(),
             name: self.name.clone(),
-            type_args: self.type_args.clone(),
+            type_args,
             args,
             ty: state.label_ty(&self.ty),
         }
@@ -362,7 +378,7 @@ impl<C: Chi> Rewrite for Xtor<C> {
         Xtor {
             prdcns: self.prdcns.clone(),
             name: table.resolve_xtor_name(&self.name, owner_label).clone(),
-            type_args: self.type_args.clone(),
+            type_args: self.type_args.rewrite(table),
             args: self.args.rewrite(table),
             ty: self.ty.rewrite(table),
         }
@@ -410,7 +426,7 @@ mod xtor_tests {
 
 #[cfg(test)]
 mod label_and_unify_tests {
-    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::splitting::labeling::{DeclSignature, DeclSignatures, LabelAndUnify, SplitState};
     use crate::syntax::*;
     use crate::traits::*;
     extern crate self as core_lang;
@@ -422,8 +438,20 @@ mod label_and_unify_tests {
         let field_label = state.label_ty(&ty!(id!("Box")));
 
         let mut sigs = DeclSignatures::new();
-        sigs.insert(id!("Wrap"), vec![field_label.clone()]);
-        sigs.insert(id!("Pack"), vec![]);
+        sigs.insert(
+            id!("Wrap"),
+            DeclSignature {
+                type_params: vec![],
+                tys: vec![field_label.clone()],
+            },
+        );
+        sigs.insert(
+            id!("Pack"),
+            DeclSignature {
+                type_params: vec![],
+                tys: vec![],
+            },
+        );
 
         // the argument is itself a freshly constructed `Box`, independently labeled from the
         // declared field type in `sigs`
