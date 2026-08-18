@@ -7,7 +7,9 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
-use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::labeling::{
+    DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause,
+};
 use crate::splitting::rewrite::{Rewrite, label_in, rewrite_clause};
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
@@ -257,10 +259,23 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         sigs: &DeclSignatures,
         scope: &TypingContext,
     ) -> Self {
+        // `ty` is the concrete type of the matched/constructed value (e.g. `Fun[i64, i64]`),
+        // its own type_args carry the enclosing declaration's own type parameters' concrete
+        // instantiation, which every clause needs to substitute into its binder types (see
+        // `label_and_unify_clause`), since a `Clause` itself carries no `.ty` to derive this from.
+        let ty = state.label_ty(&self.ty);
+        let decl_type_args: Vec<Ty> = match &ty {
+            Ty::Decl { type_args, .. } => type_args.args.clone(),
+            _ => vec![],
+        };
         XCase {
             prdcns: self.prdcns.clone(),
-            clauses: self.clauses.label_and_unify(state, sigs, scope),
-            ty: state.label_ty(&self.ty),
+            clauses: self
+                .clauses
+                .iter()
+                .map(|clause| label_and_unify_clause(clause, state, sigs, scope, &decl_type_args))
+                .collect(),
+            ty,
         }
     }
 }

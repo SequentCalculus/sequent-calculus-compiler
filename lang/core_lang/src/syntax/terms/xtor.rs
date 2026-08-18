@@ -347,18 +347,31 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
                 .map(|a| state.label_ty(a))
                 .collect(),
         };
+        // `ty` is the concrete type of the whole xtor value (e.g. `Fun[i64, Fun[i64, i64]]` for a
+        // destructor consumption), its own type_args carry the enclosing declaration's own
+        // type parameters concrete instantiation, needed below alongside the xtor's own.
+        let ty = state.label_ty(&self.ty);
+        let decl_type_args: &[Ty] = match &ty {
+            Ty::Decl { type_args, .. } => &type_args.args,
+            _ => &[],
+        };
         let args = self.args.label_and_unify(state, sigs, scope);
 
         let sig = sigs
             .get(&self.name)
             .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.name.name));
-        // Substitute the xtor's own type parameters with this occurrence's labeled type_args
-        // before unifying, otherwise a field declared as `Ty::Var(B)` would never unify with
-        // anything, and the concrete type flowing through an existential/universal field would
-        // silently escape type splitting.
-        let subst = (sig.type_params.as_slice(), type_args.args.as_slice());
-        for (arg, field_ty) in args.entries.iter().zip(&sig.tys) {
-            let expected = field_ty.substitute(subst);
+        // Substitute both the enclosing declaration's own type parameters (e.g. `Fun`'s `A`, `B`)
+        // and the xtor's own existential/universal ones (e.g. `Pack`'s own `B`) into the declared
+        // field type before unifying, mirrors the identical double substitution in
+        // `check_xcase_against_decl`. Without this, a field declared as `Ty::Var(...)` would never
+        // unify with anything, and the concrete type flowing through it would silently escape type
+        // splitting.
+        let expected_tys = sig.tys.iter().map(|field_ty| {
+            field_ty
+                .substitute((&sig.decl_type_params, decl_type_args))
+                .substitute((&sig.own_type_params, &type_args.args))
+        });
+        for (arg, expected) in args.entries.iter().zip(expected_tys) {
             state.unify_ty(&arg.get_type(), &expected);
         }
 
@@ -367,7 +380,7 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
             name: self.name.clone(),
             type_args,
             args,
-            ty: state.label_ty(&self.ty),
+            ty,
         }
     }
 }
@@ -441,14 +454,16 @@ mod label_and_unify_tests {
         sigs.insert(
             id!("Wrap"),
             DeclSignature {
-                type_params: vec![],
+                decl_type_params: vec![],
+                own_type_params: vec![],
                 tys: vec![field_label.clone()],
             },
         );
         sigs.insert(
             id!("Pack"),
             DeclSignature {
-                type_params: vec![],
+                decl_type_params: vec![],
+                own_type_params: vec![],
                 tys: vec![],
             },
         );

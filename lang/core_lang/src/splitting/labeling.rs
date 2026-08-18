@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     splitting::union_find::UnionFind,
     syntax::{
-        CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
+        Chi, Clause, CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
         TypingContext,
         declaration::{Polarity, TypeDeclaration, XtorSig},
         types::TypeArgs,
@@ -13,14 +13,22 @@ use crate::{
 /// A label is a fresh `Identifier` sharing the declared type's name but carrying a unique `id` prefixed with `#`, e.g. `Box#1`
 pub type Label = Identifier;
 
-/// The canonical, labeled signature of one `Def` or `XtorSig`: its own type parameters (Def's own
-/// generics; an xtor's own existential/universal parameters, never a surrounding declaration's),
-/// alongside its labeled parameter/field types. `type_params` is needed at every call/construction
-/// site to substitute the site's own explicit `type_args` into `tys` *before* unifying against the
-/// actual argument, otherwise a field typed `Ty::Var(B)` (`B` being the xtor's own parameter)
-/// would never unify with anything, since `unify_ty` only ever matches `Ty::Decl` pairs.
+/// The canonical, labeled signature of one `Def` or `XtorSig`, alongside its labeled
+/// parameter/field types. Both `type_params` fields are needed at every call/construction site to
+/// substitute the site's own concrete instantiation into `tys` *before* unifying against the
+/// actual argument, otherwise a field typed `Ty::Var(...)` would never unify with anything,
+/// since `unify_ty` only ever matches `Ty::Decl` pairs. There are two independent levels of
+/// generics an xtor's field type can reference (mirroring the double substitution in
+/// `check_xcase_against_decl`):
 pub struct DeclSignature {
-    pub type_params: Vec<Identifier>,
+    /// The *enclosing* data/codata declaration's own type parameters, e.g. `Fun`'s `A, B` for its
+    /// `apply` dtor's `x: A`. Always empty for a `Def` entry, a `Def` has no enclosing
+    /// declaration, its own `type_params` is the only level.
+    pub decl_type_params: Vec<Identifier>,
+    /// This entry's own type parameters: a `Def`'s own generics, or an xtor's own
+    /// existential/universal parameters (distinct from the enclosing declaration's, e.g. `Pack`'s
+    /// own `B` in `Pack[B](val: B)`).
+    pub own_type_params: Vec<Identifier>,
     pub tys: Vec<Ty>,
 }
 
@@ -159,7 +167,8 @@ pub fn build_decl_signatures(
         sigs.insert(
             def.name.clone(),
             DeclSignature {
-                type_params: def.type_params.clone(),
+                decl_type_params: vec![],
+                own_type_params: def.type_params.clone(),
                 tys,
             },
         );
@@ -170,15 +179,18 @@ pub fn build_decl_signatures(
         .iter()
         .map(|decl| label_typedeclaration_signature(decl, state))
         .collect();
-    for xtor in data_types.iter().flat_map(|decl| &decl.xtors) {
-        let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
-        sigs.insert(
-            xtor.name.clone(),
-            DeclSignature {
-                type_params: xtor.type_params.clone(),
-                tys,
-            },
-        );
+    for decl in &data_types {
+        for xtor in &decl.xtors {
+            let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+            sigs.insert(
+                xtor.name.clone(),
+                DeclSignature {
+                    decl_type_params: decl.type_params.clone(),
+                    own_type_params: xtor.type_params.clone(),
+                    tys,
+                },
+            );
+        }
     }
 
     let codata_types: Vec<CodataDeclaration> = prog
@@ -186,15 +198,18 @@ pub fn build_decl_signatures(
         .iter()
         .map(|decl| label_typedeclaration_signature(decl, state))
         .collect();
-    for xtor in codata_types.iter().flat_map(|decl| &decl.xtors) {
-        let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
-        sigs.insert(
-            xtor.name.clone(),
-            DeclSignature {
-                type_params: xtor.type_params.clone(),
-                tys,
-            },
-        );
+    for decl in &codata_types {
+        for xtor in &decl.xtors {
+            let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
+            sigs.insert(
+                xtor.name.clone(),
+                DeclSignature {
+                    decl_type_params: decl.type_params.clone(),
+                    own_type_params: xtor.type_params.clone(),
+                    tys,
+                },
+            );
+        }
     }
 
     (sigs, data_types, codata_types)
@@ -258,6 +273,58 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
         scope: &TypingContext,
     ) -> Self {
         self.as_ref().map(|x| x.label_and_unify(state, sigs, scope))
+    }
+}
+
+/// Labels and unifies one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every
+/// other node, a `Clause` carries no `.ty` of its own, the enclosing declaration's own
+/// concrete type arguments (e.g. `Fun`'s `A`, `B`) are only known from the owning `XCase`'s own
+/// `.ty`, so the caller must pass them in (mirrors [`crate::splitting::rewrite::rewrite_clause`],
+/// which needs the analogous `owner_label` for the same structural reason).
+pub fn label_and_unify_clause<C: Chi>(
+    clause: &Clause<C>,
+    state: &mut SplitState,
+    sigs: &DeclSignatures,
+    scope: &TypingContext,
+    decl_type_args: &[Ty],
+) -> Clause<C> {
+    let sig = sigs
+        .get(&clause.xtor)
+        .unwrap_or_else(|| panic!("missing signature for xtor: {}", clause.xtor.name));
+
+    // Substitute the enclosing declaration's own type parameters (e.g. `Fun`'s `A`, `B`) using
+    // the concrete arguments from the matched/constructed value's own type, mirrors the
+    // identical substitution in `check_xcase_against_decl`. The xtor's own existential/universal
+    // parameters are deliberately not substituted here (unlike Xtor/Call): a clause introduces
+    // fresh, abstract names for those instead, it doesn't know a concrete instantiation for them.
+    let labeled_bindings: Vec<ContextBinding> = clause
+        .context
+        .bindings
+        .iter()
+        .zip(&sig.tys)
+        .map(|(binding, field_ty)| {
+            let expected = field_ty.substitute((&sig.decl_type_params, decl_type_args));
+            let ty = state.label_ty(&binding.ty);
+            state.unify_ty(&ty, &expected);
+            ContextBinding {
+                var: binding.var.clone(),
+                chi: binding.chi.clone(),
+                ty,
+            }
+        })
+        .collect();
+
+    let mut extended_scope = scope.clone();
+    extended_scope.bindings.extend(labeled_bindings.clone());
+
+    Clause {
+        prdcns: clause.prdcns.clone(),
+        xtor: clause.xtor.clone(),
+        type_params: clause.type_params.clone(),
+        context: TypingContext {
+            bindings: labeled_bindings,
+        },
+        body: clause.body.label_and_unify(state, sigs, &extended_scope),
     }
 }
 

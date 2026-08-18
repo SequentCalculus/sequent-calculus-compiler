@@ -260,7 +260,7 @@ impl LabelAndUnify for Call {
         // before unifying, otherwise a parameter declared as `Ty::Var(A)` would never unify
         // with anything, and the concrete type flowing through a generic parameter would
         // silently escape type splitting.
-        let subst = (sig.type_params.as_slice(), type_args.args.as_slice());
+        let subst = (sig.own_type_params.as_slice(), type_args.args.as_slice());
         for (arg, param_ty) in args.entries.iter().zip(&sig.tys) {
             let expected = param_ty.substitute(subst);
             state.unify_ty(&arg.get_type(), &expected);
@@ -541,14 +541,16 @@ mod label_and_unify_tests {
         sigs.insert(
             id!("f"),
             DeclSignature {
-                type_params: vec![],
+                decl_type_params: vec![],
+                own_type_params: vec![],
                 tys: vec![param_label.clone()],
             },
         );
         sigs.insert(
             id!("Pack"),
             DeclSignature {
-                type_params: vec![],
+                decl_type_params: vec![],
+                own_type_params: vec![],
                 tys: vec![],
             },
         );
