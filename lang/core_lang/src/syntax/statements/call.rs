@@ -13,6 +13,7 @@ use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
+use crate::syntax::arguments::Argument;
 use crate::syntax::types::TypeArgs;
 use crate::syntax::*;
 use crate::traits::*;
@@ -266,11 +267,23 @@ impl LabelAndUnify for Call {
             state.unify_ty(&arg.get_type(), &expected);
         }
 
+        // `ty` is always the same type as the return continuation (the last consumer argument),
+        // not an independent occurrence. Reuse its label instead of minting a fresh one.
+        let ty = args
+            .entries
+            .iter()
+            .rev()
+            .find_map(|arg| match arg {
+                Argument::Consumer(term) => Some(term.get_type()),
+                Argument::Producer(_) => None,
+            })
+            .unwrap_or_else(|| state.label_ty(&self.ty));
+
         Call {
             name: self.name.clone(),
             type_args,
             args,
-            ty: state.label_ty(&self.ty),
+            ty,
         }
     }
 }
