@@ -106,8 +106,8 @@ fn build_declaration_copy<P: Polarity + Clone>(
 }
 
 /// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
-/// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons@1` only ever ends up
-/// inside `List@1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
+/// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons__1` only ever ends up
+/// inside `List__1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
 /// in `build_declaration_copy`.
 fn split_xtor_sig<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
@@ -208,8 +208,8 @@ mod rewrite_tests {
             panic!("expected Ty::Decl");
         };
         assert_eq!(
-            ty_name.name.split('@').nth(1),
-            rewritten.name.name.split('@').nth(1)
+            ty_name.name.split("__").nth(1),
+            rewritten.name.name.split("__").nth(1)
         );
     }
 }

@@ -50,7 +50,7 @@ impl SplitTable {
                 });
                 ty_names.insert(
                     label.clone(),
-                    Identifier::new(format!("{}@{}", origin.name, idx + 1)),
+                    Identifier::new(format!("{}__{}", origin.name, idx + 1)),
                 );
             }
 
@@ -131,7 +131,7 @@ impl SplitTable {
 
 /// Registers the split-copy name of every xtor of `decl`, for every label in `decl.name`'s
 /// equivalence classes, sharing the same per-class index assigned to the declaration itself so
-/// e.g. `Cons@1` is always paired with `List@1`.
+/// e.g. `Cons__1` is always paired with `List__1`.
 fn register_xtor_names<P: Polarity>(
     decl: &TypeDeclaration<P>,
     labels_by_origin: &HashMap<Identifier, Vec<Label>>,
@@ -153,7 +153,7 @@ fn register_xtor_names<P: Polarity>(
             let name = if roots.len() == 1 {
                 xtor.name.clone()
             } else {
-                Identifier::new(format!("{}@{}", xtor.name.name, idx + 1))
+                Identifier::new(format!("{}__{}", xtor.name.name, idx + 1))
             };
             xtor_names.insert((xtor.name.clone(), label.clone()), name);
         }
@@ -227,8 +227,8 @@ mod split_table_tests {
         let xtor_name_a = table.resolve_xtor_name(&id!("Wrap"), &a);
         // whichever suffix `Box` got for label `a`, `Wrap` must carry the identical suffix
         assert_eq!(
-            ty_name_a.name.split('@').nth(1),
-            xtor_name_a.name.split('@').nth(1)
+            ty_name_a.name.split("__").nth(1),
+            xtor_name_a.name.split("__").nth(1)
         );
     }
 
