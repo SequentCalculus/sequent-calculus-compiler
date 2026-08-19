@@ -50,7 +50,10 @@ impl SplitTable {
                 });
                 ty_names.insert(
                     label.clone(),
-                    Identifier::new(format!("{}__{}", origin.name, idx + 1)),
+                    Identifier {
+                        name: format!("{}__{}", origin.name, idx + 1),
+                        id: origin.id,
+                    },
                 );
             }
 
@@ -153,7 +156,13 @@ fn register_xtor_names<P: Polarity>(
             let name = if roots.len() == 1 {
                 xtor.name.clone()
             } else {
-                Identifier::new(format!("{}__{}", xtor.name.name, idx + 1))
+                // Preserve the xtor's own unique `id` (assigned by `fresh_identifier` in
+                // `fun2core::declaration::compile_ctor`/`compile_dtor` specifically to keep an
+                // xtor's name distinct from its owning declaration's, e.g. `Pair { Pair(...) }`)
+                Identifier {
+                    name: format!("{}__{}", xtor.name.name, idx + 1),
+                    id: xtor.name.id,
+                }
             };
             xtor_names.insert((xtor.name.clone(), label.clone()), name);
         }
