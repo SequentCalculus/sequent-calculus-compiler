@@ -85,7 +85,7 @@ impl fmt::Display for GrowingCycle {
 /// applied, or `None` if the graph is safe to solve as-is.
 pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
     let mut cycles = Vec::new();
-    let mut seen_cycle_keys: HashSet<Vec<Node>> = HashSet::new();
+    let mut seen_cycle_keys: HashSet<Vec<(Node, Option<Ty>)>> = HashSet::new();
 
     for edges in graph.edges.values() {
         for edge in edges {
@@ -119,8 +119,8 @@ pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
                     }
                     let cycle = GrowingCycle { steps };
 
-                    // deduplicate cycles by their canonical node sequence
-                    let key = canonical_cycle_key(&cycle.nodes());
+                    // deduplicate cycles by their canonical (node, applied constructor) sequence
+                    let key = canonical_cycle_key(&cycle.steps);
                     if seen_cycle_keys.insert(key) {
                         cycles.push(cycle);
                     }
@@ -186,32 +186,50 @@ fn edge_applied_template(edge: &Edge) -> Option<Ty> {
     })
 }
 
-/// Computes a canonical key for a cycle of nodes (independent of the starting node).
+/// Computes a canonical key for a growing cycle (independent of the starting node), pairing each
+/// node with the constructor applied on the edge used to *leave* it. Including the applied
+/// constructors (not just the node sequence) matters because two distinct growing edges can close
+/// a cycle over the very same node sequence, e.g. a def's own shared type parameter `C` reached
+/// by two different recursive calls that each wrap it in a different constructor (`Box[C] ⊑ C`
+/// and `Bag[C] ⊑ C`, both self-loops on node `C`). Deduplicating by node sequence alone would
+/// collapse these into a single cycle and silently drop one constructor from
+/// [`GrowingCycle::erasure_targets`].
 ///
-/// For example, [A, B, C, A] and [B, C, A, B] will both yield the same minimal
-/// rotated node sequence, e.g., [A, B, C].
-fn canonical_cycle_key(nodes: &[Node]) -> Vec<Node> {
-    if nodes.len() <= 1 {
-        return nodes.to_vec();
+/// For example, `[A, B, C, A]`/`[B, C, A, B]` with matching applied constructors on every hop
+/// yield the same minimal rotated sequence.
+fn canonical_cycle_key(steps: &[CycleStep]) -> Vec<(Node, Option<Ty>)> {
+    if steps.len() <= 1 {
+        return steps.iter().map(|s| (s.node.clone(), s.applied.clone())).collect();
     }
 
-    let elems = if nodes.first() == nodes.last() {
-        &nodes[..nodes.len() - 1]
+    // The path always starts and ends at the same node (see `find_all_growing_cycles`); drop the
+    // duplicated closing node here.
+    let elems = if steps.first().map(|s| &s.node) == steps.last().map(|s| &s.node) {
+        &steps[..steps.len() - 1]
     } else {
-        nodes
+        steps
     };
 
     if elems.is_empty() {
         return Vec::new();
     }
 
-    let n = elems.len();
-    let mut min_rotation = elems.to_vec();
+    let pairs: Vec<(Node, Option<Ty>)> = elems
+        .iter()
+        .enumerate()
+        .map(|(i, step)| {
+            let applied = steps.get(i + 1).and_then(|next| next.applied.clone());
+            (step.node.clone(), applied)
+        })
+        .collect();
+
+    let n = pairs.len();
+    let mut min_rotation = pairs.clone();
 
     for i in 1..n {
         let mut rotated = Vec::with_capacity(n);
-        rotated.extend_from_slice(&elems[i..]);
-        rotated.extend_from_slice(&elems[..i]);
+        rotated.extend_from_slice(&pairs[i..]);
+        rotated.extend_from_slice(&pairs[..i]);
         if rotated < min_rotation {
             min_rotation = rotated;
         }
@@ -361,6 +379,31 @@ mod growing_cycle_tests {
         set.insert(FlowConstraint::from((
             vec![ty!(id!("Bag"), [tvar!(id!("D", 4))])],
             vec![id!("D", 4)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+
+        assert_eq!(cycles.len(), 2);
+        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+        assert_eq!(all_targets, HashSet::from([id!("Box"), id!("Bag")]));
+    }
+
+    #[test]
+    fn two_growing_self_loops_on_the_very_same_node_are_not_deduplicated() {
+        // Same identifier `C` used as the target of two different growing self-loops -- e.g. a
+        // single def's own shared type parameter, reached via two different recursive calls that
+        // each wrap it in a different constructor. Deduplicating by node sequence alone would
+        // collapse these into one cycle and silently drop one constructor from
+        // `erasure_targets()`.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Box"), [tvar!(id!("C", 1))])],
+            vec![id!("C", 1)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Bag"), [tvar!(id!("C", 1))])],
+            vec![id!("C", 1)],
         )));
 
         let graph = ConstraintGraph::from(set);
