@@ -4,8 +4,12 @@ use printer::{Print, PrintCfg};
 
 use crate::{
     mono::{
-        constraint_graph::ConstraintGraph, constraints::ConstraintCollector, errors::MonoError,
-        solver::solve_with_erasure, specialize::specialize_program,
+        constraint_graph::ConstraintGraph,
+        constraints::{ConstraintCollector, FlowConstraintSet},
+        errors::MonoError,
+        growing_cycle::find_all_growing_cycles,
+        solver::solve_with_erasure,
+        specialize::specialize_program,
     },
     splitting::split_program,
     syntax::program::Prog,
@@ -22,25 +26,32 @@ pub mod position;
 pub mod solver;
 pub mod specialize;
 
-/// Monomorphizes a program and returns the monomorphized program along with the constraint graph.
+/// Type-checks and collects the flow constraints of `program`. The `GlobalEnv` only borrows
+/// `program`'s own declaration vectors, so it must be rebuilt for every distinct `Prog` value.
+/// In particular after type splitting, which renames declarations and xtors.
+fn constraints_of(program: &Prog) -> FlowConstraintSet {
+    let env = GlobalEnv::new(&program.data_types, &program.codata_types, &program.defs);
+    program.collect_constraints(&env).unwrap()
+}
+
+/// Monomorphizes a program and returns the monomorphized program.
 pub fn monomorphize_program(
     program: Prog,
     debug: bool,
     viz_path: Option<Option<std::path::PathBuf>>,
 ) -> Result<Prog, MonoError> {
-    // Type-splitting preprocessing: refines which physical declaration each occurrence of a
-    // declared type points at (see `crate::splitting`), so the constraint collection/solving below
-    // sees a more finely divided, but still fully polymorphic, program and finds no more, but
-    // possibly fewer, growing cycles.
-    let program = split_program(&program);
+    let constraints = constraints_of(&program);
+    let graph = ConstraintGraph::from(constraints.clone());
 
-    let constraints = program
-        .collect_constraints(&GlobalEnv::new(
-            &program.data_types,
-            &program.codata_types,
-            &program.defs,
-        ))
-        .unwrap();
+    let growing_cycle_found = !find_all_growing_cycles(&graph).is_empty();
+    let (program, constraints, graph) = if growing_cycle_found {
+        let program = split_program(&program);
+        let constraints = constraints_of(&program);
+        let graph = ConstraintGraph::from(constraints.clone());
+        (program, constraints, graph)
+    } else {
+        (program, constraints, graph)
+    };
 
     let forced_set_cfg = PrintCfg {
         width: 0,
@@ -50,10 +61,17 @@ pub fn monomorphize_program(
     };
 
     if debug {
-        println!(
-            "Typesplit Program: \n{}",
-            program.print_to_colored_string(Some(&forced_set_cfg))
-        );
+        if growing_cycle_found {
+            println!(
+                "Growing cycle found -- ran type splitting:\n{}",
+                program.print_to_colored_string(Some(&forced_set_cfg))
+            );
+        } else {
+            println!(
+                "No growing cycle found -- skipped type splitting:\n{}",
+                program.print_to_colored_string(Some(&forced_set_cfg))
+            );
+        }
 
         println!(
             "Flow Constraints: \n{}",
@@ -62,8 +80,6 @@ pub fn monomorphize_program(
     }
 
     let (solution, erased_decls, erased_constraints) = solve_with_erasure(constraints.clone());
-
-    let graph = ConstraintGraph::from(constraints.clone());
 
     if let Some(path) = viz_path {
         graph.render_as(graph_viz::OutputFormat::Png, path).unwrap();
