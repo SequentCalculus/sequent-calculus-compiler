@@ -199,7 +199,10 @@ fn edge_applied_template(edge: &Edge) -> Option<Ty> {
 /// yield the same minimal rotated sequence.
 fn canonical_cycle_key(steps: &[CycleStep]) -> Vec<(Node, Option<Ty>)> {
     if steps.len() <= 1 {
-        return steps.iter().map(|s| (s.node.clone(), s.applied.clone())).collect();
+        return steps
+            .iter()
+            .map(|s| (s.node.clone(), s.applied.clone()))
+            .collect();
     }
 
     // The path always starts and ends at the same node (see `find_all_growing_cycles`); drop the
