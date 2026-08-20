@@ -14,8 +14,7 @@ use crate::syntax::{Def, Prog, TypingContext};
 /// one physical copy of each data/codata declaration per resulting equivalence class and rewrites
 /// every reference to point at the correct copy (Phase 2, [`rewrite`]). Splitting is a pure
 /// bookkeeping refinement: it never changes program semantics, only how many physical
-/// declarations later phases see -- every `Def`/declaration stays fully polymorphic (`type_params`
-/// untouched), it just runs the existing, unmodified monomorphization pipeline over a more finely
+/// declarations later phases see. It just runs the existing, unmodified monomorphization pipeline over a more finely
 /// divided program, so it finds no more, but possibly fewer, growing cycles.
 pub fn split_program(prog: &Prog) -> Prog {
     let mut state = SplitState::default();
@@ -34,13 +33,19 @@ pub fn split_program(prog: &Prog) -> Prog {
         &labeled_codata,
     );
 
+    let mut max_id = prog.max_id;
+
+    // Physical copies of a split declaration are alpha-renamed here (fresh `type_params` ids),
+    // since the constraint graph indexes its nodes directly by these identifiers, unrenamed
+    // copies would collapse onto the same node, leaving splitting unable to ever separate a
+    // growing cycle (see `splitting::rewrite::build_declaration_copy`).
     let data_types = labeled_data
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table))
+        .flat_map(|decl| split_declaration(decl, &table, &mut max_id))
         .collect();
     let codata_types = labeled_codata
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table))
+        .flat_map(|decl| split_declaration(decl, &table, &mut max_id))
         .collect();
     let defs = labeled_defs.iter().map(|def| def.rewrite(&table)).collect();
 
@@ -48,7 +53,7 @@ pub fn split_program(prog: &Prog) -> Prog {
         defs,
         data_types,
         codata_types,
-        max_id: prog.max_id,
+        max_id,
     }
 }
 
