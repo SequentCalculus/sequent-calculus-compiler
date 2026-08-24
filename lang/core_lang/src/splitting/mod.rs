@@ -1,4 +1,5 @@
 pub mod labeling;
+pub mod reachability;
 pub mod rewrite;
 pub mod split_table;
 pub mod union_find;
@@ -133,9 +134,9 @@ mod split_program_tests {
         }
     }
 
-    /// Two defs that both construct a `Box` but pass it through the *same* shared call site
+    /// Two defs that both construct a `Box` but pass it through the same shared call site
     /// (`use_box`'s one canonical parameter label unifies every call site's argument against
-    /// itself) end up in a single equivalence class -- `Box` stays as one, unrenamed declaration.
+    /// itself) end up in a single equivalence class, `Box` stays as one, unrenamed declaration.
     /// Splitting only ever separates occurrences the type system doesn't already force together.
     #[test]
     fn split_program_keeps_boxes_merged_through_a_shared_call_site() {
