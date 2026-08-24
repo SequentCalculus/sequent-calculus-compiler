@@ -10,6 +10,7 @@ use crate::syntax::*;
 use crate::typing::*;
 
 use std::collections::HashMap;
+use std::fmt;
 
 /// This enum encodes the monomorphic types of AxCut. They are either integers, or instances of
 /// user-declared type templates, or, during typechecking, type parameters standing for a
@@ -35,12 +36,21 @@ pub enum Ty {
         /// corresponding template, for a type parameter this is empty.
         type_args: TypeArgs,
     },
+    /// A Type Variable used for type inference.
+    /// Should only be used until type inference, and not occur after that
+    TypeVar {
+        /// the optional SourceSpan, if it is part of (Co-)Data defintion
+        #[derivative(PartialEq = "ignore")]
+        span: Option<SourceSpan>,
+        name: Name,
+    },
 }
 
 impl Ty {
     /// This function checks the well-formedness of a type during typechecking. For a user-declared
     /// type it creates a monomorphic instance of the corresponding template if necessary. The type
     /// must not be a type parameter.
+    // TODO: Create costum function for Type Inference, to report better errors etc.
     pub fn check(
         &self,
         span: &Option<SourceSpan>,
@@ -71,6 +81,12 @@ impl Ty {
                     },
                 }
             }
+            Ty::TypeVar { name, .. } => {
+                panic!(
+                    "The type variable {} was encounterd while checking a type.",
+                    name
+                );
+            }
         }
     }
 
@@ -100,6 +116,7 @@ impl Ty {
                     }
                 }
             },
+            Ty::TypeVar { .. } => Ok(()),
         }
     }
 
@@ -119,30 +136,125 @@ impl Ty {
         }
     }
 
+    /// This function creates a type variable, without a span
+    /// - `name` is the variable name
+    ///
+    /// To create a type variable with a span use the direct Struct constructor
+    pub fn mk_ty_var(name: &str) -> Self {
+        Ty::TypeVar {
+            span: None,
+            name: name.to_string(),
+        }
+    }
+
     /// This function substitutes type parameters with monomorphic types inside a given type.
+    /// If a type variable could not be found it is not changed
     /// - `mappings` contains the substitutions to perform.
     pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {
         match self {
             Ty::I64 { .. } => self,
+            // a type decleration could have a type variable in the type args
             Ty::Decl {
                 span,
                 name,
                 type_args,
-            } => match mappings.get(&name) {
-                Some(ty) => ty.clone(),
-                None => Ty::Decl {
-                    span,
-                    name,
-                    type_args: TypeArgs {
-                        span: type_args.span,
-                        args: type_args
-                            .args
-                            .into_iter()
-                            .map(|ty| ty.subst_ty(mappings))
-                            .collect(),
-                    },
+            } => Ty::Decl {
+                span,
+                name,
+                type_args: TypeArgs {
+                    span: type_args.span,
+                    args: type_args
+                        .args
+                        .into_iter()
+                        .map(|ty| ty.subst_ty(mappings))
+                        .collect(),
                 },
             },
+            Ty::TypeVar { span, name } => match mappings.get(&name) {
+                Some(ty) => ty.clone(),
+                None => Ty::TypeVar { span, name },
+            },
+        }
+    }
+
+    /// This function substitutes type parameters with types from the mapping in-place
+    /// If no type is found for a type variable it is not changed
+    /// - `mappings` contains the substitions to perform
+    pub fn mut_subst_ty(&mut self, mappings: &HashMap<Name, Ty>) {
+        match self {
+            Ty::I64 { .. } => {}
+            Ty::Decl { type_args, .. } => {
+                for ty in &mut type_args.args {
+                    ty.mut_subst_ty(mappings);
+                }
+            }
+            Ty::TypeVar { name, .. } => {
+                if let Some(new_ty) = mappings.get(name) {
+                    *self = new_ty.clone();
+                }
+            }
+        }
+    }
+
+    /// special case of the type substitution with only one type variable to substitute by
+    pub fn mut_subst_one_ty(&mut self, new_name: &Name, new_ty: &Ty) {
+        match self {
+            Ty::I64 { .. } => {}
+            Ty::Decl { type_args, .. } => {
+                for ty in &mut type_args.args {
+                    ty.mut_subst_one_ty(new_name, new_ty);
+                }
+            }
+            Ty::TypeVar { name, .. } => {
+                if name == new_name {
+                    *self = new_ty.clone();
+                }
+            }
+        }
+    }
+
+    /// This function collects all type variable names in a type
+    pub fn collect_var_names(&self) -> Vec<Name> {
+        match self {
+            Ty::I64 { .. } => vec![],
+            Ty::Decl { type_args, .. } => type_args.args.iter().fold(Vec::new(), |mut list, ty| {
+                list.append(&mut ty.collect_var_names());
+                list
+            }),
+            Ty::TypeVar { name, .. } => vec![name.to_string()],
+        }
+    }
+
+    /// converting a type declaration to a type variable if it is part of a TypeContext
+    pub fn identifiy_type_vars(&mut self, type_params: &TypeContext) {
+        match self {
+            Ty::I64 { .. } => {}
+            Ty::Decl {
+                span,
+                name,
+                type_args,
+            } => {
+                if type_params.contains_binding(name) {
+                    // this decleration is actually a Type Variable
+                    *self = Ty::TypeVar {
+                        name: name.to_string(),
+                        span: *span,
+                    }
+                } else {
+                    for type_arg in &mut type_args.args {
+                        type_arg.identifiy_type_vars(type_params);
+                    }
+                }
+            }
+            Ty::TypeVar { .. } => {}
+        }
+    }
+
+    pub fn get_span(&self) -> Option<SourceSpan> {
+        match self {
+            Ty::I64 { span } => *span,
+            Ty::Decl { span, .. } => *span,
+            Ty::TypeVar { span, .. } => *span,
         }
     }
 }
@@ -249,6 +361,21 @@ impl Print for Ty {
             Ty::Decl {
                 name, type_args, ..
             } => alloc.typ(name).append(type_args.print(cfg, alloc)),
+            Ty::TypeVar { name, .. } => alloc.typ(name),
+        }
+    }
+}
+
+impl fmt::Display for Ty {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Ty::I64 { .. } => write!(f, "I64"),
+            Ty::Decl {
+                name, type_args, ..
+            } => write!(f, "{}[{}]", name, type_args.print_to_string(None)),
+            Ty::TypeVar { name, .. } => {
+                write!(f, "TypeVar:{}", name)
+            }
         }
     }
 }
@@ -317,12 +444,93 @@ impl Print for TypeArgs {
 
 #[cfg(test)]
 mod type_tests {
+    use std::collections::HashMap;
+
     use printer::Print;
+
+    use crate::syntax::{Name, TypeArgs};
 
     use super::Ty;
 
     #[test]
     fn display_i64() {
         assert_eq!(Ty::mk_i64().print_to_string(None), "i64".to_owned())
+    }
+
+    fn test_mapping() -> HashMap<Name, Ty> {
+        let mut mapping = HashMap::new();
+        mapping.insert(
+            "x".to_owned(),
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("A")])),
+        );
+        mapping.insert("y".to_owned(), Ty::mk_i64());
+        mapping.insert("other var".to_owned(), Ty::mk_ty_var("y"));
+
+        return mapping;
+    }
+
+    #[test]
+    fn mut_subst_i64() {
+        let mut test_ty = Ty::mk_i64();
+
+        test_ty.mut_subst_ty(&test_mapping());
+
+        assert_eq!(test_ty, Ty::mk_i64())
+    }
+
+    #[test]
+    fn mut_subst_simple_var() {
+        let mut test_ty = Ty::mk_ty_var("y");
+
+        test_ty.mut_subst_ty(&test_mapping());
+
+        assert_eq!(test_ty, Ty::mk_i64())
+    }
+
+    #[test]
+    fn mut_subst_complex_type() {
+        let mut test_ty = Ty::mk_decl(
+            "LPair",
+            TypeArgs::mk(vec![Ty::mk_ty_var("y"), Ty::mk_ty_var("other var")]),
+        );
+
+        test_ty.mut_subst_ty(&test_mapping());
+
+        assert_eq!(
+            test_ty,
+            Ty::mk_decl(
+                "LPair",
+                TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_ty_var("y")])
+            )
+        )
+    }
+
+    #[test]
+    fn collect_var_names_test_simple() {
+        let test_ty = Ty::mk_ty_var("x");
+
+        let result = test_ty.collect_var_names();
+
+        let expected = vec!["x".to_string()];
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn collect_var_names_test_complex() {
+        let test_ty = Ty::mk_decl(
+            "Fun",
+            TypeArgs::mk(vec![
+                Ty::mk_ty_var("x"),
+                Ty::mk_i64(),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("y")])),
+            ]),
+        );
+
+        let result = test_ty.collect_var_names();
+
+        let expected = vec!["x".to_string(), "y".to_string()];
+
+        assert_eq!(result, expected);
     }
 }

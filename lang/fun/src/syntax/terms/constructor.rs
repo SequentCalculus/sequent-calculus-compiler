@@ -6,8 +6,14 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::Constraint;
+use crate::typing::inference::ConstraintBank;
+use crate::typing::inference::Inference;
+use crate::typing::inference::args_constraint_equations;
+use crate::typing::inference::args_insert_inferred_type;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
@@ -54,42 +60,113 @@ impl From<Constructor> for Term {
     }
 }
 
-impl Check for Constructor {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for Constructor {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        let type_args = match expected {
-            Ty::Decl { type_args, .. } => type_args,
-            Ty::I64 { .. } => {
-                return Err(Error::ExpectedI64ForConstructor {
-                    span: self.span,
-                    name: self.id,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.ty = Some(ty_var.clone());
+
+        let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&self.id) {
+            Some(type_name) => type_name,
+            None => {
+                return Err(Error::Undefined {
+                    span: Some(self.span),
+                    name: self.id.clone(),
                 });
             }
         };
 
-        // the name of the constructor in the symbol table for the instantiated data type, the
-        // instance must exists already
-        let name = self.id.clone() + &type_args.print_to_string(None);
-        match symbol_table.ctors.get(&name) {
-            Some(types) => {
-                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span, &name)?;
+        let (chirality, general_type_vars, _) = constraint_bank
+            .symbol_table
+            .type_templates
+            .get(&data_type_name)
+            .unwrap();
 
-                self.args =
-                    check_args(&self.span, symbol_table, context, self.args, &types.clone())?;
+        if chirality == &Polarity::Codata {
+            return Err(Error::ExpectedDataForNew {
+                span: self.span,
+                data: data_type_name,
+            });
+        }
 
-                check_equality(&self.span, symbol_table, expected, &ty)?;
+        // this instance of the Data Type is instanciated, whith replacing the general type vars
+        // with instance type variables eg. (A -> a1)
 
-                self.ty = Some(expected.clone());
-                Ok(self)
-            }
-            None => Err(Error::Undefined {
+        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+        for type_var in &general_type_vars.bindings {
+            type_var_mapping.insert(
+                type_var.clone(),
+                constraint_bank.var_name_generator.get_new_ty_var(),
+            );
+        }
+
+        let expected_type = Ty::Decl {
+            span: Some(self.span),
+            name: data_type_name,
+            type_args: TypeArgs {
                 span: Some(self.span),
-                name: self.id.clone(),
-            }),
+                args: general_type_vars
+                    .bindings
+                    .iter()
+                    .map(|name| type_var_mapping.get(name).unwrap().clone())
+                    .collect(),
+            },
+        };
+
+        let instanciated_template = match constraint_bank.symbol_table.ctor_templates.get(&self.id)
+        {
+            Some(ctor_template) => ctor_template.clone().subst_ty(&type_var_mapping),
+            None => {
+                return Err(Error::Undefined {
+                    span: Some(self.span),
+                    name: self.id.clone(),
+                });
+            }
+        };
+
+        if instanciated_template.bindings.len() != self.args.entries.len() {
+            return Err(Error::WrongNumberOfArguments {
+                span: self.span,
+                expected: instanciated_template.bindings.len(),
+                got: self.args.entries.len(),
+            });
+        }
+
+        args_constraint_equations(
+            &mut self.args,
+            &instanciated_template,
+            context,
+            constraint_bank,
+            self.span,
+        )?;
+
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, expected_type));
+
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
         }
     }
 }
@@ -108,36 +185,52 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
-    use crate::typing::*;
+    use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
+    use crate::typing::inference::Inference;
 
     #[test]
-    fn check_nil() {
-        let result = Constructor {
+    fn inference_nil() {
+        let mut term = Constructor {
             span: dummy_span(),
             id: "Nil".to_owned(),
             args: vec![].into(),
             ty: None,
-        }
-        .check(
-            &mut symbol_table_list(),
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: symbol_table_list(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
+            Ty::mk_ty_var("x"),
         )
         .unwrap();
-        let expected = Constructor {
-            span: dummy_span(),
-            id: "Nil".to_owned(),
-            args: vec![].into(),
-            ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
-        };
-        assert_eq!(result, expected)
+
+        let expected = vec![Constraint::mk_only_ty(
+            Ty::mk_ty_var("x"),
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
+        )];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     #[test]
-    fn check_cons() {
+    fn inference_cons() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        let result = Constructor {
+        let mut term = Constructor {
             span: dummy_span(),
             id: "Cons".to_owned(),
             args: vec![
@@ -152,71 +245,39 @@ mod test {
             ]
             .into(),
             ty: None,
-        }
-        .check(
-            &mut symbol_table_list(),
-            &ctx,
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        )
-        .unwrap();
-        let expected = Constructor {
-            span: dummy_span(),
-            id: "Cons".to_owned(),
-            args: vec![
-                XVar {
-                    span: dummy_span(),
-                    var: "x".to_owned(),
-                    ty: Some(Ty::mk_i64()),
-                    chi: Some(Prd),
-                }
-                .into(),
-                Constructor {
-                    span: dummy_span(),
-                    id: "Nil".to_owned(),
-                    args: vec![].into(),
-                    ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
-                }
-                .into(),
-            ]
-            .into(),
-            ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
-        assert_eq!(result, expected)
-    }
 
-    #[test]
-    fn check_ctor_fail() {
-        let result = Constructor {
-            span: dummy_span(),
-            id: "Cons".to_owned(),
-            args: vec![
-                Constructor {
-                    span: dummy_span(),
-                    id: "Nil".to_owned(),
-                    args: vec![].into(),
-                    ty: None,
-                }
-                .into(),
-                Constructor {
-                    span: dummy_span(),
-                    id: "Nil".to_owned(),
-                    args: vec![].into(),
-                    ty: None,
-                }
-                .into(),
-            ]
-            .into(),
-            ty: None,
-        }
-        .check(
-            &mut symbol_table_list(),
-            &TypingContext {
-                span: None,
-                bindings: vec![],
-            },
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err());
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: symbol_table_list(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let expected = vec![
+            // cons
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+            // nil
+            Constraint::mk_only_ty(
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
+            ),
+            Constraint::mk_only_ty(
+                Ty::mk_ty_var("x"),
+                Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
+            ),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     fn example_nil() -> Constructor {

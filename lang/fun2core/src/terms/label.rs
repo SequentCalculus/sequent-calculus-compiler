@@ -75,19 +75,14 @@ impl Compile for fun::syntax::terms::Label {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, lit, mu, ty};
-    use fun::{parse_term, typing::check::Check};
+    use fun::{parse_term, syntax::inferr_helper::inferr_term};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_label1() {
-        let term = parse_term!("label a { 1 }");
-        let term_typed = term
-            .check(
-                &mut Default::default(),
-                &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+        let mut term = parse_term!("label a { 1 }");
+
+        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),
@@ -96,7 +91,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
@@ -104,14 +99,9 @@ mod compile_tests {
 
     #[test]
     fn compile_label2() {
-        let term = parse_term!("label a { goto a (1) }");
-        let term_typed = term
-            .check(
-                &mut Default::default(),
-                &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+        let mut term = parse_term!("label a { goto a (1) }");
+
+        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),
@@ -120,7 +110,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)

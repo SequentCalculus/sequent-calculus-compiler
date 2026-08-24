@@ -69,24 +69,21 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{ctor, id, lit, ty};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
-        typing::check::Check,
+        parse_term,
+        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        test_common::symbol_table_list,
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_cons() {
-        let term = parse_term!("Cons(1,Nil)");
-        let term_typed = term
-            .check(
-                &mut symbol_table_list(),
-                &TypingContext::default(),
-                &fun::syntax::types::Ty::mk_decl(
-                    "List",
-                    fun::syntax::types::TypeArgs::mk(vec![fun::syntax::types::Ty::mk_i64()]),
-                ),
-            )
-            .unwrap();
+        let mut term = parse_term!("Cons(1,Nil)");
+        inferr_term(
+            &mut term,
+            &mut symbol_table_list(),
+            &TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
@@ -95,7 +92,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!(id!("List[i64]")));
+        let result = term.compile(&mut state, ty!(id!("List[i64]")));
 
         let expected = ctor!(
             id!("Cons"),

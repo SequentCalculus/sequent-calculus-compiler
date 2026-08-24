@@ -11,5 +11,11 @@ pub fn compile_ty(ty: &fun::syntax::types::Ty) -> core_lang::syntax::types::Ty {
         fun::syntax::types::Ty::Decl { .. } => {
             core_lang::syntax::types::Ty::Decl(Identifier::new(ty.print_to_string(None)))
         }
+        fun::syntax::types::Ty::TypeVar { name, .. } => {
+            panic!(
+                "The type variable {} was encountered while transforming fun to core. Type variables should not occour after type inference.",
+                name
+            )
+        }
     }
 }

@@ -42,36 +42,42 @@ mod compile_tests {
     use core_macros::{call, covar, id, lit, mu, ty};
     use fun::{
         parse_term,
-        syntax::context::TypingContext,
-        typing::{check::Check, symbol_table::SymbolTable},
+        syntax::{context::TypingContext, terms::inferr_helper::inferr_term},
+        typing::symbol_table::SymbolTable,
     };
     use std::collections::{HashMap, HashSet, VecDeque};
 
     #[test]
     fn compile_fac() {
-        let term = parse_term!("fac(3)");
+        let mut term = parse_term!("fac(3)");
         let mut ctx = TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
-        let term_typed = term
-            .check(
-                &mut {
-                    let mut funs = HashMap::new();
-                    funs.insert("fac".to_owned(), (ctx, fun::syntax::types::Ty::mk_i64()));
+        let symbol_table = &mut {
+            let mut funs = HashMap::new();
+            funs.insert(
+                "fac_0".to_owned(),
+                (ctx.clone(), fun::syntax::types::Ty::mk_i64()),
+            );
 
-                    SymbolTable {
-                        ctors: HashMap::default(),
-                        dtors: HashMap::default(),
-                        defs: funs,
-                        types: HashMap::default(),
-                        ctor_templates: HashMap::default(),
-                        dtor_templates: HashMap::default(),
-                        type_templates: HashMap::default(),
-                    }
-                },
-                &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+            let mut var_defs = HashMap::new();
+            var_defs.insert(
+                "fac".to_owned(),
+                vec![(ctx.clone(), fun::syntax::types::Ty::mk_i64())],
+            );
+
+            SymbolTable {
+                ctors: HashMap::default(),
+                dtors: HashMap::default(),
+                variational_defs: var_defs,
+                defs: funs,
+                types: HashMap::default(),
+                ctor_templates: HashMap::default(),
+                dtor_templates: HashMap::default(),
+                type_templates: HashMap::default(),
+            }
+        };
+
+        inferr_term(&mut term, symbol_table, &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
@@ -80,7 +86,7 @@ mod compile_tests {
             current_label: "fac",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(id!("a0"), call!(id!("fac"), [lit!(3), covar!(id!("a0"))])).into();
         assert_eq!(result, expected)

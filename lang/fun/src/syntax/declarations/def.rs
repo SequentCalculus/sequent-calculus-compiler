@@ -1,11 +1,14 @@
 //! This module contains the definition of top-level functions.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::tokens::{COLON, DEF};
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
@@ -35,17 +38,27 @@ pub struct Def {
 }
 
 impl Def {
-    /// This function checks the well-formedness of the top-level function. This consists of
-    /// checking the well-formedness of the paramater list and return type, and typechecking the
-    /// body in the context given by the parameters.
-    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+    pub fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+    ) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
-        self.context.check(symbol_table)?;
-        self.ret_ty.check(&Some(self.span), symbol_table)?;
+        self.ret_ty
+            .check(&Some(self.span), &mut constraint_bank.symbol_table)?;
+        self.context.check(&mut constraint_bank.symbol_table)?;
 
-        self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
+        self.body
+            .gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
+    }
 
-        Ok(self)
+    pub fn insert_inferred_type(
+        &mut self,
+        mappings: &std::collections::HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.body
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
@@ -91,8 +104,6 @@ mod def_tests {
             types::Ty,
             util::dummy_span,
         },
-        test_common::{data_list, def_mult, def_mult_typed},
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
     };
 
     use super::Def;
@@ -126,15 +137,5 @@ mod def_tests {
             declarations: vec![simple_def().into()],
         };
         assert_eq!(parser.parse("def x(): i64 { 4 }"), Ok(module));
-    }
-
-    #[test]
-    fn def_check() {
-        let mut symbol_table = SymbolTable::default();
-        def_mult().build(&mut symbol_table).unwrap();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = def_mult().check(&mut symbol_table).unwrap();
-        let expected = def_mult_typed();
-        assert_eq!(result, expected)
     }
 }

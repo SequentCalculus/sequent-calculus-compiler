@@ -72,22 +72,23 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
-        typing::check::Check,
+        parse_term,
+        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        test_common::symbol_table_list,
     };
 
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_list() {
-        let term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
-        let term_typed = term
-            .check(
-                &mut symbol_table_list(),
-                &TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+        let mut term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
+
+        inferr_term(
+            &mut term,
+            &mut symbol_table_list(),
+            &TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
@@ -96,7 +97,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
             id!("a0"),

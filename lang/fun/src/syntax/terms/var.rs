@@ -1,11 +1,14 @@
 //! This module defines variables and covariables in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
-use crate::traits::*;
+use crate::traits::OptTyped;
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -58,14 +61,13 @@ impl From<XVar> for Term {
     }
 }
 
-impl Check for XVar {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for XVar {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        use Chirality::*;
+        ty_var: Ty,
+    ) -> Result<(), Error> {
         // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
         if self.chi == Some(Cns) {
@@ -73,48 +75,66 @@ impl Check for XVar {
         }
 
         let found_ty = context.lookup_var(&self.var, &self.span)?;
-        if let Some(ty) = self.ty {
-            check_equality(&self.span, symbol_table, &ty, &found_ty)?;
-        }
 
-        check_equality(&self.span, symbol_table, expected, &found_ty)?;
-
-        self.ty = Some(expected.clone());
+        self.ty = Some(ty_var.clone());
         self.chi = Some(Prd);
-        Ok(self)
+
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, found_ty));
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        _choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     #[test]
-    fn check_var() {
+    fn inference_var() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x")
-            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-            .unwrap();
-        let expected = XVar {
-            span: dummy_span(),
-            var: "x".to_owned(),
-            ty: Some(Ty::mk_i64()),
-            chi: Some(Prd),
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
         };
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_var_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_i64());
-        let result = XVar::mk("x").check(
-            &mut SymbolTable::default(),
-            &ctx,
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
+
+        let mut term = XVar::mk("x");
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
+        assert_eq!(
+            result,
+            vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())]
+        )
     }
 }

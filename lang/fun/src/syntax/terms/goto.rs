@@ -8,8 +8,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::ConstraintBank;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the control operator for invoking a captured continuation/program context
@@ -68,18 +71,39 @@ impl From<Goto> for Term {
     }
 }
 
-impl Check for Goto {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for Goto {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        let cont_type = context.lookup_covar(&self.target, &self.span)?;
-        self.term = self.term.check(symbol_table, context, &cont_type)?;
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        let continuation_type = context.lookup_covar(&self.target, &self.span)?;
+        self.ty = Some(ty_var);
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+        self.term
+            .gather_constraints(constraint_bank, context, continuation_type)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
+        }
     }
 }
 
@@ -96,45 +120,41 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::*;
+    use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
+    use crate::typing::inference::Inference;
 
     use std::rc::Rc;
 
     #[test]
-    fn check_goto() {
+    fn inference_goto() {
         let mut ctx = TypingContext::default();
         ctx.add_covar("a", Ty::mk_i64());
-        let result = Goto {
+        let mut term = Goto {
             span: dummy_span(),
             target: "a".to_owned(),
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
-        .unwrap();
-        let expected = Goto {
-            span: dummy_span(),
-            target: "a".to_owned(),
-            term: Rc::new(Lit::mk(1).into()),
-            ty: Some(Ty::mk_i64()),
         };
-        assert_eq!(result, expected)
-    }
 
-    #[test]
-    fn check_goto_fail() {
-        let result = Goto {
-            span: dummy_span(),
-            target: "a".to_owned(),
-            term: Rc::new(Lit::mk(1).into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        );
-        assert!(result.is_err())
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64())];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected)
     }
 
     fn example() -> Goto {

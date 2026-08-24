@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the comparison operation used.
@@ -123,20 +125,54 @@ impl From<IfC> for Term {
     }
 }
 
-impl Check for IfC {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for IfC {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
-        self.thenc = self.thenc.check(symbol_table, context, expected)?;
-        self.elsec = self.elsec.check(symbol_table, context, expected)?;
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.ty = Some(ty_var.clone());
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+        self.fst
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.snd
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+
+        self.thenc
+            .gather_constraints(constraint_bank, context, ty_var.clone())?;
+        self.elsec
+            .gather_constraints(constraint_bank, context, ty_var)?;
+
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.fst
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.snd
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+
+        self.thenc
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.elsec
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
+        }
     }
 }
 
@@ -156,13 +192,13 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     use std::rc::Rc;
 
     #[test]
-    fn check_ife() {
-        let result = IfC {
+    fn inference_ife() {
+        let mut term = IfC {
             span: dummy_span(),
             sort: IfSort::Equal,
             fst: Rc::new(Lit::mk(2).into()),
@@ -170,40 +206,36 @@ mod test {
             thenc: Rc::new(Lit::mk(2).into()),
             elsec: Rc::new(Lit::mk(3).into()),
             ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_i64(),
+            Ty::mk_ty_var("x"),
         )
         .unwrap();
-        let expected = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(2).into()),
-            snd: Some(Rc::new(Lit::mk(1).into())),
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
 
-    #[test]
-    fn check_ife_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
-            snd: Some(Rc::new(XVar::mk("x").into())),
-            thenc: Rc::new(Lit::mk(1).into()),
-            elsec: Rc::new(Lit::mk(2).into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
-        assert!(result.is_err())
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     fn example() -> IfC {
@@ -233,52 +265,6 @@ mod test {
             parser.parse("if 1 == 1 {2 } else { 4}"),
             Ok(example().into())
         );
-    }
-
-    #[test]
-    fn check_ifz() {
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(1).into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(Lit::mk(1).into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(2).into()),
-            elsec: Rc::new(Lit::mk(3).into()),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
-    }
-
-    #[test]
-    fn check_ifz_fail() {
-        let mut ctx = TypingContext::default();
-        ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let result = IfC {
-            span: dummy_span(),
-            sort: IfSort::Equal,
-            fst: Rc::new(XVar::mk("x").into()),
-            snd: None,
-            thenc: Rc::new(Lit::mk(1).into()),
-            elsec: Rc::new(Lit::mk(2).into()),
-            ty: None,
-        }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
-        assert!(result.is_err())
     }
 
     fn example_zero() -> IfC {

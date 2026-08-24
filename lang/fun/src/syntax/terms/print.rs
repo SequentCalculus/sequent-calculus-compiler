@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines printing an integer in Fun. It consists of the information whether a
@@ -69,19 +71,44 @@ impl From<PrintI64> for Term {
     }
 }
 
-impl Check for PrintI64 {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for PrintI64 {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.arg = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.ty = Some(ty_var.clone());
 
-        self.next = self.next.check(symbol_table, context, expected)?;
+        self.arg
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.next
+            .gather_constraints(constraint_bank, context, ty_var)?;
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.arg
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.next
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
+        }
     }
 }
 
@@ -89,5 +116,50 @@ impl UsedBinders for PrintI64 {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.arg.used_binders(used);
         self.next.used_binders(used);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::rc::Rc;
+
+    use crate::syntax::util::dummy_span;
+    use crate::syntax::{Lit, PrintI64, Term, Ty, TypingContext};
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+
+    #[test]
+    fn inference_print() {
+        let ctx = TypingContext::default();
+
+        let mut term = PrintI64 {
+            span: dummy_span(),
+            newline: false,
+            arg: Rc::new(Term::Lit(Lit::mk(5))),
+            next: Rc::new(Term::Lit(Lit::mk(7))),
+            ty: None,
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 }

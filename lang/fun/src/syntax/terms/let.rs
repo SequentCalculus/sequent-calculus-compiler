@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{ConstraintBank, Inference};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines let-bindings of a term. It consists of the variable the term is bound to,
@@ -29,7 +31,7 @@ pub struct Let {
     /// The bound variable
     pub variable: Var,
     /// The (annotated) type of the bound term
-    pub var_ty: Ty,
+    pub var_ty: Option<Ty>,
     /// The bound term
     pub bound_term: Rc<Term>,
     /// The term in which the variable for the bound term is in scope
@@ -50,20 +52,33 @@ impl Print for Let {
         cfg: &printer::PrintCfg,
         alloc: &'a printer::Alloc<'a>,
     ) -> printer::Builder<'a> {
-        alloc
-            .keyword(LET)
-            .append(alloc.space())
-            .append(self.variable.print(cfg, alloc))
-            .append(COLON)
-            .append(alloc.space())
-            .append(self.var_ty.print(cfg, alloc))
-            .append(alloc.space())
-            .append(EQ)
-            .append(alloc.space())
-            .append(self.bound_term.print(cfg, alloc).group())
-            .append(SEMI)
-            .append(alloc.hardline())
-            .append(self.in_term.print(cfg, alloc).group())
+        if self.var_ty.is_some() {
+            alloc
+                .keyword(LET)
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(COLON)
+                .append(alloc.space())
+                .append(self.var_ty.print(cfg, alloc))
+                .append(alloc.space())
+                .append(EQ)
+                .append(alloc.space())
+                .append(self.bound_term.print(cfg, alloc).group())
+                .append(SEMI)
+                .append(alloc.hardline())
+                .append(self.in_term.print(cfg, alloc).group())
+        } else {
+            alloc
+                .keyword(LET)
+                .append(alloc.space())
+                .append(self.variable.print(cfg, alloc))
+                .append(EQ)
+                .append(alloc.space())
+                .append(self.bound_term.print(cfg, alloc).group())
+                .append(SEMI)
+                .append(alloc.hardline())
+                .append(self.in_term.print(cfg, alloc).group())
+        }
     }
 }
 
@@ -73,22 +88,68 @@ impl From<Let> for Term {
     }
 }
 
-impl Check for Let {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for Let {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.var_ty.check(&Some(self.span), symbol_table)?;
-        self.bound_term = self.bound_term.check(symbol_table, context, &self.var_ty)?;
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.ty = Some(ty_var.clone());
+
+        // if the bound term has an annotation it is used, else a type variable is substituted
+        let bound_term_type = match &self.var_ty {
+            Some(ty) => ty.clone(),
+            None => {
+                let new_ty = constraint_bank.var_name_generator.get_new_ty_var();
+                self.var_ty = Some(new_ty.clone());
+                new_ty
+            }
+        };
+
+        self.bound_term
+            .gather_constraints(constraint_bank, context, bound_term_type.clone())?;
 
         let mut new_context = context.clone();
-        new_context.add_var(&self.variable, self.var_ty.clone());
-        self.in_term = self.in_term.check(symbol_table, &new_context, expected)?;
+        new_context.add_var(&self.variable, bound_term_type);
+        self.in_term
+            .gather_constraints(constraint_bank, &new_context, ty_var)?;
 
-        self.ty = Some(expected.clone());
-        Ok(self)
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.bound_term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.in_term
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+
+        match &mut self.var_ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)?;
+            }
+            None => panic!(
+                "The Type of the bound term of the Let Term {:?} is not set after type inference",
+                self
+            ),
+        };
+
+        match &mut self.ty {
+            Some(ty_var) => {
+                ty_var.mut_subst_ty(mappings);
+                ty_var.check(&Some(self.span), symbol_table)
+            }
+            None => panic!(
+                "The Type of the term {:?} is not set after type inference",
+                self
+            ),
+        }
     }
 }
 
@@ -107,77 +168,95 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::test_common::*;
-    use crate::typing::*;
+    use crate::typing::inference::Constraint;
+    use crate::typing::inference::ConstraintBank;
+    use crate::typing::inference::Inference;
 
     use std::rc::Rc;
 
     #[test]
-    fn check_let1() {
-        let result = Let {
+    fn inference_let() {
+        let mut term = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: None,
             bound_term: Rc::new(Lit::mk(2).into()),
             in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
-        }
-        .check(
-            &mut SymbolTable::default(),
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_i64(),
+            Ty::mk_ty_var("x"),
         )
         .unwrap();
-        let expected = Let {
-            span: dummy_span(),
-            variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
-            bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(
-                XVar {
-                    span: dummy_span(),
-                    ty: Some(Ty::mk_i64()),
-                    var: "x".to_owned(),
-                    chi: Some(Prd),
-                }
-                .into(),
-            ),
-            ty: Some(Ty::mk_i64()),
-        };
-        assert_eq!(result, expected)
+
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
+
     #[test]
-    fn check_let_fail() {
-        let mut symbol_table = symbol_table_list();
-        let result = Let {
+    fn inference_let_type_annotation() {
+        let mut term = Let {
             span: dummy_span(),
             variable: "x".to_owned(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Lit::mk(2).into()),
-            in_term: Rc::new(
-                Constructor {
-                    span: dummy_span(),
-                    id: "Nil".to_owned(),
-                    args: vec![XVar::mk("x").into()].into(),
-                    ty: None,
-                }
-                .into(),
-            ),
+            in_term: Rc::new(XVar::mk("x").into()),
             ty: None,
-        }
-        .check(
-            &mut symbol_table,
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
+
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
+        assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
     }
 
     fn example() -> Let {
         Let {
             span: dummy_span(),
             variable: "x".to_string(),
-            var_ty: Ty::mk_i64(),
+            var_ty: Some(Ty::mk_i64()),
             bound_term: Rc::new(Term::Lit(Lit::mk(2))),
             in_term: Rc::new(Term::Lit(Lit::mk(4))),
             ty: None,

@@ -7,8 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -77,18 +79,36 @@ impl From<Op> for Term {
         Term::Op(value)
     }
 }
-impl Check for Op {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
-        context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
 
-        Ok(self)
+impl Inference for Op {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
+        context: &TypingContext,
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+
+        self.fst
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.snd
+            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.fst
+            .insert_inferred_type(mappings, symbol_table, choices)?;
+        self.snd
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
@@ -106,47 +126,45 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     use std::rc::Rc;
 
     #[test]
-    fn check_op() {
-        let result = Op {
-            span: dummy_span(),
-            fst: Rc::new(Lit::mk(1).into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .check(
-            &mut SymbolTable::default(),
-            &TypingContext::default(),
-            &Ty::mk_i64(),
-        )
-        .unwrap();
-        let expected = Op {
-            span: dummy_span(),
-            fst: Rc::new(Lit::mk(1).into()),
-            op: BinOp::Sum,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .into();
-        assert_eq!(result, expected)
-    }
-    #[test]
-    fn check_op_fail() {
-        let result = Op {
+    fn inference_op() {
+        let mut term = Op {
             span: dummy_span(),
             fst: Rc::new(Lit::mk(2).into()),
-            op: BinOp::Sub,
-            snd: Rc::new(Lit::mk(2).into()),
-        }
-        .check(
-            &mut SymbolTable::default(),
+            op: BinOp::Sum,
+            snd: Rc::new(Lit::mk(3).into()),
+        };
+
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
+
+        let expected = vec![
+            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+        ];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
     }
 
     fn example_prod() -> Op {

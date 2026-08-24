@@ -54,19 +54,19 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::Prd;
     use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, id, lit, mu, ty};
-    use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
+    use fun::{parse_term, syntax::inferr_helper::inferr_term, test_common::symbol_table_lpair};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_fst() {
-        let term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
-        let term_typed = term
-            .check(
-                &mut symbol_table_lpair(),
-                &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+        let mut term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
+
+        inferr_term(
+            &mut term,
+            &mut symbol_table_lpair(),
+            &fun::syntax::context::TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
@@ -75,7 +75,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, core_lang::syntax::types::Ty::I64);
+        let result = term.compile(&mut state, core_lang::syntax::types::Ty::I64);
 
         let expected = mu!(
             id!("a0"),
@@ -107,14 +107,13 @@ mod compile_tests {
 
     #[test]
     fn compile_snd() {
-        let term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
-        let term_typed = term
-            .check(
-                &mut symbol_table_lpair(),
-                &fun::syntax::context::TypingContext::default(),
-                &fun::syntax::types::Ty::mk_i64(),
-            )
-            .unwrap();
+        let mut term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
+        inferr_term(
+            &mut term,
+            &mut symbol_table_lpair(),
+            &fun::syntax::context::TypingContext::default(),
+        )
+        .unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
@@ -123,7 +122,7 @@ mod compile_tests {
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"));
 
         let expected = mu!(
             id!("a0"),

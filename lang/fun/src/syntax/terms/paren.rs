@@ -6,8 +6,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::ConstraintBank;
+use crate::typing::inference::Inference;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a term in parentheses.
@@ -56,39 +59,30 @@ impl From<Paren> for Term {
     }
 }
 
-impl Check for Paren {
-    fn check(
-        mut self,
-        symbol_table: &mut SymbolTable,
+impl Inference for Paren {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        self.inner = self.inner.check(symbol_table, context, expected)?;
-        Ok(self)
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        self.inner
+            .gather_constraints(constraint_bank, context, ty_var)
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        mappings: &HashMap<Name, Ty>,
+        symbol_table: &mut SymbolTable,
+        choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        self.inner
+            .insert_inferred_type(mappings, symbol_table, choices)
     }
 }
 
 impl UsedBinders for Paren {
     fn used_binders(&self, used: &mut HashSet<Var>) {
         self.inner.used_binders(used);
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::syntax::*;
-    use crate::typing::*;
-
-    #[test]
-    fn check_parens() {
-        let result = Paren::mk(Lit::mk(1))
-            .check(
-                &mut SymbolTable::default(),
-                &TypingContext::default(),
-                &Ty::mk_i64(),
-            )
-            .unwrap();
-        let expected = Paren::mk(Lit::mk(1));
-        assert_eq!(result, expected)
     }
 }

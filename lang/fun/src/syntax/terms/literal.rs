@@ -1,11 +1,14 @@
 //! This module defines integer literals in Fun.
 
+use std::collections::HashMap;
+
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
-use crate::traits::*;
+use crate::traits::OptTyped;
+use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -49,43 +52,60 @@ impl From<Lit> for Term {
     }
 }
 
-impl Check for Lit {
-    fn check(
-        self,
-        symbol_table: &mut SymbolTable,
+impl Inference for Lit {
+    fn gather_constraints(
+        &mut self,
+        constraint_bank: &mut ConstraintBank,
         _context: &TypingContext,
-        expected: &Ty,
-    ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, expected, &Ty::mk_i64())?;
-        Ok(self)
+        ty_var: Ty,
+    ) -> Result<(), Error> {
+        constraint_bank
+            .constraints
+            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+
+        Ok(())
+    }
+
+    fn insert_inferred_type(
+        &mut self,
+        _mappings: &HashMap<Name, Ty>,
+        _symbol_table: &mut SymbolTable,
+        _choices: &HashMap<u32, usize>,
+    ) -> Result<(), Error> {
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::*;
+    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
 
     #[test]
-    fn check_lit() {
-        let result = Lit::mk(1)
-            .check(
-                &mut SymbolTable::default(),
-                &TypingContext::default(),
-                &Ty::mk_i64(),
-            )
-            .unwrap();
-        let expected = Lit::mk(1);
-        assert_eq!(result, expected)
-    }
+    fn inference_lit() {
+        let mut term = Lit::mk(15);
 
-    #[test]
-    fn check_lit_fail() {
-        let result = Lit::mk(1).check(
-            &mut SymbolTable::default(),
+        let mut constraint_bank = ConstraintBank {
+            symbol_table: Default::default(),
+            var_name_generator: Default::default(),
+            constraints: Default::default(),
+            possible_choices: Default::default(),
+        };
+
+        term.gather_constraints(
+            &mut constraint_bank,
             &TypingContext::default(),
-            &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-        );
-        assert!(result.is_err())
+            Ty::mk_ty_var("x"),
+        )
+        .unwrap();
+
+        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
+
+        let ConstraintBank {
+            constraints: result,
+            ..
+        } = constraint_bank;
+
+        assert_eq!(result, expected);
     }
 }
