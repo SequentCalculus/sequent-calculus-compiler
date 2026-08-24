@@ -4,7 +4,9 @@ pub mod rewrite;
 pub mod split_table;
 pub mod union_find;
 
-use crate::splitting::labeling::{LabelAndUnify, SplitState, build_decl_signatures};
+use crate::splitting::labeling::{
+    LabelAndUnify, SplitState, build_decl_signatures, merge_field_observations,
+};
 use crate::splitting::rewrite::{Rewrite, split_declaration};
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::{Def, Prog, TypingContext};
@@ -26,6 +28,10 @@ pub fn split_program(prog: &Prog) -> Prog {
         .iter()
         .map(|def| def.label_and_unify(&mut state, &sigs, &TypingContext::default()))
         .collect();
+
+    // Must run after every occurrence has been walked (`state.uf`'s roots need to be final) and
+    // before `SplitTable::build`, which is what turns those roots into split-copy names.
+    let _field_observations = merge_field_observations(&mut state);
 
     let table = SplitTable::build(
         &mut state.uf,

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, mem::take, rc::Rc};
 
 use crate::{
     splitting::{reachability::compute_field_reachability, union_find::UnionFind},
@@ -143,6 +143,36 @@ impl SplitState {
             }
         }
     }
+}
+
+/// Reconciles every recorded [`FieldObservation`]: groups them by their owner's *final*
+/// union-find root, then unifies every observation within a group together, so occurrences that
+/// end up sharing one physical copy of the enclosing declaration also end up with one consistent
+/// field type. Must run after every other `unify_ty` call in the walk, since it relies on
+/// `state.uf`'s roots being final.
+pub fn merge_field_observations(state: &mut SplitState) -> FieldObservations {
+    let observations = take(&mut state.field_observations);
+
+    let mut groups: HashMap<(Label, Identifier, usize), Vec<Ty>> = HashMap::new();
+    for obs in &observations {
+        let root = state.uf.find(&obs.owner);
+        groups
+            .entry((root, obs.xtor.clone(), obs.field_index))
+            .or_default()
+            .push(obs.ty.clone());
+    }
+
+    let mut representatives = HashMap::new();
+    for (key, tys) in groups {
+        let mut tys = tys.into_iter();
+        let first = tys.next().expect("group is never empty by construction");
+        for ty in tys {
+            state.unify_ty(&first, &ty);
+        }
+        representatives.insert(key, first);
+    }
+
+    FieldObservations(representatives)
 }
 
 /// Labels a `Def`'s own signature, so that every future call site can unify against these fixed
@@ -644,5 +674,77 @@ mod split_state_tests {
             codata_types[0].xtors[0].args.bindings[0].ty,
             sigs[&id!("head")].tys[0]
         );
+    }
+
+    #[test]
+    fn merge_field_observations_keeps_distinct_owner_roots_separate() {
+        let mut state = fresh_state();
+        let owner_a = state.label_ty(&ty!(id!("Bar")));
+        let owner_b = state.label_ty(&ty!(id!("Bar")));
+        let field_a = state.label_ty(&ty!(id!("Foo")));
+        let field_b = state.label_ty(&ty!(id!("Foo")));
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&owner_a).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: field_a.clone(),
+        });
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&owner_b).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: field_b.clone(),
+        });
+
+        let observations = merge_field_observations(&mut state);
+
+        let root_a = state.uf.find(label_in(&owner_a));
+        let root_b = state.uf.find(label_in(&owner_b));
+        assert_eq!(observations.get(&root_a, &id!("MkBar"), 0), Some(&field_a));
+        assert_eq!(observations.get(&root_b, &id!("MkBar"), 0), Some(&field_b));
+        assert_ne!(
+            state.uf.find(label_in(&field_a)),
+            state.uf.find(label_in(&field_b))
+        );
+    }
+
+    #[test]
+    fn merge_field_observations_unifies_observations_sharing_an_owner_root() {
+        let mut state = fresh_state();
+        let owner_a = state.label_ty(&ty!(id!("Bar")));
+        let owner_b = state.label_ty(&ty!(id!("Bar")));
+        state.unify_ty(&owner_a, &owner_b);
+        let field_a = state.label_ty(&ty!(id!("Foo")));
+        let field_b = state.label_ty(&ty!(id!("Foo")));
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&owner_a).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: field_a.clone(),
+        });
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&owner_b).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: field_b.clone(),
+        });
+
+        merge_field_observations(&mut state);
+
+        assert_eq!(
+            state.uf.find(label_in(&field_a)),
+            state.uf.find(label_in(&field_b))
+        );
+    }
+
+    #[test]
+    fn merge_field_observations_returns_none_for_a_field_never_observed() {
+        let mut state = fresh_state();
+        let never_observed = Identifier {
+            name: "Bar#1".to_string(),
+            id: 0,
+        };
+        let observations = merge_field_observations(&mut state);
+        assert_eq!(observations.get(&never_observed, &id!("MkBar"), 0), None);
     }
 }
