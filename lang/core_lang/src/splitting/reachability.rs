@@ -75,13 +75,17 @@ pub fn compute_reachable_decls(
         .collect()
 }
 
-/// True iff `field_ty` can structurally reach back to `owner`, directly or transitively.
+/// True iff `field_ty` can structurally reach back to `owner`, directly or transitively. A field
+/// with no `Ty::Decl` head at all (a bare type variable like `x: D`, or `i64`) is trivially `true`
+/// it already flows through the existing type-parameter substitution, not the field-observation
+/// mechanism, so there is nothing to gain from treating it as independent.
 fn is_self_referential(field_ty: &Ty, owner: &Identifier, reachable: &ReachableFrom) -> bool {
     let mut heads = HashSet::new();
     decl_heads(field_ty, &mut heads);
-    heads
-        .iter()
-        .any(|head| head == owner || reachable.get(head).is_some_and(|r| r.contains(owner)))
+    heads.is_empty()
+        || heads
+            .iter()
+            .any(|head| head == owner || reachable.get(head).is_some_and(|r| r.contains(owner)))
 }
 
 /// For every xtor in the program, whether each of its field positions (parallel to
@@ -191,8 +195,27 @@ mod reachability_tests {
     fn direct_self_reference_is_detected() {
         let prog = prog!([], [list_decl()], []);
         let reachability = compute_field_reachability(&prog);
-        // Cons's fields are [x: int, xs: List] -- only xs loops back.
-        assert_eq!(reachability[&id!("Cons")], vec![false, true]);
+        // Cons's fields are [x: int, xs: List]: xs loops back directly, x has no Decl head at
+        // all and is trivially treated the same way.
+        assert_eq!(reachability[&id!("Cons")], vec![true, true]);
+    }
+
+    #[test]
+    fn self_reference_nested_in_an_unrelated_wrapper_is_still_detected() {
+        // A.MkA(x: List[A]): the outer head `List` is unrelated to `A`, but `A` itself appears
+        // as a nested type argument, must still be flagged self-referential.
+        let a_wraps_itself = data!(
+            id!("A"),
+            [ctor_sig!(
+                id!("MkA"),
+                [],
+                [bind!(id!("x"), prd!(), ty!(id!("List"), [ty!(id!("A"))]))]
+            )],
+            []
+        );
+        let prog = prog!([], [a_wraps_itself, list_decl()], []);
+        let reachability = compute_field_reachability(&prog);
+        assert_eq!(reachability[&id!("MkA")], vec![true]);
     }
 
     #[test]

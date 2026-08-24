@@ -6,7 +6,9 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_t
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
-use crate::splitting::labeling::{DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in};
+use crate::splitting::labeling::{
+    DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in,
+};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::types::TypeArgs;

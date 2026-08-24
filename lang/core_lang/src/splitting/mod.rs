@@ -31,7 +31,7 @@ pub fn split_program(prog: &Prog) -> Prog {
 
     // Must run after every occurrence has been walked (`state.uf`'s roots need to be final) and
     // before `SplitTable::build`, which is what turns those roots into split-copy names.
-    let _field_observations = merge_field_observations(&mut state);
+    let field_observations = merge_field_observations(&mut state);
 
     let table = SplitTable::build(
         &mut state.uf,
@@ -48,11 +48,11 @@ pub fn split_program(prog: &Prog) -> Prog {
     // growing cycle (see `splitting::rewrite::build_declaration_copy`).
     let data_types = labeled_data
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table, &mut max_id))
+        .flat_map(|decl| split_declaration(decl, &table, &sigs, &field_observations, &mut max_id))
         .collect();
     let codata_types = labeled_codata
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table, &mut max_id))
+        .flat_map(|decl| split_declaration(decl, &table, &sigs, &field_observations, &mut max_id))
         .collect();
     let defs = labeled_defs.iter().map(|def| def.rewrite(&table)).collect();
 
@@ -188,5 +188,201 @@ mod split_program_tests {
         assert_eq!(result.data_types.len(), 1);
         assert_eq!(result.data_types[0].name, id!("Box"));
         assert_eq!(result.data_types[0].xtors[0].name, id!("Wrap"));
+    }
+
+    fn foo_decl() -> DataDeclaration {
+        data!(id!("Foo"), [ctor_sig!(id!("MkFoo"), [], [])], [])
+    }
+
+    fn bar_decl() -> DataDeclaration {
+        data!(
+            id!("Bar"),
+            [ctor_sig!(
+                id!("MkBar"),
+                [],
+                [bind!(id!("f"), prd!(), ty!(id!("Foo")))]
+            )],
+            []
+        )
+    }
+
+    /// `Foo` is nested (non-self-referentially) inside `Bar`'s field. Two independent `Bar`
+    /// constructions must split `Foo` apart too, not just `Bar`.
+    #[test]
+    fn split_program_splits_an_independent_nested_declaration_too() {
+        let def_a = def!(
+            id!("a"),
+            [bind!(id!("ret"), cns!(), ty!(id!("Bar")))],
+            cut!(
+                ctor!(
+                    id!("MkBar"),
+                    [],
+                    [ctor!(id!("MkFoo"), [], [], ty!(id!("Foo")))],
+                    ty!(id!("Bar"))
+                ),
+                covar!(id!("ret"), ty!(id!("Bar"))),
+                ty!(id!("Bar"))
+            )
+        );
+        let def_b = def!(
+            id!("b"),
+            [bind!(id!("ret"), cns!(), ty!(id!("Bar")))],
+            cut!(
+                ctor!(
+                    id!("MkBar"),
+                    [],
+                    [ctor!(id!("MkFoo"), [], [], ty!(id!("Foo")))],
+                    ty!(id!("Bar"))
+                ),
+                covar!(id!("ret"), ty!(id!("Bar"))),
+                ty!(id!("Bar"))
+            )
+        );
+        let prog = Prog {
+            defs: vec![def_a, def_b],
+            data_types: vec![foo_decl(), bar_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        };
+
+        let result = split_program(&prog);
+
+        // 2 independent `Bar` copies, each with its own independent `Foo` copy.
+        assert_eq!(result.data_types.len(), 4);
+        let bars: Vec<_> = result
+            .data_types
+            .iter()
+            .filter(|d| d.name.name.starts_with("Bar"))
+            .collect();
+        let foos: Vec<_> = result
+            .data_types
+            .iter()
+            .filter(|d| d.name.name.starts_with("Foo"))
+            .collect();
+        assert_eq!(bars.len(), 2);
+        assert_eq!(foos.len(), 2);
+        assert_ne!(
+            bars[0].xtors[0].args.bindings[0].ty,
+            bars[1].xtors[0].args.bindings[0].ty
+        );
+    }
+
+    fn list_decl() -> DataDeclaration {
+        data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), ty!("int")),
+                        bind!(id!("xs"), prd!(), ty!(id!("List")))
+                    ]
+                )
+            ],
+            []
+        )
+    }
+
+    /// Builds a `Cons`-chain of the given `depth` (0 = a bare `Nil`).
+    fn nested_list(depth: usize) -> Term<Prd> {
+        if depth == 0 {
+            ctor!(id!("Nil"), [], [], ty!(id!("List"))).into()
+        } else {
+            ctor!(
+                id!("Cons"),
+                [],
+                [lit!(depth as i64), nested_list(depth - 1)],
+                ty!(id!("List"))
+            )
+            .into()
+        }
+    }
+
+    fn list_prog(list: Term<Prd>) -> Prog {
+        Prog {
+            defs: vec![def!(
+                id!("a"),
+                [bind!(id!("ret"), cns!(), ty!(id!("List")))],
+                cut!(list, covar!(id!("ret"), ty!(id!("List"))), ty!(id!("List")))
+            )],
+            data_types: vec![list_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        }
+    }
+
+    /// `List` recursively references itself through `Cons.xs`. A manually unrolled, deeply nested
+    /// construction must not blow `List` up into one physical copy per nesting depth.
+    /// Self-referential fields stay merged with the recursive chain they belong to, regardless of
+    /// how deep that chain goes.
+    #[test]
+    fn split_program_keeps_a_self_referential_declaration_from_exploding_with_depth() {
+        let shallow = split_program(&list_prog(nested_list(1))).data_types.len();
+        let deep = split_program(&list_prog(nested_list(5))).data_types.len();
+
+        assert_eq!(shallow, deep);
+    }
+
+    fn a_decl() -> DataDeclaration {
+        data!(
+            id!("A"),
+            [ctor_sig!(
+                id!("MkA"),
+                [],
+                [bind!(id!("b"), prd!(), ty!(id!("B")))]
+            )],
+            []
+        )
+    }
+
+    fn b_decl() -> DataDeclaration {
+        data!(
+            id!("B"),
+            [
+                ctor_sig!(id!("MkB"), [], [bind!(id!("a"), prd!(), ty!(id!("A")))]),
+                ctor_sig!(id!("Leaf"), [], [])
+            ],
+            []
+        )
+    }
+
+    /// Builds an `A` value nested `depth` levels deep, alternating `MkA`/`MkB`, terminated by
+    /// `Leaf` (`MkA(MkB(MkA(...Leaf))))`).
+    fn nested_a(depth: usize) -> Term<Prd> {
+        ctor!(id!("MkA"), [], [nested_b(depth)], ty!(id!("A"))).into()
+    }
+
+    fn nested_b(depth: usize) -> Term<Prd> {
+        if depth == 0 {
+            ctor!(id!("Leaf"), [], [], ty!(id!("B"))).into()
+        } else {
+            ctor!(id!("MkB"), [], [nested_a(depth - 1)], ty!(id!("B"))).into()
+        }
+    }
+
+    fn ab_prog(a: Term<Prd>) -> Prog {
+        Prog {
+            defs: vec![def!(
+                id!("a"),
+                [bind!(id!("ret"), cns!(), ty!(id!("A")))],
+                cut!(a, covar!(id!("ret"), ty!(id!("A"))), ty!(id!("A")))
+            )],
+            data_types: vec![a_decl(), b_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        }
+    }
+
+    /// `A` and `B` reach back to each other only via mutual recursion (`A.MkA.b: B`,
+    /// `B.MkB.a: A`), not via a direct self-reference, must not explode into one pair of
+    /// declarations per nesting level either.
+    #[test]
+    fn split_program_keeps_mutually_recursive_declarations_from_exploding_with_depth() {
+        let shallow = split_program(&ab_prog(nested_a(0))).data_types.len();
+        let deep = split_program(&ab_prog(nested_a(5))).data_types.len();
+
+        assert_eq!(shallow, deep);
     }
 }

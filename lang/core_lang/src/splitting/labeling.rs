@@ -85,7 +85,7 @@ pub struct SplitState {
     /// derived from, e.g. `Box#3` -> `Box`.
     pub label_origin: HashMap<Label, Identifier>,
     /// Field observations recorded for non-self-referential fields, reconciled once the walk
-    /// finishes. 
+    /// finishes.
     pub field_observations: Vec<FieldObservation>,
 }
 
@@ -186,19 +186,29 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
         .collect()
 }
 
-/// Labels one `XtorSig`'s argument types and rebuilds the full labeled tree in the same pass.
+/// Labels one `XtorSig`'s argument types and rebuilds the full labeled tree in the same pass. A
+/// non-self-referential field (`self_referential[i]` false) is deliberately left unlabeled: no one
+/// ever unifies against this declaration-level anchor for such fields (see
+/// [`crate::splitting::rewrite::build_field_args`]), so minting one would only create a label that
+/// never gets unioned with anything.
 fn label_xtor_signature<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
     state: &mut SplitState,
+    self_referential: &[bool],
 ) -> XtorSig<P> {
     let bindings = xtor
         .args
         .bindings
         .iter()
-        .map(|binding| ContextBinding {
+        .zip(self_referential)
+        .map(|(binding, &self_referential)| ContextBinding {
             var: binding.var.clone(),
             chi: binding.chi.clone(),
-            ty: state.label_ty(&binding.ty),
+            ty: if self_referential {
+                state.label_ty(&binding.ty)
+            } else {
+                binding.ty.clone()
+            },
         })
         .collect();
     XtorSig {
@@ -209,10 +219,11 @@ fn label_xtor_signature<P: Polarity + Clone>(
     }
 }
 
-/// Labels every xtor of one data/codata declaration (see [`label_xtor_sig`]).
+/// Labels every xtor of one data/codata declaration (see [`label_xtor_signature`]).
 fn label_typedeclaration_signature<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     state: &mut SplitState,
+    field_reachability: &HashMap<Identifier, Vec<bool>>,
 ) -> TypeDeclaration<P> {
     TypeDeclaration {
         dat: decl.dat.clone(),
@@ -220,7 +231,7 @@ fn label_typedeclaration_signature<P: Polarity + Clone>(
         xtors: decl
             .xtors
             .iter()
-            .map(|xtor| label_xtor_signature(xtor, state))
+            .map(|xtor| label_xtor_signature(xtor, state, &field_reachability[&xtor.name]))
             .collect(),
         type_params: decl.type_params.clone(),
     }
@@ -253,7 +264,7 @@ pub fn build_decl_signatures(
     let data_types: Vec<DataDeclaration> = prog
         .data_types
         .iter()
-        .map(|decl| label_typedeclaration_signature(decl, state))
+        .map(|decl| label_typedeclaration_signature(decl, state, &field_reachability))
         .collect();
     for decl in &data_types {
         for xtor in &decl.xtors {
@@ -273,7 +284,7 @@ pub fn build_decl_signatures(
     let codata_types: Vec<CodataDeclaration> = prog
         .codata_types
         .iter()
-        .map(|decl| label_typedeclaration_signature(decl, state))
+        .map(|decl| label_typedeclaration_signature(decl, state, &field_reachability))
         .collect();
     for decl in &codata_types {
         for xtor in &decl.xtors {
@@ -609,7 +620,7 @@ mod split_state_tests {
         );
 
         let mut state = fresh_state();
-        let labeled = label_xtor_signature(&ctor, &mut state);
+        let labeled = label_xtor_signature(&ctor, &mut state, &[true, true]);
 
         assert_eq!(labeled.name, id!("Cons"));
         assert_eq!(labeled.args.bindings.len(), 2);

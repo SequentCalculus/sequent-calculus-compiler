@@ -5,7 +5,7 @@
 
 use std::rc::Rc;
 
-use crate::splitting::labeling::Label;
+use crate::splitting::labeling::{DeclSignature, DeclSignatures, FieldObservations, Label};
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration, XtorSig};
 use crate::syntax::{
@@ -62,18 +62,36 @@ pub fn rewrite_clause<C: Chi>(
 pub fn split_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     table: &SplitTable,
+    sigs: &DeclSignatures,
+    field_observations: &FieldObservations,
     max_id: &mut ID,
 ) -> Vec<TypeDeclaration<P>> {
     let roots = table.copies_for(&decl.name);
     if roots.is_empty() {
-        return vec![build_declaration_copy(decl, table, None, max_id)];
+        return vec![build_declaration_copy(
+            decl,
+            table,
+            sigs,
+            field_observations,
+            None,
+            max_id,
+        )];
     }
     // only alpha-rename `type_params` when the declaration actually gets split into several
     // physical copies
     let alpha_rename = roots.len() > 1;
     roots
         .iter()
-        .map(|root| build_declaration_copy(decl, table, Some((root, alpha_rename)), max_id))
+        .map(|root| {
+            build_declaration_copy(
+                decl,
+                table,
+                sigs,
+                field_observations,
+                Some((root, alpha_rename)),
+                max_id,
+            )
+        })
         .collect()
 }
 
@@ -85,6 +103,8 @@ pub fn split_declaration<P: Polarity + Clone>(
 fn build_declaration_copy<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
     table: &SplitTable,
+    sigs: &DeclSignatures,
+    field_observations: &FieldObservations,
     root: Option<(&Label, bool)>,
     max_id: &mut ID,
 ) -> TypeDeclaration<P> {
@@ -112,7 +132,17 @@ fn build_declaration_copy<P: Polarity + Clone>(
         xtors: decl
             .xtors
             .iter()
-            .map(|xtor| split_xtor_sig(xtor, table, root, &decl_subst, max_id))
+            .map(|xtor| {
+                split_xtor_sig(
+                    xtor,
+                    table,
+                    sigs,
+                    field_observations,
+                    root,
+                    &decl_subst,
+                    max_id,
+                )
+            })
             .collect(),
         type_params: rename_params(&decl.type_params, &decl_subst),
     }
@@ -121,10 +151,12 @@ fn build_declaration_copy<P: Polarity + Clone>(
 /// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
 /// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons__1` only ever ends up
 /// inside `List__1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
-/// in `build_declaration_copy`.
+/// in [`build_declaration_copy`].
 fn split_xtor_sig<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
     table: &SplitTable,
+    sigs: &DeclSignatures,
+    field_observations: &FieldObservations,
     root: Option<(&Label, bool)>,
     decl_subst: &[(Identifier, Identifier)],
     max_id: &mut ID,
@@ -143,6 +175,11 @@ fn split_xtor_sig<P: Polarity + Clone>(
         .cloned()
         .collect();
 
+    let sig = sigs
+        .get(&xtor.name)
+        .unwrap_or_else(|| panic!("missing signature for xtor: {}", xtor.name.name));
+    let args = build_field_args(xtor, sig, table, field_observations, root);
+
     XtorSig {
         xtor: xtor.xtor.clone(),
         name: match root {
@@ -150,7 +187,48 @@ fn split_xtor_sig<P: Polarity + Clone>(
             None => xtor.name.clone(),
         },
         type_params: rename_params(&xtor.type_params, &xtor_subst),
-        args: substitute_args(&xtor.args.rewrite(table), &subst),
+        args: substitute_args(&args, &subst),
+    }
+}
+
+/// Builds one physical copy's field types. A self-referential field (`sig.self_referential[i]`,
+/// see [`crate::splitting::reachability`]) keeps its declared shape as-is, rewritten through
+/// `table`. A genuinely independent field instead resolves to the field observation
+/// recorded for this specific copy's equivalence class (`root`), so e.g. two split copies of `Bar`
+/// each end up with their own, independently split copy of a nested `Foo` field, falling back to
+/// the declared shape if the xtor was never actually constructed/matched anywhere in the program.
+fn build_field_args<P: Polarity + Clone>(
+    xtor: &XtorSig<P>,
+    sig: &DeclSignature,
+    table: &SplitTable,
+    field_observations: &FieldObservations,
+    root: Option<(&Label, bool)>,
+) -> TypingContext {
+    TypingContext {
+        bindings: xtor
+            .args
+            .bindings
+            .iter()
+            .enumerate()
+            .map(|(i, binding)| {
+                let ty = if sig.self_referential[i] {
+                    binding.ty.rewrite(table)
+                } else {
+                    match root.and_then(|(r, _)| field_observations.get(r, &xtor.name, i)) {
+                        // observed at some real occurrence: split independently from its owner
+                        Some(representative) => representative.rewrite(table),
+                        // never constructed/matched anywhere: `binding.ty` was left unlabeled by
+                        // `label_xtor_signature`, so there is nothing to rewrite, use it as-is
+                        None => binding.ty.clone(),
+                    }
+                };
+                ContextBinding {
+                    var: binding.var.clone(),
+                    chi: binding.chi.clone(),
+                    ty,
+                }
+            })
+            .collect(),
     }
 }
 
@@ -196,6 +274,9 @@ fn substitute_args(args: &TypingContext, subst: &[(Identifier, Identifier)]) -> 
 #[cfg(test)]
 mod rewrite_tests {
     use super::*;
+    use crate::splitting::labeling::{
+        FieldObservation, SplitState, label_in, merge_field_observations,
+    };
     use crate::splitting::union_find::UnionFind;
     use crate::syntax::{DataDeclaration, Ty};
     extern crate self as core_lang;
@@ -212,6 +293,18 @@ mod rewrite_tests {
             )],
             []
         )
+    }
+
+    fn wrap_sigs() -> DeclSignatures {
+        DeclSignatures::from([(
+            id!("Wrap"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![Ty::I64],
+                self_referential: vec![true],
+            },
+        )])
     }
 
     fn box_label(n: usize) -> Label {
@@ -245,7 +338,10 @@ mod rewrite_tests {
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
         let mut max_id = 0;
-        let copies = split_declaration(&box_decl(), &table, &mut max_id);
+        let sigs = wrap_sigs();
+        let field_observations = FieldObservations::default();
+        let copies =
+            split_declaration(&box_decl(), &table, &sigs, &field_observations, &mut max_id);
 
         assert_eq!(copies.len(), 2);
         assert_ne!(copies[0].name, copies[1].name);
@@ -263,7 +359,10 @@ mod rewrite_tests {
         let table = SplitTable::build(&mut uf, &HashMap::new(), &[box_decl()], &[]);
 
         let mut max_id = 0;
-        let copies = split_declaration(&box_decl(), &table, &mut max_id);
+        let sigs = wrap_sigs();
+        let field_observations = FieldObservations::default();
+        let copies =
+            split_declaration(&box_decl(), &table, &sigs, &field_observations, &mut max_id);
 
         assert_eq!(copies.len(), 1);
         assert_eq!(copies[0].name, id!("Box"));
@@ -279,7 +378,15 @@ mod rewrite_tests {
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
         let mut max_id = 0;
-        let copies = split_declaration(&pack_decl(), &table, &mut max_id);
+        let sigs = wrap_sigs();
+        let field_observations = FieldObservations::default();
+        let copies = split_declaration(
+            &pack_decl(),
+            &table,
+            &sigs,
+            &field_observations,
+            &mut max_id,
+        );
 
         assert_eq!(copies.len(), 2);
         assert_eq!(copies[0].type_params.len(), 1);
@@ -300,7 +407,15 @@ mod rewrite_tests {
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
         let mut max_id = 0;
-        let copies = split_declaration(&pack_decl(), &table, &mut max_id);
+        let sigs = wrap_sigs();
+        let field_observations = FieldObservations::default();
+        let copies = split_declaration(
+            &pack_decl(),
+            &table,
+            &sigs,
+            &field_observations,
+            &mut max_id,
+        );
 
         for copy in &copies {
             let field_ty = &copy.xtors[0].args.bindings[0].ty;
@@ -334,5 +449,93 @@ mod rewrite_tests {
             ty_name.name.split("__").nth(1),
             rewritten.name.name.split("__").nth(1)
         );
+    }
+
+    fn bar_decl(foo_field: Ty) -> DataDeclaration {
+        data!(
+            id!("Bar"),
+            [ctor_sig!(
+                id!("MkBar"),
+                [],
+                [bind!(id!("f"), prd!(), foo_field)]
+            )],
+            []
+        )
+    }
+
+    fn bar_sigs() -> DeclSignatures {
+        DeclSignatures::from([(
+            id!("MkBar"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![ty!(id!("Foo"))],
+                self_referential: vec![false],
+            },
+        )])
+    }
+
+    /// The central proof that independently constructed, non-self-referential fields no longer
+    /// bleed into each other: two `Bar` copies, each fed its own `Foo` field observation, end up
+    /// with two different field types instead of one shared one.
+    #[test]
+    fn split_declaration_gives_each_copy_its_own_field_observation() {
+        let mut state = SplitState::default();
+        let bar_a = state.label_ty(&ty!(id!("Bar")));
+        let bar_b = state.label_ty(&ty!(id!("Bar")));
+        let foo_a = state.label_ty(&ty!(id!("Foo")));
+        let foo_b = state.label_ty(&ty!(id!("Foo")));
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&bar_a).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: foo_a.clone(),
+        });
+        state.field_observations.push(FieldObservation {
+            owner: label_in(&bar_b).clone(),
+            xtor: id!("MkBar"),
+            field_index: 0,
+            ty: foo_b.clone(),
+        });
+        let field_observations = merge_field_observations(&mut state);
+
+        let label_origin = HashMap::from([
+            (label_in(&bar_a).clone(), id!("Bar")),
+            (label_in(&bar_b).clone(), id!("Bar")),
+            (label_in(&foo_a).clone(), id!("Foo")),
+            (label_in(&foo_b).clone(), id!("Foo")),
+        ]);
+        let decl = bar_decl(foo_a.clone());
+        let table = SplitTable::build(&mut state.uf, &label_origin, &[decl.clone()], &[]);
+
+        let sigs = bar_sigs();
+        let mut max_id = 0;
+        let copies = split_declaration(&decl, &table, &sigs, &field_observations, &mut max_id);
+
+        assert_eq!(copies.len(), 2);
+        let field_ty = |copy: &DataDeclaration| copy.xtors[0].args.bindings[0].ty.clone();
+        assert_ne!(field_ty(&copies[0]), field_ty(&copies[1]));
+    }
+
+    /// An xtor whose declaration is never actually constructed anywhere falls back to its
+    /// originally declared field shape, mirroring `SplitTable::copies_for`'s existing
+    /// never-referenced fallback. `label_xtor_signature` never labels a non-self-referential
+    /// field in the first place, so the fallback shape is the bare, unlabeled original type.
+    #[test]
+    fn split_declaration_falls_back_to_declared_shape_when_never_constructed() {
+        let mut state = SplitState::default();
+        let bar = state.label_ty(&ty!(id!("Bar")));
+
+        let label_origin = HashMap::from([(label_in(&bar).clone(), id!("Bar"))]);
+        let decl = bar_decl(ty!(id!("Foo")));
+        let table = SplitTable::build(&mut state.uf, &label_origin, &[decl.clone()], &[]);
+
+        let sigs = bar_sigs();
+        let field_observations = FieldObservations::default();
+        let mut max_id = 0;
+        let copies = split_declaration(&decl, &table, &sigs, &field_observations, &mut max_id);
+
+        assert_eq!(copies.len(), 1);
+        assert_eq!(copies[0].xtors[0].args.bindings[0].ty, ty!(id!("Foo")));
     }
 }
