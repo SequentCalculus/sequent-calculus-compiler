@@ -316,7 +316,13 @@ mod label_and_unify_tests {
             )
         );
 
-        let result: Clause<Cns> = label_and_unify_clause(&example, &mut state, &sigs, &scope, &[]);
+        let owner = state.label_ty(&ty!(id!("List")));
+        let owner_label = match &owner {
+            Ty::Decl { name, .. } => name.clone(),
+            _ => unreachable!(),
+        };
+        let result: Clause<Cns> =
+            label_and_unify_clause(&example, &mut state, &sigs, &scope, &[], &owner_label);
         let binding_ty = result.context.bindings[0].ty.clone();
 
         let (

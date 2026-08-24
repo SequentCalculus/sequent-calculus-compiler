@@ -6,8 +6,8 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_t
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
-use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
-use crate::splitting::rewrite::{Rewrite, label_in};
+use crate::splitting::labeling::{DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in};
+use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::types::TypeArgs;
 use crate::traits::*;
@@ -360,19 +360,27 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
         let sig = sigs
             .get(&self.name)
             .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.name.name));
-        // Substitute both the enclosing declaration's own type parameters (e.g. `Fun`'s `A`, `B`)
-        // and the xtor's own existential/universal ones (e.g. `Pack`'s own `B`) into the declared
-        // field type before unifying, mirrors the identical double substitution in
-        // `check_xcase_against_decl`. Without this, a field declared as `Ty::Var(...)` would never
-        // unify with anything, and the concrete type flowing through it would silently escape type
-        // splitting.
-        let expected_tys = sig.tys.iter().map(|field_ty| {
-            field_ty
-                .substitute((&sig.decl_type_params, decl_type_args))
-                .substitute((&sig.own_type_params, &type_args.args))
-        });
-        for (arg, expected) in args.entries.iter().zip(expected_tys) {
-            state.unify_ty(&arg.get_type(), &expected);
+        let owner = label_in(&ty).clone();
+        for (i, (arg, field_ty)) in args.entries.iter().zip(sig.tys.iter()).enumerate() {
+            if sig.self_referential[i] {
+                // Substitute both the enclosing declaration's own type parameters (e.g. `Fun`'s
+                // `A`, `B`) and the xtor's own existential/universal ones (e.g. `Pack`'s own `B`)
+                // into the declared field type before unifying, mirrors the identical double
+                // substitution in `check_xcase_against_decl`. Without this, a field declared as
+                // `Ty::Var(...)` would never unify with anything, and the concrete type flowing
+                // through it would silently escape type splitting.
+                let expected = field_ty
+                    .substitute((&sig.decl_type_params, decl_type_args))
+                    .substitute((&sig.own_type_params, &type_args.args));
+                state.unify_ty(&arg.get_type(), &expected);
+            } else {
+                state.field_observations.push(FieldObservation {
+                    owner: owner.clone(),
+                    xtor: self.name.clone(),
+                    field_index: i,
+                    ty: arg.get_type(),
+                });
+            }
         }
 
         Xtor {
@@ -495,6 +503,53 @@ mod label_and_unify_tests {
         assert_eq!(state.uf.find(field_name), state.uf.find(arg_name));
         // the xtor's own type is freshly labeled, independent of the field-level unification
         assert!(matches!(result.ty, Ty::Decl { .. }));
+    }
+
+    #[test]
+    fn label_and_unify_defers_non_self_referential_field_to_an_observation() {
+        let mut state = SplitState::default();
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("MkBar"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![ty!(id!("Foo"))],
+                self_referential: vec![false],
+            },
+        );
+        sigs.insert(
+            id!("MkFoo"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![],
+                self_referential: vec![],
+            },
+        );
+
+        let example = ctor!(
+            id!("MkBar"),
+            [],
+            [ctor!(id!("MkFoo"), [], [], ty!(id!("Foo")))],
+            ty!(id!("Bar"))
+        );
+
+        let first: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let second: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+
+        let arg_name = |x: &Xtor<Prd>| match x.args.entries[0].get_type() {
+            Ty::Decl { name, .. } => name,
+            _ => panic!("expected Ty::Decl"),
+        };
+        // nothing unifies the two independent `MkFoo` occurrences with each other
+        assert_ne!(
+            state.uf.find(&arg_name(&first)),
+            state.uf.find(&arg_name(&second))
+        );
+        assert_eq!(state.field_observations.len(), 2);
     }
 }
 

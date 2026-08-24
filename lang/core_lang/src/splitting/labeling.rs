@@ -38,6 +38,16 @@ pub struct DeclSignature {
 
 pub type DeclSignatures = HashMap<Identifier, DeclSignature>;
 
+/// Unwraps the label embedded in a `Ty::Decl`. Every type this is called on (an `Xtor`'s or
+/// `XCase`'s own `.ty`) is guaranteed by the type system (see `Checked`) to be a declared type, so
+/// anything else indicates a labeling bug.
+pub fn label_in(ty: &Ty) -> &Label {
+    match ty {
+        Ty::Decl { name, .. } => name,
+        _ => panic!("expected a labeled Ty::Decl, got {ty:?}"),
+    }
+}
+
 /// One field position's actual type at one specific `Xtor`/`Clause` occurrence, recorded instead
 /// of unified immediately: whether two occurrences' observations should later merge depends on
 /// whether their *enclosing* declaration occurrences end up in the same equivalence class, which
@@ -316,15 +326,17 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
 
 /// Labels and unifies one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every
 /// other node, a `Clause` carries no `.ty` of its own, the enclosing declaration's own
-/// concrete type arguments (e.g. `Fun`'s `A`, `B`) are only known from the owning `XCase`'s own
-/// `.ty`, so the caller must pass them in (mirrors [`crate::splitting::rewrite::rewrite_clause`],
-/// which needs the analogous `owner_label` for the same structural reason).
+/// concrete type arguments (e.g. `Fun`'s `A`, `B`) and the scrutinee's own label are only known
+/// from the owning `XCase`, so the caller must pass them in (mirrors
+/// [`crate::splitting::rewrite::rewrite_clause`], which needs the analogous `owner_label` for the
+/// same structural reason).
 pub fn label_and_unify_clause<C: Chi>(
     clause: &Clause<C>,
     state: &mut SplitState,
     sigs: &DeclSignatures,
     scope: &TypingContext,
     decl_type_args: &[Ty],
+    owner: &Label,
 ) -> Clause<C> {
     let sig = sigs
         .get(&clause.xtor)
@@ -340,10 +352,20 @@ pub fn label_and_unify_clause<C: Chi>(
         .bindings
         .iter()
         .zip(&sig.tys)
-        .map(|(binding, field_ty)| {
-            let expected = field_ty.substitute((&sig.decl_type_params, decl_type_args));
+        .enumerate()
+        .map(|(i, (binding, field_ty))| {
             let ty = state.label_ty(&binding.ty);
-            state.unify_ty(&ty, &expected);
+            if sig.self_referential[i] {
+                let expected = field_ty.substitute((&sig.decl_type_params, decl_type_args));
+                state.unify_ty(&ty, &expected);
+            } else {
+                state.field_observations.push(FieldObservation {
+                    owner: owner.clone(),
+                    xtor: clause.xtor.clone(),
+                    field_index: i,
+                    ty: ty.clone(),
+                });
+            }
             ContextBinding {
                 var: binding.var.clone(),
                 chi: binding.chi.clone(),

@@ -56,16 +56,6 @@ pub fn rewrite_clause<C: Chi>(
     }
 }
 
-/// Unwraps the label embedded in a `Ty::Decl`. Every type this is called on (an `Xtor`'s or
-/// `XCase`'s own `.ty`) is guaranteed by the type system (see `Checked`) to be a declared type, so
-/// anything else indicates a labeling bug.
-pub fn label_in(ty: &Ty) -> &Label {
-    match ty {
-        Ty::Decl { name, .. } => name,
-        _ => panic!("expected a labeled Ty::Decl, got {ty:?}"),
-    }
-}
-
 /// Splits one data/codata declaration into one physical copy per equivalence class recorded for
 /// it. A declaration with no recorded equivalence classes (never referenced anywhere in the
 /// program) is kept as a single, unrenamed copy.

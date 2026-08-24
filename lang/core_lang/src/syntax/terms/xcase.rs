@@ -8,9 +8,9 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
 use crate::splitting::labeling::{
-    DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause,
+    DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause, label_in,
 };
-use crate::splitting::rewrite::{Rewrite, label_in, rewrite_clause};
+use crate::splitting::rewrite::{Rewrite, rewrite_clause};
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
@@ -268,12 +268,15 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
             Ty::Decl { type_args, .. } => type_args.args.clone(),
             _ => vec![],
         };
+        let owner = label_in(&ty).clone();
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self
                 .clauses
                 .iter()
-                .map(|clause| label_and_unify_clause(clause, state, sigs, scope, &decl_type_args))
+                .map(|clause| {
+                    label_and_unify_clause(clause, state, sigs, scope, &decl_type_args, &owner)
+                })
                 .collect(),
             ty,
         }
