@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    splitting::union_find::UnionFind,
+    splitting::{reachability::compute_field_reachability, union_find::UnionFind},
     syntax::{
         Chi, Clause, CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
         TypingContext,
@@ -30,9 +30,40 @@ pub struct DeclSignature {
     /// own `B` in `Pack[B](val: B)`).
     pub own_type_params: Vec<Identifier>,
     pub tys: Vec<Ty>,
+    /// Parallel to `tys`: whether each field's raw declared type structurally loops back to this
+    /// xtor's own enclosing declaration (see [`crate::splitting::reachability`]), e.g. `true` for
+    /// `List.Cons.xs: List[A]`, `false` for `Bar.MkBar.f: Foo`. Always empty for a `Def` entry.
+    pub self_referential: Vec<bool>,
 }
 
 pub type DeclSignatures = HashMap<Identifier, DeclSignature>;
+
+/// One field position's actual type at one specific `Xtor`/`Clause` occurrence, recorded instead
+/// of unified immediately: whether two occurrences' observations should later merge depends on
+/// whether their *enclosing* declaration occurrences end up in the same equivalence class, which
+/// is only known once the whole walk (and its union-find) is finished.
+pub struct FieldObservation {
+    /// The label embedded in the enclosing `Xtor`/`XCase` occurrence's own `.ty`.
+    pub owner: Label,
+    /// The xtor this field belongs to (original, pre-split name).
+    pub xtor: Identifier,
+    pub field_index: usize,
+    pub ty: Ty,
+}
+
+/// The result of reconciling every [`FieldObservation`] recorded during the walk, keyed by (the
+/// owner's union-find root, xtor, field index).
+#[derive(Default)]
+pub struct FieldObservations(HashMap<(Label, Identifier, usize), Ty>);
+
+impl FieldObservations {
+    /// Looks up the reconciled field type observed for `xtor`'s `field_index`-th field, among
+    /// occurrences belonging to the equivalence class rooted at `root`. `None` means the xtor was
+    /// never actually constructed/matched anywhere in the program.
+    pub fn get(&self, root: &Label, xtor: &Identifier, field_index: usize) -> Option<&Ty> {
+        self.0.get(&(root.clone(), xtor.clone(), field_index))
+    }
+}
 
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
 /// union-find, and a record of each label's origin.
@@ -43,6 +74,9 @@ pub struct SplitState {
     /// Maps every minted label back to the original (unlabeled) declaration identifier it was
     /// derived from, e.g. `Box#3` -> `Box`.
     pub label_origin: HashMap<Label, Identifier>,
+    /// Field observations recorded for non-self-referential fields, reconciled once the walk
+    /// finishes. 
+    pub field_observations: Vec<FieldObservation>,
 }
 
 impl SplitState {
@@ -161,6 +195,7 @@ pub fn build_decl_signatures(
     prog: &Prog,
     state: &mut SplitState,
 ) -> (DeclSignatures, Vec<DataDeclaration>, Vec<CodataDeclaration>) {
+    let field_reachability = compute_field_reachability(prog);
     let mut sigs = DeclSignatures::new();
     for def in &prog.defs {
         let tys = label_def_signature(def, state);
@@ -170,6 +205,7 @@ pub fn build_decl_signatures(
                 decl_type_params: vec![],
                 own_type_params: def.type_params.clone(),
                 tys,
+                self_referential: vec![],
             },
         );
     }
@@ -188,6 +224,7 @@ pub fn build_decl_signatures(
                     decl_type_params: decl.type_params.clone(),
                     own_type_params: xtor.type_params.clone(),
                     tys,
+                    self_referential: field_reachability[&xtor.name].clone(),
                 },
             );
         }
@@ -207,6 +244,7 @@ pub fn build_decl_signatures(
                     decl_type_params: decl.type_params.clone(),
                     own_type_params: xtor.type_params.clone(),
                     tys,
+                    self_referential: field_reachability[&xtor.name].clone(),
                 },
             );
         }

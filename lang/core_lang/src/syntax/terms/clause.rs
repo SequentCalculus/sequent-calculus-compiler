@@ -291,6 +291,7 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![field_label.clone()],
+                self_referential: vec![true],
             },
         );
 
