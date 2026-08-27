@@ -471,7 +471,7 @@ impl BuildSymbolTable for Def {
         symbol_table.defs.insert(
             self.name.clone(),
             (
-                self.type_params.clone(),
+                self.type_params.to_type_context(),
                 self.context.clone(),
                 self.ret_ty.clone(),
             ),
@@ -492,7 +492,7 @@ impl BuildSymbolTable for Data {
             self.name.clone(),
             (
                 Polarity::Data,
-                self.type_params.clone(),
+                self.type_params.to_type_context(),
                 self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -514,7 +514,7 @@ impl BuildSymbolTable for CtorSig {
         }
         symbol_table.ctor_templates.insert(
             self.name.clone(),
-            (self.type_params.clone(), self.args.clone()),
+            (self.type_params.to_type_context(), self.args.clone()),
         );
         Ok(())
     }
@@ -532,7 +532,7 @@ impl BuildSymbolTable for Codata {
             self.name.clone(),
             (
                 Polarity::Codata,
-                self.type_params.clone(),
+                self.type_params.to_type_context(),
                 self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -555,7 +555,7 @@ impl BuildSymbolTable for DtorSig {
         symbol_table.dtor_templates.insert(
             self.name.clone(),
             (
-                self.type_params.clone(),
+                self.type_params.to_type_context(),
                 self.args.clone(),
                 self.cont_ty.clone(),
             ),

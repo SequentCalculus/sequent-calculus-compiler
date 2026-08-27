@@ -31,7 +31,7 @@ pub struct DtorSig {
     /// The dstructor name
     pub name: Name,
     /// The type parameters instantiating the type parameters of the codata type and the destructor
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The argument context
     pub args: TypingContext,
     /// The return type
@@ -44,7 +44,7 @@ impl DtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        let extended_type_params = type_params.extend(self.type_params.clone());
+        let extended_type_params = type_params.extend(self.type_params.to_type_context());
         self.args
             .check_template(symbol_table, &extended_type_params)?;
         self.cont_ty
@@ -89,7 +89,7 @@ pub struct Codata {
     /// The codata type name
     pub name: Name,
     /// The type parameters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The list of destructors
     pub dtors: Vec<DtorSig>,
 }
@@ -101,11 +101,11 @@ impl Codata {
         let dtor_params: Vec<String> = self
             .dtors
             .iter()
-            .flat_map(|dtor| dtor.type_params.bindings.clone())
+            .flat_map(|dtor| dtor.type_params.names())
             .collect();
 
         if let Some(overlapps) =
-            check_overlapping_type_params(&self.type_params.bindings, &dtor_params)
+            check_overlapping_type_params(&self.type_params.names(), &dtor_params)
         {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span,
@@ -118,7 +118,7 @@ impl Codata {
         }
 
         for dtor in &self.dtors {
-            dtor.check(symbol_table, &self.type_params)?;
+            dtor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
     }
@@ -159,7 +159,7 @@ impl Print for Codata {
 #[cfg(test)]
 mod codata_tests {
     use crate::{
-        syntax::{Codata, DtorSig, Ty, TypeArgs, TypeContext, TypingContext},
+        syntax::{Codata, DtorSig, Polarity, Ty, TypeArgs, TypeParams, TypingContext},
         test_common::codata_stream,
         typing::symbol_table::{self, BuildSymbolTable, SymbolTable},
     };
@@ -168,7 +168,7 @@ mod codata_tests {
     #[test]
     fn display_stream() {
         let result = codata_stream().print_to_string(Default::default());
-        let expected = "codata Stream[A] { head: A, tail: Stream[A] }";
+        let expected = "codata Stream[A+] { head: A, tail: Stream[A] }";
         assert_eq!(result, expected)
     }
 
@@ -185,17 +185,11 @@ mod codata_tests {
         let data = Codata {
             span: None,
             name: "Box".to_owned(),
-            type_params: TypeContext {
-                span: None,
-                bindings: vec!["A".to_owned()].into(),
-            },
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             dtors: vec![DtorSig {
                 span: None,
                 name: "Pack".to_owned(),
-                type_params: TypeContext {
-                    span: None,
-                    bindings: vec!["A".to_owned()].into(),
-                },
+                type_params: TypeParams::mk(&[("A", Polarity::Data)]),
                 args: TypingContext::default(),
                 cont_ty: Ty::mk_decl(&"A", TypeArgs::default()),
             }],

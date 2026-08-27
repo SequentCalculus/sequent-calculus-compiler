@@ -31,7 +31,7 @@ pub struct CtorSig {
     /// The constructor name
     pub name: Name,
     /// The type parameters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The argument context
     pub args: TypingContext,
 }
@@ -42,8 +42,10 @@ impl CtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args
-            .check_template(symbol_table, &type_params.extend(self.type_params.clone()))?;
+        self.args.check_template(
+            symbol_table,
+            &type_params.extend(self.type_params.to_type_context()),
+        )?;
         Ok(())
     }
 }
@@ -81,7 +83,7 @@ pub struct Data {
     /// The data type name
     pub name: Name,
     /// The type paramenters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The constructors
     pub ctors: Vec<CtorSig>,
 }
@@ -93,11 +95,11 @@ impl Data {
         let ctor_params: Vec<String> = self
             .ctors
             .iter()
-            .flat_map(|ctor| ctor.type_params.bindings.clone())
+            .flat_map(|ctor| ctor.type_params.names())
             .collect();
 
         if let Some(overlapps) =
-            check_overlapping_type_params(&self.type_params.bindings, &ctor_params)
+            check_overlapping_type_params(&self.type_params.names(), &ctor_params)
         {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span,
@@ -110,7 +112,7 @@ impl Data {
         }
 
         for ctor in &self.ctors {
-            ctor.check(symbol_table, &self.type_params)?;
+            ctor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
     }
@@ -153,7 +155,7 @@ mod data_tests {
     use printer::Print;
 
     use crate::{
-        syntax::{CtorSig, Data, TypeContext, TypingContext},
+        syntax::{CtorSig, Data, Polarity, TypeParams, TypingContext},
         test_common::data_list,
         typing::symbol_table::{self, BuildSymbolTable, SymbolTable},
     };
@@ -161,7 +163,7 @@ mod data_tests {
     #[test]
     fn display_list() {
         let result = data_list().print_to_string(Default::default());
-        let expected = "data List[A] { Nil, Cons(x: A, xs: List[A]) }";
+        let expected = "data List[A+] { Nil, Cons(x: A, xs: List[A]) }";
         assert_eq!(result, expected)
     }
 
@@ -178,17 +180,11 @@ mod data_tests {
         let data = Data {
             span: None,
             name: "Box".to_owned(),
-            type_params: TypeContext {
-                span: None,
-                bindings: vec!["A".to_owned()].into(),
-            },
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             ctors: vec![CtorSig {
                 span: None,
                 name: "Pack".to_owned(),
-                type_params: TypeContext {
-                    span: None,
-                    bindings: vec!["A".to_owned()].into(),
-                },
+                type_params: TypeParams::mk(&[("A", Polarity::Data)]),
                 args: TypingContext::default(),
             }],
         };

@@ -137,7 +137,7 @@ mod program_tests {
     use crate::{
         parser::fun,
         syntax::{
-            Chirality, CtorSig, DtorSig, TypeArgs, TypeContext,
+            Chirality, CtorSig, DtorSig, Polarity, TypeArgs, TypeParams,
             context::{ContextBinding, TypingContext},
             declarations::{Codata, Data, Def},
             program::Program,
@@ -158,7 +158,7 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "x".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -174,11 +174,11 @@ mod program_tests {
                 Data {
                     span: Some(dummy_span()),
                     name: "Ex".to_owned(),
-                    type_params: TypeContext::mk(&["A"]),
+                    type_params: TypeParams::mk(&[("A", Polarity::Data)]),
                     ctors: vec![CtorSig {
                         span: Some(dummy_span()),
                         name: "Mk".to_owned(),
-                        type_params: TypeContext::mk(&["B"]),
+                        type_params: TypeParams::mk(&[("B", Polarity::Data)]),
                         args: TypingContext {
                             span: Some(dummy_span()),
                             bindings: vec![ContextBinding {
@@ -201,11 +201,11 @@ mod program_tests {
                 Codata {
                     span: Some(dummy_span()),
                     name: "Ex".to_owned(),
-                    type_params: TypeContext::mk(&["A"]),
+                    type_params: TypeParams::mk(&[("A", Polarity::Data)]),
                     dtors: vec![DtorSig {
                         span: Some(dummy_span()),
                         name: "unmk".to_owned(),
-                        type_params: TypeContext::mk(&["B"]),
+                        type_params: TypeParams::mk(&[("B", Polarity::Data)]),
                         args: TypingContext {
                             span: Some(dummy_span()),
                             bindings: vec![ContextBinding {
@@ -267,7 +267,7 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "f".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     context: ctx,
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -302,7 +302,7 @@ mod program_tests {
         let d1 = Def {
             span: dummy_span(),
             name: "f".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_i64(),
@@ -311,7 +311,7 @@ mod program_tests {
         let d2 = Def {
             span: dummy_span(),
             name: "g".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_i64(),
@@ -342,7 +342,7 @@ mod program_tests {
     fn parse_existential_data() {
         let parser = fun::ProgParser::new();
         assert_eq!(
-            parser.parse("data Ex[A] { Mk[B](x: B) }"),
+            parser.parse("data Ex[A+] { Mk[B+](x: B) }"),
             Ok(existential_data())
         );
     }
@@ -352,7 +352,7 @@ mod program_tests {
         let parser = fun::ProgParser::new();
 
         assert_eq!(
-            parser.parse("codata Ex[A] { unmk[B](x: B): B }"),
+            parser.parse("codata Ex[A+] { unmk[B+](x: B): B }"),
             Ok(existential_codata())
         );
     }
@@ -361,7 +361,7 @@ mod program_tests {
     fn display_existential_data() {
         assert_eq!(
             existential_data().print_to_string(Default::default()),
-            "data Ex[A] { Mk[B](x: B) }".to_string()
+            "data Ex[A+] { Mk[B+](x: B) }".to_string()
         )
     }
 
@@ -369,7 +369,7 @@ mod program_tests {
     fn display_existential_codata() {
         assert_eq!(
             existential_codata().print_to_string(Default::default()),
-            "codata Ex[A] { unmk[B](x: B): B }".to_string()
+            "codata Ex[A+] { unmk[B+](x: B): B }".to_string()
         )
     }
 }

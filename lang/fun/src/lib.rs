@@ -12,7 +12,7 @@ pub mod test_common {
 
     use super::{
         syntax::{
-            context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
+            context::{Chirality::Prd, NameContext, TypeContext, TypeParams, TypingContext},
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},
@@ -52,18 +52,18 @@ pub mod test_common {
         Data {
             span: None,
             name: "List".to_owned(),
-            type_params: TypeContext::mk(&vec!["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             ctors: vec![
                 CtorSig {
                     span: None,
                     name: "Nil".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: context_cons("A"),
                 },
             ],
@@ -74,18 +74,18 @@ pub mod test_common {
         Data {
             span: None,
             name: "List[i64]".to_owned(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             ctors: vec![
                 CtorSig {
                     span: None,
                     name: "Nil".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: context_cons_i64(),
                 },
             ],
@@ -154,19 +154,19 @@ pub mod test_common {
         Codata {
             span: None,
             name: "Stream".to_owned(),
-            type_params: TypeContext::mk(&vec!["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             dtors: vec![
                 DtorSig {
                     span: None,
                     name: "head".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: None,
                     name: "tail".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl(
                         "Stream",
@@ -283,11 +283,11 @@ pub mod test_common {
         Codata {
             span: None,
             name: "Fun".to_owned(),
-            type_params: TypeContext::mk(&vec!["A", "B"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data), ("B", Polarity::Data)]),
             dtors: vec![DtorSig {
                 span: None,
                 name: "apply".to_owned(),
-                type_params: TypeContext::default(),
+                type_params: TypeParams::default(),
                 args: context_ap("A", "B"),
                 cont_ty: Ty::mk_decl("B", TypeArgs::default()),
             }],
@@ -352,19 +352,19 @@ pub mod test_common {
         Codata {
             span: None,
             name: "LPair".to_owned(),
-            type_params: TypeContext::mk(&vec!["A", "B"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data), ("B", Polarity::Data)]),
             dtors: vec![
                 DtorSig {
                     span: None,
                     name: "fst".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("A", TypeArgs::default()),
                 },
                 DtorSig {
                     span: None,
                     name: "snd".to_owned(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: TypingContext::default(),
                     cont_ty: Ty::mk_decl("B", TypeArgs::default()),
                 },
@@ -435,7 +435,7 @@ pub mod test_common {
         Def {
             span: dummy_span(),
             name: "mult".to_owned(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: context_mult(),
             body: Case {
                 span: dummy_span(),
@@ -487,7 +487,7 @@ pub mod test_common {
         Def {
             span: dummy_span(),
             name: "mult".to_owned(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: context_mult(),
             ret_ty: Ty::mk_i64(),
             body: Case {

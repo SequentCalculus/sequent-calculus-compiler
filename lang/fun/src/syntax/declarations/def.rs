@@ -28,7 +28,7 @@ pub struct Def {
     /// The name of the definition
     pub name: Name,
     /// The type parameters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The parameters
     pub context: TypingContext,
     /// The return type
@@ -41,11 +41,12 @@ impl Def {
     fn push_type_param_scope(&self, symbol_table: &mut SymbolTable) -> Vec<Name> {
         let mut inserted = vec![];
         for param in &self.type_params.bindings {
+            // TODO: still hardcodes Polarity::Data instead of `param.polarity`
             symbol_table.type_templates.insert(
-                param.clone(),
+                param.name.clone(),
                 (Polarity::Data, TypeContext::default(), vec![]),
             );
-            inserted.push(param.clone());
+            inserted.push(param.name.clone());
         }
         inserted
     }
@@ -112,7 +113,7 @@ mod def_tests {
     use crate::{
         parser::fun,
         syntax::{
-            Chirality, TypeArgs, TypeContext, XVar,
+            Chirality, Polarity, TypeArgs, TypeParams, XVar,
             context::{ContextBinding, TypingContext},
             program::Program,
             terms::{Lit, Term},
@@ -130,7 +131,7 @@ mod def_tests {
         Def {
             span: dummy_span(),
             name: "x".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: TypingContext {
                 span: None,
                 bindings: vec![],
@@ -144,7 +145,7 @@ mod def_tests {
         Def {
             span: dummy_span(),
             name: "id".to_string(),
-            type_params: TypeContext::mk(&["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             context: TypingContext {
                 span: None,
                 bindings: vec![ContextBinding {
@@ -170,7 +171,7 @@ mod def_tests {
     fn display_id() {
         assert_eq!(
             id_def().print_to_string(Default::default()),
-            "def id[A](x: A): A {\n    x\n}".to_string()
+            "def id[A+](x: A): A {\n    x\n}".to_string()
         )
     }
 
@@ -190,7 +191,7 @@ mod def_tests {
             declarations: vec![id_def().into()],
         };
         println!("{}", id_def().print_to_string(None));
-        assert_eq!(parser.parse("def id[A](x: A): A { x }"), Ok(module));
+        assert_eq!(parser.parse("def id[A+](x: A): A { x }"), Ok(module));
     }
 
     #[test]
@@ -209,7 +210,7 @@ mod def_tests {
         let bad = Def {
             span: dummy_span(),
             name: "bad".to_string(),
-            type_params: TypeContext::mk(&["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             context: TypingContext {
                 span: None,
                 bindings: vec![],

@@ -399,7 +399,7 @@ pub Term: Term = {
 //
 
 Ctor: CtorSig = {
-    <l: @L> <name: CtorName> <lc: @L> <type_params: OptTypeContext> <args: OptContext> <r: @R> =>
+    <l: @L> <name: CtorName> <lc: @L> <type_params: OptTypeParams> <args: OptContext> <r: @R> =>
         CtorSig{
             span: Some(span(l, r)),
             name,
@@ -409,7 +409,7 @@ Ctor: CtorSig = {
 }
 
 Dtor: DtorSig = {
-    <l: @L> <name: DtorName> <lc: @L> <type_params: OptTypeContext> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
+    <l: @L> <name: DtorName> <lc: @L> <type_params: OptTypeParams> <args: OptContext> <rc: @R> ":" <cont_ty: Ty> <r: @R> =>
         DtorSig{
             span: Some(span(l, r)),
             name,
@@ -420,7 +420,7 @@ Dtor: DtorSig = {
 }
 
 Def: Def = {
-    <l: @L> "def" <name: Name> <type_params: OptTypeContext> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
+    <l: @L> "def" <name: Name> <type_params: OptTypeParams> <lc: @L> <context: OptContext> <rc: @R> ":" <ret_ty: Ty>  <body: Braces<Term>> <r: @R> =>
         Def {
             span: span(l, r),
             name,
@@ -435,8 +435,24 @@ pub OptTypeContext: TypeContext = {
     <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: Some(span(l, r)), bindings, },
 }
 
+// A type parameter's polarity is mandatory (no default, no inference): `+` for data/positive,
+// `-` for codata/negative.
+PolaritySigil: Polarity = {
+    "+" => Polarity::Data,
+    "-" => Polarity::Codata,
+}
+
+TypeParam: TypeParam = {
+    <l: @L> <name: TypeName> <polarity: PolaritySigil> <r: @R> =>
+        TypeParam { span: Some(span(l, r)), name, polarity },
+}
+
+pub OptTypeParams: TypeParams = {
+    <l: @L> <bindings: OptBracketedList<TypeParam>> <r: @R> => TypeParams { span: Some(span(l, r)), bindings, },
+}
+
 Data: Data = {
-    <l: @L> "data" <name: TypeName> <type_params: OptTypeContext> <ctors: BracedList<Ctor>> <r: @R> =>
+    <l: @L> "data" <name: TypeName> <type_params: OptTypeParams> <ctors: BracedList<Ctor>> <r: @R> =>
         Data {
             span: Some(span(l, r)),
             name,
@@ -446,7 +462,7 @@ Data: Data = {
 }
 
 Codata: Codata = {
-    <l: @L> "codata" <name: TypeName> <type_params: OptTypeContext> <dtors: BracedList<Dtor>> <r: @R> =>
+    <l: @L> "codata" <name: TypeName> <type_params: OptTypeParams> <dtors: BracedList<Dtor>> <r: @R> =>
         Codata {
             span: Some(span(l, r)),
             name,
