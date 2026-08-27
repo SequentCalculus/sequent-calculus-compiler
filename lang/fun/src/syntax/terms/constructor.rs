@@ -79,9 +79,8 @@ impl Check for Constructor {
         self.type_args.is_instance(&own_type_params, symbol_table)?;
 
         let mappings: HashMap<Name, Ty> = own_type_params
-            .bindings
-            .iter()
-            .cloned()
+            .names()
+            .into_iter()
             .zip(self.type_args.args.iter().cloned())
             .collect();
         let types = args_template.subst_ty(&mappings);
@@ -316,7 +315,7 @@ mod test {
             "Any".to_owned(),
             (
                 Polarity::Data,
-                TypeContext::default(),
+                TypeParams::default(),
                 vec!["Mk".to_owned()],
             ),
         );
@@ -324,10 +323,7 @@ mod test {
         symbol_table.ctor_templates.insert(
             "Mk".to_owned(),
             (
-                TypeContext {
-                    span: None,
-                    bindings: vec!["B".to_owned()],
-                },
+                TypeParams::mk(&[("B", Polarity::Data)]),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

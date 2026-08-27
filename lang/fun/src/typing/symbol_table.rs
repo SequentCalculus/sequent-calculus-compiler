@@ -1,12 +1,12 @@
 //! This module define the symbol table used during typechecking.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use miette::SourceSpan;
 use printer::Print;
 
 use crate::syntax::{
-    context::{TypeContext, TypingContext},
+    context::{TypeContext, TypeParams, TypingContext},
     declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
     names::Name,
     program::Program,
@@ -29,35 +29,35 @@ use crate::parser::util::ToMiette;
 pub struct SymbolTable {
     /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
     /// and return type.
-    pub defs: HashMap<Name, (TypeContext, TypingContext, Ty)>,
+    pub defs: HashMap<Name, (TypeParams, TypingContext, Ty)>,
     /// Maps names of monomorphic [constructors][CtorSig] (with the type arguments of the
     /// surrounding data type instance already substituted) to their own (still open) type
     /// parameters and their argument list.
-    pub ctors: HashMap<Name, (TypeContext, TypingContext)>,
+    pub ctors: HashMap<Name, (TypeParams, TypingContext)>,
     /// Maps names of monomorphic [destructors][DtorSig] (with the type arguments of the
     /// surrounding codata type instance already substituted) to their own (still open) type
     /// parameters, their argument list, and their return type.
-    pub dtors: HashMap<Name, (TypeContext, TypingContext, Ty)>,
+    pub dtors: HashMap<Name, (TypeParams, TypingContext, Ty)>,
     /// Maps names of instances of user-declared [data](Data) and [codata](Codata) types to their
     /// [polarity](Polarity) determinig whether they are data or codata, to their type arguments
     /// instantiating the type parameters of the corresponding template, and to their name of xtors.
     pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
     /// Maps names of [constructors][CtorSig] of a template to their own (existential) type
     /// parameters and their signatures, i.e., their argument list.
-    pub ctor_templates: HashMap<Name, (TypeContext, TypingContext)>,
+    pub ctor_templates: HashMap<Name, (TypeParams, TypingContext)>,
     /// Maps names of [destructors][DtorSig] of a template to their own (existential) type
     /// parameters and their signatures, i.e., their argument list and return type.
-    pub dtor_templates: HashMap<Name, (TypeContext, TypingContext, Ty)>,
+    pub dtor_templates: HashMap<Name, (TypeParams, TypingContext, Ty)>,
     /// Maps names of user-declared type templates for [data](Data) and [codata](Codata) types to
     /// their [polarity](Polarity) determining whether they are data or codata, to their type
     /// parameters, and to their name of xtors.
-    pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
-    /// Names of type variables that are currently in scope as abstract type variables,
-    /// e.g. bound by an existential constructor pattern in a `case` clause (`Cons[B](x, xs)`) or
-    /// a universal destructor parameter in a `new` clause (`head[B]`). Such names are treated as
-    /// valid, opaque monomorphic types without requiring an instance or template to exist for
-    /// them.
-    pub abstract_type_vars: HashSet<Name>,
+    pub type_templates: HashMap<Name, (Polarity, TypeParams, Vec<Name>)>,
+    /// Maps type variables that are currently in scope as abstract type variables to their
+    /// declared [polarity](Polarity), e.g. bound by an existential constructor pattern in a
+    /// `case` clause (`Cons[B](x, xs)`) or a universal destructor parameter in a `new` clause
+    /// (`head[B]`). Such names are treated as valid, opaque monomorphic types without requiring
+    /// an instance or template to exist for them.
+    pub abstract_type_vars: HashMap<Name, Polarity>,
 }
 
 impl SymbolTable {
@@ -79,9 +79,8 @@ impl SymbolTable {
 
         type_args.is_instance(&type_params, self)?;
         let mappings: HashMap<Name, Ty> = type_params
-            .bindings
-            .iter()
-            .cloned()
+            .names()
+            .into_iter()
             .zip(type_args.args.clone())
             .collect();
 
@@ -213,7 +212,7 @@ impl SymbolTable {
         span: &SourceSpan,
         ctor: &Name,
         data_ty: &Ty,
-    ) -> Result<(TypeContext, TypingContext), Error> {
+    ) -> Result<(TypeParams, TypingContext), Error> {
         data_ty.check(&Some(*span), self)?;
 
         let Ty::Decl { type_args, .. } = data_ty else {
@@ -324,9 +323,8 @@ impl SymbolTable {
         dtor_own_type_args.is_instance(&own_type_params, self)?;
 
         let mappings: HashMap<Name, Ty> = own_type_params
-            .bindings
-            .iter()
-            .cloned()
+            .names()
+            .into_iter()
             .zip(dtor_own_type_args.args.iter().cloned())
             .collect();
 
@@ -342,10 +340,10 @@ impl SymbolTable {
         for (name, (_, type_params, _)) in &self.type_templates {
             type_params.no_dups(name)?;
             for param in &type_params.bindings {
-                if self.type_templates.contains_key(param) {
+                if self.type_templates.contains_key(&param.name) {
                     return Err(Error::DefinedMultipleTimes {
                         span: type_params.span.to_miette(),
-                        name: param.clone(),
+                        name: param.name.clone(),
                     });
                 }
             }
@@ -354,10 +352,10 @@ impl SymbolTable {
         for (name, (type_params, _, _)) in &self.defs {
             type_params.no_dups(name)?;
             for param in &type_params.bindings {
-                if self.type_templates.contains_key(param) {
+                if self.type_templates.contains_key(&param.name) {
                     return Err(Error::DefinedMultipleTimes {
                         span: type_params.span.to_miette(),
-                        name: param.clone(),
+                        name: param.name.clone(),
                     });
                 }
             }
@@ -386,28 +384,38 @@ impl SymbolTable {
     /// is already in scope as a rigid variable (e.g. due to a nested clause shadowing an outer
     /// one), since that would silently shadow an existing type and lead to confusing errors
     /// elsewhere.
+    ///
+    /// Each user-chosen name in `names` is paired positionally with the corresponding
+    /// `TypeParam` in `own_type_params` (the ctor's/dtor's own declared existential/universal
+    /// parameter list), so that the name is brought into scope with the *declared* polarity
+    /// rather than a guessed default. Callers must ensure both lists have equal length (an arity
+    /// mismatch is a separate, earlier error).
     /// - `span` is the source location of the clause introducing the names.
     /// - `names` are the type parameter names to bring into scope.
+    /// - `own_type_params` is the ctor's/dtor's own declared type parameter list, in the same
+    ///   order as `names`.
     pub fn push_abstract_vars(
         &mut self,
         span: &SourceSpan,
         names: &TypeContext,
+        own_type_params: &TypeParams,
     ) -> Result<Vec<Ty>, Error> {
         let mut result = vec![];
-        for name in &names.bindings {
+        for (name, own_param) in names.bindings.iter().zip(&own_type_params.bindings) {
             if self.type_templates.contains_key(name) {
                 return Err(Error::DefinedMultipleTimes {
                     span: Some(*span),
                     name: name.clone(),
                 });
             }
-            if self.abstract_type_vars.contains(name) {
+            if self.abstract_type_vars.contains_key(name) {
                 return Err(Error::DefinedMultipleTimes {
                     span: Some(*span),
                     name: name.clone(),
                 });
             }
-            self.abstract_type_vars.insert(name.clone());
+            self.abstract_type_vars
+                .insert(name.clone(), own_param.polarity.clone());
             result.push(Ty::Decl {
                 span: None,
                 name: name.clone(),
@@ -471,7 +479,7 @@ impl BuildSymbolTable for Def {
         symbol_table.defs.insert(
             self.name.clone(),
             (
-                self.type_params.to_type_context(),
+                self.type_params.clone(),
                 self.context.clone(),
                 self.ret_ty.clone(),
             ),
@@ -492,7 +500,7 @@ impl BuildSymbolTable for Data {
             self.name.clone(),
             (
                 Polarity::Data,
-                self.type_params.to_type_context(),
+                self.type_params.clone(),
                 self.ctors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -514,7 +522,7 @@ impl BuildSymbolTable for CtorSig {
         }
         symbol_table.ctor_templates.insert(
             self.name.clone(),
-            (self.type_params.to_type_context(), self.args.clone()),
+            (self.type_params.clone(), self.args.clone()),
         );
         Ok(())
     }
@@ -532,7 +540,7 @@ impl BuildSymbolTable for Codata {
             self.name.clone(),
             (
                 Polarity::Codata,
-                self.type_params.to_type_context(),
+                self.type_params.clone(),
                 self.dtors.iter().map(|ctor| ctor.name.clone()).collect(),
             ),
         );
@@ -555,7 +563,7 @@ impl BuildSymbolTable for DtorSig {
         symbol_table.dtor_templates.insert(
             self.name.clone(),
             (
-                self.type_params.to_type_context(),
+                self.type_params.clone(),
                 self.args.clone(),
                 self.cont_ty.clone(),
             ),
@@ -569,7 +577,7 @@ mod symbol_table_tests {
     use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         syntax::{
-            context::{Chirality::Prd, ContextBinding, TypeContext, TypingContext},
+            context::{Chirality::Prd, ContextBinding, TypeParams, TypingContext},
             program::Program,
             types::{Ty, TypeArgs},
             util::dummy_span,
@@ -597,7 +605,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
-                TypeContext::default(),
+                TypeParams::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
@@ -636,7 +644,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
-                TypeContext::default(),
+                TypeParams::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

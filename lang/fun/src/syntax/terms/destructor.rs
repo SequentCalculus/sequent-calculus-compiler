@@ -311,10 +311,7 @@ mod destructor_tests {
             "Const".to_owned(),
             (
                 Polarity::Codata,
-                TypeContext {
-                    span: None,
-                    bindings: vec!["A".to_owned()],
-                },
+                TypeParams::mk(&[("A", Polarity::Data)]),
                 vec!["run".to_owned()],
             ),
         );
@@ -322,10 +319,7 @@ mod destructor_tests {
         symbol_table.dtor_templates.insert(
             "run".to_owned(),
             (
-                TypeContext {
-                    span: None,
-                    bindings: vec!["B".to_owned()],
-                },
+                TypeParams::mk(&[("B", Polarity::Data)]),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

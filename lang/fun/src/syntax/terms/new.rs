@@ -131,12 +131,15 @@ impl Check for New {
                     got: clause.type_params.bindings.len(),
                 });
             }
-            let rigid_args = symbol_table.push_abstract_vars(&clause.span, &clause.type_params)?;
+            let rigid_args = symbol_table.push_abstract_vars(
+                &clause.span,
+                &clause.type_params,
+                &own_type_params,
+            )?;
 
             let mappings: HashMap<Name, Ty> = own_type_params
-                .bindings
-                .iter()
-                .cloned()
+                .names()
+                .into_iter()
                 .zip(rigid_args)
                 .collect();
             let dtor_args = dtor_args.subst_ty(&mappings);
@@ -418,10 +421,7 @@ mod test {
         symbol_table.dtors.insert(
             "run".to_owned(),
             (
-                TypeContext {
-                    span: None,
-                    bindings: vec!["B".to_owned()],
-                },
+                TypeParams::mk(&[("B", Polarity::Data)]),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

@@ -41,10 +41,9 @@ impl Def {
     fn push_type_param_scope(&self, symbol_table: &mut SymbolTable) -> Vec<Name> {
         let mut inserted = vec![];
         for param in &self.type_params.bindings {
-            // TODO: still hardcodes Polarity::Data instead of `param.polarity`
             symbol_table.type_templates.insert(
                 param.name.clone(),
-                (Polarity::Data, TypeContext::default(), vec![]),
+                (param.polarity.clone(), TypeParams::default(), vec![]),
             );
             inserted.push(param.name.clone());
         }

@@ -95,7 +95,7 @@ mod test {
         ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         symbol_table.defs.insert(
             "mult".to_owned(),
-            (TypeContext::default(), ctx.clone(), Ty::mk_i64()),
+            (TypeParams::default(), ctx.clone(), Ty::mk_i64()),
         );
         let result = def_mult()
             .body
@@ -133,7 +133,7 @@ mod test {
         symbol_table.defs.insert(
             "id".to_owned(),
             (
-                TypeContext::mk(&["A"]),
+                TypeParams::mk(&[("A", Polarity::Data)]),
                 poly_ctx,
                 Ty::mk_decl("A", TypeArgs::default()),
             ),
@@ -158,7 +158,7 @@ mod test {
         mono_ctx.add_var("x", Ty::mk_i64());
         symbol_table.defs.insert(
             "id".to_owned(),
-            (TypeContext::default(), mono_ctx, Ty::mk_i64()),
+            (TypeParams::default(), mono_ctx, Ty::mk_i64()),
         );
 
         let result = Call {

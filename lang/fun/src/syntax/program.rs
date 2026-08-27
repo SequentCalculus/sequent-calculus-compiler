@@ -145,6 +145,7 @@ mod program_tests {
             types::Ty,
             util::dummy_span,
         },
+        typing::Error,
     };
     use std::collections::HashSet;
 
@@ -371,5 +372,32 @@ mod program_tests {
             existential_codata().print_to_string(Default::default()),
             "codata Ex[A+] { unmk[B+](x: B): B }".to_string()
         )
+    }
+
+    #[test]
+    fn def_body_respects_declared_polarity_of_own_type_param() {
+        let parser = fun::ProgParser::new();
+        let result = parser
+            .parse("def wrap[B+](x: B): B { x }\ndef f[A-](x: A): A { wrap[A](x) }")
+            .unwrap()
+            .check();
+        assert!(
+            matches!(result, Err(Error::PolarityMismatch { .. })),
+            "expected a PolarityMismatch since f's own A- is used where wrap expects B+, got {result:?}"
+        );
+        // Sanity-check the Display impl (used for diagnostics) doesn't panic and mentions the
+        // mismatching polarities.
+        let message = result.unwrap_err().to_string();
+        assert!(message.contains("Polarity mismatch"));
+    }
+
+    #[test]
+    fn def_body_accepts_matching_declared_polarity_of_own_type_param() {
+        let parser = fun::ProgParser::new();
+        let result = parser
+            .parse("def wrap[B+](x: B): B { x }\ndef f[A+](x: A): A { wrap[A](x) }")
+            .unwrap()
+            .check();
+        assert!(result.is_ok(), "expected Ok, got {result:?}");
     }
 }

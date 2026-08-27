@@ -51,7 +51,8 @@ impl Ty {
             Ty::Decl {
                 name, type_args, ..
             } => {
-                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains(name) {
+                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains_key(name)
+                {
                     return Ok(());
                 }
 
@@ -104,6 +105,36 @@ impl Ty {
                     }
                 }
             },
+        }
+    }
+
+    /// This function determines the [`Polarity`] of a type, i.e. whether it behaves as a
+    /// data/positive (CBV) or codata/negative (CBN) type. `I64` is always positive. 
+    /// For a type parameter this is its declared polarity (looked up in
+    /// `symbol_table.abstract_type_vars`), for a user-declared type template or instance it is
+    /// the polarity declared on the corresponding `data`/`codata` template.
+    pub fn polarity(&self, symbol_table: &SymbolTable) -> Result<Polarity, Error> {
+        match self {
+            Ty::I64 { .. } => Ok(Polarity::Data),
+            Ty::Decl {
+                span,
+                name,
+                type_args,
+            } => {
+                if type_args.args.is_empty() {
+                    if let Some(polarity) = symbol_table.abstract_type_vars.get(name) {
+                        return Ok(polarity.clone());
+                    }
+                }
+                symbol_table
+                    .type_templates
+                    .get(name)
+                    .map(|(pol, _, _)| pol.clone())
+                    .ok_or_else(|| Error::Undefined {
+                        span: span.to_miette(),
+                        name: name.clone(),
+                    })
+            }
         }
     }
 
@@ -180,15 +211,14 @@ fn create_instance(
     instance_name: String,
     type_args: &TypeArgs,
     pol: Polarity,
-    type_params: TypeContext,
+    type_params: TypeParams,
     xtors: Vec<Name>,
     symbol_table: &mut SymbolTable,
 ) -> Result<(), Error> {
     type_args.is_instance(&type_params, symbol_table)?;
     let mappings: HashMap<Name, Ty> = type_params
-        .bindings
-        .iter()
-        .cloned()
+        .names()
+        .into_iter()
         .zip(type_args.args.clone())
         .collect();
 
@@ -277,12 +307,13 @@ pub struct TypeArgs {
 
 impl TypeArgs {
     /// This function checks whether the type arguments form a valid instance for a list of type
-    /// parameters.
+    /// parameters, i.e. that the arity matches and that each argument's [`Polarity`] matches the
+    /// declared polarity of the corresponding type parameter.
     /// - `template` is the list of type parameters.
     /// - `symbol_table` is the symbol table during typechecking.
     pub fn is_instance(
         &self,
-        template: &TypeContext,
+        template: &TypeParams,
         symbol_table: &mut SymbolTable,
     ) -> Result<(), Error> {
         if self.args.len() != template.bindings.len() {
@@ -292,8 +323,17 @@ impl TypeArgs {
                 got: self.args.len(),
             });
         }
-        for typ in &self.args {
+        for (typ, param) in self.args.iter().zip(&template.bindings) {
             typ.check(&self.span, symbol_table)?;
+            let got = typ.polarity(symbol_table)?;
+            if got != param.polarity {
+                return Err(Error::PolarityMismatch {
+                    span: self.span.to_miette(),
+                    param: param.name.clone(),
+                    expected: param.polarity.clone(),
+                    got,
+                });
+            }
         }
         Ok(())
     }
@@ -330,10 +370,85 @@ impl Print for TypeArgs {
 mod type_tests {
     use printer::Print;
 
-    use super::Ty;
+    use super::{Ty, TypeArgs};
 
     #[test]
     fn display_i64() {
         assert_eq!(Ty::mk_i64().print_to_string(None), "i64".to_owned())
+    }
+
+    #[test]
+    fn i64_polarity_is_data() {
+        let symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        assert_eq!(
+            Ty::mk_i64().polarity(&symbol_table).unwrap(),
+            crate::syntax::declarations::Polarity::Data
+        );
+    }
+
+    #[test]
+    fn declared_template_polarity_is_looked_up() {
+        use crate::test_common::{symbol_table_list, symbol_table_stream_template};
+
+        let data_symbol_table = symbol_table_list();
+        assert_eq!(
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
+                .polarity(&data_symbol_table)
+                .unwrap(),
+            crate::syntax::declarations::Polarity::Data
+        );
+
+        let codata_symbol_table = symbol_table_stream_template();
+        assert_eq!(
+            Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()]))
+                .polarity(&codata_symbol_table)
+                .unwrap(),
+            crate::syntax::declarations::Polarity::Codata
+        );
+    }
+
+    #[test]
+    fn is_instance_accepts_matching_polarity() {
+        use crate::syntax::context::TypeParams;
+        use crate::syntax::declarations::Polarity;
+
+        let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        let template = TypeParams::mk(&[("A", Polarity::Data)]);
+        let args = TypeArgs::mk(vec![Ty::mk_i64()]);
+        assert!(args.is_instance(&template, &mut symbol_table).is_ok());
+    }
+
+    #[test]
+    fn is_instance_rejects_mismatched_polarity() {
+        use crate::syntax::context::TypeParams;
+        use crate::syntax::declarations::Polarity;
+
+        let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        let template = TypeParams::mk(&[("A", Polarity::Codata)]);
+        let args = TypeArgs::mk(vec![Ty::mk_i64()]);
+        let result = args.is_instance(&template, &mut symbol_table);
+        assert!(matches!(
+            result,
+            Err(crate::typing::errors::Error::PolarityMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn is_instance_rejects_data_argument_for_codata_param() {
+        use crate::syntax::context::TypeParams;
+        use crate::syntax::declarations::Polarity;
+        use crate::test_common::symbol_table_stream;
+
+        let mut symbol_table = symbol_table_stream();
+        let template = TypeParams::mk(&[("A", Polarity::Data)]);
+        let args = TypeArgs::mk(vec![Ty::mk_decl(
+            "Stream",
+            TypeArgs::mk(vec![Ty::mk_i64()]),
+        )]);
+        let result = args.is_instance(&template, &mut symbol_table);
+        assert!(matches!(
+            result,
+            Err(crate::typing::errors::Error::PolarityMismatch { .. })
+        ));
     }
 }

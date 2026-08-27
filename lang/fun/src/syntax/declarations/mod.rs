@@ -18,6 +18,15 @@ pub enum Polarity {
     Codata,
 }
 
+impl std::fmt::Display for Polarity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Polarity::Data => write!(f, "+"),
+            Polarity::Codata => write!(f, "-"),
+        }
+    }
+}
+
 // TODO: contemplate boxing large variants here
 #[allow(clippy::large_enum_variant)]
 /// This enum defines top-level declarations. They are either [`Data`] or [`Codata`] type templates
