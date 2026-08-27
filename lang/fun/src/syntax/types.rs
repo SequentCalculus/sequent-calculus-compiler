@@ -409,7 +409,7 @@ mod type_tests {
 
     #[test]
     fn is_instance_accepts_matching_polarity() {
-        use crate::syntax::context::TypeParams;
+        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
 
         let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
@@ -420,7 +420,7 @@ mod type_tests {
 
     #[test]
     fn is_instance_rejects_mismatched_polarity() {
-        use crate::syntax::context::TypeParams;
+        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
 
         let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
@@ -435,7 +435,7 @@ mod type_tests {
 
     #[test]
     fn is_instance_rejects_data_argument_for_codata_param() {
-        use crate::syntax::context::TypeParams;
+        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
         use crate::test_common::symbol_table_stream;
 

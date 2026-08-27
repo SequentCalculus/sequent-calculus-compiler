@@ -12,7 +12,8 @@ pub mod test_common {
 
     use super::{
         syntax::{
-            context::{Chirality::Prd, NameContext, TypeContext, TypeParams, TypingContext},
+            context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
+            type_params::TypeParams,
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
             types::{Ty, TypeArgs},

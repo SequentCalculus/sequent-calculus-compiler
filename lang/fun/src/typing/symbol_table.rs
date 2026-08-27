@@ -6,7 +6,8 @@ use miette::SourceSpan;
 use printer::Print;
 
 use crate::syntax::{
-    context::{TypeContext, TypeParams, TypingContext},
+    context::{TypeContext, TypingContext},
+    type_params::TypeParams,
     declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
     names::Name,
     program::Program,
@@ -577,7 +578,8 @@ mod symbol_table_tests {
     use super::{BuildSymbolTable, SymbolTable};
     use crate::{
         syntax::{
-            context::{Chirality::Prd, ContextBinding, TypeParams, TypingContext},
+            context::{Chirality::Prd, ContextBinding, TypingContext},
+            type_params::TypeParams,
             program::Program,
             types::{Ty, TypeArgs},
             util::dummy_span,
