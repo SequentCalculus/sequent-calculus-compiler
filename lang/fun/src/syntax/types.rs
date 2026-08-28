@@ -10,6 +10,7 @@ use crate::syntax::*;
 use crate::typing::*;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 /// This enum encodes the monomorphic types of AxCut. They are either integers, or instances of
 /// user-declared type templates, or, during typechecking, type parameters standing for a
@@ -150,6 +151,23 @@ impl Ty {
             span: None,
             name: name.to_string(),
             type_args,
+        }
+    }
+
+    /// This function collects the names of all user-declared types referenced by this type
+    /// (including nested type arguments, e.g. `Foo` in `List[Foo]`), skipping names bound as
+    /// type parameters in `bound`.
+    pub fn collect_referenced_types(&self, bound: &HashSet<Name>, out: &mut HashSet<Name>) {
+        if let Ty::Decl {
+            name, type_args, ..
+        } = self
+        {
+            if !bound.contains(name) {
+                out.insert(name.clone());
+            }
+            for arg in &type_args.args {
+                arg.collect_referenced_types(bound, out);
+            }
         }
     }
 

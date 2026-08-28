@@ -9,6 +9,8 @@ use crate::syntax::*;
 use crate::typing::check::check_overlapping_type_params;
 use crate::typing::*;
 
+use std::collections::HashSet;
+
 /// This struct defines a data type constructor. It consists of a name (unique within its type), optional type parameters, and
 /// a typing context defining its argument types. The latter can contain type parameters abstracted
 /// by the data type template or the signature itself.
@@ -115,6 +117,21 @@ impl Data {
             ctor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
+    }
+
+    /// This function collects the names of all user-declared types referenced by any
+    /// constructor's argument types, excluding this type's own and each constructor's own type
+    /// parameters.
+    pub fn referenced_types(&self) -> HashSet<Name> {
+        let mut out = HashSet::new();
+        for ctor in &self.ctors {
+            let mut bound: HashSet<Name> = self.type_params.names().into_iter().collect();
+            bound.extend(ctor.type_params.names());
+            for binding in &ctor.args.bindings {
+                binding.ty.collect_referenced_types(&bound, &mut out);
+            }
+        }
+        out
     }
 }
 

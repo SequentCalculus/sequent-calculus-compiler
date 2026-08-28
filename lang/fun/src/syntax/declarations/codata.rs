@@ -9,6 +9,8 @@ use crate::syntax::*;
 use crate::typing::check::check_overlapping_type_params;
 use crate::typing::*;
 
+use std::collections::HashSet;
+
 /// This struct defines a codata type destructor. It consists of a name (unique within its type), an optional list of type parameters,
 /// a typing context defining its argument types, and a return type. The latter two can contain
 /// type parameters abstracted by the codata type template or the signature itself.
@@ -121,6 +123,22 @@ impl Codata {
             dtor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
+    }
+
+    /// This function collects the names of all user-declared types referenced by any
+    /// destructor's argument or continuation types, excluding this type's own and each
+    /// destructor's own type parameters.
+    pub fn referenced_types(&self) -> HashSet<Name> {
+        let mut out = HashSet::new();
+        for dtor in &self.dtors {
+            let mut bound: HashSet<Name> = self.type_params.names().into_iter().collect();
+            bound.extend(dtor.type_params.names());
+            for binding in &dtor.args.bindings {
+                binding.ty.collect_referenced_types(&bound, &mut out);
+            }
+            dtor.cont_ty.collect_referenced_types(&bound, &mut out);
+        }
+        out
     }
 }
 

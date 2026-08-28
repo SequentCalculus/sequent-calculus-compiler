@@ -60,22 +60,48 @@ impl Program {
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
-        // collect all uninstantiated type names from the symbol table, which are exactly this once which are actually used in the program
-        let used_types: HashSet<&str> = symbol_table
+        // collect all uninstantiated type names from the symbol table, which are exactly those
+        // which are actually instantiated somewhere in the term-level program
+        let mut used_types: HashSet<Name> = symbol_table
             .types
             .keys()
-            .map(|name| name.split_once("[").map_or(name.as_str(), |x| x.0))
+            .map(|name| name.split_once("[").map_or(name.as_str(), |x| x.0).to_string())
             .collect();
+
+        // A used type's constructors/destructors may reference other types that are never
+        // explicitly instantiated on their own, e.g. an argument that is never used in any
+        // clause body. Close `used_types` under all types referenced this way, since dropping
+        // such a type would leave a dangling reference in the (still used) type that needs it.
+        loop {
+            let mut changed = false;
+            for data in &data_types {
+                if used_types.contains(&data.name) {
+                    for name in data.referenced_types() {
+                        changed |= used_types.insert(name);
+                    }
+                }
+            }
+            for codata in &codata_types {
+                if used_types.contains(&codata.name) {
+                    for name in codata.referenced_types() {
+                        changed |= used_types.insert(name);
+                    }
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
 
         // filter out all unused type templates
         let checked = CheckedProgram {
             data_types: data_types
                 .into_iter()
-                .filter(|data| used_types.contains(data.name.as_str()))
+                .filter(|data| used_types.contains(&data.name))
                 .collect(),
             codata_types: codata_types
                 .into_iter()
-                .filter(|codata| used_types.contains(codata.name.as_str()))
+                .filter(|codata| used_types.contains(&codata.name))
                 .collect(),
             defs,
         };
