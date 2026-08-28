@@ -254,7 +254,7 @@ pub fn build_decl_signatures(
             def.name.clone(),
             DeclSignature {
                 decl_type_params: vec![],
-                own_type_params: def.type_params.clone(),
+                own_type_params: def.type_params.iter().map(|p| p.id.clone()).collect(),
                 tys,
                 self_referential: vec![],
             },
@@ -272,8 +272,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: decl.type_params.clone(),
-                    own_type_params: xtor.type_params.clone(),
+                    decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
+                    own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
                     tys,
                     self_referential: field_reachability[&xtor.name].clone(),
                 },
@@ -292,8 +292,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: decl.type_params.clone(),
-                    own_type_params: xtor.type_params.clone(),
+                    decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
+                    own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
                     tys,
                     self_referential: field_reachability[&xtor.name].clone(),
                 },

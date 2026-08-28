@@ -10,6 +10,7 @@ pub mod names;
 pub mod program;
 pub mod statements;
 pub mod terms;
+pub mod type_params;
 pub mod types;
 
 pub use arguments::{
@@ -27,4 +28,5 @@ pub use statements::{
 pub use terms::{
     BinOp, Chi, Clause, Cns, FsOp, FsTerm, FsXtor, Literal, Mu, Op, Prd, Term, XCase, XVar, Xtor,
 };
+pub use type_params::{ParamPolarity, TypeParam};
 pub use types::Ty;

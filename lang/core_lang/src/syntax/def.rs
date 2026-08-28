@@ -26,7 +26,7 @@ pub struct Def<S = Statement> {
     /// The name of the definition
     pub name: Identifier,
     /// The type parameters
-    pub type_params: Vec<Identifier>,
+    pub type_params: Vec<TypeParam>,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
@@ -150,7 +150,8 @@ impl Checked for Def {
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // extend the type parameters of the clause with the type parameters of the definition
-        let extended_type_params = [type_params, &self.type_params].concat();
+        let own_ids: Vec<Identifier> = self.type_params.iter().map(|p| p.id.clone()).collect();
+        let extended_type_params = [type_params, &own_ids].concat();
 
         // check well-formedness of the context
         self.context.check(&extended_type_params, context, env)?;

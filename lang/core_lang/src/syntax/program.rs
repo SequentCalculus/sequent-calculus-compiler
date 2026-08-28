@@ -157,10 +157,13 @@ impl Checked for Prog {
         }
 
         for data in &self.data_types {
-            data.check(&data.type_params, context, env)?;
+            let own_ids: Vec<Identifier> = data.type_params.iter().map(|p| p.id.clone()).collect();
+            data.check(&own_ids, context, env)?;
         }
         for codata in &self.codata_types {
-            codata.check(&codata.type_params, context, env)?;
+            let own_ids: Vec<Identifier> =
+                codata.type_params.iter().map(|p| p.id.clone()).collect();
+            codata.check(&own_ids, context, env)?;
         }
         for def in &self.defs {
             def.check(type_params, context, env)?;
@@ -210,7 +213,7 @@ mod constraint_tests {
     use crate::syntax::*;
     use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
-    use core_macros::{bind, ctor_sig, data, def, exit, id, lit, prd, prog, tvar, ty};
+    use core_macros::{bind, ctor_sig, data, def, exit, id, lit, prd, prog, tparam, tvar, ty};
 
     #[test]
     fn collect_constraints_prog() {
@@ -227,7 +230,7 @@ mod constraint_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         let prog = prog!(
@@ -273,7 +276,8 @@ mod check_tests {
     use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
     use core_macros::{
-        bind, cns, codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prd, prog, tvar, ty,
+        bind, cns, codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prd, prog, tparam, tvar,
+        ty,
     };
 
     #[test]
@@ -325,7 +329,7 @@ mod check_tests {
     #[test]
     fn check_type_arity_mismatch_in_prog() {
         // data declaration with one type parameter but used without arguments in a def
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], [id!("A", 1)]);
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], [tparam!(id!("A", 1), "+")]);
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
@@ -336,11 +340,11 @@ mod check_tests {
         let type_params: Vec<Identifier> = prog
             .data_types
             .iter()
-            .flat_map(|data| data.type_params.clone())
+            .flat_map(|data| data.type_params.iter().map(|p| p.id.clone()))
             .chain(
                 prog.codata_types
                     .iter()
-                    .flat_map(|codata| codata.type_params.clone()),
+                    .flat_map(|codata| codata.type_params.iter().map(|p| p.id.clone())),
             )
             .collect();
 
@@ -426,7 +430,7 @@ mod check_tests {
             id!("ExistsAny"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("val"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -436,7 +440,7 @@ mod check_tests {
             id!("ForallId"),
             [dtor_sig!(
                 id!("Inst"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [
                     bind!(id!("arg"), prd!(), tvar!(id!("A", 1))),
                     bind!(id!("cont"), cns!(), tvar!(id!("A", 1)))
@@ -467,7 +471,7 @@ mod check_tests {
             id!("ExistsErr"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("val"), prd!(), tvar!(id!("B", 2)))]
             )],
             []

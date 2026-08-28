@@ -141,7 +141,7 @@ fn specialize_declaration<P: Polarity + Clone>(
     table: &NamingTable,
     erased_decls: &ErasedDecls,
 ) -> Vec<TypeDeclaration<P>> {
-    let params = &decl.type_params;
+    let params: Vec<Identifier> = decl.type_params.iter().map(|p| p.id.clone()).collect();
     let is_erased = erased_decls.is_erased(&decl.name);
 
     if params.is_empty() || is_erased {
@@ -151,7 +151,7 @@ fn specialize_declaration<P: Polarity + Clone>(
         }
 
         let ctx = SpecializeContext::ground(table, erased_decls);
-        let extra_params: &[Identifier] = if is_erased { params } else { &[] };
+        let extra_params: &[Identifier] = if is_erased { &params } else { &[] };
 
         // This is already a monomorphic declaration, so we only need to specialize its xtors.
         return vec![TypeDeclaration {
@@ -170,7 +170,7 @@ fn specialize_declaration<P: Polarity + Clone>(
         .instantiations_for(&decl.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, params, tuple, erased_decls);
+            let ctx = SpecializeContext::with_subst(table, &params, tuple, erased_decls);
             TypeDeclaration {
                 dat: decl.dat.clone(),
                 name: table.lookup(&decl.name, tuple).clone(),
@@ -191,7 +191,7 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
     extra_params: &[Identifier],
     ctx: &SpecializeContext,
 ) -> Vec<XtorSig<P>> {
-    let mut params = xtor_sig.type_params.clone();
+    let mut params: Vec<Identifier> = xtor_sig.type_params.iter().map(|p| p.id.clone()).collect();
     params.extend_from_slice(extra_params);
 
     // This is already a monomorphic declaration, so we can return it as-is
@@ -280,7 +280,7 @@ pub fn specialize_clause<C: Chi>(
 
 /// Specialization of polymorphic function definitions into monomorphic ones
 pub fn specialize_def(def: &Def, table: &NamingTable, erased_decls: &ErasedDecls) -> Vec<Def> {
-    let params = &def.type_params;
+    let params: Vec<Identifier> = def.type_params.iter().map(|p| p.id.clone()).collect();
 
     if params.is_empty() {
         // This function has no type parameters of its own, so it produces
@@ -301,7 +301,7 @@ pub fn specialize_def(def: &Def, table: &NamingTable, erased_decls: &ErasedDecls
         .instantiations_for(&def.name)
         .iter()
         .map(|tuple| {
-            let ctx = SpecializeContext::with_subst(table, params, tuple, erased_decls);
+            let ctx = SpecializeContext::with_subst(table, &params, tuple, erased_decls);
             Def {
                 name: table.lookup(&def.name, tuple).clone(),
                 type_params: vec![],
@@ -335,7 +335,7 @@ mod specialize_tests {
     extern crate self as core_lang;
     use core_macros::{
         bind, call, clause, cns, codata, covar, ctor, ctor_sig, cut, data, def, dtor_sig, exit, id,
-        lit, prd, tvar, ty, var,
+        lit, prd, tparam, tvar, ty, var,
     };
 
     fn list_decl() -> DataDeclaration {
@@ -352,7 +352,7 @@ mod specialize_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
     }
 
@@ -378,14 +378,14 @@ mod specialize_tests {
                     bind!(id!("y"), prd!(), tvar!(id!("B", 3)))
                 ]
             )],
-            [id!("A", 2), id!("B", 3)]
+            [tparam!(id!("A", 2), "+"), tparam!(id!("B", 3), "+")]
         );
     }
 
     fn identity_def() -> Def {
         return def!(
             id!("identity"),
-            [id!("A", 1)],
+            [tparam!(id!("A", 1), "+")],
             [
                 bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                 bind!(id!("ret"), cns!(), tvar!(id!("A", 1)))
@@ -403,7 +403,7 @@ mod specialize_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("E", 2)],
+                [tparam!(id!("E", 2), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("E", 2)))]
             )],
             []
@@ -415,13 +415,13 @@ mod specialize_tests {
             id!("Container"),
             [dtor_sig!(
                 id!("wrap"),
-                [id!("S", 2)],
+                [tparam!(id!("S", 2), "+")],
                 [
                     bind!(id!("x"), prd!(), tvar!(id!("S", 2))),
                     bind!(id!("tag"), prd!(), tvar!(id!("T", 1)))
                 ]
             )],
-            [id!("T", 1)]
+            [tparam!(id!("T", 1), "+")]
         );
     }
 
@@ -795,7 +795,7 @@ mod specialize_tests {
 
         let unused = def!(
             id!("unused"),
-            [id!("A", 1)],
+            [tparam!(id!("A", 1), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))],
             cut!(
                 var!(id!("x"), tvar!(id!("A", 1))),
@@ -834,7 +834,7 @@ mod specialize_tests {
 
         let singleton = def!(
             id!("singleton"),
-            [id!("A", 1)],
+            [tparam!(id!("A", 1), "+")],
             [
                 bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                 bind!(id!("ret"), cns!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
@@ -921,7 +921,7 @@ mod specialize_tests {
 
         let swap = def!(
             id!("swap"),
-            [id!("A", 1), id!("B", 2)],
+            [tparam!(id!("A", 1), "+"), tparam!(id!("B", 2), "+")],
             [
                 bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                 bind!(id!("y"), prd!(), tvar!(id!("B", 2))),
@@ -1081,7 +1081,7 @@ mod specialize_tests {
 
         let wrap = def!(
             id!("wrap"),
-            [id!("A", 1)],
+            [tparam!(id!("A", 1), "+")],
             [
                 bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
                 bind!(id!("ret"), cns!(), tvar!(id!("A", 1)))
@@ -1335,7 +1335,7 @@ mod erasure_tests {
     use std::collections::{HashMap, HashSet};
     extern crate self as core_lang;
     use core_macros::{
-        bind, call, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tvar, ty, var,
+        bind, call, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tparam, tvar, ty, var,
     };
 
     fn box_decl() -> DataDeclaration {
@@ -1346,7 +1346,7 @@ mod erasure_tests {
                 [],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
     }
 
@@ -1416,7 +1416,7 @@ mod erasure_tests {
 
         let nest_def = def!(
             id!("nest"),
-            [id!("C", 1)],
+            [tparam!(id!("C", 1), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("C", 1)))],
             cut!(
                 var!(id!("x"), tvar!(id!("C", 1))),

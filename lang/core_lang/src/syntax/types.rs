@@ -31,13 +31,30 @@ pub enum Ty {
 impl Ty {
     /// This function checks whether a type is a codata type.
     /// - `codata_types` is the list of codata type declarations in the program.
-    pub fn is_codata(&self, codata_types: &[CodataDeclaration]) -> bool {
+    /// - `type_params` is the ambient list of declaration-site type parameters currently in
+    ///   scope (with their declared polarity), used to resolve `Ty::Var`. A `Ty::Var` not found
+    ///   in this list indicates a checker bug (an out-of-scope type variable should never reach
+    ///   this point) and is reported loudly via `unreachable!` rather than silently defaulting.
+    pub fn is_codata(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
         match self {
             Ty::I64 => false,
             Ty::Decl { name, .. } => codata_types
                 .iter()
                 .any(|declaration| declaration.name == *name),
-            Ty::Var(_) => false,
+            Ty::Var(param) => {
+                let declared = type_params
+                    .iter()
+                    .find(|type_param| *type_param == param)
+                    .unwrap_or_else(|| {
+                        unreachable!(
+                            "Ty::Var {} not found among the ambient type parameters {:?} \
+                             passed to is_codata",
+                            param.print_to_string(None),
+                            type_params
+                        )
+                    });
+                matches!(declared.polarity, ParamPolarity::Codata)
+            }
         }
     }
 
@@ -107,18 +124,25 @@ impl ConstraintCollector for Ty {
             Ty::I64 => Ok(FlowConstraintSet::new()),
             Ty::Var(_) => Ok(FlowConstraintSet::new()),
             Ty::Decl { name, type_args } => {
-                if self.is_codata(env.codata_decls) {
+                // Self is a `Ty::Decl` here, so `is_codata`'s `Ty::Var` branch (the only one that
+                // consults `type_params`) can never be reached - passing an empty ambient list is
+                // safe.
+                if self.is_codata(env.codata_decls, &[]) {
                     let Some(template) = env.lookup_codata_decl(name) else {
                         return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
-                    collect_type_flow(&type_args.args, template.type_params.as_slice())
+                    let template_ids: Vec<Identifier> =
+                        template.type_params.iter().map(|p| p.id.clone()).collect();
+                    collect_type_flow(&type_args.args, &template_ids)
                 } else {
                     let Some(template) = env.lookup_data_decl(name) else {
                         return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
-                    collect_type_flow(&type_args.args, template.type_params.as_slice())
+                    let template_ids: Vec<Identifier> =
+                        template.type_params.iter().map(|p| p.id.clone()).collect();
+                    collect_type_flow(&type_args.args, &template_ids)
                 }
             }
         }
@@ -274,6 +298,46 @@ mod type_tests {
         };
         assert_eq!(ty.print_to_string(None), "List[A_1]");
     }
+
+    #[test]
+    fn is_codata_resolves_ty_var_via_ambient_type_params() {
+        use crate::syntax::type_params::{ParamPolarity, TypeParam};
+
+        let positive = Identifier {
+            name: "A".to_string(),
+            id: 1,
+        };
+        let negative = Identifier {
+            name: "B".to_string(),
+            id: 2,
+        };
+        let type_params = vec![
+            TypeParam {
+                id: positive.clone(),
+                polarity: ParamPolarity::Data,
+            },
+            TypeParam {
+                id: negative.clone(),
+                polarity: ParamPolarity::Codata,
+            },
+        ];
+
+        assert!(!Ty::Var(positive).is_codata(&[], &type_params));
+        assert!(Ty::Var(negative).is_codata(&[], &type_params));
+    }
+
+    #[test]
+    #[should_panic(expected = "not found among the ambient type parameters")]
+    fn is_codata_panics_loudly_on_out_of_scope_ty_var() {
+        // An out-of-scope `Ty::Var` reaching `is_codata` indicates a checker bug and must be
+        // reported loudly (this is the direct fix for the polarity-annotation bug: silently
+        // defaulting to `false` here previously masked exactly this class of error).
+        let stray = Identifier {
+            name: "Z".to_string(),
+            id: 99,
+        };
+        let _ = Ty::Var(stray).is_codata(&[], &[]);
+    }
 }
 
 #[cfg(test)]
@@ -284,7 +348,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{data, id, tvar, ty};
+    use core_macros::{data, id, tparam, tvar, ty};
 
     #[test]
     fn check_fails_for_undeclared_type_var() {
@@ -320,7 +384,7 @@ mod check_tests {
     #[test]
     fn check_arity_mismatch_against_declaration() {
         // create a data declaration: List[A]
-        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
 
         // arity mismatch: List[] against List[A]
         let ty_bad = ty!(id!("List"));
@@ -336,7 +400,7 @@ mod check_tests {
     #[test]
     fn check_succeeds_for_type_var_arg_with_type_params() {
         // create a data declaration: List[A]
-        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
 
         // List[A] where A is a type variable declared in the current context
         let ty_var_arg = ty!(id!("List"), [tvar!(id!("A", 1))]);
@@ -364,7 +428,7 @@ mod specialize_tests {
         syntax::{Ty, types::TypeArgs},
     };
     extern crate self as core_lang;
-    use core_macros::{data, id, tvar, ty};
+    use core_macros::{data, id, tparam, tvar, ty};
 
     #[test]
     fn specialize_ground_i64_is_identity() {
@@ -402,7 +466,7 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
         let table = NamingTable::build(
             &solution,
             &[list.clone()],
@@ -435,7 +499,7 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
         let table = NamingTable::build(
             &solution,
             &[list.clone()],

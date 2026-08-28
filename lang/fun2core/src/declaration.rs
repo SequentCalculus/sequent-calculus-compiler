@@ -20,13 +20,13 @@ pub fn compile_ctor(
     type_params: Rc<HashMap<String, Identifier>>,
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
-    let ctor_type_params = compile_type_params(&ctor.type_params, max_id);
+    let ctor_type_params = compile_type_params(&ctor.type_params.to_type_context(), max_id);
     let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
             .chain(build_type_param_subst(
-                &ctor.type_params.bindings,
+                &ctor.type_params.names(),
                 &ctor_type_params,
             ))
             .collect(),
@@ -52,13 +52,13 @@ pub fn compile_dtor(
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
 
-    let dtor_type_params = compile_type_params(&dtor.type_params, max_id);
+    let dtor_type_params = compile_type_params(&dtor.type_params.to_type_context(), max_id);
     let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
             .chain(build_type_param_subst(
-                &dtor.type_params.bindings,
+                &dtor.type_params.names(),
                 &dtor_type_params,
             ))
             .collect(),

@@ -348,6 +348,10 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
         // the clause's own freshly bound type parameters play the role of the xtor's own declared type parameters within this clause; treat them as an "identity substitution" (target is another type *variable*, not a concrete type) so that references to the xtor's own parameters in its signature line up with what the clause actually bound
         let own_type_args: Vec<Ty> = clause.type_params.iter().cloned().map(Ty::Var).collect();
+        let decl_type_param_ids: Vec<Identifier> =
+            decl.type_params.iter().map(|p| p.id.clone()).collect();
+        let sig_type_param_ids: Vec<Identifier> =
+            sig.type_params.iter().map(|p| p.id.clone()).collect();
 
         // check that the types of the binders in the clause match the types of the arguments in the xtor signature, after instantiating the type parameters with the concrete type arguments
         for (expected_binding, actual_binding) in
@@ -364,8 +368,8 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
             let expected_ty = expected_binding
                 .ty
-                .substitute((&decl.type_params, concrete_type_args))
-                .substitute((&sig.type_params, &own_type_args));
+                .substitute((&decl_type_param_ids, concrete_type_args))
+                .substitute((&sig_type_param_ids, &own_type_args));
 
             if actual_binding.ty != expected_ty {
                 bail!(TypeError::TypeMismatch {
@@ -545,7 +549,7 @@ mod check_tests {
     use crate::typing::check::Checked;
     use core_macros::{
         bind, case, clause, cocase, codata, covar, ctor_sig, cut, data, dtor_sig, exit, id, lit,
-        prd, tvar, ty, var,
+        prd, tparam, tvar, ty, var,
     };
 
     fn box_decl() -> DataDeclaration {
@@ -553,7 +557,7 @@ mod check_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -565,7 +569,7 @@ mod check_tests {
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -772,7 +776,8 @@ mod constraint_tests {
     use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
     use core_macros::{
-        bind, case, clause, cocase, codata, ctor_sig, data, dtor_sig, exit, id, lit, prd, tvar, ty,
+        bind, case, clause, cocase, codata, ctor_sig, data, dtor_sig, exit, id, lit, prd, tparam,
+        tvar, ty,
     };
     use std::collections::HashSet;
 
@@ -781,7 +786,7 @@ mod constraint_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -793,7 +798,7 @@ mod constraint_tests {
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []

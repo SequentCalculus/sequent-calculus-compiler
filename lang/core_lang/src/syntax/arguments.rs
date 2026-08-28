@@ -58,10 +58,10 @@ impl Typed for Argument {
 }
 
 impl IsCoValue for Argument {
-    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
         match self {
-            Argument::Producer(prd) => prd.is_value(codata_types),
-            Argument::Consumer(cns) => cns.is_covalue(codata_types),
+            Argument::Producer(prd) => prd.is_value(codata_types, type_params),
+            Argument::Consumer(cns) => cns.is_covalue(codata_types, type_params),
         }
     }
 }
@@ -214,8 +214,8 @@ impl From<VecDeque<Argument>> for Arguments {
 }
 
 impl IsCoValue for Arguments {
-    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
-        self.entries.is_co_value(codata_types)
+    fn is_co_value(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
+        self.entries.is_co_value(codata_types, type_params)
     }
 }
 

@@ -154,7 +154,9 @@ impl ConstraintCollector for Call {
             return Err(MonoError::UndefinedFunction(self.name.name.clone()));
         };
 
-        constraints.extend(collect_type_flow(&self.type_args.args, &def.type_params)?);
+        let def_type_param_ids: Vec<Identifier> =
+            def.type_params.iter().map(|p| p.id.clone()).collect();
+        constraints.extend(collect_type_flow(&self.type_args.args, &def_type_param_ids)?);
 
         Ok(constraints)
     }
@@ -214,7 +216,9 @@ impl Checked for Call {
         }
 
         // build the substitution mapping for the type parameters and type arguments
-        let subst = (def.type_params.as_slice(), self.type_args.args.as_slice());
+        let def_type_param_ids: Vec<Identifier> =
+            def.type_params.iter().map(|p| p.id.clone()).collect();
+        let subst = (def_type_param_ids.as_slice(), self.type_args.args.as_slice());
 
         // check that the types of the arguments match the types of the parameters after substitution
         for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {
@@ -308,7 +312,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{bind, call, def, exit, id, lit, prd, tvar, ty, var};
+    use core_macros::{bind, call, def, exit, id, lit, prd, tparam, tvar, ty, var};
 
     #[test]
     fn call_check_ok() {
@@ -335,7 +339,7 @@ mod check_tests {
     fn call_check_poly_ok() {
         let poly_def = def!(
             id!("identity"),
-            [id!("A")],
+            [tparam!(id!("A"), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("A")))],
             exit!(var!(id!("x")), tvar!(id!("A")))
         );
@@ -358,7 +362,7 @@ mod check_tests {
     fn call_check_poly_type_mismatch() {
         let poly_def = def!(
             id!("identity"),
-            [id!("A")],
+            [tparam!(id!("A"), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("A")))],
             exit!(var!(id!("x")), tvar!(id!("A")))
         );
@@ -382,7 +386,7 @@ mod check_tests {
     fn call_check_poly_arity_mismatch() {
         let poly_def = def!(
             id!("identity"),
-            [id!("A")],
+            [tparam!(id!("A"), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("A")))],
             exit!(var!(id!("x")), tvar!(id!("A")))
         );
@@ -483,7 +487,7 @@ mod collect_tests {
         typing::env::GlobalEnv,
     };
     extern crate self as core_lang;
-    use core_macros::{bind, call, def, exit, id, lit, prd, tvar, ty, var};
+    use core_macros::{bind, call, def, exit, id, lit, prd, tparam, tvar, ty, var};
 
     #[test]
     fn collect_constraints_mono_ok() {
@@ -505,7 +509,7 @@ mod collect_tests {
     fn collect_constraints_poly_instantiation() {
         let poly_def = def!(
             id!("identity"),
-            [id!("A")],
+            [tparam!(id!("A"), "+")],
             [bind!(id!("x"), prd!(), tvar!(id!("A")))],
             exit!(var!(id!("x")), tvar!(id!("A")))
         );

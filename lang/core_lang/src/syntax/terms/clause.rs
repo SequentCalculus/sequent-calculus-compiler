@@ -227,13 +227,13 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
             env.lookup_xtor_for_data_decl(&self.xtor)?
                 .type_params
                 .into_iter()
-                .map(Ty::Var)
+                .map(|p| Ty::Var(p.id))
                 .collect()
         } else {
             env.lookup_xtor_for_codata_decl(&self.xtor)?
                 .type_params
                 .into_iter()
-                .map(Ty::Var)
+                .map(|p| Ty::Var(p.id))
                 .collect()
         };
 

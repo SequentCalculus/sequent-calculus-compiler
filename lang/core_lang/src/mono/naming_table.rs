@@ -50,9 +50,11 @@ impl NamingTable {
         }
 
         for def in defs {
+            let def_type_param_ids: Vec<Identifier> =
+                def.type_params.iter().map(|p| p.id.clone()).collect();
             table.register(
                 &def.name,
-                &def.type_params,
+                &def_type_param_ids,
                 solution,
                 mangle_def_declaration,
             );
@@ -75,6 +77,8 @@ impl NamingTable {
         erased_decls: &ErasedDecls,
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) {
+        let decl_type_param_ids: Vec<Identifier> =
+            decl.type_params.iter().map(|p| p.id.clone()).collect();
         if erased_decls.is_erased(&decl.name) {
             self.names
                 .insert((decl.name.clone(), vec![]), decl.name.clone());
@@ -85,20 +89,24 @@ impl NamingTable {
             for xtor in &decl.xtors {
                 // Record the declaration's own type parameters as extra parameters for the xtor.
                 self.xtor_extra_params
-                    .insert(xtor.name.clone(), decl.type_params.clone());
+                    .insert(xtor.name.clone(), decl_type_param_ids.clone());
 
+                let xtor_type_param_ids: Vec<Identifier> =
+                    xtor.type_params.iter().map(|p| p.id.clone()).collect();
                 self.register_combined(
                     &xtor.name,
-                    &xtor.type_params,
-                    &decl.type_params,
+                    &xtor_type_param_ids,
+                    &decl_type_param_ids,
                     solution,
                     mangle,
                 );
             }
         } else {
-            self.register(&decl.name, &decl.type_params, solution, mangle);
+            self.register(&decl.name, &decl_type_param_ids, solution, mangle);
             for xtor in &decl.xtors {
-                self.register(&xtor.name, &xtor.type_params, solution, mangle);
+                let xtor_type_param_ids: Vec<Identifier> =
+                    xtor.type_params.iter().map(|p| p.id.clone()).collect();
+                self.register(&xtor.name, &xtor_type_param_ids, solution, mangle);
             }
         }
     }
@@ -255,7 +263,7 @@ mod erasure_tests {
     use crate::mono::erasure::ErasedDecls;
     use std::collections::{HashMap, HashSet};
     extern crate self as core_lang;
-    use core_macros::{bind, ctor_sig, data, id, prd, tvar, ty};
+    use core_macros::{bind, ctor_sig, data, id, prd, tparam, tvar, ty};
 
     fn box_decl() -> DataDeclaration {
         return data!(
@@ -265,7 +273,7 @@ mod erasure_tests {
                 [],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
     }
 

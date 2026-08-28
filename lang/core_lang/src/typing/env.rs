@@ -1,6 +1,6 @@
 use crate::{
     mono::errors::MonoError,
-    syntax::{CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier},
+    syntax::{CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier, TypeParam},
 };
 
 /// Global environment holding immutable references to all top-level program declarations used during type checking.
@@ -63,7 +63,7 @@ impl<'a> GlobalEnv<'a> {
     }
 
     /// Searches both [`DataDeclaration`] and [`CodataDeclaration`] for a type matching the given identifier, returning a slice of its associated type parameters if found.
-    pub fn lookup_type_params(&self, name: &Identifier) -> Option<&[Identifier]> {
+    pub fn lookup_type_params(&self, name: &Identifier) -> Option<&[TypeParam]> {
         self.lookup_data_decl(name)
             .map(|decl| decl.type_params.as_slice())
             .or_else(|| {

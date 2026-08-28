@@ -70,7 +70,7 @@ pub struct XtorSig<P: Polarity> {
     /// The xtor name
     pub name: Identifier,
     /// The type parameters of the xtor
-    pub type_params: Vec<Identifier>,
+    pub type_params: Vec<TypeParam>,
     /// The argument context
     pub args: TypingContext,
 }
@@ -120,7 +120,8 @@ impl<P: Polarity> Checked for XtorSig<P> {
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // extend the type parameters with the type parameters of the xtor
-        let extended_type_params = [type_params, &self.type_params].concat();
+        let own_ids: Vec<Identifier> = self.type_params.iter().map(|p| p.id.clone()).collect();
+        let extended_type_params = [type_params, &own_ids].concat();
         self.args.check(&extended_type_params, context, env)
     }
 }
@@ -137,7 +138,7 @@ pub struct TypeDeclaration<P: Polarity> {
     /// The xtors of the type
     pub xtors: Vec<XtorSig<P>>,
     /// The type parameters of the type
-    pub type_params: Vec<Identifier>,
+    pub type_params: Vec<TypeParam>,
 }
 
 /// Type alias for data types
@@ -261,12 +262,12 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{bind, ctor_sig, data, id, prd, tvar, ty};
+    use core_macros::{bind, ctor_sig, data, id, prd, tparam, tvar, ty};
 
     #[test]
     fn ty_decl_check_arity_and_args() {
         // create a data declaration: List[A]
-        let list = data!(id!("List"), [], [id!("A", 1)]);
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
 
         // well-formed: List[i64]
         let ty_good = ty!(id!("List"), [ty!("int")]);
@@ -322,7 +323,7 @@ mod check_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []

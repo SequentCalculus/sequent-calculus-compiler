@@ -9,6 +9,7 @@ pub(crate) mod names;
 pub(crate) mod prog;
 pub(crate) mod statements;
 pub(crate) mod terms;
+pub(crate) mod type_params;
 pub(crate) mod types;
 use terms::{fs_xtor, unfocused_xtor, xcase, xvar};
 
@@ -31,6 +32,13 @@ pub fn ty(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn tvar(input: TokenStream) -> TokenStream {
     types::tvar(input)
+}
+
+/// Create a [`core_lang::syntax::type_params::TypeParam`] from an identifier expression and a
+/// mandatory polarity sigil string, `"+"` (data/positive) or `"-"` (codata/negative).
+#[proc_macro]
+pub fn tparam(input: TokenStream) -> TokenStream {
+    type_params::tparam(input)
 }
 
 /// Create a [`core_lang::syntax::context::ContextBinding`] with given name, chirality, and type.

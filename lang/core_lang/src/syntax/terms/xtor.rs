@@ -212,14 +212,18 @@ impl Bind for Xtor<Cns> {
 impl<C: Chi> ConstraintCollector for Xtor<C> {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self.ty.collect_constraints(env)?;
-        let xtor_params = if self.prdcns.is_prd() {
+        let xtor_params: Vec<Identifier> = if self.prdcns.is_prd() {
             env.lookup_xtor_for_data_decl(&self.name)?
                 .type_params
-                .clone()
+                .iter()
+                .map(|p| p.id.clone())
+                .collect()
         } else {
             env.lookup_xtor_for_codata_decl(&self.name)?
                 .type_params
-                .clone()
+                .iter()
+                .map(|p| p.id.clone())
+                .collect()
         };
 
         constraints.extend(collect_type_flow(&self.type_args.args, &xtor_params)?);
@@ -564,7 +568,7 @@ mod constraint_tests {
     use std::collections::HashSet;
     extern crate self as core_lang;
     use core_macros::{
-        bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tvar, ty,
+        bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tparam, tvar, ty,
     };
 
     fn example_list() -> DataDeclaration {
@@ -581,7 +585,7 @@ mod constraint_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
     }
 
@@ -590,7 +594,7 @@ mod constraint_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -602,7 +606,7 @@ mod constraint_tests {
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
@@ -614,10 +618,10 @@ mod constraint_tests {
             id!("Container"),
             [dtor_sig!(
                 id!("Wrap"),
-                [id!("S", 2)],
+                [tparam!(id!("S", 2), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("S", 2)))]
             )],
-            [id!("T", 1)]
+            [tparam!(id!("T", 1), "+")]
         );
     }
 
@@ -677,7 +681,7 @@ mod constraint_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         let cons: Xtor<Prd> = ctor!(
@@ -764,7 +768,7 @@ mod constraint_tests {
                     )]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         let dtor: Xtor<Cns> = dtor!(id!("Head"), [], [lit!(1)], ty!(id!("List"), [ty!("int")]));

@@ -9,7 +9,7 @@ use crate::splitting::labeling::{DeclSignature, DeclSignatures, FieldObservation
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration, XtorSig};
 use crate::syntax::{
-    Chi, Clause, ContextBinding, ID, Identifier, Ty, TypingContext, fresh_identifier,
+    Chi, Clause, ContextBinding, ID, Identifier, Ty, TypeParam, TypingContext, fresh_identifier,
 };
 
 /// This trait rewrites every label produced by [`crate::splitting::labeling::LabelAndUnify`] into
@@ -114,11 +114,11 @@ fn build_declaration_copy<P: Polarity + Clone>(
     // would collapse onto the very same graph node, making splitting unable to ever separate a
     // growing cycle. Minting fresh `id`s keeps
     // each copy's node distinct.
-    let decl_subst = match root {
+    let decl_subst: Vec<(Identifier, Identifier)> = match root {
         Some((_, true)) => decl
             .type_params
             .iter()
-            .map(|old| (old.clone(), fresh_identifier(max_id, &old.name)))
+            .map(|old| (old.id.clone(), fresh_identifier(max_id, &old.id.name)))
             .collect(),
         _ => vec![],
     };
@@ -165,7 +165,7 @@ fn split_xtor_sig<P: Polarity + Clone>(
         Some((_, true)) => xtor
             .type_params
             .iter()
-            .map(|old| (old.clone(), fresh_identifier(max_id, &old.name)))
+            .map(|old| (old.id.clone(), fresh_identifier(max_id, &old.id.name)))
             .collect(),
         _ => vec![],
     };
@@ -233,19 +233,25 @@ fn build_field_args<P: Polarity + Clone>(
 }
 
 /// Applies an `old -> new` `Identifier` renaming to a `type_params` list, leaving it unchanged if
-/// `subst` is empty.
-fn rename_params(params: &[Identifier], subst: &[(Identifier, Identifier)]) -> Vec<Identifier> {
+/// `subst` is empty. Each parameter's declared `ParamPolarity` is preserved across the rename, 
+/// only the `Identifier` changes, since renaming is purely an alpha-renaming for constraint-graph
+/// node freshness, never a change in what polarity was actually declared.
+fn rename_params(params: &[TypeParam], subst: &[(Identifier, Identifier)]) -> Vec<TypeParam> {
     if subst.is_empty() {
         return params.to_vec();
     }
     params
         .iter()
         .map(|param| {
-            subst
+            let id = subst
                 .iter()
-                .find(|(old, _)| old == param)
+                .find(|(old, _)| old == &param.id)
                 .map(|(_, new)| new.clone())
-                .unwrap_or_else(|| param.clone())
+                .unwrap_or_else(|| param.id.clone());
+            TypeParam {
+                id,
+                polarity: param.polarity,
+            }
         })
         .collect()
 }
@@ -280,7 +286,7 @@ mod rewrite_tests {
     use crate::splitting::union_find::UnionFind;
     use crate::syntax::{DataDeclaration, Ty};
     extern crate self as core_lang;
-    use core_macros::{bind, ctor, ctor_sig, data, id, prd, tvar, ty};
+    use core_macros::{bind, ctor, ctor_sig, data, id, prd, tparam, tvar, ty};
     use std::collections::HashMap;
 
     fn box_decl() -> DataDeclaration {
@@ -325,7 +331,7 @@ mod rewrite_tests {
                 [],
                 [bind!(id!("x"), prd!(), tvar!(id!("C", 1)))]
             )],
-            [id!("C", 1)]
+            [tparam!(id!("C", 1), "+")]
         )
     }
 
@@ -394,8 +400,8 @@ mod rewrite_tests {
         // both copies must get fresh, mutually distinct, nonzero ids, otherwise the constraint
         // graph would index both copies' type parameter under the same node
         assert_ne!(copies[0].type_params[0], copies[1].type_params[0]);
-        assert_ne!(copies[0].type_params[0].id, 0);
-        assert_ne!(copies[1].type_params[0].id, 0);
+        assert_ne!(copies[0].type_params[0].id.id, 0);
+        assert_ne!(copies[1].type_params[0].id.id, 0);
     }
 
     #[test]
@@ -419,7 +425,7 @@ mod rewrite_tests {
 
         for copy in &copies {
             let field_ty = &copy.xtors[0].args.bindings[0].ty;
-            assert_eq!(field_ty, &Ty::Var(copy.type_params[0].clone()));
+            assert_eq!(field_ty, &Ty::Var(copy.type_params[0].id.clone()));
         }
     }
 

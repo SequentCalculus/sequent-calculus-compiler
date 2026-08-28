@@ -91,7 +91,7 @@ fn shrink_unknown_cuts(
         Ty::Decl { name, .. } => {
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
-            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
+            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata, &[]) {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -261,7 +261,7 @@ fn shrink_critical_pairs(
                 _,
                 _,
                 _,
-            ) = if ty.is_codata(state.codata) {
+            ) = if ty.is_codata(state.codata, &[]) {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
