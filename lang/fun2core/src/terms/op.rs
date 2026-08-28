@@ -4,6 +4,7 @@ use crate::compile::{Compile, CompileState};
 use core_lang::syntax::{
     Identifier, Ty,
     terms::{Cns, Prd},
+    type_params::ParamPolarity,
 };
 
 use std::{collections::HashMap, rc::Rc};
@@ -29,7 +30,7 @@ impl Compile for fun::syntax::terms::Op {
         self,
         state: &mut crate::compile::CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64, type_params.clone())),
@@ -46,7 +47,7 @@ impl Compile for fun::syntax::terms::Op {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let new_op: core_lang::syntax::terms::Term<Prd> = core_lang::syntax::terms::Op {
             fst: Rc::new(self.fst.compile(state, Ty::I64, type_params.clone())),

@@ -1,7 +1,7 @@
 //! This module defines the translation for the conditionals comparing two terms.
 
 use crate::compile::{Compile, CompileState, share};
-use core_lang::syntax::{Identifier, Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns, type_params::ParamPolarity};
 
 use std::{collections::HashMap, rc::Rc};
 
@@ -20,7 +20,7 @@ impl Compile for fun::syntax::terms::IfC {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         // if the consumer is a not a leaf, we share it by lifting it to the top level to avoid
         // exponential blowup

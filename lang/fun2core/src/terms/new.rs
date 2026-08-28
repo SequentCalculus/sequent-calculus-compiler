@@ -8,6 +8,7 @@ use crate::{
 use core_lang::syntax::{
     Identifier, Ty,
     terms::{Cns, Prd},
+    type_params::ParamPolarity,
 };
 
 use std::{collections::HashMap, rc::Rc};
@@ -25,7 +26,7 @@ impl Compile for fun::syntax::terms::New {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
@@ -57,7 +58,7 @@ impl Compile for fun::syntax::terms::New {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self
@@ -80,7 +81,7 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
     use core_macros::{
-        bind, clause, cns, cocase, codata, covar, cut, dtor_sig, id, lit, prd, tvar, ty,
+        bind, clause, cns, cocase, codata, covar, cut, dtor_sig, id, lit, prd, tparam, tvar, ty,
     };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
@@ -122,7 +123,7 @@ mod compile_tests {
                     [bind!(id!("out"), prd!(), tvar!(id!("B", 2)))]
                 )
             ],
-            [id!("A", 1), id!("B", 2)]
+            [tparam!(id!("A", 1), "+"), tparam!(id!("B", 2), "+")]
         );
 
         let mut state = CompileState {

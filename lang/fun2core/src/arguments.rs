@@ -6,7 +6,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, type_params::ParamPolarity};
 use fun::traits::OptTyped;
 
 /// This function translates [arguments in Fun](fun::syntax::arguments::Arguments) to
@@ -18,7 +18,7 @@ use fun::traits::OptTyped;
 pub fn compile_subst(
     arguments: fun::syntax::arguments::Arguments,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::arguments::Arguments {
     core_lang::syntax::arguments::Arguments {
         entries: arguments

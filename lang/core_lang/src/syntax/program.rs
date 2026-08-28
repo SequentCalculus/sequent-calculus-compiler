@@ -326,7 +326,11 @@ mod check_tests {
     #[test]
     fn check_type_arity_mismatch_in_prog() {
         // data declaration with one type parameter but used without arguments in a def
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], [tparam!(id!("A", 1), "+")]);
+        let list = data!(
+            id!("List"),
+            [ctor_sig!(id!("Nil"), [], [])],
+            [tparam!(id!("A", 1), "+")]
+        );
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],

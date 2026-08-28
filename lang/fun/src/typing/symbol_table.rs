@@ -7,10 +7,10 @@ use printer::Print;
 
 use crate::syntax::{
     context::{TypeContext, TypingContext},
-    type_params::TypeParams,
     declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
     names::Name,
     program::Program,
+    type_params::TypeParams,
     types::{Ty, TypeArgs},
 };
 
@@ -579,8 +579,8 @@ mod symbol_table_tests {
     use crate::{
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
-            type_params::TypeParams,
             program::Program,
+            type_params::TypeParams,
             types::{Ty, TypeArgs},
             util::dummy_span,
         },

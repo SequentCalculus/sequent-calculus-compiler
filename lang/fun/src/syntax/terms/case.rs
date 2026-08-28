@@ -383,11 +383,7 @@ mod test {
 
         symbol_table.type_templates.insert(
             "Any".to_owned(),
-            (
-                Polarity::Data,
-                TypeParams::default(),
-                vec!["Mk".to_owned()],
-            ),
+            (Polarity::Data, TypeParams::default(), vec!["Mk".to_owned()]),
         );
 
         symbol_table.ctor_templates.insert(

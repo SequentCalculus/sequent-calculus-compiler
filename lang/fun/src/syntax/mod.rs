@@ -11,7 +11,9 @@ pub mod types;
 pub mod util;
 
 pub use arguments::Arguments;
-pub use context::{Chirality, Chirality::Cns, Chirality::Prd, NameContext, TypeContext, TypingContext};
+pub use context::{
+    Chirality, Chirality::Cns, Chirality::Prd, NameContext, TypeContext, TypingContext,
+};
 pub use declarations::*;
 pub use names::{Covar, Name, Var, fresh_covar};
 pub use terms::*;

@@ -6,6 +6,7 @@ use crate::program::build_type_param_subst;
 use crate::types::{compile_ty, compile_type_params};
 use core_lang::syntax::fresh_identifier;
 use core_lang::syntax::names::Identifier;
+use core_lang::syntax::type_params::ParamPolarity;
 use fun::syntax::fresh_covar;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -14,14 +15,14 @@ use std::rc::Rc;
 /// [constructors in Core](core_lang::syntax::declaration::XtorSig), replacing type parameters with
 /// the given core identifiers.
 /// - `ctor` is the Fun constructor to translate.
-/// - `type_params` maps Fun type parameter names to fresh Core identifiers.
+/// - `type_params` maps Fun type parameter names to their fresh Core identifier and polarity.
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
-    let ctor_type_params = compile_type_params(&ctor.type_params.to_type_context(), max_id);
-    let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
+    let ctor_type_params = compile_type_params(&ctor.type_params, max_id);
+    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
@@ -44,16 +45,16 @@ pub fn compile_ctor(
 /// [destructors in Core](core_lang::syntax::declaration::XtorSig), replacing type parameters with
 /// the given core identifiers.
 /// - `dtor` is the Fun destructor to translate.
-/// - `type_params` maps Fun type parameter names to fresh Core identifiers.
+/// - `type_params` maps Fun type parameter names to their fresh Core identifier and polarity.
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
 
-    let dtor_type_params = compile_type_params(&dtor.type_params.to_type_context(), max_id);
-    let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
+    let dtor_type_params = compile_type_params(&dtor.type_params, max_id);
+    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()

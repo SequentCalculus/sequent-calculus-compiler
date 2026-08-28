@@ -1,7 +1,7 @@
 //! This module defines the translation for printing an integer.
 
 use crate::compile::{Compile, CompileState};
-use core_lang::syntax::{Identifier, Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns, type_params::ParamPolarity};
 
 use std::{collections::HashMap, rc::Rc};
 
@@ -14,7 +14,7 @@ impl Compile for fun::syntax::terms::PrintI64 {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::PrintI64 {
             newline: self.newline,

@@ -4,12 +4,13 @@ use crate::{
     compile::{Compile, CompileState},
     context::compile_context,
     program::build_type_param_subst,
-    types::{compile_ty, compile_type_params},
+    types::compile_ty,
 };
 use core_lang::syntax::{
-    Chirality, ContextBinding, Statement,
+    Chirality, ContextBinding, Statement, fresh_identifier,
     names::Identifier,
     terms::{Cns, Prd},
+    type_params::{ParamPolarity, TypeParam},
 };
 use fun::traits::OptTyped;
 
@@ -21,10 +22,35 @@ pub fn compile_clause(
     clause: fun::syntax::terms::Clause,
     cont: core_lang::syntax::terms::Term<Cns>,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::terms::Clause<Cns, Statement> {
-    let clause_type_params = compile_type_params(&clause.type_params, state.max_id);
-    let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
+    // lookup the concrete constructor (name and own declared type parameters) in the data types
+    let Some(ctor) = state.data_types.iter().find_map(|data_decl| {
+        data_decl
+            .xtors
+            .iter()
+            .find(|ctor| ctor.name.name == clause.xtor)
+            .cloned()
+    }) else {
+        panic!("Constructor {} not found in data types", clause.xtor);
+    };
+
+    // The clause's own freshly-bound existential parameters carry no polarity annotation of
+    // their own - they inherit their declared polarity from the constructor's own type
+    // parameters, matched positionally (mirroring Fun's `push_abstract_vars` and Core's
+    // `Clause::check`).
+    let clause_type_params: Vec<TypeParam> = clause
+        .type_params
+        .bindings
+        .iter()
+        .zip(&ctor.type_params)
+        .map(|(name, declared)| TypeParam {
+            id: fresh_identifier(state.max_id, name),
+            polarity: declared.polarity,
+        })
+        .collect();
+
+    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
@@ -35,21 +61,10 @@ pub fn compile_clause(
             .collect(),
     );
 
-    // lookup the concret name of the constructor in the data types
-    let Some(xtor) = state.data_types.iter().find_map(|data_decl| {
-        data_decl
-            .xtors
-            .iter()
-            .find(|ctor| ctor.name.name == clause.xtor)
-            .map(|ctor| ctor.name.clone())
-    }) else {
-        panic!("Constructor {} not found in data types", clause.xtor);
-    };
-
     core_lang::syntax::terms::Clause {
         prdcns: Cns,
-        xtor,
-        type_params: clause_type_params,
+        xtor: ctor.name,
+        type_params: clause_type_params.into_iter().map(|p| p.id).collect(),
         context: compile_context(clause.context, type_params_subst.clone()),
         body: Rc::new(
             clause
@@ -68,10 +83,34 @@ pub fn compile_clause(
 pub fn compile_coclause(
     clause: fun::syntax::terms::Clause,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::terms::Clause<Prd, Statement> {
-    let coclause_type_params = compile_type_params(&clause.type_params, state.max_id);
-    let type_params_subst: Rc<HashMap<String, Identifier>> = Rc::new(
+    // lookup the concrete destructor (name and own declared type parameters) in the codata types
+    let Some(dtor) = state.codata_types.iter().find_map(|codata_decl| {
+        codata_decl
+            .xtors
+            .iter()
+            .find(|dtor| dtor.name.name == clause.xtor)
+            .cloned()
+    }) else {
+        panic!("Destructor {} not found in codata types", clause.xtor);
+    };
+
+    // The clause's own freshly-bound universal parameters carry no polarity annotation of their
+    // own - they inherit their declared polarity from the destructor's own type parameters,
+    // matched positionally.
+    let coclause_type_params: Vec<TypeParam> = clause
+        .type_params
+        .bindings
+        .iter()
+        .zip(&dtor.type_params)
+        .map(|(name, declared)| TypeParam {
+            id: fresh_identifier(state.max_id, name),
+            polarity: declared.polarity,
+        })
+        .collect();
+
+    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
@@ -96,21 +135,10 @@ pub fn compile_coclause(
         ty: ty.clone(),
     });
 
-    // lookup the concret name of the destructor in the codata types
-    let Some(xtor) = state.codata_types.iter().find_map(|codata_decl| {
-        codata_decl
-            .xtors
-            .iter()
-            .find(|dtor| dtor.name.name == clause.xtor)
-            .map(|dtor| dtor.name.clone())
-    }) else {
-        panic!("Destructor {} not found in codata types", clause.xtor);
-    };
-
     core_lang::syntax::terms::Clause {
         prdcns: Prd,
-        xtor,
-        type_params: coclause_type_params,
+        xtor: dtor.name,
+        type_params: coclause_type_params.into_iter().map(|p| p.id).collect(),
         context: new_context,
         body: Rc::new(
             clause.body.compile_with_cont(

@@ -11,6 +11,7 @@ use core_lang::syntax::{
     names::Identifier,
     statements::Cut,
     terms::{Cns, Mu, Prd, XVar},
+    type_params::{ParamPolarity, TypeParam},
 };
 use core_lang::traits::{IsCoValue, Typed, TypedFreeVars};
 use fun::syntax::names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
@@ -69,7 +70,7 @@ pub trait Compile: Sized {
         self,
         consumer: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement;
 
     /// This method translates a term from the surface language [Fun](fun) into the intermediate
@@ -92,7 +93,7 @@ pub trait Compile: Sized {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
@@ -120,7 +121,7 @@ impl<T: Compile + Clone> Compile for Rc<T> {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         Rc::unwrap_or_clone(self).compile(state, ty, type_params)
     }
@@ -129,7 +130,7 @@ impl<T: Compile + Clone> Compile for Rc<T> {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state, type_params)
     }
@@ -228,8 +229,13 @@ pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Argument>, &mut CompileState)
 /// - `continuation` is the continuation containing the statement from which the term has been
 ///   lifted.
 /// - `state` is the [state](CompileState) threaded through the translation.
-fn bind(arg: Argument, k: Continuation, state: &mut CompileState) -> Statement {
-    if arg.is_co_value(state.codata_types) {
+fn bind(
+    arg: Argument,
+    k: Continuation,
+    state: &mut CompileState,
+    type_params: Rc<Vec<TypeParam>>,
+) -> Statement {
+    if arg.is_co_value(state.codata_types, &type_params) {
         k(arg, state)
     } else {
         let ty = arg.get_type();
@@ -277,22 +283,28 @@ pub fn bind_many(
     mut args: VecDeque<Argument>,
     k: ContinuationVec,
     state: &mut CompileState,
+    type_params: Rc<Vec<TypeParam>>,
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(arg) => bind(
-            arg,
-            Box::new(|binding, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut bindings, state| {
-                        bindings.push_front(binding);
-                        k(bindings, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
+        Some(arg) => {
+            let type_params_rec = type_params.clone();
+            bind(
+                arg,
+                Box::new(move |binding, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut bindings, state| {
+                            bindings.push_front(binding);
+                            k(bindings, state)
+                        }),
+                        state,
+                        type_params_rec,
+                    )
+                }),
+                state,
+                type_params,
+            )
+        }
     }
 }

@@ -157,7 +157,10 @@ impl ConstraintCollector for Call {
 
         let def_type_param_ids: Vec<Identifier> =
             def.type_params.iter().map(|p| p.id.clone()).collect();
-        constraints.extend(collect_type_flow(&self.type_args.args, &def_type_param_ids)?);
+        constraints.extend(collect_type_flow(
+            &self.type_args.args,
+            &def_type_param_ids,
+        )?);
 
         Ok(constraints)
     }
@@ -227,7 +230,10 @@ impl Checked for Call {
         // build the substitution mapping for the type parameters and type arguments
         let def_type_param_ids: Vec<Identifier> =
             def.type_params.iter().map(|p| p.id.clone()).collect();
-        let subst = (def_type_param_ids.as_slice(), self.type_args.args.as_slice());
+        let subst = (
+            def_type_param_ids.as_slice(),
+            self.type_args.args.as_slice(),
+        );
 
         // check that the types of the arguments match the types of the parameters after substitution
         for (binding, arg) in def.context.bindings.iter().zip(&self.args.entries) {

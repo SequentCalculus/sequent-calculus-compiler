@@ -5,7 +5,7 @@ use crate::{
     terms::clause::compile_clause,
     types::compile_ty,
 };
-use core_lang::syntax::{Identifier, terms::Cns};
+use core_lang::syntax::{Identifier, terms::Cns, type_params::ParamPolarity};
 use fun::traits::OptTyped;
 
 use std::{collections::HashMap, rc::Rc};
@@ -26,7 +26,7 @@ impl Compile for fun::syntax::terms::Case {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         // if there is more than one clause and the consumer is a not a leaf, we share it by
         // lifting it to the top level to avoid exponential blowup
@@ -73,7 +73,8 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::{self as core_syntax};
     use core_macros::{
-        bind, case, clause, covar, ctor, ctor_sig, cut, data, id, lit, mu, prd, tvar, ty, var,
+        bind, case, clause, covar, ctor, ctor_sig, cut, data, id, lit, mu, prd, tparam, tvar, ty,
+        var,
     };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
@@ -109,7 +110,7 @@ mod compile_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         let mut state = CompileState {

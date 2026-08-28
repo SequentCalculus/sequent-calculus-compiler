@@ -6,7 +6,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, type_params::ParamPolarity};
 
 impl Compile for fun::syntax::terms::Goto {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -21,7 +21,7 @@ impl Compile for fun::syntax::terms::Goto {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {

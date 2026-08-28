@@ -9,7 +9,7 @@ use crate::syntax::names::Identifier;
 /// The runtime polarity of a single declaration-site type parameter: `Data` (positive/CBV) or
 /// `Codata` (negative/CBN). Distinct from the [`Polarity`] *trait* (`declaration.rs`), which
 /// marks a whole declaration at compile time via the zero-sized `Data`/`Codata` structs.
-/// Implements the `Polarity` trait rather than introducing an unrelated concept, 
+/// Implements the `Polarity` trait rather than introducing an unrelated concept,
 /// so generic code written against `P: Polarity` keeps working.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParamPolarity {

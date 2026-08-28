@@ -7,7 +7,10 @@ use crate::{
     def::{compile_def, compile_main},
     types::compile_type_params,
 };
-use core_lang::syntax::names::Identifier;
+use core_lang::syntax::{
+    names::Identifier,
+    type_params::{ParamPolarity, TypeParam},
+};
 use std::{
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -25,7 +28,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
 
     for data in prog.data_types {
         let type_params = compile_type_params(&data.type_params, &mut max_id);
-        let type_param_subst = build_type_param_subst(&data.type_params.bindings, &type_params);
+        let type_param_subst = build_type_param_subst(&data.type_params.names(), &type_params);
         global_type_param_subst.extend(type_param_subst.clone());
 
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
@@ -41,7 +44,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     }
     for codata in prog.codata_types {
         let type_params = compile_type_params(&codata.type_params, &mut max_id);
-        let type_param_subst = build_type_param_subst(&codata.type_params.bindings, &type_params);
+        let type_param_subst = build_type_param_subst(&codata.type_params.names(), &type_params);
         global_type_param_subst.extend(type_param_subst.clone());
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
@@ -77,7 +80,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
             }
         } else {
             let type_params = compile_type_params(&def.type_params, state.max_id);
-            let type_param_subst = build_type_param_subst(&def.type_params.bindings, &type_params);
+            let type_param_subst = build_type_param_subst(&def.type_params.names(), &type_params);
 
             let mut local_subst = global_type_param_subst.clone();
             local_subst.extend(type_param_subst);
@@ -101,9 +104,13 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
 
 pub fn build_type_param_subst(
     names: &[String],
-    params: &[Identifier],
-) -> HashMap<String, Identifier> {
-    names.iter().cloned().zip(params.iter().cloned()).collect()
+    params: &[TypeParam],
+) -> HashMap<String, (Identifier, ParamPolarity)> {
+    names
+        .iter()
+        .cloned()
+        .zip(params.iter().map(|p| (p.id.clone(), p.polarity)))
+        .collect()
 }
 
 #[cfg(test)]
@@ -112,10 +119,13 @@ mod compile_tests {
     use crate::def::{compile_def, compile_main};
     use crate::program::compile_prog;
     use core_lang::syntax::Identifier;
+    use core_lang::syntax::type_params::{ParamPolarity, TypeParam};
     use core_macros::{
-        bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tvar, ty, var,
+        bind, cns, covar, ctor_sig, cut, data, def, exit, id, lit, mutilde, prd, tparam, tvar, ty,
+        var,
     };
-    use fun::syntax::context::TypeContext;
+    use fun::syntax::declarations::Polarity;
+    use fun::syntax::type_params::TypeParams;
     use fun::syntax::{
         Chirality,
         declarations::{CtorSig, Data, Def},
@@ -134,7 +144,7 @@ mod compile_tests {
         Def {
             span: dummy_span(),
             name: "main".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: ctx,
             body: Lit::mk(1).into(),
             ret_ty: Ty::mk_i64(),
@@ -146,7 +156,7 @@ mod compile_tests {
         Def {
             span: dummy_span(),
             name: "id".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             context: ctx,
             body: XVar {
                 span: dummy_span(),
@@ -189,18 +199,18 @@ mod compile_tests {
         Data {
             span: None,
             name: "List".to_string(),
-            type_params: TypeContext::mk(&["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             ctors: vec![
                 CtorSig {
                     span: None,
                     name: "Nil".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: fun::syntax::context::TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: cons_ctx,
                 },
             ],
@@ -215,18 +225,18 @@ mod compile_tests {
         Data {
             span: None,
             name: "List[i64]".to_string(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             ctors: vec![
                 CtorSig {
                     span: None,
                     name: "Nil".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: fun::syntax::context::TypingContext::default(),
                 },
                 CtorSig {
                     span: None,
                     name: "Cons".to_string(),
-                    type_params: TypeContext::default(),
+                    type_params: TypeParams::default(),
                     args: cons_ctx,
                 },
             ],
@@ -239,7 +249,7 @@ mod compile_tests {
         Def {
             span: dummy_span(),
             name: "id_poly".to_string(),
-            type_params: TypeContext::mk(&["A"]),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
             context: ctx,
             body: XVar {
                 span: dummy_span(),
@@ -256,11 +266,11 @@ mod compile_tests {
         Data {
             span: None,
             name: "Box".to_owned(),
-            type_params: TypeContext::default(),
+            type_params: TypeParams::default(),
             ctors: vec![CtorSig {
                 span: None,
                 name: "Pack".to_owned(),
-                type_params: TypeContext::mk(&["A"]),
+                type_params: TypeParams::mk(&[("A", Polarity::Data)]),
                 args: {
                     let mut ctx = fun::syntax::context::TypingContext::default();
                     ctx.add_var("x", Ty::mk_decl("A", TypeArgs::default()));
@@ -370,7 +380,7 @@ mod compile_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         assert_eq!(result.data_types[0], expected);
@@ -410,7 +420,7 @@ mod compile_tests {
     fn compile_poly_def() {
         let fresh_param = id!("A", 1);
         let mut subst = HashMap::new();
-        subst.insert("A".to_string(), fresh_param.clone());
+        subst.insert("A".to_string(), (fresh_param.clone(), ParamPolarity::Data));
 
         let mut state = CompileState {
             used_vars: HashSet::new(),
@@ -426,7 +436,10 @@ mod compile_tests {
             example_def_poly(),
             &mut state,
             Rc::new(subst),
-            vec![fresh_param.clone()],
+            vec![TypeParam {
+                id: fresh_param.clone(),
+                polarity: ParamPolarity::Data,
+            }],
         );
 
         assert_eq!(result.len(), 1);
@@ -479,7 +492,7 @@ mod compile_tests {
             id!("Box"),
             [ctor_sig!(
                 id!("Pack", 2),
-                [id!("A", 1)],
+                [tparam!(id!("A", 1), "+")],
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []

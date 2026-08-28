@@ -6,6 +6,7 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::names::Identifier;
+use core_lang::syntax::type_params::{ParamPolarity, TypeParam};
 use fun::traits::{OptTyped, UsedBinders};
 
 use std::collections::{HashMap, VecDeque};
@@ -24,8 +25,8 @@ use std::rc::Rc;
 pub fn compile_def(
     def: fun::syntax::declarations::Def,
     state: &mut CompileState,
-    type_params_subst: Rc<HashMap<String, Identifier>>,
-    type_params: Vec<Identifier>,
+    type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Vec<TypeParam>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
 
@@ -91,7 +92,7 @@ pub fn compile_def(
 pub fn compile_main(
     def: fun::syntax::declarations::Def,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
     let context = compile_context(def.context, type_params.clone());

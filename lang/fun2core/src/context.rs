@@ -2,6 +2,7 @@
 
 use crate::types::compile_ty;
 use core_lang::syntax::names::Identifier;
+use core_lang::syntax::type_params::ParamPolarity;
 use std::{collections::HashMap, rc::Rc};
 
 /// This function converts [chirality in Fun](fun::syntax::context::Chirality) to
@@ -20,7 +21,7 @@ pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::
 /// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_context(
     context: fun::syntax::context::TypingContext,
-    type_params: Rc<HashMap<String, Identifier>>,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::context::TypingContext {
     core_lang::syntax::context::TypingContext {
         bindings: context

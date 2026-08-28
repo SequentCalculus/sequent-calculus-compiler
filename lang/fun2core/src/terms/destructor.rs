@@ -7,7 +7,12 @@ use crate::{
     compile::{Compile, CompileState, bind_many},
     types::{compile_ty, compile_type_args},
 };
-use core_lang::syntax::{names::Identifier, terms::Cns, types::TypeArgs};
+use core_lang::syntax::{
+    names::Identifier,
+    terms::Cns,
+    type_params::{ParamPolarity, TypeParam},
+    types::TypeArgs,
+};
 use fun::traits::OptTyped;
 
 impl Compile for fun::syntax::terms::Destructor {
@@ -23,8 +28,17 @@ impl Compile for fun::syntax::terms::Destructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
+        let ambient_type_params: Rc<Vec<TypeParam>> = Rc::new(
+            type_params
+                .values()
+                .map(|(id, polarity)| TypeParam {
+                    id: id.clone(),
+                    polarity: *polarity,
+                })
+                .collect(),
+        );
         bind_many(
             compile_subst(self.args, state, type_params.clone()).into(),
             Box::new(move |mut bindings, state| {
@@ -84,6 +98,7 @@ impl Compile for fun::syntax::terms::Destructor {
                     .compile_with_cont(new_cont, state, type_params)
             }),
             state,
+            ambient_type_params,
         )
     }
 }
@@ -93,7 +108,8 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::{CodataDeclaration, terms::Prd};
     use core_macros::{
-        bind, clause, cns, cocase, codata, covar, cut, dtor, dtor_sig, id, lit, mu, prd, tvar, ty,
+        bind, clause, cns, cocase, codata, covar, cut, dtor, dtor_sig, id, lit, mu, prd, tparam,
+        tvar, ty,
     };
     use fun::{parse_term, test_common::symbol_table_lpair, typing::check::Check};
     use std::{
@@ -116,7 +132,7 @@ mod compile_tests {
                     [bind!(id!("out"), prd!(), tvar!(id!("B", 2)))]
                 )
             ],
-            [id!("A", 1), id!("B", 2)]
+            [tparam!(id!("A", 1), "+"), tparam!(id!("B", 2), "+")]
         );
     }
 

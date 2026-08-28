@@ -4,7 +4,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::compile::{Compile, CompileState};
-use core_lang::syntax::{Identifier, Ty};
+use core_lang::syntax::{Identifier, Ty, type_params::ParamPolarity};
 
 pub mod call;
 pub mod case;
@@ -28,7 +28,7 @@ impl Compile for fun::syntax::terms::Term {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<core_lang::syntax::terms::Prd> {
         match self {
             fun::syntax::terms::Term::XVar(var) => var.compile(state, ty, type_params),
@@ -53,7 +53,7 @@ impl Compile for fun::syntax::terms::Term {
         self,
         cont: core_lang::syntax::terms::Term<core_lang::syntax::terms::Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         match self {
             fun::syntax::terms::Term::XVar(var) => var.compile_with_cont(cont, state, type_params),

@@ -13,9 +13,9 @@ pub mod test_common {
     use super::{
         syntax::{
             context::{Chirality::Prd, NameContext, TypeContext, TypingContext},
-            type_params::TypeParams,
             declarations::{Codata, CtorSig, Data, Def, DtorSig, Polarity},
             terms::{BinOp, Call, Case, Clause, Lit, Op, XVar},
+            type_params::TypeParams,
             types::{Ty, TypeArgs},
         },
         typing::symbol_table::SymbolTable,

@@ -7,7 +7,7 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, type_params::ParamPolarity};
 
 impl Compile for fun::syntax::terms::Call {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -22,7 +22,7 @@ impl Compile for fun::syntax::terms::Call {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state, type_params.clone());
         args.entries.push(cont.into());
@@ -51,10 +51,11 @@ impl Compile for fun::syntax::terms::Call {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
+    use core_lang::syntax::type_params::ParamPolarity;
     use core_macros::{call, covar, id, lit, mu, tvar, ty};
     use fun::{
         parse_term,
-        syntax::{TypeContext, context::TypingContext},
+        syntax::{TypeParams, context::TypingContext, declarations::Polarity},
         typing::{check::Check, symbol_table::SymbolTable},
     };
     use std::{
@@ -73,11 +74,7 @@ mod compile_tests {
                     let mut funs = HashMap::new();
                     funs.insert(
                         "fac".to_owned(),
-                        (
-                            TypeContext::default(),
-                            ctx,
-                            fun::syntax::types::Ty::mk_i64(),
-                        ),
+                        (TypeParams::default(), ctx, fun::syntax::types::Ty::mk_i64()),
                     );
 
                     SymbolTable {
@@ -88,7 +85,7 @@ mod compile_tests {
                         ctor_templates: HashMap::default(),
                         dtor_templates: HashMap::default(),
                         type_templates: HashMap::default(),
-                        abstract_type_vars: HashSet::default(),
+                        abstract_type_vars: HashMap::default(),
                     }
                 },
                 &fun::syntax::context::TypingContext::default(),
@@ -121,7 +118,7 @@ mod compile_tests {
         defs.insert(
             "id".to_owned(),
             (
-                TypeContext::mk(&["A"]),
+                TypeParams::mk(&[("A", Polarity::Data)]),
                 ctx,
                 fun::syntax::types::Ty::mk_i64(),
             ),
@@ -137,7 +134,7 @@ mod compile_tests {
                     ctor_templates: HashMap::default(),
                     dtor_templates: HashMap::default(),
                     type_templates: HashMap::default(),
-                    abstract_type_vars: HashSet::default(),
+                    abstract_type_vars: HashMap::default(),
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
@@ -182,7 +179,7 @@ mod compile_tests {
         defs.insert(
             "id".to_owned(),
             (
-                TypeContext::mk(&["A"]),
+                TypeParams::mk(&[("A", Polarity::Data)]),
                 ctx,
                 fun::syntax::types::Ty::mk_i64(),
             ),
@@ -198,7 +195,7 @@ mod compile_tests {
                     ctor_templates: HashMap::default(),
                     dtor_templates: HashMap::default(),
                     type_templates: HashMap::default(),
-                    abstract_type_vars: HashSet::default(),
+                    abstract_type_vars: HashMap::default(),
                 },
                 &fun::syntax::context::TypingContext::default(),
                 &fun::syntax::types::Ty::mk_i64(),
@@ -229,7 +226,10 @@ mod compile_tests {
         // Simulate the type parameter substitution that would normally occur in compile_type_params.
         let mut type_params_subst = HashMap::new();
         let fresh_target_id = id!("A", 42);
-        type_params_subst.insert("A".to_string(), fresh_target_id.clone());
+        type_params_subst.insert(
+            "A".to_string(),
+            (fresh_target_id.clone(), ParamPolarity::Data),
+        );
         let type_params_rc = Rc::new(type_params_subst);
 
         let continuation =

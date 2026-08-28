@@ -233,7 +233,7 @@ fn build_field_args<P: Polarity + Clone>(
 }
 
 /// Applies an `old -> new` `Identifier` renaming to a `type_params` list, leaving it unchanged if
-/// `subst` is empty. Each parameter's declared `ParamPolarity` is preserved across the rename, 
+/// `subst` is empty. Each parameter's declared `ParamPolarity` is preserved across the rename,
 /// only the `Identifier` changes, since renaming is purely an alpha-renaming for constraint-graph
 /// node freshness, never a change in what polarity was actually declared.
 fn rename_params(params: &[TypeParam], subst: &[(Identifier, Identifier)]) -> Vec<TypeParam> {

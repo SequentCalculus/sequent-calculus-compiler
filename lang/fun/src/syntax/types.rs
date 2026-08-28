@@ -51,8 +51,7 @@ impl Ty {
             Ty::Decl {
                 name, type_args, ..
             } => {
-                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains_key(name)
-                {
+                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains_key(name) {
                     return Ok(());
                 }
 
@@ -109,7 +108,7 @@ impl Ty {
     }
 
     /// This function determines the [`Polarity`] of a type, i.e. whether it behaves as a
-    /// data/positive (CBV) or codata/negative (CBN) type. `I64` is always positive. 
+    /// data/positive (CBV) or codata/negative (CBN) type. `I64` is always positive.
     /// For a type parameter this is its declared polarity (looked up in
     /// `symbol_table.abstract_type_vars`), for a user-declared type template or instance it is
     /// the polarity declared on the corresponding `data`/`codata` template.
@@ -409,8 +408,8 @@ mod type_tests {
 
     #[test]
     fn is_instance_accepts_matching_polarity() {
-        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
 
         let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
         let template = TypeParams::mk(&[("A", Polarity::Data)]);
@@ -420,8 +419,8 @@ mod type_tests {
 
     #[test]
     fn is_instance_rejects_mismatched_polarity() {
-        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
 
         let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
         let template = TypeParams::mk(&[("A", Polarity::Codata)]);
@@ -435,8 +434,8 @@ mod type_tests {
 
     #[test]
     fn is_instance_rejects_data_argument_for_codata_param() {
-        use crate::syntax::type_params::TypeParams;
         use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
         use crate::test_common::symbol_table_stream;
 
         let mut symbol_table = symbol_table_stream();

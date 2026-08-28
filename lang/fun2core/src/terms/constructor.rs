@@ -9,6 +9,7 @@ use core_lang::syntax::{
     Ty,
     names::Identifier,
     terms::{Cns, Prd},
+    type_params::ParamPolarity,
 };
 
 use std::{collections::HashMap, rc::Rc};
@@ -26,7 +27,7 @@ impl Compile for fun::syntax::terms::Constructor {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         // lookup the concret name of the constructor in the data types
         let Some(name) = state.data_types.iter().find_map(|data_decl| {
@@ -66,7 +67,7 @@ impl Compile for fun::syntax::terms::Constructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, Identifier>>,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self
@@ -87,7 +88,7 @@ impl Compile for fun::syntax::terms::Constructor {
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_macros::{bind, ctor, ctor_sig, data, id, lit, prd, tvar, ty};
+    use core_macros::{bind, ctor, ctor_sig, data, id, lit, prd, tparam, tvar, ty};
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
@@ -124,7 +125,7 @@ mod compile_tests {
                     ]
                 )
             ],
-            [id!("A", 1)]
+            [tparam!(id!("A", 1), "+")]
         );
 
         let mut state = CompileState {
