@@ -1,5 +1,5 @@
-data Pair[A, B] { Tup(x:A,y:B) }
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
+data Pair[A+, B+] { Tup(x:A,y:B) }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
 
 def swap(x : Pair[i64, i64]) : Pair[i64, i64] { x.case[i64, i64] { Tup(a, b) => Tup(b, a) } }
 def diag(x : i64) : Pair[i64, i64] { Tup(x, x) }

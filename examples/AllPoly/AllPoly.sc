@@ -1,26 +1,26 @@
-codata Fun[A, B] { 
-    apply(x: A) : B 
+codata Fun[A+, B+] {
+    apply(x: A) : B
 }
 
 codata Id {
-    applyId[C](x: C) : C
+    applyId[C+](x: C) : C
 }
 
-codata Container[T] {
-    wrap[S](x: S, tag: T) : T
+codata Container[T+] {
+    wrap[S+](x: S, tag: T) : T
 }
 
-data List[D] {
+data List[D+] {
     Nil,
     Cons(x: D, xs: List[D])
 }
 
 data Box {
-    Pack[E](x: E, transform: Fun[E, i64])
+    Pack[E+](x: E, transform: Fun[E, i64])
 }
 
-data Sealed[K] {
-    Seal[V](val: V, key: K)
+data Sealed[K+] {
+    Seal[V+](val: V, key: K)
 }
 
 data Bool {
@@ -28,7 +28,7 @@ data Bool {
     False
 }
 
-def identity[X](x: X) : X {
+def identity[X+](x: X) : X {
     x
 }
 

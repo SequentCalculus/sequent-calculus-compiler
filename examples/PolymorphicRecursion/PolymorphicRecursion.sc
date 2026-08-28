@@ -1,6 +1,6 @@
-data Nested[A] {
+data Nested[A+] {
     Base(x: A),
-    Grow[E](tag: E, inner: Nested[Nested[A]])
+    Grow[E+](tag: E, inner: Nested[Nested[A]])
 }
 
 data Bool {
@@ -9,23 +9,23 @@ data Bool {
 }
 
 data Box {
-    Pack[V](val: V, tag: i64)
+    Pack[V+](val: V, tag: i64)
 }
 
-data List[D] {
+data List[D+] {
     Nil,
     Cons(x: D, xs: List[D])
 }
 
-codata Holder[H] {
-    put[S](val: S, tag: H): H
+codata Holder[H+] {
+    put[S+](val: S, tag: H): H
 }
 
-def identity[X](x: X): X {
+def identity[X+](x: X): X {
     x
 }
 
-def sumNested[A](n: Nested[A]): i64 {
+def sumNested[A+](n: Nested[A]): i64 {
     n.case[A] {
         Base(x) => 1,
         Grow[E](tag, inner) => 1 + sumNested[Nested[A]](inner)

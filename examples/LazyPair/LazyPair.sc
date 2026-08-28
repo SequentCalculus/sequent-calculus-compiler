@@ -1,5 +1,5 @@
-codata LazyPair[A, B] { fst : A, snd : B }
-data Pair[A, B] { Tup(x:A,y:B) }
+codata LazyPair[A+, B+] { fst : A, snd : B }
+data Pair[A+, B+] { Tup(x:A,y:B) }
 
 // Swap the elements of a lazy pair.
 def swapLazy(x:LazyPair[i64,i64]) : LazyPair[i64, i64] { new { fst => x.snd[i64, i64], snd => x.fst[i64, i64] } }

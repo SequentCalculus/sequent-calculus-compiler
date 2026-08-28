@@ -1,4 +1,4 @@
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
 
 // Fast multiplication function from the introduction of the paper.
 def fmult(l : List[i64]) : i64 { label a { mult(l,a) } }

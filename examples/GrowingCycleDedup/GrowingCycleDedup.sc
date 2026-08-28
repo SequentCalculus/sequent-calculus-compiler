@@ -1,12 +1,12 @@
-data Box[V] {
+data Box[V+] {
     Wrap(val: V)
 }
 
-data Bag[V] {
+data Bag[V+] {
     Put(val: V)
 }
 
-def grow[C](n: i64, x: C): i64 {
+def grow[C+](n: i64, x: C): i64 {
     if n == 0 {
         0
     } else {
