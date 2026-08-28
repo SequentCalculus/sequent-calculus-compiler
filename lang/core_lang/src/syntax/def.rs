@@ -145,13 +145,12 @@ impl ConstraintCollector for Def {
 impl Checked for Def {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // extend the type parameters of the clause with the type parameters of the definition
-        let own_ids: Vec<Identifier> = self.type_params.iter().map(|p| p.id.clone()).collect();
-        let extended_type_params = [type_params, &own_ids].concat();
+        let extended_type_params = [type_params, &self.type_params].concat();
 
         // check well-formedness of the context
         self.context.check(&extended_type_params, context, env)?;

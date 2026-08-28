@@ -206,7 +206,7 @@ fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
 impl<C: Chi> Checked for XCase<C> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
@@ -303,7 +303,7 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
     xcase: &XCase<C>,
     decl: &TypeDeclaration<P>,
     type_name: &Identifier,
-    type_params: &[Identifier],
+    type_params: &[TypeParam],
     context: &TypingContext,
     concrete_type_args: &[Ty],
     env: &GlobalEnv,

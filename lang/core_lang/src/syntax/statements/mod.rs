@@ -163,7 +163,7 @@ impl Specialize for Statement {
 impl Checked for Statement {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

@@ -1,6 +1,8 @@
 use std::fmt;
 use std::panic::Location;
 
+use crate::syntax::type_params::ParamPolarity;
+
 /// This macro captures the source location (file and line) precisely where it is called,
 /// constructs a `LocatedError`, and returns it immediately as an `Err` variant.
 ///
@@ -80,6 +82,13 @@ pub enum TypeError {
     /// An xtor name was declared more than once across all data/codata declarations.
     DuplicateXtorName(String),
 
+    /// A type argument's polarity does not match the declared polarity of the corresponding
+    /// type parameter (`data` = positive/CBV, `codata` = negative/CBN).
+    PolarityMismatch {
+        expected: ParamPolarity,
+        got: ParamPolarity,
+    },
+
     /// Generic wrapper for other errors with contextual message.
     Contextual { msg: String },
 }
@@ -137,6 +146,11 @@ impl fmt::Display for TypeError {
             TypeError::DuplicateXtorName(name) => {
                 write!(f, "Duplicate xtor name: '{}'", name,)
             }
+            TypeError::PolarityMismatch { expected, got } => write!(
+                f,
+                "Polarity mismatch: expected {} but got {}",
+                expected, got
+            ),
             TypeError::Contextual { msg } => write!(f, "{}", msg),
         }
     }

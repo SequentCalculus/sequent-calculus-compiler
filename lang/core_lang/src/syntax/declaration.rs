@@ -115,13 +115,12 @@ impl<P: Polarity> Print for XtorSig<P> {
 impl<P: Polarity> Checked for XtorSig<P> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         // extend the type parameters with the type parameters of the xtor
-        let own_ids: Vec<Identifier> = self.type_params.iter().map(|p| p.id.clone()).collect();
-        let extended_type_params = [type_params, &own_ids].concat();
+        let extended_type_params = [type_params, &self.type_params].concat();
         self.args.check(&extended_type_params, context, env)
     }
 }
@@ -231,7 +230,7 @@ pub fn cont_int() -> DataDeclaration {
 impl<P: Polarity> Checked for TypeDeclaration<P> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

@@ -19,6 +19,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::check::check_arity;
+use crate::typing::check::check_polarity;
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
@@ -195,7 +196,7 @@ impl Specialize for Call {
 impl Checked for Call {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
@@ -211,8 +212,16 @@ impl Checked for Call {
         check_arity(def.type_params.len(), self.type_args.args.len())?;
         check_arity(def.context.bindings.len(), self.args.entries.len())?;
 
-        for ty_arg in &self.type_args.args {
+        // check well-formedness and polarity of each type argument against the def's own
+        // declared type parameters
+        for (ty_arg, declared_param) in self.type_args.args.iter().zip(&def.type_params) {
             ty_arg.check(type_params, context, env)?;
+            let got = if ty_arg.is_codata(env.codata_decls, type_params) {
+                ParamPolarity::Codata
+            } else {
+                ParamPolarity::Data
+            };
+            check_polarity(declared_param.polarity, got)?;
         }
 
         // build the substitution mapping for the type parameters and type arguments
@@ -404,6 +413,33 @@ mod check_tests {
                 )
                 .is_err()
         );
+    }
+
+    #[test]
+    fn call_check_poly_polarity_mismatch() {
+        // def identity[A-](x: A): A - A is declared negative/codata
+        let poly_def = def!(
+            id!("identity"),
+            [tparam!(id!("A"), "-")],
+            [bind!(id!("x"), prd!(), tvar!(id!("A")))],
+            exit!(var!(id!("x")), tvar!(id!("A")))
+        );
+        let defs = vec![poly_def];
+
+        // identity[i64](42) - i64 is always positive/data, mismatching the declared polarity
+        let call_stmt: Statement = call!(id!("identity"), [ty!("int")], [lit!(42)]).into();
+
+        assert!(matches!(
+            call_stmt.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&vec![], &vec![], &defs),
+            ),
+            Err(crate::typing::errors::LocatedTypeError {
+                error: crate::typing::errors::TypeError::PolarityMismatch { .. },
+                ..
+            })
+        ));
     }
 
     #[test]

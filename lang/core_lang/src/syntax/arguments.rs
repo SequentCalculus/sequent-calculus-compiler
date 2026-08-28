@@ -132,7 +132,7 @@ impl Specialize for Argument {
 impl Checked for Argument {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
@@ -265,7 +265,7 @@ impl Specialize for Arguments {
 impl Checked for Arguments {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

@@ -172,7 +172,7 @@ impl SubstVar for TypingContext {
 impl Checked for TypingContext {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

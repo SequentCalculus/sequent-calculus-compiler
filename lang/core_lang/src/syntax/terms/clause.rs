@@ -9,7 +9,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -248,12 +248,43 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
 impl<C: Chi> Checked for Clause<C> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // The clause's own freshly-bound existential/universal parameters carry no annotation of
+        // their own - they inherit their polarity from the xtor's own declared parameters,
+        // matched positionally, mirroring how Fun's `push_abstract_vars` threads the ctor's/
+        // dtor's declared polarity into a `case`/`new` clause's pattern-bound names.
+        let own_declared_params: &[TypeParam] = if self.prdcns.is_cns() {
+            env.data_decls
+                .iter()
+                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
+                .map(|xtor| xtor.type_params.as_slice())
+        } else {
+            env.codata_decls
+                .iter()
+                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
+                .map(|xtor| xtor.type_params.as_slice())
+        }
+        .ok_or_else(|| {
+            LocatedTypeError::new(TypeError::UndeclaredXtor {
+                type_name: "unknown".to_string(),
+                xtor_name: self.xtor.name.clone(),
+            })
+        })?;
+        let own_type_params: Vec<TypeParam> = self
+            .type_params
+            .iter()
+            .zip(own_declared_params)
+            .map(|(id, declared)| TypeParam {
+                id: id.clone(),
+                polarity: declared.polarity,
+            })
+            .collect();
+
         // extend the type parameters with the type parameters of the clause
-        let extended_type_params = [type_params, &self.type_params].concat();
+        let extended_type_params = [type_params, &own_type_params].concat();
         self.context.check(&extended_type_params, context, env)?;
 
         // extend the context of the clause with the bindings of the clause

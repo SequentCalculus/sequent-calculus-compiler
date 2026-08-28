@@ -115,7 +115,7 @@ impl ConstraintCollector for Prog {
 impl Checked for Prog {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
@@ -157,13 +157,10 @@ impl Checked for Prog {
         }
 
         for data in &self.data_types {
-            let own_ids: Vec<Identifier> = data.type_params.iter().map(|p| p.id.clone()).collect();
-            data.check(&own_ids, context, env)?;
+            data.check(&data.type_params, context, env)?;
         }
         for codata in &self.codata_types {
-            let own_ids: Vec<Identifier> =
-                codata.type_params.iter().map(|p| p.id.clone()).collect();
-            codata.check(&own_ids, context, env)?;
+            codata.check(&codata.type_params, context, env)?;
         }
         for def in &self.defs {
             def.check(type_params, context, env)?;
@@ -337,14 +334,14 @@ mod check_tests {
             []
         );
 
-        let type_params: Vec<Identifier> = prog
+        let type_params: Vec<TypeParam> = prog
             .data_types
             .iter()
-            .flat_map(|data| data.type_params.iter().map(|p| p.id.clone()))
+            .flat_map(|data| data.type_params.iter().cloned())
             .chain(
                 prog.codata_types
                     .iter()
-                    .flat_map(|codata| codata.type_params.iter().map(|p| p.id.clone())),
+                    .flat_map(|codata| codata.type_params.iter().cloned()),
             )
             .collect();
 

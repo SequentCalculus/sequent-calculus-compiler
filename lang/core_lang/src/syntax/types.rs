@@ -9,7 +9,7 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
-use crate::typing::check::{Checked, check_arity};
+use crate::typing::check::{Checked, check_arity, check_polarity};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
@@ -85,7 +85,7 @@ impl Ty {
 impl Checked for Ty {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         _context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
@@ -108,9 +108,16 @@ impl Checked for Ty {
                 // check that the number of type arguments matches the number of type parameters in the declaration
                 check_arity(declaration_type_params.len(), type_args.args.len())?;
 
-                // check that all type arguments are well-formed
-                for arg in &type_args.args {
+                // check that all type arguments are well-formed and that each argument's
+                // polarity matches the declared polarity of the corresponding type parameter
+                for (arg, declared_param) in type_args.args.iter().zip(declaration_type_params) {
                     arg.check(type_params, _context, env)?;
+                    let got = if arg.is_codata(env.codata_decls, type_params) {
+                        ParamPolarity::Codata
+                    } else {
+                        ParamPolarity::Data
+                    };
+                    check_polarity(declared_param.polarity, got)?;
                 }
                 Ok(())
             }
@@ -348,7 +355,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
-    use core_macros::{data, id, tparam, tvar, ty};
+    use core_macros::{codata, data, id, tparam, tvar, ty};
 
     #[test]
     fn check_fails_for_undeclared_type_var() {
@@ -363,7 +370,7 @@ mod check_tests {
         let t = tvar!(id!("A", 1));
 
         let res = t.check(
-            &[id!("A", 1)],
+            &[tparam!(id!("A", 1), "+")],
             &TypingContext::default(),
             &GlobalEnv::default(),
         );
@@ -406,9 +413,49 @@ mod check_tests {
         let ty_var_arg = ty!(id!("List"), [tvar!(id!("A", 1))]);
 
         let res = ty_var_arg.check(
-            &[id!("A", 1)],
+            &[tparam!(id!("A", 1), "+")],
             &TypingContext::default(),
             &GlobalEnv::new(&[list], &[], &[]),
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn check_rejects_data_argument_for_codata_declared_param() {
+        // data Box[A-] { ... } - A is declared negative/codata
+        let box_decl = data!(id!("Box"), [], [tparam!(id!("A", 1), "-")]);
+
+        // Box[i64] - i64 is always positive/data, so this must be rejected
+        let ty_bad = ty!(id!("Box"), [ty!("int")]);
+
+        let res = ty_bad.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[box_decl], &[], &[]),
+        );
+        assert!(matches!(
+            res,
+            Err(crate::typing::errors::LocatedTypeError {
+                error: crate::typing::errors::TypeError::PolarityMismatch { .. },
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn check_accepts_codata_argument_for_codata_declared_param() {
+        // codata Stream[A] { ... } - Stream itself is a codata type
+        let stream_decl = codata!(id!("Stream"), [], []);
+        // data Box[A-] { ... } - A is declared negative/codata
+        let box_decl = data!(id!("Box"), [], [tparam!(id!("A", 1), "-")]);
+
+        // Box[Stream] - Stream is codata, matching the declared polarity
+        let ty_good = ty!(id!("Box"), [ty!(id!("Stream"))]);
+
+        let res = ty_good.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[box_decl], &[stream_decl], &[]),
         );
         assert!(res.is_ok());
     }

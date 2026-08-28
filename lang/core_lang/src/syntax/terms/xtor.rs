@@ -286,7 +286,7 @@ impl<C: Chi> Specialize for Xtor<C> {
 impl<C: Chi> Checked for Xtor<C> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

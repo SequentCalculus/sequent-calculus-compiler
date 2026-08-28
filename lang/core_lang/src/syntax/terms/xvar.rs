@@ -164,7 +164,7 @@ impl<C: Chi> Specialize for XVar<C> {
 impl<C: Chi> Checked for XVar<C> {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

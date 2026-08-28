@@ -165,7 +165,7 @@ impl Specialize for PrintI64 {
 impl Checked for PrintI64 {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

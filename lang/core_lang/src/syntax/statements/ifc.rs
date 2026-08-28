@@ -261,7 +261,7 @@ impl Specialize for IfC {
 impl Checked for IfC {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {

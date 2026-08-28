@@ -157,7 +157,7 @@ impl Specialize for Exit {
 impl Checked for Exit {
     fn check(
         &self,
-        type_params: &[Identifier],
+        type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
