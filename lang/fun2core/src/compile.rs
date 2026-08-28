@@ -204,7 +204,6 @@ pub fn share(
             name: Identifier::new(name),
             type_args: core_lang::syntax::types::TypeArgs { args: vec![] },
             args,
-            ty: ty.clone(),
         }
         .into(),
         ty,

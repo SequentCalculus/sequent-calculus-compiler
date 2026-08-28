@@ -7,16 +7,12 @@ use syn::parse_str;
 pub fn unfocused_call(input: TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        ["Called Name", "Type Arguments", "Arguments", "Type"],
-        &[
-            (1, parse_str("[]").unwrap()),
-            (3, parse_str("core_lang::syntax::types::Ty::I64").unwrap()),
-        ],
+        ["Called Name", "Type Arguments", "Arguments"],
+        &[(1, parse_str("[]").unwrap())],
     );
     let name = &args[0];
     let type_args = expr_to_array(&args[1], 1);
     let call_args = arguments(&args[2], 1);
-    let ty = &args[3];
     quote! {
         core_lang::syntax::statements::call::Call{
             name: #name,
@@ -24,7 +20,6 @@ pub fn unfocused_call(input: TokenStream) -> TokenStream {
             args: ::std::vec![ #(#type_args),* ],
         },
             args: #call_args,
-            ty: #ty
         }
     }
     .into()

@@ -27,22 +27,30 @@ use crate::typing::errors::TypeError;
 use std::collections::BTreeSet;
 
 /// This struct defines the call of a top-level function in Core. It consists of the name of the
-/// top-level function to call,  the type arguments, the arguments, and the type.
+/// top-level function to call, the type arguments, and the arguments. Unlike Fun, Core calls have
+/// no independent return type: the continuation is passed as the last (consumer) argument, and
+/// that continuation's type is the call's type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     /// The name of the top-level function being called
     pub name: Identifier,
     /// The type arguments
     pub type_args: TypeArgs,
-    /// The arguments
+    /// The arguments, whose last entry is the continuation
     pub args: Arguments,
-    /// The type (which is the return type of the definition)
-    pub ty: Ty,
 }
 
 impl Typed for Call {
     fn get_type(&self) -> Ty {
-        self.ty.clone()
+        self.args
+            .entries
+            .iter()
+            .rev()
+            .find_map(|arg| match arg {
+                Argument::Consumer(term) => Some(term.get_type()),
+                Argument::Producer(_) => None,
+            })
+            .expect("a well-formed Call must have a consumer argument (its continuation)")
     }
 }
 
@@ -146,9 +154,7 @@ impl TypedFreeVars for FsCall {
 
 impl ConstraintCollector for Call {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
-        let mut constraints = self.ty.collect_constraints(env)?;
-
-        constraints.extend(self.args.collect_constraints(env)?);
+        let mut constraints = self.args.collect_constraints(env)?;
         constraints.extend(self.type_args.collect_constraints(env)?);
 
         let Some(def) = env.lookup_def(&self.name) else {
@@ -191,7 +197,6 @@ impl Specialize for Call {
             name: specialized_name,
             type_args: TypeArgs::default(),
             args: self.args.specialize(context),
-            ty: self.ty.specialize(context),
         }
     }
 }
@@ -203,9 +208,6 @@ impl Checked for Call {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
-        // check well-formedness of the type
-        self.ty.check(type_params, context, env)?;
-
         // Check that the called function is defined
         let Some(def) = env.lookup_def(&self.name) else {
             bail!(TypeError::UndefinedFunction(self.name.name.clone()));
@@ -286,23 +288,10 @@ impl LabelAndUnify for Call {
             state.unify_ty(&arg.get_type(), &expected);
         }
 
-        // `ty` is always the same type as the return continuation (the last consumer argument),
-        // not an independent occurrence. Reuse its label instead of minting a fresh one.
-        let ty = args
-            .entries
-            .iter()
-            .rev()
-            .find_map(|arg| match arg {
-                Argument::Consumer(term) => Some(term.get_type()),
-                Argument::Producer(_) => None,
-            })
-            .unwrap_or_else(|| state.label_ty(&self.ty));
-
         Call {
             name: self.name.clone(),
             type_args,
             args,
-            ty,
         }
     }
 }
@@ -315,7 +304,6 @@ impl Rewrite for Call {
             name: self.name.clone(),
             type_args: self.type_args.rewrite(table),
             args: self.args.rewrite(table),
-            ty: self.ty.rewrite(table),
         }
     }
 }

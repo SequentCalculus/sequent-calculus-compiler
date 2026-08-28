@@ -37,12 +37,6 @@ impl Compile for fun::syntax::terms::Call {
                     .collect::<Vec<_>>(),
             },
             args,
-            ty: compile_ty(
-                &self
-                    .ret_ty
-                    .expect("Types should be annotated before translation"),
-                type_params,
-            ),
         }
         .into()
     }
