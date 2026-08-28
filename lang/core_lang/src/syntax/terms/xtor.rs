@@ -359,7 +359,7 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
         let ty = state.label_ty(&self.ty);
         let decl_type_args: &[Ty] = match &ty {
             Ty::Decl { type_args, .. } => &type_args.args,
-            _ => &[],
+            _ => panic!("Expected declaration type in Xtor to label, got {:?}", ty),
         };
         let args = self.args.label_and_unify(state, sigs, scope);
 

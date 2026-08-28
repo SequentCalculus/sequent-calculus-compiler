@@ -19,6 +19,7 @@ use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
+use core::panic;
 use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines pattern and copattern matches in Core. It consists of the information that
@@ -266,7 +267,7 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         let ty = state.label_ty(&self.ty);
         let decl_type_args: Vec<Ty> = match &ty {
             Ty::Decl { type_args, .. } => type_args.args.clone(),
-            _ => vec![],
+            _ => panic!("Expected declaration type in XCase to label, got {:?}", ty),
         };
         let owner = label_in(&ty).clone();
         XCase {
