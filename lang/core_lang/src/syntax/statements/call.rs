@@ -591,7 +591,6 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![param_label.clone()],
-                self_referential: vec![],
             },
         );
         sigs.insert(
@@ -600,7 +599,6 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![],
-                self_referential: vec![],
             },
         );
 

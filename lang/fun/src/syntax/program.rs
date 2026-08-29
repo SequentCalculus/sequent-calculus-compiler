@@ -65,7 +65,11 @@ impl Program {
         let mut used_types: HashSet<Name> = symbol_table
             .types
             .keys()
-            .map(|name| name.split_once("[").map_or(name.as_str(), |x| x.0).to_string())
+            .map(|name| {
+                name.split_once("[")
+                    .map_or(name.as_str(), |x| x.0)
+                    .to_string()
+            })
             .collect();
 
         // A used type's constructors/destructors may reference other types that are never

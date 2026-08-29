@@ -5,7 +5,7 @@
 
 use std::rc::Rc;
 
-use crate::splitting::labeling::{DeclSignature, DeclSignatures, FieldObservations, Label};
+use crate::splitting::labeling::{DeclSignatures, FieldObservations, Label};
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::declaration::{Polarity, TypeDeclaration, XtorSig};
 use crate::syntax::{
@@ -175,10 +175,10 @@ fn split_xtor_sig<P: Polarity + Clone>(
         .cloned()
         .collect();
 
-    let sig = sigs
-        .get(&xtor.name)
-        .unwrap_or_else(|| panic!("missing signature for xtor: {}", xtor.name.name));
-    let args = build_field_args(xtor, sig, table, field_observations, root);
+    if !sigs.contains_key(&xtor.name) {
+        panic!("missing signature for xtor: {}", xtor.name.name);
+    }
+    let args = build_field_args(xtor, table, field_observations, root);
 
     XtorSig {
         xtor: xtor.xtor.clone(),
@@ -191,15 +191,12 @@ fn split_xtor_sig<P: Polarity + Clone>(
     }
 }
 
-/// Builds one physical copy's field types. A self-referential field (`sig.self_referential[i]`,
-/// see [`crate::splitting::reachability`]) keeps its declared shape as-is, rewritten through
-/// `table`. A genuinely independent field instead resolves to the field observation
-/// recorded for this specific copy's equivalence class (`root`), so e.g. two split copies of `Bar`
-/// each end up with their own, independently split copy of a nested `Foo` field, falling back to
-/// the declared shape if the xtor was never actually constructed/matched anywhere in the program.
+/// Builds one physical copy's field types. Every field resolves to the field observation recorded
+/// for this specific copy's equivalence class (`root`), so e.g. two split copies of `Bar` each end
+/// up with their own, independently split copy of a nested or self-referential field too,
+/// falling back to the declared shape if the xtor was never actually constructed/matched anywhere in the program.
 fn build_field_args<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
-    sig: &DeclSignature,
     table: &SplitTable,
     field_observations: &FieldObservations,
     root: Option<(&Label, bool)>,
@@ -211,16 +208,11 @@ fn build_field_args<P: Polarity + Clone>(
             .iter()
             .enumerate()
             .map(|(i, binding)| {
-                let ty = if sig.self_referential[i] {
-                    binding.ty.rewrite(table)
-                } else {
-                    match root.and_then(|(r, _)| field_observations.get(r, &xtor.name, i)) {
-                        // observed at some real occurrence: split independently from its owner
-                        Some(representative) => representative.rewrite(table),
-                        // never constructed/matched anywhere: `binding.ty` was left unlabeled by
-                        // `label_xtor_signature`, so there is nothing to rewrite, use it as-is
-                        None => binding.ty.clone(),
-                    }
+                let ty = match root.and_then(|(r, _)| field_observations.get(r, &xtor.name, i)) {
+                    // observed at some real occurrence: split independently from its owner
+                    Some(representative) => representative.rewrite(table),
+                    // never constructed/matched anywhere: `binding.ty` was left unlabeled
+                    None => binding.ty.clone(),
                 };
                 ContextBinding {
                     var: binding.var.clone(),
@@ -281,7 +273,7 @@ fn substitute_args(args: &TypingContext, subst: &[(Identifier, Identifier)]) -> 
 mod rewrite_tests {
     use super::*;
     use crate::splitting::labeling::{
-        FieldObservation, SplitState, label_in, merge_field_observations,
+        DeclSignature, FieldObservation, SplitState, label_in, merge_field_observations,
     };
     use crate::splitting::union_find::UnionFind;
     use crate::syntax::{DataDeclaration, Ty};
@@ -308,7 +300,6 @@ mod rewrite_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![Ty::I64],
-                self_referential: vec![true],
             },
         )])
     }
@@ -476,7 +467,6 @@ mod rewrite_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![ty!(id!("Foo"))],
-                self_referential: vec![false],
             },
         )])
     }
@@ -525,8 +515,8 @@ mod rewrite_tests {
 
     /// An xtor whose declaration is never actually constructed anywhere falls back to its
     /// originally declared field shape, mirroring `SplitTable::copies_for`'s existing
-    /// never-referenced fallback. `label_xtor_signature` never labels a non-self-referential
-    /// field in the first place, so the fallback shape is the bare, unlabeled original type.
+    /// never-referenced fallback: no field is ever labeled at signature-time (see
+    /// `build_decl_signatures`), so the fallback shape is the bare, unlabeled original type.
     #[test]
     fn split_declaration_falls_back_to_declared_shape_when_never_constructed() {
         let mut state = SplitState::default();

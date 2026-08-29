@@ -19,7 +19,6 @@ use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
 
-use core::panic;
 use std::collections::{BTreeSet, HashSet};
 
 /// This struct defines pattern and copattern matches in Core. It consists of the information that
@@ -260,24 +259,17 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         sigs: &DeclSignatures,
         scope: &TypingContext,
     ) -> Self {
-        // `ty` is the concrete type of the matched/constructed value (e.g. `Fun[i64, i64]`),
-        // its own type_args carry the enclosing declaration's own type parameters' concrete
-        // instantiation, which every clause needs to substitute into its binder types (see
+        // `ty` is the concrete type of the matched/constructed value (e.g. `Fun[i64, i64]`); its
+        // label is the owner every clause's field observations are recorded against (see
         // `label_and_unify_clause`), since a `Clause` itself carries no `.ty` to derive this from.
         let ty = state.label_ty(&self.ty);
-        let decl_type_args: Vec<Ty> = match &ty {
-            Ty::Decl { type_args, .. } => type_args.args.clone(),
-            _ => panic!("Expected declaration type in XCase to label, got {:?}", ty),
-        };
         let owner = label_in(&ty).clone();
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self
                 .clauses
                 .iter()
-                .map(|clause| {
-                    label_and_unify_clause(clause, state, sigs, scope, &decl_type_args, &owner)
-                })
+                .map(|clause| label_and_unify_clause(clause, state, sigs, scope, &owner))
                 .collect(),
             ty,
         }

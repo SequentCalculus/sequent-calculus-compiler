@@ -1,12 +1,10 @@
 use std::{collections::HashMap, mem::take, rc::Rc};
 
 use crate::{
-    splitting::{reachability::compute_field_reachability, union_find::UnionFind},
+    splitting::union_find::UnionFind,
     syntax::{
         Chi, Clause, CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
-        TypingContext,
-        declaration::{Polarity, TypeDeclaration, XtorSig},
-        types::TypeArgs,
+        TypingContext, types::TypeArgs,
     },
 };
 
@@ -30,10 +28,6 @@ pub struct DeclSignature {
     /// own `B` in `Pack[B](val: B)`).
     pub own_type_params: Vec<Identifier>,
     pub tys: Vec<Ty>,
-    /// Parallel to `tys`: whether each field's raw declared type structurally loops back to this
-    /// xtor's own enclosing declaration (see [`crate::splitting::reachability`]), e.g. `true` for
-    /// `List.Cons.xs: List[A]`, `false` for `Bar.MkBar.f: Foo`. Always empty for a `Def` entry.
-    pub self_referential: Vec<bool>,
 }
 
 pub type DeclSignatures = HashMap<Identifier, DeclSignature>;
@@ -145,31 +139,52 @@ impl SplitState {
     }
 }
 
-/// Reconciles every recorded [`FieldObservation`]: groups them by their owner's *final*
+/// Reconciles every recorded [`FieldObservation`]: groups them by their owner's *current*
 /// union-find root, then unifies every observation within a group together, so occurrences that
 /// end up sharing one physical copy of the enclosing declaration also end up with one consistent
-/// field type. Must run after every other `unify_ty` call in the walk, since it relies on
-/// `state.uf`'s roots being final.
+/// field type. Must run after every other `unify_ty` call in the walk.
+///
+/// This is a fixpoint, not a single pass: unifying the observations *within* one group can itself
+/// trigger new unions (via nested `type_args`) that merge two owner roots which were already
+/// frozen into two *separate* groups by an earlier iteration.
 pub fn merge_field_observations(state: &mut SplitState) -> FieldObservations {
     let observations = take(&mut state.field_observations);
+    let mut representatives: HashMap<(Label, Identifier, usize), Ty>;
 
-    let mut groups: HashMap<(Label, Identifier, usize), Vec<Ty>> = HashMap::new();
-    for obs in &observations {
-        let root = state.uf.find(&obs.owner);
-        groups
-            .entry((root, obs.xtor.clone(), obs.field_index))
-            .or_default()
-            .push(obs.ty.clone());
-    }
+    loop {
+        let roots_before: Vec<Label> = observations
+            .iter()
+            .map(|obs| state.uf.find(&obs.owner))
+            .collect();
 
-    let mut representatives = HashMap::new();
-    for (key, tys) in groups {
-        let mut tys = tys.into_iter();
-        let first = tys.next().expect("group is never empty by construction");
-        for ty in tys {
-            state.unify_ty(&first, &ty);
+        let mut groups: HashMap<(Label, Identifier, usize), Vec<Ty>> = HashMap::new();
+        for (obs, root) in observations.iter().zip(&roots_before) {
+            groups
+                .entry((root.clone(), obs.xtor.clone(), obs.field_index))
+                .or_default()
+                .push(obs.ty.clone());
         }
-        representatives.insert(key, first);
+
+        representatives = HashMap::new();
+        for (key, tys) in groups {
+            let mut tys = tys.into_iter();
+            let first = tys.next().expect("group is never empty by construction");
+            for ty in tys {
+                state.unify_ty(&first, &ty);
+            }
+            representatives.insert(key, first);
+        }
+
+        // Merging within a group can itself trigger new unions (via nested `type_args`) that
+        // change an observation's owner root -- re-group under the now-current roots until a
+        // full pass changes nothing.
+        let roots_after: Vec<Label> = observations
+            .iter()
+            .map(|obs| state.uf.find(&obs.owner))
+            .collect();
+        if roots_after == roots_before {
+            break;
+        }
     }
 
     FieldObservations(representatives)
@@ -186,67 +201,10 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
         .collect()
 }
 
-/// Labels one `XtorSig`'s argument types and rebuilds the full labeled tree in the same pass. A
-/// non-self-referential field (`self_referential[i]` false) is deliberately left unlabeled: no one
-/// ever unifies against this declaration-level anchor for such fields (see
-/// [`crate::splitting::rewrite::build_field_args`]), so minting one would only create a label that
-/// never gets unioned with anything.
-fn label_xtor_signature<P: Polarity + Clone>(
-    xtor: &XtorSig<P>,
-    state: &mut SplitState,
-    self_referential: &[bool],
-) -> XtorSig<P> {
-    let bindings = xtor
-        .args
-        .bindings
-        .iter()
-        .zip(self_referential)
-        .map(|(binding, &self_referential)| ContextBinding {
-            var: binding.var.clone(),
-            chi: binding.chi.clone(),
-            ty: if self_referential {
-                state.label_ty(&binding.ty)
-            } else {
-                binding.ty.clone()
-            },
-        })
-        .collect();
-    XtorSig {
-        xtor: xtor.xtor.clone(),
-        name: xtor.name.clone(),
-        type_params: xtor.type_params.clone(),
-        args: TypingContext { bindings },
-    }
-}
-
-/// Labels every xtor of one data/codata declaration (see [`label_xtor_signature`]).
-fn label_typedeclaration_signature<P: Polarity + Clone>(
-    decl: &TypeDeclaration<P>,
-    state: &mut SplitState,
-    field_reachability: &HashMap<Identifier, Vec<bool>>,
-) -> TypeDeclaration<P> {
-    TypeDeclaration {
-        dat: decl.dat.clone(),
-        name: decl.name.clone(),
-        xtors: decl
-            .xtors
-            .iter()
-            .map(|xtor| label_xtor_signature(xtor, state, &field_reachability[&xtor.name]))
-            .collect(),
-        type_params: decl.type_params.clone(),
-    }
-}
-
-/// Labels every `Def`'s parameter types and every data/codata declaration's xtor field types
-/// exactly once, so that every future call/use site can unify against these fixed labels (looked
-/// up via the returned `DeclSignatures`) rather than creating a fresh, unrelated one per call.
-/// Also returns the fully labeled declaration trees (needed by the rewrite phase to walk and
-/// split them).
 pub fn build_decl_signatures(
     prog: &Prog,
     state: &mut SplitState,
 ) -> (DeclSignatures, Vec<DataDeclaration>, Vec<CodataDeclaration>) {
-    let field_reachability = compute_field_reachability(prog);
     let mut sigs = DeclSignatures::new();
     for def in &prog.defs {
         let tys = label_def_signature(def, state);
@@ -256,16 +214,11 @@ pub fn build_decl_signatures(
                 decl_type_params: vec![],
                 own_type_params: def.type_params.iter().map(|p| p.id.clone()).collect(),
                 tys,
-                self_referential: vec![],
             },
         );
     }
 
-    let data_types: Vec<DataDeclaration> = prog
-        .data_types
-        .iter()
-        .map(|decl| label_typedeclaration_signature(decl, state, &field_reachability))
-        .collect();
+    let data_types: Vec<DataDeclaration> = prog.data_types.clone();
     for decl in &data_types {
         for xtor in &decl.xtors {
             let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
@@ -275,17 +228,12 @@ pub fn build_decl_signatures(
                     decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
                     own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
                     tys,
-                    self_referential: field_reachability[&xtor.name].clone(),
                 },
             );
         }
     }
 
-    let codata_types: Vec<CodataDeclaration> = prog
-        .codata_types
-        .iter()
-        .map(|decl| label_typedeclaration_signature(decl, state, &field_reachability))
-        .collect();
+    let codata_types: Vec<CodataDeclaration> = prog.codata_types.clone();
     for decl in &codata_types {
         for xtor in &decl.xtors {
             let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
@@ -295,7 +243,6 @@ pub fn build_decl_signatures(
                     decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
                     own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
                     tys,
-                    self_referential: field_reachability[&xtor.name].clone(),
                 },
             );
         }
@@ -313,7 +260,7 @@ pub fn build_decl_signatures(
 /// This is the combined labeling-and-unification pass of type splitting;
 /// running it eagerly during a single tree walk avoids a separate constraint-collection pass, at
 /// the cost of requiring declaration signatures to be labeled once upfront (see
-/// [`build_def_signatures`]) so that multiple call/use sites unify against one shared, stable
+/// [`build_decl_signatures`]) so that multiple call/use sites unify against one shared, stable
 /// label rather than against each other pairwise.
 ///
 /// `scope` maps every locally bound (co)variable (`Mu`'s variable, a `Clause`'s context bindings)
@@ -366,9 +313,8 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
 }
 
 /// Labels and unifies one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every
-/// other node, a `Clause` carries no `.ty` of its own, the enclosing declaration's own
-/// concrete type arguments (e.g. `Fun`'s `A`, `B`) and the scrutinee's own label are only known
-/// from the owning `XCase`, so the caller must pass them in (mirrors
+/// other node, a `Clause` carries no `.ty` of its own, the scrutinee's own label is only known
+/// from the owning `XCase`, so the caller must pass it in (mirrors
 /// [`crate::splitting::rewrite::rewrite_clause`], which needs the analogous `owner_label` for the
 /// same structural reason).
 pub fn label_and_unify_clause<C: Chi>(
@@ -376,37 +322,29 @@ pub fn label_and_unify_clause<C: Chi>(
     state: &mut SplitState,
     sigs: &DeclSignatures,
     scope: &TypingContext,
-    decl_type_args: &[Ty],
     owner: &Label,
 ) -> Clause<C> {
-    let sig = sigs
-        .get(&clause.xtor)
-        .unwrap_or_else(|| panic!("missing signature for xtor: {}", clause.xtor.name));
+    if !sigs.contains_key(&clause.xtor) {
+        panic!("missing signature for xtor: {}", clause.xtor.name);
+    }
 
-    // Substitute the enclosing declaration's own type parameters (e.g. `Fun`'s `A`, `B`) using
-    // the concrete arguments from the matched/constructed value's own type, mirrors the
-    // identical substitution in `check_xcase_against_decl`. The xtor's own existential/universal
-    // parameters are deliberately not substituted here (unlike Xtor/Call): a clause introduces
-    // fresh, abstract names for those instead, it doesn't know a concrete instantiation for them.
+    // Every binder's field type is recorded per-occurrence via `FieldObservation` rather than
+    // unified immediately: whether it should end up sharing a physical copy with some other
+    // occurrence's field depends on whether their owners turn out equivalent, which is only known
+    // once the whole walk finishes (see `merge_field_observations`).
     let labeled_bindings: Vec<ContextBinding> = clause
         .context
         .bindings
         .iter()
-        .zip(&sig.tys)
         .enumerate()
-        .map(|(i, (binding, field_ty))| {
+        .map(|(i, binding)| {
             let ty = state.label_ty(&binding.ty);
-            if sig.self_referential[i] {
-                let expected = field_ty.substitute((&sig.decl_type_params, decl_type_args));
-                state.unify_ty(&ty, &expected);
-            } else {
-                state.field_observations.push(FieldObservation {
-                    owner: owner.clone(),
-                    xtor: clause.xtor.clone(),
-                    field_index: i,
-                    ty: ty.clone(),
-                });
-            }
+            state.field_observations.push(FieldObservation {
+                owner: owner.clone(),
+                xtor: clause.xtor.clone(),
+                field_index: i,
+                ty: ty.clone(),
+            });
             ContextBinding {
                 var: binding.var.clone(),
                 chi: binding.chi.clone(),
@@ -606,26 +544,6 @@ mod split_state_tests {
         assert_eq!(params.len(), 2);
         assert!(matches!(params[0], Ty::Decl { .. }));
         assert_eq!(params[1], Ty::I64);
-    }
-
-    #[test]
-    fn label_xtor_sig_labels_each_field_and_rebuilds_the_tree() {
-        let ctor = ctor_sig!(
-            id!("Cons"),
-            [],
-            [
-                bind!(id!("x"), prd!(), ty!("int")),
-                bind!(id!("xs"), prd!(), ty!(id!("List")))
-            ]
-        );
-
-        let mut state = fresh_state();
-        let labeled = label_xtor_signature(&ctor, &mut state, &[true, true]);
-
-        assert_eq!(labeled.name, id!("Cons"));
-        assert_eq!(labeled.args.bindings.len(), 2);
-        assert_eq!(labeled.args.bindings[0].ty, Ty::I64);
-        assert!(matches!(labeled.args.bindings[1].ty, Ty::Decl { .. }));
     }
 
     #[test]

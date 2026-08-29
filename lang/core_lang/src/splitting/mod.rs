@@ -1,5 +1,4 @@
 pub mod labeling;
-pub mod reachability;
 pub mod rewrite;
 pub mod split_table;
 pub mod union_find;
@@ -69,7 +68,9 @@ mod split_program_tests {
     use super::*;
     use crate::syntax::*;
     extern crate self as core_lang;
-    use core_macros::{bind, call, cns, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, ty};
+    use core_macros::{
+        bind, call, case, clause, cns, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, ty, var,
+    };
 
     fn box_decl() -> DataDeclaration {
         data!(
@@ -313,16 +314,196 @@ mod split_program_tests {
         }
     }
 
-    /// `List` recursively references itself through `Cons.xs`. A manually unrolled, deeply nested
-    /// construction must not blow `List` up into one physical copy per nesting depth.
-    /// Self-referential fields stay merged with the recursive chain they belong to, regardless of
-    /// how deep that chain goes.
     #[test]
-    fn split_program_keeps_a_self_referential_declaration_from_exploding_with_depth() {
+    fn split_program_splits_a_manually_unrolled_chain_into_one_copy_per_depth_level() {
         let shallow = split_program(&list_prog(nested_list(1))).data_types.len();
         let deep = split_program(&list_prog(nested_list(5))).data_types.len();
 
-        assert_eq!(shallow, deep);
+        assert!(
+            deep > shallow,
+            "expected the manually unrolled chain to split into more copies as it gets deeper, got shallow={shallow}, deep={deep}"
+        );
+    }
+
+    #[test]
+    fn split_program_lets_a_self_referential_field_point_at_a_different_copy() {
+        let result = split_program(&list_prog(nested_list(2)));
+
+        assert!(result.data_types.len() > 1);
+        let cross_references_a_different_copy = result.data_types.iter().any(|copy| {
+            copy.xtors.iter().any(|xtor| {
+                xtor.name.name.starts_with("Cons")
+                    && match &xtor.args.bindings[1].ty {
+                        Ty::Decl { name, .. } => name != &copy.name,
+                        _ => false,
+                    }
+            })
+        });
+        assert!(
+            cross_references_a_different_copy,
+            "expected at least one split copy whose Cons.xs field points at a different copy \
+             than its own declaration, got: {:#?}",
+            result.data_types
+        );
+    }
+
+    #[test]
+    fn split_program_keeps_a_def_call_recursive_function_from_exploding_with_depth() {
+        let len = def!(
+            id!("len"),
+            [
+                bind!(id!("xs"), prd!(), ty!(id!("List"))),
+                bind!(id!("ret"), cns!(), ty!("int"))
+            ],
+            cut!(
+                var!(id!("xs"), ty!(id!("List"))),
+                case!(
+                    [
+                        clause!(
+                            Cns,
+                            id!("Nil"),
+                            [],
+                            [],
+                            cut!(lit!(0), covar!(id!("ret")), ty!("int"))
+                        ),
+                        clause!(
+                            Cns,
+                            id!("Cons"),
+                            [],
+                            [
+                                bind!(id!("x"), prd!(), ty!("int")),
+                                bind!(id!("tail"), prd!(), ty!(id!("List")))
+                            ],
+                            call!(
+                                id!("len"),
+                                [var!(id!("tail"), ty!(id!("List"))), covar!(id!("ret"))]
+                            )
+                        )
+                    ],
+                    ty!(id!("List"))
+                ),
+                ty!(id!("List"))
+            )
+        );
+        // Two unrelated call sites, feeding manually unrolled chains of very different depths
+        // into the very same recursive function.
+        let def_a = def!(
+            id!("a"),
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            call!(id!("len"), [nested_list(1), covar!(id!("ret"))])
+        );
+        let def_b = def!(
+            id!("b"),
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            call!(id!("len"), [nested_list(5), covar!(id!("ret"))])
+        );
+        let prog = Prog {
+            defs: vec![len, def_a, def_b],
+            data_types: vec![list_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        };
+
+        let result = split_program(&prog);
+
+        assert_eq!(result.data_types.len(), 1);
+        assert_eq!(result.data_types[0].name, id!("List"));
+    }
+
+    #[test]
+    fn split_program_does_not_merge_two_separate_mutually_recursive_defs_canonical_classes() {
+        let is_even = def!(
+            id!("is_even"),
+            [
+                bind!(id!("xs"), prd!(), ty!(id!("List"))),
+                bind!(id!("ret"), cns!(), ty!("int"))
+            ],
+            cut!(
+                var!(id!("xs"), ty!(id!("List"))),
+                case!(
+                    [
+                        clause!(
+                            Cns,
+                            id!("Nil"),
+                            [],
+                            [],
+                            cut!(lit!(1), covar!(id!("ret")), ty!("int"))
+                        ),
+                        clause!(
+                            Cns,
+                            id!("Cons"),
+                            [],
+                            [
+                                bind!(id!("x"), prd!(), ty!("int")),
+                                bind!(id!("tail"), prd!(), ty!(id!("List")))
+                            ],
+                            call!(
+                                id!("is_odd"),
+                                [var!(id!("tail"), ty!(id!("List"))), covar!(id!("ret"))]
+                            )
+                        )
+                    ],
+                    ty!(id!("List"))
+                ),
+                ty!(id!("List"))
+            )
+        );
+        let is_odd = def!(
+            id!("is_odd"),
+            [
+                bind!(id!("xs"), prd!(), ty!(id!("List"))),
+                bind!(id!("ret"), cns!(), ty!("int"))
+            ],
+            cut!(
+                var!(id!("xs"), ty!(id!("List"))),
+                case!(
+                    [
+                        clause!(
+                            Cns,
+                            id!("Nil"),
+                            [],
+                            [],
+                            cut!(lit!(0), covar!(id!("ret")), ty!("int"))
+                        ),
+                        clause!(
+                            Cns,
+                            id!("Cons"),
+                            [],
+                            [
+                                bind!(id!("x"), prd!(), ty!("int")),
+                                bind!(id!("tail"), prd!(), ty!(id!("List")))
+                            ],
+                            call!(
+                                id!("is_even"),
+                                [var!(id!("tail"), ty!(id!("List"))), covar!(id!("ret"))]
+                            )
+                        )
+                    ],
+                    ty!(id!("List"))
+                ),
+                ty!(id!("List"))
+            )
+        );
+        let def_a = def!(
+            id!("a"),
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            call!(id!("is_even"), [nested_list(1), covar!(id!("ret"))])
+        );
+        let def_b = def!(
+            id!("b"),
+            [bind!(id!("ret"), cns!(), ty!("int"))],
+            call!(id!("is_odd"), [nested_list(5), covar!(id!("ret"))])
+        );
+        let prog = Prog {
+            defs: vec![is_even, is_odd, def_a, def_b],
+            data_types: vec![list_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        };
+
+        let result = split_program(&prog);
+
+        assert_eq!(result.data_types.len(), 2);
     }
 
     fn a_decl() -> DataDeclaration {
@@ -374,15 +555,15 @@ mod split_program_tests {
             max_id: 0,
         }
     }
-
-    /// `A` and `B` reach back to each other only via mutual recursion (`A.MkA.b: B`,
-    /// `B.MkB.a: A`), not via a direct self-reference, must not explode into one pair of
-    /// declarations per nesting level either.
     #[test]
-    fn split_program_keeps_mutually_recursive_declarations_from_exploding_with_depth() {
+    fn split_program_splits_a_manually_unrolled_mutually_recursive_chain_into_more_copies_with_depth()
+     {
         let shallow = split_program(&ab_prog(nested_a(0))).data_types.len();
         let deep = split_program(&ab_prog(nested_a(5))).data_types.len();
 
-        assert_eq!(shallow, deep);
+        assert!(
+            deep > shallow,
+            "expected the manually unrolled mutually recursive chain to split into more copies as it gets deeper, got shallow={shallow}, deep={deep}"
+        );
     }
 }

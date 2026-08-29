@@ -311,9 +311,8 @@ mod label_and_unify_tests {
     use core_macros::{bind, clause, covar, cut, id, prd, ty, var};
 
     #[test]
-    fn label_and_unify_merges_binding_with_declared_field() {
+    fn label_and_unify_defers_a_binding_to_an_observation() {
         let mut state = SplitState::default();
-        let field_label = state.label_ty(&ty!(id!("Box")));
 
         let mut sigs = DeclSignatures::new();
         sigs.insert(
@@ -321,8 +320,7 @@ mod label_and_unify_tests {
             DeclSignature {
                 decl_type_params: vec![],
                 own_type_params: vec![],
-                tys: vec![field_label.clone()],
-                self_referential: vec![true],
+                tys: vec![ty!(id!("Box"))],
             },
         );
 
@@ -353,21 +351,16 @@ mod label_and_unify_tests {
             _ => unreachable!(),
         };
         let result: Clause<Cns> =
-            label_and_unify_clause(&example, &mut state, &sigs, &scope, &[], &owner_label);
+            label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner_label);
         let binding_ty = result.context.bindings[0].ty.clone();
 
-        let (
-            Ty::Decl {
-                name: field_name, ..
-            },
-            Ty::Decl {
-                name: binding_name, ..
-            },
-        ) = (&field_label, &binding_ty)
-        else {
-            panic!("expected Ty::Decl on both sides");
-        };
-        assert_eq!(state.uf.find(field_name), state.uf.find(&binding_name));
+        // nothing unifies the binding eagerly -- it is recorded as a field observation instead,
+        // to be reconciled against whatever the owner's equivalence class turns out to be
+        assert_eq!(state.field_observations.len(), 1);
+        assert_eq!(state.field_observations[0].owner, owner_label);
+        assert_eq!(state.field_observations[0].xtor, id!("Cons"));
+        assert_eq!(state.field_observations[0].field_index, 0);
+        assert_eq!(state.field_observations[0].ty, binding_ty);
 
         // scope threading: the body's occurrence of `x` must carry exactly the binding's label
         let Statement::Cut(body_cut) = result.body.as_ref() else {

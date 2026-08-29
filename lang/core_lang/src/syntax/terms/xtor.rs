@@ -354,39 +354,28 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
                 .collect(),
         };
         // `ty` is the concrete type of the whole xtor value (e.g. `Fun[i64, Fun[i64, i64]]` for a
-        // destructor consumption), its own type_args carry the enclosing declaration's own
-        // type parameters concrete instantiation, needed below alongside the xtor's own.
+        // destructor consumption). `label_in` below relies on it being a declared type.
         let ty = state.label_ty(&self.ty);
-        let decl_type_args: &[Ty] = match &ty {
-            Ty::Decl { type_args, .. } => &type_args.args,
-            _ => panic!("Expected declaration type in Xtor to label, got {:?}", ty),
-        };
+        if !matches!(ty, Ty::Decl { .. }) {
+            panic!("Expected declaration type in Xtor to label, got {ty:?}");
+        }
         let args = self.args.label_and_unify(state, sigs, scope);
 
-        let sig = sigs
-            .get(&self.name)
-            .unwrap_or_else(|| panic!("missing signature for xtor: {}", self.name.name));
+        if !sigs.contains_key(&self.name) {
+            panic!("missing signature for xtor: {}", self.name.name);
+        }
         let owner = label_in(&ty).clone();
-        for (i, (arg, field_ty)) in args.entries.iter().zip(sig.tys.iter()).enumerate() {
-            if sig.self_referential[i] {
-                // Substitute both the enclosing declaration's own type parameters (e.g. `Fun`'s
-                // `A`, `B`) and the xtor's own existential/universal ones (e.g. `Pack`'s own `B`)
-                // into the declared field type before unifying, mirrors the identical double
-                // substitution in `check_xcase_against_decl`. Without this, a field declared as
-                // `Ty::Var(...)` would never unify with anything, and the concrete type flowing
-                // through it would silently escape type splitting.
-                let expected = field_ty
-                    .substitute((&sig.decl_type_params, decl_type_args))
-                    .substitute((&sig.own_type_params, &type_args.args));
-                state.unify_ty(&arg.get_type(), &expected);
-            } else {
-                state.field_observations.push(FieldObservation {
-                    owner: owner.clone(),
-                    xtor: self.name.clone(),
-                    field_index: i,
-                    ty: arg.get_type(),
-                });
-            }
+        // Every field's actual type is recorded per-occurrence via `FieldObservation` rather than
+        // unified immediately: whether it should end up sharing a physical copy with some other
+        // occurrence's field depends on whether their owners turn out equivalent, which is only
+        // known once the whole walk finishes (see `merge_field_observations`).
+        for (i, arg) in args.entries.iter().enumerate() {
+            state.field_observations.push(FieldObservation {
+                owner: owner.clone(),
+                xtor: self.name.clone(),
+                field_index: i,
+                ty: arg.get_type(),
+            });
         }
 
         Xtor {
@@ -460,9 +449,8 @@ mod label_and_unify_tests {
     use core_macros::{ctor, id, ty};
 
     #[test]
-    fn label_and_unify_merges_argument_with_declared_field() {
+    fn label_and_unify_defers_the_field_to_an_observation_instead_of_unifying_eagerly() {
         let mut state = SplitState::default();
-        let field_label = state.label_ty(&ty!(id!("Box")));
 
         let mut sigs = DeclSignatures::new();
         sigs.insert(
@@ -470,8 +458,7 @@ mod label_and_unify_tests {
             DeclSignature {
                 decl_type_params: vec![],
                 own_type_params: vec![],
-                tys: vec![field_label.clone()],
-                self_referential: vec![true],
+                tys: vec![ty!(id!("Box"))],
             },
         );
         sigs.insert(
@@ -480,12 +467,9 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![],
-                self_referential: vec![],
             },
         );
 
-        // the argument is itself a freshly constructed `Box`, independently labeled from the
-        // declared field type in `sigs`
         let example = ctor!(
             id!("Wrap"),
             [],
@@ -497,22 +481,21 @@ mod label_and_unify_tests {
             example.label_and_unify(&mut state, &sigs, &TypingContext::default());
         let arg_ty = result.args.entries[0].get_type();
 
-        let (
-            Ty::Decl {
-                name: field_name, ..
-            },
-            Ty::Decl { name: arg_name, .. },
-        ) = (&field_label, &arg_ty)
-        else {
-            panic!("expected Ty::Decl on both sides");
+        // no signature-level anchor is ever minted or unified against -- the field's type is
+        // recorded as an observation, owned by this occurrence's own (freshly labeled) `.ty`
+        assert_eq!(state.field_observations.len(), 1);
+        let owner = match &result.ty {
+            Ty::Decl { name, .. } => name,
+            _ => panic!("expected Ty::Decl"),
         };
-        assert_eq!(state.uf.find(field_name), state.uf.find(arg_name));
-        // the xtor's own type is freshly labeled, independent of the field-level unification
+        assert_eq!(&state.field_observations[0].owner, owner);
+        assert_eq!(state.field_observations[0].ty, arg_ty);
+        // the xtor's own type is freshly labeled, independent of the field-level observation
         assert!(matches!(result.ty, Ty::Decl { .. }));
     }
 
     #[test]
-    fn label_and_unify_defers_non_self_referential_field_to_an_observation() {
+    fn label_and_unify_keeps_two_independent_occurrences_field_observations_separate() {
         let mut state = SplitState::default();
         let mut sigs = DeclSignatures::new();
         sigs.insert(
@@ -521,7 +504,6 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![ty!(id!("Foo"))],
-                self_referential: vec![false],
             },
         );
         sigs.insert(
@@ -530,7 +512,6 @@ mod label_and_unify_tests {
                 decl_type_params: vec![],
                 own_type_params: vec![],
                 tys: vec![],
-                self_referential: vec![],
             },
         );
 
