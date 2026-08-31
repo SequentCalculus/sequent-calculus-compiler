@@ -263,13 +263,14 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         // label is the owner every clause's field observations are recorded against (see
         // `label_and_unify_clause`), since a `Clause` itself carries no `.ty` to derive this from.
         let ty = state.label_ty(&self.ty);
-        let owner = label_in(&ty).clone();
+        // Each clause records itself as a use of its xtor and derives both its owner label and the
+        // declaration's type-parameter instantiation from `ty`, see `label_and_unify_clause`.
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self
                 .clauses
                 .iter()
-                .map(|clause| label_and_unify_clause(clause, state, sigs, scope, &owner))
+                .map(|clause| label_and_unify_clause(clause, state, sigs, scope, &ty))
                 .collect(),
             ty,
         }
@@ -378,14 +379,13 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
     }
 
     // exhaustiveness check: are all possible cases covered
-    if seen_xtors.len() != decl.xtors.len() {
-        let missing: Vec<String> = decl
-            .xtors
-            .iter()
-            .filter(|xt| !seen_xtors.contains(&xt.name.name))
-            .map(|xt| xt.name.name.clone())
-            .collect();
-
+    let missing: Vec<String> = decl
+        .xtors
+        .iter()
+        .filter(|xt| !seen_xtors.contains(&xt.name.name))
+        .map(|xt| xt.name.name.clone())
+        .collect();
+    if !missing.is_empty() {
         bail!(TypeError::Contextual {
             msg: format!(
                 "Non-exhaustive match for type '{}': missing clauses for [{}]",

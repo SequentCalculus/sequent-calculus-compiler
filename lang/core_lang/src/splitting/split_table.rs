@@ -8,7 +8,8 @@ use std::collections::HashMap;
 use crate::splitting::labeling::Label;
 use crate::splitting::union_find::UnionFind;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
-use crate::syntax::{CodataDeclaration, DataDeclaration, Identifier};
+use crate::syntax::types::TypeArgs;
+use crate::syntax::{CodataDeclaration, DataDeclaration, Identifier, Ty};
 
 /// Maps every label minted during labeling to the name of the physical declaration copy its
 /// equivalence class was assigned, and every original xtor name (paired with a label from its
@@ -107,14 +108,17 @@ impl SplitTable {
 
     /// Looks up the split-copy name for an xtor, given a label belonging to its owning
     /// declaration's equivalence class (typically the label embedded in the specific `Xtor`
-    /// occurrence's own `.ty`, not a label taken from `sigs`).
+    /// occurrence's own `.ty`, not a label taken from `sigs`). Every xtor of every declaration is
+    /// registered for every one of its labels, so this is total for any label minted during
+    /// labeling -- dead-xtor dropping happens later, when the physical copies are built (see
+    /// [`crate::splitting::rewrite::keeps_xtor`]), and never removes a name a term still uses.
     pub fn resolve_xtor_name(&self, original: &Identifier, owner_label: &Label) -> &Identifier {
         self.xtor_names
             .get(&(original.clone(), owner_label.clone()))
             .unwrap_or_else(|| {
                 panic!(
-                    "no split name recorded for xtor {} under label {} -- this indicates a bug \
-                     in labeling or split-table construction",
+                    "no split name recorded for xtor {} under label {} -- this indicates a \
+                     bug in labeling or split-table construction",
                     original.name, owner_label.name
                 )
             })
@@ -130,11 +134,44 @@ impl SplitTable {
             .map(Vec::as_slice)
             .unwrap_or(&[])
     }
+
+    /// Resolves a type that was never labeled in the first place. The declared shape of a field
+    /// that was never actually observed at any real occurrence (see
+    /// [`crate::splitting::rewrite::build_field_args`]'s fallback for a never-constructed xtor).
+    /// Such a type carries only an *origin* name (e.g. `List`, never `List#3`), which is only
+    /// valid as-is when that origin was never split or
+    /// never referenced at all. When the origin *was* split into several physical copies, that bare name
+    /// belongs to none of them, since nothing was ever observed, any one of them is an equally
+    /// valid (if arbitrary) choice, so this deterministically resolves to the first-assigned one.
+    pub fn resolve_unobserved_ty(&self, ty: &Ty) -> Ty {
+        match ty {
+            Ty::I64 => Ty::I64,
+            Ty::Var(v) => Ty::Var(v.clone()),
+            Ty::Decl { name, type_args } => {
+                let resolved_name = match self.roots_by_origin.get(name).and_then(|r| r.first()) {
+                    Some(root) => self.resolve_ty_name(root).clone(),
+                    None => name.clone(),
+                };
+                Ty::Decl {
+                    name: resolved_name,
+                    type_args: TypeArgs {
+                        args: type_args
+                            .args
+                            .iter()
+                            .map(|arg| self.resolve_unobserved_ty(arg))
+                            .collect(),
+                    },
+                }
+            }
+        }
+    }
 }
 
 /// Registers the split-copy name of every xtor of `decl`, for every label in `decl.name`'s
 /// equivalence classes, sharing the same per-class index assigned to the declaration itself so
-/// e.g. `Cons__1` is always paired with `List__1`.
+/// e.g. `Cons__1` is always paired with `List__1`. Purely a naming step: which of these xtors a
+/// given physical copy actually keeps is decided separately, when the copy is built (see
+/// [`crate::splitting::rewrite::keeps_xtor`]).
 fn register_xtor_names<P: Polarity>(
     decl: &TypeDeclaration<P>,
     labels_by_origin: &HashMap<Identifier, Vec<Label>>,
@@ -246,5 +283,47 @@ mod split_table_tests {
         let mut uf = UnionFind::default();
         let table = SplitTable::build(&mut uf, &HashMap::new(), &[box_decl()], &[]);
         assert!(table.copies_for(&id!("Box")).is_empty());
+    }
+
+    /// A field type that was never labeled (no real occurrence ever observed it, see
+    /// `crate::splitting::rewrite::build_field_args`'s fallback) only names its *origin*
+    /// declaration, not any specific split copy. If that origin was itself split into several
+    /// physical copies, the bare origin name belongs to none of them -- `resolve_unobserved_ty`
+    /// must resolve it to one of the actual copies instead of leaving a dangling reference.
+    #[test]
+    fn resolve_unobserved_ty_picks_an_actual_copy_when_the_origin_was_split() {
+        let mut uf = UnionFind::default();
+        let a = box_label(1);
+        let b = box_label(2);
+        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+
+        let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
+
+        let bare_box = crate::syntax::Ty::Decl {
+            name: id!("Box"),
+            type_args: Default::default(),
+        };
+        let resolved = table.resolve_unobserved_ty(&bare_box);
+        let crate::syntax::Ty::Decl { name, .. } = &resolved else {
+            panic!("expected Ty::Decl");
+        };
+        // must be one of the two actual split copies, never the bare, now-nonexistent "Box"
+        assert_ne!(name, &id!("Box"));
+        assert!(name == table.resolve_ty_name(&a) || name == table.resolve_ty_name(&b));
+    }
+
+    #[test]
+    fn resolve_unobserved_ty_keeps_the_bare_name_when_the_origin_was_never_split() {
+        let mut uf = UnionFind::default();
+        let a = box_label(1);
+        let label_origin = HashMap::from([(a.clone(), id!("Box"))]);
+
+        let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
+
+        let bare_box = crate::syntax::Ty::Decl {
+            name: id!("Box"),
+            type_args: Default::default(),
+        };
+        assert_eq!(table.resolve_unobserved_ty(&bare_box), bare_box);
     }
 }

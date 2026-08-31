@@ -7,7 +7,8 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::labeling::{
-    DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in,
+    DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in, type_param_subst,
+    unify_declared_type_vars,
 };
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
@@ -361,20 +362,35 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
         }
         let args = self.args.label_and_unify(state, sigs, scope);
 
-        if !sigs.contains_key(&self.name) {
+        let Some(sig) = sigs.get(&self.name) else {
             panic!("missing signature for xtor: {}", self.name.name);
-        }
+        };
+        let Ty::Decl {
+            type_args: decl_type_args,
+            ..
+        } = &ty
+        else {
+            unreachable!("just checked above that `ty` is a Ty::Decl");
+        };
+        let subst = type_param_subst(sig, &decl_type_args.args, &type_args.args);
         let owner = label_in(&ty).clone();
+        state.record_xtor_use(&owner, &self.name);
         // Every field's actual type is recorded per-occurrence via `FieldObservation` rather than
         // unified immediately: whether it should end up sharing a physical copy with some other
         // occurrence's field depends on whether their owners turn out equivalent, which is only
-        // known once the whole walk finishes (see `merge_field_observations`).
+        // known once the whole walk finishes (see `merge_field_observations`). The positions the
+        // declaration left open as a type variable have no head to observe and are tied to this
+        // occurrence's own type arguments instead (see `unify_declared_type_vars`).
         for (i, arg) in args.entries.iter().enumerate() {
+            let actual = arg.get_type();
+            if let Some(declared) = sig.tys.get(i) {
+                unify_declared_type_vars(state, declared, &actual, &subst);
+            }
             state.field_observations.push(FieldObservation {
                 owner: owner.clone(),
                 xtor: self.name.clone(),
                 field_index: i,
-                ty: arg.get_type(),
+                ty: actual,
             });
         }
 
@@ -391,9 +407,10 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
 impl<C: Chi> Rewrite for Xtor<C> {
     fn rewrite(&self, table: &SplitTable) -> Self {
         let owner_label = label_in(&self.ty);
+        let name = table.resolve_xtor_name(&self.name, owner_label);
         Xtor {
             prdcns: self.prdcns.clone(),
-            name: table.resolve_xtor_name(&self.name, owner_label).clone(),
+            name: name.clone(),
             type_args: self.type_args.rewrite(table),
             args: self.args.rewrite(table),
             ty: self.ty.rewrite(table),

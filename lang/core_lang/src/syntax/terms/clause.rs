@@ -351,7 +351,7 @@ mod label_and_unify_tests {
             _ => unreachable!(),
         };
         let result: Clause<Cns> =
-            label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner_label);
+            label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner);
         let binding_ty = result.context.bindings[0].ty.clone();
 
         // nothing unifies the binding eagerly -- it is recorded as a field observation instead,

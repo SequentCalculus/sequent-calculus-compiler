@@ -1,4 +1,8 @@
-use std::{collections::HashMap, mem::take, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    mem::take,
+    rc::Rc,
+};
 
 use crate::{
     splitting::union_find::UnionFind,
@@ -42,6 +46,68 @@ pub fn label_in(ty: &Ty) -> &Label {
     }
 }
 
+/// Unifies the type an occurrence's argument or binder really has with the field type its xtor
+/// declares, but only at the positions the declaration left open as a type variable, which
+/// `subst` maps to the occurrence's own labeled type arguments.
+///
+/// Those positions carry no head of their own, so nothing else would ever tie them to anything: a
+/// field declared `x: A` would leave the concrete type flowing through it invisible to splitting,
+/// and a field declared `xs: List[B]` would leave `B`'s instantiation unconnected to the value
+/// actually stored there. Every *other* position is a declaration head, whose split copy is chosen
+/// by the [`FieldObservation`] mechanism instead.
+pub fn unify_declared_type_vars(
+    state: &mut SplitState,
+    declared: &Ty,
+    actual: &Ty,
+    subst: &[(Identifier, Ty)],
+) {
+    match declared {
+        Ty::I64 => {}
+        Ty::Var(param) => {
+            if let Some((_, expected)) = subst.iter().find(|(candidate, _)| candidate == param) {
+                let expected = expected.clone();
+                state.unify_ty(&expected, actual);
+            }
+        }
+        Ty::Decl { type_args, .. } => {
+            let Ty::Decl {
+                type_args: actual_args,
+                ..
+            } = actual
+            else {
+                return;
+            };
+            for (declared_arg, actual_arg) in type_args.args.iter().zip(&actual_args.args) {
+                unify_declared_type_vars(state, declared_arg, actual_arg, subst);
+            }
+        }
+    }
+}
+
+/// Pairs a signature's type parameters with an occurrence's labeled type arguments, for
+/// [`unify_declared_type_vars`]. Mirrors the double substitution in `check_xcase_against_decl`:
+/// `decl_type_args` instantiate the enclosing declaration's own parameters (e.g. `Fun`'s `A`, `B`),
+/// `own_type_args` the xtor's own existential/universal ones (e.g. `Pack`'s own `B`). A clause
+/// passes an empty `own_type_args`: it binds fresh, abstract names for those rather than knowing a
+/// concrete instantiation.
+pub fn type_param_subst(
+    sig: &DeclSignature,
+    decl_type_args: &[Ty],
+    own_type_args: &[Ty],
+) -> Vec<(Identifier, Ty)> {
+    sig.decl_type_params
+        .iter()
+        .cloned()
+        .zip(decl_type_args.iter().cloned())
+        .chain(
+            sig.own_type_params
+                .iter()
+                .cloned()
+                .zip(own_type_args.iter().cloned()),
+        )
+        .collect()
+}
+
 /// One field position's actual type at one specific `Xtor`/`Clause` occurrence, recorded instead
 /// of unified immediately: whether two occurrences' observations should later merge depends on
 /// whether their *enclosing* declaration occurrences end up in the same equivalence class, which
@@ -69,6 +135,40 @@ impl FieldObservations {
     }
 }
 
+/// The result of reconciling every recorded xtor use onto its equivalence class, keyed by (the
+/// owner's final union-find root, original xtor name). Built once, after the walk, by
+/// [`finalize_used_xtors`].
+#[derive(Default)]
+pub struct UsedXtors(HashSet<(Label, Identifier)>);
+
+impl UsedXtors {
+    /// True iff `xtor` occurs anywhere in the program for the equivalence class rooted at `root`.
+    /// Anything else is dead for that class and is dropped from its physical copy, see
+    /// [`crate::splitting::rewrite::keeps_xtor`].
+    pub fn contains(&self, root: &Label, xtor: &Identifier) -> bool {
+        self.0.contains(&(root.clone(), xtor.clone()))
+    }
+}
+
+impl FromIterator<(Label, Identifier)> for UsedXtors {
+    fn from_iter<I: IntoIterator<Item = (Label, Identifier)>>(iter: I) -> Self {
+        UsedXtors(iter.into_iter().collect())
+    }
+}
+
+/// Reconciles every `(owner, xtor)` pair recorded during the walk onto the owner's *final*
+/// union-find root, mirroring [`merge_field_observations`]'s reason for deferring to the end of
+/// the walk: an owner's root is only stable once every other union has already happened. Unlike
+/// there, a single pass suffices: membership is a plain fact that cannot itself trigger a union.
+pub fn finalize_used_xtors(state: &mut SplitState) -> UsedXtors {
+    UsedXtors(
+        take(&mut state.used_xtors)
+            .into_iter()
+            .map(|(owner, xtor)| (state.uf.find(&owner), xtor))
+            .collect(),
+    )
+}
+
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
 /// union-find, and a record of each label's origin.
 #[derive(Default)]
@@ -81,6 +181,10 @@ pub struct SplitState {
     /// Field observations recorded for non-self-referential fields, reconciled once the walk
     /// finishes.
     pub field_observations: Vec<FieldObservation>,
+    /// Every `(owner label, original xtor name)` pair that literally occurs somewhere in the
+    /// program, recorded during the walk via [`SplitState::record_xtor_use`] and reconciled onto
+    /// final union-find roots afterwards by [`finalize_used_xtors`].
+    used_xtors: Vec<(Label, Identifier)>,
 }
 
 impl SplitState {
@@ -102,6 +206,11 @@ impl SplitState {
         self.label_origin
             .insert(label.clone(), Identifier::new(base_name.to_string()));
         label
+    }
+
+    /// Records that `xtor` occurs here, under an enclosing value whose own type carries `owner`.
+    pub fn record_xtor_use(&mut self, owner: &Label, xtor: &Identifier) {
+        self.used_xtors.push((owner.clone(), xtor.clone()));
     }
 
     /// Labels every `Ty::Decl` occurrence with a fresh label, recursively into type arguments.
@@ -313,20 +422,36 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
 }
 
 /// Labels and unifies one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every
-/// other node, a `Clause` carries no `.ty` of its own, the scrutinee's own label is only known
-/// from the owning `XCase`, so the caller must pass it in (mirrors
-/// [`crate::splitting::rewrite::rewrite_clause`], which needs the analogous `owner_label` for the
-/// same structural reason).
+/// other node, a `Clause` carries no `.ty` of its own, the matched/constructed value's type is only
+/// known from the owning `XCase`, so the caller must pass it in (mirrors
+/// [`crate::splitting::rewrite::rewrite_clause`], which needs the analogous owner label for the
+/// same structural reason). Both halves of that type are needed: its label owns every field
+/// observation recorded here, and its type arguments instantiate the declaration's own type
+/// parameters for [`unify_declared_type_vars`].
 pub fn label_and_unify_clause<C: Chi>(
     clause: &Clause<C>,
     state: &mut SplitState,
     sigs: &DeclSignatures,
     scope: &TypingContext,
-    owner: &Label,
+    owner_ty: &Ty,
 ) -> Clause<C> {
-    if !sigs.contains_key(&clause.xtor) {
+    let Some(sig) = sigs.get(&clause.xtor) else {
         panic!("missing signature for xtor: {}", clause.xtor.name);
-    }
+    };
+    let owner = label_in(owner_ty);
+    let Ty::Decl {
+        type_args: decl_type_args,
+        ..
+    } = owner_ty
+    else {
+        panic!("expected a labeled Ty::Decl as the clause's owner, got {owner_ty:?}");
+    };
+    let subst = type_param_subst(sig, &decl_type_args.args, &[]);
+
+    // A clause is a real occurrence of its xtor, for `case` and `new` alike. Recording it here
+    // rather than in `XCase::label_and_unify` covers both polarities in one place: this is the
+    // only function that sees the owner label and the clause's xtor together.
+    state.record_xtor_use(owner, &clause.xtor);
 
     // Every binder's field type is recorded per-occurrence via `FieldObservation` rather than
     // unified immediately: whether it should end up sharing a physical copy with some other
@@ -339,6 +464,9 @@ pub fn label_and_unify_clause<C: Chi>(
         .enumerate()
         .map(|(i, binding)| {
             let ty = state.label_ty(&binding.ty);
+            if let Some(declared) = sig.tys.get(i) {
+                unify_declared_type_vars(state, declared, &ty, &subst);
+            }
             state.field_observations.push(FieldObservation {
                 owner: owner.clone(),
                 xtor: clause.xtor.clone(),
