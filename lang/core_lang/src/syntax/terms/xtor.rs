@@ -853,7 +853,7 @@ mod constraint_tests {
         );
 
         let constraints = wrap
-            .collect_constraints(&GlobalEnv::new(&[], &[container], &[]))
+            .collect_constraints(&GlobalEnv::new(&[example_list()], &[container], &[]))
             .unwrap();
 
         let expected = FlowConstraintSet {
@@ -870,6 +870,10 @@ mod constraint_tests {
                 FlowConstraint {
                     from: vec![Ty::I64],
                     to: vec![id!("S", 2)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
                 },
             ]),
         };
