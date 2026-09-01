@@ -1330,12 +1330,13 @@ mod erasure_tests {
     use super::*;
     use crate::{
         mono::erasure::ErasedDecls,
-        syntax::{DataDeclaration, types::TypeArgs},
+        syntax::{Cns, DataDeclaration, Statement, types::TypeArgs},
     };
     use std::collections::{HashMap, HashSet};
     extern crate self as core_lang;
     use core_macros::{
-        bind, call, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tparam, tvar, ty, var,
+        bind, call, clause, covar, ctor, ctor_sig, cut, data, def, id, lit, prd, tparam, tvar, ty,
+        var,
     };
 
     fn box_decl() -> DataDeclaration {
@@ -1399,6 +1400,81 @@ mod erasure_tests {
                 name: id!("Box"),
                 type_args: TypeArgs::default()
             }
+        );
+    }
+
+    fn wrap_clause() -> Clause<Cns> {
+        clause!(
+            Cns,
+            id!("Wrap"),
+            [],
+            [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))],
+            cut!(
+                var!(id!("x"), tvar!(id!("A", 1))),
+                covar!(id!("ret"), ty!("int")),
+                ty!("int")
+            )
+        )
+    }
+
+    #[test]
+    fn specialize_clause_marks_the_non_matching_erased_instantiation_unreachable() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        )]));
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let ctx = SpecializeContext::ground(&table, &erased);
+
+        // mirrors a scrutinee whose own active instantiation of the erased Box is `int`
+        let copies = specialize_clause(&wrap_clause(), &ctx, Some(&[ty!("int")]));
+        assert_eq!(copies.len(), 2);
+
+        let reachable_name = table.lookup(&id!("Wrap"), &[ty!("int")]);
+        let unreachable_name = table.lookup(&id!("Wrap"), &[ty!(id!("Box"))]);
+
+        let reachable_clause = copies
+            .iter()
+            .find(|c| &c.xtor == reachable_name)
+            .expect("expected a clause for the reachable instantiation");
+        let unreachable_clause = copies
+            .iter()
+            .find(|c| &c.xtor == unreachable_name)
+            .expect("expected a clause for the unreachable instantiation");
+
+        assert!(
+            !matches!(reachable_clause.body.as_ref(), Statement::Unreachable(_)),
+            "expected the matching instantiation to keep its real body, got {:?}",
+            reachable_clause.body
+        );
+        assert!(
+            matches!(unreachable_clause.body.as_ref(), Statement::Unreachable(_)),
+            "expected the non-matching instantiation's body to become Unreachable, got {:?}",
+            unreachable_clause.body
+        );
+    }
+
+    #[test]
+    fn specialize_clause_keeps_every_instantiation_reachable_without_a_scrutinee_type() {
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+        )]));
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let ctx = SpecializeContext::ground(&table, &erased);
+
+        let copies = specialize_clause(&wrap_clause(), &ctx, None);
+
+        assert_eq!(copies.len(), 2);
+        assert!(
+            copies
+                .iter()
+                .all(|c| !matches!(c.body.as_ref(), Statement::Unreachable(_))),
+            "expected every instantiation to keep its real body when no active scrutinee \
+             instantiation is known, got {:#?}",
+            copies
         );
     }
 
