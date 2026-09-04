@@ -177,7 +177,7 @@ pub struct SplitState {
     per_name_counters: HashMap<String, usize>,
     /// Maps every minted label back to the original (unlabeled) declaration identifier it was
     /// derived from, e.g. `Box#3` -> `Box`.
-    pub label_origin: HashMap<Label, Identifier>,
+    pub label_origin: Vec<(Label, Identifier)>,
     /// Field observations recorded for non-self-referential fields, reconciled once the walk
     /// finishes.
     pub field_observations: Vec<FieldObservation>,
@@ -204,7 +204,7 @@ impl SplitState {
             id: 0,
         };
         self.label_origin
-            .insert(label.clone(), Identifier::new(base_name.to_string()));
+            .push((label.clone(), Identifier::new(base_name.to_string())));
         label
     }
 

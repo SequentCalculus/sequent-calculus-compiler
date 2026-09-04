@@ -36,9 +36,19 @@ impl GrowingCycle {
         self.steps.iter().map(|step| step.node.clone()).collect()
     }
 
-    /// Returns the set of declaration names that must be erased to break this cycle: the head
-    /// name of every type constructor application found along the path.
-    pub fn erasure_targets(&self) -> HashSet<Identifier> {
+    /// Returns the declaration that must be erased to break this specific cycle: the head name
+    /// of the constructor applied by the *triggering* edge, i.e. the growing edge
+    /// [`find_all_growing_cycles`] was examining when it discovered this cycle.
+    pub fn trigger_target(&self) -> Option<Identifier> {
+        self.steps.get(1)?.applied.as_ref().and_then(|ty| match ty {
+            Ty::Decl { name, .. } => Some(name.clone()),
+            _ => None,
+        })
+    }
+
+    /// Returns the head name of every type constructor application found anywhere along the
+    /// discovered path, not just the triggering one
+    pub fn path_constructors(&self) -> HashSet<Identifier> {
         self.steps
             .iter()
             .filter_map(|step| step.applied.as_ref())
@@ -193,7 +203,7 @@ fn edge_applied_template(edge: &Edge) -> Option<Ty> {
 /// by two different recursive calls that each wrap it in a different constructor (`Box[C] ⊑ C`
 /// and `Bag[C] ⊑ C`, both self-loops on node `C`). Deduplicating by node sequence alone would
 /// collapse these into a single cycle and silently drop one constructor from
-/// [`GrowingCycle::erasure_targets`].
+/// [`GrowingCycle::path_constructors`].
 ///
 /// For example, `[A, B, C, A]`/`[B, C, A, B]` with matching applied constructors on every hop
 /// yield the same minimal rotated sequence.
@@ -248,6 +258,7 @@ mod growing_cycle_tests {
     use crate::mono::{
         constraint_graph::ConstraintGraph,
         constraints::{FlowConstraint, FlowConstraintSet},
+        erasure::erase_constraints,
     };
     extern crate self as core_lang;
     use core_macros::{id, tvar, ty};
@@ -345,7 +356,7 @@ mod growing_cycle_tests {
         let cycles = find_all_growing_cycles(&graph);
 
         assert_eq!(cycles.len(), 1);
-        assert_eq!(cycles[0].erasure_targets(), HashSet::from([id!("Box")]));
+        assert_eq!(cycles[0].path_constructors(), HashSet::from([id!("Box")]));
     }
 
     #[test]
@@ -367,7 +378,7 @@ mod growing_cycle_tests {
         let cycles = find_all_growing_cycles(&graph);
 
         assert_eq!(cycles.len(), 1);
-        assert_eq!(cycles[0].erasure_targets(), HashSet::from([id!("Box")]));
+        assert_eq!(cycles[0].path_constructors(), HashSet::from([id!("Box")]));
     }
 
     #[test]
@@ -388,7 +399,7 @@ mod growing_cycle_tests {
         let cycles = find_all_growing_cycles(&graph);
 
         assert_eq!(cycles.len(), 2);
-        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.path_constructors()).collect();
         assert_eq!(all_targets, HashSet::from([id!("Box"), id!("Bag")]));
     }
 
@@ -398,7 +409,7 @@ mod growing_cycle_tests {
         // single def's own shared type parameter, reached via two different recursive calls that
         // each wrap it in a different constructor. Deduplicating by node sequence alone would
         // collapse these into one cycle and silently drop one constructor from
-        // `erasure_targets()`.
+        // `path_constructors()`.
         let mut set = FlowConstraintSet::new();
         set.insert(FlowConstraint::from((
             vec![ty!(id!("Box"), [tvar!(id!("C", 1))])],
@@ -413,8 +424,89 @@ mod growing_cycle_tests {
         let cycles = find_all_growing_cycles(&graph);
 
         assert_eq!(cycles.len(), 2);
-        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+        let all_targets: HashSet<_> = cycles.iter().flat_map(|c| c.path_constructors()).collect();
         assert_eq!(all_targets, HashSet::from([id!("Box"), id!("Bag")]));
+    }
+
+    /// `P[X] ⊑ Y`, `Q[Y] ⊑ X` -- mutual polymorphic recursion between two *separate*
+    /// declarations, both applying a constructor, closing a single two-hop cycle. Erasing either
+    /// one alone already breaks the cycle (see `trigger_target`'s doc comment), so `path_constructors`
+    /// and `trigger_target` must legitimately disagree here: the former reports both `P` and `Q`,
+    /// the latter only the one constructor actually applied by the edge this cycle was discovered
+    /// from.
+    fn mutual_recursion_cycle() -> GrowingCycle {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("P"), [tvar!(id!("X", 1))])],
+            vec![id!("Y", 2)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Q"), [tvar!(id!("Y", 2))])],
+            vec![id!("X", 1)],
+        )));
+
+        let graph = ConstraintGraph::from(set);
+        let cycles = find_all_growing_cycles(&graph);
+        assert_eq!(
+            cycles.len(),
+            1,
+            "expected exactly one two-hop cycle, got {cycles:?}"
+        );
+        cycles.into_iter().next().unwrap()
+    }
+
+    #[test]
+    fn trigger_target_is_only_the_constructor_of_the_discovering_edge() {
+        let cycle = mutual_recursion_cycle();
+
+        // both constructors really do sit on the path -- otherwise this test would not be
+        // exercising the distinction it claims to
+        assert_eq!(
+            cycle.path_constructors(),
+            HashSet::from([id!("P"), id!("Q")])
+        );
+
+        // but only one of them is the trigger: whichever edge `find_all_growing_cycles` was
+        // examining when it found this cycle, i.e. steps[1]'s constructor
+        let trigger = cycle.trigger_target();
+        assert!(
+            trigger == Some(id!("P")) || trigger == Some(id!("Q")),
+            "expected exactly one of P/Q as the trigger, got {trigger:?}"
+        );
+
+        // and erasing just that one is actually sufficient to break the cycle -- the whole point
+        let erased = HashSet::from([trigger.unwrap()]);
+        let broken_graph =
+            ConstraintGraph::from(erase_constraints(&constraints_of_mutual(), &erased));
+        assert!(
+            find_all_growing_cycles(&broken_graph).is_empty(),
+            "erasing only the trigger must be sufficient to break the cycle"
+        );
+    }
+
+    /// Rebuilds the same constraints `mutual_recursion_cycle` used, needed separately because
+    /// `erase_constraints` takes the constraint set, not the graph built from it.
+    fn constraints_of_mutual() -> FlowConstraintSet {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("P"), [tvar!(id!("X", 1))])],
+            vec![id!("Y", 2)],
+        )));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Q"), [tvar!(id!("Y", 2))])],
+            vec![id!("X", 1)],
+        )));
+        set
+    }
+
+    #[test]
+    fn trigger_target_matches_the_edge_recorded_at_step_one() {
+        let cycle = mutual_recursion_cycle();
+        let expected = cycle.steps[1].applied.as_ref().and_then(|ty| match ty {
+            Ty::Decl { name, .. } => Some(name.clone()),
+            _ => None,
+        });
+        assert_eq!(cycle.trigger_target(), expected);
     }
 
     #[test]

@@ -1,7 +1,7 @@
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::position::Position;
 use crate::syntax::{Identifier, Ty};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// A node in the constraint graph: the vector of type parameters
 /// belonging to one declaration site, in declared order.
@@ -143,7 +143,7 @@ pub struct ConstraintGraph {
     /// positions reference several distinct source nodes appears once
     /// under each of those nodes, so the solver can find it regardless of
     /// which contributing node last changed.
-    pub edges: HashMap<Node, Vec<Edge>>,
+    pub edges: BTreeMap<Node, Vec<Edge>>,
     /// Registry mapping each identifier to its owning node and index.
     pub locations: VarLocations,
 }

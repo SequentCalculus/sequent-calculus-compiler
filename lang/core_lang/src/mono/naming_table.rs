@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::{
     mono::{erasure::ErasedDecls, solver::Solution},
@@ -15,10 +15,7 @@ use crate::{
 /// to build it is not required afterwards.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamingTable {
-    names: HashMap<(Identifier, Vec<Ty>), Identifier>,
-    /// All ground instantiation tuples recorded for a given base identifier,
-    /// in the same order the solution produced them.
-    instantiations: HashMap<Identifier, Vec<Vec<Ty>>>,
+    names: BTreeMap<(Identifier, Vec<Ty>), Identifier>,
     xtor_extra_params: HashMap<Identifier, Vec<Identifier>>,
 }
 
@@ -36,8 +33,7 @@ impl NamingTable {
         erased_decls: &ErasedDecls,
     ) -> Self {
         let mut table = NamingTable {
-            names: HashMap::new(),
-            instantiations: HashMap::new(),
+            names: BTreeMap::new(),
             xtor_extra_params: HashMap::new(),
         };
 
@@ -82,10 +78,6 @@ impl NamingTable {
         if erased_decls.is_erased(&decl.name) {
             self.names
                 .insert((decl.name.clone(), vec![]), decl.name.clone());
-            self.instantiations
-                .entry(decl.name.clone())
-                .or_default()
-                .push(vec![]);
             for xtor in &decl.xtors {
                 // Record the declaration's own type parameters as extra parameters for the xtor.
                 self.xtor_extra_params
@@ -141,10 +133,6 @@ impl NamingTable {
     ) {
         if own_params.is_empty() && extra_params.is_empty() {
             self.names.insert((name.clone(), vec![]), name.clone());
-            self.instantiations
-                .entry(name.clone())
-                .or_default()
-                .push(vec![]);
             return;
         }
 
@@ -182,10 +170,6 @@ impl NamingTable {
             let mangeled = mangle(name, &tuple);
             self.names
                 .insert((name.clone(), tuple.clone()), Identifier::new(mangeled));
-            self.instantiations
-                .entry(name.clone())
-                .or_default()
-                .push(tuple);
         }
     }
 
@@ -202,7 +186,8 @@ impl NamingTable {
             })
     }
 
-    /// Returns all concrete type instantiation tuples recorded for a given identifier.
+    /// Returns all concrete type instantiation tuples recorded for a given identifier, in
+    /// canonical order.
     pub fn instantiations_for(&self, name: &Identifier) -> Vec<Vec<Ty>> {
         self.names
             .keys()
@@ -308,6 +293,51 @@ mod erasure_tests {
         let name_int = table.lookup(&id!("Wrap"), &[ty!("int")]);
         let name_box = table.lookup(&id!("Wrap"), &[ty!(id!("Box"))]);
         assert_ne!(name_int, name_box);
+    }
+
+    /// With several distinct names in the table, `instantiations_for` must return exactly the
+    /// queried identifier's own tuples, never another one's -- the whole point of filtering by
+    /// `id == name` rather than assuming the table holds only one name's entries.
+    #[test]
+    fn instantiations_for_returns_only_the_requested_identifiers_tuples() {
+        // `Box` is erased, so its ctor `Wrap` gets one variant per instantiation of `A`; `Cons`
+        // carries its own existential parameter and lands in the same table with its own tuples.
+        let list_decl = data!(
+            id!("List"),
+            [ctor_sig!(
+                id!("Cons"),
+                [tparam!(id!("E", 3), "+")],
+                [bind!(id!("y"), prd!(), tvar!(id!("E", 3)))]
+            )],
+            [tparam!(id!("L", 2), "+")]
+        );
+        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let solution = Solution::from(HashMap::from([
+            (
+                vec![id!("A", 1)],
+                HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
+            ),
+            (vec![id!("L", 2)], HashSet::from([vec![ty!("int")]])),
+            (
+                vec![id!("E", 3)],
+                HashSet::from([vec![ty!("int")], vec![ty!(id!("List"), [ty!("int")])]]),
+            ),
+        ]));
+
+        let table = NamingTable::build(&solution, &[box_decl(), list_decl], &[], &[], &erased);
+
+        // exactly Cons's own tuples, in canonical order (`Ty::I64` sorts before `Ty::Decl`) --
+        // neither Box's/Wrap's nor List's entries may leak in
+        assert_eq!(
+            table.instantiations_for(&id!("Cons")),
+            vec![vec![ty!("int")], vec![ty!(id!("List"), [ty!("int")])]]
+        );
+        assert_eq!(
+            table.instantiations_for(&id!("Wrap")),
+            vec![vec![ty!("int")], vec![ty!(id!("Box"))]]
+        );
+        // an identifier that was never registered yields nothing rather than the next one's tuples
+        assert!(table.instantiations_for(&id!("Absent")).is_empty());
     }
 
     #[test]

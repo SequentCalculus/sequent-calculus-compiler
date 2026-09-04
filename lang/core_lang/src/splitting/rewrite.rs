@@ -360,7 +360,6 @@ mod rewrite_tests {
     use crate::syntax::{DataDeclaration, Ty};
     extern crate self as core_lang;
     use core_macros::{bind, ctor, ctor_sig, data, id, prd, tparam, tvar, ty};
-    use std::collections::HashMap;
 
     fn box_decl() -> DataDeclaration {
         data!(
@@ -478,7 +477,7 @@ mod rewrite_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
         let used = used_for(id!("Wrap"), &[a.clone(), b.clone()]);
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
@@ -507,7 +506,7 @@ mod rewrite_tests {
     #[test]
     fn split_declaration_keeps_an_unreferenced_declaration_as_a_single_unchanged_copy() {
         let mut uf = UnionFind::default();
-        let table = SplitTable::build(&mut uf, &HashMap::new(), &[box_decl()], &[]);
+        let table = SplitTable::build(&mut uf, &[], &[box_decl()], &[]);
 
         let mut max_id = 0;
         let sigs = wrap_sigs();
@@ -532,7 +531,7 @@ mod rewrite_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))]);
+        let label_origin = vec![(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))];
         let used = used_for(id!("Wrap"), &[a, b]);
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
@@ -563,7 +562,7 @@ mod rewrite_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))]);
+        let label_origin = vec![(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))];
         let used = used_for(id!("Wrap"), &[a, b]);
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
@@ -590,7 +589,7 @@ mod rewrite_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
         let occurrence = ctor!(id!("Wrap"), [], [], ty!(id!("Box")));
@@ -660,12 +659,12 @@ mod rewrite_tests {
         });
         let field_observations = merge_field_observations(&mut state);
 
-        let label_origin = HashMap::from([
+        let label_origin = vec![
             (label_in(&bar_a).clone(), id!("Bar")),
             (label_in(&bar_b).clone(), id!("Bar")),
             (label_in(&foo_a).clone(), id!("Foo")),
             (label_in(&foo_b).clone(), id!("Foo")),
-        ]);
+        ];
         let decl = bar_decl(foo_a.clone());
         let used = used_for(
             id!("MkBar"),
@@ -694,7 +693,7 @@ mod rewrite_tests {
         let mut state = SplitState::default();
         let bar = state.label_ty(&ty!(id!("Bar")));
 
-        let label_origin = HashMap::from([(label_in(&bar).clone(), id!("Bar"))]);
+        let label_origin = vec![(label_in(&bar).clone(), id!("Bar"))];
         let decl = bar_decl(ty!(id!("Foo")));
         // `MkBar` itself was constructed (so it isn't dropped), only its field was never
         // observed.

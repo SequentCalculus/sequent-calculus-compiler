@@ -123,7 +123,7 @@ pub fn solve_with_erasure(
         );
     }
 
-    let targets: HashSet<_> = cycles.iter().flat_map(|c| c.erasure_targets()).collect();
+    let targets: HashSet<_> = cycles.iter().filter_map(|c| c.trigger_target()).collect();
     let erased = ErasedDecls(targets.clone());
 
     let erased_constraints = erase_constraints(&constraints, &targets);

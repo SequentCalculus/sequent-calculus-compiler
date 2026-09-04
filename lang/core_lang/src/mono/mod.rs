@@ -113,3 +113,143 @@ pub fn monomorphize_program(
 
     Ok(mono_prog)
 }
+
+#[cfg(test)]
+mod determinism_tests {
+    use super::*;
+    use crate::syntax::{Cns, DataDeclaration, Def, Identifier, Ty, terms::Literal};
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, call, case, clause, cns, covar, ctor_sig, cut, data, def, id, prd, tparam, tvar, ty,
+        var,
+    };
+
+    fn growing(arg: Ty) -> Ty {
+        ty!(id!("Growing"), [arg])
+    }
+
+    /// `data Growing[B+] { Base(x: B), Grow(next: Growing[Growing[B]]) }` -- the `Grow` field grows
+    /// by one level per step, which is what makes the constraint graph cyclic in the first place.
+    fn growing_decl() -> DataDeclaration {
+        data!(
+            id!("Growing"),
+            [
+                ctor_sig!(
+                    id!("Base"),
+                    [],
+                    [bind!(id!("x"), prd!(), tvar!(id!("B", 2)))]
+                ),
+                ctor_sig!(
+                    id!("Grow"),
+                    [],
+                    [bind!(
+                        id!("next"),
+                        prd!(),
+                        growing(growing(tvar!(id!("B", 2))))
+                    )]
+                )
+            ],
+            [tparam!(id!("B", 2), "+")]
+        )
+    }
+
+    /// One half of a mutually recursive pair, both matching directly on `Growing[A]` and calling
+    /// the other one at `Growing[A]`. Two *separate* defs recursing into each other do not converge
+    /// under Type Splitting, so the growing cycle survives into the solver and erasure has to break
+    /// it -- exactly the situation in which the choice of erasure target was observed to vary.
+    fn level_def(name: &str, other: &str, result: i64) -> Def {
+        let a = || tvar!(id!("A", 1));
+        def!(
+            Identifier::new(name.to_string()),
+            [tparam!(id!("A", 1), "+")],
+            [
+                bind!(id!("g"), prd!(), growing(a())),
+                bind!(id!("a0"), cns!(), ty!("int"))
+            ],
+            cut!(
+                var!(id!("g"), growing(a())),
+                case!(
+                    [
+                        clause!(
+                            Cns,
+                            id!("Base"),
+                            [],
+                            [bind!(id!("x"), prd!(), a())],
+                            cut!(
+                                Literal { lit: result },
+                                covar!(id!("a0"), ty!("int")),
+                                ty!("int")
+                            )
+                        ),
+                        clause!(
+                            Cns,
+                            id!("Grow"),
+                            [],
+                            [bind!(id!("next"), prd!(), growing(growing(a())))],
+                            call!(
+                                Identifier::new(other.to_string()),
+                                [growing(a())],
+                                [
+                                    var!(id!("next"), growing(growing(a()))),
+                                    covar!(id!("a0"), ty!("int"))
+                                ]
+                            )
+                        )
+                    ],
+                    growing(a())
+                ),
+                growing(a())
+            )
+        )
+    }
+
+    /// Seeds the solver with a ground instantiation (`Growing[i64]`); without it there is nothing
+    /// for the fixpoint to propagate.
+    fn start_def() -> Def {
+        def!(
+            id!("start"),
+            [],
+            [
+                bind!(id!("g"), prd!(), growing(ty!("int"))),
+                bind!(id!("a0"), cns!(), ty!("int"))
+            ],
+            call!(
+                id!("evenLevel"),
+                [ty!("int")],
+                [
+                    var!(id!("g"), growing(ty!("int"))),
+                    covar!(id!("a0"), ty!("int"))
+                ]
+            )
+        )
+    }
+
+    fn mutually_recursive_prog() -> Prog {
+        Prog {
+            defs: vec![
+                level_def("evenLevel", "oddLevel", 0),
+                level_def("oddLevel", "evenLevel", 1),
+                start_def(),
+            ],
+            data_types: vec![growing_decl()],
+            codata_types: vec![],
+            max_id: 100,
+        }
+    }
+
+    /// Monomorphizing the same program twice must yield the very same program.
+    #[test]
+    fn monomorphizing_the_same_program_twice_yields_the_same_program() {
+        let first = monomorphize_program(mutually_recursive_prog(), false, None)
+            .expect("fixture must monomorphize");
+
+        for run in 1..20 {
+            let again = monomorphize_program(mutually_recursive_prog(), false, None)
+                .expect("fixture must monomorphize");
+            assert_eq!(
+                first, again,
+                "monomorphization is not deterministic -- run {run} differs from the first"
+            );
+        }
+    }
+}

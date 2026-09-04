@@ -26,7 +26,7 @@ impl SplitTable {
     /// `SplitState` accumulated during labeling (label -> original, unlabeled declaration name).
     pub fn build(
         uf: &mut UnionFind,
-        label_origin: &HashMap<Label, Identifier>,
+        label_origin: &[(Label, Identifier)],
         data_types: &[DataDeclaration],
         codata_types: &[CodataDeclaration],
     ) -> Self {
@@ -233,11 +233,31 @@ mod split_table_tests {
     }
 
     #[test]
+    fn build_assigns_copy_indices_in_the_order_label_origin_lists_them() {
+        let mut uf = UnionFind::default();
+        // three distinct, never-unified occurrences, deliberately listed out of numeric order
+        let c = box_label(3);
+        let a = box_label(1);
+        let b = box_label(2);
+        let label_origin = vec![
+            (c.clone(), id!("Box")),
+            (a.clone(), id!("Box")),
+            (b.clone(), id!("Box")),
+        ];
+
+        let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
+
+        assert_eq!(table.resolve_ty_name(&c).name, "Box__1");
+        assert_eq!(table.resolve_ty_name(&a).name, "Box__2");
+        assert_eq!(table.resolve_ty_name(&b).name, "Box__3");
+    }
+
+    #[test]
     fn build_assigns_two_distinct_names_for_two_never_unified_occurrences() {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
@@ -251,7 +271,7 @@ mod split_table_tests {
         let a = box_label(1);
         let b = box_label(2);
         uf.union(&a, &b);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
@@ -265,7 +285,7 @@ mod split_table_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
@@ -281,7 +301,7 @@ mod split_table_tests {
     #[test]
     fn copies_for_is_empty_for_a_never_referenced_declaration() {
         let mut uf = UnionFind::default();
-        let table = SplitTable::build(&mut uf, &HashMap::new(), &[box_decl()], &[]);
+        let table = SplitTable::build(&mut uf, &[], &[box_decl()], &[]);
         assert!(table.copies_for(&id!("Box")).is_empty());
     }
 
@@ -295,7 +315,7 @@ mod split_table_tests {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
-        let label_origin = HashMap::from([(a.clone(), id!("Box")), (b.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
@@ -316,7 +336,7 @@ mod split_table_tests {
     fn resolve_unobserved_ty_keeps_the_bare_name_when_the_origin_was_never_split() {
         let mut uf = UnionFind::default();
         let a = box_label(1);
-        let label_origin = HashMap::from([(a.clone(), id!("Box"))]);
+        let label_origin = vec![(a.clone(), id!("Box"))];
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
