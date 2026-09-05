@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use printer::tokens::COMMA;
 use printer::{Alloc, Anno, Builder, DocAllocator, Print, PrintCfg};
@@ -48,7 +48,7 @@ impl Print for FlowConstraint {
 /// constraint solving phase.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FlowConstraintSet {
-    pub constraints: HashSet<FlowConstraint>,
+    pub constraints: BTreeSet<FlowConstraint>,
 }
 
 impl FlowConstraintSet {
@@ -75,17 +75,16 @@ impl Print for FlowConstraintSet {
                 .append(alloc.text("}").annotate(Anno::BraceClose));
         }
 
-        // sort for deterministic output
-        let mut sorted: Vec<&FlowConstraint> = self.constraints.iter().collect();
-        sorted.sort();
-
         let sep = if cfg.allow_linebreaks {
             alloc.text(COMMA).append(alloc.line())
         } else {
             alloc.text(COMMA).append(alloc.space())
         };
 
-        let body = alloc.intersperse(sorted.into_iter().map(|x| x.print(cfg, alloc).group()), sep);
+        let body = alloc.intersperse(
+            self.constraints.iter().map(|x| x.print(cfg, alloc).group()),
+            sep,
+        );
 
         if cfg.allow_linebreaks {
             alloc

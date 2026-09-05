@@ -563,7 +563,7 @@ mod constraint_tests {
     use crate::syntax::types::TypeArgs;
     use crate::typing::env::GlobalEnv;
     use crate::{mono::constraints::ConstraintCollector, syntax::*};
-    use std::collections::HashSet;
+    use std::collections::BTreeSet;
     extern crate self as core_lang;
     use core_macros::{
         bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tparam, tvar, ty,
@@ -650,7 +650,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
                 to: vec![id!("A", 1)],
             }]),
@@ -702,7 +702,7 @@ mod constraint_tests {
             .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
             .unwrap();
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![
+            constraints: BTreeSet::from_iter(vec![
                 FlowConstraint {
                     from: vec![Ty::I64],
                     to: vec![id!("A", 1)],
@@ -738,7 +738,7 @@ mod constraint_tests {
         assert_eq!(
             constraints,
             FlowConstraintSet {
-                constraints: HashSet::from_iter(vec![FlowConstraint {
+                constraints: BTreeSet::from_iter(vec![FlowConstraint {
                     from: vec![Ty::I64],
                     to: vec![id!("A", 1)]
                 }])
@@ -776,7 +776,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
                 to: vec![id!("A", 1)],
             }]),
@@ -801,7 +801,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![
+            constraints: BTreeSet::from_iter(vec![
                 FlowConstraint {
                     from: vec![Ty::Decl {
                         name: id!("List"),
@@ -832,7 +832,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::I64],
                 to: vec![id!("A", 1)],
             }]),
@@ -857,7 +857,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![
+            constraints: BTreeSet::from_iter(vec![
                 FlowConstraint {
                     from: vec![Ty::Decl {
                         name: id!("List"),

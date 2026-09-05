@@ -204,7 +204,7 @@ mod program_tests {
 #[cfg(test)]
 mod constraint_tests {
 
-    use std::collections::HashSet;
+    use std::collections::BTreeSet;
 
     use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
     use crate::syntax::*;
@@ -249,7 +249,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![
+            constraints: BTreeSet::from_iter(vec![
                 FlowConstraint {
                     from: vec![Ty::I64],
                     to: vec![id!("A", 1)],

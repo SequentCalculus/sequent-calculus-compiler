@@ -772,7 +772,7 @@ mod constraint_tests {
         bind, case, clause, cocase, codata, ctor_sig, data, dtor_sig, exit, id, lit, prd, tparam,
         tvar, ty,
     };
-    use std::collections::HashSet;
+    use std::collections::BTreeSet;
 
     fn box_decl() -> DataDeclaration {
         return data!(
@@ -819,7 +819,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::Var(id!("A", 1))],
                 to: vec![id!("B", 2)],
             }]),
@@ -849,7 +849,7 @@ mod constraint_tests {
             .unwrap();
 
         let expected = FlowConstraintSet {
-            constraints: HashSet::from_iter(vec![FlowConstraint {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
                 from: vec![Ty::Var(id!("A", 1))],
                 to: vec![id!("B", 2)],
             }]),
