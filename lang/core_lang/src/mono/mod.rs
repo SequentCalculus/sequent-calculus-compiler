@@ -8,6 +8,7 @@ use crate::{
         constraints::{ConstraintCollector, FlowConstraintSet},
         erasure::ErasedDecls,
         errors::MonoError,
+        graph_viz::VizOutput,
         growing_cycle::find_all_growing_cycles,
         solver::{Solution, solve_with_erasure},
         specialize::specialize_program,
@@ -115,16 +116,27 @@ fn print_solving_debug(
     println!("Solution: \n{}", solution.print_to_string(Some(&cfg)));
 }
 
+/// Renders `graph` as requested by `viz`, a no-op for [`VizOutput::Disabled`].
+fn render_viz(graph: &ConstraintGraph, viz: VizOutput) -> Result<(), MonoError> {
+    let result = match viz {
+        VizOutput::Disabled => return Ok(()),
+        VizOutput::DefaultPath => {
+            graph.render_as(graph_viz::OutputFormat::Png, None::<&std::path::Path>)
+        }
+        VizOutput::Path(path) => graph.render_as(graph_viz::OutputFormat::Png, Some(path)),
+    };
+    result.map_err(|e| MonoError::Contextual {
+        msg: format!("failed to render constraint graph visualization: {e}"),
+    })
+}
+
 /// Monomorphizes a program and returns the monomorphized program.
 ///
 /// Fails if constraint collection rejects the program (a bug in an earlier phase, since Fun/Core
-/// type checking already ran) or, when `viz_path` is given, if rendering the constraint graph
-/// visualization fails (e.g. the `dot` binary is missing or the output path is not writable).
-pub fn monomorphize_program(
-    program: Prog,
-    debug: bool,
-    viz_path: Option<Option<std::path::PathBuf>>,
-) -> Result<Prog, MonoError> {
+/// type checking already ran) or, when `viz` requests rendering, if rendering the constraint
+/// graph visualization fails (e.g. the `dot` binary is missing or the output path is not
+/// writable).
+pub fn monomorphize_program(program: Prog, debug: bool, viz: VizOutput) -> Result<Prog, MonoError> {
     let (program, constraints, graph, split) = split_if_needed(program)?;
     if debug {
         print_splitting_debug(&program, &constraints, split);
@@ -132,13 +144,7 @@ pub fn monomorphize_program(
 
     let (solution, erased_decls, erased_constraints) = solve_with_erasure(constraints);
 
-    if let Some(path) = viz_path {
-        graph
-            .render_as(graph_viz::OutputFormat::Png, path)
-            .map_err(|e| MonoError::Contextual {
-                msg: format!("failed to render constraint graph visualization: {e}"),
-            })?;
-    }
+    render_viz(&graph, viz)?;
     if debug {
         print_solving_debug(&erased_constraints, &erased_decls, &solution);
     }
@@ -272,11 +278,11 @@ mod determinism_tests {
     /// Monomorphizing the same program twice must yield the very same program.
     #[test]
     fn monomorphizing_the_same_program_twice_yields_the_same_program() {
-        let first = monomorphize_program(mutually_recursive_prog(), false, None)
+        let first = monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled)
             .expect("fixture must monomorphize");
 
         for run in 1..20 {
-            let again = monomorphize_program(mutually_recursive_prog(), false, None)
+            let again = monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled)
                 .expect("fixture must monomorphize");
             assert_eq!(
                 first, again,

@@ -11,6 +11,31 @@ use printer::Print;
 use crate::mono::constraint_graph::{ConstraintGraph, Node};
 use crate::syntax::Ty;
 
+/// Whether (and where) to render the constraint graph as a Graphviz file, 
+/// a `--viz[=PATH]`-style CLI flag naturally parses to (flag absent, present without a value, 
+/// present with an explicit path) with cases that name what each one means.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum VizOutput {
+    /// Do not render anything.
+    #[default]
+    Disabled,
+    /// Render to the default path.
+    DefaultPath,
+    /// Render to the given path.
+    Path(PathBuf),
+}
+
+impl VizOutput {
+    /// Converts from the `Option<Option<PathBuf>>` a `--viz[=PATH]`-style `clap` flag parses to.
+    pub fn from_cli_flag(flag: Option<Option<PathBuf>>) -> Self {
+        match flag {
+            None => VizOutput::Disabled,
+            Some(None) => VizOutput::DefaultPath,
+            Some(Some(path)) => VizOutput::Path(path),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputFormat {
     /// Quick raster image for local debugging.

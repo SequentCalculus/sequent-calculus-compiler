@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use driver::{Driver, PrintMode};
+use driver::{Driver, PrintMode, VizOutput};
 
 use crate::cli::print_stdout;
 
@@ -17,7 +17,8 @@ pub struct Args {
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
-    let monomorphized = drv.monomorphized(&cmd.filepath, cmd.viz, cmd.debug);
+    let viz = VizOutput::from_cli_flag(cmd.viz);
+    let monomorphized = drv.monomorphized(&cmd.filepath, viz, cmd.debug);
     let monomorphized = match monomorphized {
         Ok(mono_prog) => mono_prog,
         Err(err) => {

@@ -11,6 +11,7 @@ use std::{
     process::Command,
 };
 
+pub use core_lang::mono::graph_viz::VizOutput;
 use core_lang::syntax::Prog;
 use core2axcut::program::shrink_prog;
 use fun::{
@@ -168,7 +169,7 @@ impl Driver {
     pub fn monomorphized(
         &mut self,
         path: &PathBuf,
-        viz: Option<Option<PathBuf>>,
+        viz: VizOutput,
         debug: bool,
     ) -> Result<Prog, DriverError> {
         let compiled = self.compiled(path)?;
@@ -185,7 +186,7 @@ impl Driver {
         }
 
         // let mut compiled = self.compiled(path)?;
-        let mut monomorphized = self.monomorphized(path, None, false)?;
+        let mut monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
         monomorphized.uniquify();
         self.uniquified.insert(path.clone(), monomorphized.clone());
         Ok(monomorphized)
@@ -234,7 +235,7 @@ impl Driver {
         }
 
         // let compiled = self.compiled(path)?;
-        let monomorphized = self.monomorphized(path, None, false)?;
+        let monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
         let focused = monomorphized.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)

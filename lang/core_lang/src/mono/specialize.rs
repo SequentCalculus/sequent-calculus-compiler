@@ -14,8 +14,8 @@ use crate::{
 };
 
 /// A substitution mapping declaration-site type parameters to their concrete instantiation, e.g.
-/// `[A, B] -> [i64, Bool]` for `Pair[i64, Bool]`. The two lists are always the same length 
-/// which is enforced once here, at construction, rather than by convention at every call site 
+/// `[A, B] -> [i64, Bool]` for `Pair[i64, Bool]`. The two lists are always the same length
+/// which is enforced once here, at construction, rather than by convention at every call site
 /// that used to build the pair by hand.
 #[derive(Clone, Debug, Default)]
 pub struct Substitution {
