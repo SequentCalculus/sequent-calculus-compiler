@@ -90,13 +90,17 @@ impl Print for Solution {
 
 /// Runs the worklist fixpoint solver over the constraint graph.
 /// Returns a [`Solution`] mapping each node to the set of concrete ground vectors it may be instantiated with.
-/// In case of a growing cycle, returns a [`MonoError::PolymorphicRecursion`] with the detected cycles.
+/// In case of polymorphic recursion, returns a [`MonoError::PolymorphicRecursion`] with every
+/// growing cycle detected, not just the first. Useful as a diagnostic tool (e.g. for comparing
+/// against the total, erasure-based [`solve_with_erasure`]), since it shows the full extent of
+/// what erasure has to break, not just one instance of it.
 pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
-    if let Some(growing_cycles) = find_all_growing_cycles(graph).into_iter().next() {
+    let growing_cycles = find_all_growing_cycles(graph);
+    if !growing_cycles.is_empty() {
         return Err(MonoError::PolymorphicRecursion {
-            cycles: vec![growing_cycles.clone()],
+            cycles: growing_cycles,
         });
-    };
+    }
 
     Ok(fixpoint_solve(graph))
 }
