@@ -27,7 +27,7 @@ use crate::{
 /// output of the solving phase and the direct input to specialization.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Solution {
-    pub map: HashMap<Node, HashSet<Vec<Ty>>>,
+    map: HashMap<Node, HashSet<Vec<Ty>>>,
 }
 
 impl Deref for Solution {
@@ -173,14 +173,14 @@ fn fixpoint_solve(graph: &ConstraintGraph) -> Solution {
         in_worklist.remove(&changed);
 
         for edge in graph.outgoing(&changed) {
-            let new_tuples = propagate(edge, &graph.locations, &solution);
-            if new_tuples.is_empty() {
+            let tuples = tuples_through_edge(edge, &graph.locations, &solution);
+            if tuples.is_empty() {
                 continue;
             }
 
             let target = solution.entry(edge.into.clone()).or_default();
             let before = target.len();
-            target.extend(new_tuples);
+            target.extend(tuples);
 
             if target.len() > before && in_worklist.insert(edge.into.clone()) {
                 worklist.push_back(edge.into.clone());
@@ -191,8 +191,7 @@ fn fixpoint_solve(graph: &ConstraintGraph) -> Solution {
     solution.into()
 }
 
-/// Computes the new vector that flow through a single edge given the
-/// current solution.
+/// Computes every vector that currently flows through a single edge, given the current solution.
 ///
 /// Builds the Cartesian product of the vector sets of all distinct source
 /// nodes the edge depends on, then resolves each position of the edge
@@ -202,7 +201,7 @@ fn fixpoint_solve(graph: &ConstraintGraph) -> Solution {
 /// an iteration over that node's own vectors: no spurious combinations are
 /// introduced, because the correlation between positions is already baked
 /// into each vector stored for that node.
-pub fn propagate(
+fn tuples_through_edge(
     edge: &Edge,
     locations: &VarLocations,
     solution: &HashMap<Node, HashSet<Vec<Ty>>>,
@@ -218,12 +217,13 @@ pub fn propagate(
     // Build the Cartesian product of the current vector sets of all distinct
     // source nodes. `combinations[k]` is a vector with one chosen vector per
     // source node, in the same order as `source_nodes`.
+    let empty = HashSet::new();
     let mut combinations: Vec<Vec<Vec<Ty>>> = vec![vec![]];
     for node in &source_nodes {
-        let vectors = solution.get(node).cloned().unwrap_or_default();
+        let vectors = solution.get(node).unwrap_or(&empty);
         let mut next = Vec::with_capacity(combinations.len() * vectors.len().max(1));
         for partial in &combinations {
-            for vector in &vectors {
+            for vector in vectors {
                 let mut extended = partial.clone();
                 extended.push(vector.clone());
                 next.push(extended);
@@ -511,7 +511,7 @@ mod solve_with_erasure_tests {
         assert_eq!(erased.0, HashSet::from([id!("Box")]));
 
         let node = vec![id!("C", 6)];
-        let sols = solution.map.get(&node).unwrap();
+        let sols = solution.get(&node).unwrap();
         // List itself keeps its full, un-erased type argument.
         assert!(sols.contains(&vec![ty!(id!("List"), [ty!("int")])]));
         // The nested Box[i64] inside List's argument has been erased to Box.
@@ -533,6 +533,6 @@ mod solve_with_erasure_tests {
 
         assert_eq!(erased.0, HashSet::from([id!("Box")]));
         let node = vec![id!("A", 1)];
-        assert!(solution.map.get(&node).unwrap().len() <= 2);
+        assert!(solution.get(&node).unwrap().len() <= 2);
     }
 }
