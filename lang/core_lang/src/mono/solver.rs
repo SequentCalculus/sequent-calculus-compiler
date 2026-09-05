@@ -106,9 +106,13 @@ pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
 /// the fixpoint solution over the resulting (necessarily acyclic-in-growth) constraint graph.
 ///
 /// Unlike [`solve`], this function always succeeds, including for programs with polymorphic
-/// recursion of any kind. A single erasure pass suffices: erasure only removes structure from
-/// constraints (never adds a type-constructor application), so it can only remove growing edges,
-/// never introduce new ones.
+/// recursion of any kind. A single erasure pass suffices: `erase_ty` flattens *every* occurrence
+/// of a targeted declaration's head to its bare, argument-less name in one step, so a single edge
+/// that grows at several positions at once (e.g. `[Box[A], Bag[B]] ⊑ [A, B]`) is fully de-grown as
+/// long as every one of its own growing heads is included in `targets`, not just the first.
+/// [`GrowingCycle::trigger_targets`] collects all of them for exactly this reason. Beyond the
+/// triggering edge itself, erasure also never adds structure elsewhere in the graph (it only ever
+/// removes type arguments), so it can only remove growing edges, never introduce new ones.
 pub fn solve_with_erasure(
     constraints: FlowConstraintSet,
 ) -> (Solution, ErasedDecls, FlowConstraintSet) {
@@ -123,7 +127,7 @@ pub fn solve_with_erasure(
         );
     }
 
-    let targets: HashSet<_> = cycles.iter().filter_map(|c| c.trigger_target()).collect();
+    let targets: HashSet<_> = cycles.iter().flat_map(|c| c.trigger_targets()).collect();
     let erased = ErasedDecls(targets.clone());
 
     let erased_constraints = erase_constraints(&constraints, &targets);

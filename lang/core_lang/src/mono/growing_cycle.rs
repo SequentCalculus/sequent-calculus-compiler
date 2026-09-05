@@ -13,13 +13,14 @@ use crate::{
     syntax::{Identifier, Ty},
 };
 
-/// One hop in a growing-cycle path: the node reached at this point, and, if the edge taken to
-/// reach it applied a type constructor (rather than simply passing a type through unchanged),
-/// the concrete template `Ty` that was applied, e.g. `Box[A]` for a constraint `Box[A] ⊑ A`.
+/// One hop in a growing-cycle path: the node reached at this point, and every type constructor
+/// the edge taken to reach it applied, e.g. `[Box[A]]` for a constraint `Box[A] ⊑ A`. A single
+/// edge can apply more than one constructor at once, one per position, e.g. `[Box[A], Bag[B]]`
+/// for `[Box[A], Bag[B]] ⊑ [A, B]`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CycleStep {
     pub node: Node,
-    pub applied: Option<Ty>,
+    pub applied: Vec<Ty>,
 }
 
 /// A growing cycle found in the constraint graph: a path of nodes, starting and ending at the
@@ -36,14 +37,21 @@ impl GrowingCycle {
         self.steps.iter().map(|step| step.node.clone()).collect()
     }
 
-    /// Returns the declaration that must be erased to break this specific cycle: the head name
-    /// of the constructor applied by the *triggering* edge, i.e. the growing edge
-    /// [`find_all_growing_cycles`] was examining when it discovered this cycle.
-    pub fn trigger_target(&self) -> Option<Identifier> {
-        self.steps.get(1)?.applied.as_ref().and_then(|ty| match ty {
-            Ty::Decl { name, .. } => Some(name.clone()),
-            _ => None,
-        })
+    /// Returns every declaration that must be erased to break this specific cycle: the head
+    /// name of every constructor applied by the *triggering* edge, i.e. the growing edge
+    /// [`find_all_growing_cycles`] was examining when it discovered this cycle. Usually one name,
+    /// but a single edge can apply several constructors at once (one per position), and erasing
+    /// only one of them would leave the others still growing.
+    pub fn trigger_targets(&self) -> HashSet<Identifier> {
+        self.steps
+            .get(1)
+            .into_iter()
+            .flat_map(|step| step.applied.iter())
+            .filter_map(|ty| match ty {
+                Ty::Decl { name, .. } => Some(name.clone()),
+                _ => None,
+            })
+            .collect()
     }
 
     /// Returns the head name of every type constructor application found anywhere along the
@@ -51,7 +59,7 @@ impl GrowingCycle {
     pub fn path_constructors(&self) -> HashSet<Identifier> {
         self.steps
             .iter()
-            .filter_map(|step| step.applied.as_ref())
+            .flat_map(|step| step.applied.iter())
             .filter_map(|ty| match ty {
                 Ty::Decl { name, .. } => Some(name.clone()),
                 _ => None,
@@ -72,10 +80,16 @@ impl fmt::Display for GrowingCycle {
         write!(f, "{}", first.node.print_to_string(None))?;
 
         for step in iter {
-            if let Some(ref ty) = step.applied {
-                write!(f, " -{}-> ", ty.print_to_string(None))?;
-            } else {
+            if step.applied.is_empty() {
                 write!(f, " -> ")?;
+            } else {
+                let templates = step
+                    .applied
+                    .iter()
+                    .map(|ty| ty.print_to_string(None))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                write!(f, " -{}-> ", templates)?;
             }
             write!(f, "{}", step.node.print_to_string(None))?;
         }
@@ -95,7 +109,7 @@ impl fmt::Display for GrowingCycle {
 /// applied, or `None` if the graph is safe to solve as-is.
 pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
     let mut cycles = Vec::new();
-    let mut seen_cycle_keys: HashSet<Vec<(Node, Option<Ty>)>> = HashSet::new();
+    let mut seen_cycle_keys: HashSet<Vec<(Node, Vec<Ty>)>> = HashSet::new();
 
     for edges in graph.edges.values() {
         for edge in edges {
@@ -106,12 +120,12 @@ pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
                 if let Some(rest_of_path) = bfs_path(graph, &edge.into, &source) {
                     let mut steps = vec![CycleStep {
                         node: source.clone(),
-                        applied: None,
+                        applied: vec![],
                     }];
 
                     steps.push(CycleStep {
                         node: edge.into.clone(),
-                        applied: edge_applied_template(edge),
+                        applied: edge_applied_templates(edge),
                     });
 
                     for window in rest_of_path.windows(2) {
@@ -120,7 +134,8 @@ pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
                             .outgoing(from)
                             .iter()
                             .find(|e| &e.into == to)
-                            .and_then(edge_applied_template);
+                            .map(edge_applied_templates)
+                            .unwrap_or_default();
 
                         steps.push(CycleStep {
                             node: to.clone(),
@@ -185,15 +200,20 @@ fn reconstruct_path(parents: &HashMap<Node, Node>, start: &Node, target: &Node) 
     path
 }
 
-/// Returns the first template among an edge's positions that actually applies a type
-/// constructor, i.e. is not simply a bare variable passed through unchanged.
-fn edge_applied_template(edge: &Edge) -> Option<Ty> {
-    edge.positions.iter().find_map(|pos| match pos {
-        Position::Variable { template, .. } if !matches!(template, Ty::Var(_)) => {
-            Some(template.clone())
-        }
-        _ => None,
-    })
+/// Returns every template among an edge's positions that actually applies a type constructor,
+/// i.e. is not simply a bare variable passed through unchanged. A single edge can grow at more
+/// than one position at once (e.g. `[Box[A], Bag[B]] ⊑ [A, B]`), so callers erasing a cycle's
+/// trigger must erase *all* of these, not just one.
+fn edge_applied_templates(edge: &Edge) -> Vec<Ty> {
+    edge.positions
+        .iter()
+        .filter_map(|pos| match pos {
+            Position::Variable { template, .. } if !matches!(template, Ty::Var(_)) => {
+                Some(template.clone())
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 /// Computes a canonical key for a growing cycle (independent of the starting node), pairing each
@@ -207,7 +227,7 @@ fn edge_applied_template(edge: &Edge) -> Option<Ty> {
 ///
 /// For example, `[A, B, C, A]`/`[B, C, A, B]` with matching applied constructors on every hop
 /// yield the same minimal rotated sequence.
-fn canonical_cycle_key(steps: &[CycleStep]) -> Vec<(Node, Option<Ty>)> {
+fn canonical_cycle_key(steps: &[CycleStep]) -> Vec<(Node, Vec<Ty>)> {
     if steps.len() <= 1 {
         return steps
             .iter()
@@ -227,11 +247,14 @@ fn canonical_cycle_key(steps: &[CycleStep]) -> Vec<(Node, Option<Ty>)> {
         return Vec::new();
     }
 
-    let pairs: Vec<(Node, Option<Ty>)> = elems
+    let pairs: Vec<(Node, Vec<Ty>)> = elems
         .iter()
         .enumerate()
         .map(|(i, step)| {
-            let applied = steps.get(i + 1).and_then(|next| next.applied.clone());
+            let applied = steps
+                .get(i + 1)
+                .map(|next| next.applied.clone())
+                .unwrap_or_default();
             (step.node.clone(), applied)
         })
         .collect();
@@ -429,11 +452,11 @@ mod growing_cycle_tests {
     }
 
     /// `P[X] ⊑ Y`, `Q[Y] ⊑ X` -- mutual polymorphic recursion between two *separate*
-    /// declarations, both applying a constructor, closing a single two-hop cycle. Erasing either
-    /// one alone already breaks the cycle (see `trigger_target`'s doc comment), so `path_constructors`
-    /// and `trigger_target` must legitimately disagree here: the former reports both `P` and `Q`,
-    /// the latter only the one constructor actually applied by the edge this cycle was discovered
-    /// from.
+    /// declarations, each applying exactly one constructor at its own single-position edge,
+    /// closing a single two-hop cycle. Erasing either one alone already breaks the cycle (see
+    /// `trigger_targets`'s doc comment), so `path_constructors` and `trigger_targets` must
+    /// legitimately disagree here: the former reports both `P` and `Q`, the latter only the one
+    /// constructor actually applied by the edge this cycle was discovered from.
     fn mutual_recursion_cycle() -> GrowingCycle {
         let mut set = FlowConstraintSet::new();
         set.insert(FlowConstraint::from((
@@ -456,7 +479,7 @@ mod growing_cycle_tests {
     }
 
     #[test]
-    fn trigger_target_is_only_the_constructor_of_the_discovering_edge() {
+    fn trigger_targets_is_only_the_constructor_of_the_discovering_edge() {
         let cycle = mutual_recursion_cycle();
 
         // both constructors really do sit on the path -- otherwise this test would not be
@@ -467,17 +490,17 @@ mod growing_cycle_tests {
         );
 
         // but only one of them is the trigger: whichever edge `find_all_growing_cycles` was
-        // examining when it found this cycle, i.e. steps[1]'s constructor
-        let trigger = cycle.trigger_target();
+        // examining when it found this cycle, i.e. steps[1]'s constructor. Here each edge only
+        // applies one constructor, so the trigger set has exactly one element.
+        let triggers = cycle.trigger_targets();
         assert!(
-            trigger == Some(id!("P")) || trigger == Some(id!("Q")),
-            "expected exactly one of P/Q as the trigger, got {trigger:?}"
+            triggers == HashSet::from([id!("P")]) || triggers == HashSet::from([id!("Q")]),
+            "expected exactly one of P/Q as the trigger, got {triggers:?}"
         );
 
         // and erasing just that one is actually sufficient to break the cycle -- the whole point
-        let erased = HashSet::from([trigger.unwrap()]);
         let broken_graph =
-            ConstraintGraph::from(erase_constraints(&constraints_of_mutual(), &erased));
+            ConstraintGraph::from(erase_constraints(&constraints_of_mutual(), &triggers));
         assert!(
             find_all_growing_cycles(&broken_graph).is_empty(),
             "erasing only the trigger must be sufficient to break the cycle"
@@ -500,13 +523,17 @@ mod growing_cycle_tests {
     }
 
     #[test]
-    fn trigger_target_matches_the_edge_recorded_at_step_one() {
+    fn trigger_targets_matches_the_edge_recorded_at_step_one() {
         let cycle = mutual_recursion_cycle();
-        let expected = cycle.steps[1].applied.as_ref().and_then(|ty| match ty {
-            Ty::Decl { name, .. } => Some(name.clone()),
-            _ => None,
-        });
-        assert_eq!(cycle.trigger_target(), expected);
+        let expected: HashSet<Identifier> = cycle.steps[1]
+            .applied
+            .iter()
+            .filter_map(|ty| match ty {
+                Ty::Decl { name, .. } => Some(name.clone()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(cycle.trigger_targets(), expected);
     }
 
     #[test]
@@ -523,10 +550,47 @@ mod growing_cycle_tests {
 
         let steps = &cycles[0].steps;
         assert_eq!(steps.len(), 2);
-        assert_eq!(steps[0].applied, None);
+        assert_eq!(steps[0].applied, vec![]);
         assert_eq!(
             steps[1].applied,
-            Some(ty!(id!("Box"), [tvar!(id!("A", 1))]))
+            vec![ty!(id!("Box"), [tvar!(id!("A", 1))])]
+        );
+    }
+
+    #[test]
+    fn trigger_targets_includes_every_constructor_the_triggering_edge_applies() {
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![
+                ty!(id!("Box"), [tvar!(id!("A", 1))]),
+                ty!(id!("Bag"), [tvar!(id!("B", 2))]),
+            ],
+            vec![id!("A", 1), id!("B", 2)],
+        )));
+
+        let graph = ConstraintGraph::from(set.clone());
+        let cycles = find_all_growing_cycles(&graph);
+        assert_eq!(cycles.len(), 1);
+        assert_eq!(
+            cycles[0].trigger_targets(),
+            HashSet::from([id!("Box"), id!("Bag")]),
+            "both constructors applied by the self-looping edge must be triggers"
+        );
+
+        let broken_graph =
+            ConstraintGraph::from(erase_constraints(&set, &cycles[0].trigger_targets()));
+        assert!(
+            find_all_growing_cycles(&broken_graph).is_empty(),
+            "erasing every trigger found on the edge must fully break the cycle in one pass"
+        );
+
+        // sanity check against the pre-fix bug: erasing only the first-found constructor is *not*
+        // sufficient, confirming this test would have failed before the fix
+        let only_first = HashSet::from([id!("Box")]);
+        let partially_broken_graph = ConstraintGraph::from(erase_constraints(&set, &only_first));
+        assert!(
+            !find_all_growing_cycles(&partially_broken_graph).is_empty(),
+            "erasing only one of the two constructors must leave the cycle intact -- otherwise              this test no longer exercises the bug it targets"
         );
     }
 }
