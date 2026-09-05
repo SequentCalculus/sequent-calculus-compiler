@@ -8,7 +8,7 @@ use crate::{
     splitting::union_find::UnionFind,
     syntax::{
         Chi, Clause, CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
-        TypingContext, types::TypeArgs,
+        TypeParam, TypingContext, types::TypeArgs,
     },
 };
 
@@ -321,7 +321,7 @@ pub fn build_decl_signatures(
             def.name.clone(),
             DeclSignature {
                 decl_type_params: vec![],
-                own_type_params: def.type_params.iter().map(|p| p.id.clone()).collect(),
+                own_type_params: TypeParam::ids(&def.type_params),
                 tys,
             },
         );
@@ -334,8 +334,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
-                    own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
+                    decl_type_params: TypeParam::ids(&decl.type_params),
+                    own_type_params: TypeParam::ids(&xtor.type_params),
                     tys,
                 },
             );
@@ -349,8 +349,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: decl.type_params.iter().map(|p| p.id.clone()).collect(),
-                    own_type_params: xtor.type_params.iter().map(|p| p.id.clone()).collect(),
+                    decl_type_params: TypeParam::ids(&decl.type_params),
+                    own_type_params: TypeParam::ids(&xtor.type_params),
                     tys,
                 },
             );

@@ -131,8 +131,7 @@ impl ConstraintCollector for Ty {
                         return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
-                    let template_ids: Vec<Identifier> =
-                        template.type_params.iter().map(|p| p.id.clone()).collect();
+                    let template_ids: Vec<Identifier> = TypeParam::ids(&template.type_params);
                     let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
                     constraints.extend(type_args.collect_constraints(env)?);
                     Ok(constraints)
@@ -141,8 +140,7 @@ impl ConstraintCollector for Ty {
                         return Err(MonoError::UndeclaredType(name.print_to_string(None)));
                     };
 
-                    let template_ids: Vec<Identifier> =
-                        template.type_params.iter().map(|p| p.id.clone()).collect();
+                    let template_ids: Vec<Identifier> = TypeParam::ids(&template.type_params);
                     let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
                     constraints.extend(type_args.collect_constraints(env)?);
                     Ok(constraints)

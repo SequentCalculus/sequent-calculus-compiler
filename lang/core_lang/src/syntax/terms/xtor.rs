@@ -12,6 +12,7 @@ use crate::splitting::labeling::{
 };
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
+use crate::syntax::TypeParam;
 use crate::syntax::types::TypeArgs;
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -214,17 +215,9 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self.ty.collect_constraints(env)?;
         let xtor_params: Vec<Identifier> = if self.prdcns.is_prd() {
-            env.lookup_xtor_for_data_decl(&self.name)?
-                .type_params
-                .iter()
-                .map(|p| p.id.clone())
-                .collect()
+            TypeParam::ids(&env.lookup_xtor_for_data_decl(&self.name)?.type_params)
         } else {
-            env.lookup_xtor_for_codata_decl(&self.name)?
-                .type_params
-                .iter()
-                .map(|p| p.id.clone())
-                .collect()
+            TypeParam::ids(&env.lookup_xtor_for_codata_decl(&self.name)?.type_params)
         };
 
         constraints.extend(collect_type_flow(&self.type_args.args, &xtor_params)?);

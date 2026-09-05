@@ -49,6 +49,14 @@ pub struct TypeParam {
     pub polarity: ParamPolarity,
 }
 
+impl TypeParam {
+    /// Projects a slice of declaration-site type parameters down to their bare `Identifier`s,
+    /// discarding polarity.
+    pub fn ids(params: &[TypeParam]) -> Vec<Identifier> {
+        params.iter().map(|p| p.id.clone()).collect()
+    }
+}
+
 impl PartialEq<Identifier> for TypeParam {
     fn eq(&self, other: &Identifier) -> bool {
         self.id == *other

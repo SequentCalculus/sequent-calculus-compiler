@@ -3,7 +3,7 @@ use std::{rc::Rc, vec};
 use crate::{
     mono::{erasure::ErasedDecls, naming_table::NamingTable, solver::Solution},
     syntax::{
-        Chi, Clause, Def, Identifier, Prog, Ty,
+        Chi, Clause, Def, Identifier, Prog, Ty, TypeParam,
         declaration::{Polarity, TypeDeclaration, XtorSig},
         statements::Unreachable,
     },
@@ -141,7 +141,7 @@ fn specialize_declaration<P: Polarity + Clone>(
     table: &NamingTable,
     erased_decls: &ErasedDecls,
 ) -> Vec<TypeDeclaration<P>> {
-    let params: Vec<Identifier> = decl.type_params.iter().map(|p| p.id.clone()).collect();
+    let params: Vec<Identifier> = TypeParam::ids(&decl.type_params);
     let is_erased = erased_decls.is_erased(&decl.name);
 
     if params.is_empty() || is_erased {
@@ -191,7 +191,7 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
     extra_params: &[Identifier],
     ctx: &SpecializeContext,
 ) -> Vec<XtorSig<P>> {
-    let mut params: Vec<Identifier> = xtor_sig.type_params.iter().map(|p| p.id.clone()).collect();
+    let mut params: Vec<Identifier> = TypeParam::ids(&xtor_sig.type_params);
     params.extend_from_slice(extra_params);
 
     // This is already a monomorphic declaration, so we can return it as-is
@@ -280,7 +280,7 @@ pub fn specialize_clause<C: Chi>(
 
 /// Specialization of polymorphic function definitions into monomorphic ones
 pub fn specialize_def(def: &Def, table: &NamingTable, erased_decls: &ErasedDecls) -> Vec<Def> {
-    let params: Vec<Identifier> = def.type_params.iter().map(|p| p.id.clone()).collect();
+    let params: Vec<Identifier> = TypeParam::ids(&def.type_params);
 
     if params.is_empty() {
         // This function has no type parameters of its own, so it produces

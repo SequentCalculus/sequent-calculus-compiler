@@ -12,6 +12,7 @@ use crate::splitting::labeling::{
 };
 use crate::splitting::rewrite::{Rewrite, rewrite_clause};
 use crate::splitting::split_table::SplitTable;
+use crate::syntax::TypeParam;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::traits::*;
 use crate::typing::check::{Checked, check_arity};
@@ -342,10 +343,8 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
 
         // the clause's own freshly bound type parameters play the role of the xtor's own declared type parameters within this clause; treat them as an "identity substitution" (target is another type *variable*, not a concrete type) so that references to the xtor's own parameters in its signature line up with what the clause actually bound
         let own_type_args: Vec<Ty> = clause.type_params.iter().cloned().map(Ty::Var).collect();
-        let decl_type_param_ids: Vec<Identifier> =
-            decl.type_params.iter().map(|p| p.id.clone()).collect();
-        let sig_type_param_ids: Vec<Identifier> =
-            sig.type_params.iter().map(|p| p.id.clone()).collect();
+        let decl_type_param_ids: Vec<Identifier> = TypeParam::ids(&decl.type_params);
+        let sig_type_param_ids: Vec<Identifier> = TypeParam::ids(&sig.type_params);
 
         // check that the types of the binders in the clause match the types of the arguments in the xtor signature, after instantiating the type parameters with the concrete type arguments
         for (expected_binding, actual_binding) in

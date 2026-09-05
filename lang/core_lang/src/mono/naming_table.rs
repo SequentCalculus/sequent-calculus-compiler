@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use crate::{
     mono::{erasure::ErasedDecls, solver::Solution},
     syntax::{
-        CodataDeclaration, DataDeclaration, Def, Identifier, Ty,
+        CodataDeclaration, DataDeclaration, Def, Identifier, Ty, TypeParam,
         declaration::{Polarity, TypeDeclaration},
     },
 };
@@ -46,8 +46,7 @@ impl NamingTable {
         }
 
         for def in defs {
-            let def_type_param_ids: Vec<Identifier> =
-                def.type_params.iter().map(|p| p.id.clone()).collect();
+            let def_type_param_ids: Vec<Identifier> = TypeParam::ids(&def.type_params);
             table.register(
                 &def.name,
                 &def_type_param_ids,
@@ -73,8 +72,7 @@ impl NamingTable {
         erased_decls: &ErasedDecls,
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) {
-        let decl_type_param_ids: Vec<Identifier> =
-            decl.type_params.iter().map(|p| p.id.clone()).collect();
+        let decl_type_param_ids: Vec<Identifier> = TypeParam::ids(&decl.type_params);
         if erased_decls.is_erased(&decl.name) {
             self.names
                 .insert((decl.name.clone(), vec![]), decl.name.clone());
@@ -83,8 +81,7 @@ impl NamingTable {
                 self.xtor_extra_params
                     .insert(xtor.name.clone(), decl_type_param_ids.clone());
 
-                let xtor_type_param_ids: Vec<Identifier> =
-                    xtor.type_params.iter().map(|p| p.id.clone()).collect();
+                let xtor_type_param_ids: Vec<Identifier> = TypeParam::ids(&xtor.type_params);
                 self.register_combined(
                     &xtor.name,
                     &xtor_type_param_ids,
@@ -96,8 +93,7 @@ impl NamingTable {
         } else {
             self.register(&decl.name, &decl_type_param_ids, solution, mangle);
             for xtor in &decl.xtors {
-                let xtor_type_param_ids: Vec<Identifier> =
-                    xtor.type_params.iter().map(|p| p.id.clone()).collect();
+                let xtor_type_param_ids: Vec<Identifier> = TypeParam::ids(&xtor.type_params);
                 self.register(&xtor.name, &xtor_type_param_ids, solution, mangle);
             }
         }
