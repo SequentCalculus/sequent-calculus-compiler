@@ -1,7 +1,5 @@
 //! This module contains some utility functions used during code generation.
 
-use printer::Print;
-
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber},
@@ -9,7 +7,7 @@ use crate::{
     parallel_moves::ParallelMoves,
     statements::CodeStatement,
 };
-use axcut::syntax::{ID, TypeDeclaration, TypingContext, statements::Clause};
+use axcut::syntax::{ID, Identifier, Ty, TypeDeclaration, TypingContext, statements::Clause};
 
 use std::hash::Hash;
 
@@ -41,6 +39,37 @@ pub trait Utils<Temporary> {
     fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary;
 }
 
+/// Builds the assembler-safe form of an identifier's name, replacing every character a human-
+/// facing identifier can contain but an assembly label cannot. `[`, `, `, `]` from
+/// `mono::naming_table`'s bracket-form specialization names, and `#` from
+/// `splitting::split_table`'s `Box#1`-style equivalence-class names with underscores, plus the
+/// `_id` suffix `Print for Identifier` appends for a non-zero `id`.
+///
+/// Built directly from the identifier's own `name`/`id` fields, not by patching its already
+/// human-facing printed form, so `Print for Identifier` itself can stay readable (`Box#1`, not
+/// `Box__1`) without that readability ever reaching an actual label.
+pub fn asm_safe_name(name: &Identifier) -> String {
+    let sanitized = name
+        .name
+        .replace('[', "_")
+        .replace(", ", "_")
+        .replace(']', "")
+        .replace('#', "__");
+    if name.id == 0 {
+        sanitized
+    } else {
+        format!("{sanitized}_{}", name.id)
+    }
+}
+
+/// [`asm_safe_name`] for a [`Ty`]: `i64` needs no sanitizing, `Ty::Decl` defers to its identifier.
+pub fn asm_safe_ty_name(ty: &Ty) -> String {
+    match ty {
+        Ty::I64 => "i64".to_string(),
+        Ty::Decl(name) => asm_safe_name(name),
+    }
+}
+
 /// This function generates a jump table for a list of clauses.
 /// - `clauses` is the lists of clauses.
 /// - `base_label` is the base name of the labels in the table.
@@ -54,14 +83,7 @@ pub fn code_table<Backend, Code, Temporary, Immediate>(
 {
     for clause in clauses {
         Backend::jump_label_fixed(
-            base_label.to_string()
-                + "_"
-                + &clause
-                    .xtor
-                    .print_to_string(None)
-                    .replace('[', "_")
-                    .replace(", ", "_")
-                    .replace(']', ""),
+            base_label.to_string() + "_" + &asm_safe_name(&clause.xtor),
             instructions,
         );
     }
@@ -144,14 +166,7 @@ pub fn code_clauses<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string()
-                + "_"
-                + &clause
-                    .xtor
-                    .print_to_string(None)
-                    .replace('[', "_")
-                    .replace(", ", "_")
-                    .replace(']', ""),
+            base_label.to_string() + "_" + &asm_safe_name(&clause.xtor),
         ));
         code_clause::<Backend, _, _, _>(context.clone(), clause, types, instructions);
     }
@@ -179,14 +194,7 @@ pub fn code_methods<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
 {
     for clause in clauses {
         instructions.push(Backend::label(
-            base_label.to_string()
-                + "_"
-                + &clause
-                    .xtor
-                    .print_to_string(None)
-                    .replace('[', "_")
-                    .replace(", ", "_")
-                    .replace(']', ""),
+            base_label.to_string() + "_" + &asm_safe_name(&clause.xtor),
         ));
         code_method::<Backend, _, _, _>(closure_environment.clone(), clause, types, instructions);
     }

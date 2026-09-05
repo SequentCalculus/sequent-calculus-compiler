@@ -52,7 +52,7 @@ impl SplitTable {
                 ty_names.insert(
                     label.clone(),
                     Identifier {
-                        name: format!("{}__{}", origin.name, idx + 1),
+                        name: format!("{}#{}", origin.name, idx + 1),
                         id: origin.id,
                     },
                 );
@@ -169,7 +169,7 @@ impl SplitTable {
 
 /// Registers the split-copy name of every xtor of `decl`, for every label in `decl.name`'s
 /// equivalence classes, sharing the same per-class index assigned to the declaration itself so
-/// e.g. `Cons__1` is always paired with `List__1`. Purely a naming step: which of these xtors a
+/// e.g. `Cons#1` is always paired with `List#1`. Purely a naming step: which of these xtors a
 /// given physical copy actually keeps is decided separately, when the copy is built (see
 /// [`crate::splitting::rewrite::keeps_xtor`]).
 fn register_xtor_names<P: Polarity>(
@@ -197,7 +197,7 @@ fn register_xtor_names<P: Polarity>(
                 // `fun2core::declaration::compile_ctor`/`compile_dtor` specifically to keep an
                 // xtor's name distinct from its owning declaration's, e.g. `Pair { Pair(...) }`)
                 Identifier {
-                    name: format!("{}__{}", xtor.name.name, idx + 1),
+                    name: format!("{}#{}", xtor.name.name, idx + 1),
                     id: xtor.name.id,
                 }
             };
@@ -247,9 +247,9 @@ mod split_table_tests {
 
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
-        assert_eq!(table.resolve_ty_name(&c).name, "Box__1");
-        assert_eq!(table.resolve_ty_name(&a).name, "Box__2");
-        assert_eq!(table.resolve_ty_name(&b).name, "Box__3");
+        assert_eq!(table.resolve_ty_name(&c).name, "Box#1");
+        assert_eq!(table.resolve_ty_name(&a).name, "Box#2");
+        assert_eq!(table.resolve_ty_name(&b).name, "Box#3");
     }
 
     #[test]
@@ -293,8 +293,8 @@ mod split_table_tests {
         let xtor_name_a = table.resolve_xtor_name(&id!("Wrap"), &a);
         // whichever suffix `Box` got for label `a`, `Wrap` must carry the identical suffix
         assert_eq!(
-            ty_name_a.name.split("__").nth(1),
-            xtor_name_a.name.split("__").nth(1)
+            ty_name_a.name.split('#').nth(1),
+            xtor_name_a.name.split('#').nth(1)
         );
     }
 

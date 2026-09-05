@@ -167,8 +167,8 @@ pub fn keeps_xtor<P: Polarity>(
 }
 
 /// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
-/// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons__1` only ever ends up
-/// inside `List__1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
+/// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons#1` only ever ends up
+/// inside `List#1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
 /// in [`build_declaration_copy`]. Only ever called for xtors [`keeps_xtor`] let through, so the
 /// name always resolves.
 fn split_xtor_sig<P: Polarity + Clone>(
@@ -461,9 +461,6 @@ mod rewrite_tests {
         assert_ne!(copies[0].name, copies[1].name);
         for copy in &copies {
             assert_eq!(copy.xtors.len(), 1);
-            // no leftover label Identifier (e.g. "Box#1") anywhere in the output
-            assert!(!copy.name.name.contains('#'));
-            assert!(!copy.xtors[0].name.name.contains('#'));
         }
     }
 
@@ -560,8 +557,8 @@ mod rewrite_tests {
             panic!("expected Ty::Decl");
         };
         assert_eq!(
-            ty_name.name.split("__").nth(1),
-            rewritten.name.name.split("__").nth(1)
+            ty_name.name.split('#').nth(1),
+            rewritten.name.name.split('#').nth(1)
         );
     }
 
