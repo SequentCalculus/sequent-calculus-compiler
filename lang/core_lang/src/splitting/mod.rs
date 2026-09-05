@@ -51,27 +51,13 @@ pub fn split_program(prog: &Prog) -> Prog {
     let data_types = labeled_data
         .iter()
         .flat_map(|decl| {
-            split_declaration(
-                decl,
-                &table,
-                &sigs,
-                &field_observations,
-                &used_xtors,
-                &mut max_id,
-            )
+            split_declaration(decl, &table, &field_observations, &used_xtors, &mut max_id)
         })
         .collect();
     let codata_types = labeled_codata
         .iter()
         .flat_map(|decl| {
-            split_declaration(
-                decl,
-                &table,
-                &sigs,
-                &field_observations,
-                &used_xtors,
-                &mut max_id,
-            )
+            split_declaration(decl, &table, &field_observations, &used_xtors, &mut max_id)
         })
         .collect();
     let defs = labeled_defs.iter().map(|def| def.rewrite(&table)).collect();
