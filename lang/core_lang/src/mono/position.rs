@@ -3,10 +3,7 @@
 
 use std::collections::HashSet;
 
-use crate::{
-    mono::constraint_graph::is_ground,
-    syntax::{Identifier, Ty},
-};
+use crate::syntax::{Identifier, Ty};
 
 /// One position within a constraint's `from` vector, classified for graph
 /// construction.
@@ -27,7 +24,7 @@ pub enum Position {
 impl Position {
     /// Classifies a single type into a [`Position`].
     pub fn classify(ty: &Ty) -> Position {
-        if is_ground(ty) {
+        if ty.is_ground() {
             return Position::Ground(ty.clone());
         }
         Position::Variable {

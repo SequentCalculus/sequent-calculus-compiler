@@ -80,6 +80,15 @@ impl Ty {
             },
         }
     }
+
+    /// Returns `true` if the type contains no type variables anywhere in its structure.
+    pub fn is_ground(&self) -> bool {
+        match self {
+            Ty::I64 => true,
+            Ty::Var(_) => false,
+            Ty::Decl { type_args, .. } => type_args.args.iter().all(Ty::is_ground),
+        }
+    }
 }
 
 impl Checked for Ty {

@@ -227,18 +227,9 @@ impl ConstraintGraph {
     }
 }
 
-/// Returns `true` if the type contains no type variables anywhere in its structure.
-pub fn is_ground(ty: &Ty) -> bool {
-    match ty {
-        Ty::I64 => true,
-        Ty::Var(_) => false,
-        Ty::Decl { type_args, .. } => type_args.args.iter().all(is_ground),
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{VarLocations, is_ground};
+    use super::VarLocations;
     use crate::mono::{
         constraint_graph::ConstraintGraph,
         constraints::{FlowConstraint, FlowConstraintSet},
@@ -279,7 +270,7 @@ mod tests {
 
         // validate seed is ground
         let seed_vector = graph.seeds[&node_a].iter().next().unwrap();
-        assert!(is_ground(&seed_vector[0]));
+        assert!(seed_vector[0].is_ground());
 
         // validate flat edges
         let outgoing_a = graph.outgoing(&node_a);
