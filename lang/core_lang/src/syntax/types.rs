@@ -9,7 +9,7 @@ use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
-use crate::typing::check::{Checked, check_arity, check_polarity};
+use crate::typing::check::{Checked, check_type_args};
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::{LocatedTypeError, TypeError};
 use crate::{bail, syntax::*};
@@ -86,7 +86,7 @@ impl Checked for Ty {
     fn check(
         &self,
         type_params: &[TypeParam],
-        _context: &TypingContext,
+        context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
         match self {
@@ -105,21 +105,13 @@ impl Checked for Ty {
                     bail!(TypeError::UndeclaredType(name.print_to_string(None)))
                 };
 
-                // check that the number of type arguments matches the number of type parameters in the declaration
-                check_arity(declaration_type_params.len(), type_args.args.len())?;
-
-                // check that all type arguments are well-formed and that each argument's
-                // polarity matches the declared polarity of the corresponding type parameter
-                for (arg, declared_param) in type_args.args.iter().zip(declaration_type_params) {
-                    arg.check(type_params, _context, env)?;
-                    let got = if arg.is_codata(env.codata_decls, type_params) {
-                        ParamPolarity::Codata
-                    } else {
-                        ParamPolarity::Data
-                    };
-                    check_polarity(declared_param.polarity, got)?;
-                }
-                Ok(())
+                check_type_args(
+                    &type_args.args,
+                    declaration_type_params,
+                    type_params,
+                    context,
+                    env,
+                )
             }
         }
     }

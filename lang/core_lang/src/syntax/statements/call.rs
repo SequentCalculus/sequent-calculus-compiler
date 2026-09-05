@@ -19,7 +19,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::check::check_arity;
-use crate::typing::check::check_polarity;
+use crate::typing::check::check_type_args;
 use crate::typing::env::GlobalEnv;
 use crate::typing::errors::LocatedTypeError;
 use crate::typing::errors::TypeError;
@@ -213,21 +213,19 @@ impl Checked for Call {
             bail!(TypeError::UndefinedFunction(self.name.name.clone()));
         };
 
-        // Check that the arity of the type arguments and the arity of the arguments match the definition
-        check_arity(def.type_params.len(), self.type_args.args.len())?;
+        // Check that the arity of the (non-type) arguments matches the definition; the type
+        // arguments' own arity is checked by `check_type_args` below.
         check_arity(def.context.bindings.len(), self.args.entries.len())?;
 
         // check well-formedness and polarity of each type argument against the def's own
         // declared type parameters
-        for (ty_arg, declared_param) in self.type_args.args.iter().zip(&def.type_params) {
-            ty_arg.check(type_params, context, env)?;
-            let got = if ty_arg.is_codata(env.codata_decls, type_params) {
-                ParamPolarity::Codata
-            } else {
-                ParamPolarity::Data
-            };
-            check_polarity(declared_param.polarity, got)?;
-        }
+        check_type_args(
+            &self.type_args.args,
+            &def.type_params,
+            type_params,
+            context,
+            env,
+        )?;
 
         // build the substitution mapping for the type parameters and type arguments
         let def_type_param_ids: Vec<Identifier> =
