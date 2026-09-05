@@ -1,3 +1,6 @@
+//! Defines `GlobalEnv`, the read-only view of a program's top-level declarations used during
+//! type checking and constraint collection.
+
 use crate::{
     mono::errors::MonoError,
     syntax::{CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier, TypeParam},

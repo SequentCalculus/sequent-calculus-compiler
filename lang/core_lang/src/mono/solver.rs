@@ -1,3 +1,6 @@
+//! The fixpoint constraint solver: computes, for every node in the constraint graph, the set
+//! of concrete type vectors it may be instantiated with.
+
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     ops::Deref,

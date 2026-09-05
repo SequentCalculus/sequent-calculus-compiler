@@ -1,3 +1,5 @@
+//! Defines the errors that can occur during constraint collection and solving.
+
 use std::fmt;
 
 use crate::mono::growing_cycle::GrowingCycle;

@@ -423,12 +423,12 @@ mod xtor_tests {
     use core_macros::{ctor, id, ty, var};
 
     fn example() -> Xtor<Prd> {
-        return ctor!(
+        ctor!(
             id!("Cons"),
             [],
             [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
-        );
+        )
     }
 
     #[test]
@@ -563,7 +563,7 @@ mod constraint_tests {
     };
 
     fn example_list() -> DataDeclaration {
-        return data!(
+        data!(
             id!("List"),
             [
                 ctor_sig!(id!("Nil"), [], []),
@@ -577,11 +577,11 @@ mod constraint_tests {
                 )
             ],
             [tparam!(id!("A", 1), "+")]
-        );
+        )
     }
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
@@ -589,11 +589,11 @@ mod constraint_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     fn runner_decl() -> CodataDeclaration {
-        return codata!(
+        codata!(
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
@@ -601,11 +601,11 @@ mod constraint_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     fn container_decl() -> CodataDeclaration {
-        return codata!(
+        codata!(
             id!("Container"),
             [dtor_sig!(
                 id!("Wrap"),
@@ -613,7 +613,7 @@ mod constraint_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("S", 2)))]
             )],
             [tparam!(id!("T", 1), "+")]
-        );
+        )
     }
 
     #[test]

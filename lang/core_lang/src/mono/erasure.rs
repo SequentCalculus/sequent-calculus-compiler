@@ -23,6 +23,7 @@ use crate::{
 pub struct ErasedDecls(pub HashSet<Identifier>);
 
 impl ErasedDecls {
+    /// True iff `name`'s own declared type parameters were erased to break a growing cycle.
     pub fn is_erased(&self, name: &Identifier) -> bool {
         self.0.contains(name)
     }

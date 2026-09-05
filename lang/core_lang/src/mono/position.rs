@@ -1,3 +1,6 @@
+//! Classifies a single constraint position (one type on a constraint's `from` side) as ground
+//! or variable-dependent, for constraint graph construction.
+
 use std::collections::HashSet;
 
 use crate::{

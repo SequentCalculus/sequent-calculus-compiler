@@ -328,7 +328,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                    &GlobalEnv::new(&[], &[], &defs)
                 )
                 .is_ok()
         );
@@ -351,7 +351,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &defs),
+                    &GlobalEnv::new(&[], &[], &defs),
                 )
                 .is_ok()
         );
@@ -375,7 +375,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                    &GlobalEnv::new(&[], &[], &defs)
                 )
                 .is_err()
         );
@@ -399,7 +399,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &defs)
+                    &GlobalEnv::new(&[], &[], &defs)
                 )
                 .is_err()
         );
@@ -423,7 +423,7 @@ mod check_tests {
             call_stmt.check(
                 &[],
                 &TypingContext::default(),
-                &GlobalEnv::new(&vec![], &vec![], &defs),
+                &GlobalEnv::new(&[], &[], &defs),
             ),
             Err(crate::typing::errors::LocatedTypeError {
                 error: crate::typing::errors::TypeError::PolarityMismatch { .. },
@@ -451,7 +451,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &vec![def_no_args])
+                    &GlobalEnv::new(&[], &[], &[def_no_args])
                 )
                 .is_err()
         );
@@ -470,7 +470,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&vec![], &vec![], &vec![def_param_other])
+                    &GlobalEnv::new(&[], &[], &[def_param_other])
                 )
                 .is_err()
         );
@@ -543,7 +543,7 @@ mod collect_tests {
         let call = call!(id!("identity"), [ty!("int")], [lit!(42)]);
 
         let constraints = call
-            .collect_constraints(&GlobalEnv::new(&vec![], &vec![], &vec![poly_def]))
+            .collect_constraints(&GlobalEnv::new(&[], &[], &[poly_def]))
             .unwrap();
 
         let expected_constraint = FlowConstraint {

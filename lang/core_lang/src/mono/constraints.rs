@@ -1,3 +1,6 @@
+//! Defines flow constraints and the `FlowConstraintSet` they collect into: the output of
+//! constraint collection and the input to constraint solving.
+
 use std::collections::BTreeSet;
 
 use printer::tokens::COMMA;
@@ -52,14 +55,17 @@ pub struct FlowConstraintSet {
 }
 
 impl FlowConstraintSet {
+    /// Creates an empty set of flow constraints.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds a single flow constraint to the set.
     pub fn insert(&mut self, constraint: FlowConstraint) {
         self.constraints.insert(constraint);
     }
 
+    /// Adds every constraint from `other` to this set.
     pub fn extend(&mut self, other: FlowConstraintSet) {
         self.constraints.extend(other.constraints);
     }

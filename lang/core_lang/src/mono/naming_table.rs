@@ -1,3 +1,6 @@
+//! Builds the table mapping every polymorphic declaration, xtor, and def, together with its
+//! concrete instantiation, to its mangled monomorphic name.
+
 use std::collections::{BTreeMap, HashMap};
 
 use crate::{
@@ -247,7 +250,7 @@ mod erasure_tests {
     use core_macros::{bind, ctor_sig, data, id, prd, tparam, tvar, ty};
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Wrap"),
@@ -255,7 +258,7 @@ mod erasure_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             [tparam!(id!("A", 1), "+")]
-        );
+        )
     }
 
     #[test]

@@ -1,3 +1,6 @@
+//! Builds the constraint graph (nodes, seeds, and edges) from a flow constraint set, the
+//! input to growing-cycle detection and the fixpoint solver.
+
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::position::Position;
 use crate::syntax::{Identifier, Ty};

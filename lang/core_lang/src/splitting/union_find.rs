@@ -1,3 +1,6 @@
+//! A union-find (disjoint-set) data structure tracking equivalence classes of labels during
+//! type splitting.
+
 use std::collections::HashMap;
 
 use crate::splitting::labeling::Label;

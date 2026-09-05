@@ -1,3 +1,5 @@
+//! Detects growing cycles in the constraint graph and reports the path and applied constructors of each one found.
+
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     fmt,

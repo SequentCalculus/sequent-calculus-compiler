@@ -1,3 +1,5 @@
+//! Renders a `ConstraintGraph` as a Graphviz DOT file, for `--debug`/`--viz` inspection.
+
 use std::{
     io::{Error, ErrorKind, Write},
     path::{Path, PathBuf},

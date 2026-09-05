@@ -447,7 +447,6 @@ mod tests {
             ],
             ty!(id!("LPairIntInt"))
         )
-        .into()
     }
 
     fn example_case() -> XCase<Cns> {
@@ -474,7 +473,6 @@ mod tests {
             ],
             ty!(id!("ListInt"))
         )
-        .into()
     }
 
     #[test]
@@ -545,7 +543,7 @@ mod check_tests {
     };
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
@@ -553,11 +551,11 @@ mod check_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     fn runner_decl() -> CodataDeclaration {
-        return codata!(
+        codata!(
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
@@ -565,7 +563,7 @@ mod check_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     #[test]
@@ -575,8 +573,7 @@ mod check_tests {
         let good_case: XCase<Cns> = case!(
             [clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)))],
             ty!(id!("List"))
-        )
-        .into();
+        );
 
         good_case
             .check(
@@ -600,8 +597,7 @@ mod check_tests {
                 cut!(var!(id!("x")), covar!(id!("a")))
             )],
             ty!(id!("NonExistent"))
-        )
-        .into();
+        );
         assert!(
             wrong
                 .check(
@@ -623,8 +619,7 @@ mod check_tests {
                 clause!(Cns, id!("Nil"), [], [], exit!(lit!(1)))
             ],
             ty!(id!("List"))
-        )
-        .into();
+        );
 
         let result = bad_case.check(
             &[],
@@ -656,8 +651,7 @@ mod check_tests {
         let incomplete_case: XCase<Cns> = case!(
             [clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)))],
             ty!(id!("List"))
-        )
-        .into();
+        );
 
         let result = incomplete_case.check(
             &[],
@@ -774,7 +768,7 @@ mod constraint_tests {
     use std::collections::BTreeSet;
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
@@ -782,11 +776,11 @@ mod constraint_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     fn runner_decl() -> CodataDeclaration {
-        return codata!(
+        codata!(
             id!("Runner"),
             [dtor_sig!(
                 id!("Run"),
@@ -794,7 +788,7 @@ mod constraint_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             []
-        );
+        )
     }
 
     #[test]
@@ -810,8 +804,7 @@ mod constraint_tests {
                 exit!(lit!(0))
             )],
             ty!(id!("Box"))
-        )
-        .into();
+        );
 
         let constraints = matched
             .collect_constraints(&GlobalEnv::new(&[box_decl], &[], &[]))
@@ -840,8 +833,7 @@ mod constraint_tests {
                 exit!(lit!(0))
             )],
             ty!(id!("Runner"))
-        )
-        .into();
+        );
 
         let constraints = matched
             .collect_constraints(&GlobalEnv::new(&[], &[runner], &[]))

@@ -1,3 +1,6 @@
+//! Defines the `Checked` trait, which is the interface every syntax element implements to type-check
+//! itself and the arity/polarity/type-argument checks shared across its implementations.
+
 use crate::{
     bail,
     syntax::{Ty, TypingContext, type_params::ParamPolarity, type_params::TypeParam},
@@ -17,6 +20,7 @@ pub trait Checked: Sized {
     ) -> Result<(), LocatedTypeError>;
 }
 
+/// Checks that a declared parameter count matches the number of arguments actually given.
 pub fn check_arity(expected: usize, got: usize) -> Result<(), LocatedTypeError> {
     if expected != got {
         bail!(TypeError::ArityMismatch { expected, got })

@@ -1,3 +1,6 @@
+//! Specializes a polymorphic program into its monomorphic form, given the solver's solution
+//! and the set of declarations erasure widened.
+
 use std::{rc::Rc, vec};
 
 use crate::{
@@ -339,7 +342,7 @@ mod specialize_tests {
     };
 
     fn list_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("List"),
             [
                 ctor_sig!(id!("Nil"), [], []),
@@ -353,22 +356,22 @@ mod specialize_tests {
                 )
             ],
             [tparam!(id!("A", 1), "+")]
-        );
+        )
     }
 
     fn bool_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Bool"),
             [
                 ctor_sig!(id!("True"), [], []),
                 ctor_sig!(id!("False"), [], [])
             ],
             []
-        );
+        )
     }
 
     fn pair_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Pair"),
             [ctor_sig!(
                 id!("mkPair"),
@@ -379,11 +382,11 @@ mod specialize_tests {
                 ]
             )],
             [tparam!(id!("A", 2), "+"), tparam!(id!("B", 3), "+")]
-        );
+        )
     }
 
     fn identity_def() -> Def {
-        return def!(
+        def!(
             id!("identity"),
             [tparam!(id!("A", 1), "+")],
             [
@@ -395,11 +398,11 @@ mod specialize_tests {
                 covar!(id!("ret"), tvar!(id!("A", 1))),
                 tvar!(id!("A", 1))
             )
-        );
+        )
     }
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Pack"),
@@ -407,11 +410,11 @@ mod specialize_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("E", 2)))]
             )],
             []
-        );
+        )
     }
 
     fn container_decl() -> CodataDeclaration {
-        return codata!(
+        codata!(
             id!("Container"),
             [dtor_sig!(
                 id!("wrap"),
@@ -422,21 +425,21 @@ mod specialize_tests {
                 ]
             )],
             [tparam!(id!("T", 1), "+")]
-        );
+        )
     }
 
     fn nil_clause() -> Clause<Cns> {
-        return clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)));
+        clause!(Cns, id!("Nil"), [], [], exit!(lit!(0)))
     }
 
     fn pack_clause() -> Clause<Cns> {
-        return clause!(
+        clause!(
             Cns,
             id!("Pack"),
             [id!("G", 4)],
             [bind!(id!("x"), prd!(), tvar!(id!("G", 4)))],
             exit!(lit!(0))
-        );
+        )
     }
 
     #[test]
@@ -593,7 +596,9 @@ mod specialize_tests {
         // field must reference the *same* mangled Pair name produced for
         // the Pair declaration above -- consistency across two independent
         // top-level specializations.
-        let list_name = table.lookup(&list_decl().name, &[pair_ty.clone()]).clone();
+        let list_name = table
+            .lookup(&list_decl().name, std::slice::from_ref(&pair_ty))
+            .clone();
         let pair_name = table
             .lookup(&pair_decl().name, &[ty!("int"), ty!("int")])
             .clone();
@@ -708,7 +713,7 @@ mod specialize_tests {
             &solution,
             &[list_decl()],
             &[],
-            &[main_def.clone()],
+            std::slice::from_ref(&main_def),
             &ErasedDecls::default(),
         );
         let copies = specialize_def(&main_def, &table, &ErasedDecls::default());
@@ -810,7 +815,7 @@ mod specialize_tests {
             &solution,
             &[],
             &[],
-            &[unused.clone()],
+            std::slice::from_ref(&unused),
             &ErasedDecls::default(),
         );
         let copies = specialize_def(&unused, &table, &ErasedDecls::default());
@@ -864,7 +869,7 @@ mod specialize_tests {
             &solution,
             &[list_decl()],
             &[],
-            &[singleton.clone()],
+            std::slice::from_ref(&singleton),
             &ErasedDecls::default(),
         );
 
@@ -946,7 +951,7 @@ mod specialize_tests {
             &solution,
             &[bool_decl()],
             &[],
-            &[swap.clone()],
+            std::slice::from_ref(&swap),
             &ErasedDecls::default(),
         );
         let copies = specialize_def(&swap, &table, &ErasedDecls::default());
@@ -1340,7 +1345,7 @@ mod erasure_tests {
     };
 
     fn box_decl() -> DataDeclaration {
-        return data!(
+        data!(
             id!("Box"),
             [ctor_sig!(
                 id!("Wrap"),
@@ -1348,7 +1353,7 @@ mod erasure_tests {
                 [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
             )],
             [tparam!(id!("A", 1), "+")]
-        );
+        )
     }
 
     #[test]
@@ -1501,7 +1506,13 @@ mod erasure_tests {
             )
         );
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[nest_def.clone()], &erased);
+        let table = NamingTable::build(
+            &solution,
+            &[box_decl()],
+            &[],
+            std::slice::from_ref(&nest_def),
+            &erased,
+        );
 
         let params = vec![id!("C", 1)];
         let args = vec![ty!(id!("Box"))];

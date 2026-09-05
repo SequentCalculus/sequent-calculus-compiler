@@ -1,3 +1,6 @@
+//! Phase 1 of type splitting: labels every declared-type occurrence and eagerly unifies label
+//! pairs wherever the type system already requires equality.
+
 use std::{
     collections::{HashMap, HashSet},
     mem::take,
@@ -310,6 +313,11 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
         .collect()
 }
 
+/// Labels every def's own signature (see [`label_def_signature`]) and collects a
+/// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use by
+/// [`unify_declared_type_vars`] at every call/construction site. Returns the resulting
+/// [`DeclSignatures`] table alongside `prog`'s own (still unlabeled) data and codata
+/// declarations, since the caller needs both to drive the rest of the labeling walk.
 pub fn build_decl_signatures(
     prog: &Prog,
     state: &mut SplitState,

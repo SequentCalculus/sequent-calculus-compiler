@@ -497,7 +497,7 @@ mod check_tests {
             stmt.check(
                 &[],
                 &TypingContext::default(),
-                &GlobalEnv::new(&vec![list], &vec![], &vec![])
+                &GlobalEnv::new(&[list], &[], &[])
             )
             .is_err()
         );

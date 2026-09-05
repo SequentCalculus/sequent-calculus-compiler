@@ -276,7 +276,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&[list.clone()], &[], &[])
+                    &GlobalEnv::new(std::slice::from_ref(&list), &[], &[])
                 )
                 .is_ok()
         );
@@ -287,7 +287,7 @@ mod check_tests {
         let res = ty_bad.check(
             &[],
             &TypingContext::default(),
-            &GlobalEnv::new(&[list.clone()], &[], &[]),
+            &GlobalEnv::new(std::slice::from_ref(&list), &[], &[]),
         );
         assert!(res.is_err());
     }
@@ -310,7 +310,7 @@ mod check_tests {
             decl.check(
                 &[],
                 &TypingContext::default(),
-                &GlobalEnv::new(&[decl.clone()], &[], &[])
+                &GlobalEnv::new(std::slice::from_ref(&decl), &[], &[])
             )
             .is_ok()
         );
@@ -333,7 +333,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&[box_decl.clone()], &[], &[]),
+                    &GlobalEnv::new(std::slice::from_ref(&box_decl), &[], &[]),
                 )
                 .is_ok()
         );
@@ -356,7 +356,7 @@ mod check_tests {
                 .check(
                     &[],
                     &TypingContext::default(),
-                    &GlobalEnv::new(&[box_decl.clone()], &[], &[]),
+                    &GlobalEnv::new(std::slice::from_ref(&box_decl), &[], &[]),
                 )
                 .is_err()
         );

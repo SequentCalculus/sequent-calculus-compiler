@@ -1,3 +1,6 @@
+//! Defines the errors that can occur during type checking, together with the `bail!` macro
+//! used to construct and return them with their source location attached.
+
 use std::fmt;
 use std::panic::Location;
 
