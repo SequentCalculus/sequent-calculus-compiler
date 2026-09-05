@@ -41,18 +41,14 @@ impl SplitTable {
         let mut ty_names: HashMap<Label, Identifier> = HashMap::new();
         let mut roots_by_origin: HashMap<Identifier, Vec<Label>> = HashMap::new();
         for (origin, labels) in &labels_by_origin {
-            // distinct roots, in first-seen order, so the same run always assigns the same index
-            let mut roots: Vec<Label> = vec![];
+            let roots = distinct_roots(uf, labels);
+
             for label in labels {
                 let root = uf.find(label);
-                let idx = roots.iter().position(|r| *r == root).unwrap_or_else(|| {
-                    roots.push(root.clone());
-                    roots.len() - 1
-                });
                 ty_names.insert(
                     label.clone(),
                     Identifier {
-                        name: format!("{}#{}", origin.name, idx + 1),
+                        name: format!("{}#{}", origin.name, split_index(&roots, &root)),
                         id: origin.id,
                     },
                 );
@@ -167,6 +163,31 @@ impl SplitTable {
     }
 }
 
+/// Returns the distinct equivalence-class roots reachable from `labels`, in first-seen order.
+fn distinct_roots(uf: &mut UnionFind, labels: &[Label]) -> Vec<Label> {
+    let mut roots: Vec<Label> = vec![];
+    for label in labels {
+        let root = uf.find(label);
+        if !roots.contains(&root) {
+            roots.push(root);
+        }
+    }
+    roots
+}
+
+/// The 1-based index of `root` within `roots` (the distinct equivalence-class roots recorded for
+/// one origin, via [`distinct_roots`]), matching the `#N` suffix a split-copy name gets. The one
+/// place this index is computed, so a declaration's own split-copy name (in [`SplitTable::build`])
+/// and its xtors' split-copy names (in [`register_xtor_names`]) can never disagree about which
+/// index a given equivalence class gets.
+fn split_index(roots: &[Label], root: &Label) -> usize {
+    roots
+        .iter()
+        .position(|r| r == root)
+        .expect("root must be one of the roots recorded for its origin")
+        + 1
+}
+
 /// Registers the split-copy name of every xtor of `decl`, for every label in `decl.name`'s
 /// equivalence classes, sharing the same per-class index assigned to the declaration itself so
 /// e.g. `Cons#1` is always paired with `List#1`. Purely a naming step: which of these xtors a
@@ -189,7 +210,6 @@ fn register_xtor_names<P: Polarity>(
     for xtor in &decl.xtors {
         for label in labels {
             let root = uf.find(label);
-            let idx = roots.iter().position(|r| *r == root).unwrap();
             let name = if roots.len() == 1 {
                 xtor.name.clone()
             } else {
@@ -197,7 +217,7 @@ fn register_xtor_names<P: Polarity>(
                 // `fun2core::declaration::compile_ctor`/`compile_dtor` specifically to keep an
                 // xtor's name distinct from its owning declaration's, e.g. `Pair { Pair(...) }`)
                 Identifier {
-                    name: format!("{}#{}", xtor.name.name, idx + 1),
+                    name: format!("{}#{}", xtor.name.name, split_index(roots, &root)),
                     id: xtor.name.id,
                 }
             };

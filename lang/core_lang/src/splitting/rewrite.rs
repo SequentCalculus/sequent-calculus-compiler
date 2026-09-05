@@ -127,6 +127,16 @@ fn build_declaration_copy<P: Polarity + Clone>(
         _ => vec![],
     };
 
+    // Whether *no* xtor of `decl` is used for this equivalence class at all. Computed once
+    // here, over all of `decl.xtors`, rather than inside `keeps_xtor` itself, which would redo
+    // this same full scan for every one of `decl.xtors`, making the filter below quadratic in
+    // their count.
+    let class_unused = root.is_some_and(|(root, _)| {
+        decl.xtors
+            .iter()
+            .all(|xtor| !used.contains(root, &xtor.name))
+    });
+
     TypeDeclaration {
         dat: decl.dat.clone(),
         name: match root {
@@ -136,7 +146,7 @@ fn build_declaration_copy<P: Polarity + Clone>(
         xtors: decl
             .xtors
             .iter()
-            .filter(|xtor| keeps_xtor(decl, xtor, used, root))
+            .filter(|xtor| keeps_xtor(xtor, used, root, class_unused))
             .map(|xtor| split_xtor_sig(xtor, table, field_observations, root, &decl_subst, max_id))
             .collect(),
         type_params: rename_params(&decl.type_params, &decl_subst),
@@ -149,21 +159,20 @@ fn build_declaration_copy<P: Polarity + Clone>(
 /// An xtor is dropped exactly when it is *unused* for that equivalence class: neither constructed
 /// or observed at any `Xtor` node, nor matched or defined by any `case`/`new` clause (see
 /// [`crate::splitting::labeling::SplitState::record_xtor_use`]). Merely matching an xtor keeps it,
-/// so no term ever loses a clause and every name a term uses still resolves.
+/// so no term ever loses a clause and every name a term uses still resolves. `class_unused` is
+/// whether *no* xtor of the owning declaration is used for this equivalence class at all.
+/// The caller computes it once, over every xtor, rather than this function recomputing it on
+/// every call.
 pub fn keeps_xtor<P: Polarity>(
-    decl: &TypeDeclaration<P>,
     xtor: &XtorSig<P>,
     used: &UsedXtors,
     root: Option<(&Label, bool)>,
+    class_unused: bool,
 ) -> bool {
     let Some((root, _)) = root else {
         return true;
     };
-    used.contains(root, &xtor.name)
-        || decl
-            .xtors
-            .iter()
-            .all(|other| !used.contains(root, &other.name))
+    used.contains(root, &xtor.name) || class_unused
 }
 
 /// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
@@ -388,16 +397,16 @@ mod rewrite_tests {
         let used = used_for(id!("Left"), std::slice::from_ref(&root));
 
         assert!(keeps_xtor(
-            &decl,
             &decl.xtors[0],
             &used,
-            Some((&root, false))
+            Some((&root, false)),
+            false
         ));
         assert!(!keeps_xtor(
-            &decl,
             &decl.xtors[1],
             &used,
-            Some((&root, false))
+            Some((&root, false)),
+            false
         ));
     }
 
@@ -410,7 +419,7 @@ mod rewrite_tests {
         assert!(
             decl.xtors
                 .iter()
-                .all(|xtor| keeps_xtor(&decl, xtor, &used, Some((&root, false))))
+                .all(|xtor| keeps_xtor(xtor, &used, Some((&root, false)), true))
         );
     }
 
@@ -424,7 +433,7 @@ mod rewrite_tests {
         assert!(
             decl.xtors
                 .iter()
-                .all(|xtor| keeps_xtor(&decl, xtor, &used, None))
+                .all(|xtor| keeps_xtor(xtor, &used, None, false))
         );
     }
 
