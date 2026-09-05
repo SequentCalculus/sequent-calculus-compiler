@@ -20,12 +20,28 @@ use crate::{
 /// specialization's single source of truth for distinguishing an "ordinary" (never erased)
 /// declaration from a "widened" one, so the two phases cannot diverge on this point.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ErasedDecls(pub HashSet<Identifier>);
+pub struct ErasedDecls(HashSet<Identifier>);
 
 impl ErasedDecls {
     /// True iff `name`'s own declared type parameters were erased to break a growing cycle.
     pub fn is_erased(&self, name: &Identifier) -> bool {
         self.0.contains(name)
+    }
+
+    /// True iff no declaration was erased.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Iterates over every erased declaration's name.
+    pub fn iter(&self) -> impl Iterator<Item = &Identifier> {
+        self.0.iter()
+    }
+}
+
+impl From<HashSet<Identifier>> for ErasedDecls {
+    fn from(erased: HashSet<Identifier>) -> Self {
+        ErasedDecls(erased)
     }
 }
 
@@ -34,7 +50,7 @@ impl ErasedDecls {
 /// `to` sides are always bare type variables and are left untouched, since there is nothing to erase there.
 pub fn erase_constraints(
     constraints: &FlowConstraintSet,
-    targets: &HashSet<Identifier>,
+    targets: &ErasedDecls,
 ) -> FlowConstraintSet {
     let mut result = FlowConstraintSet::new();
     for constraint in &constraints.constraints {
@@ -50,14 +66,16 @@ pub fn erase_constraints(
     result
 }
 
-/// Recursively erases the type arguments of any occurrence of a declaration name in `targets`
-/// within the given type, returning a new type. If the type is a declaration whose name is in `targets`, its type arguments are dropped to an empty vector; otherwise, the type is returned unchanged, except that any nested type arguments are recursively processed.
-pub fn erase_ty(ty: &Ty, targets: &HashSet<Identifier>) -> Ty {
+/// Recursively erases the type arguments of any occurrence of an erased declaration's head
+/// within the given type, returning a new type. If the type is a declaration erased in
+/// `targets`, its type arguments are dropped to an empty vector; otherwise, the type is returned
+/// unchanged, except that any nested type arguments are recursively processed.
+pub fn erase_ty(ty: &Ty, targets: &ErasedDecls) -> Ty {
     match ty {
         Ty::I64 => Ty::I64,
         Ty::Var(id) => Ty::Var(id.clone()),
         Ty::Decl { name, type_args } => {
-            if targets.contains(name) {
+            if targets.is_erased(name) {
                 Ty::Decl {
                     name: name.clone(),
                     type_args: TypeArgs::default(),
@@ -85,7 +103,7 @@ mod erasure_tests {
     use crate::{
         mono::{
             constraints::{FlowConstraint, FlowConstraintSet},
-            erasure::{erase_constraints, erase_ty},
+            erasure::{ErasedDecls, erase_constraints, erase_ty},
         },
         syntax::Ty,
     };
@@ -94,7 +112,7 @@ mod erasure_tests {
 
     #[test]
     fn erase_ty_replaces_type_args_of_target_head() {
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let input = ty!(id!("Box"), [tvar!(id!("A", 1))]);
         let result = erase_ty(&input, &targets);
         assert_eq!(result, ty!(id!("Box")));
@@ -102,7 +120,7 @@ mod erasure_tests {
 
     #[test]
     fn erase_ty_leaves_non_target_heads_untouched() {
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let input = ty!(id!("List"), [tvar!(id!("A", 1))]);
         let result = erase_ty(&input, &targets);
         assert_eq!(result, input);
@@ -113,7 +131,7 @@ mod erasure_tests {
         // List[Box[i64]] -- List is not erased, Box is. Only Box's own
         // arguments should be dropped; List's argument list itself, and its
         // nesting of Box, must be preserved.
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let input = ty!(id!("List"), [ty!(id!("Box"), [tvar!(id!("A", 1))])]);
         let result = erase_ty(&input, &targets);
         assert_eq!(result, ty!(id!("List"), [ty!(id!("Box"))]));
@@ -123,7 +141,7 @@ mod erasure_tests {
     fn erase_ty_erases_target_nested_inside_target() {
         // Box[Box[i64]], erasing Box: the outer Box loses its args entirely,
         // so the inner Box[i64] disappears along with it.
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let input = ty!(id!("Box"), [ty!(id!("Box"), [tvar!(id!("A", 1))])]);
         let result = erase_ty(&input, &targets);
         assert_eq!(result, ty!(id!("Box")));
@@ -131,7 +149,7 @@ mod erasure_tests {
 
     #[test]
     fn erase_ty_leaves_primitives_and_vars_untouched() {
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         assert_eq!(erase_ty(&Ty::I64, &targets), Ty::I64);
         let var = tvar!(id!("A", 1));
         assert_eq!(erase_ty(&var, &targets), var);
@@ -141,7 +159,7 @@ mod erasure_tests {
     fn erase_constraints_only_touches_from_side() {
         // Box[A] ⊑ A -- erasing Box must erase the `from` side but never
         // touch the `to` side, which is always a bare variable vector.
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let mut input = FlowConstraintSet::new();
         input.insert(FlowConstraint::from((
             vec![ty!(id!("Box"), [tvar!(id!("A", 1))])],
@@ -157,7 +175,7 @@ mod erasure_tests {
 
     #[test]
     fn erase_constraints_leaves_unrelated_constraints_unchanged() {
-        let targets = HashSet::from([id!("Box")]);
+        let targets = ErasedDecls::from(HashSet::from([id!("Box")]));
         let mut input = FlowConstraintSet::new();
         input.insert(FlowConstraint::from((
             vec![ty!(id!("int"))],

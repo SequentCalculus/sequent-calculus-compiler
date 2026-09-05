@@ -240,8 +240,8 @@ impl<C: Chi> Specialize for Xtor<C> {
                 .iter()
                 .map(|a| {
                     erase_ty(
-                        &a.substitute((&context.subst.0, &context.subst.1)),
-                        &context.erased_decls.0,
+                        &a.substitute(context.subst.as_slices()),
+                        context.erased_decls,
                     )
                 })
                 .collect(),
@@ -254,8 +254,8 @@ impl<C: Chi> Specialize for Xtor<C> {
             .iter()
             .map(|a| {
                 erase_ty(
-                    &a.substitute((&context.subst.0, &context.subst.1)),
-                    &context.erased_decls.0,
+                    &a.substitute(context.subst.as_slices()),
+                    context.erased_decls,
                 )
             })
             .collect();

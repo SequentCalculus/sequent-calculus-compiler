@@ -102,11 +102,10 @@ fn print_solving_debug(
             erased_constraints.print_to_string(Some(&cfg))
         );
     }
-    if !erased_decls.0.is_empty() {
+    if !erased_decls.is_empty() {
         println!(
             "Erased Declarations: {}",
             erased_decls
-                .0
                 .iter()
                 .map(|id| id.print_to_string(Some(&cfg)))
                 .collect::<Vec<_>>()

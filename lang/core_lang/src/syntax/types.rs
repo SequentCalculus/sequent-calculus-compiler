@@ -168,7 +168,7 @@ impl Specialize for Ty {
             Ty::I64 => Ty::I64,
 
             Ty::Var(param) => {
-                let (params, args) = &context.subst;
+                let (params, args) = context.subst.as_slices();
                 let pos = params.iter().position(|p| p == param).unwrap_or_else(|| {
                     panic!(
                         "type variable {} not found in substitution",
@@ -185,7 +185,7 @@ impl Specialize for Ty {
                 let substituted: Vec<Ty> = type_args
                     .args
                     .iter()
-                    .map(|a| a.substitute((&context.subst.0, &context.subst.1)))
+                    .map(|a| a.substitute(context.subst.as_slices()))
                     .collect();
                 let candidate = Ty::Decl {
                     name: name.clone(),
@@ -193,7 +193,7 @@ impl Specialize for Ty {
                 };
 
                 // Erase the type inline to match the right candidate for the lookup
-                let erased_candidate = erase_ty(&candidate, &context.erased_decls.0);
+                let erased_candidate = erase_ty(&candidate, context.erased_decls);
                 let Ty::Decl {
                     name: erased_name,
                     type_args: erased_args,

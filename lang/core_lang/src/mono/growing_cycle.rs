@@ -283,7 +283,7 @@ mod growing_cycle_tests {
     use crate::mono::{
         constraint_graph::ConstraintGraph,
         constraints::{FlowConstraint, FlowConstraintSet},
-        erasure::erase_constraints,
+        erasure::{ErasedDecls, erase_constraints},
     };
     extern crate self as core_lang;
     use core_macros::{id, tvar, ty};
@@ -501,8 +501,10 @@ mod growing_cycle_tests {
         );
 
         // and erasing just that one is actually sufficient to break the cycle -- the whole point
-        let broken_graph =
-            ConstraintGraph::from(erase_constraints(&constraints_of_mutual(), &triggers));
+        let broken_graph = ConstraintGraph::from(erase_constraints(
+            &constraints_of_mutual(),
+            &ErasedDecls::from(triggers),
+        ));
         assert!(
             find_all_growing_cycles(&broken_graph).is_empty(),
             "erasing only the trigger must be sufficient to break the cycle"
@@ -579,8 +581,10 @@ mod growing_cycle_tests {
             "both constructors applied by the self-looping edge must be triggers"
         );
 
-        let broken_graph =
-            ConstraintGraph::from(erase_constraints(&set, &cycles[0].trigger_targets()));
+        let broken_graph = ConstraintGraph::from(erase_constraints(
+            &set,
+            &ErasedDecls::from(cycles[0].trigger_targets()),
+        ));
         assert!(
             find_all_growing_cycles(&broken_graph).is_empty(),
             "erasing every trigger found on the edge must fully break the cycle in one pass"
@@ -588,7 +592,7 @@ mod growing_cycle_tests {
 
         // sanity check against the pre-fix bug: erasing only the first-found constructor is *not*
         // sufficient, confirming this test would have failed before the fix
-        let only_first = HashSet::from([id!("Box")]);
+        let only_first = ErasedDecls::from(HashSet::from([id!("Box")]));
         let partially_broken_graph = ConstraintGraph::from(erase_constraints(&set, &only_first));
         assert!(
             !find_all_growing_cycles(&partially_broken_graph).is_empty(),

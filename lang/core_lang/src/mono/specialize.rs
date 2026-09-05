@@ -13,14 +13,64 @@ use crate::{
     traits::Typed,
 };
 
+/// A substitution mapping declaration-site type parameters to their concrete instantiation, e.g.
+/// `[A, B] -> [i64, Bool]` for `Pair[i64, Bool]`. The two lists are always the same length 
+/// which is enforced once here, at construction, rather than by convention at every call site 
+/// that used to build the pair by hand.
+#[derive(Clone, Debug, Default)]
+pub struct Substitution {
+    params: Vec<Identifier>,
+    args: Vec<Ty>,
+}
+
+impl Substitution {
+    /// The empty substitution: no type parameters bound to anything.
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// Builds a substitution from a parameter list and its concrete instantiation.
+    pub fn new(params: Vec<Identifier>, args: Vec<Ty>) -> Self {
+        debug_assert_eq!(
+            params.len(),
+            args.len(),
+            "Substitution::new called with mismatched lengths: params={:?}, args={:?}",
+            params,
+            args
+        );
+        Substitution { params, args }
+    }
+
+    /// Returns a new substitution extending this one with additional parameter/argument pairs.
+    pub fn extended(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
+        debug_assert_eq!(
+            new_params.len(),
+            new_args.len(),
+            "extended called with mismatched lengths: new_params={:?}, new_args={:?}",
+            new_params,
+            new_args
+        );
+        let mut params = self.params.clone();
+        params.extend_from_slice(new_params);
+        let mut args = self.args.clone();
+        args.extend_from_slice(new_args);
+        Substitution { params, args }
+    }
+
+    /// Returns the substitution as the `(params, args)` slice pair [`Ty::substitute`] expects.
+    pub fn as_slices(&self) -> (&[Identifier], &[Ty]) {
+        (&self.params, &self.args)
+    }
+}
+
 /// A context for specializing polymorphic declarations into monomorphic ones.
 ///
 /// `table` is a reference to the naming table that maps polymorphic type parameters to their corresponding concrete types.
-/// `subst` is an optional tuple containing a reference to the list of type parameters and their corresponding concrete types for the current specialization context.
+/// `subst` carries the type parameters and their corresponding concrete types for the current specialization context.
 #[derive(Clone)]
 pub struct SpecializeContext<'a> {
     pub table: &'a NamingTable,
-    pub subst: (Vec<Identifier>, Vec<Ty>),
+    pub subst: Substitution,
     pub erased_decls: &'a ErasedDecls,
 }
 
@@ -29,7 +79,7 @@ impl<'a> SpecializeContext<'a> {
     pub fn ground(table: &'a NamingTable, erased_decls: &'a ErasedDecls) -> Self {
         SpecializeContext {
             table,
-            subst: (vec![], vec![]),
+            subst: Substitution::empty(),
             erased_decls,
         }
     }
@@ -41,38 +91,18 @@ impl<'a> SpecializeContext<'a> {
         args: &'a [Ty],
         erased_decls: &'a ErasedDecls,
     ) -> Self {
-        debug_assert_eq!(
-            params.len(),
-            args.len(),
-            "with_subst called with mismatched lengths: params={:?}, args={:?}",
-            params,
-            args
-        );
         SpecializeContext {
             table,
-            subst: (params.to_vec(), args.to_vec()),
+            subst: Substitution::new(params.to_vec(), args.to_vec()),
             erased_decls,
         }
     }
 
     /// Extends the current specialization context with additional type parameters and their corresponding concrete types, returning a new `SpecializeContext` that combines the existing substitution with the new one.
     fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
-        debug_assert_eq!(
-            new_params.len(),
-            new_args.len(),
-            "extend_with_substs called with mismatched lengths: new_params={:?}, new_args={:?}",
-            new_params,
-            new_args
-        );
-        let mut extended_params = self.subst.0.clone();
-        extended_params.extend_from_slice(new_params);
-
-        let mut extended_args = self.subst.1.clone();
-        extended_args.extend_from_slice(new_args);
-
         SpecializeContext {
             table: self.table,
-            subst: (extended_params, extended_args),
+            subst: self.subst.extended(new_params, new_args),
             erased_decls: self.erased_decls,
         }
     }
@@ -1358,7 +1388,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_erased_declaration_keeps_one_copy_with_two_xtor_variants() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1384,7 +1414,7 @@ mod erasure_tests {
         // Wrap(123) : Box[i64]
         // Box is erased, so `type_args` on the Xtor term itself is
         // empty; the concrete instantiation must be recovere d from `self.ty`.
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")]]),
@@ -1424,7 +1454,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_clause_marks_the_non_matching_erased_instantiation_unreachable() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1462,7 +1492,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_clause_keeps_every_instantiation_reachable_without_a_scrutinee_type() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1487,7 +1517,7 @@ mod erasure_tests {
     fn call_specialize_erases_nested_recursive_type_argument() {
         // nest[Box[C]](...) while specializing nest's own C := Box: after substitution the
         // call's type argument is Box[Box], which must be erased to bare Box before lookup.
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let mut solution_map = HashMap::new();
         solution_map.insert(
             vec![id!("C", 1)],

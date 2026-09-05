@@ -179,8 +179,8 @@ impl Specialize for Call {
             .iter()
             .map(|ty| {
                 erase_ty(
-                    &ty.substitute((&context.subst.0, &context.subst.1)),
-                    &context.erased_decls.0,
+                    &ty.substitute(context.subst.as_slices()),
+                    context.erased_decls,
                 )
             })
             .collect();

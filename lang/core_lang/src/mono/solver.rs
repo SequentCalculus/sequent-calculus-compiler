@@ -135,9 +135,9 @@ pub fn solve_with_erasure(
     }
 
     let targets: HashSet<_> = cycles.iter().flat_map(|c| c.trigger_targets()).collect();
-    let erased = ErasedDecls(targets.clone());
+    let erased = ErasedDecls::from(targets);
 
-    let erased_constraints = erase_constraints(&constraints, &targets);
+    let erased_constraints = erase_constraints(&constraints, &erased);
     let erased_graph = ConstraintGraph::from(erased_constraints.clone());
 
     debug_assert!(
@@ -459,7 +459,7 @@ mod solve_with_erasure_tests {
         let (with_erasure, erased, _) = solve_with_erasure(set);
 
         assert_eq!(plain, with_erasure);
-        assert!(erased.0.is_empty());
+        assert!(erased.is_empty());
     }
 
     #[test]
@@ -474,7 +474,7 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
 
         let node = vec![id!("A", 1)];
         let sols = solution
@@ -508,7 +508,7 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
 
         let node = vec![id!("C", 6)];
         let sols = solution.get(&node).unwrap();
@@ -531,7 +531,7 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased.0, HashSet::from([id!("Box")]));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
         let node = vec![id!("A", 1)];
         assert!(solution.get(&node).unwrap().len() <= 2);
     }

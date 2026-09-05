@@ -263,7 +263,7 @@ mod erasure_tests {
 
     #[test]
     fn erased_decl_keeps_single_unmangled_name() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -277,7 +277,7 @@ mod erasure_tests {
 
     #[test]
     fn erased_decl_registers_two_xtor_instantiations() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -310,7 +310,7 @@ mod erasure_tests {
             )],
             [tparam!(id!("L", 2), "+")]
         );
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([
             (
                 vec![id!("A", 1)],
@@ -341,7 +341,7 @@ mod erasure_tests {
 
     #[test]
     fn extra_params_for_returns_declarations_own_params_when_erased() {
-        let erased = ErasedDecls(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")]]),

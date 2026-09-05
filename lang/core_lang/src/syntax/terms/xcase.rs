@@ -194,12 +194,7 @@ fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
         type_args
             .args
             .iter()
-            .map(|a| {
-                erase_ty(
-                    &a.substitute((&ctx.subst.0, &ctx.subst.1)),
-                    &ctx.erased_decls.0,
-                )
-            })
+            .map(|a| erase_ty(&a.substitute(ctx.subst.as_slices()), ctx.erased_decls))
             .collect(),
     )
 }
