@@ -1,3 +1,7 @@
+//! Type-splitting preprocessing: labels every declared-type occurrence, unifies label pairs
+//! the type system already requires equal, then emits one physical copy of each data/codata
+//! declaration per resulting equivalence class. See `split_program` for the full pipeline.
+
 pub mod labeling;
 pub mod rewrite;
 pub mod split_table;
@@ -648,7 +652,7 @@ mod split_program_tests {
             let field = &copy.xtors[0].args.bindings[0].ty;
             assert_eq!(
                 field,
-                &tvar!(copy.type_params[0].id.clone()),
+                &tvar!(copy.type_params[0].name.clone()),
                 "expected the field to stay generic in the copy's own type parameter, got {field:?}"
             );
         }
@@ -704,7 +708,7 @@ mod split_program_tests {
             .iter()
             .find(|d| d.xtors.iter().any(|x| x.name.name.starts_with("Cons")))
             .expect("expected a copy that still has Cons");
-        let param = tvar!(cons_copy.type_params[0].id.clone());
+        let param = tvar!(cons_copy.type_params[0].name.clone());
         let cons = &cons_copy.xtors[0];
         assert_eq!(cons.args.bindings[0].ty, param, "x must stay generic");
         let Ty::Decl {

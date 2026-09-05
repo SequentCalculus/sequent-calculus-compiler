@@ -45,7 +45,7 @@ pub fn compile_clause(
         .iter()
         .zip(&ctor.type_params)
         .map(|(name, declared)| TypeParam {
-            id: fresh_identifier(state.max_id, name),
+            name: fresh_identifier(state.max_id, name),
             polarity: declared.polarity,
         })
         .collect();
@@ -64,7 +64,7 @@ pub fn compile_clause(
     core_lang::syntax::terms::Clause {
         prdcns: Cns,
         xtor: ctor.name,
-        type_params: clause_type_params.into_iter().map(|p| p.id).collect(),
+        type_params: clause_type_params.into_iter().map(|p| p.name).collect(),
         context: compile_context(clause.context, type_params_subst.clone()),
         body: Rc::new(
             clause
@@ -105,7 +105,7 @@ pub fn compile_coclause(
         .iter()
         .zip(&dtor.type_params)
         .map(|(name, declared)| TypeParam {
-            id: fresh_identifier(state.max_id, name),
+            name: fresh_identifier(state.max_id, name),
             polarity: declared.polarity,
         })
         .collect();
@@ -138,7 +138,7 @@ pub fn compile_coclause(
     core_lang::syntax::terms::Clause {
         prdcns: Prd,
         xtor: dtor.name,
-        type_params: coclause_type_params.into_iter().map(|p| p.id).collect(),
+        type_params: coclause_type_params.into_iter().map(|p| p.name).collect(),
         context: new_context,
         body: Rc::new(
             clause.body.compile_with_cont(

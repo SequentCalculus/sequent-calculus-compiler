@@ -66,7 +66,7 @@ pub fn compile_type_params(
         .bindings
         .iter()
         .map(|param| TypeParam {
-            id: fresh_identifier(max_id, &param.name),
+            name: fresh_identifier(max_id, &param.name),
             polarity: translate_polarity(&param.polarity),
         })
         .collect()

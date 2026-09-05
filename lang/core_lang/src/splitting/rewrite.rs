@@ -122,7 +122,7 @@ fn build_declaration_copy<P: Polarity + Clone>(
         Some((_, true)) => decl
             .type_params
             .iter()
-            .map(|old| (old.id.clone(), fresh_identifier(max_id, &old.id.name)))
+            .map(|old| (old.name.clone(), fresh_identifier(max_id, &old.name.name)))
             .collect(),
         _ => vec![],
     };
@@ -188,7 +188,7 @@ fn split_xtor_sig<P: Polarity + Clone>(
         Some((_, true)) => xtor
             .type_params
             .iter()
-            .map(|old| (old.id.clone(), fresh_identifier(max_id, &old.id.name)))
+            .map(|old| (old.name.clone(), fresh_identifier(max_id, &old.name.name)))
             .collect(),
         _ => vec![],
     };
@@ -211,7 +211,7 @@ fn split_xtor_sig<P: Polarity + Clone>(
 /// Builds one physical copy's field types from the field observations recorded for this specific
 /// copy's equivalence class (`root`), so e.g. two split copies of `Bar` each end up pointing at
 /// their own, independently split copy of a nested or self-referential field. Only the observed
-/// *head names* are taken over, see [`graft_observed_decl_names`].
+/// *head names* are taken over, see [`substitute_observed_decl_names`].
 ///
 /// A field never observed at any real occurrence falls back to its declared shape, resolved via
 /// `resolve_unobserved_ty`. That shape only names the *origin* type, not a specific split copy of
@@ -232,7 +232,7 @@ fn build_field_args<P: Polarity + Clone>(
             .map(|(i, binding)| {
                 let ty = match root.and_then(|(r, _)| field_observations.get(r, &xtor.name, i)) {
                     // observed at some real occurrence: split independently from its owner
-                    Some(observed) => graft_observed_decl_names(&binding.ty, observed, table),
+                    Some(observed) => substitute_observed_decl_names(&binding.ty, observed, table),
                     // never used anywhere: `binding.ty` was left unlabeled
                     None => table.resolve_unobserved_ty(&binding.ty),
                 };
@@ -249,7 +249,7 @@ fn build_field_args<P: Polarity + Clone>(
 /// Rebuilds one field's type for a physical copy: the *declared* type is the skeleton, and only its
 /// `Ty::Decl` heads are replaced by whichever split copy the observation at the real occurrence
 /// points at.
-fn graft_observed_decl_names(declared: &Ty, observed: &Ty, table: &SplitTable) -> Ty {
+fn substitute_observed_decl_names(declared: &Ty, observed: &Ty, table: &SplitTable) -> Ty {
     let Ty::Decl {
         type_args: declared_args,
         ..
@@ -278,7 +278,7 @@ fn graft_observed_decl_names(declared: &Ty, observed: &Ty, table: &SplitTable) -
                 .enumerate()
                 .map(|(i, declared_arg)| match observed_args.args.get(i) {
                     Some(observed_arg) => {
-                        graft_observed_decl_names(declared_arg, observed_arg, table)
+                        substitute_observed_decl_names(declared_arg, observed_arg, table)
                     }
                     None => table.resolve_unobserved_ty(declared_arg),
                 })
@@ -298,13 +298,13 @@ fn rename_params(params: &[TypeParam], subst: &[(Identifier, Identifier)]) -> Ve
     params
         .iter()
         .map(|param| {
-            let id = subst
+            let name = subst
                 .iter()
-                .find(|(old, _)| old == &param.id)
+                .find(|(old, _)| old == &param.name)
                 .map(|(_, new)| new.clone())
-                .unwrap_or_else(|| param.id.clone());
+                .unwrap_or_else(|| param.name.clone());
             TypeParam {
-                id,
+                name,
                 polarity: param.polarity,
             }
         })
@@ -505,8 +505,8 @@ mod rewrite_tests {
         // both copies must get fresh, mutually distinct, nonzero ids, otherwise the constraint
         // graph would index both copies' type parameter under the same node
         assert_ne!(copies[0].type_params[0], copies[1].type_params[0]);
-        assert_ne!(copies[0].type_params[0].id.id, 0);
-        assert_ne!(copies[1].type_params[0].id.id, 0);
+        assert_ne!(copies[0].type_params[0].name.id, 0);
+        assert_ne!(copies[1].type_params[0].name.id, 0);
     }
 
     #[test]
@@ -530,7 +530,7 @@ mod rewrite_tests {
 
         for copy in &copies {
             let field_ty = &copy.xtors[0].args.bindings[0].ty;
-            assert_eq!(field_ty, &Ty::Var(copy.type_params[0].id.clone()));
+            assert_eq!(field_ty, &Ty::Var(copy.type_params[0].name.clone()));
         }
     }
 
@@ -609,7 +609,12 @@ mod rewrite_tests {
             id!("MkBar"),
             &[label_in(&bar_a).clone(), label_in(&bar_b).clone()],
         );
-        let table = SplitTable::build(&mut state.uf, &label_origin, &[decl.clone()], &[]);
+        let table = SplitTable::build(
+            &mut state.uf,
+            &label_origin,
+            std::slice::from_ref(&decl),
+            &[],
+        );
 
         let mut max_id = 0;
         let copies = split_declaration(&decl, &table, &field_observations, &used, &mut max_id);
@@ -629,7 +634,12 @@ mod rewrite_tests {
         // `MkBar` itself was constructed (so it isn't dropped), only its field was never
         // observed.
         let used = used_for(id!("MkBar"), &[label_in(&bar).clone()]);
-        let table = SplitTable::build(&mut state.uf, &label_origin, &[decl.clone()], &[]);
+        let table = SplitTable::build(
+            &mut state.uf,
+            &label_origin,
+            std::slice::from_ref(&decl),
+            &[],
+        );
 
         let field_observations = FieldObservations::default();
         let mut max_id = 0;

@@ -109,7 +109,7 @@ pub fn build_type_param_subst(
     names
         .iter()
         .cloned()
-        .zip(params.iter().map(|p| (p.id.clone(), p.polarity)))
+        .zip(params.iter().map(|p| (p.name.clone(), p.polarity)))
         .collect()
 }
 
@@ -437,7 +437,7 @@ mod compile_tests {
             &mut state,
             Rc::new(subst),
             vec![TypeParam {
-                id: fresh_param.clone(),
+                name: fresh_param.clone(),
                 polarity: ParamPolarity::Data,
             }],
         );

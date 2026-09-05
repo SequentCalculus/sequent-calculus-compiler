@@ -314,11 +314,11 @@ mod type_tests {
         };
         let type_params = vec![
             TypeParam {
-                id: positive.clone(),
+                name: positive.clone(),
                 polarity: ParamPolarity::Data,
             },
             TypeParam {
-                id: negative.clone(),
+                name: negative.clone(),
                 polarity: ParamPolarity::Codata,
             },
         ];
@@ -510,7 +510,7 @@ mod specialize_tests {
         let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
         let table = NamingTable::build(
             &solution,
-            &[list.clone()],
+            std::slice::from_ref(&list),
             &[],
             &[],
             &ErasedDecls::default(),
@@ -543,7 +543,7 @@ mod specialize_tests {
         let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
         let table = NamingTable::build(
             &solution,
-            &[list.clone()],
+            std::slice::from_ref(&list),
             &[],
             &[],
             &ErasedDecls::default(),

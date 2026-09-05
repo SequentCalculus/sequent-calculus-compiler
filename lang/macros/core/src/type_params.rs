@@ -17,7 +17,7 @@ pub fn tparam(input: TokenStream) -> TokenStream {
 
     quote! {
         core_lang::syntax::type_params::TypeParam{
-            id: #id_expr,
+            name: #id_expr,
             polarity: #polarity,
         }
     }

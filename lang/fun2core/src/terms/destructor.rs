@@ -34,7 +34,7 @@ impl Compile for fun::syntax::terms::Destructor {
             type_params
                 .values()
                 .map(|(id, polarity)| TypeParam {
-                    id: id.clone(),
+                    name: id.clone(),
                     polarity: *polarity,
                 })
                 .collect(),

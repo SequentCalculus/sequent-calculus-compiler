@@ -44,7 +44,7 @@ impl Compile for fun::syntax::terms::Let {
         let ambient_type_params: Vec<TypeParam> = type_params
             .values()
             .map(|(id, polarity)| TypeParam {
-                id: id.clone(),
+                name: id.clone(),
                 polarity: *polarity,
             })
             .collect();

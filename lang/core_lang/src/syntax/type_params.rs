@@ -45,27 +45,27 @@ impl std::fmt::Display for ParamPolarity {
 /// declared [`ParamPolarity`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParam {
-    pub id: Identifier,
+    pub name: Identifier,
     pub polarity: ParamPolarity,
 }
 
 impl TypeParam {
     /// Projects a slice of declaration-site type parameters down to their bare `Identifier`s,
-    /// discarding polarity.
+    /// discarding polarity
     pub fn ids(params: &[TypeParam]) -> Vec<Identifier> {
-        params.iter().map(|p| p.id.clone()).collect()
+        params.iter().map(|p| p.name.clone()).collect()
     }
 }
 
 impl PartialEq<Identifier> for TypeParam {
     fn eq(&self, other: &Identifier) -> bool {
-        self.id == *other
+        self.name == *other
     }
 }
 
 impl Print for TypeParam {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.id
+        self.name
             .print(cfg, alloc)
             .append(self.polarity.print(cfg, alloc))
     }
