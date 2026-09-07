@@ -59,7 +59,8 @@ impl Ty {
     }
 
     /// This function substitutes type variables in a type with their corresponding concrete types according to the provided substitution mapping.
-    /// - `subst` is an optional tuple containing a reference to the list of type parameters and their corresponding concrete types for the current substitution context.
+    /// - `subst` is a `(params, args)` pair: `params[i]` is substituted by `args[i]` wherever it
+    ///   occurs. A variable not present in `params` is left unchanged.
     pub fn substitute(&self, subst: (&[Identifier], &[Ty])) -> Self {
         match self {
             Ty::I64 => Ty::I64,
@@ -136,7 +137,7 @@ impl ConstraintCollector for Ty {
             return Err(MonoError::UndeclaredType(name.print_to_string(None)));
         };
 
-        let template_ids: Vec<Identifier> = TypeParam::ids(declared_params);
+        let template_ids: Vec<Identifier> = TypeParam::names(declared_params);
         let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
         constraints.extend(type_args.collect_constraints(env)?);
         Ok(constraints)

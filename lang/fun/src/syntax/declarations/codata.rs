@@ -106,12 +106,12 @@ impl Codata {
             .flat_map(|dtor| dtor.type_params.names())
             .collect();
 
-        if let Some(overlapps) =
+        if let Some(overlaps) =
             check_overlapping_type_params(&self.type_params.names(), &dtor_params)
         {
             return Err(Error::DefinedMultipleTimes {
                 span: self.span,
-                name: overlapps
+                name: overlaps
                     .iter()
                     .map(|s| s.to_string())
                     .collect::<Vec<_>>()

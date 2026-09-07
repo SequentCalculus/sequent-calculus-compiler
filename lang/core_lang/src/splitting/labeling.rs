@@ -329,7 +329,7 @@ pub fn build_decl_signatures(
             def.name.clone(),
             DeclSignature {
                 decl_type_params: vec![],
-                own_type_params: TypeParam::ids(&def.type_params),
+                own_type_params: TypeParam::names(&def.type_params),
                 tys,
             },
         );
@@ -342,8 +342,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: TypeParam::ids(&decl.type_params),
-                    own_type_params: TypeParam::ids(&xtor.type_params),
+                    decl_type_params: TypeParam::names(&decl.type_params),
+                    own_type_params: TypeParam::names(&xtor.type_params),
                     tys,
                 },
             );
@@ -357,8 +357,8 @@ pub fn build_decl_signatures(
             sigs.insert(
                 xtor.name.clone(),
                 DeclSignature {
-                    decl_type_params: TypeParam::ids(&decl.type_params),
-                    own_type_params: TypeParam::ids(&xtor.type_params),
+                    decl_type_params: TypeParam::names(&decl.type_params),
+                    own_type_params: TypeParam::names(&xtor.type_params),
                     tys,
                 },
             );

@@ -65,8 +65,10 @@ impl Substitution {
 
 /// A context for specializing polymorphic declarations into monomorphic ones.
 ///
-/// `table` is a reference to the naming table that maps polymorphic type parameters to their corresponding concrete types.
-/// `subst` carries the type parameters and their corresponding concrete types for the current specialization context.
+/// `table` is a reference to the naming table that maps polymorphic type parameters to their
+/// corresponding concrete types.
+/// `subst` carries the type parameters and their corresponding concrete types for the current
+/// specialization context.
 #[derive(Clone)]
 pub struct SpecializeContext<'a> {
     pub table: &'a NamingTable,
@@ -98,7 +100,9 @@ impl<'a> SpecializeContext<'a> {
         }
     }
 
-    /// Extends the current specialization context with additional type parameters and their corresponding concrete types, returning a new `SpecializeContext` that combines the existing substitution with the new one.
+    /// Extends the current specialization context with additional type parameters and their
+    /// corresponding concrete types, returning a new `SpecializeContext` that combines the
+    /// existing substitution with the new one.
     fn extend_with_substs(&self, new_params: &[Identifier], new_args: &[Ty]) -> Self {
         SpecializeContext {
             table: self.table,
@@ -110,7 +114,9 @@ impl<'a> SpecializeContext<'a> {
 
 /// A trait for types that can be specialized from polymorphic to monomorphic forms.
 pub trait Specialize {
-    /// Specializes the current instance using the provided specialization context, returning a new instance with all polymorphic type parameters replaced by their corresponding concrete types.
+    /// Specializes the current instance using the provided specialization context, returning a
+    /// new instance with all polymorphic type parameters replaced by their corresponding
+    /// concrete types.
     fn specialize(&self, context: &SpecializeContext) -> Self;
 }
 
@@ -203,7 +209,7 @@ fn specialize_declaration<P: Polarity + Clone>(
     table: &NamingTable,
     erased_decls: &ErasedDecls,
 ) -> Vec<TypeDeclaration<P>> {
-    let params: Vec<Identifier> = TypeParam::ids(&decl.type_params);
+    let params: Vec<Identifier> = TypeParam::names(&decl.type_params);
     let is_erased = erased_decls.is_erased(&decl.name);
 
     if params.is_empty() || is_erased {
@@ -253,7 +259,7 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
     extra_params: &[Identifier],
     ctx: &SpecializeContext,
 ) -> Vec<XtorSig<P>> {
-    let mut params: Vec<Identifier> = TypeParam::ids(&xtor_sig.type_params);
+    let mut params: Vec<Identifier> = TypeParam::names(&xtor_sig.type_params);
     params.extend_from_slice(extra_params);
 
     // This is already a monomorphic declaration, so we can return it as-is
@@ -342,7 +348,7 @@ pub fn specialize_clause<C: Chi>(
 
 /// Specialization of polymorphic function definitions into monomorphic ones
 pub fn specialize_def(def: &Def, table: &NamingTable, erased_decls: &ErasedDecls) -> Vec<Def> {
-    let params: Vec<Identifier> = TypeParam::ids(&def.type_params);
+    let params: Vec<Identifier> = TypeParam::names(&def.type_params);
 
     if params.is_empty() {
         // This function has no type parameters of its own, so it produces

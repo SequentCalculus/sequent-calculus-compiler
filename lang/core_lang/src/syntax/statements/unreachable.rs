@@ -100,7 +100,7 @@ impl Checked for Unreachable {
 pub struct FsUnreachable;
 
 impl FsUnreachable {
-    /// This function constructs an unreachable statement from a given type.
+    /// This function constructs a focused unreachable statement.
     #[allow(clippy::self_named_constructors)]
     pub fn unreachable() -> Self {
         FsUnreachable

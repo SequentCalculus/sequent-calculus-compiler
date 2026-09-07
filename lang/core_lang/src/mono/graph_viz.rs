@@ -11,9 +11,9 @@ use printer::Print;
 use crate::mono::constraint_graph::{ConstraintGraph, Node};
 use crate::syntax::Ty;
 
-/// Whether (and where) to render the constraint graph as a Graphviz file,
-/// a `--viz[=PATH]`-style CLI flag naturally parses to (flag absent, present without a value,
-/// present with an explicit path) with cases that name what each one means.
+/// Whether (and where) to render the constraint graph as a Graphviz file. Named cases for the
+/// three states a `--viz[=PATH]`-style CLI flag naturally parses to: absent, present without a
+/// value, and present with an explicit path.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum VizOutput {
     /// Do not render anything.

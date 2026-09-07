@@ -97,8 +97,8 @@ pub fn compile_def(
 /// - `used_labels` is the set of labels of top-level functions in the corresponding [Fun](fun)
 ///   program.
 /// - `max_id` is the maximum identifier used so far, needed for generating fresh identifiers.
-/// - `type_params` maps every top-level declaration's type parameter names to their fresh Core
-///   identifier and declared polarity (`main` has none of its own).
+/// - `type_params_subst` maps every top-level declaration's type parameter names to their fresh
+///   Core identifier and declared polarity (`main` has none of its own).
 ///
 /// # Panics
 ///
@@ -109,10 +109,10 @@ pub fn compile_main(
     data_types: &[DataDeclaration],
     used_labels: &mut HashSet<Name>,
     max_id: &mut usize,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
-    let context = compile_context(def.context, type_params.clone());
+    let context = compile_context(def.context, type_params_subst.clone());
 
     def.body.used_binders(&mut used_vars);
     // we sometimes create new top-level labels during the translation, so we need to collect them
@@ -132,7 +132,7 @@ pub fn compile_main(
         &def.body
             .get_type()
             .expect("Types should be annotated before translation"),
-        type_params.clone(),
+        type_params_subst.clone(),
     );
 
     let body = def.body.compile_with_cont(
@@ -149,7 +149,7 @@ pub fn compile_main(
         )
         .into(),
         &mut state,
-        type_params,
+        type_params_subst,
     );
 
     def_plus_lifted_statements.push_front(core_lang::syntax::Def {

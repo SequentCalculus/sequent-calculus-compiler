@@ -75,14 +75,16 @@ impl VarLocations {
     }
 }
 
-/// A directed edge between two type variables in the constraint graph.
+/// A directed edge between two nodes (vectors of type parameters) in the constraint graph.
 ///
-/// The shape of `from` encodes both the source variable and any constructor
-/// wrapping that is applied to types as they flow through this edge:
+/// Each element of `positions` classifies the corresponding position of the original constraint's
+/// `from` vector and encodes both its source variable(s), if any, and any constructor wrapping
+/// applied to types as they flow through this edge:
 ///
-/// - `Ty::Var(α)` is a **flat edge**: every type in `S(α)` flows unchanged into `into`.
-/// - `Ty::Decl { name: T, args: [Ty::Var(α)] }` is a **constructor edge**: for each
-///   `ρ ∈ S(α)`, the wrapped type `T[ρ]` flows into `into`.
+/// - [`Position::Variable`] with a bare `Ty::Var(α)` template is a **flat edge**: every type in
+///   `S(α)` flows unchanged into `into`.
+/// - [`Position::Variable`] with a `Ty::Decl { name: T, args: [Ty::Var(α)] }` template is a
+///   **constructor edge**: for each `ρ ∈ S(α)`, the wrapped type `T[ρ]` flows into `into`.
 #[derive(Debug, Clone)]
 pub struct Edge {
     /// Classified positions, one per element of the original `from` vector, in order.
@@ -167,8 +169,7 @@ impl From<FlowConstraintSet> for ConstraintGraph {
     ///
     /// # Panics
     ///
-    /// Panics if a constraint's `from` and `to` vectors have different
-    /// lengths, or if any position of `to` is not a [`Ty::Var`].
+    /// Panics if a constraint's `from` and `to` vectors have different lengths.
     fn from(constraints: FlowConstraintSet) -> Self {
         let mut graph = ConstraintGraph::default();
 
@@ -278,7 +279,7 @@ mod tests {
         assert_eq!(outgoing_a[0].into, node_b);
         assert!(
             !outgoing_a[0].has_constructor_position(),
-            "A -> B sollte flach sein"
+            "A -> B should be a flat edge"
         );
 
         let outgoing_b = graph.outgoing(&node_b);
@@ -286,7 +287,7 @@ mod tests {
         assert_eq!(outgoing_b[0].into, node_a);
         assert!(
             !outgoing_b[0].has_constructor_position(),
-            "B -> A sollte flach sein"
+            "B -> A should be a flat edge"
         );
     }
 
@@ -318,7 +319,7 @@ mod tests {
         assert_eq!(outgoing_a[0].into, node_b);
         assert!(
             outgoing_a[0].has_constructor_position(),
-            "Kante sollte Constructor-Position enthalten"
+            "edge should have a constructor position"
         );
 
         assert!(graph.outgoing(&node_b).is_empty());

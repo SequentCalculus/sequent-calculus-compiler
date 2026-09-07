@@ -11,7 +11,9 @@ use crate::{
     },
 };
 
-/// A mapping from polymorphic type parameters to their corresponding concrete types as string representations after monomorphization.
+/// A mapping from a polymorphic declaration, xtor, or def, paired with one concrete
+/// instantiation of its type parameters, to the mangled [`Identifier`] its monomorphic copy is
+/// given.
 ///
 /// This is the single source of truth for specialization: once built, it is
 /// the only structure the specialization passes need. The [`Solution`] used
@@ -21,7 +23,8 @@ pub struct NamingTable {
     names: BTreeMap<(Identifier, Vec<Ty>), Identifier>,
     xtor_extra_params: HashMap<Identifier, Vec<Identifier>>,
     /// Tracks which (name, instantiation) pair first claimed each mangled name, so a second,
-    /// distinct.
+    /// distinct pair mangling to the same name is reported as a [`MonoError::NameCollision`]
+    /// instead of silently overwriting the first one.
     mangled_owners: HashMap<Identifier, (Identifier, Vec<Ty>)>,
 }
 
@@ -56,7 +59,7 @@ impl NamingTable {
         }
 
         for def in defs {
-            let def_type_param_ids: Vec<Identifier> = TypeParam::ids(&def.type_params);
+            let def_type_param_ids: Vec<Identifier> = TypeParam::names(&def.type_params);
             table.register(
                 &def.name,
                 &def_type_param_ids,
@@ -82,7 +85,7 @@ impl NamingTable {
         erased_decls: &ErasedDecls,
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) -> Result<(), MonoError> {
-        let decl_type_param_ids: Vec<Identifier> = TypeParam::ids(&decl.type_params);
+        let decl_type_param_ids: Vec<Identifier> = TypeParam::names(&decl.type_params);
         if erased_decls.is_erased(&decl.name) {
             self.insert_name((decl.name.clone(), vec![]), decl.name.clone())?;
             for xtor in &decl.xtors {
@@ -90,7 +93,7 @@ impl NamingTable {
                 self.xtor_extra_params
                     .insert(xtor.name.clone(), decl_type_param_ids.clone());
 
-                let xtor_type_param_ids: Vec<Identifier> = TypeParam::ids(&xtor.type_params);
+                let xtor_type_param_ids: Vec<Identifier> = TypeParam::names(&xtor.type_params);
                 self.register_combined(
                     &xtor.name,
                     &xtor_type_param_ids,
@@ -102,7 +105,7 @@ impl NamingTable {
         } else {
             self.register(&decl.name, &decl_type_param_ids, solution, mangle)?;
             for xtor in &decl.xtors {
-                let xtor_type_param_ids: Vec<Identifier> = TypeParam::ids(&xtor.type_params);
+                let xtor_type_param_ids: Vec<Identifier> = TypeParam::names(&xtor.type_params);
                 self.register(&xtor.name, &xtor_type_param_ids, solution, mangle)?;
             }
         }

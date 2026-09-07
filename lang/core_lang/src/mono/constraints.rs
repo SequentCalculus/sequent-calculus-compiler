@@ -10,12 +10,15 @@ use crate::mono::errors::MonoError;
 use crate::syntax::{Identifier, Ty};
 use crate::typing::env::GlobalEnv;
 
-/// A flow constraint describing how a concrete type reaches a polymorphic type parameter.
+/// A flow constraint describing how a vector of concrete types reaches a vector of polymorphic
+/// type parameters, position by position. A single-parameter declaration like `List[A]` has a
+/// singleton vector; a multi-parameter one like `Pair[A, B]` bundles both into one vector, so the
+/// correlation between them is preserved.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct FlowConstraint {
-    /// The concrete type that reaches the polymorphic type parameter.
+    /// The concrete types that reach the polymorphic type parameters, one per position.
     pub from: Vec<Ty>,
-    /// The name of the polymorphic type parameter.
+    /// The names of the polymorphic type parameters, one per position.
     pub to: Vec<Identifier>,
 }
 
@@ -115,7 +118,9 @@ pub trait ConstraintCollector {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError>;
 }
 
-/// This function collects flow constraints from a concrete type reaching a polymorphic type parameter. It is used as a helper function in the implementation of the `ConstraintCollector` trait for various syntax elements.
+/// This function collects flow constraints from a concrete type reaching a polymorphic type
+/// parameter. It is used as a helper function in the implementation of the
+/// `ConstraintCollector` trait for various syntax elements.
 pub fn collect_type_flow(
     sources: &[Ty],
     targets: &[Identifier],

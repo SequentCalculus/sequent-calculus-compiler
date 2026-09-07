@@ -71,7 +71,7 @@ impl TypeParams {
                 .map(|(name, polarity)| TypeParam {
                     span: None,
                     name: name.to_string(),
-                    polarity: polarity.clone(),
+                    polarity: *polarity,
                 })
                 .collect(),
         }
@@ -97,11 +97,9 @@ impl TypeParams {
 
 impl Print for TypeParam {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        let sigil = match self.polarity {
-            Polarity::Data => "+",
-            Polarity::Codata => "-",
-        };
-        alloc.text(self.name.clone()).append(alloc.text(sigil))
+        alloc
+            .text(self.name.clone())
+            .append(alloc.text(self.polarity.to_string()))
     }
 }
 

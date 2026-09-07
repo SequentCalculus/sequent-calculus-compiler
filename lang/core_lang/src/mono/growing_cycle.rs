@@ -107,8 +107,9 @@ impl fmt::Display for GrowingCycle {
 /// reach back to one of its own source nodes via any path in the graph,
 /// including the trivial case of a direct self-loop, where the edge's source and target are the very same node.
 ///
-/// Returns the full path with the applied type constructor recorded at the hop where it was
-/// applied, or `None` if the graph is safe to solve as-is.
+/// Returns every growing cycle found, each as the full path with the applied type constructor
+/// recorded at the hop where it was applied. Returns an empty vector if the graph is safe to
+/// solve as-is.
 pub fn find_all_growing_cycles(graph: &ConstraintGraph) -> Vec<GrowingCycle> {
     let mut cycles = Vec::new();
     let mut seen_cycle_keys: HashSet<Vec<(Node, Vec<Ty>)>> = HashSet::new();
@@ -596,7 +597,8 @@ mod growing_cycle_tests {
         let partially_broken_graph = ConstraintGraph::from(erase_constraints(&set, &only_first));
         assert!(
             !find_all_growing_cycles(&partially_broken_graph).is_empty(),
-            "erasing only one of the two constructors must leave the cycle intact -- otherwise              this test no longer exercises the bug it targets"
+            "erasing only one of the two constructors must leave the cycle intact -- otherwise \
+             this test no longer exercises the bug it targets"
         );
     }
 }

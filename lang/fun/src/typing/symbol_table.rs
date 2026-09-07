@@ -416,7 +416,7 @@ impl SymbolTable {
                 });
             }
             self.abstract_type_vars
-                .insert(name.clone(), own_param.polarity.clone());
+                .insert(name.clone(), own_param.polarity);
             result.push(Ty::Decl {
                 span: None,
                 name: name.clone(),

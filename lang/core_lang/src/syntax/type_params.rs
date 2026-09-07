@@ -51,8 +51,9 @@ pub struct TypeParam {
 
 impl TypeParam {
     /// Projects a slice of declaration-site type parameters down to their bare `Identifier`s,
-    /// discarding polarity
-    pub fn ids(params: &[TypeParam]) -> Vec<Identifier> {
+    /// discarding polarity. Mirrors `fun::syntax::type_params::TypeParams::names` on the Fun
+    /// side.
+    pub fn names(params: &[TypeParam]) -> Vec<Identifier> {
         params.iter().map(|p| p.name.clone()).collect()
     }
 }

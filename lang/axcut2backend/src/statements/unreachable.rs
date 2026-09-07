@@ -1,3 +1,5 @@
+//! This module defines the code generation for the unreachable statement.
+
 use super::CodeStatement;
 use crate::{code::Instructions, config::Config, utils::Utils};
 use axcut::syntax::{TypeDeclaration, TypingContext, statements::Unreachable};

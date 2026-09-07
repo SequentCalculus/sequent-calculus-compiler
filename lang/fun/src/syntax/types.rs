@@ -68,7 +68,7 @@ impl Ty {
                             *span,
                             instance_name,
                             type_args,
-                            pol.clone(),
+                            *pol,
                             type_params.clone(),
                             xtors.clone(),
                             symbol_table,
@@ -123,13 +123,13 @@ impl Ty {
             } => {
                 if type_args.args.is_empty() {
                     if let Some(polarity) = symbol_table.abstract_type_vars.get(name) {
-                        return Ok(polarity.clone());
+                        return Ok(*polarity);
                     }
                 }
                 symbol_table
                     .type_templates
                     .get(name)
-                    .map(|(pol, _, _)| pol.clone())
+                    .map(|(pol, _, _)| *pol)
                     .ok_or_else(|| Error::Undefined {
                         span: span.to_miette(),
                         name: name.clone(),
@@ -347,7 +347,7 @@ impl TypeArgs {
                 return Err(Error::PolarityMismatch {
                     span: self.span.to_miette(),
                     param: param.name.clone(),
-                    expected: param.polarity.clone(),
+                    expected: param.polarity,
                     got,
                 });
             }

@@ -144,16 +144,16 @@ pub fn check_overlapping_type_params(
 ) -> Option<Vec<String>> {
     let set_b: HashSet<&str> = snd_params.iter().map(|s| s.as_str()).collect();
 
-    let overlapps: Vec<String> = fst_params
+    let overlaps: Vec<String> = fst_params
         .iter()
         .filter(|p| set_b.contains(p.as_str()))
         .cloned()
         .collect();
 
-    if overlapps.is_empty() {
+    if overlaps.is_empty() {
         None
     } else {
-        Some(overlapps)
+        Some(overlaps)
     }
 }
 

@@ -43,7 +43,7 @@ impl Def {
         for param in &self.type_params.bindings {
             symbol_table.type_templates.insert(
                 param.name.clone(),
-                (param.polarity.clone(), TypeParams::default(), vec![]),
+                (param.polarity, TypeParams::default(), vec![]),
             );
             inserted.push(param.name.clone());
         }

@@ -9,9 +9,9 @@ use crate::cli::print_stdout;
 #[derive(clap::Args)]
 pub struct Args {
     filepath: PathBuf,
-    #[arg(long = "viz", num_args(0..=1), require_equals = true)]
+    #[arg(long = "viz", short = 'v', num_args(0..=1), require_equals = true)]
     viz: Option<Option<PathBuf>>,
-    #[arg(long = "debug")]
+    #[arg(long = "debug", short = 'd')]
     debug: bool,
 }
 

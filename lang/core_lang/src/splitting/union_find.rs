@@ -5,8 +5,10 @@ use std::collections::HashMap;
 
 use crate::splitting::labeling::Label;
 
-/// A simple union-find data structure for tracking equivalence classes of labels. Each label
-/// is either a root of its own class (in which case it is its own `parent`) or it points to another label that is its `parent`. The `rank` map is used to keep the tree shallow by always attaching the smaller tree to the root of the larger tree during union operations.
+/// A simple union-find data structure for tracking equivalence classes of labels. Each label is
+/// either a root of its own class (in which case it is its own `parent`) or it points to another
+/// label that is its `parent`. The `rank` map is used to keep the tree shallow by always
+/// attaching the smaller tree to the root of the larger tree during union operations.
 #[derive(Debug, Clone, Default)]
 pub struct UnionFind {
     parent: HashMap<Label, Label>,
@@ -14,13 +16,17 @@ pub struct UnionFind {
 }
 
 impl UnionFind {
-    /// Ensures that a label is present in the union-find structure. If the label is not already present, it initializes it as its own `parent` (root of its own class) and sets its `rank` to 0.
+    /// Ensures that a label is present in the union-find structure. If the label is not already
+    /// present, it initializes it as its own `parent` (root of its own class) and sets its
+    /// `rank` to 0.
     fn make(&mut self, l: &Label) {
         self.parent.entry(l.clone()).or_insert_with(|| l.clone());
         self.rank.entry(l.clone()).or_insert(0);
     }
 
-    /// Finds the root of the equivalence class for the given label, applying path compression to flatten the structure for future queries. If the label is not present, it is first added to the structure.
+    /// Finds the root of the equivalence class for the given label, applying path compression to
+    /// flatten the structure for future queries. If the label is not present, it is first added
+    /// to the structure.
     pub fn find(&mut self, l: &Label) -> Label {
         self.make(l);
         if self.parent[l] != *l {
@@ -30,7 +36,9 @@ impl UnionFind {
         self.parent[l].clone()
     }
 
-    /// Unions the equivalence classes of two labels. If they are already in the same class, nothing is done. Otherwise, the root of one class is made the parent of the root of the other class, using `rank` to keep the tree shallow.
+    /// Unions the equivalence classes of two labels. If they are already in the same class,
+    /// nothing is done. Otherwise, the root of one class is made the parent of the root of the
+    /// other class, using `rank` to keep the tree shallow.
     pub fn union(&mut self, a: &Label, b: &Label) {
         let (ra, rb) = (self.find(a), self.find(b));
         if ra == rb {

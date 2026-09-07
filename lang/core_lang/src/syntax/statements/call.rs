@@ -161,7 +161,7 @@ impl ConstraintCollector for Call {
             return Err(MonoError::UndefinedFunction(self.name.name.clone()));
         };
 
-        let def_type_param_ids: Vec<Identifier> = TypeParam::ids(&def.type_params);
+        let def_type_param_ids: Vec<Identifier> = TypeParam::names(&def.type_params);
         constraints.extend(collect_type_flow(
             &self.type_args.args,
             &def_type_param_ids,
@@ -227,7 +227,7 @@ impl Checked for Call {
         )?;
 
         // build the substitution mapping for the type parameters and type arguments
-        let def_type_param_ids: Vec<Identifier> = TypeParam::ids(&def.type_params);
+        let def_type_param_ids: Vec<Identifier> = TypeParam::names(&def.type_params);
         let subst = (
             def_type_param_ids.as_slice(),
             self.type_args.args.as_slice(),

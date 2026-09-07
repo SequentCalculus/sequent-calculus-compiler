@@ -40,10 +40,10 @@ pub trait Utils<Temporary> {
 }
 
 /// Builds the assembler-safe form of an identifier's name, replacing every character a human-
-/// facing identifier can contain but an assembly label cannot. `[`, `, `, `]` from
-/// `mono::naming_table`'s bracket-form specialization names, and `#` from
-/// `splitting::split_table`'s `Box#1`-style equivalence-class names with underscores, plus the
-/// `_id` suffix `Print for Identifier` appends for a non-zero `id`.
+/// facing identifier can contain but an assembly label cannot: `[` and `, ` (from
+/// `mono::naming_table`'s bracket-form specialization names) become `_`, `]` is dropped entirely,
+/// and `#` (from `splitting::split_table`'s `Box#1`-style equivalence-class names) becomes `__`,
+/// plus the `_id` suffix `Print for Identifier` appends for a non-zero `id`.
 ///
 /// Built directly from the identifier's own `name`/`id` fields, not by patching its already
 /// human-facing printed form, so `Print for Identifier` itself can stay readable (`Box#1`, not

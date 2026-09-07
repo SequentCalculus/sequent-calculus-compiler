@@ -1,12 +1,13 @@
-//! Defines the errors that can occur during constraint collection and solving.
+//! Defines the errors that can occur during constraint collection, solving, and specialization.
 
 use std::fmt;
 
 use crate::mono::growing_cycle::GrowingCycle;
 
-/// This enum defines the errors that can occur during typechecking and
-/// constraint collection. Variants are designed to be specific and to
-/// provide human-friendly messages via `Display`.
+/// This enum defines the errors that can occur across the monomorphization pipeline: constraint
+/// collection (`TypeMismatch`, `UndeclaredType`, `UndefinedFunction`, `UndeclaredXtor`), solving
+/// (`PolymorphicRecursion`), and specialization (`NameCollision`). Variants are designed to be
+/// specific and to provide human-friendly messages via `Display`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MonoError {
     /// A concrete type does not match the expected type.
@@ -31,7 +32,7 @@ pub enum MonoError {
     /// Detected polymorphic recursion, which is not supported by our monomorphization approach.
     PolymorphicRecursion { cycles: Vec<GrowingCycle> },
 
-    /// Two distinct declarations, xtors, or defs mangled to the very same monomorphic name. 
+    /// Two distinct declarations, xtors, or defs mangled to the very same monomorphic name.
     /// The mangling scheme (`mono::naming_table`) is not injective for every possible source
     /// name, e.g. a user-defined `f_Box` can collide with the generated name for `f[Box]`.
     NameCollision {
