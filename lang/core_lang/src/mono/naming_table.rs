@@ -314,7 +314,8 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased)
+            .expect("test fixture must not collide");
 
         // Box itself must remain registered under its own, unchanged name.
         assert_eq!(table.lookup(&id!("Box"), &[]), &id!("Box"));
@@ -328,7 +329,8 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased)
+            .expect("test fixture must not collide");
 
         let mut tuples = table.instantiations_for(&id!("Wrap"));
         tuples.sort();
@@ -368,7 +370,8 @@ mod erasure_tests {
             ),
         ]));
 
-        let table = NamingTable::build(&solution, &[box_decl(), list_decl], &[], &[], &erased).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[box_decl(), list_decl], &[], &[], &erased)
+            .expect("test fixture must not collide");
 
         // exactly Cons's own tuples, in canonical order (`Ty::I64` sorts before `Ty::Decl`) --
         // neither Box's/Wrap's nor List's entries may leak in
@@ -392,7 +395,8 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased)
+            .expect("test fixture must not collide");
 
         assert_eq!(table.extra_params_for(&id!("Wrap")), &[id!("A", 1)]);
     }
@@ -405,7 +409,8 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased)
+            .expect("test fixture must not collide");
 
         assert!(table.extra_params_for(&id!("Wrap")).is_empty());
     }

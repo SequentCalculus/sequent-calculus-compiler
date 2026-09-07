@@ -5,7 +5,9 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args, specialize_clause};
+use crate::mono::specialize::{
+    Specialize, SpecializeContext, recover_extra_args, specialize_clause,
+};
 use crate::splitting::labeling::{
     DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause, label_in,
 };

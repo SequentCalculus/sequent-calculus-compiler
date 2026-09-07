@@ -468,7 +468,8 @@ mod specialize_tests {
     #[test]
     fn specialize_ground_i64_is_identity() {
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default())
+            .expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
@@ -481,7 +482,8 @@ mod specialize_tests {
         // A -> i64 under an active substitution, as happens while
         // specializing the body of a polymorphic declaration.
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default())
+            .expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let params = vec![id!("A", 1)];
         let args = vec![ty!("int")];
@@ -508,7 +510,8 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        ).expect("test fixture must not collide");
+        )
+        .expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
@@ -541,7 +544,8 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        ).expect("test fixture must not collide");
+        )
+        .expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
