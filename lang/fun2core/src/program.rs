@@ -2,7 +2,6 @@
 //! [Core](core_lang) program.
 
 use crate::{
-    compile::CompileState,
     declaration::{compile_ctor, compile_dtor},
     def::{compile_def, compile_main},
     types::compile_type_params,
@@ -24,12 +23,10 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     let mut data_types = Vec::new();
     let mut codata_types = Vec::new();
     let mut max_id = 0;
-    let mut global_type_param_subst = HashMap::new();
 
     for data in prog.data_types {
         let type_params = compile_type_params(&data.type_params, &mut max_id);
         let type_param_subst = build_type_param_subst(&data.type_params.names(), &type_params);
-        global_type_param_subst.extend(type_param_subst.clone());
 
         data_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Data,
@@ -45,7 +42,6 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     for codata in prog.codata_types {
         let type_params = compile_type_params(&codata.type_params, &mut max_id);
         let type_param_subst = build_type_param_subst(&codata.type_params.names(), &type_params);
-        global_type_param_subst.extend(type_param_subst.clone());
         codata_types.push(core_lang::syntax::declaration::TypeDeclaration {
             dat: core_lang::syntax::declaration::Codata,
             name: Identifier::new(codata.name),
@@ -59,36 +55,37 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
     }
 
     let mut used_labels: HashSet<String> = prog.defs.iter().map(|def| def.name.clone()).collect();
-    let mut state = CompileState {
-        used_vars: HashSet::new(),
-        codata_types: &codata_types,
-        data_types: &data_types,
-        used_labels: &mut used_labels,
-        current_label: "",
-        lifted_statements: &mut VecDeque::new(),
-        max_id: &mut max_id,
-    };
 
     let mut defs_translated = VecDeque::new();
     for def in prog.defs {
         if def.name == "main" {
-            for def_main in compile_main(def, &mut state, Rc::new(global_type_param_subst.clone()))
-                .into_iter()
-                .rev()
+            // `main` can never itself be generic, and it cannot see a declaration's own type
+            // parameters (those are scoped to that declaration's xtors, not to def bodies), so it
+            // is always compiled under an empty substitution.
+            for def_main in compile_main(
+                def,
+                &codata_types,
+                &data_types,
+                &mut used_labels,
+                &mut max_id,
+                Rc::new(HashMap::new()),
+            )
+            .into_iter()
+            .rev()
             {
                 defs_translated.push_front(def_main);
             }
         } else {
-            let type_params = compile_type_params(&def.type_params, state.max_id);
+            let type_params = compile_type_params(&def.type_params, &mut max_id);
             let type_param_subst = build_type_param_subst(&def.type_params.names(), &type_params);
-
-            let mut local_subst = global_type_param_subst.clone();
-            local_subst.extend(type_param_subst);
 
             defs_translated.extend(compile_def(
                 def,
-                &mut state,
-                Rc::new(local_subst),
+                &codata_types,
+                &data_types,
+                &mut used_labels,
+                &mut max_id,
+                Rc::new(type_param_subst),
                 type_params,
             ));
         }
@@ -115,7 +112,6 @@ pub fn build_type_param_subst(
 
 #[cfg(test)]
 mod compile_tests {
-    use crate::compile::CompileState;
     use crate::def::{compile_def, compile_main};
     use crate::program::compile_prog;
     use core_lang::syntax::Identifier;
@@ -135,7 +131,7 @@ mod compile_tests {
         util::dummy_span,
     };
 
-    use std::collections::{HashMap, HashSet, VecDeque};
+    use std::collections::{HashMap, HashSet};
     use std::rc::Rc;
 
     fn example_def1() -> Def {
@@ -282,17 +278,17 @@ mod compile_tests {
 
     #[test]
     fn compile_def1() {
-        let mut state = CompileState {
-            used_vars: HashSet::new(),
-            codata_types: &[],
-            data_types: &[],
-            used_labels: &mut HashSet::from(["main".to_string()]),
-            current_label: "",
-            lifted_statements: &mut VecDeque::default(),
-            max_id: &mut 0,
-        };
+        let mut used_labels = HashSet::from(["main".to_string()]);
+        let mut max_id = 0;
 
-        let result = compile_main(example_def1(), &mut state, Rc::new(HashMap::new()));
+        let result = compile_main(
+            example_def1(),
+            &[],
+            &[],
+            &mut used_labels,
+            &mut max_id,
+            Rc::new(HashMap::new()),
+        );
         let expected = def!(
             id!("main"),
             [bind!(id!("a"), cns!())],
@@ -306,16 +302,18 @@ mod compile_tests {
 
     #[test]
     fn compile_def2() {
-        let mut state = CompileState {
-            used_vars: HashSet::new(),
-            codata_types: &[],
-            data_types: &[],
-            used_labels: &mut HashSet::from(["id".to_string()]),
-            current_label: "",
-            lifted_statements: &mut VecDeque::default(),
-            max_id: &mut 0,
-        };
-        let result = compile_def(example_def2(), &mut state, Rc::new(HashMap::new()), vec![]);
+        let mut used_labels = HashSet::from(["id".to_string()]);
+        let mut max_id = 0;
+
+        let result = compile_def(
+            example_def2(),
+            &[],
+            &[],
+            &mut used_labels,
+            &mut max_id,
+            Rc::new(HashMap::new()),
+            vec![],
+        );
         let expected = def!(
             id!("id"),
             [bind!(id!("x"), prd!()), bind!(id!("a0"), cns!())],
@@ -422,19 +420,15 @@ mod compile_tests {
         let mut subst = HashMap::new();
         subst.insert("A".to_string(), (fresh_param.clone(), ParamPolarity::Data));
 
-        let mut state = CompileState {
-            used_vars: HashSet::new(),
-            codata_types: &[],
-            data_types: &[],
-            used_labels: &mut HashSet::from(["id_poly".to_string()]),
-            current_label: "",
-            lifted_statements: &mut VecDeque::default(),
-            max_id: &mut 0,
-        };
+        let mut used_labels = HashSet::from(["id_poly".to_string()]);
+        let mut max_id = 0;
 
         let result = compile_def(
             example_def_poly(),
-            &mut state,
+            &[],
+            &[],
+            &mut used_labels,
+            &mut max_id,
             Rc::new(subst),
             vec![TypeParam {
                 name: fresh_param.clone(),

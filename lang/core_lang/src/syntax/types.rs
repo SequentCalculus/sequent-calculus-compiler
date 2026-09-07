@@ -128,34 +128,18 @@ impl Checked for Ty {
 
 impl ConstraintCollector for Ty {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
-        match self {
-            Ty::I64 => Ok(FlowConstraintSet::new()),
-            Ty::Var(_) => Ok(FlowConstraintSet::new()),
-            Ty::Decl { name, type_args } => {
-                // Self is a `Ty::Decl` here, so `is_codata`'s `Ty::Var` branch (the only one that
-                // consults `type_params`) can never be reached - passing an empty ambient list is
-                // safe.
-                if self.is_codata(env.codata_decls, &[]) {
-                    let Some(template) = env.lookup_codata_decl(name) else {
-                        return Err(MonoError::UndeclaredType(name.print_to_string(None)));
-                    };
+        let Ty::Decl { name, type_args } = self else {
+            return Ok(FlowConstraintSet::new());
+        };
 
-                    let template_ids: Vec<Identifier> = TypeParam::ids(&template.type_params);
-                    let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
-                    constraints.extend(type_args.collect_constraints(env)?);
-                    Ok(constraints)
-                } else {
-                    let Some(template) = env.lookup_data_decl(name) else {
-                        return Err(MonoError::UndeclaredType(name.print_to_string(None)));
-                    };
+        let Some(declared_params) = env.lookup_type_params(name) else {
+            return Err(MonoError::UndeclaredType(name.print_to_string(None)));
+        };
 
-                    let template_ids: Vec<Identifier> = TypeParam::ids(&template.type_params);
-                    let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
-                    constraints.extend(type_args.collect_constraints(env)?);
-                    Ok(constraints)
-                }
-            }
-        }
+        let template_ids: Vec<Identifier> = TypeParam::ids(declared_params);
+        let mut constraints = collect_type_flow(&type_args.args, &template_ids)?;
+        constraints.extend(type_args.collect_constraints(env)?);
+        Ok(constraints)
     }
 }
 
@@ -483,7 +467,7 @@ mod specialize_tests {
     #[test]
     fn specialize_ground_i64_is_identity() {
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
@@ -496,7 +480,7 @@ mod specialize_tests {
         // A -> i64 under an active substitution, as happens while
         // specializing the body of a polymorphic declaration.
         let solution = Solution::default();
-        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default());
+        let table = NamingTable::build(&solution, &[], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let params = vec![id!("A", 1)];
         let args = vec![ty!("int")];
@@ -523,7 +507,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
@@ -556,7 +540,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 

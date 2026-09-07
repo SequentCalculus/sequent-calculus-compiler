@@ -87,8 +87,12 @@ impl ConstraintGraph {
             "#,
         );
 
-        // Type variable vector nodes.
-        for node in &self.nodes {
+        // Type variable vector nodes. `self.nodes` is a `HashSet`, so its iteration order is not
+        // deterministic across runs. Sorted here to keep the rendered DOT file (and therefore
+        // any figure generated from it) reproducible.
+        let mut nodes: Vec<&Node> = self.nodes.iter().collect();
+        nodes.sort();
+        for node in nodes {
             out.push_str(&format!(
                 "  {} [label=\"{}\"];\n",
                 node_dot_id(node),
@@ -99,8 +103,12 @@ impl ConstraintGraph {
         out.push('\n');
 
         // Seed nodes: one rectangle per node vector, listing all correlated
-        // ground vectors observed for it.
-        for (node, seeds) in &self.seeds {
+        // ground vectors observed for it. `self.seeds` is a `HashMap`, sorted by node for the
+        // same reason as above.
+        let mut seeds: Vec<(&Node, &std::collections::HashSet<Vec<Ty>>)> =
+            self.seeds.iter().collect();
+        seeds.sort_by_key(|(node, _)| (*node).clone());
+        for (node, seeds) in seeds {
             out.push_str(&format!(
                 "  {seed_id} [label=\"{{{types}}}\", shape=rectangle, \
                  style=filled, fillcolor=lightgrey];\n",
@@ -230,8 +238,12 @@ fn node_label(node: &Node) -> String {
 /// seeding a node, joined with `|` so Graphviz renders them as a simple
 /// record-style list.
 fn seed_label(seeds: &std::collections::HashSet<Vec<Ty>>) -> String {
-    let labels: Vec<String> = seeds
-        .iter()
+    // `seeds` is a `HashSet`, sorted here for the same determinism reason as `render_dot`'s own
+    // node and seed ordering.
+    let mut tuples: Vec<&Vec<Ty>> = seeds.iter().collect();
+    tuples.sort();
+    let labels: Vec<String> = tuples
+        .into_iter()
         .map(|tuple| tuple_display_name(tuple))
         .collect();
     labels.join(" | ")

@@ -4,9 +4,8 @@ use printer::tokens::{CASE, NEW};
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
-use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext, specialize_clause};
+use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args, specialize_clause};
 use crate::splitting::labeling::{
     DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause, label_in,
 };
@@ -180,23 +179,6 @@ impl<C: Chi> Specialize for XCase<C> {
             ty: self.ty.specialize(context),
         }
     }
-}
-
-/// Recovers the extra type arguments of a declaration type if it is an erased declaration, returning `None` if the type is not a declaration type or if it is not an erased declaration.
-fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
-    let Ty::Decl { name, type_args } = ty else {
-        return None;
-    };
-    if !ctx.erased_decls.is_erased(name) {
-        return None;
-    }
-    Some(
-        type_args
-            .args
-            .iter()
-            .map(|a| erase_ty(&a.substitute(ctx.subst.as_slices()), ctx.erased_decls))
-            .collect(),
-    )
 }
 
 impl<C: Chi> Checked for XCase<C> {

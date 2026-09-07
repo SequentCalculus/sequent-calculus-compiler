@@ -149,7 +149,7 @@ pub fn monomorphize_program(program: Prog, debug: bool, viz: VizOutput) -> Resul
         print_solving_debug(&erased_constraints, &erased_decls, &solution);
     }
 
-    Ok(specialize_program(&program, &solution, &erased_decls))
+    specialize_program(&program, &solution, &erased_decls)
 }
 
 #[cfg(test)]

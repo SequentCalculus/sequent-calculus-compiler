@@ -146,7 +146,7 @@ fn build_declaration_copy<P: Polarity + Clone>(
         xtors: decl
             .xtors
             .iter()
-            .filter(|xtor| keeps_xtor(xtor, used, root, class_unused))
+            .filter(|xtor| keeps_xtor(xtor, used, root.map(|(r, _)| r), class_unused))
             .map(|xtor| split_xtor_sig(xtor, table, field_observations, root, &decl_subst, max_id))
             .collect(),
         type_params: rename_params(&decl.type_params, &decl_subst),
@@ -166,10 +166,10 @@ fn build_declaration_copy<P: Polarity + Clone>(
 pub fn keeps_xtor<P: Polarity>(
     xtor: &XtorSig<P>,
     used: &UsedXtors,
-    root: Option<(&Label, bool)>,
+    root: Option<&Label>,
     class_unused: bool,
 ) -> bool {
-    let Some((root, _)) = root else {
+    let Some(root) = root else {
         return true;
     };
     used.contains(root, &xtor.name) || class_unused
@@ -396,18 +396,8 @@ mod rewrite_tests {
         let root = box_label(1);
         let used = used_for(id!("Left"), std::slice::from_ref(&root));
 
-        assert!(keeps_xtor(
-            &decl.xtors[0],
-            &used,
-            Some((&root, false)),
-            false
-        ));
-        assert!(!keeps_xtor(
-            &decl.xtors[1],
-            &used,
-            Some((&root, false)),
-            false
-        ));
+        assert!(keeps_xtor(&decl.xtors[0], &used, Some(&root), false));
+        assert!(!keeps_xtor(&decl.xtors[1], &used, Some(&root), false));
     }
 
     #[test]
@@ -419,7 +409,7 @@ mod rewrite_tests {
         assert!(
             decl.xtors
                 .iter()
-                .all(|xtor| keeps_xtor(xtor, &used, Some((&root, false)), true))
+                .all(|xtor| keeps_xtor(xtor, &used, Some(&root), true))
         );
     }
 

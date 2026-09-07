@@ -4,7 +4,7 @@
 use std::{rc::Rc, vec};
 
 use crate::{
-    mono::{erasure::ErasedDecls, naming_table::NamingTable, solver::Solution},
+    mono::{erasure::ErasedDecls, erasure::erase_ty, naming_table::NamingTable, solver::Solution},
     syntax::{
         Chi, Clause, Def, Identifier, Prog, Ty, TypeParam,
         declaration::{Polarity, TypeDeclaration, XtorSig},
@@ -132,15 +132,44 @@ impl<X: Specialize> Specialize for std::rc::Rc<X> {
     }
 }
 
-/// This function is the entry point for specializing a program from polymorphic to monomorphic form. It takes a reference to a [`Solution`] produced by the constraint solving process, and returns a new program where all polymorphic type parameters have been replaced with their corresponding concrete types according to the solution.
-pub fn specialize_program(prog: &Prog, solution: &Solution, erased_decls: &ErasedDecls) -> Prog {
+/// Recovers the extra type arguments an erased declaration's own type parameters were widened
+/// to, from a concrete occurrence's type. Returns`None` if `ty` is not a declaration type, or
+/// if it is but was not erased.
+pub fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
+    let Ty::Decl { name, type_args } = ty else {
+        return None;
+    };
+    if !ctx.erased_decls.is_erased(name) {
+        return None;
+    }
+    Some(
+        type_args
+            .args
+            .iter()
+            .map(|a| erase_ty(&a.substitute(ctx.subst.as_slices()), ctx.erased_decls))
+            .collect(),
+    )
+}
+
+/// This function is the entry point for specializing a program from polymorphic to monomorphic
+/// form. It takes a reference to a [`Solution`] produced by the constraint solving process, and
+/// returns a new program where all polymorphic type parameters have been replaced with their
+/// corresponding concrete types according to the solution.
+///
+/// Fails with [`MonoError::NameCollision`] if two distinct declarations, xtors, or defs would
+/// mangle to the same monomorphic name (see [`NamingTable::build`]).
+pub fn specialize_program(
+    prog: &Prog,
+    solution: &Solution,
+    erased_decls: &ErasedDecls,
+) -> Result<Prog, crate::mono::errors::MonoError> {
     let table = NamingTable::build(
         solution,
         &prog.data_types,
         &prog.codata_types,
         &prog.defs,
         erased_decls,
-    );
+    )?;
 
     let data_types = prog
         .data_types
@@ -160,12 +189,12 @@ pub fn specialize_program(prog: &Prog, solution: &Solution, erased_decls: &Erase
         .flat_map(|def| specialize_def(def, &table, erased_decls))
         .collect();
 
-    Prog {
+    Ok(Prog {
         defs,
         data_types,
         codata_types,
         max_id: prog.max_id,
-    }
+    })
 }
 
 /// Specialization of polymorphic type declarations into monomorphic ones
@@ -294,7 +323,7 @@ pub fn specialize_clause<C: Chi>(
             } else {
                 Rc::new(
                     Unreachable {
-                        ty: clause.body.get_type(),
+                        ty: clause.body.get_type().specialize(&extended_ctx),
                     }
                     .into(),
                 )
@@ -490,7 +519,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
@@ -530,7 +559,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_declaration(&pair_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
@@ -559,7 +588,7 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
         let table =
-            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = &SpecializeContext::ground(&table, &erased);
 
@@ -613,7 +642,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
 
         let pair_copies = specialize_declaration(&pair_decl(), &table, &ErasedDecls::default());
         let list_copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
@@ -675,7 +704,7 @@ mod specialize_tests {
             max_id: 0,
         };
 
-        let specialized_prog = specialize_program(&prog, &solution, &ErasedDecls::default());
+        let specialized_prog = specialize_program(&prog, &solution, &ErasedDecls::default()).expect("test fixture must not collide");
 
         assert_eq!(
             specialized_prog.data_types.len(),
@@ -685,7 +714,7 @@ mod specialize_tests {
         assert_eq!(specialized_prog.codata_types.len(), 0);
 
         let table =
-            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
         let expected_name = table.lookup(&list_decl().name, &[ty!("int")]).clone();
 
         let specialized_list = &specialized_prog.data_types[0];
@@ -745,7 +774,7 @@ mod specialize_tests {
             &[],
             std::slice::from_ref(&main_def),
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_def(&main_def, &table, &ErasedDecls::default());
 
         // Exactly one copy of main, no multiplication.
@@ -787,7 +816,7 @@ mod specialize_tests {
             &[],
             &[identity_def()],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_def(&identity_def(), &table, &ErasedDecls::default());
 
         assert_eq!(copies.len(), 2, "expected one copy per instantiation");
@@ -847,7 +876,7 @@ mod specialize_tests {
             &[],
             std::slice::from_ref(&unused),
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_def(&unused, &table, &ErasedDecls::default());
 
         assert!(
@@ -901,7 +930,7 @@ mod specialize_tests {
             &[],
             std::slice::from_ref(&singleton),
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
 
         let list_copies = specialize_declaration(&list_decl(), &table, &ErasedDecls::default());
         let def_copies = specialize_def(&singleton, &table, &ErasedDecls::default());
@@ -983,7 +1012,7 @@ mod specialize_tests {
             &[],
             std::slice::from_ref(&swap),
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_def(&swap, &table, &ErasedDecls::default());
 
         assert_eq!(
@@ -1071,7 +1100,7 @@ mod specialize_tests {
             max_id: 0,
         };
 
-        let result = specialize_program(&prog, &solution, &ErasedDecls::default());
+        let result = specialize_program(&prog, &solution, &ErasedDecls::default()).expect("test fixture must not collide");
 
         // One monomorphic List copy, one main def.
         assert_eq!(result.data_types.len(), 1);
@@ -1144,7 +1173,7 @@ mod specialize_tests {
             &[],
             &[identity_def(), wrap.clone()],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
 
         let identity_copies = specialize_def(&identity_def(), &table, &ErasedDecls::default());
         let wrap_copies = specialize_def(&wrap, &table, &ErasedDecls::default());
@@ -1209,7 +1238,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_declaration(&box_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(
@@ -1260,7 +1289,7 @@ mod specialize_tests {
             &[container_decl()],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let copies = specialize_declaration(&container_decl(), &table, &ErasedDecls::default());
 
         assert_eq!(copies.len(), 1, "Container[T] instantiated only at i64");
@@ -1292,7 +1321,7 @@ mod specialize_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
         let table =
-            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default());
+            NamingTable::build(&solution, &[list_decl()], &[], &[], &ErasedDecls::default()).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = SpecializeContext::ground(&table, &erased);
 
@@ -1326,7 +1355,7 @@ mod specialize_tests {
             &[],
             &[],
             &ErasedDecls::default(),
-        );
+        ).expect("test fixture must not collide");
         let erased = ErasedDecls::default();
         let ctx = SpecializeContext::ground(&table, &erased);
 
@@ -1394,7 +1423,7 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
         let copies = specialize_declaration(&box_decl(), &table, &erased);
 
         assert_eq!(copies.len(), 1, "erased declaration must not be duplicated");
@@ -1419,7 +1448,7 @@ mod erasure_tests {
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")]]),
         )]));
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
         let ctx = SpecializeContext::ground(&table, &erased);
 
         let term = ctor!(id!("Wrap"), [], [lit!(123)], ty!(id!("Box"), [ty!("int")]));
@@ -1459,7 +1488,7 @@ mod erasure_tests {
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
         let ctx = SpecializeContext::ground(&table, &erased);
 
         // mirrors a scrutinee whose own active instantiation of the erased Box is `int`
@@ -1497,7 +1526,7 @@ mod erasure_tests {
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
         let ctx = SpecializeContext::ground(&table, &erased);
 
         let copies = specialize_clause(&wrap_clause(), &ctx, None);
@@ -1542,7 +1571,7 @@ mod erasure_tests {
             &[],
             std::slice::from_ref(&nest_def),
             &erased,
-        );
+        ).expect("test fixture must not collide");
 
         let params = vec![id!("C", 1)];
         let args = vec![ty!(id!("Box"))];

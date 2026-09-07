@@ -7,24 +7,34 @@ use crate::{
 };
 use core_lang::syntax::names::Identifier;
 use core_lang::syntax::type_params::{ParamPolarity, TypeParam};
+use core_lang::syntax::{CodataDeclaration, DataDeclaration};
+use fun::syntax::names::Name;
 use fun::traits::{OptTyped, UsedBinders};
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 
 /// This function translates a [top-level function in Fun](fun::syntax::declarations::Def) to a
 /// [top-level function in Core](core_lang::syntax::Def).
 /// - `def` is the top-level function to translate.
 /// - `codata_types` is the list of codata types in the corresponding [Fun](fun) program.
+/// - `data_types` is the list of data types in the corresponding [Fun](fun) program.
 /// - `used_labels` is the set of labels of top-level functions in the corresponding [Fun](fun)
 ///   program.
+/// - `max_id` is the maximum identifier used so far, needed for generating fresh identifiers.
+/// - `type_params_subst` maps this def's ambient type parameter names (its own plus any enclosing
+///   declaration's) to their fresh Core identifier and declared polarity.
+/// - `type_params` is this def's own type parameters, already translated to Core.
 ///
 /// # Panics
 ///
 /// A panic is caused if the types are not annotated in the program.
 pub fn compile_def(
     def: fun::syntax::declarations::Def,
-    state: &mut CompileState,
+    codata_types: &[CodataDeclaration],
+    data_types: &[DataDeclaration],
+    used_labels: &mut HashSet<Name>,
+    max_id: &mut usize,
     type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     type_params: Vec<TypeParam>,
 ) -> VecDeque<core_lang::syntax::Def> {
@@ -37,12 +47,12 @@ pub fn compile_def(
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
         used_vars,
-        codata_types: state.codata_types,
-        data_types: state.data_types,
-        used_labels: state.used_labels,
+        codata_types,
+        data_types,
+        used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
-        max_id: state.max_id,
+        max_id,
     };
 
     let new_covar = state.fresh_covar();
@@ -83,15 +93,22 @@ pub fn compile_def(
 /// instead its body is translated with a consumer that terminates the program.
 /// - `def` is the top-level function `main`.
 /// - `codata_types` is the list of codata types in the corresponding [Fun](fun) program.
+/// - `data_types` is the list of data types in the corresponding [Fun](fun) program.
 /// - `used_labels` is the set of labels of top-level functions in the corresponding [Fun](fun)
 ///   program.
+/// - `max_id` is the maximum identifier used so far, needed for generating fresh identifiers.
+/// - `type_params` maps every top-level declaration's type parameter names to their fresh Core
+///   identifier and declared polarity (`main` has none of its own).
 ///
 /// # Panics
 ///
 /// A panic is caused if the types are not annotated in the program
 pub fn compile_main(
     def: fun::syntax::declarations::Def,
-    state: &mut CompileState,
+    codata_types: &[CodataDeclaration],
+    data_types: &[DataDeclaration],
+    used_labels: &mut HashSet<Name>,
+    max_id: &mut usize,
     type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
@@ -102,12 +119,12 @@ pub fn compile_main(
     let mut def_plus_lifted_statements = VecDeque::new();
     let mut state: CompileState = CompileState {
         used_vars,
-        codata_types: state.codata_types,
-        data_types: state.data_types,
-        used_labels: state.used_labels,
+        codata_types,
+        data_types,
+        used_labels,
         current_label: &def.name,
         lifted_statements: &mut def_plus_lifted_statements,
-        max_id: state.max_id,
+        max_id,
     };
 
     let new_var = state.fresh_var();

@@ -5,7 +5,7 @@ use printer::*;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args};
 use crate::splitting::labeling::{
     DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in, type_param_subst,
     unify_declared_type_vars,
@@ -234,19 +234,7 @@ impl<C: Chi> Specialize for Xtor<C> {
         // reflected in `specialized_ty`, but they're still needed to pick the right
         // specialized xtor. Surface syntax never carries them explicitly at the call site
         // (they were always implicit via the expected type), so we recover them from `self.ty`.
-        let extra_args: Vec<Ty> = match &self.ty {
-            Ty::Decl { name, type_args } if context.erased_decls.is_erased(name) => type_args
-                .args
-                .iter()
-                .map(|a| {
-                    erase_ty(
-                        &a.substitute(context.subst.as_slices()),
-                        context.erased_decls,
-                    )
-                })
-                .collect(),
-            _ => vec![],
-        };
+        let extra_args: Vec<Ty> = recover_extra_args(&self.ty, context).unwrap_or_default();
 
         let mut ground_type_args: Vec<Ty> = self
             .type_args

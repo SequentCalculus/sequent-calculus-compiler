@@ -2,7 +2,7 @@
 //! parameters erased in order to break a growing cycle during constraint solving, as part of
 //! total monomorphization of polymorphic recursion.
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use crate::{
     mono::constraints::{FlowConstraint, FlowConstraintSet},
@@ -19,8 +19,11 @@ use crate::{
 /// parameter had been declared on the xtor itself. This is the naming table's and
 /// specialization's single source of truth for distinguishing an "ordinary" (never erased)
 /// declaration from a "widened" one, so the two phases cannot diverge on this point.
+///
+/// A [`BTreeSet`], not a [`HashSet`], so [`ErasedDecls::iter`] yields a deterministic order.
+/// The only consumer is the `--debug` report in `mono::print_solving_debug`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ErasedDecls(HashSet<Identifier>);
+pub struct ErasedDecls(BTreeSet<Identifier>);
 
 impl ErasedDecls {
     /// True iff `name`'s own declared type parameters were erased to break a growing cycle.
@@ -41,7 +44,7 @@ impl ErasedDecls {
 
 impl From<HashSet<Identifier>> for ErasedDecls {
     fn from(erased: HashSet<Identifier>) -> Self {
-        ErasedDecls(erased)
+        ErasedDecls(erased.into_iter().collect())
     }
 }
 

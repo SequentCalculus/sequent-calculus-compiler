@@ -45,6 +45,8 @@ pub struct Driver {
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Monomorphized in core, but not yet uniquified or focused
+    monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
     uniquified: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -71,6 +73,7 @@ impl Driver {
             parsed: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
+            monomorphized: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
@@ -166,16 +169,27 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the monomorphized version of the [Core](core_lang) code.
+    ///
+    /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
+    /// the result is cached by path alone, so a later call reusing the cache does not repeat a
+    /// `--debug` report or a constraint-graph rendering requested by an earlier call.
     pub fn monomorphized(
         &mut self,
         path: &PathBuf,
         viz: VizOutput,
         debug: bool,
     ) -> Result<Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.monomorphized.get(path) {
+            return Ok(res.clone());
+        }
+
         let compiled = self.compiled(path)?;
         let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz)
             .map_err(DriverError::MonoError)?;
 
+        self.monomorphized.insert(path.clone(), mono_prog.clone());
         Ok(mono_prog)
     }
 
@@ -185,7 +199,6 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        // let mut compiled = self.compiled(path)?;
         let mut monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
         monomorphized.uniquify();
         self.uniquified.insert(path.clone(), monomorphized.clone());
@@ -234,7 +247,6 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        // let compiled = self.compiled(path)?;
         let monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
         let focused = monomorphized.focus();
         self.focused.insert(path.clone(), focused.clone());
