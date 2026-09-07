@@ -135,15 +135,14 @@ impl Focusing for Statement {
 
 impl ConstraintCollector for Statement {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
-        let constraints = match self {
-            Statement::Cut(cut) => cut.collect_constraints(env)?,
-            Statement::IfC(ifc) => ifc.collect_constraints(env)?,
-            Statement::PrintI64(print) => print.collect_constraints(env)?,
-            Statement::Call(call) => call.collect_constraints(env)?,
-            Statement::Exit(exit) => exit.collect_constraints(env)?,
-            Statement::Unreachable(_unreachable) => FlowConstraintSet::new(),
-        };
-        Ok(constraints)
+        match self {
+            Statement::Cut(cut) => cut.collect_constraints(env),
+            Statement::IfC(ifc) => ifc.collect_constraints(env),
+            Statement::PrintI64(print) => print.collect_constraints(env),
+            Statement::Call(call) => call.collect_constraints(env),
+            Statement::Exit(exit) => exit.collect_constraints(env),
+            Statement::Unreachable(unreachable) => unreachable.collect_constraints(env),
+        }
     }
 }
 
@@ -155,7 +154,7 @@ impl Specialize for Statement {
             Statement::PrintI64(print) => print.specialize(context).into(),
             Statement::Call(call) => call.specialize(context).into(),
             Statement::Exit(exit) => exit.specialize(context).into(),
-            Statement::Unreachable(_unreachable) => self.clone(),
+            Statement::Unreachable(unreachable) => unreachable.specialize(context).into(),
         }
     }
 }
@@ -173,7 +172,7 @@ impl Checked for Statement {
             Statement::PrintI64(print) => print.check(type_params, context, env),
             Statement::Call(call) => call.check(type_params, context, env),
             Statement::Exit(exit) => exit.check(type_params, context, env),
-            Statement::Unreachable(_unreachable) => Ok(()),
+            Statement::Unreachable(unreachable) => unreachable.check(type_params, context, env),
         }
     }
 }

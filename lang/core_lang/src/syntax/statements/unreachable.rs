@@ -1,12 +1,24 @@
+//! This module defines the unreachable statement in Core.
+
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
-/// This struct defines the unreachable statement in Core.
+/// This struct defines the unreachable statement in Core. It marks a match/comatch clause that
+/// [`crate::mono::specialize::specialize_clause`]'s reachability narrowing found structurally
+/// impossible for the equivalence class it was specializing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unreachable {
     pub ty: Ty,
@@ -55,6 +67,31 @@ impl Rewrite for Unreachable {
         Unreachable {
             ty: self.ty.rewrite(table),
         }
+    }
+}
+
+impl ConstraintCollector for Unreachable {
+    fn collect_constraints(&self, _env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        Ok(FlowConstraintSet::new())
+    }
+}
+
+impl Specialize for Unreachable {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Unreachable {
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl Checked for Unreachable {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        self.ty.check(type_params, context, env)
     }
 }
 
