@@ -31,6 +31,15 @@ pub enum MonoError {
     /// Detected polymorphic recursion, which is not supported by our monomorphization approach.
     PolymorphicRecursion { cycles: Vec<GrowingCycle> },
 
+    /// Two distinct declarations, xtors, or defs mangled to the very same monomorphic name. 
+    /// The mangling scheme (`mono::naming_table`) is not injective for every possible source
+    /// name, e.g. a user-defined `f_Box` can collide with the generated name for `f[Box]`.
+    NameCollision {
+        mangled: String,
+        first: String,
+        second: String,
+    },
+
     /// Generic wrapper for other errors with contextual message.
     Contextual { msg: String },
 }
@@ -62,6 +71,15 @@ impl fmt::Display for MonoError {
                 f,
                 "Undeclared xtor: '{}' has no xtor named '{}'",
                 type_name, xtor_name
+            ),
+            MonoError::NameCollision {
+                mangled,
+                first,
+                second,
+            } => write!(
+                f,
+                "Naming collision: '{}' and '{}' both mangle to the monomorphic name '{}'",
+                first, second, mangled
             ),
             MonoError::Contextual { msg } => write!(f, "{}", msg),
             MonoError::PolymorphicRecursion { cycles } => {

@@ -4,7 +4,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::{
-    mono::{erasure::ErasedDecls, solver::Solution},
+    mono::{erasure::ErasedDecls, errors::MonoError, solver::Solution},
     syntax::{
         CodataDeclaration, DataDeclaration, Def, Identifier, Ty, TypeParam,
         declaration::{Polarity, TypeDeclaration},
@@ -20,6 +20,9 @@ use crate::{
 pub struct NamingTable {
     names: BTreeMap<(Identifier, Vec<Ty>), Identifier>,
     xtor_extra_params: HashMap<Identifier, Vec<Identifier>>,
+    /// Tracks which (name, instantiation) pair first claimed each mangled name, so a second,
+    /// distinct.
+    mangled_owners: HashMap<Identifier, (Identifier, Vec<Ty>)>,
 }
 
 impl NamingTable {
@@ -28,24 +31,28 @@ impl NamingTable {
     /// For each node and each ground vector in its solution, generates a
     /// fresh, deterministically mangled identifier derived from the concrete types,
     /// e.g. `Pair[A,B]` instantiated with `[i64, Bool]` becomes `Pair[i64, Bool]`.
+    ///
+    /// Fails with [`MonoError::NameCollision`] if two distinct declarations, xtors, or defs
+    /// mangle to the same monomorphic name.
     pub fn build(
         solution: &Solution,
         data_decls: &[DataDeclaration],
         codata_decls: &[CodataDeclaration],
         defs: &[Def],
         erased_decls: &ErasedDecls,
-    ) -> Self {
+    ) -> Result<Self, MonoError> {
         let mut table = NamingTable {
             names: BTreeMap::new(),
             xtor_extra_params: HashMap::new(),
+            mangled_owners: HashMap::new(),
         };
 
         for decl in data_decls {
-            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
+            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration)?;
         }
 
         for decl in codata_decls {
-            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration);
+            table.register_decl(decl, solution, erased_decls, mangle_ty_declaration)?;
         }
 
         for def in defs {
@@ -55,10 +62,10 @@ impl NamingTable {
                 &def_type_param_ids,
                 solution,
                 mangle_def_declaration,
-            );
+            )?;
         }
 
-        table
+        Ok(table)
     }
 
     /// Registers a single data or codata declaration and its xtors.
@@ -74,11 +81,10 @@ impl NamingTable {
         solution: &Solution,
         erased_decls: &ErasedDecls,
         mangle: fn(&Identifier, &[Ty]) -> String,
-    ) {
+    ) -> Result<(), MonoError> {
         let decl_type_param_ids: Vec<Identifier> = TypeParam::ids(&decl.type_params);
         if erased_decls.is_erased(&decl.name) {
-            self.names
-                .insert((decl.name.clone(), vec![]), decl.name.clone());
+            self.insert_name((decl.name.clone(), vec![]), decl.name.clone())?;
             for xtor in &decl.xtors {
                 // Record the declaration's own type parameters as extra parameters for the xtor.
                 self.xtor_extra_params
@@ -91,15 +97,16 @@ impl NamingTable {
                     &decl_type_param_ids,
                     solution,
                     mangle,
-                );
+                )?;
             }
         } else {
-            self.register(&decl.name, &decl_type_param_ids, solution, mangle);
+            self.register(&decl.name, &decl_type_param_ids, solution, mangle)?;
             for xtor in &decl.xtors {
                 let xtor_type_param_ids: Vec<Identifier> = TypeParam::ids(&xtor.type_params);
-                self.register(&xtor.name, &xtor_type_param_ids, solution, mangle);
+                self.register(&xtor.name, &xtor_type_param_ids, solution, mangle)?;
             }
         }
+        Ok(())
     }
 
     /// Registers a single declaration (data, codata, or def) and its type parameters.
@@ -113,8 +120,8 @@ impl NamingTable {
         type_params: &[Identifier],
         solution: &Solution,
         mangle: fn(&Identifier, &[Ty]) -> String,
-    ) {
-        self.register_combined(name, type_params, &[], solution, mangle);
+    ) -> Result<(), MonoError> {
+        self.register_combined(name, type_params, &[], solution, mangle)
     }
 
     /// Registers every instantiation of `name` under the combination of `own_params` (the
@@ -129,10 +136,9 @@ impl NamingTable {
         extra_params: &[Identifier],
         solution: &Solution,
         mangle: fn(&Identifier, &[Ty]) -> String,
-    ) {
+    ) -> Result<(), MonoError> {
         if own_params.is_empty() && extra_params.is_empty() {
-            self.names.insert((name.clone(), vec![]), name.clone());
-            return;
+            return self.insert_name((name.clone(), vec![]), name.clone());
         }
 
         let tuples: Vec<Vec<Ty>> = if extra_params.is_empty() {
@@ -166,10 +172,36 @@ impl NamingTable {
         };
 
         for tuple in tuples {
-            let mangeled = mangle(name, &tuple);
-            self.names
-                .insert((name.clone(), tuple.clone()), Identifier::new(mangeled));
+            let mangled = Identifier::new(mangle(name, &tuple));
+            self.insert_name((name.clone(), tuple), mangled)?;
         }
+        Ok(())
+    }
+
+    /// Registers `key` (a declaration/xtor/def name paired with its concrete instantiation) as
+    /// mangling to `mangled`. This is the single choke point every insertion into `names` goes
+    /// through, so every mangled name gets checked for collisions regardless of which caller
+    /// produced it.
+    ///
+    /// Returns [`MonoError::NameCollision`] if some other, distinct key already claimed the same
+    /// mangled name.
+    fn insert_name(
+        &mut self,
+        key: (Identifier, Vec<Ty>),
+        mangled: Identifier,
+    ) -> Result<(), MonoError> {
+        if let Some(previous) = self.mangled_owners.get(&mangled)
+            && previous != &key
+        {
+            return Err(MonoError::NameCollision {
+                mangled: mangled.name.clone(),
+                first: describe_owner(&previous.0, &previous.1),
+                second: describe_owner(&key.0, &key.1),
+            });
+        }
+        self.mangled_owners.insert(mangled.clone(), key.clone());
+        self.names.insert(key, mangled);
+        Ok(())
     }
 
     /// Looks up the mangled name for a given type and its instantiation.
@@ -202,6 +234,16 @@ impl NamingTable {
             .get(xtor)
             .map(|params| params.as_slice())
             .unwrap_or(&[])
+    }
+}
+
+/// Renders one side of a [`MonoError::NameCollision`]: the source name paired with its concrete
+/// instantiation, for a human-readable error message.
+fn describe_owner(name: &Identifier, tuple: &[Ty]) -> String {
+    if tuple.is_empty() {
+        name.name.clone()
+    } else {
+        format!("{}{:?}", name.name, tuple)
     }
 }
 
@@ -269,7 +311,7 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
 
         // Box itself must remain registered under its own, unchanged name.
         assert_eq!(table.lookup(&id!("Box"), &[]), &id!("Box"));
@@ -283,7 +325,7 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
 
         let mut tuples = table.instantiations_for(&id!("Wrap"));
         tuples.sort();
@@ -323,7 +365,7 @@ mod erasure_tests {
             ),
         ]));
 
-        let table = NamingTable::build(&solution, &[box_decl(), list_decl], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl(), list_decl], &[], &[], &erased).expect("test fixture must not collide");
 
         // exactly Cons's own tuples, in canonical order (`Ty::I64` sorts before `Ty::Decl`) --
         // neither Box's/Wrap's nor List's entries may leak in
@@ -347,7 +389,7 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
 
         assert_eq!(table.extra_params_for(&id!("Wrap")), &[id!("A", 1)]);
     }
@@ -360,7 +402,7 @@ mod erasure_tests {
             HashSet::from([vec![ty!("int")]]),
         )]));
 
-        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased);
+        let table = NamingTable::build(&solution, &[box_decl()], &[], &[], &erased).expect("test fixture must not collide");
 
         assert!(table.extra_params_for(&id!("Wrap")).is_empty());
     }
