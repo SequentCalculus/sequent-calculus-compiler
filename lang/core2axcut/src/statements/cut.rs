@@ -88,10 +88,10 @@ fn shrink_unknown_cuts(
         .into(),
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
-        Ty::Decl(name) => {
+        Ty::Decl { name, .. } => {
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
-            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata) {
+            let (xtors, var_keep, var_expand): (Vec<_>, _, _) = if ty.is_codata(state.codata, &[]) {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -158,6 +158,10 @@ fn shrink_unknown_cuts(
             }
             .into()
         }
+        Ty::Var(name) => panic!(
+            "Unexpected type variable {} in Core, which should have been substituted away",
+            name.name
+        ),
     }
 }
 
@@ -248,7 +252,7 @@ fn shrink_critical_pairs(
         .into(),
 
         // otherwise we eta-expand one side, depending on whether the type is a data or codata type
-        Ty::Decl(name) => {
+        Ty::Decl { name, .. } => {
             // for codata types we flip the sides of the cut, then we can always expand the
             // right-hand side
             let (xtors, var_keep, statement_keep, var_expand, statement_expand): (
@@ -257,7 +261,7 @@ fn shrink_critical_pairs(
                 _,
                 _,
                 _,
-            ) = if ty.is_codata(state.codata) {
+            ) = if ty.is_codata(state.codata, &[]) {
                 (
                     lookup_type_declaration(&name, state.codata)
                         .xtors
@@ -356,6 +360,10 @@ fn shrink_critical_pairs(
             }
             .into()
         }
+        Ty::Var(name) => panic!(
+            "Unexpected type variable {} in Core, which should have been substituted away",
+            name.name
+        ),
     }
 }
 
@@ -529,6 +537,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -548,6 +557,7 @@ impl Shrinking for FsCut {
                     prdcns: Cns,
                     name,
                     args,
+                    type_args: _,
                     ty: _,
                 }),
             ) => shrink_known_cuts(&name, args.vec_vars(), clauses.as_slice(), state),
@@ -631,6 +641,7 @@ impl Shrinking for FsCut {
                     prdcns: Prd,
                     name,
                     args,
+                    type_args: _,
                     ty: _,
                 }),
                 FsTerm::Mu(Mu {
@@ -650,6 +661,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -668,6 +680,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Prd,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),
@@ -686,6 +699,7 @@ impl Shrinking for FsCut {
                 FsTerm::Xtor(FsXtor {
                     prdcns: Cns,
                     name,
+                    type_args: _,
                     args,
                     ty: _,
                 }),

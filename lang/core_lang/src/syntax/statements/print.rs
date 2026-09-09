@@ -3,8 +3,17 @@
 use printer::tokens::{PRINT_I64, PRINTLN_I64, SEMI};
 use printer::*;
 
-use crate::syntax::*;
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -131,5 +140,71 @@ impl Focusing for PrintI64 {
             }),
             max_id,
         )
+    }
+}
+
+impl ConstraintCollector for PrintI64 {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.arg.collect_constraints(env)?;
+
+        constraints.extend(self.next.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl Specialize for PrintI64 {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        PrintI64 {
+            newline: self.newline,
+            arg: self.arg.specialize(context),
+            next: self.next.specialize(context),
+        }
+    }
+}
+
+impl Checked for PrintI64 {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        if self.arg.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.arg.get_type().print_to_string(None),
+                msg: Some("Argument of print statement must have type i64".to_string()),
+            });
+        }
+
+        self.arg.check(type_params, context, env)?;
+        self.next.check(type_params, context, env)?;
+
+        Ok(())
+    }
+}
+
+impl LabelAndUnify for PrintI64 {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        PrintI64 {
+            newline: self.newline,
+            arg: self.arg.label_and_unify(state, sigs, scope),
+            next: self.next.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for PrintI64 {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        PrintI64 {
+            newline: self.newline,
+            arg: self.arg.rewrite(table),
+            next: self.next.rewrite(table),
+        }
     }
 }

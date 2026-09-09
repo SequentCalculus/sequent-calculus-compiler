@@ -10,19 +10,19 @@ def fac(n:i64) : i64 { if n == 0 {1} else {n * fac(n - 1)} }
 def ex23() : i64 { fac(1) }
 
 // section 2.4
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
 def sum(x:List[i64]) : i64 { x.case[i64] { Nil => 0,
                                            Cons(y, ys) => y + sum(ys) }}
 
-codata Stream[A] { head : A, tail : Stream[A] }
+codata Stream[A+] { head : A, tail : Stream[A] }
 def repeat(x:i64) : Stream[i64] { new { head => x, tail => repeat(x) } }
 
 // section 2.4.1, example 2.4
-data Pair[A, B] { Tup(x:A, y:B) }
+data Pair[A+, B+] { Tup(x:A, y:B) }
 def swap(x:Pair[i64, i64]) : Pair[i64, i64] { x.case[i64, i64] { Tup(y, z) => Tup(z, y) } }
 
 // section 2.4.2, example 2.5
-codata LazyPair[A, B] { fst : A, snd : B }
+codata LazyPair[A+, B+] { fst : A, snd : B }
 def swaplazy(x:LazyPair[i64, i64]) : LazyPair[i64, i64] { new { fst => x.snd[i64, i64], snd => x.fst[i64, i64] } }
 
 // example 2.6
@@ -48,7 +48,7 @@ def casecase() : List[i64] { Nil.case[i64] { Nil => Nil, Cons(x, xs) => xs}.case
 def tltltl() : Stream[i64] { repeat(1).tail[i64].tail[i64].tail[i64] }
 
 //section 5.6
-codata Fun[A, B] { apply(x: A) : B }
+codata Fun[A+, B+] { apply(x: A) : B }
 def criticalEta1(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = new { apply(y) => (goto b (new { apply(z) => 1 })).apply[i64, i64](y) }; new { apply(z) => 3 }}
 def criticalEta2(b:cns Fun[i64, i64]) : Fun[i64, i64] { let x : Fun[i64, i64] = goto b (new { apply(z) => 1 }); new { apply(z) => 3 }}
 

@@ -2,8 +2,18 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 
@@ -12,12 +22,14 @@ pub mod cut;
 pub mod exit;
 pub mod ifc;
 pub mod print;
+pub mod unreachable;
 
 pub use call::*;
 pub use cut::*;
 pub use exit::*;
 pub use ifc::*;
 pub use print::*;
+pub use unreachable::*;
 
 /// This enum defines the statements of Core. It contains one variant for each construct which
 /// simply wraps the struct defining the corresponding construct.
@@ -33,6 +45,8 @@ pub enum Statement {
     Call(Call),
     /// Exiting the program
     Exit(Exit),
+    /// Unreachable statement
+    Unreachable(Unreachable),
 }
 
 impl Typed for Statement {
@@ -43,6 +57,7 @@ impl Typed for Statement {
             Statement::PrintI64(print) => print.get_type(),
             Statement::Call(call) => call.get_type(),
             Statement::Exit(exit) => exit.get_type(),
+            Statement::Unreachable(unreachable) => unreachable.get_type(),
         }
     }
 }
@@ -55,6 +70,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::Call(call) => call.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
+            Statement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }
@@ -72,6 +88,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(prod_subst, cons_subst).into(),
             Statement::Call(call) => call.subst_sim(prod_subst, cons_subst).into(),
             Statement::Exit(exit) => exit.subst_sim(prod_subst, cons_subst).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -84,6 +101,7 @@ impl TypedFreeVars for Statement {
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::Call(call) => call.typed_free_vars(vars),
             Statement::Exit(exit) => exit.typed_free_vars(vars),
+            Statement::Unreachable(_unreachable) => {}
         }
     }
 }
@@ -96,6 +114,7 @@ impl Uniquify for Statement {
             Statement::PrintI64(print) => print.uniquify(max_id).into(),
             Statement::Call(call) => call.uniquify(max_id).into(),
             Statement::Exit(exit) => exit.uniquify(max_id).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -109,6 +128,84 @@ impl Focusing for Statement {
             Statement::PrintI64(print) => print.focus(max_id),
             Statement::Call(call) => call.focus(max_id),
             Statement::Exit(exit) => exit.focus(max_id),
+            Statement::Unreachable(unreachable) => unreachable.focus(max_id),
+        }
+    }
+}
+
+impl ConstraintCollector for Statement {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        match self {
+            Statement::Cut(cut) => cut.collect_constraints(env),
+            Statement::IfC(ifc) => ifc.collect_constraints(env),
+            Statement::PrintI64(print) => print.collect_constraints(env),
+            Statement::Call(call) => call.collect_constraints(env),
+            Statement::Exit(exit) => exit.collect_constraints(env),
+            Statement::Unreachable(unreachable) => unreachable.collect_constraints(env),
+        }
+    }
+}
+
+impl Specialize for Statement {
+    fn specialize(&self, context: &crate::mono::specialize::SpecializeContext) -> Self {
+        match self {
+            Statement::Cut(cut) => cut.specialize(context).into(),
+            Statement::IfC(ifc) => ifc.specialize(context).into(),
+            Statement::PrintI64(print) => print.specialize(context).into(),
+            Statement::Call(call) => call.specialize(context).into(),
+            Statement::Exit(exit) => exit.specialize(context).into(),
+            Statement::Unreachable(unreachable) => unreachable.specialize(context).into(),
+        }
+    }
+}
+
+impl Checked for Statement {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Statement::Cut(cut) => cut.check(type_params, context, env),
+            Statement::IfC(ifc) => ifc.check(type_params, context, env),
+            Statement::PrintI64(print) => print.check(type_params, context, env),
+            Statement::Call(call) => call.check(type_params, context, env),
+            Statement::Exit(exit) => exit.check(type_params, context, env),
+            Statement::Unreachable(unreachable) => unreachable.check(type_params, context, env),
+        }
+    }
+}
+
+impl LabelAndUnify for Statement {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        match self {
+            Statement::Cut(cut) => cut.label_and_unify(state, sigs, scope).into(),
+            Statement::IfC(ifc) => ifc.label_and_unify(state, sigs, scope).into(),
+            Statement::PrintI64(print) => print.label_and_unify(state, sigs, scope).into(),
+            Statement::Call(call) => call.label_and_unify(state, sigs, scope).into(),
+            Statement::Exit(exit) => exit.label_and_unify(state, sigs, scope).into(),
+            Statement::Unreachable(unreachable) => {
+                unreachable.label_and_unify(state, sigs, scope).into()
+            }
+        }
+    }
+}
+
+impl Rewrite for Statement {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        match self {
+            Statement::Cut(cut) => cut.rewrite(table).into(),
+            Statement::IfC(ifc) => ifc.rewrite(table).into(),
+            Statement::PrintI64(print) => print.rewrite(table).into(),
+            Statement::Call(call) => call.rewrite(table).into(),
+            Statement::Exit(exit) => exit.rewrite(table).into(),
+            Statement::Unreachable(unreachable) => unreachable.rewrite(table).into(),
         }
     }
 }
@@ -127,6 +224,8 @@ pub enum FsStatement {
     Call(FsCall),
     /// Exiting the program
     Exit(FsExit),
+    /// Unreachable statement
+    Unreachable(FsUnreachable),
 }
 
 impl Print for FsStatement {
@@ -137,6 +236,7 @@ impl Print for FsStatement {
             FsStatement::PrintI64(print) => print.print(cfg, alloc),
             FsStatement::Call(call) => call.print(cfg, alloc),
             FsStatement::Exit(exit) => exit.print(cfg, alloc),
+            FsStatement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }
@@ -150,6 +250,7 @@ impl SubstVar for FsStatement {
             FsStatement::PrintI64(print) => print.subst_sim(subst).into(),
             FsStatement::Call(call) => call.subst_sim(subst).into(),
             FsStatement::Exit(exit) => exit.subst_sim(subst).into(),
+            FsStatement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -162,6 +263,7 @@ impl TypedFreeVars for FsStatement {
             FsStatement::PrintI64(print) => print.typed_free_vars(vars),
             FsStatement::Call(call) => call.typed_free_vars(vars),
             FsStatement::Exit(exit) => exit.typed_free_vars(vars),
+            FsStatement::Unreachable(_unreachable) => {}
         }
     }
 }

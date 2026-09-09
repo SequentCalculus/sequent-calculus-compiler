@@ -10,6 +10,7 @@ use crate::syntax::*;
 use crate::typing::*;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 /// This enum encodes the monomorphic types of AxCut. They are either integers, or instances of
 /// user-declared type templates, or, during typechecking, type parameters standing for a
@@ -51,6 +52,10 @@ impl Ty {
             Ty::Decl {
                 name, type_args, ..
             } => {
+                if type_args.args.is_empty() && symbol_table.abstract_type_vars.contains_key(name) {
+                    return Ok(());
+                }
+
                 let instance_name = name.clone() + &type_args.print_to_string(None);
                 match symbol_table.types.get(&instance_name) {
                     Some(_) => Ok(()),
@@ -63,7 +68,7 @@ impl Ty {
                             *span,
                             instance_name,
                             type_args,
-                            pol.clone(),
+                            *pol,
                             type_params.clone(),
                             xtors.clone(),
                             symbol_table,
@@ -103,6 +108,36 @@ impl Ty {
         }
     }
 
+    /// This function determines the [`Polarity`] of a type, i.e. whether it behaves as a
+    /// data/positive (CBV) or codata/negative (CBN) type. `I64` is always positive.
+    /// For a type parameter this is its declared polarity (looked up in
+    /// `symbol_table.abstract_type_vars`), for a user-declared type template or instance it is
+    /// the polarity declared on the corresponding `data`/`codata` template.
+    pub fn polarity(&self, symbol_table: &SymbolTable) -> Result<Polarity, Error> {
+        match self {
+            Ty::I64 { .. } => Ok(Polarity::Data),
+            Ty::Decl {
+                span,
+                name,
+                type_args,
+            } => {
+                if type_args.args.is_empty() {
+                    if let Some(polarity) = symbol_table.abstract_type_vars.get(name) {
+                        return Ok(*polarity);
+                    }
+                }
+                symbol_table
+                    .type_templates
+                    .get(name)
+                    .map(|(pol, _, _)| *pol)
+                    .ok_or_else(|| Error::Undefined {
+                        span: span.to_miette(),
+                        name: name.clone(),
+                    })
+            }
+        }
+    }
+
     /// This function creates an i64 type with no defined source location.
     pub fn mk_i64() -> Self {
         Ty::I64 { span: None }
@@ -116,6 +151,23 @@ impl Ty {
             span: None,
             name: name.to_string(),
             type_args,
+        }
+    }
+
+    /// This function collects the names of all user-declared types referenced by this type
+    /// (including nested type arguments, e.g. `Foo` in `List[Foo]`), skipping names bound as
+    /// type parameters in `bound`.
+    pub fn collect_referenced_types(&self, bound: &HashSet<Name>, out: &mut HashSet<Name>) {
+        if let Ty::Decl {
+            name, type_args, ..
+        } = self
+        {
+            if !bound.contains(name) {
+                out.insert(name.clone());
+            }
+            for arg in &type_args.args {
+                arg.collect_referenced_types(bound, out);
+            }
         }
     }
 
@@ -176,15 +228,14 @@ fn create_instance(
     instance_name: String,
     type_args: &TypeArgs,
     pol: Polarity,
-    type_params: TypeContext,
+    type_params: TypeParams,
     xtors: Vec<Name>,
     symbol_table: &mut SymbolTable,
 ) -> Result<(), Error> {
     type_args.is_instance(&type_params, symbol_table)?;
     let mappings: HashMap<Name, Ty> = type_params
-        .bindings
-        .iter()
-        .cloned()
+        .names()
+        .into_iter()
         .zip(type_args.args.clone())
         .collect();
 
@@ -203,20 +254,26 @@ fn create_instance(
     match pol {
         Polarity::Data => {
             for (base_name, full_name) in &xtor_names {
-                let Some(args_template) = symbol_table.ctor_templates.get(base_name) else {
+                let Some((ctor_type_args, args_template)) =
+                    symbol_table.ctor_templates.get(base_name)
+                else {
                     return Err(Error::Undefined {
                         span,
                         name: base_name.clone(),
                     });
                 };
-                symbol_table
-                    .ctors
-                    .insert(full_name.clone(), args_template.clone().subst_ty(&mappings));
+                symbol_table.ctors.insert(
+                    full_name.clone(),
+                    (
+                        ctor_type_args.clone(),
+                        args_template.clone().subst_ty(&mappings),
+                    ),
+                );
             }
         }
         Polarity::Codata => {
             for (base_name, full_name) in &xtor_names {
-                let Some((args_template, cont_ty_template)) =
+                let Some((dtor_type_args, args_template, cont_ty_template)) =
                     symbol_table.dtor_templates.get(base_name)
                 else {
                     return Err(Error::Undefined {
@@ -227,6 +284,7 @@ fn create_instance(
                 symbol_table.dtors.insert(
                     full_name.clone(),
                     (
+                        dtor_type_args.clone(),
                         args_template.clone().subst_ty(&mappings),
                         cont_ty_template.clone().subst_ty(&mappings),
                     ),
@@ -266,12 +324,13 @@ pub struct TypeArgs {
 
 impl TypeArgs {
     /// This function checks whether the type arguments form a valid instance for a list of type
-    /// parameters.
+    /// parameters, i.e. that the arity matches and that each argument's [`Polarity`] matches the
+    /// declared polarity of the corresponding type parameter.
     /// - `template` is the list of type parameters.
     /// - `symbol_table` is the symbol table during typechecking.
     pub fn is_instance(
         &self,
-        template: &TypeContext,
+        template: &TypeParams,
         symbol_table: &mut SymbolTable,
     ) -> Result<(), Error> {
         if self.args.len() != template.bindings.len() {
@@ -281,8 +340,17 @@ impl TypeArgs {
                 got: self.args.len(),
             });
         }
-        for typ in &self.args {
+        for (typ, param) in self.args.iter().zip(&template.bindings) {
             typ.check(&self.span, symbol_table)?;
+            let got = typ.polarity(symbol_table)?;
+            if got != param.polarity {
+                return Err(Error::PolarityMismatch {
+                    span: self.span.to_miette(),
+                    param: param.name.clone(),
+                    expected: param.polarity,
+                    got,
+                });
+            }
         }
         Ok(())
     }
@@ -319,10 +387,85 @@ impl Print for TypeArgs {
 mod type_tests {
     use printer::Print;
 
-    use super::Ty;
+    use super::{Ty, TypeArgs};
 
     #[test]
     fn display_i64() {
         assert_eq!(Ty::mk_i64().print_to_string(None), "i64".to_owned())
+    }
+
+    #[test]
+    fn i64_polarity_is_data() {
+        let symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        assert_eq!(
+            Ty::mk_i64().polarity(&symbol_table).unwrap(),
+            crate::syntax::declarations::Polarity::Data
+        );
+    }
+
+    #[test]
+    fn declared_template_polarity_is_looked_up() {
+        use crate::test_common::{symbol_table_list, symbol_table_stream_template};
+
+        let data_symbol_table = symbol_table_list();
+        assert_eq!(
+            Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))
+                .polarity(&data_symbol_table)
+                .unwrap(),
+            crate::syntax::declarations::Polarity::Data
+        );
+
+        let codata_symbol_table = symbol_table_stream_template();
+        assert_eq!(
+            Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()]))
+                .polarity(&codata_symbol_table)
+                .unwrap(),
+            crate::syntax::declarations::Polarity::Codata
+        );
+    }
+
+    #[test]
+    fn is_instance_accepts_matching_polarity() {
+        use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
+
+        let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        let template = TypeParams::mk(&[("A", Polarity::Data)]);
+        let args = TypeArgs::mk(vec![Ty::mk_i64()]);
+        assert!(args.is_instance(&template, &mut symbol_table).is_ok());
+    }
+
+    #[test]
+    fn is_instance_rejects_mismatched_polarity() {
+        use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
+
+        let mut symbol_table = crate::typing::symbol_table::SymbolTable::default();
+        let template = TypeParams::mk(&[("A", Polarity::Codata)]);
+        let args = TypeArgs::mk(vec![Ty::mk_i64()]);
+        let result = args.is_instance(&template, &mut symbol_table);
+        assert!(matches!(
+            result,
+            Err(crate::typing::errors::Error::PolarityMismatch { .. })
+        ));
+    }
+
+    #[test]
+    fn is_instance_rejects_data_argument_for_codata_param() {
+        use crate::syntax::declarations::Polarity;
+        use crate::syntax::type_params::TypeParams;
+        use crate::test_common::symbol_table_stream;
+
+        let mut symbol_table = symbol_table_stream();
+        let template = TypeParams::mk(&[("A", Polarity::Data)]);
+        let args = TypeArgs::mk(vec![Ty::mk_decl(
+            "Stream",
+            TypeArgs::mk(vec![Ty::mk_i64()]),
+        )]);
+        let result = args.is_instance(&template, &mut symbol_table);
+        assert!(matches!(
+            result,
+            Err(crate::typing::errors::Error::PolarityMismatch { .. })
+        ));
     }
 }

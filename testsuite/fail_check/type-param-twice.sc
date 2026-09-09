@@ -1,2 +1,2 @@
 // Same type parameter used twice
-data T[A,A] { C(x: A) }
+data T[A+,A+] { C(x: A) }

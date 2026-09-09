@@ -1,10 +1,12 @@
 //! This module defines the translation for the goto control operator.
 
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, type_params::ParamPolarity};
 
 impl Compile for fun::syntax::terms::Goto {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -19,6 +21,7 @@ impl Compile for fun::syntax::terms::Goto {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         self.term.compile_with_cont(
             core_lang::syntax::terms::XVar {
@@ -28,10 +31,12 @@ impl Compile for fun::syntax::terms::Goto {
                     &self
                         .ty
                         .expect("Types should be annotated before translation"),
+                    type_params.clone(),
                 ),
             }
             .into(),
             state,
+            type_params,
         )
     }
 }
@@ -41,7 +46,10 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, ife, lit, mu, prod, ty, var};
     use fun::{parse_term, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_goto_1() {
@@ -58,11 +66,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
         let expected = mu!(id!("a0"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
     }
@@ -83,11 +93,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string(), "a".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a"),

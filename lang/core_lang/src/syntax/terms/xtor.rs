@@ -2,14 +2,30 @@
 
 use printer::*;
 
-use crate::syntax::*;
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::erasure::erase_ty;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args};
+use crate::splitting::labeling::{
+    DeclSignatures, FieldObservation, LabelAndUnify, SplitState, label_in, type_param_subst,
+    unify_declared_type_vars,
+};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
+use crate::syntax::TypeParam;
+use crate::syntax::types::TypeArgs;
 use crate::traits::*;
+use crate::typing::check::{Checked, check_arity};
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
+use core::panic;
 use std::collections::BTreeSet;
 
 /// This struct defines constructors and destructors in Core. It consists of the information that
 /// determines whether it is a constructor (if `C` is instantiated with [`Prd`]) or a destructor
-/// (if `C` is instantiated with [`Cns`]), a name for the xtor, the arguments of the xtor, and of
+/// (if `C` is instantiated with [`Cns`]), a name for the xtor, the type arguments of the xtor, the arguments of the xtor, and of
 /// the type. The type parameter `A` determines whether this is the unfocused variant (if `A` is
 /// instantiated with [`Arguments`], which is the default) or the focused variant (if `A` is
 /// instantiated with [`TypingContext`]).
@@ -19,6 +35,8 @@ pub struct Xtor<C: Chi, A = Arguments> {
     pub prdcns: C,
     /// The xtor name
     pub name: Identifier,
+    /// The type arguments of the xtor
+    pub type_args: TypeArgs,
     /// The arguments of the xtor
     pub args: A,
     /// The type of the xtor
@@ -43,11 +61,13 @@ impl<C: Chi> Print for Xtor<C> {
         };
         if self.prdcns.is_prd() {
             alloc
-                .ctor(&self.name.print_to_string(Some(cfg)))
+                .ctor(&self.name.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         } else {
             alloc
-                .dtor(&self.name.print_to_string(Some(cfg)))
+                .dtor(&self.name.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args.group())
         }
     }
@@ -63,10 +83,12 @@ impl<C: Chi> Print for FsXtor<C> {
         if self.prdcns.is_prd() {
             alloc
                 .ctor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args)
         } else {
             alloc
                 .dtor(&self.name.print_to_string(Some(cfg)))
+                .append(self.type_args.print_to_string(Some(cfg)))
                 .append(args)
         }
     }
@@ -146,6 +168,7 @@ impl Bind for Xtor<Prd> {
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         name: self.name,
+                        type_args: self.type_args,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
@@ -175,6 +198,7 @@ impl Bind for Xtor<Cns> {
                     FsTerm::Xtor(FsXtor {
                         prdcns: self.prdcns,
                         name: self.name,
+                        type_args: self.type_args,
                         args: bindings.into(),
                         ty: self.ty.clone(),
                     }),
@@ -187,11 +211,200 @@ impl Bind for Xtor<Cns> {
     }
 }
 
+impl<C: Chi> ConstraintCollector for Xtor<C> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        let xtor_params: Vec<Identifier> = if self.prdcns.is_prd() {
+            TypeParam::names(&env.lookup_xtor_for_data_decl(&self.name)?.type_params)
+        } else {
+            TypeParam::names(&env.lookup_xtor_for_codata_decl(&self.name)?.type_params)
+        };
+
+        constraints.extend(collect_type_flow(&self.type_args.args, &xtor_params)?);
+        constraints.extend(self.args.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Xtor<C> {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        let specialized_ty = self.ty.specialize(context);
+
+        // If the surrounding declaration was erased, its own type arguments are no longer
+        // reflected in `specialized_ty`, but they're still needed to pick the right
+        // specialized xtor. Surface syntax never carries them explicitly at the call site
+        // (they were always implicit via the expected type), so we recover them from `self.ty`.
+        let extra_args: Vec<Ty> = recover_extra_args(&self.ty, context).unwrap_or_default();
+
+        let mut ground_type_args: Vec<Ty> = self
+            .type_args
+            .args
+            .iter()
+            .map(|a| {
+                erase_ty(
+                    &a.substitute(context.subst.as_slices()),
+                    context.erased_decls,
+                )
+            })
+            .collect();
+        ground_type_args.extend(extra_args);
+
+        let mangled_name = if ground_type_args.is_empty() {
+            self.name.clone()
+        } else {
+            context.table.lookup(&self.name, &ground_type_args).clone()
+        };
+
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: mangled_name,
+            type_args: TypeArgs::default(),
+            args: self.args.specialize(context),
+            ty: specialized_ty,
+        }
+    }
+}
+
+impl<C: Chi> Checked for Xtor<C> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        self.ty.check(type_params, context, env)?;
+        self.type_args
+            .args
+            .iter()
+            .try_for_each(|arg| arg.check(type_params, context, env))?;
+        self.args.check(type_params, context, env)?;
+
+        let Ty::Decl { name, .. } = &self.ty else {
+            bail!(TypeError::Contextual {
+                msg: "Expected TypeDeclaration".to_string()
+            })
+        };
+
+        // lookup the type declaration and check that the name of the xtor is defined on this declaration
+        if self.prdcns.is_prd() {
+            let data_decl = env.lookup_data_decl(name).ok_or_else(|| {
+                LocatedTypeError::new(TypeError::UndeclaredType(name.name.clone()))
+            })?;
+
+            let Some(xtor) = data_decl.xtors.iter().find(|xtor| xtor.name == self.name) else {
+                bail!(TypeError::UndeclaredXtor {
+                    type_name: name.name.clone(),
+                    xtor_name: self.name.name.clone()
+                })
+            };
+
+            check_arity(xtor.args.bindings.len(), self.args.entries.len())?;
+        } else {
+            let codata_decl = env.lookup_codata_decl(name).ok_or_else(|| {
+                LocatedTypeError::new(TypeError::UndeclaredType(name.name.clone()))
+            })?;
+
+            let Some(xtor) = codata_decl.xtors.iter().find(|xtor| xtor.name == self.name) else {
+                bail!(TypeError::UndeclaredXtor {
+                    type_name: name.name.clone(),
+                    xtor_name: self.name.name.clone()
+                })
+            };
+
+            check_arity(xtor.args.bindings.len(), self.args.entries.len())?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<C: Chi> LabelAndUnify for Xtor<C> {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        // Label this occurrence's own explicit type arguments (instantiating the xtor's own
+        // existential/universal type parameters, e.g. `Pack[List[int]](...)`) before using them.
+        let type_args = TypeArgs {
+            args: self
+                .type_args
+                .args
+                .iter()
+                .map(|a| state.label_ty(a))
+                .collect(),
+        };
+        // `ty` is the concrete type of the whole xtor value (e.g. `Fun[i64, Fun[i64, i64]]` for a
+        // destructor consumption). `label_in` below relies on it being a declared type.
+        let ty = state.label_ty(&self.ty);
+        if !matches!(ty, Ty::Decl { .. }) {
+            panic!("Expected declaration type in Xtor to label, got {ty:?}");
+        }
+        let args = self.args.label_and_unify(state, sigs, scope);
+
+        let Some(sig) = sigs.get(&self.name) else {
+            panic!("missing signature for xtor: {}", self.name.name);
+        };
+        let Ty::Decl {
+            type_args: decl_type_args,
+            ..
+        } = &ty
+        else {
+            unreachable!("just checked above that `ty` is a Ty::Decl");
+        };
+        let subst = type_param_subst(sig, &decl_type_args.args, &type_args.args);
+        let owner = label_in(&ty).clone();
+        state.record_xtor_use(&owner, &self.name);
+        // Every field's actual type is recorded per-occurrence via `FieldObservation` rather than
+        // unified immediately: whether it should end up sharing a physical copy with some other
+        // occurrence's field depends on whether their owners turn out equivalent, which is only
+        // known once the whole walk finishes (see `merge_field_observations`). The positions the
+        // declaration left open as a type variable have no head to observe and are tied to this
+        // occurrence's own type arguments instead (see `unify_declared_type_vars`).
+        for (i, arg) in args.entries.iter().enumerate() {
+            let actual = arg.get_type();
+            if let Some(declared) = sig.tys.get(i) {
+                unify_declared_type_vars(state, declared, &actual, &subst);
+            }
+            state.field_observations.push(FieldObservation {
+                owner: owner.clone(),
+                xtor: self.name.clone(),
+                field_index: i,
+                ty: actual,
+            });
+        }
+
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: self.name.clone(),
+            type_args,
+            args,
+            ty,
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Xtor<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        let owner_label = label_in(&self.ty);
+        let name = table.resolve_xtor_name(&self.name, owner_label);
+        Xtor {
+            prdcns: self.prdcns.clone(),
+            name: name.clone(),
+            type_args: self.type_args.rewrite(table),
+            args: self.args.rewrite(table),
+            ty: self.ty.rewrite(table),
+        }
+    }
+}
+
 #[cfg(test)]
 mod xtor_tests {
     use printer::Print;
 
     use super::Subst;
+
     use crate::syntax::*;
     use crate::test_common::example_subst;
     extern crate self as core_lang;
@@ -200,6 +413,7 @@ mod xtor_tests {
     fn example() -> Xtor<Prd> {
         ctor!(
             id!("Cons"),
+            [],
             [var!(id!("x")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
         )
@@ -216,9 +430,435 @@ mod xtor_tests {
         let result = example().subst_sim(&subst.0, &subst.1);
         let expected = ctor!(
             id!("Cons"),
+            [],
             [var!(id!("y")), var!(id!("xs"), ty!(id!("ListInt")))],
             ty!(id!("ListInt"))
         );
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignature, DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    use crate::traits::*;
+    extern crate self as core_lang;
+    use core_macros::{ctor, id, ty};
+
+    #[test]
+    fn label_and_unify_defers_the_field_to_an_observation_instead_of_unifying_eagerly() {
+        let mut state = SplitState::default();
+
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("Wrap"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![ty!(id!("Box"))],
+            },
+        );
+        sigs.insert(
+            id!("Pack"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![],
+            },
+        );
+
+        let example = ctor!(
+            id!("Wrap"),
+            [],
+            [ctor!(id!("Pack"), [], [], ty!(id!("Box")))],
+            ty!(id!("Wrapper"))
+        );
+
+        let result: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let arg_ty = result.args.entries[0].get_type();
+
+        // no signature-level anchor is ever minted or unified against -- the field's type is
+        // recorded as an observation, owned by this occurrence's own (freshly labeled) `.ty`
+        assert_eq!(state.field_observations.len(), 1);
+        let owner = match &result.ty {
+            Ty::Decl { name, .. } => name,
+            _ => panic!("expected Ty::Decl"),
+        };
+        assert_eq!(&state.field_observations[0].owner, owner);
+        assert_eq!(state.field_observations[0].ty, arg_ty);
+        // the xtor's own type is freshly labeled, independent of the field-level observation
+        assert!(matches!(result.ty, Ty::Decl { .. }));
+    }
+
+    #[test]
+    fn label_and_unify_keeps_two_independent_occurrences_field_observations_separate() {
+        let mut state = SplitState::default();
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("MkBar"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![ty!(id!("Foo"))],
+            },
+        );
+        sigs.insert(
+            id!("MkFoo"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![],
+            },
+        );
+
+        let example = ctor!(
+            id!("MkBar"),
+            [],
+            [ctor!(id!("MkFoo"), [], [], ty!(id!("Foo")))],
+            ty!(id!("Bar"))
+        );
+
+        let first: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+        let second: Xtor<Prd> =
+            example.label_and_unify(&mut state, &sigs, &TypingContext::default());
+
+        let arg_name = |x: &Xtor<Prd>| match x.args.entries[0].get_type() {
+            Ty::Decl { name, .. } => name,
+            _ => panic!("expected Ty::Decl"),
+        };
+        // nothing unifies the two independent `MkFoo` occurrences with each other
+        assert_ne!(
+            state.uf.find(&arg_name(&first)),
+            state.uf.find(&arg_name(&second))
+        );
+        assert_eq!(state.field_observations.len(), 2);
+    }
+}
+
+#[cfg(test)]
+mod constraint_tests {
+    use crate::mono::constraints::{FlowConstraint, FlowConstraintSet};
+    use crate::syntax::types::TypeArgs;
+    use crate::typing::env::GlobalEnv;
+    use crate::{mono::constraints::ConstraintCollector, syntax::*};
+    use std::collections::BTreeSet;
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, cns, codata, ctor, ctor_sig, data, dtor, dtor_sig, id, lit, prd, tparam, tvar, ty,
+    };
+
+    fn example_list() -> DataDeclaration {
+        data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [tparam!(id!("A", 1), "+")]
+        )
+    }
+
+    fn box_decl() -> DataDeclaration {
+        data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [tparam!(id!("A", 1), "+")],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        )
+    }
+
+    fn runner_decl() -> CodataDeclaration {
+        codata!(
+            id!("Runner"),
+            [dtor_sig!(
+                id!("Run"),
+                [tparam!(id!("A", 1), "+")],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        )
+    }
+
+    fn container_decl() -> CodataDeclaration {
+        codata!(
+            id!("Container"),
+            [dtor_sig!(
+                id!("Wrap"),
+                [tparam!(id!("S", 2), "+")],
+                [bind!(id!("x"), prd!(), tvar!(id!("S", 2)))]
+            )],
+            [tparam!(id!("T", 1), "+")]
+        )
+    }
+
+    #[test]
+    fn collect_constraint_cons() {
+        let list = example_list();
+
+        let cons: Xtor<Prd> = ctor!(
+            id!("Cons"),
+            [],
+            [
+                lit!(1),
+                ctor!(
+                    id!("Cons"),
+                    [],
+                    [
+                        lit!(2),
+                        ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))
+                    ],
+                    ty!(id!("List"), [ty!("int")])
+                )
+            ],
+            ty!(id!("List"), [ty!("int")])
+        );
+
+        let constraints = cons
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::I64],
+                to: vec![id!("A", 1)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_cons_nested() {
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))])),
+                        bind!(
+                            id!("xxs"),
+                            prd!(),
+                            ty!(id!("List"), [ty!(id!("List"), [tvar!(id!("A", 1))])])
+                        )
+                    ]
+                )
+            ],
+            [tparam!(id!("A", 1), "+")]
+        );
+
+        let cons: Xtor<Prd> = ctor!(
+            id!("Cons"),
+            [],
+            [
+                lit!(1),
+                ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")])),
+                ctor!(
+                    id!("Nil"),
+                    [],
+                    [],
+                    ty!(id!("List"), [ty!(id!("List"), [ty!("int")])])
+                )
+            ],
+            ty!(id!("List"), [ty!("int")])
+        );
+
+        let constraints = cons
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::Decl {
+                        name: Identifier {
+                            name: "List".to_string(),
+                            id: 0,
+                        },
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    }],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_nil() {
+        let list = example_list();
+
+        let nil: Xtor<Prd> = ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]));
+
+        let constraints = nil
+            .collect_constraints(&GlobalEnv::new(&[list], &[], &[]))
+            .unwrap();
+
+        assert_eq!(
+            constraints,
+            FlowConstraintSet {
+                constraints: BTreeSet::from_iter(vec![FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)]
+                }])
+            }
+        )
+    }
+
+    #[test]
+    fn collect_constraint_dtor() {
+        let list = codata!(
+            id!("List"),
+            [
+                dtor_sig!(
+                    id!("Head"),
+                    [],
+                    [bind!(id!("h"), cns!(), tvar!(id!("A", 1)))]
+                ),
+                dtor_sig!(
+                    id!("Tail"),
+                    [],
+                    [bind!(
+                        id!("t"),
+                        cns!(),
+                        ty!(id!("List"), [tvar!(id!("A", 1))])
+                    )]
+                )
+            ],
+            [tparam!(id!("A", 1), "+")]
+        );
+
+        let dtor: Xtor<Cns> = dtor!(id!("Head"), [], [lit!(1)], ty!(id!("List"), [ty!("int")]));
+
+        let constraints = dtor
+            .collect_constraints(&GlobalEnv::new(&[], &[list], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::I64],
+                to: vec![id!("A", 1)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_existential_ctor() {
+        let box_decl = box_decl();
+
+        let pack: Xtor<Prd> = ctor!(
+            id!("Pack"),
+            [ty!(id!("List"), [ty!("int")])],
+            [ctor!(id!("Nil"), [], [], ty!(id!("List"), [ty!("int")]))],
+            ty!(id!("Box"))
+        );
+
+        let constraints = pack
+            .collect_constraints(&GlobalEnv::new(&[box_decl, example_list()], &[], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::Decl {
+                        name: id!("List"),
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    }],
+                    to: vec![id!("A", 1)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_universal_dtor() {
+        let runner = runner_decl();
+
+        let run: Xtor<Cns> = dtor!(id!("Run"), [ty!("int")], [lit!(1)], ty!(id!("Runner")));
+
+        let constraints = run
+            .collect_constraints(&GlobalEnv::new(&[], &[runner], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![FlowConstraint {
+                from: vec![Ty::I64],
+                to: vec![id!("A", 1)],
+            }]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+
+    #[test]
+    fn collect_constraint_dtor_with_decl_and_own_type_params() {
+        let container = container_decl();
+
+        let wrap: Xtor<Cns> = dtor!(
+            id!("Wrap"),
+            [ty!("int")],
+            [lit!(1)],
+            ty!(id!("Container"), [ty!(id!("List"), [ty!("int")])])
+        );
+
+        let constraints = wrap
+            .collect_constraints(&GlobalEnv::new(&[example_list()], &[container], &[]))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::Decl {
+                        name: id!("List"),
+                        type_args: TypeArgs {
+                            args: vec![Ty::I64],
+                        },
+                    }],
+                    to: vec![id!("T", 1)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("S", 2)],
+                },
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
+        };
+
+        assert_eq!(constraints, expected)
     }
 }

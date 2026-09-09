@@ -3,8 +3,13 @@
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
+use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -21,6 +26,8 @@ pub struct Clause<C: Chi, S = Statement> {
     pub prdcns: C,
     /// The name of the xtor
     pub xtor: Identifier,
+    /// The type parameters of the xtor
+    pub type_params: Vec<Identifier>,
     /// The bindings to which the arguments of the xtor are bound
     pub context: TypingContext,
     /// The body of the pattern, either unfocused ([`Statement`]) or focused ([`FsStatement`])
@@ -39,9 +46,9 @@ impl<C: Chi, S: Print> Print for Clause<C, S> {
         };
 
         let xtor = if self.prdcns.is_prd() {
-            alloc.dtor(&self.xtor.print_to_string(Some(cfg)))
+            alloc.dtor(&self.xtor.name.print_to_string(Some(cfg)))
         } else {
-            alloc.ctor(&self.xtor.print_to_string(Some(cfg)))
+            alloc.ctor(&self.xtor.name.print_to_string(Some(cfg)))
         };
         xtor.append(context.group())
             .append(alloc.space())
@@ -207,8 +214,161 @@ impl<C: Chi> Focusing for Clause<C> {
         Clause {
             prdcns: self.prdcns,
             xtor: self.xtor,
+            type_params: self.type_params,
             context: self.context,
             body: self.body.focus(max_id),
         }
+    }
+}
+
+impl<C: Chi> ConstraintCollector for Clause<C> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let xtor_params: Vec<Ty> = if self.prdcns.is_cns() {
+            env.lookup_xtor_for_data_decl(&self.xtor)?
+                .type_params
+                .into_iter()
+                .map(|p| Ty::Var(p.name))
+                .collect()
+        } else {
+            env.lookup_xtor_for_codata_decl(&self.xtor)?
+                .type_params
+                .into_iter()
+                .map(|p| Ty::Var(p.name))
+                .collect()
+        };
+
+        let mut constraints = collect_type_flow(&xtor_params, &self.type_params)?;
+
+        // collect constraints from the body of the clause
+        constraints.extend(self.body.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl<C: Chi> Checked for Clause<C> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // The clause's own freshly-bound existential/universal parameters carry no annotation of
+        // their own - they inherit their polarity from the xtor's own declared parameters,
+        // matched positionally, mirroring how Fun's `push_abstract_vars` threads the ctor's/
+        // dtor's declared polarity into a `case`/`new` clause's pattern-bound names.
+        let own_declared_params: &[TypeParam] = if self.prdcns.is_cns() {
+            env.data_decls
+                .iter()
+                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
+                .map(|xtor| xtor.type_params.as_slice())
+        } else {
+            env.codata_decls
+                .iter()
+                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
+                .map(|xtor| xtor.type_params.as_slice())
+        }
+        .ok_or_else(|| {
+            LocatedTypeError::new(TypeError::UndeclaredXtor {
+                type_name: "unknown".to_string(),
+                xtor_name: self.xtor.name.clone(),
+            })
+        })?;
+        let own_type_params: Vec<TypeParam> = self
+            .type_params
+            .iter()
+            .zip(own_declared_params)
+            .map(|(id, declared)| TypeParam {
+                name: id.clone(),
+                polarity: declared.polarity,
+            })
+            .collect();
+
+        // extend the type parameters with the type parameters of the clause
+        let extended_type_params = [type_params, &own_type_params].concat();
+        self.context.check(&extended_type_params, context, env)?;
+
+        // extend the context of the clause with the bindings of the clause
+        let mut extended_context = context.clone();
+        for binding in &self.context.bindings {
+            extended_context.bindings.push(binding.clone());
+        }
+
+        // check the body of the clause under the extended context of the clause
+        self.body
+            .check(&extended_type_params, &extended_context, env)?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{
+        DeclSignature, DeclSignatures, SplitState, label_and_unify_clause,
+    };
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{bind, clause, covar, cut, id, prd, ty, var};
+
+    #[test]
+    fn label_and_unify_defers_a_binding_to_an_observation() {
+        let mut state = SplitState::default();
+
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("Cons"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![],
+                tys: vec![ty!(id!("Box"))],
+            },
+        );
+
+        // `a` is the outer continuation the clause body cuts against; it must already be in
+        // scope, exactly like it would be for a real match's surrounding context.
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("a"),
+            chi: Chirality::Cns,
+            ty: Ty::I64,
+        });
+
+        let example = clause!(
+            Cns,
+            id!("Cons"),
+            [],
+            [bind!(id!("x"), prd!(), ty!(id!("Box")))],
+            cut!(
+                var!(id!("x"), ty!(id!("Box"))),
+                covar!(id!("a")),
+                ty!(id!("Box"))
+            )
+        );
+
+        let owner = state.label_ty(&ty!(id!("List")));
+        let owner_label = match &owner {
+            Ty::Decl { name, .. } => name.clone(),
+            _ => unreachable!(),
+        };
+        let result: Clause<Cns> =
+            label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner);
+        let binding_ty = result.context.bindings[0].ty.clone();
+
+        // nothing unifies the binding eagerly -- it is recorded as a field observation instead,
+        // to be reconciled against whatever the owner's equivalence class turns out to be
+        assert_eq!(state.field_observations.len(), 1);
+        assert_eq!(state.field_observations[0].owner, owner_label);
+        assert_eq!(state.field_observations[0].xtor, id!("Cons"));
+        assert_eq!(state.field_observations[0].field_index, 0);
+        assert_eq!(state.field_observations[0].ty, binding_ty);
+
+        // scope threading: the body's occurrence of `x` must carry exactly the binding's label
+        let Statement::Cut(body_cut) = result.body.as_ref() else {
+            panic!("expected a Cut");
+        };
+        let Term::XVar(producer) = body_cut.producer.as_ref() else {
+            panic!("expected an XVar producer");
+        };
+        assert_eq!(producer.ty, binding_ty);
     }
 }

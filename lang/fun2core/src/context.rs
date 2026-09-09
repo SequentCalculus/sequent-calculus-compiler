@@ -2,6 +2,8 @@
 
 use crate::types::compile_ty;
 use core_lang::syntax::names::Identifier;
+use core_lang::syntax::type_params::ParamPolarity;
+use std::{collections::HashMap, rc::Rc};
 
 /// This function converts [chirality in Fun](fun::syntax::context::Chirality) to
 /// [chirality in Core](core_lang::syntax::context::Chirality).
@@ -13,9 +15,13 @@ pub fn compile_chi(chi: &fun::syntax::context::Chirality) -> core_lang::syntax::
 }
 
 /// This function converts [typing contexts in Fun](fun::syntax::context::TypingContext) to
-/// [typing contexts in Core](core_lang::syntax::context::TypingContext).
+/// [typing contexts in Core](core_lang::syntax::context::TypingContext), replacing type
+/// parameters with the given core identifiers.
+/// - `context` is the Fun typing context to translate.
+/// - `type_params` maps Fun type parameter names to fresh Core identifiers.
 pub fn compile_context(
     context: fun::syntax::context::TypingContext,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::context::TypingContext {
     core_lang::syntax::context::TypingContext {
         bindings: context
@@ -24,7 +30,7 @@ pub fn compile_context(
             .map(|binding| core_lang::syntax::context::ContextBinding {
                 var: Identifier::new(binding.var),
                 chi: compile_chi(&binding.chi),
-                ty: compile_ty(&binding.ty),
+                ty: compile_ty(&binding.ty, type_params.clone()),
             })
             .collect(),
     }

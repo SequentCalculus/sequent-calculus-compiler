@@ -5,18 +5,19 @@
 //! administrative redexes.
 
 use core_lang::syntax::{
-    CodataDeclaration, Def, Statement, Ty,
+    CodataDeclaration, DataDeclaration, Def, Statement, Ty,
     arguments::Argument,
     context::Chirality,
     names::Identifier,
     statements::Cut,
     terms::{Cns, Mu, Prd, XVar},
+    type_params::{ParamPolarity, TypeParam},
 };
 use core_lang::traits::{IsCoValue, Typed, TypedFreeVars};
 use fun::syntax::names::{Covar, Name, Var, fresh_covar, fresh_name, fresh_var};
 
 use std::{
-    collections::{BTreeSet, HashSet, VecDeque},
+    collections::{BTreeSet, HashMap, HashSet, VecDeque},
     rc::Rc,
 };
 
@@ -31,12 +32,16 @@ pub struct CompileState<'a> {
     pub used_vars: HashSet<Var>,
     /// The codata types in the program
     pub codata_types: &'a [CodataDeclaration],
+    /// The data types in the program
+    pub data_types: &'a [DataDeclaration],
     /// The labels for top-level functions used in the program
     pub used_labels: &'a mut HashSet<Name>,
     /// The name of the definition being currently compiled
     pub current_label: &'a str,
     /// A list of already lifted statements
     pub lifted_statements: &'a mut VecDeque<Def>,
+    /// The maximum identifier used in the program so far, needed for generating fresh identifiers
+    pub max_id: &'a mut usize,
 }
 
 impl CompileState<'_> {
@@ -60,10 +65,12 @@ pub trait Compile: Sized {
     /// administrative redexes
     /// - `consumer` is the consumer input.
     /// - `state` is the [state](CompileState) threaded through the translation.
+    /// - `type_params` is a mapping from type parameter names to their corresponding identifiers.
     fn compile_with_cont(
         self,
         consumer: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement;
 
     /// This method translates a term from the surface language [Fun](fun) into the intermediate
@@ -82,7 +89,12 @@ pub trait Compile: Sized {
     /// 〚5〛= μ a. 〚5〛_{a} = μ a. < 5 | a > =η 5
     /// ```
     /// Therefore, an optimized version of this function is implemented for non-computations.
-    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    fn compile(
+        self,
+        state: &mut CompileState,
+        ty: Ty,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
             core_lang::syntax::terms::XVar {
@@ -92,6 +104,7 @@ pub trait Compile: Sized {
             }
             .into(),
             state,
+            type_params,
         );
         Mu {
             prdcns: Prd,
@@ -104,16 +117,22 @@ pub trait Compile: Sized {
 }
 
 impl<T: Compile + Clone> Compile for Rc<T> {
-    fn compile(self, state: &mut CompileState, ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
-        Rc::unwrap_or_clone(self).compile(state, ty)
+    fn compile(
+        self,
+        state: &mut CompileState,
+        ty: Ty,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
+        Rc::unwrap_or_clone(self).compile(state, ty, type_params)
     }
 
     fn compile_with_cont(
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
-        Rc::unwrap_or_clone(self).compile_with_cont(cont, state)
+        Rc::unwrap_or_clone(self).compile_with_cont(cont, state, type_params)
     }
 }
 
@@ -174,6 +193,7 @@ pub fn share(
 
     state.lifted_statements.push_front(core_lang::syntax::Def {
         name: Identifier::new(name.clone()),
+        type_params: vec![],
         context,
         body,
     });
@@ -182,8 +202,8 @@ pub fn share(
         var,
         core_lang::syntax::statements::Call {
             name: Identifier::new(name),
+            type_args: core_lang::syntax::types::TypeArgs { args: vec![] },
             args,
-            ty: ty.clone(),
         }
         .into(),
         ty,
@@ -208,8 +228,13 @@ pub type ContinuationVec = Box<dyn FnOnce(VecDeque<Argument>, &mut CompileState)
 /// - `continuation` is the continuation containing the statement from which the term has been
 ///   lifted.
 /// - `state` is the [state](CompileState) threaded through the translation.
-fn bind(arg: Argument, k: Continuation, state: &mut CompileState) -> Statement {
-    if arg.is_co_value(state.codata_types) {
+fn bind(
+    arg: Argument,
+    k: Continuation,
+    state: &mut CompileState,
+    type_params: Rc<Vec<TypeParam>>,
+) -> Statement {
+    if arg.is_co_value(state.codata_types, &type_params) {
         k(arg, state)
     } else {
         let ty = arg.get_type();
@@ -257,22 +282,28 @@ pub fn bind_many(
     mut args: VecDeque<Argument>,
     k: ContinuationVec,
     state: &mut CompileState,
+    type_params: Rc<Vec<TypeParam>>,
 ) -> Statement {
     match args.pop_front() {
         None => k(VecDeque::new(), state),
-        Some(arg) => bind(
-            arg,
-            Box::new(|binding, state| {
-                bind_many(
-                    args,
-                    Box::new(|mut bindings, state| {
-                        bindings.push_front(binding);
-                        k(bindings, state)
-                    }),
-                    state,
-                )
-            }),
-            state,
-        ),
+        Some(arg) => {
+            let type_params_rec = type_params.clone();
+            bind(
+                arg,
+                Box::new(move |binding, state| {
+                    bind_many(
+                        args,
+                        Box::new(|mut bindings, state| {
+                            bindings.push_front(binding);
+                            k(bindings, state)
+                        }),
+                        state,
+                        type_params_rec,
+                    )
+                }),
+                state,
+                type_params,
+            )
+        }
     }
 }

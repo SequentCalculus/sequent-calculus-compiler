@@ -1,5 +1,10 @@
 //! This module defines user-declared data and codata types in Core.
 
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
@@ -55,7 +60,7 @@ impl Polarity for Codata {
 }
 
 /// This struct defines an xtor, i.e., a constructor or destructor. It consists of a name (unique
-/// within its type) and a typing context defining its parameters. The type parameter `P`
+/// within its type), type arguments, and a typing context defining its parameters. The type parameter `P`
 /// determines whether this is a constructor (if `P` is instantiated with [`Data`]) or destructor
 /// (if `P` is instantiated with [`Codata`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,6 +69,8 @@ pub struct XtorSig<P: Polarity> {
     pub xtor: P,
     /// The xtor name
     pub name: Identifier,
+    /// The type parameters of the xtor
+    pub type_params: Vec<TypeParam>,
     /// The argument context
     pub args: TypingContext,
 }
@@ -85,15 +92,36 @@ impl<P: Polarity> Print for XtorSig<P> {
             self.args.print(cfg, alloc).parens()
         };
 
+        let type_params = if self.type_params.is_empty() {
+            alloc.nil()
+        } else {
+            self.type_params.print(cfg, alloc).brackets()
+        };
+
         if self.xtor.is_data() {
             alloc
-                .ctor(&self.name.print_to_string(Some(cfg)))
+                .ctor(&self.name.name.print_to_string(Some(cfg)))
+                .append(type_params)
                 .append(args.group())
         } else {
             alloc
-                .dtor(&self.name.print_to_string(Some(cfg)))
+                .dtor(&self.name.name.print_to_string(Some(cfg)))
+                .append(type_params)
                 .append(args.group())
         }
+    }
+}
+
+impl<P: Polarity> Checked for XtorSig<P> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // extend the type parameters with the type parameters of the xtor
+        let extended_type_params = [type_params, &self.type_params].concat();
+        self.args.check(&extended_type_params, context, env)
     }
 }
 
@@ -108,6 +136,8 @@ pub struct TypeDeclaration<P: Polarity> {
     pub name: Identifier,
     /// The xtors of the type
     pub xtors: Vec<XtorSig<P>>,
+    /// The type parameters of the type
+    pub type_params: Vec<TypeParam>,
 }
 
 /// Type alias for data types
@@ -126,6 +156,21 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
             .print(cfg, alloc)
             .append(alloc.space())
             .append(alloc.typ(&self.name.print_to_string(Some(cfg))))
+            .append(if self.type_params.is_empty() {
+                alloc.nil()
+            } else {
+                alloc
+                    .text("[")
+                    .append(
+                        alloc.intersperse(
+                            self.type_params
+                                .iter()
+                                .map(|param| alloc.typ(&param.print_to_string(Some(cfg)))),
+                            alloc.text(COMMA).append(alloc.space()),
+                        ),
+                    )
+                    .append(alloc.text("]"))
+            })
             .append(alloc.space());
 
         let sep = alloc.text(COMMA).append(alloc.line());
@@ -169,6 +214,7 @@ pub fn cont_int() -> DataDeclaration {
         xtors: vec![CtorSig {
             xtor: Data,
             name: Identifier::new("Ret".to_string()),
+            type_params: vec![],
             args: TypingContext {
                 bindings: vec![ContextBinding {
                     var: Identifier::new("x".to_string()),
@@ -177,5 +223,142 @@ pub fn cont_int() -> DataDeclaration {
                 }],
             },
         }],
+        type_params: vec![],
+    }
+}
+
+impl<P: Polarity> Checked for TypeDeclaration<P> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // check xtors
+        for xtor in &self.xtors {
+            xtor.check(type_params, context, env)?;
+        }
+        Ok(())
+    }
+}
+
+impl<P: Polarity> ConstraintCollector for TypeDeclaration<P> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::default();
+        for xtor in &self.xtors {
+            for binding in xtor.args.bindings.iter() {
+                constraints.extend(binding.ty.collect_constraints(env)?);
+            }
+        }
+        Ok(constraints)
+    }
+}
+
+#[cfg(test)]
+mod check_tests {
+    use crate::{
+        syntax::TypingContext,
+        typing::{check::Checked, env::GlobalEnv},
+    };
+    extern crate self as core_lang;
+    use core_macros::{bind, ctor_sig, data, id, prd, tparam, tvar, ty};
+
+    #[test]
+    fn ty_decl_check_arity_and_args() {
+        // create a data declaration: List[A]
+        let list = data!(id!("List"), [], [tparam!(id!("A", 1), "+")]);
+
+        // well-formed: List[i64]
+        let ty_good = ty!(id!("List"), [ty!("int")]);
+
+        assert!(
+            ty_good
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(std::slice::from_ref(&list), &[], &[])
+                )
+                .is_ok()
+        );
+
+        // arity mismatch: List[] against List[A]
+        let ty_bad = ty!(id!("List"));
+
+        let res = ty_bad.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(std::slice::from_ref(&list), &[], &[]),
+        );
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn type_declaration_and_xtor_check() {
+        // create a constructor signature with one argument of type i64
+        let decl = data!(
+            id!("List"),
+            [ctor_sig!(
+                id!("Cons"),
+                [],
+                [bind!(id!("x"), prd!(), ty!("int"))]
+            )],
+            []
+        );
+
+        // xtor signature check
+        assert!(
+            decl.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(std::slice::from_ref(&decl), &[], &[])
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn existential_type_decl_ok() {
+        let box_decl = data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [tparam!(id!("A", 1), "+")],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        assert!(
+            box_decl
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(std::slice::from_ref(&box_decl), &[], &[]),
+                )
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn existential_type_decl_err() {
+        let box_decl = data!(
+            id!("Box"),
+            [ctor_sig!(
+                id!("Pack"),
+                [],
+                [bind!(id!("x"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        assert!(
+            box_decl
+                .check(
+                    &[],
+                    &TypingContext::default(),
+                    &GlobalEnv::new(std::slice::from_ref(&box_decl), &[], &[]),
+                )
+                .is_err()
+        );
     }
 }

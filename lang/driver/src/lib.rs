@@ -11,6 +11,8 @@ use std::{
     process::Command,
 };
 
+pub use core_lang::mono::graph_viz::VizOutput;
+use core_lang::syntax::Prog;
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
@@ -43,6 +45,8 @@ pub struct Driver {
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Monomorphized in core, but not yet uniquified or focused
+    monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
     uniquified: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -51,6 +55,12 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// Whether `monomorphized` runs type splitting on a growing cycle (see
+    /// [`core_lang::mono::monomorphize_program`]'s `split` parameter). Set once via
+    /// [`Driver::set_split`] before any of the cached methods run, since it isn't part of any
+    /// cache key, calling one of them again with a different setting on the same `Driver` would
+    /// silently return the stale result.
+    split: bool,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -61,7 +71,8 @@ pub enum PrintMode {
 }
 
 impl Driver {
-    /// This function creates a new driver.
+    /// This function creates a new driver. Type splitting is enabled by default (see
+    /// [`Driver::set_split`]).
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
@@ -69,11 +80,22 @@ impl Driver {
             parsed: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
+            monomorphized: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
+            split: true,
         }
+    }
+
+    /// Sets whether `monomorphized` runs type splitting on a growing cycle. Call this before any
+    /// other method that ends up monomorphizing (`monomorphized`, `uniquified`, `focused`,
+    /// `shrunk`, `linearized`, or any of their `print_*`/`compile_*` callers), once one of them
+    /// has run and cached its result for a given path, this setting no longer has any effect on
+    /// that path.
+    pub fn set_split(&mut self, split: bool) {
+        self.split = split;
     }
 
     /// This function returns the unparsed source code for the given file.
@@ -124,6 +146,7 @@ impl Driver {
 
         let checked = self.checked(path)?;
         let compiled = compile_prog(checked);
+
         self.compiled.insert(path.clone(), compiled.clone());
         Ok(compiled)
     }
@@ -163,16 +186,40 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the monomorphized version of the [Core](core_lang) code.
+    ///
+    /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
+    /// the result is cached by path alone, so a later call reusing the cache does not repeat a
+    /// `--debug` report or a constraint-graph rendering requested by an earlier call.
+    pub fn monomorphized(
+        &mut self,
+        path: &PathBuf,
+        viz: VizOutput,
+        debug: bool,
+    ) -> Result<Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.monomorphized.get(path) {
+            return Ok(res.clone());
+        }
+
+        let compiled = self.compiled(path)?;
+        let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz, self.split)
+            .map_err(DriverError::MonoError)?;
+
+        self.monomorphized.insert(path.clone(), mono_prog.clone());
+        Ok(mono_prog)
+    }
+
     /// This function returns the uniquified version of the [Core](core_lang) code.
     pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         if let Some(res) = self.uniquified.get(path) {
             return Ok(res.clone());
         }
 
-        let mut compiled = self.compiled(path)?;
-        compiled.uniquify();
-        self.uniquified.insert(path.clone(), compiled.clone());
-        Ok(compiled)
+        let mut monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        monomorphized.uniquify();
+        self.uniquified.insert(path.clone(), monomorphized.clone());
+        Ok(monomorphized)
     }
 
     pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
@@ -217,8 +264,8 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let focused = compiled.focus();
+        let monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let focused = monomorphized.focus();
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }

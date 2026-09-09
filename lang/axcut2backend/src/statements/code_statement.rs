@@ -4,7 +4,11 @@
 use printer::Print;
 
 use crate::{
-    code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves, utils::Utils,
+    code::Instructions,
+    config::Config,
+    memory::Memory,
+    parallel_moves::ParallelMoves,
+    utils::{Utils, asm_safe_name},
 };
 use axcut::syntax::{Statement, TypeDeclaration, TypingContext};
 
@@ -69,7 +73,7 @@ impl CodeStatement for Statement {
                 substitute.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
             Statement::Call(call) => {
-                let label = call.label.print_to_string(None) + "_";
+                let label = asm_safe_name(&call.label) + "_";
                 let comment = call.label.print_to_string(None) + "(...)";
                 instructions.push(Backend::comment(comment));
 
@@ -101,6 +105,9 @@ impl CodeStatement for Statement {
             }
             Statement::Exit(ret) => {
                 ret.code_statement::<Backend, _, _, _>(types, context, instructions);
+            }
+            Statement::Unreachable(unreachable) => {
+                unreachable.code_statement::<Backend, _, _, _>(types, context, instructions);
             }
         }
     }

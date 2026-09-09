@@ -4,7 +4,7 @@ use printer::{Print, tokens::SWITCH};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
-use crate::utils::{code_clauses, code_table};
+use crate::utils::{asm_safe_ty_name, code_clauses, code_table};
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber::Snd},
@@ -32,15 +32,7 @@ impl CodeStatement for Switch {
         let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
-        let fresh_label = format!(
-            "{}_{}",
-            self.ty
-                .print_to_string(None)
-                .replace('[', "_")
-                .replace(", ", "_")
-                .replace(']', ""),
-            fresh_label()
-        );
+        let fresh_label = format!("{}_{}", asm_safe_ty_name(&self.ty), fresh_label());
 
         let number_of_clauses = self.clauses.len();
         // the case < 1 cannot happen

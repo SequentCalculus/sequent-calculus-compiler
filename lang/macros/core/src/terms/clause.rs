@@ -13,18 +13,28 @@ pub fn fs_clause(input: TokenStream) -> TokenStream {
 fn clause(input: TokenStream, statement_kind: proc_macro2::TokenStream) -> TokenStream {
     let args = parse_args(
         input.into(),
-        ["Chirality", "Xtor Name", "Xtor Arguments", "Clause Body"],
+        [
+            "Chirality",
+            "Xtor Name",
+            "Xtor Type Parameters",
+            "Xtor Arguments",
+            "Clause Body",
+        ],
         &[],
     );
     let chi = &args[0];
     let xtor = &args[1];
-    let xtor_args = expr_to_array(&args[2], 2);
-    let body = &args[3];
+    let xtor_type_params = expr_to_array(&args[2], 2);
+    let xtor_args = expr_to_array(&args[3], 2);
+    let body = &args[4];
 
     quote! {
         core_lang::syntax::terms::clause::Clause{
             prdcns: #chi,
             xtor: #xtor,
+            type_params: Vec::from([
+                #(#xtor_type_params),*
+            ]),
             context: core_lang::syntax::context::TypingContext{
                 bindings: Vec::from([
                     #(#xtor_args),*

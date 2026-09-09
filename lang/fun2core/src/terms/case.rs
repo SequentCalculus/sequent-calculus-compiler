@@ -5,10 +5,10 @@ use crate::{
     terms::clause::compile_clause,
     types::compile_ty,
 };
-use core_lang::syntax::terms::Cns;
+use core_lang::syntax::{Identifier, terms::Cns, type_params::ParamPolarity};
 use fun::traits::OptTyped;
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Case {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -26,6 +26,7 @@ impl Compile for fun::syntax::terms::Case {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         // if there is more than one clause and the consumer is a not a leaf, we share it by
         // lifting it to the top level to avoid exponential blowup
@@ -50,33 +51,40 @@ impl Compile for fun::syntax::terms::Case {
             clauses: self
                 .clauses
                 .into_iter()
-                .map(|clause| compile_clause(clause, cont.clone(), state))
+                .map(|clause| compile_clause(clause, cont.clone(), state, type_params.clone()))
                 .collect(),
             ty: compile_ty(
                 &self
                     .scrutinee
                     .get_type()
                     .expect("Types should be annotated before translation"),
+                type_params.clone(),
             ),
         }
         .into();
 
         // 〚t〛_{new_cont}
-        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state)
+        Rc::unwrap_or_clone(self.scrutinee).compile_with_cont(new_cont, state, type_params)
     }
 }
 
 #[cfg(test)]
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
-    use core_lang::syntax as core_syntax;
-    use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
+    use core_lang::syntax::{self as core_syntax};
+    use core_macros::{
+        bind, case, clause, covar, ctor, ctor_sig, cut, data, id, lit, mu, prd, tparam, tvar, ty,
+        var,
+    };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_list,
         typing::check::Check,
     };
 
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_list() {
@@ -89,48 +97,72 @@ mod compile_tests {
             )
             .unwrap();
 
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [tparam!(id!("A", 1), "+")]
+        );
+
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string(), "xs".to_string()]),
             codata_types: &[],
+            data_types: &[list],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
             cut!(
                 ctor!(
-                    id!("Cons"),
-                    [lit!(1), ctor!(id!("Nil"), [], ty!(id!("List[i64]")))],
-                    ty!(id!("List[i64]"))
+                    id!("Cons", 0),
+                    [],
+                    [
+                        lit!(1),
+                        ctor!(id!("Nil", 0), [], [], ty!(id!("List"), vec![ty!("int")]))
+                    ],
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
                 case!(
                     [
                         clause!(
                             core_syntax::Cns,
-                            id!("Nil"),
+                            id!("Nil", 0),
+                            [],
                             [],
                             cut!(lit!(0), covar!(id!("a0")))
                         ),
                         clause!(
                             core_syntax::Cns,
-                            id!("Cons"),
+                            id!("Cons", 0),
+                            [],
                             [
                                 bind!(id!("x"), core_syntax::Chirality::Prd),
                                 bind!(
                                     id!("xs"),
                                     core_syntax::Chirality::Prd,
-                                    ty!(id!("List[i64]"))
+                                    ty!(id!("List"), vec![ty!("int")])
                                 )
                             ],
                             cut!(var!(id!("x")), covar!(id!("a0")))
                         )
                     ],
-                    ty!(id!("List[i64]"))
+                    ty!(id!("List"), vec![ty!("int")])
                 ),
-                ty!(id!("List[i64]"))
+                ty!(id!("List"), vec![ty!("int")])
             )
         )
         .into();
