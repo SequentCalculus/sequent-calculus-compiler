@@ -55,6 +55,12 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// Whether `monomorphized` runs type splitting on a growing cycle (see
+    /// [`core_lang::mono::monomorphize_program`]'s `split` parameter). Set once via
+    /// [`Driver::set_split`] before any of the cached methods run, since it isn't part of any
+    /// cache key, calling one of them again with a different setting on the same `Driver` would
+    /// silently return the stale result.
+    split: bool,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -65,7 +71,8 @@ pub enum PrintMode {
 }
 
 impl Driver {
-    /// This function creates a new driver.
+    /// This function creates a new driver. Type splitting is enabled by default (see
+    /// [`Driver::set_split`]).
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
@@ -78,7 +85,17 @@ impl Driver {
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
+            split: true,
         }
+    }
+
+    /// Sets whether `monomorphized` runs type splitting on a growing cycle. Call this before any
+    /// other method that ends up monomorphizing (`monomorphized`, `uniquified`, `focused`,
+    /// `shrunk`, `linearized`, or any of their `print_*`/`compile_*` callers), once one of them
+    /// has run and cached its result for a given path, this setting no longer has any effect on
+    /// that path.
+    pub fn set_split(&mut self, split: bool) {
+        self.split = split;
     }
 
     /// This function returns the unparsed source code for the given file.
@@ -186,7 +203,7 @@ impl Driver {
         }
 
         let compiled = self.compiled(path)?;
-        let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz)
+        let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz, self.split)
             .map_err(DriverError::MonoError)?;
 
         self.monomorphized.insert(path.clone(), mono_prog.clone());

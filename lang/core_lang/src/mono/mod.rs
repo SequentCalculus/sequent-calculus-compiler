@@ -36,27 +36,47 @@ fn constraints_of(program: &Prog) -> Result<FlowConstraintSet, MonoError> {
     program.collect_constraints(&env)
 }
 
-/// Collects `program`'s flow constraints and, if they contain a growing cycle, runs type
-/// splitting and re-collects them on the split program. Splitting only ever helps, it can only
-/// reduce how many growing cycles remain, never introduce one, so a single conditional pass
-/// suffices. There is no need to re-check the split program's own constraints for a growing cycle.
+/// Whether [`split_if_needed`] ran type splitting, and why not if it didn't, both non-splitting
+/// cases leave erasure alone to widen every growing declaration directly on the unsplit program,
+/// but they mean different things for interpreting `--debug` output or benchmark results: one
+/// says splitting had nothing to do, the other says it was explicitly asked not to run.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SplitOutcome {
+    /// No growing cycle existed, so there was nothing to split.
+    NoCycle,
+    /// A growing cycle existed, but splitting was disabled (`--no-split`); erasure runs directly
+    /// on the unsplit program instead.
+    Disabled,
+    /// A growing cycle existed and splitting ran.
+    Split,
+}
+
+/// Collects `program`'s flow constraints and, if they contain a growing cycle and `split` is
+/// enabled, runs type splitting and re-collects them on the split program. Splitting only ever
+/// helps, it can only reduce how many growing cycles remain, never introduce one, so a single
+/// conditional pass suffices. There is no need to re-check the split program's own constraints
+/// for a growing cycle.
 ///
 /// Returns the (possibly split) program alongside its constraints, the constraint graph built
-/// from them, and whether splitting actually ran (purely for `--debug` reporting).
+/// from them, and the [`SplitOutcome`] (purely for `--debug` reporting).
 fn split_if_needed(
     program: Prog,
-) -> Result<(Prog, FlowConstraintSet, ConstraintGraph, bool), MonoError> {
+    split: bool,
+) -> Result<(Prog, FlowConstraintSet, ConstraintGraph, SplitOutcome), MonoError> {
     let constraints = constraints_of(&program)?;
     let graph = ConstraintGraph::from(constraints.clone());
 
     if find_all_growing_cycles(&graph).is_empty() {
-        return Ok((program, constraints, graph, false));
+        return Ok((program, constraints, graph, SplitOutcome::NoCycle));
+    }
+    if !split {
+        return Ok((program, constraints, graph, SplitOutcome::Disabled));
     }
 
     let program = split_program(&program);
     let constraints = constraints_of(&program)?;
     let graph = ConstraintGraph::from(constraints.clone());
-    Ok((program, constraints, graph, true))
+    Ok((program, constraints, graph, SplitOutcome::Split))
 }
 
 /// The `PrintCfg` every `--debug` report below renders with: unbounded width and forced
@@ -70,14 +90,17 @@ fn debug_print_cfg() -> PrintCfg {
     }
 }
 
-/// Reports the outcome of `split_if_needed`: whether a growing cycle forced type splitting, the
-/// (possibly split) program, and the flow constraints collected from it.
-fn print_splitting_debug(program: &Prog, constraints: &FlowConstraintSet, split: bool) {
+/// Reports the outcome of `split_if_needed`: whether (and why not) a growing cycle forced type
+/// splitting, the (possibly split) program, and the flow constraints collected from it.
+fn print_splitting_debug(program: &Prog, constraints: &FlowConstraintSet, outcome: SplitOutcome) {
     let cfg = debug_print_cfg();
-    let headline = if split {
-        "Growing cycle found -- ran type splitting:"
-    } else {
-        "No growing cycle found -- skipped type splitting:"
+    let headline = match outcome {
+        SplitOutcome::NoCycle => "No growing cycle found -- skipped type splitting:",
+        SplitOutcome::Disabled => {
+            "Growing cycle found -- type splitting disabled (--no-split), erasure runs on the
+             unsplit program:"
+        }
+        SplitOutcome::Split => "Growing cycle found -- ran type splitting:",
     };
     println!(
         "{headline}\n{}",
@@ -132,14 +155,21 @@ fn render_viz(graph: &ConstraintGraph, viz: VizOutput) -> Result<(), MonoError> 
 
 /// Monomorphizes a program and returns the monomorphized program.
 ///
+/// `split` controls whether type splitting runs when a growing cycle is found.
+///
 /// Fails if constraint collection rejects the program (a bug in an earlier phase, since Fun/Core
 /// type checking already ran) or, when `viz` requests rendering, if rendering the constraint
 /// graph visualization fails (e.g. the `dot` binary is missing or the output path is not
 /// writable).
-pub fn monomorphize_program(program: Prog, debug: bool, viz: VizOutput) -> Result<Prog, MonoError> {
-    let (program, constraints, graph, split) = split_if_needed(program)?;
+pub fn monomorphize_program(
+    program: Prog,
+    debug: bool,
+    viz: VizOutput,
+    split: bool,
+) -> Result<Prog, MonoError> {
+    let (program, constraints, graph, outcome) = split_if_needed(program, split)?;
     if debug {
-        print_splitting_debug(&program, &constraints, split);
+        print_splitting_debug(&program, &constraints, outcome);
     }
 
     let (solution, erased_decls, erased_constraints) = solve_with_erasure(constraints);
@@ -278,12 +308,14 @@ mod determinism_tests {
     /// Monomorphizing the same program twice must yield the very same program.
     #[test]
     fn monomorphizing_the_same_program_twice_yields_the_same_program() {
-        let first = monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled)
-            .expect("fixture must monomorphize");
+        let first =
+            monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled, true)
+                .expect("fixture must monomorphize");
 
         for run in 1..20 {
-            let again = monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled)
-                .expect("fixture must monomorphize");
+            let again =
+                monomorphize_program(mutually_recursive_prog(), false, VizOutput::Disabled, true)
+                    .expect("fixture must monomorphize");
             assert_eq!(
                 first, again,
                 "monomorphization is not deterministic -- run {run} differs from the first"

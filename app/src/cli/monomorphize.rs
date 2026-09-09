@@ -13,10 +13,16 @@ pub struct Args {
     viz: Option<Option<PathBuf>>,
     #[arg(long = "debug", short = 'd')]
     debug: bool,
+    /// Disable type splitting: a growing cycle is erased directly on the unsplit program instead
+    /// (widening more declarations than necessary). On by default, since splitting only ever
+    /// helps precision; useful for comparing against the unsplit baseline.
+    #[arg(long = "no-split")]
+    no_split: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
+    drv.set_split(!cmd.no_split);
     let viz = VizOutput::from_cli_flag(cmd.viz);
     let monomorphized = drv.monomorphized(&cmd.filepath, viz, cmd.debug);
     let monomorphized = match monomorphized {
