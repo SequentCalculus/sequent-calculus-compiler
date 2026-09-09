@@ -1,2 +1,2 @@
 test_args = []
-expected = "11\n2"
+expected = "7\n2"
