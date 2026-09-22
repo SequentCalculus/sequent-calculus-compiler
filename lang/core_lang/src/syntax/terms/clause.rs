@@ -304,14 +304,14 @@ impl<C: Chi> Checked for Clause<C> {
 #[cfg(test)]
 mod label_and_unify_tests {
     use crate::splitting::labeling::{
-        DeclSignature, DeclSignatures, SplitState, finish_classes, label_and_unify_clause,
+        DeclSignature, DeclSignatures, SplitState, finish_classes, label_and_unify_clause, label_in,
     };
     use crate::syntax::*;
     extern crate self as core_lang;
     use core_macros::{bind, clause, covar, cut, id, prd, ty, var};
 
     #[test]
-    fn label_and_unify_defers_a_binding_to_an_observation() {
+    fn label_and_unify_ties_a_binding_to_the_owner_class_copy() {
         let mut state = SplitState::default();
 
         let mut sigs = DeclSignatures::new();
@@ -354,13 +354,17 @@ mod label_and_unify_tests {
             label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner);
         let binding_ty = result.context.bindings[0].ty.clone();
 
-        // the binding is not unified against the declaration, it is recorded on the owner's
-        // equivalence class, where a second occurrence of the same field would meet it
+        // the owner's class now holds its own copy of the field, and the binder is tied to it,
+        // which is where a second occurrence of the same class would meet it
         let (field_observations, used_xtors) = finish_classes(&state);
         let root = state.uf.find(&owner_label);
+        let copy = field_observations
+            .get(&root, &id!("Cons"), 0)
+            .expect("the owner's class holds Cons.0")
+            .clone();
         assert_eq!(
-            field_observations.get(&root, &id!("Cons"), 0),
-            Some(&binding_ty)
+            state.uf.find(label_in(&copy)),
+            state.uf.find(label_in(&binding_ty))
         );
         assert!(used_xtors.contains(&root, &id!("Cons")));
 

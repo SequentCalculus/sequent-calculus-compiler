@@ -48,46 +48,9 @@ pub fn label_in(ty: &Ty) -> &Label {
     }
 }
 
-/// Unifies the type an occurrence's argument or binder really has with the field type its xtor
-/// declares, instantiated for this occurrence.
-///
-/// The declaration only exists as an unlabeled template, so it is instantiated here first: every
-/// declaration head gets a fresh label, then every type parameter is replaced by the labeled type
-/// argument this occurrence supplies for it. The result is an ordinary labeled type, and the
-/// actual type is unified with it like anywhere else. This is the same substitution `Call`
-/// performs against a `Def` signature, except that a `Def` signature was labeled once up front.
-///
-/// Take `data List[A] { Nil, Cons(head: A, tail: List[A]) }` and the occurrence
-/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`, with `subst` mapping `A` to
-/// `Box#1`:
-/// - `head: A` instantiates to `Box#1` and is unified with the argument's `Box#2`. This ties the
-///   annotation `List[Box]` to the value actually stored in it; without it the two could end up in
-///   different split copies, and the list's type would no longer match the value it holds.
-/// - `tail: List[A]` instantiates to `List#3[Box#1]`, where `List#3` is fresh and occurs nowhere
-///   else. Unifying it with the argument's type merely makes it an alias of that head, so the head
-///   stays exactly as free as before: which split copy it belongs to is still decided through the
-///   owner class's observed field types (see [`SplitState::observe_field`]). Only `Box#1` is tied.
-///
-/// The template is labeled *before* substituting, since labeling afterwards would give the
-/// substituted `Box#1` a fresh label as well and cut it loose from the annotation. A type
-/// parameter `subst` has no instantiation for (an xtor's own existential in a clause, e.g. `B` in
-/// `Pack[B](val: B)`, is abstract there) stays a type variable, which `unify_ty` skips.
-fn unify_with_field_template(
-    state: &mut SplitState,
-    declared: &Ty,
-    actual: &Ty,
-    subst: &(Vec<Identifier>, Vec<Ty>),
-) {
-    let template = state
-        .label_ty(declared)
-        .substitute((subst.0.as_slice(), subst.1.as_slice()));
-    // `actual` first, so that on a rank tie the root stays the occurrence's own label rather
-    // than the freshly minted template head
-    state.unify_ty(actual, &template);
-}
-
 /// Pairs a signature's type parameters with an occurrence's labeled type arguments, in the
-/// `(params, args)` shape [`Ty::substitute`] expects, for [`unify_with_field_template`]. Mirrors the double substitution in `check_xcase_against_decl`:
+/// `(params, args)` shape [`Ty::substitute`] expects, for [`constrain_xtor_occurrence`]. Mirrors
+/// the double substitution in `check_xcase_against_decl`:
 /// `decl_type_args` instantiate the enclosing declaration's own parameters (e.g. `Fun`'s `A`, `B`),
 /// `own_type_args` the xtor's own existential/universal ones (e.g. `Pack`'s own `B`). A clause
 /// passes an empty `own_type_args`: it binds fresh, abstract names for those rather than knowing a
@@ -110,16 +73,17 @@ fn type_param_subst(
         .unzip()
 }
 
-/// The field type each equivalence class observed, keyed by (the class's final union-find root,
-/// xtor, field index). A read-only view over the finished union-find's class data, built once by
+/// Each equivalence class's own copy of every field it touched, keyed by (the class's final
+/// union-find root, xtor, field index): the declared field type with its heads labeled for that
+/// class and its type parameters left as variables (see
+/// [`crate::splitting::union_find::ClassData`]). A read-only view over the finished union-find's class data, built once by
 /// [`finish_classes`] so that the rewrite phase never needs live access to the union-find itself
 /// (mirroring how [`crate::splitting::split_table::SplitTable`] is resolved up front).
 #[derive(Default)]
 pub struct FieldObservations(HashMap<(Label, Identifier, usize), Ty>);
 
 impl FieldObservations {
-    /// Looks up the field type observed for `xtor`'s `field_index`-th field in the equivalence
-    /// class rooted at `root`. `None` means the xtor was never actually constructed/matched
+    /// Looks up the class rooted at `root`'s copy of `xtor`'s `field_index`-th field. `None` means the xtor was never actually constructed/matched
     /// anywhere in the program.
     pub fn get(&self, root: &Label, xtor: &Identifier, field_index: usize) -> Option<&Ty> {
         self.0.get(&(root.clone(), xtor.clone(), field_index))
@@ -150,7 +114,7 @@ impl FromIterator<(Label, Identifier)> for UsedXtors {
 }
 
 /// Turns the finished union-find's class data into the two read-only views the rewrite phase
-/// consults. Purely a change of indexing, every union and every observation has already happened
+/// consults. Purely a change of indexing, every union and every class field has already been created
 /// during the walk; the class data is keyed by root throughout (see
 /// [`crate::splitting::union_find::ClassData`]), so no reconciliation is left to do here.
 pub fn finish_classes(state: &SplitState) -> (FieldObservations, UsedXtors) {
@@ -168,7 +132,7 @@ pub fn finish_classes(state: &SplitState) -> (FieldObservations, UsedXtors) {
 }
 
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
-/// union-find (which also holds each class's observed field types and used xtors), and a record
+/// union-find (which also holds each class's own copy of its fields and its used xtors), and a record
 /// of each label's origin.
 #[derive(Default)]
 pub struct SplitState {
@@ -205,19 +169,28 @@ impl SplitState {
         self.uf.record_xtor_use(owner, xtor);
     }
 
-    /// Records the type this occurrence really has at `xtor`'s `index`-th field, under an
-    /// enclosing value whose own type carries `owner`.
+    /// Returns `owner`'s class's own copy of `xtor`'s `index`-th field, whose declared type is
+    /// `declared`, materializing it the first time the class touches that field.
     ///
-    /// A field type cannot simply be unified against the declaration, because the declaration is
-    /// never labeled: at a declaration head there is nothing on the declared side to unify with,
-    /// and leaving that head free is exactly what lets two occurrences of the same declaration end
-    /// up in different split copies (the positions the declaration left open as a type variable
-    /// are handled by [`unify_with_field_template`] instead). So the type is stored on the owner's
-    /// class, and only a *second* occurrence observing the same field forces the two to agree.
-    pub fn observe_field(&mut self, owner: &Label, xtor: &Identifier, index: usize, ty: &Ty) {
-        if let Some(already_observed) = self.uf.observe_field(owner, xtor, index, ty) {
-            self.unify_ty(&already_observed, ty);
+    /// The declaration itself only exists as an unlabeled template. A class of labels is what
+    /// becomes one physical copy of it, so the class gets its own instance of the field: every
+    /// declaration head labeled freshly, every type parameter left as a variable. The heads are
+    /// this copy's decisions (which copy of `List` does `tail: List[A]` point at?), shared by
+    /// every occurrence of the class; the type parameters are not, since one generic copy can be
+    /// instantiated differently at every occurrence (see [`constrain_xtor_occurrence`]).
+    pub fn class_field(
+        &mut self,
+        owner: &Label,
+        xtor: &Identifier,
+        index: usize,
+        declared: &Ty,
+    ) -> Ty {
+        if let Some(field) = self.uf.field(owner, xtor, index) {
+            return field;
         }
+        let field = self.label_ty(declared);
+        self.uf.insert_field(owner, xtor, index, field.clone());
+        field
     }
 
     /// Labels every `Ty::Decl` occurrence with a fresh label, recursively into type arguments.
@@ -239,7 +212,7 @@ impl SplitState {
     ///
     /// Two rules feed the worklist. *Structurally*, two equal declared types have equal type
     /// arguments. *By congruence*, two classes that just merged have to agree on every field both
-    /// of them observed, which [`UnionFind::union`] reports back as pending pairs. Only the second
+    /// of them hold, which [`UnionFind::union`] reports back as pending pairs. Only the second
     /// rule makes this more than a plain structural recursion: merging two classes' fields can
     /// merge further classes, whose fields then have to agree in turn.
     ///
@@ -284,7 +257,7 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
 
 /// Labels every def's own signature (see [`label_def_signature`]) and collects a
 /// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use by
-/// [`unify_with_field_template`] at every call/construction site. Returns the resulting
+/// [`constrain_xtor_occurrence`] at every call/construction site. Returns the resulting
 /// [`DeclSignatures`] table alongside `prog`'s own (still unlabeled) data and codata
 /// declarations, since the caller needs both to drive the rest of the labeling walk.
 pub fn build_decl_signatures(
@@ -409,12 +382,22 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
 /// the labeled types the occurrence actually has at the xtor's fields, i.e. an `Xtor`'s argument
 /// types or a clause's binder types.
 ///
-/// Three things happen: the xtor is recorded as used for the owner's class (see
-/// [`SplitState::record_xtor_use`]), and every field type is unified with the declared field
-/// instantiated for this occurrence (see [`unify_with_field_template`]) as well as recorded on the
-/// owner's class (see [`SplitState::observe_field`]). The first ties the type-parameter positions
-/// to the owner's type arguments; the second is what decides the split copy of every declaration
-/// head.
+/// The xtor is recorded as used for the owner's class (see [`SplitState::record_xtor_use`]), and
+/// every field's actual type is unified with the owner class's copy of that field (see
+/// [`SplitState::class_field`]), instantiated for this occurrence by substituting its type
+/// arguments. That one unification does both jobs a field has:
+/// - the *heads* are the class's own labels, so every occurrence of the class ends up agreeing on
+///   which split copy a field such as `tail: List[A]` points at;
+/// - the *type parameters* are replaced per occurrence, so a field such as `head: A` is tied to
+///   this occurrence's own type argument, and nothing else. Two occurrences sharing one generic
+///   copy (e.g. through a polymorphic `Def` called at two types), or two values of one type hiding
+///   different existentials, therefore keep their instantiations apart.
+///
+/// Take `data List[A] { Nil, Cons(head: A, tail: List[A]) }` and the occurrence
+/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`. Its class holds the fields
+/// `head: A` and `tail: List#2[A]`, which instantiate to `Box#1` and `List#2[Box#1]`. The first is
+/// unified with the argument's `Box#2`, tying the annotation `List[Box]` to the value stored in
+/// it; the second ties the argument's list head to the class's `List#2`.
 pub fn constrain_xtor_occurrence(
     state: &mut SplitState,
     sigs: &DeclSignatures,
@@ -439,11 +422,12 @@ pub fn constrain_xtor_occurrence(
     let subst = type_param_subst(sig, &decl_type_args.args, own_type_args);
 
     state.record_xtor_use(owner, xtor);
-    for (i, actual) in field_tys.iter().enumerate() {
-        if let Some(declared) = sig.tys.get(i) {
-            unify_with_field_template(state, declared, actual, &subst);
-        }
-        state.observe_field(owner, xtor, i, actual);
+    for (i, (actual, declared)) in field_tys.iter().zip(&sig.tys).enumerate() {
+        let field = state.class_field(owner, xtor, i, declared);
+        let expected = field.substitute((subst.0.as_slice(), subst.1.as_slice()));
+        // `actual` first, so that on a rank tie the root stays the occurrence's own label rather
+        // than the class field's head, minted later
+        state.unify_ty(actual, &expected);
     }
 }
 
@@ -501,6 +485,20 @@ mod split_state_tests {
 
     fn fresh_state() -> SplitState {
         SplitState::default()
+    }
+
+    /// Stands in for one occurrence holding `actual` at a field declared as `declared`, without
+    /// a full xtor signature: unifies `actual` with the owner class's copy of that field.
+    fn touch_field(
+        state: &mut SplitState,
+        owner: &Ty,
+        xtor: &Identifier,
+        index: usize,
+        declared: &Ty,
+        actual: &Ty,
+    ) {
+        let field = state.class_field(label_in(owner), xtor, index, declared);
+        state.unify_ty(actual, &field);
     }
 
     #[test]
@@ -730,21 +728,50 @@ mod split_state_tests {
     }
 
     #[test]
-    fn observations_under_distinct_owner_roots_stay_separate() {
+    fn fields_under_distinct_owner_roots_stay_separate() {
         let mut state = fresh_state();
         let owner_a = state.label_ty(&ty!(id!("Bar")));
         let owner_b = state.label_ty(&ty!(id!("Bar")));
         let field_a = state.label_ty(&ty!(id!("Foo")));
         let field_b = state.label_ty(&ty!(id!("Foo")));
 
-        state.observe_field(label_in(&owner_a), &id!("MkBar"), 0, &field_a);
-        state.observe_field(label_in(&owner_b), &id!("MkBar"), 0, &field_b);
+        touch_field(
+            &mut state,
+            &owner_a,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_a,
+        );
+        touch_field(
+            &mut state,
+            &owner_b,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_b,
+        );
 
         let (observations, _) = finish_classes(&state);
         let root_a = state.uf.find(label_in(&owner_a));
         let root_b = state.uf.find(label_in(&owner_b));
-        assert_eq!(observations.get(&root_a, &id!("MkBar"), 0), Some(&field_a));
-        assert_eq!(observations.get(&root_b, &id!("MkBar"), 0), Some(&field_b));
+        let copy_a = observations
+            .get(&root_a, &id!("MkBar"), 0)
+            .expect("class a holds MkBar.0")
+            .clone();
+        let copy_b = observations
+            .get(&root_b, &id!("MkBar"), 0)
+            .expect("class b holds MkBar.0")
+            .clone();
+        // each class's own copy of the field points at the value stored there
+        assert_eq!(
+            state.uf.find(label_in(&copy_a)),
+            state.uf.find(label_in(&field_a))
+        );
+        assert_eq!(
+            state.uf.find(label_in(&copy_b)),
+            state.uf.find(label_in(&field_b))
+        );
         assert_ne!(
             state.uf.find(label_in(&field_a)),
             state.uf.find(label_in(&field_b))
@@ -752,7 +779,7 @@ mod split_state_tests {
     }
 
     #[test]
-    fn observing_one_field_twice_under_the_same_owner_unifies_both_types() {
+    fn touching_one_field_twice_under_the_same_owner_unifies_both_types() {
         let mut state = fresh_state();
         let owner_a = state.label_ty(&ty!(id!("Bar")));
         let owner_b = state.label_ty(&ty!(id!("Bar")));
@@ -760,9 +787,23 @@ mod split_state_tests {
         let field_a = state.label_ty(&ty!(id!("Foo")));
         let field_b = state.label_ty(&ty!(id!("Foo")));
 
-        // the owners are already one class, so the second observation meets the first
-        state.observe_field(label_in(&owner_a), &id!("MkBar"), 0, &field_a);
-        state.observe_field(label_in(&owner_b), &id!("MkBar"), 0, &field_b);
+        // the owners are already one class, so both values meet in its one copy of the field
+        touch_field(
+            &mut state,
+            &owner_a,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_a,
+        );
+        touch_field(
+            &mut state,
+            &owner_b,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_b,
+        );
 
         assert_eq!(
             state.uf.find(label_in(&field_a)),
@@ -772,15 +813,29 @@ mod split_state_tests {
 
     #[test]
     fn unifying_two_owners_after_the_fact_still_merges_their_field_observations() {
-        // The other order: both fields are observed while the owners are still separate, and only
+        // The other order: both fields are touched while the owners are still separate, and only
         // a later union brings them together. The congruence rule has to fire from inside `union`.
         let mut state = fresh_state();
         let owner_a = state.label_ty(&ty!(id!("Bar")));
         let owner_b = state.label_ty(&ty!(id!("Bar")));
         let field_a = state.label_ty(&ty!(id!("Foo")));
         let field_b = state.label_ty(&ty!(id!("Foo")));
-        state.observe_field(label_in(&owner_a), &id!("MkBar"), 0, &field_a);
-        state.observe_field(label_in(&owner_b), &id!("MkBar"), 0, &field_b);
+        touch_field(
+            &mut state,
+            &owner_a,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_a,
+        );
+        touch_field(
+            &mut state,
+            &owner_b,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &field_b,
+        );
         assert_ne!(
             state.uf.find(label_in(&field_a)),
             state.uf.find(label_in(&field_b))
@@ -806,10 +861,38 @@ mod split_state_tests {
         let foo_b = state.label_ty(&ty!(id!("Foo")));
         let baz_a = state.label_ty(&ty!(id!("Baz")));
         let baz_b = state.label_ty(&ty!(id!("Baz")));
-        state.observe_field(label_in(&bar_a), &id!("MkBar"), 0, &foo_a);
-        state.observe_field(label_in(&bar_b), &id!("MkBar"), 0, &foo_b);
-        state.observe_field(label_in(&foo_a), &id!("MkFoo"), 0, &baz_a);
-        state.observe_field(label_in(&foo_b), &id!("MkFoo"), 0, &baz_b);
+        touch_field(
+            &mut state,
+            &bar_a,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &foo_a,
+        );
+        touch_field(
+            &mut state,
+            &bar_b,
+            &id!("MkBar"),
+            0,
+            &ty!(id!("Foo")),
+            &foo_b,
+        );
+        touch_field(
+            &mut state,
+            &foo_a,
+            &id!("MkFoo"),
+            0,
+            &ty!(id!("Baz")),
+            &baz_a,
+        );
+        touch_field(
+            &mut state,
+            &foo_b,
+            &id!("MkFoo"),
+            0,
+            &ty!(id!("Baz")),
+            &baz_b,
+        );
 
         state.unify_ty(&bar_a, &bar_b);
 
@@ -826,7 +909,163 @@ mod split_state_tests {
     }
 
     #[test]
-    fn finish_classes_returns_none_for_a_field_never_observed() {
+    fn an_existential_instantiation_stays_with_its_occurrence_not_the_owners_class() {
+        // `data Packed { Pack[B](val: B) }`: `B` is the xtor's own existential, so each value picks
+        // its own instantiation. Two values can share one class of `Packed` (e.g. both flow into
+        // the same variable) and still hide completely unrelated types, here a `List` and a `Box`.
+        // Nothing requires those to be equal, so they must not end up in one class.
+        let mut state = fresh_state();
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("Pack"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![id!("B", 1)],
+                tys: vec![tvar!(id!("B", 1))],
+            },
+        );
+
+        let owner_a = state.label_ty(&ty!(id!("Packed")));
+        let owner_b = state.label_ty(&ty!(id!("Packed")));
+        state.unify_ty(&owner_a, &owner_b);
+        let hidden_a = state.label_ty(&ty!(id!("List")));
+        let hidden_b = state.label_ty(&ty!(id!("Box")));
+
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Pack"),
+            &owner_a,
+            std::slice::from_ref(&hidden_a),
+            std::slice::from_ref(&hidden_a),
+        );
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Pack"),
+            &owner_b,
+            std::slice::from_ref(&hidden_b),
+            std::slice::from_ref(&hidden_b),
+        );
+
+        assert_ne!(
+            state.uf.find(label_in(&hidden_a)),
+            state.uf.find(label_in(&hidden_b)),
+            "the two hidden types were merged just because their owners share a class"
+        );
+    }
+
+    #[test]
+    fn an_existential_instantiation_stays_with_its_occurrence_when_owners_merge_later() {
+        // Same as above, but the two owners only become one class after both occurrences were
+        // constrained, so any merging would have to come from the collisions `union` reports.
+        let mut state = fresh_state();
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("Pack"),
+            DeclSignature {
+                decl_type_params: vec![],
+                own_type_params: vec![id!("B", 1)],
+                tys: vec![tvar!(id!("B", 1))],
+            },
+        );
+
+        let owner_a = state.label_ty(&ty!(id!("Packed")));
+        let owner_b = state.label_ty(&ty!(id!("Packed")));
+        let hidden_a = state.label_ty(&ty!(id!("List")));
+        let hidden_b = state.label_ty(&ty!(id!("Box")));
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Pack"),
+            &owner_a,
+            std::slice::from_ref(&hidden_a),
+            std::slice::from_ref(&hidden_a),
+        );
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Pack"),
+            &owner_b,
+            std::slice::from_ref(&hidden_b),
+            std::slice::from_ref(&hidden_b),
+        );
+
+        state.unify_ty(&owner_a, &owner_b);
+
+        assert_ne!(
+            state.uf.find(label_in(&hidden_a)),
+            state.uf.find(label_in(&hidden_b)),
+            "the two hidden types were merged by the owners' later union"
+        );
+    }
+
+    #[test]
+    fn a_declaration_type_argument_stays_with_its_occurrence_across_a_shared_generic_copy() {
+        // `data List[A] { Cons(x: A, ..) }` and `def len[T](xs: List[T])`. The def has one labeled
+        // signature `List#s[T]`, and the calls `len[Box](a)` and `len[Bool](b)` substitute `T` per
+        // call before unifying, exactly like `Call::label_and_unify`. That puts both lists into one
+        // class (one generic copy of `List`) without relating their element types, which is
+        // legitimate: the copy is generic. The elements stored in them must stay apart.
+        let mut state = fresh_state();
+        let mut sigs = DeclSignatures::new();
+        sigs.insert(
+            id!("Cons"),
+            DeclSignature {
+                decl_type_params: vec![id!("A", 1)],
+                own_type_params: vec![],
+                tys: vec![tvar!(id!("A", 1))],
+            },
+        );
+
+        let t = id!("T", 2);
+        let param = state.label_ty(&ty!(id!("List"), [tvar!(t.clone())]));
+        let list_a = state.label_ty(&ty!(id!("List"), [ty!(id!("Box"))]));
+        let list_b = state.label_ty(&ty!(id!("List"), [ty!(id!("Bool"))]));
+        let call_arg_a = state.label_ty(&ty!(id!("Box")));
+        let call_arg_b = state.label_ty(&ty!(id!("Bool")));
+        state.unify_ty(
+            &list_a,
+            &param.substitute((std::slice::from_ref(&t), std::slice::from_ref(&call_arg_a))),
+        );
+        state.unify_ty(
+            &list_b,
+            &param.substitute((std::slice::from_ref(&t), std::slice::from_ref(&call_arg_b))),
+        );
+        assert_eq!(
+            state.uf.find(label_in(&list_a)),
+            state.uf.find(label_in(&list_b)),
+            "precondition: both lists share one generic copy"
+        );
+
+        let elem_a = state.label_ty(&ty!(id!("Box")));
+        let elem_b = state.label_ty(&ty!(id!("Bool")));
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Cons"),
+            &list_a,
+            &[],
+            std::slice::from_ref(&elem_a),
+        );
+        constrain_xtor_occurrence(
+            &mut state,
+            &sigs,
+            &id!("Cons"),
+            &list_b,
+            &[],
+            std::slice::from_ref(&elem_b),
+        );
+
+        assert_ne!(
+            state.uf.find(label_in(&elem_a)),
+            state.uf.find(label_in(&elem_b)),
+            "the two lists' elements were merged just because the lists share a generic copy"
+        );
+    }
+
+    #[test]
+    fn finish_classes_returns_none_for_a_field_never_touched() {
         let state = fresh_state();
         let never_observed = Identifier {
             name: "Bar#1".to_string(),

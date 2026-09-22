@@ -34,7 +34,7 @@ pub fn split_program(prog: &Prog) -> Prog {
         .map(|def| def.label_and_unify(&mut state, &sigs, &TypingContext::default()))
         .collect();
 
-    // Every union and every observation already happened during the walk; this only re-indexes
+    // Every union and every class field already happened during the walk; this only re-indexes
     // the union-find's class data into the two views the rewrite phase consults.
     let (field_observations, used_xtors) = finish_classes(&state);
 

@@ -12,10 +12,10 @@ use crate::syntax::{Identifier, Ty};
 /// surviving root, so the keys of `UnionFind::classes` are always exactly the current roots.
 #[derive(Debug, Clone, Default)]
 pub struct ClassData {
-    /// The labeled type observed for one field of one xtor, keyed by `(xtor, field index)`.
-    /// Whichever occurrence observed a field first wins; every later observation is unified
-    /// against that one rather than replacing it, which keeps the stored representative
-    /// independent of hash-map iteration order.
+    /// This class's own copy of one field of one xtor, keyed by `(xtor, field index)`: the declared
+    /// field type with every declaration head labeled for this class, and every type parameter
+    /// left as a variable. It is the field as the class's physical copy of the declaration will
+    /// declare it, created the first time any occurrence of the class touches the field.
     pub fields: HashMap<(Identifier, usize), Ty>,
     /// Every xtor that literally occurs somewhere in the program for this class. Anything else is
     /// dead for the class and is dropped from its physical copy, see
@@ -63,9 +63,9 @@ impl UnionFind {
     /// already in the same class, nothing happens. Otherwise the root of one class is made the
     /// parent of the root of the other, using `rank` to keep the tree shallow.
     ///
-    /// Returns the field types that *collided* during the merge: both classes had already
-    /// observed the same `(xtor, field index)`, so those two observed types now have to denote the
-    /// same thing. That is the congruence rule of type splitting, and it is the caller's job (see
+    /// Returns the field types that *collided* during the merge: both classes already held their
+    /// own copy of the same `(xtor, field index)`, and one physical copy can only declare the
+    /// field once, so those two types now have to denote the same thing. That is the congruence rule of type splitting, and it is the caller's job (see
     /// `SplitState::unify_ty`) to unify each returned pair, which may in turn trigger further
     /// unions. Returning them rather than unifying here keeps this type free of any knowledge
     /// about how types are structurally decomposed.
@@ -92,8 +92,8 @@ impl UnionFind {
         self.merge_class_data(&winner, &loser)
     }
 
-    /// Moves `loser`'s class data onto `winner`, keeping `winner`'s entry wherever both observed
-    /// the same field and reporting that pair back to the caller.
+    /// Moves `loser`'s class data onto `winner`, keeping `winner`'s entry wherever both hold the
+    /// same field and reporting that pair back to the caller.
     fn merge_class_data(&mut self, winner: &Label, loser: &Label) -> Vec<(Ty, Ty)> {
         let Some(loser_data) = self.classes.remove(loser) else {
             return vec![];
@@ -115,30 +115,33 @@ impl UnionFind {
         collisions
     }
 
-    /// Records `ty` as the type observed for `xtor`'s `index`-th field in `owner`'s class.
-    /// Returns the type already observed at that position, if any, which the caller must unify
-    /// against `ty`; the stored entry itself is left untouched.
-    pub fn observe_field(
-        &mut self,
-        owner: &Label,
-        xtor: &Identifier,
-        index: usize,
-        ty: &Ty,
-    ) -> Option<Ty> {
+    /// Looks up the copy of `xtor`'s `index`-th field that `owner`'s class holds, if the class has
+    /// touched that field before.
+    pub fn field(&mut self, owner: &Label, xtor: &Identifier, index: usize) -> Option<Ty> {
         let root = self.find(owner);
-        match self
+        self.classes
+            .get(&root)?
+            .fields
+            .get(&(xtor.clone(), index))
+            .cloned()
+    }
+
+    /// Stores `ty` as `owner`'s class's copy of `xtor`'s `index`-th field. Only ever called for a
+    /// field the class does not hold yet (see `SplitState::class_field`): a class declares each
+    /// field exactly once, and a second copy has to be unified with the first instead.
+    pub fn insert_field(&mut self, owner: &Label, xtor: &Identifier, index: usize, ty: Ty) {
+        let root = self.find(owner);
+        let previous = self
             .classes
             .entry(root)
             .or_default()
             .fields
-            .entry((xtor.clone(), index))
-        {
-            Entry::Occupied(kept) => Some(kept.get().clone()),
-            Entry::Vacant(slot) => {
-                slot.insert(ty.clone());
-                None
-            }
-        }
+            .insert((xtor.clone(), index), ty);
+        debug_assert!(
+            previous.is_none(),
+            "field {index} of {} inserted twice for one class",
+            xtor.name
+        );
     }
 
     /// Records that `xtor` occurs somewhere in the program for `owner`'s class.
@@ -307,46 +310,31 @@ mod union_find_tests {
     }
 
     #[test]
-    fn observe_field_keeps_the_first_observation_and_reports_the_later_one() {
-        let mut uf = UnionFind::default();
-        let owner = label("Bar", 1);
-        let first = ty!(id!("Foo#1"));
-        let second = ty!(id!("Foo#2"));
-
-        assert_eq!(uf.observe_field(&owner, &id!("MkBar"), 0, &first), None);
-        // the second observation does not overwrite, it is handed back for unification
-        assert_eq!(
-            uf.observe_field(&owner, &id!("MkBar"), 0, &second),
-            Some(first.clone())
-        );
-        assert_eq!(
-            uf.observe_field(&owner, &id!("MkBar"), 0, &second),
-            Some(first)
-        );
-    }
-
-    #[test]
-    fn observations_under_distinct_owners_do_not_interfere() {
+    fn field_is_absent_until_inserted_and_then_found_under_every_label_of_the_class() {
         let mut uf = UnionFind::default();
         let owner_a = label("Bar", 1);
         let owner_b = label("Bar", 2);
-        let field_a = ty!(id!("Foo#1"));
-        let field_b = ty!(id!("Foo#2"));
+        let field = ty!(id!("Foo#1"));
 
-        assert_eq!(uf.observe_field(&owner_a, &id!("MkBar"), 0, &field_a), None);
-        assert_eq!(uf.observe_field(&owner_b, &id!("MkBar"), 0, &field_b), None);
+        assert_eq!(uf.field(&owner_a, &id!("MkBar"), 0), None);
+        uf.insert_field(&owner_a, &id!("MkBar"), 0, field.clone());
+        assert_eq!(uf.field(&owner_a, &id!("MkBar"), 0), Some(field.clone()));
+        assert_eq!(uf.field(&owner_b, &id!("MkBar"), 0), None);
+
+        uf.union(&owner_a, &owner_b);
+        assert_eq!(uf.field(&owner_b, &id!("MkBar"), 0), Some(field));
     }
 
     #[test]
-    fn union_reports_colliding_field_observations_as_pending_pairs() {
+    fn union_reports_colliding_fields_as_pending_pairs() {
         // The congruence rule: two owners that turn out equal force their MkBar.0 fields together.
         let mut uf = UnionFind::default();
         let owner_a = label("Bar", 1);
         let owner_b = label("Bar", 2);
         let field_a = ty!(id!("Foo#1"));
         let field_b = ty!(id!("Foo#2"));
-        uf.observe_field(&owner_a, &id!("MkBar"), 0, &field_a);
-        uf.observe_field(&owner_b, &id!("MkBar"), 0, &field_b);
+        uf.insert_field(&owner_a, &id!("MkBar"), 0, field_a.clone());
+        uf.insert_field(&owner_b, &id!("MkBar"), 0, field_b.clone());
 
         let pending = uf.union(&owner_a, &owner_b);
 
@@ -354,24 +342,22 @@ mod union_find_tests {
         let (x, y) = &pending[0];
         assert!(
             (x == &field_a && y == &field_b) || (x == &field_b && y == &field_a),
-            "expected the two observed field types as a pending pair, got {pending:?}"
+            "expected the two fields as a pending pair, got {pending:?}"
         );
     }
 
     #[test]
-    fn union_reports_nothing_when_only_one_side_observed_the_field() {
+    fn union_reports_nothing_when_only_one_side_holds_the_field() {
         let mut uf = UnionFind::default();
         let owner_a = label("Bar", 1);
         let owner_b = label("Bar", 2);
-        uf.observe_field(&owner_a, &id!("MkBar"), 0, &ty!(id!("Foo#1")));
+        uf.insert_field(&owner_a, &id!("MkBar"), 0, ty!(id!("Foo#1")));
 
         assert!(uf.union(&owner_a, &owner_b).is_empty());
-        // the surviving root carries the observation either way
-        let root = uf.find(&owner_a);
-        let data = uf.classes().find(|(r, _)| *r == &root).map(|(_, d)| d);
+        // the surviving root carries the field either way
         assert_eq!(
-            data.and_then(|d| d.fields.get(&(id!("MkBar"), 0))),
-            Some(&ty!(id!("Foo#1")))
+            uf.field(&owner_b, &id!("MkBar"), 0),
+            Some(ty!(id!("Foo#1")))
         );
     }
 

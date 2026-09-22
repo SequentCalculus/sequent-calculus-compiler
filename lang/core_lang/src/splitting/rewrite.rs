@@ -581,16 +581,15 @@ mod rewrite_tests {
         let bar_b = state.label_ty(&ty!(id!("Bar")));
         let foo_a = state.label_ty(&ty!(id!("Foo")));
         let foo_b = state.label_ty(&ty!(id!("Foo")));
-        state.observe_field(label_in(&bar_a), &id!("MkBar"), 0, &foo_a);
-        state.observe_field(label_in(&bar_b), &id!("MkBar"), 0, &foo_b);
+        for (bar, foo) in [(&bar_a, &foo_a), (&bar_b, &foo_b)] {
+            let field = state.class_field(label_in(bar), &id!("MkBar"), 0, &ty!(id!("Foo")));
+            state.unify_ty(foo, &field);
+        }
         let (field_observations, _) = finish_classes(&state);
 
-        let label_origin = vec![
-            (label_in(&bar_a).clone(), id!("Bar")),
-            (label_in(&bar_b).clone(), id!("Bar")),
-            (label_in(&foo_a).clone(), id!("Foo")),
-            (label_in(&foo_b).clone(), id!("Foo")),
-        ];
+        // taken from the state rather than written out by hand, since each class's copy of the
+        // field minted its own `Foo` label
+        let label_origin = state.label_origin.clone();
         let decl = bar_decl(foo_a.clone());
         let used = used_for(
             id!("MkBar"),

@@ -408,7 +408,7 @@ mod xtor_tests {
 #[cfg(test)]
 mod label_and_unify_tests {
     use crate::splitting::labeling::{
-        DeclSignature, DeclSignatures, LabelAndUnify, SplitState, finish_classes,
+        DeclSignature, DeclSignatures, LabelAndUnify, SplitState, finish_classes, label_in,
     };
     use crate::syntax::*;
     use crate::traits::*;
@@ -416,7 +416,7 @@ mod label_and_unify_tests {
     use core_macros::{ctor, id, ty};
 
     #[test]
-    fn label_and_unify_defers_the_field_to_an_observation_instead_of_unifying_eagerly() {
+    fn label_and_unify_ties_the_field_to_the_owner_class_copy_instead_of_a_signature_anchor() {
         let mut state = SplitState::default();
 
         let mut sigs = DeclSignatures::new();
@@ -448,17 +448,24 @@ mod label_and_unify_tests {
             example.label_and_unify(&mut state, &sigs, &TypingContext::default());
         let arg_ty = result.args.entries[0].get_type();
 
-        // no signature-level anchor is ever minted or unified against -- the field's type is
-        // recorded on the class of this occurrence's own (freshly labeled) `.ty`
+        // no signature-level anchor is ever minted or unified against -- the field is tied to
+        // the copy held by the class of this occurrence's own (freshly labeled) `.ty`
         let owner = match &result.ty {
             Ty::Decl { name, .. } => name.clone(),
             _ => panic!("expected Ty::Decl"),
         };
         let (observations, used) = finish_classes(&state);
         let root = state.uf.find(&owner);
-        assert_eq!(observations.get(&root, &id!("Wrap"), 0), Some(&arg_ty));
+        let copy = observations
+            .get(&root, &id!("Wrap"), 0)
+            .expect("the owner's class holds Wrap.0")
+            .clone();
+        assert_eq!(
+            state.uf.find(label_in(&copy)),
+            state.uf.find(label_in(&arg_ty))
+        );
         assert!(used.contains(&root, &id!("Wrap")));
-        // the xtor's own type is freshly labeled, independent of the field-level observation
+        // the xtor's own type is freshly labeled, independent of the class's copy of the field
         assert!(matches!(result.ty, Ty::Decl { .. }));
     }
 
@@ -504,7 +511,7 @@ mod label_and_unify_tests {
             state.uf.find(&arg_name(&first)),
             state.uf.find(&arg_name(&second))
         );
-        // and each occurrence's observation stays on its own owner class
+        // and each occurrence's field stays tied to its own owner class's copy
         let owner_name = |x: &Xtor<Prd>| match &x.ty {
             Ty::Decl { name, .. } => name.clone(),
             _ => panic!("expected Ty::Decl"),
@@ -513,14 +520,18 @@ mod label_and_unify_tests {
         let root_first = state.uf.find(&owner_name(&first));
         let root_second = state.uf.find(&owner_name(&second));
         assert_ne!(root_first, root_second);
-        assert_eq!(
-            observations.get(&root_first, &id!("MkBar"), 0),
-            Some(&first.args.entries[0].get_type())
-        );
-        assert_eq!(
-            observations.get(&root_second, &id!("MkBar"), 0),
-            Some(&second.args.entries[0].get_type())
-        );
+        for (root, occurrence) in [(&root_first, &first), (&root_second, &second)] {
+            let copy = observations
+                .get(root, &id!("MkBar"), 0)
+                .expect("each owner class holds MkBar.0")
+                .clone();
+            assert_eq!(
+                state.uf.find(label_in(&copy)),
+                state
+                    .uf
+                    .find(label_in(&occurrence.args.entries[0].get_type()))
+            );
+        }
     }
 }
 
