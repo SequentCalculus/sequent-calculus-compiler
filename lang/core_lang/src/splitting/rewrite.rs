@@ -344,9 +344,7 @@ fn substitute_args(args: &TypingContext, subst: &[(Identifier, Identifier)]) -> 
 #[cfg(test)]
 mod rewrite_tests {
     use super::*;
-    use crate::splitting::labeling::{
-        FieldObservation, SplitState, label_in, merge_field_observations,
-    };
+    use crate::splitting::labeling::{SplitState, finish_classes, label_in};
     use crate::splitting::union_find::UnionFind;
     use crate::syntax::{DataDeclaration, Ty};
     extern crate self as core_lang;
@@ -583,19 +581,9 @@ mod rewrite_tests {
         let bar_b = state.label_ty(&ty!(id!("Bar")));
         let foo_a = state.label_ty(&ty!(id!("Foo")));
         let foo_b = state.label_ty(&ty!(id!("Foo")));
-        state.field_observations.push(FieldObservation {
-            owner: label_in(&bar_a).clone(),
-            xtor: id!("MkBar"),
-            field_index: 0,
-            ty: foo_a.clone(),
-        });
-        state.field_observations.push(FieldObservation {
-            owner: label_in(&bar_b).clone(),
-            xtor: id!("MkBar"),
-            field_index: 0,
-            ty: foo_b.clone(),
-        });
-        let field_observations = merge_field_observations(&mut state);
+        state.observe_field(label_in(&bar_a), &id!("MkBar"), 0, &foo_a);
+        state.observe_field(label_in(&bar_b), &id!("MkBar"), 0, &foo_b);
+        let (field_observations, _) = finish_classes(&state);
 
         let label_origin = vec![
             (label_in(&bar_a).clone(), id!("Bar")),

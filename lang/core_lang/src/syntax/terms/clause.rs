@@ -304,7 +304,7 @@ impl<C: Chi> Checked for Clause<C> {
 #[cfg(test)]
 mod label_and_unify_tests {
     use crate::splitting::labeling::{
-        DeclSignature, DeclSignatures, SplitState, label_and_unify_clause,
+        DeclSignature, DeclSignatures, SplitState, finish_classes, label_and_unify_clause,
     };
     use crate::syntax::*;
     extern crate self as core_lang;
@@ -354,13 +354,15 @@ mod label_and_unify_tests {
             label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner);
         let binding_ty = result.context.bindings[0].ty.clone();
 
-        // nothing unifies the binding eagerly -- it is recorded as a field observation instead,
-        // to be reconciled against whatever the owner's equivalence class turns out to be
-        assert_eq!(state.field_observations.len(), 1);
-        assert_eq!(state.field_observations[0].owner, owner_label);
-        assert_eq!(state.field_observations[0].xtor, id!("Cons"));
-        assert_eq!(state.field_observations[0].field_index, 0);
-        assert_eq!(state.field_observations[0].ty, binding_ty);
+        // the binding is not unified against the declaration, it is recorded on the owner's
+        // equivalence class, where a second occurrence of the same field would meet it
+        let (field_observations, used_xtors) = finish_classes(&state);
+        let root = state.uf.find(&owner_label);
+        assert_eq!(
+            field_observations.get(&root, &id!("Cons"), 0),
+            Some(&binding_ty)
+        );
+        assert!(used_xtors.contains(&root, &id!("Cons")));
 
         // scope threading: the body's occurrence of `x` must carry exactly the binding's label
         let Statement::Cut(body_cut) = result.body.as_ref() else {
