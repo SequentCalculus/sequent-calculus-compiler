@@ -7,8 +7,7 @@ use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args};
 use crate::splitting::labeling::{
-    DeclSignatures, LabelAndUnify, SplitState, label_in, type_param_subst,
-    unify_with_field_template,
+    DeclSignatures, LabelAndUnify, SplitState, constrain_xtor_occurrence, label_in,
 };
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
@@ -336,38 +335,12 @@ impl<C: Chi> LabelAndUnify for Xtor<C> {
                 .collect(),
         };
         // `ty` is the concrete type of the whole xtor value (e.g. `Fun[i64, Fun[i64, i64]]` for a
-        // destructor consumption). `label_in` below relies on it being a declared type.
+        // destructor consumption), and owns everything this occurrence records.
         let ty = state.label_ty(&self.ty);
-        if !matches!(ty, Ty::Decl { .. }) {
-            panic!("Expected declaration type in Xtor to label, got {ty:?}");
-        }
         let args = self.args.label_and_unify(state, sigs, scope);
 
-        let Some(sig) = sigs.get(&self.name) else {
-            panic!("missing signature for xtor: {}", self.name.name);
-        };
-        let Ty::Decl {
-            type_args: decl_type_args,
-            ..
-        } = &ty
-        else {
-            unreachable!("just checked above that `ty` is a Ty::Decl");
-        };
-        let subst = type_param_subst(sig, &decl_type_args.args, &type_args.args);
-        let owner = label_in(&ty).clone();
-        state.record_xtor_use(&owner, &self.name);
-        // Every field's actual type is unified with the declared field instantiated for this
-        // occurrence, which ties the type-parameter positions to this occurrence's own type
-        // arguments (see `unify_with_field_template`), and recorded on the owner's equivalence
-        // class, which decides the split copy of every declaration head (see
-        // `SplitState::observe_field`).
-        for (i, arg) in args.entries.iter().enumerate() {
-            let actual = arg.get_type();
-            if let Some(declared) = sig.tys.get(i) {
-                unify_with_field_template(state, declared, &actual, &subst);
-            }
-            state.observe_field(&owner, &self.name, i, &actual);
-        }
+        let arg_tys: Vec<Ty> = args.entries.iter().map(|arg| arg.get_type()).collect();
+        constrain_xtor_occurrence(state, sigs, &self.name, &ty, &type_args.args, &arg_tys);
 
         Xtor {
             prdcns: self.prdcns.clone(),
