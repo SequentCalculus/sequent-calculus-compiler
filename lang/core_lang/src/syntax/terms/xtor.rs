@@ -454,9 +454,9 @@ mod label_and_unify_tests {
             Ty::Decl { name, .. } => name.clone(),
             _ => panic!("expected Ty::Decl"),
         };
-        let (observations, used) = finish_classes(&state);
+        let (class_fields, used) = finish_classes(&state);
         let root = state.uf.find(&owner);
-        let copy = observations
+        let copy = class_fields
             .get(&root, &id!("Wrap"), 0)
             .expect("the owner's class holds Wrap.0")
             .clone();
@@ -470,7 +470,7 @@ mod label_and_unify_tests {
     }
 
     #[test]
-    fn label_and_unify_keeps_two_independent_occurrences_field_observations_separate() {
+    fn label_and_unify_keeps_two_independent_occurrences_fields_separate() {
         let mut state = SplitState::default();
         let mut sigs = DeclSignatures::new();
         sigs.insert(
@@ -516,12 +516,12 @@ mod label_and_unify_tests {
             Ty::Decl { name, .. } => name.clone(),
             _ => panic!("expected Ty::Decl"),
         };
-        let (observations, _) = finish_classes(&state);
+        let (class_fields, _) = finish_classes(&state);
         let root_first = state.uf.find(&owner_name(&first));
         let root_second = state.uf.find(&owner_name(&second));
         assert_ne!(root_first, root_second);
         for (root, occurrence) in [(&root_first, &first), (&root_second, &second)] {
-            let copy = observations
+            let copy = class_fields
                 .get(root, &id!("MkBar"), 0)
                 .expect("each owner class holds MkBar.0")
                 .clone();

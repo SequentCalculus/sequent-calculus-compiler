@@ -14,14 +14,18 @@ use crate::{
     },
 };
 
-/// A label is a fresh `Identifier` sharing the declared type's name but carrying a unique `id` prefixed with `#`, e.g. `Box#1`
+/// A label is a fresh `Identifier` whose name is the declared type's name with a unique `#`-suffix,
+/// e.g. `Box#1`; its `id` is always 0 (see `SplitState::fresh`).
 pub type Label = Identifier;
 
-/// The canonical, labeled signature of one `Def` or `XtorSig`, alongside its labeled
-/// parameter/field types. Both `type_params` fields are needed at every call/construction site to
-/// substitute the site's own concrete instantiation into `tys` *before* unifying against the
-/// actual argument, otherwise a field typed `Ty::Var(...)` would never unify with anything,
-/// since `unify_ty` only ever matches `Ty::Decl` pairs. There are two independent levels of
+/// The signature of one `Def` or `XtorSig`: its parameter or field types plus the type parameters
+/// they may mention. For a `Def`, `tys` are labeled once up front, the one canonical signature
+/// every `Call` unifies against. For an xtor, `tys` are the declaration's unlabeled field types,
+/// only a template from which every equivalence class instantiates its own copy (see
+/// [`SplitState::class_field`]). Both `type_params` fields are needed at every call site and xtor
+/// occurrence to substitute the site's own instantiation *before* unifying against the actual
+/// argument, otherwise a field typed `Ty::Var(...)` would never unify with anything, since
+/// `unify_ty` only ever matches `Ty::Decl` pairs. There are two independent levels of
 /// generics an xtor's field type can reference (mirroring the double substitution in
 /// `check_xcase_against_decl`):
 pub struct DeclSignature {
@@ -76,15 +80,16 @@ fn type_param_subst(
 /// Each equivalence class's own copy of every field it touched, keyed by (the class's final
 /// union-find root, xtor, field index): the declared field type with its heads labeled for that
 /// class and its type parameters left as variables (see
-/// [`crate::splitting::union_find::ClassData`]). A read-only view over the finished union-find's class data, built once by
-/// [`finish_classes`] so that the rewrite phase never needs live access to the union-find itself
-/// (mirroring how [`crate::splitting::split_table::SplitTable`] is resolved up front).
+/// [`crate::splitting::union_find::ClassData`]). A read-only view over the finished union-find's
+/// class data, built once by [`finish_classes`] so that the rewrite phase never needs live access
+/// to the union-find itself (mirroring how [`crate::splitting::split_table::SplitTable`] is
+/// resolved up front).
 #[derive(Default)]
-pub struct FieldObservations(HashMap<(Label, Identifier, usize), Ty>);
+pub struct ClassFields(HashMap<(Label, Identifier, usize), Ty>);
 
-impl FieldObservations {
-    /// Looks up the class rooted at `root`'s copy of `xtor`'s `field_index`-th field. `None` means the xtor was never actually constructed/matched
-    /// anywhere in the program.
+impl ClassFields {
+    /// Looks up the class rooted at `root`'s copy of `xtor`'s `field_index`-th field. `None` means
+    /// no occurrence of that class ever touched the field, i.e. the xtor never occurs for it.
     pub fn get(&self, root: &Label, xtor: &Identifier, field_index: usize) -> Option<&Ty> {
         self.0.get(&(root.clone(), xtor.clone(), field_index))
     }
@@ -92,7 +97,7 @@ impl FieldObservations {
 
 /// Every xtor that occurs for an equivalence class, keyed by (the class's final union-find root,
 /// original xtor name). A read-only view over the finished union-find's class data, built once by
-/// [`finish_classes`] alongside [`FieldObservations`].
+/// [`finish_classes`] alongside [`ClassFields`].
 #[derive(Default)]
 pub struct UsedXtors(HashSet<(Label, Identifier)>);
 
@@ -114,10 +119,10 @@ impl FromIterator<(Label, Identifier)> for UsedXtors {
 }
 
 /// Turns the finished union-find's class data into the two read-only views the rewrite phase
-/// consults. Purely a change of indexing, every union and every class field has already been created
-/// during the walk; the class data is keyed by root throughout (see
+/// consults. Purely a change of indexing: every union has happened and every class field has been
+/// created during the walk, and the class data is keyed by root throughout (see
 /// [`crate::splitting::union_find::ClassData`]), so no reconciliation is left to do here.
-pub fn finish_classes(state: &SplitState) -> (FieldObservations, UsedXtors) {
+pub fn finish_classes(state: &SplitState) -> (ClassFields, UsedXtors) {
     let mut fields = HashMap::new();
     let mut used = HashSet::new();
     for (root, data) in state.uf.classes() {
@@ -128,12 +133,12 @@ pub fn finish_classes(state: &SplitState) -> (FieldObservations, UsedXtors) {
             used.insert((root.clone(), xtor.clone()));
         }
     }
-    (FieldObservations(fields), UsedXtors(used))
+    (ClassFields(fields), UsedXtors(used))
 }
 
 /// Carries all mutable state through the single label+unify walk: the fresh-id counter, the
-/// union-find (which also holds each class's own copy of its fields and its used xtors), and a record
-/// of each label's origin.
+/// union-find (which also holds each class's own copy of its fields and its used xtors), and a
+/// record of each label's origin.
 #[derive(Default)]
 pub struct SplitState {
     pub uf: UnionFind,
@@ -256,10 +261,10 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
 }
 
 /// Labels every def's own signature (see [`label_def_signature`]) and collects a
-/// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use by
-/// [`constrain_xtor_occurrence`] at every call/construction site. Returns the resulting
-/// [`DeclSignatures`] table alongside `prog`'s own (still unlabeled) data and codata
-/// declarations, since the caller needs both to drive the rest of the labeling walk.
+/// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use at every
+/// call site (`Call::label_and_unify`) and every xtor occurrence ([`constrain_xtor_occurrence`]).
+/// Returns the resulting [`DeclSignatures`] table alongside `prog`'s own (still unlabeled) data
+/// and codata declarations, since the caller needs both to drive the rest of the labeling walk.
 pub fn build_decl_signatures(
     prog: &Prog,
     state: &mut SplitState,
@@ -313,14 +318,15 @@ pub fn build_decl_signatures(
 /// This trait assigns fresh labels to every declared-type occurrence within a syntax element and
 /// eagerly unifies label pairs wherever the existing type system already requires
 /// two types to be equal at that position, e.g. a `Cut`'s producer/consumer type, a `Call`'s
-/// argument against the callee's declared parameter type, an `Xtor`'s argument against its
-/// declared field type, or an `XCase` clause's binder against the matched `Xtor`'s declared field.
+/// argument against the callee's declared parameter type, or an `Xtor`'s argument and an `XCase`
+/// clause's binder against the owner class's copy of that field (see
+/// [`constrain_xtor_occurrence`]).
 ///
-/// This is the combined labeling-and-unification pass of type splitting;
-/// running it eagerly during a single tree walk avoids a separate constraint-collection pass, at
-/// the cost of requiring declaration signatures to be labeled once upfront (see
-/// [`build_decl_signatures`]) so that multiple call/use sites unify against one shared, stable
-/// label rather than against each other pairwise.
+/// This is the combined labeling-and-unification pass of type splitting; running it eagerly
+/// during a single tree walk avoids a separate constraint-collection pass, which is safe because
+/// the resulting partition does not depend on the order of the unions. `Def` signatures are
+/// labeled once up front (see [`build_decl_signatures`]) so that every call site unifies against
+/// one shared, stable label rather than against each other pairwise.
 ///
 /// `scope` maps every locally bound (co)variable (`Mu`'s variable, a `Clause`'s context bindings)
 /// to its already-labeled type, mirroring [`crate::typing::check::Checked::check`]'s
@@ -394,10 +400,11 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
 ///   different existentials, therefore keep their instantiations apart.
 ///
 /// Take `data List[A] { Nil, Cons(head: A, tail: List[A]) }` and the occurrence
-/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`. Its class holds the fields
-/// `head: A` and `tail: List#2[A]`, which instantiate to `Box#1` and `List#2[Box#1]`. The first is
-/// unified with the argument's `Box#2`, tying the annotation `List[Box]` to the value stored in
-/// it; the second ties the argument's list head to the class's `List#2`.
+/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`, with the arguments
+/// `Wrap(1) : Box#2` and `Nil : List#2[Box#3]`. Its class holds the fields `head: A` and
+/// `tail: List#3[A]`, which instantiate to `Box#1` and `List#3[Box#1]`. Unifying the first with
+/// `Box#2` ties the annotation `List[Box]` to the value stored in it; unifying the second with
+/// `Nil`'s type ties its head `List#2` to the class's `List#3`, and its `Box#3` to `Box#1`.
 pub fn constrain_xtor_occurrence(
     state: &mut SplitState,
     sigs: &DeclSignatures,
@@ -425,8 +432,6 @@ pub fn constrain_xtor_occurrence(
     for (i, (actual, declared)) in field_tys.iter().zip(&sig.tys).enumerate() {
         let field = state.class_field(owner, xtor, i, declared);
         let expected = field.substitute((subst.0.as_slice(), subst.1.as_slice()));
-        // `actual` first, so that on a rank tie the root stays the occurrence's own label rather
-        // than the class field's head, minted later
         state.unify_ty(actual, &expected);
     }
 }
@@ -456,8 +461,8 @@ pub fn label_and_unify_clause<C: Chi>(
         })
         .collect();
 
-    // Recorded here rather than in `XCase::label_and_unify`, since this is the only place that sees
-    // the owner type and the clause's xtor together, for both polarities.
+    // Constrained here rather than in `XCase::label_and_unify`, since this is the only place that
+    // sees the owner type and the clause's xtor together, for both polarities.
     let binder_tys: Vec<Ty> = labeled_bindings.iter().map(|b| b.ty.clone()).collect();
     constrain_xtor_occurrence(state, sigs, &clause.xtor, owner_ty, &[], &binder_tys);
 
@@ -752,14 +757,14 @@ mod split_state_tests {
             &field_b,
         );
 
-        let (observations, _) = finish_classes(&state);
+        let (class_fields, _) = finish_classes(&state);
         let root_a = state.uf.find(label_in(&owner_a));
         let root_b = state.uf.find(label_in(&owner_b));
-        let copy_a = observations
+        let copy_a = class_fields
             .get(&root_a, &id!("MkBar"), 0)
             .expect("class a holds MkBar.0")
             .clone();
-        let copy_b = observations
+        let copy_b = class_fields
             .get(&root_b, &id!("MkBar"), 0)
             .expect("class b holds MkBar.0")
             .clone();
@@ -812,7 +817,7 @@ mod split_state_tests {
     }
 
     #[test]
-    fn unifying_two_owners_after_the_fact_still_merges_their_field_observations() {
+    fn unifying_two_owners_after_the_fact_still_merges_their_fields() {
         // The other order: both fields are touched while the owners are still separate, and only
         // a later union brings them together. The congruence rule has to fire from inside `union`.
         let mut state = fresh_state();
@@ -852,8 +857,8 @@ mod split_state_tests {
     #[test]
     fn merging_fields_cascades_into_the_fields_of_those_fields() {
         // Bar#1.MkBar.0 = Foo#1, Bar#2.MkBar.0 = Foo#2, and each Foo in turn holds its own Baz.
-        // Unifying the two Bars must propagate two levels down, which is exactly what the
-        // the worklist in `unify_ty` now handles.
+        // Unifying the two Bars must propagate two levels down, which is what the worklist in
+        // `unify_ty` handles.
         let mut state = fresh_state();
         let bar_a = state.label_ty(&ty!(id!("Bar")));
         let bar_b = state.label_ty(&ty!(id!("Bar")));
@@ -1067,13 +1072,13 @@ mod split_state_tests {
     #[test]
     fn finish_classes_returns_none_for_a_field_never_touched() {
         let state = fresh_state();
-        let never_observed = Identifier {
+        let never_touched = Identifier {
             name: "Bar#1".to_string(),
             id: 0,
         };
-        let (observations, used) = finish_classes(&state);
-        assert_eq!(observations.get(&never_observed, &id!("MkBar"), 0), None);
-        assert!(!used.contains(&never_observed, &id!("MkBar")));
+        let (class_fields, used) = finish_classes(&state);
+        assert_eq!(class_fields.get(&never_touched, &id!("MkBar"), 0), None);
+        assert!(!used.contains(&never_touched, &id!("MkBar")));
     }
 
     #[test]

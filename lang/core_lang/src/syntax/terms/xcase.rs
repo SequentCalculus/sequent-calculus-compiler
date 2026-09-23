@@ -240,11 +240,11 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         scope: &TypingContext,
     ) -> Self {
         // `ty` is the concrete type of the matched/constructed value (e.g. `Fun[i64, i64]`); its
-        // label is the owner every clause's field observations are recorded against (see
+        // label is the owner whose class every clause's fields are tied to (see
         // `label_and_unify_clause`), since a `Clause` itself carries no `.ty` to derive this from.
         let ty = state.label_ty(&self.ty);
         // Each clause records itself as a use of its xtor and derives both its owner label and the
-        // declaration's type-parameter instantiation from `ty`, see `label_and_unify_clause`.
+        // declaration's type-parameter instantiation from `ty`, see `constrain_xtor_occurrence`.
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self

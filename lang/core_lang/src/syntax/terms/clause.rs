@@ -356,9 +356,9 @@ mod label_and_unify_tests {
 
         // the owner's class now holds its own copy of the field, and the binder is tied to it,
         // which is where a second occurrence of the same class would meet it
-        let (field_observations, used_xtors) = finish_classes(&state);
+        let (class_fields, used_xtors) = finish_classes(&state);
         let root = state.uf.find(&owner_label);
-        let copy = field_observations
+        let copy = class_fields
             .get(&root, &id!("Cons"), 0)
             .expect("the owner's class holds Cons.0")
             .clone();

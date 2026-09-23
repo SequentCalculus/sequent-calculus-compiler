@@ -131,15 +131,15 @@ impl SplitTable {
             .unwrap_or(&[])
     }
 
-    /// Resolves a type that was never labeled in the first place. The declared shape of a field
-    /// that was never actually observed at any real occurrence (see
-    /// [`crate::splitting::rewrite::build_field_args`]'s fallback for a never-constructed xtor).
-    /// Such a type carries only an *origin* name (e.g. `List`, never `List#3`), which is only
-    /// valid as-is when that origin was never split or
-    /// never referenced at all. When the origin *was* split into several physical copies, that bare name
-    /// belongs to none of them, since nothing was ever observed, any one of them is an equally
-    /// valid (if arbitrary) choice, so this deterministically resolves to the first-assigned one.
-    pub fn resolve_unobserved_ty(&self, ty: &Ty) -> Ty {
+    /// Resolves a type that was never labeled in the first place: the declared shape of a field
+    /// that no occurrence of a class ever touched, so the class holds no copy of it (see
+    /// `crate::splitting::rewrite::build_field_args`'s fallback, e.g. for a never-constructed
+    /// xtor). Such a type carries only an *origin* name (e.g. `List`, never `List#3`), which is
+    /// only valid as-is when that origin was never split or never referenced at all. When the
+    /// origin *was* split into several physical copies, that bare name belongs to none of them;
+    /// since nothing ever constrained the field, any one of them is an equally valid (if
+    /// arbitrary) choice, so this deterministically resolves to the first-assigned one.
+    pub fn resolve_unlabeled_ty(&self, ty: &Ty) -> Ty {
         match ty {
             Ty::I64 => Ty::I64,
             Ty::Var(v) => Ty::Var(v.clone()),
@@ -154,7 +154,7 @@ impl SplitTable {
                         args: type_args
                             .args
                             .iter()
-                            .map(|arg| self.resolve_unobserved_ty(arg))
+                            .map(|arg| self.resolve_unlabeled_ty(arg))
                             .collect(),
                     },
                 }
@@ -325,13 +325,13 @@ mod split_table_tests {
         assert!(table.copies_for(&id!("Box")).is_empty());
     }
 
-    /// A field type that was never labeled (no real occurrence ever observed it, see
+    /// A field type that was never labeled (no occurrence ever touched it, see
     /// `crate::splitting::rewrite::build_field_args`'s fallback) only names its *origin*
     /// declaration, not any specific split copy. If that origin was itself split into several
-    /// physical copies, the bare origin name belongs to none of them -- `resolve_unobserved_ty`
+    /// physical copies, the bare origin name belongs to none of them -- `resolve_unlabeled_ty`
     /// must resolve it to one of the actual copies instead of leaving a dangling reference.
     #[test]
-    fn resolve_unobserved_ty_picks_an_actual_copy_when_the_origin_was_split() {
+    fn resolve_unlabeled_ty_picks_an_actual_copy_when_the_origin_was_split() {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let b = box_label(2);
@@ -343,7 +343,7 @@ mod split_table_tests {
             name: id!("Box"),
             type_args: Default::default(),
         };
-        let resolved = table.resolve_unobserved_ty(&bare_box);
+        let resolved = table.resolve_unlabeled_ty(&bare_box);
         let crate::syntax::Ty::Decl { name, .. } = &resolved else {
             panic!("expected Ty::Decl");
         };
@@ -353,7 +353,7 @@ mod split_table_tests {
     }
 
     #[test]
-    fn resolve_unobserved_ty_keeps_the_bare_name_when_the_origin_was_never_split() {
+    fn resolve_unlabeled_ty_keeps_the_bare_name_when_the_origin_was_never_split() {
         let mut uf = UnionFind::default();
         let a = box_label(1);
         let label_origin = vec![(a.clone(), id!("Box"))];
@@ -364,6 +364,6 @@ mod split_table_tests {
             name: id!("Box"),
             type_args: Default::default(),
         };
-        assert_eq!(table.resolve_unobserved_ty(&bare_box), bare_box);
+        assert_eq!(table.resolve_unlabeled_ty(&bare_box), bare_box);
     }
 }

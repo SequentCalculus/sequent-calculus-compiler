@@ -34,9 +34,9 @@ pub fn split_program(prog: &Prog) -> Prog {
         .map(|def| def.label_and_unify(&mut state, &sigs, &TypingContext::default()))
         .collect();
 
-    // Every union and every class field already happened during the walk; this only re-indexes
-    // the union-find's class data into the two views the rewrite phase consults.
-    let (field_observations, used_xtors) = finish_classes(&state);
+    // Every union has happened and every class field has been created during the walk; this only
+    // re-indexes the union-find's class data into the two views the rewrite phase consults.
+    let (class_fields, used_xtors) = finish_classes(&state);
 
     let table = SplitTable::build(
         &mut state.uf,
@@ -53,15 +53,11 @@ pub fn split_program(prog: &Prog) -> Prog {
     // growing cycle (see `splitting::rewrite::build_declaration_copy`).
     let data_types = labeled_data
         .iter()
-        .flat_map(|decl| {
-            split_declaration(decl, &table, &field_observations, &used_xtors, &mut max_id)
-        })
+        .flat_map(|decl| split_declaration(decl, &table, &class_fields, &used_xtors, &mut max_id))
         .collect();
     let codata_types = labeled_codata
         .iter()
-        .flat_map(|decl| {
-            split_declaration(decl, &table, &field_observations, &used_xtors, &mut max_id)
-        })
+        .flat_map(|decl| split_declaration(decl, &table, &class_fields, &used_xtors, &mut max_id))
         .collect();
     let defs = labeled_defs.iter().map(|def| def.rewrite(&table)).collect();
 
@@ -657,9 +653,9 @@ mod split_program_tests {
         }
     }
 
-    /// An observation at a concrete occurrence (`Cons(1, Nil)`, so
-    /// `i64`) must not freeze the copy's field to that one instantiation either. Only the *head* of
-    /// `xs: List[B]` is a splitting decision; `B` stays `B`.
+    /// A concrete occurrence (`Cons(1, Nil)`, so `i64`) must not freeze the copy's field to that
+    /// one instantiation either. Only the *head* of `xs: List[B]` is a splitting decision; `B`
+    /// stays `B`.
     #[test]
     fn split_program_does_not_freeze_a_field_to_the_instantiation_seen_at_one_occurrence() {
         let list_ty = || ty!(id!("List"), [ty!("int")]);

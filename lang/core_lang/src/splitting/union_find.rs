@@ -9,7 +9,8 @@ use crate::syntax::{Identifier, Ty};
 /// Everything the labeling walk has learned about one equivalence class of labels.
 ///
 /// Held only at class *roots*: [`UnionFind::union`] migrates an absorbed class's data onto the
-/// surviving root, so the keys of `UnionFind::classes` are always exactly the current roots.
+/// surviving root, so every key of `UnionFind::classes` is always a current root (a root without
+/// any data yet simply has no entry).
 #[derive(Debug, Clone, Default)]
 pub struct ClassData {
     /// This class's own copy of one field of one xtor, keyed by `(xtor, field index)`: the declared
@@ -29,7 +30,7 @@ pub struct ClassData {
 /// smaller tree to the root of the larger tree during union operations.
 ///
 /// Beyond the plain partition it also carries each class's [`ClassData`], so that the congruence
-/// rule of type splitting (equal owners force their equally-named fields to be equal) fires
+/// rule of type splitting (equal owners force the same field of the same xtor to be equal) fires
 /// directly inside [`UnionFind::union`] instead of being reconstructed afterwards.
 #[derive(Debug, Clone, Default)]
 pub struct UnionFind {
@@ -65,10 +66,11 @@ impl UnionFind {
     ///
     /// Returns the field types that *collided* during the merge: both classes already held their
     /// own copy of the same `(xtor, field index)`, and one physical copy can only declare the
-    /// field once, so those two types now have to denote the same thing. That is the congruence rule of type splitting, and it is the caller's job (see
-    /// `SplitState::unify_ty`) to unify each returned pair, which may in turn trigger further
-    /// unions. Returning them rather than unifying here keeps this type free of any knowledge
-    /// about how types are structurally decomposed.
+    /// field once, so those two types now have to denote the same thing. That is the congruence
+    /// rule of type splitting, and it is the caller's job (see `SplitState::unify_ty`) to unify
+    /// each returned pair, which may in turn trigger further unions. Returning them rather than
+    /// unifying here keeps this type free of any knowledge about how types are structurally
+    /// decomposed.
     pub fn union(&mut self, a: &Label, b: &Label) -> Vec<(Ty, Ty)> {
         let (ra, rb) = (self.find(a), self.find(b));
         if ra == rb {
