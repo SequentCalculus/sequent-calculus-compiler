@@ -9,8 +9,8 @@ use std::{
 use crate::{
     splitting::union_find::UnionFind,
     syntax::{
-        Chi, Clause, CodataDeclaration, ContextBinding, DataDeclaration, Def, Identifier, Prog, Ty,
-        TypeParam, TypingContext, types::TypeArgs,
+        Chi, Clause, ContextBinding, Def, Identifier, Prog, Ty, TypeParam, TypingContext,
+        types::TypeArgs,
     },
 };
 
@@ -263,12 +263,11 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
 /// Labels every def's own signature (see [`label_def_signature`]) and collects a
 /// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use at every
 /// call site (`Call::label_and_unify`) and every xtor occurrence ([`constrain_xtor_occurrence`]).
-/// Returns the resulting [`DeclSignatures`] table alongside `prog`'s own (still unlabeled) data
-/// and codata declarations, since the caller needs both to drive the rest of the labeling walk.
-pub fn build_decl_signatures(
-    prog: &Prog,
-    state: &mut SplitState,
-) -> (DeclSignatures, Vec<DataDeclaration>, Vec<CodataDeclaration>) {
+///
+/// Only the defs' signatures are labeled. An xtor's entry carries the declaration's field types
+/// unchanged, as the unlabeled template every equivalence class instantiates its own copy from
+/// (see [`SplitState::class_field`]).
+pub fn build_decl_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatures {
     let mut sigs = DeclSignatures::new();
     for def in &prog.defs {
         let tys = label_def_signature(def, state);
@@ -282,8 +281,7 @@ pub fn build_decl_signatures(
         );
     }
 
-    let data_types: Vec<DataDeclaration> = prog.data_types.clone();
-    for decl in &data_types {
+    for decl in &prog.data_types {
         for xtor in &decl.xtors {
             let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
             sigs.insert(
@@ -297,8 +295,7 @@ pub fn build_decl_signatures(
         }
     }
 
-    let codata_types: Vec<CodataDeclaration> = prog.codata_types.clone();
-    for decl in &codata_types {
+    for decl in &prog.codata_types {
         for xtor in &decl.xtors {
             let tys = xtor.args.bindings.iter().map(|b| b.ty.clone()).collect();
             sigs.insert(
@@ -312,7 +309,7 @@ pub fn build_decl_signatures(
         }
     }
 
-    (sigs, data_types, codata_types)
+    sigs
 }
 
 /// This trait assigns fresh labels to every declared-type occurrence within a syntax element and
@@ -710,7 +707,7 @@ mod split_state_tests {
         };
 
         let mut state = fresh_state();
-        let (sigs, data_types, codata_types) = build_decl_signatures(&prog, &mut state);
+        let sigs = build_decl_signatures(&prog, &mut state);
 
         assert!(sigs.contains_key(&id!("f")));
         assert!(sigs.contains_key(&id!("Cons")));
@@ -719,15 +716,13 @@ mod split_state_tests {
         assert_eq!(sigs[&id!("Cons")].tys.len(), 1);
         assert_eq!(sigs[&id!("head")].tys.len(), 1);
 
-        // the labeled declaration trees carry the same field types as `sigs`, not a separate copy
-        assert_eq!(data_types.len(), 1);
+        // an xtor's entry is the declaration's field type unchanged, not a labeled copy of it
         assert_eq!(
-            data_types[0].xtors[0].args.bindings[0].ty,
+            prog.data_types[0].xtors[0].args.bindings[0].ty,
             sigs[&id!("Cons")].tys[0]
         );
-        assert_eq!(codata_types.len(), 1);
         assert_eq!(
-            codata_types[0].xtors[0].args.bindings[0].ty,
+            prog.codata_types[0].xtors[0].args.bindings[0].ty,
             sigs[&id!("head")].tys[0]
         );
     }

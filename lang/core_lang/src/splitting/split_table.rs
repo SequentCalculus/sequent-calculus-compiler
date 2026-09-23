@@ -1,15 +1,45 @@
-//! Builds the table the rewrite phase consults to turn each label into the name of the physical
-//! declaration copy its equivalence class was assigned. Mirrors `mono::naming_table::NamingTable`:
-//! resolved once, up front, from the finished union-find, so the rewrite phase itself never needs
-//! live access to the union-find.
+//! Resolves the finished union-find into everything the rewrite phase consults, bundled as a
+//! [`SplitPlan`]: the [`SplitTable`], which turns each label into the name of the physical
+//! declaration copy its equivalence class was assigned, alongside the per-class lookups from
+//! [`crate::splitting::labeling`]. Mirrors `mono::naming_table::NamingTable`: resolved once, up
+//! front, so the rewrite phase itself never needs live access to the union-find.
 
 use std::collections::HashMap;
 
-use crate::splitting::labeling::Label;
+use crate::splitting::labeling::{ClassFields, Label, SplitState, UsedXtors, finish_classes};
 use crate::splitting::union_find::UnionFind;
 use crate::syntax::declaration::{Polarity, TypeDeclaration};
 use crate::syntax::types::TypeArgs;
 use crate::syntax::{CodataDeclaration, DataDeclaration, Identifier, Ty};
+
+/// Everything the rewrite phase needs to know about the finished union-find, resolved once up
+/// front: which copy every label belongs to ([`SplitTable`]), what each equivalence class declares
+/// for a field ([`ClassFields`]) and which xtors it uses ([`UsedXtors`]). All three are keyed by
+/// class and are always consulted together, so they travel as one value.
+pub struct SplitPlan {
+    pub table: SplitTable,
+    pub class_fields: ClassFields,
+    pub used_xtors: UsedXtors,
+}
+
+impl SplitPlan {
+    /// Resolves the finished walk into the plan. Nothing is computed here that the walk did not
+    /// already decide: [`finish_classes`] only re-indexes the union-find's class data, and
+    /// [`SplitTable::build`] only turns equivalence classes into names.
+    pub fn build(
+        state: &mut SplitState,
+        data_types: &[DataDeclaration],
+        codata_types: &[CodataDeclaration],
+    ) -> Self {
+        let (class_fields, used_xtors) = finish_classes(state);
+        let table = SplitTable::build(&mut state.uf, &state.label_origin, data_types, codata_types);
+        SplitPlan {
+            table,
+            class_fields,
+            used_xtors,
+        }
+    }
+}
 
 /// Maps every label minted during labeling to the name of the physical declaration copy its
 /// equivalence class was assigned, and every original xtor name (paired with a label from its
@@ -44,23 +74,20 @@ impl SplitTable {
             let roots = distinct_roots(uf, labels);
 
             for label in labels {
-                let root = uf.find(label);
-                ty_names.insert(
-                    label.clone(),
+                // only one equivalence class: keep the original name, so a declaration that never
+                // actually gets split stays identical up to alpha-renaming
+                let name = if roots.len() == 1 {
+                    origin.clone()
+                } else {
+                    let root = uf.find(label);
                     Identifier {
                         name: format!("{}#{}", origin.name, split_index(&roots, &root)),
                         id: origin.id,
-                    },
-                );
+                    }
+                };
+                ty_names.insert(label.clone(), name);
             }
 
-            // only one equivalence class: keep the original name instead, so a declaration that
-            // never actually gets split stays identical up to alpha-renaming
-            if roots.len() == 1 {
-                for label in labels {
-                    ty_names.insert(label.clone(), origin.clone());
-                }
-            }
             roots_by_origin.insert(origin.clone(), roots);
         }
 

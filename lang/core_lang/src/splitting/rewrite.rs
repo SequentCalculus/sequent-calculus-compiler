@@ -5,8 +5,8 @@
 
 use std::rc::Rc;
 
-use crate::splitting::labeling::{ClassFields, Label, UsedXtors};
-use crate::splitting::split_table::SplitTable;
+use crate::splitting::labeling::{Label, UsedXtors};
+use crate::splitting::split_table::{SplitPlan, SplitTable};
 use crate::syntax::declaration::{Polarity, TypeDeclaration, XtorSig};
 use crate::syntax::{
     Chi, Clause, ContextBinding, ID, Identifier, Ty, TypeParam, TypingContext, fresh_identifier,
@@ -59,24 +59,31 @@ pub fn rewrite_clause<C: Chi>(
     }
 }
 
+/// Which physical copy of a declaration is currently being built.
+#[derive(Debug, Clone, Copy)]
+pub enum CopyOf<'a> {
+    /// Nothing in the program ever referenced the declaration, so it is emitted once, unrenamed
+    /// and complete.
+    Unreferenced,
+    /// One copy for the equivalence class rooted at `root`. `alpha_rename` is set only when the
+    /// declaration is actually split into several copies, see `build_declaration_copy`.
+    Class { root: &'a Label, alpha_rename: bool },
+}
+
 /// Splits one data/codata declaration into one physical copy per equivalence class recorded for
 /// it. A declaration with no recorded equivalence classes (never referenced anywhere in the
 /// program) is kept as a single, unrenamed copy.
 pub fn split_declaration<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
-    table: &SplitTable,
-    class_fields: &ClassFields,
-    used: &UsedXtors,
+    plan: &SplitPlan,
     max_id: &mut ID,
 ) -> Vec<TypeDeclaration<P>> {
-    let roots = table.copies_for(&decl.name);
+    let roots = plan.table.copies_for(&decl.name);
     if roots.is_empty() {
         return vec![build_declaration_copy(
             decl,
-            table,
-            class_fields,
-            used,
-            None,
+            plan,
+            CopyOf::Unreferenced,
             max_id,
         )];
     }
@@ -86,39 +93,27 @@ pub fn split_declaration<P: Polarity + Clone>(
     roots
         .iter()
         .map(|root| {
-            build_declaration_copy(
-                decl,
-                table,
-                class_fields,
-                used,
-                Some((root, alpha_rename)),
-                max_id,
-            )
+            build_declaration_copy(decl, plan, CopyOf::Class { root, alpha_rename }, max_id)
         })
         .collect()
 }
 
-/// Builds one physical copy of a declaration for a given equivalence class. `root` identifies
-/// which class this copy is for (renaming the declaration and its xtors accordingly via `table`)
-/// together with whether this copy's `type_params` must be alpha-renamed (only when the
-/// declaration was actually split into several copies); `None` means
-/// the declaration has no recorded equivalence classes at all, so it's emitted unrenamed as-is.
+/// Builds one physical copy of a declaration, for the class `copy` identifies.
 fn build_declaration_copy<P: Polarity + Clone>(
     decl: &TypeDeclaration<P>,
-    table: &SplitTable,
-    class_fields: &ClassFields,
-    used: &UsedXtors,
-    root: Option<(&Label, bool)>,
+    plan: &SplitPlan,
+    copy: CopyOf,
     max_id: &mut ID,
 ) -> TypeDeclaration<P> {
     // Every physical copy of a split declaration shares the same `type_params` `Identifier`s
     // (`decl.type_params.clone()`) unless renamed here. Since the constraint graph indexes its
     // nodes directly by these `Identifier`s (see `mono::constraint_graph::Node`), unrenamed copies
     // would collapse onto the very same graph node, making splitting unable to ever separate a
-    // growing cycle. Minting fresh `id`s keeps
-    // each copy's node distinct.
-    let decl_subst: Vec<(Identifier, Identifier)> = match root {
-        Some((_, true)) => decl
+    // growing cycle. Minting fresh `id`s keeps each copy's node distinct.
+    let decl_subst: Vec<(Identifier, Identifier)> = match copy {
+        CopyOf::Class {
+            alpha_rename: true, ..
+        } => decl
             .type_params
             .iter()
             .map(|old| (old.name.clone(), fresh_identifier(max_id, &old.name.name)))
@@ -128,21 +123,21 @@ fn build_declaration_copy<P: Polarity + Clone>(
 
     TypeDeclaration {
         dat: decl.dat.clone(),
-        name: match root {
-            Some((root, _)) => table.resolve_ty_name(root).clone(),
-            None => decl.name.clone(),
+        name: match copy {
+            CopyOf::Class { root, .. } => plan.table.resolve_ty_name(root).clone(),
+            CopyOf::Unreferenced => decl.name.clone(),
         },
         xtors: decl
             .xtors
             .iter()
-            .filter(|xtor| keeps_xtor(xtor, used, root.map(|(r, _)| r)))
-            .map(|xtor| split_xtor_sig(xtor, table, class_fields, root, &decl_subst, max_id))
+            .filter(|xtor| keeps_xtor(xtor, &plan.used_xtors, copy))
+            .map(|xtor| split_xtor_sig(xtor, plan, copy, &decl_subst, max_id))
             .collect(),
         type_params: rename_params(&decl.type_params, &decl_subst),
     }
 }
 
-/// Decides whether `xtor` survives in the physical copy `root` identifies, the one and only place
+/// Decides whether `xtor` survives in the physical copy `copy` identifies, the one and only place
 /// dead-xtor dropping happens.
 ///
 /// An xtor is dropped exactly when it is *unused* for that equivalence class: neither constructed
@@ -156,33 +151,32 @@ fn build_declaration_copy<P: Polarity + Clone>(
 /// every position typed by that copy is dead. `core2axcut`s `shrink_unknown_cuts` turns the one
 /// place that would otherwise need a clause, the eta-expansion of a cut of a variable against a
 /// covariable, into `unreachable`.
-pub fn keeps_xtor<P: Polarity>(xtor: &XtorSig<P>, used: &UsedXtors, root: Option<&Label>) -> bool {
-    let Some(root) = root else {
-        return true;
-    };
-    used.contains(root, &xtor.name)
+pub fn keeps_xtor<P: Polarity>(xtor: &XtorSig<P>, used: &UsedXtors, copy: CopyOf) -> bool {
+    match copy {
+        CopyOf::Unreferenced => true,
+        CopyOf::Class { root, .. } => used.contains(root, &xtor.name),
+    }
 }
 
-/// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
-/// (paired with the same `root` as [`build_declaration_copy`], so e.g. `Cons#1` only ever ends up
-/// inside `List#1`). `None` leaves the name unchanged, mirroring the unreferenced-declaration case
-/// in [`build_declaration_copy`]. Only ever called for xtors [`keeps_xtor`] let through, so the
-/// name always resolves.
+/// Rewrites one xtor's field types and, for a class copy, renames it to that copy's name (paired
+/// with the same class as [`build_declaration_copy`], so e.g. `Cons#1` only ever ends up inside
+/// `List#1`). Only ever called for xtors [`keeps_xtor`] let through, so the name always resolves.
 fn split_xtor_sig<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
-    table: &SplitTable,
-    class_fields: &ClassFields,
-    root: Option<(&Label, bool)>,
+    plan: &SplitPlan,
+    copy: CopyOf,
     decl_subst: &[(Identifier, Identifier)],
     max_id: &mut ID,
 ) -> XtorSig<P> {
-    let name = match root {
-        Some((root, _)) => table.resolve_xtor_name(&xtor.name, root).clone(),
-        None => xtor.name.clone(),
+    let name = match copy {
+        CopyOf::Class { root, .. } => plan.table.resolve_xtor_name(&xtor.name, root).clone(),
+        CopyOf::Unreferenced => xtor.name.clone(),
     };
 
-    let xtor_subst: Vec<(Identifier, Identifier)> = match root {
-        Some((_, true)) => xtor
+    let xtor_subst: Vec<(Identifier, Identifier)> = match copy {
+        CopyOf::Class {
+            alpha_rename: true, ..
+        } => xtor
             .type_params
             .iter()
             .map(|old| (old.name.clone(), fresh_identifier(max_id, &old.name.name)))
@@ -195,7 +189,7 @@ fn split_xtor_sig<P: Polarity + Clone>(
         .cloned()
         .collect();
 
-    let args = build_field_args(xtor, table, class_fields, root);
+    let args = build_field_args(xtor, plan, copy);
 
     XtorSig {
         xtor: xtor.xtor.clone(),
@@ -205,12 +199,12 @@ fn split_xtor_sig<P: Polarity + Clone>(
     }
 }
 
-/// Builds one physical copy's field types from the copy of each field its equivalence class
-/// (`root`) holds (see [`crate::splitting::union_find::ClassData`]), so e.g. two split copies of
-/// `Bar` each end up pointing at their own, independently split copy of a nested or
-/// self-referential field. A class's field copy already has exactly the shape the physical copy
-/// declares: the declared type with every head labeled for this class and every type parameter
-/// left as a variable, so rewriting its labels is all that is left to do.
+/// Builds one physical copy's field types from the copy of each field its equivalence class holds
+/// (see [`crate::splitting::union_find::ClassData`]), so e.g. two split copies of `Bar` each end
+/// up pointing at their own, independently split copy of a nested or self-referential field. A
+/// class's field copy already has exactly the shape the physical copy declares: the declared type
+/// with every head labeled for this class and every type parameter left as a variable, so
+/// rewriting its labels is all that is left to do.
 ///
 /// A field no occurrence of the class ever touched falls back to its declared shape, resolved via
 /// `resolve_unlabeled_ty`. That shape only names the *origin* type, not a specific split copy of
@@ -218,10 +212,13 @@ fn split_xtor_sig<P: Polarity + Clone>(
 /// explicitly, rather than leaving a name that belongs to none of the copies dangling.
 fn build_field_args<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
-    table: &SplitTable,
-    class_fields: &ClassFields,
-    root: Option<(&Label, bool)>,
+    plan: &SplitPlan,
+    copy: CopyOf,
 ) -> TypingContext {
+    let class_field = |index: usize| match copy {
+        CopyOf::Class { root, .. } => plan.class_fields.get(root, &xtor.name, index),
+        CopyOf::Unreferenced => None,
+    };
     TypingContext {
         bindings: xtor
             .args
@@ -229,10 +226,10 @@ fn build_field_args<P: Polarity + Clone>(
             .iter()
             .enumerate()
             .map(|(i, binding)| {
-                let ty = match root.and_then(|(r, _)| class_fields.get(r, &xtor.name, i)) {
-                    Some(class_field) => class_field.rewrite(table),
+                let ty = match class_field(i) {
+                    Some(field) => field.rewrite(&plan.table),
                     // no occurrence of this class touched the field: `binding.ty` is unlabeled
-                    None => table.resolve_unlabeled_ty(&binding.ty),
+                    None => plan.table.resolve_unlabeled_ty(&binding.ty),
                 };
                 ContextBinding {
                     var: binding.var.clone(),
@@ -292,7 +289,7 @@ fn substitute_args(args: &TypingContext, subst: &[(Identifier, Identifier)]) -> 
 #[cfg(test)]
 mod rewrite_tests {
     use super::*;
-    use crate::splitting::labeling::{SplitState, finish_classes, label_in};
+    use crate::splitting::labeling::{ClassFields, SplitState, finish_classes, label_in};
     use crate::splitting::union_find::UnionFind;
     use crate::syntax::{DataDeclaration, Ty};
     extern crate self as core_lang;
@@ -314,6 +311,23 @@ mod rewrite_tests {
         crate::syntax::Identifier {
             name: format!("Box#{n}"),
             id: 0,
+        }
+    }
+
+    /// Bundles a hand-built table with hand-built class data, the way `SplitPlan::build` would
+    /// from a finished walk.
+    fn plan_of(table: SplitTable, class_fields: ClassFields, used_xtors: UsedXtors) -> SplitPlan {
+        SplitPlan {
+            table,
+            class_fields,
+            used_xtors,
+        }
+    }
+
+    fn class_copy(root: &Label) -> CopyOf<'_> {
+        CopyOf::Class {
+            root,
+            alpha_rename: false,
         }
     }
 
@@ -342,8 +356,8 @@ mod rewrite_tests {
         let root = box_label(1);
         let used = used_for(id!("Left"), std::slice::from_ref(&root));
 
-        assert!(keeps_xtor(&decl.xtors[0], &used, Some(&root)));
-        assert!(!keeps_xtor(&decl.xtors[1], &used, Some(&root)));
+        assert!(keeps_xtor(&decl.xtors[0], &used, class_copy(&root)));
+        assert!(!keeps_xtor(&decl.xtors[1], &used, class_copy(&root)));
     }
 
     /// A class that uses no xtor at all has no values, so its copy keeps nothing. The resulting
@@ -357,7 +371,7 @@ mod rewrite_tests {
         assert!(
             decl.xtors
                 .iter()
-                .all(|xtor| !keeps_xtor(xtor, &used, Some(&root)))
+                .all(|xtor| !keeps_xtor(xtor, &used, class_copy(&root)))
         );
     }
 
@@ -368,7 +382,11 @@ mod rewrite_tests {
         let decl = choice_decl();
         let used = UsedXtors::default();
 
-        assert!(decl.xtors.iter().all(|xtor| keeps_xtor(xtor, &used, None)));
+        assert!(
+            decl.xtors
+                .iter()
+                .all(|xtor| keeps_xtor(xtor, &used, CopyOf::Unreferenced))
+        );
     }
 
     /// A generic `Pack[C] { Wrap(x: C) }`, whose field type references its own decl-level type
@@ -397,7 +415,11 @@ mod rewrite_tests {
 
         let mut max_id = 0;
         let class_fields = ClassFields::default();
-        let copies = split_declaration(&box_decl(), &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(
+            &box_decl(),
+            &plan_of(table, class_fields, used),
+            &mut max_id,
+        );
 
         assert_eq!(copies.len(), 2);
         assert_ne!(copies[0].name, copies[1].name);
@@ -414,7 +436,11 @@ mod rewrite_tests {
         let mut max_id = 0;
         let class_fields = ClassFields::default();
         let used = UsedXtors::default();
-        let copies = split_declaration(&box_decl(), &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(
+            &box_decl(),
+            &plan_of(table, class_fields, used),
+            &mut max_id,
+        );
 
         assert_eq!(copies.len(), 1);
         assert_eq!(copies[0].name, id!("Box"));
@@ -432,7 +458,11 @@ mod rewrite_tests {
 
         let mut max_id = 0;
         let class_fields = ClassFields::default();
-        let copies = split_declaration(&pack_decl(), &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(
+            &pack_decl(),
+            &plan_of(table, class_fields, used),
+            &mut max_id,
+        );
 
         assert_eq!(copies.len(), 2);
         assert_eq!(copies[0].type_params.len(), 1);
@@ -455,7 +485,11 @@ mod rewrite_tests {
 
         let mut max_id = 0;
         let class_fields = ClassFields::default();
-        let copies = split_declaration(&pack_decl(), &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(
+            &pack_decl(),
+            &plan_of(table, class_fields, used),
+            &mut max_id,
+        );
 
         for copy in &copies {
             let field_ty = &copy.xtors[0].args.bindings[0].ty;
@@ -535,7 +569,7 @@ mod rewrite_tests {
         );
 
         let mut max_id = 0;
-        let copies = split_declaration(&decl, &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(&decl, &plan_of(table, class_fields, used), &mut max_id);
 
         assert_eq!(copies.len(), 2);
         let field_ty = |copy: &DataDeclaration| copy.xtors[0].args.bindings[0].ty.clone();
@@ -561,7 +595,7 @@ mod rewrite_tests {
 
         let class_fields = ClassFields::default();
         let mut max_id = 0;
-        let copies = split_declaration(&decl, &table, &class_fields, &used, &mut max_id);
+        let copies = split_declaration(&decl, &plan_of(table, class_fields, used), &mut max_id);
 
         assert_eq!(copies.len(), 1);
         assert_eq!(copies[0].xtors[0].args.bindings[0].ty, ty!(id!("Foo")));

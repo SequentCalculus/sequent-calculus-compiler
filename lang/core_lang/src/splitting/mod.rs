@@ -7,11 +7,9 @@ pub mod rewrite;
 pub mod split_table;
 pub mod union_find;
 
-use crate::splitting::labeling::{
-    LabelAndUnify, SplitState, build_decl_signatures, finish_classes,
-};
+use crate::splitting::labeling::{LabelAndUnify, SplitState, build_decl_signatures};
 use crate::splitting::rewrite::{Rewrite, split_declaration};
-use crate::splitting::split_table::SplitTable;
+use crate::splitting::split_table::SplitPlan;
 use crate::syntax::{Def, Prog, TypingContext};
 
 /// Type-splitting preprocessing pass, run before constraint collection (see
@@ -26,7 +24,7 @@ use crate::syntax::{Def, Prog, TypingContext};
 /// divided program, so it finds no more, but possibly fewer, growing cycles.
 pub fn split_program(prog: &Prog) -> Prog {
     let mut state = SplitState::default();
-    let (sigs, labeled_data, labeled_codata) = build_decl_signatures(prog, &mut state);
+    let sigs = build_decl_signatures(prog, &mut state);
 
     let labeled_defs: Vec<Def> = prog
         .defs
@@ -35,15 +33,8 @@ pub fn split_program(prog: &Prog) -> Prog {
         .collect();
 
     // Every union has happened and every class field has been created during the walk; this only
-    // re-indexes the union-find's class data into the two views the rewrite phase consults.
-    let (class_fields, used_xtors) = finish_classes(&state);
-
-    let table = SplitTable::build(
-        &mut state.uf,
-        &state.label_origin,
-        &labeled_data,
-        &labeled_codata,
-    );
+    // resolves that into the names and per-class lookups the rewrite phase consults.
+    let plan = SplitPlan::build(&mut state, &prog.data_types, &prog.codata_types);
 
     let mut max_id = prog.max_id;
 
@@ -51,15 +42,20 @@ pub fn split_program(prog: &Prog) -> Prog {
     // since the constraint graph indexes its nodes directly by these identifiers, unrenamed
     // copies would collapse onto the same node, leaving splitting unable to ever separate a
     // growing cycle (see `splitting::rewrite::build_declaration_copy`).
-    let data_types = labeled_data
+    let data_types = prog
+        .data_types
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table, &class_fields, &used_xtors, &mut max_id))
+        .flat_map(|decl| split_declaration(decl, &plan, &mut max_id))
         .collect();
-    let codata_types = labeled_codata
+    let codata_types = prog
+        .codata_types
         .iter()
-        .flat_map(|decl| split_declaration(decl, &table, &class_fields, &used_xtors, &mut max_id))
+        .flat_map(|decl| split_declaration(decl, &plan, &mut max_id))
         .collect();
-    let defs = labeled_defs.iter().map(|def| def.rewrite(&table)).collect();
+    let defs = labeled_defs
+        .iter()
+        .map(|def| def.rewrite(&plan.table))
+        .collect();
 
     Prog {
         defs,
