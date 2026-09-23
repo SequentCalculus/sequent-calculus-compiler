@@ -199,46 +199,65 @@ fn split_xtor_sig<P: Polarity + Clone>(
     }
 }
 
-/// Builds one physical copy's field types from the copy of each field its equivalence class holds
-/// (see [`crate::splitting::union_find::ClassData`]), so e.g. two split copies of `Bar` each end
-/// up pointing at their own, independently split copy of a nested or self-referential field. A
+/// Builds one physical copy's field types.
+///
+/// For a class copy they are the field copies that class holds (see
+/// [`crate::splitting::union_find::ClassData`]), so e.g. two split copies of `Bar` each end up
+/// pointing at their own, independently split copy of a nested or self-referential field. A
 /// class's field copy already has exactly the shape the physical copy declares: the declared type
 /// with every head labeled for this class and every type parameter left as a variable, so
 /// rewriting its labels is all that is left to do.
 ///
-/// A field no occurrence of the class ever touched falls back to its declared shape, resolved via
-/// `resolve_unlabeled_ty`. That shape only names the *origin* type, not a specific split copy of
-/// it, so if the origin itself was split into several physical copies, one of them is picked
-/// explicitly, rather than leaving a name that belongs to none of the copies dangling.
+/// For an unreferenced declaration there is no class and hence no field copy, so the declared
+/// shape is all there is to go on. It names only the *origin* type, not a specific split copy of
+/// it, so if the origin itself was split, `resolve_unlabeled_ty` picks one of its actual copies
+/// rather than leaving a name that belongs to none of them.
 fn build_field_args<P: Polarity + Clone>(
     xtor: &XtorSig<P>,
     plan: &SplitPlan,
     copy: CopyOf,
 ) -> TypingContext {
-    let class_field = |index: usize| match copy {
-        CopyOf::Class { root, .. } => plan.class_fields.get(root, &xtor.name, index),
-        CopyOf::Unreferenced => None,
-    };
     TypingContext {
         bindings: xtor
             .args
             .bindings
             .iter()
             .enumerate()
-            .map(|(i, binding)| {
-                let ty = match class_field(i) {
-                    Some(field) => field.rewrite(&plan.table),
-                    // no occurrence of this class touched the field: `binding.ty` is unlabeled
-                    None => plan.table.resolve_unlabeled_ty(&binding.ty),
-                };
-                ContextBinding {
-                    var: binding.var.clone(),
-                    chi: binding.chi.clone(),
-                    ty,
-                }
+            .map(|(i, binding)| ContextBinding {
+                var: binding.var.clone(),
+                chi: binding.chi.clone(),
+                ty: match copy {
+                    CopyOf::Class { root, .. } => {
+                        class_field(plan, root, xtor, i).rewrite(&plan.table)
+                    }
+                    CopyOf::Unreferenced => plan.table.resolve_unlabeled_ty(&binding.ty),
+                },
             })
             .collect(),
     }
+}
+
+/// Looks up the copy of `xtor`'s `index`-th field that the class rooted at `root` holds.
+///
+/// That copy always exists for an xtor the class actually uses, and `build_declaration_copy` only
+/// ever builds a field list for such an xtor, since `keeps_xtor` drops every other one: recording
+/// a use and creating the class's copy of every one of that xtor's fields happen in the same step,
+/// in `constrain_xtor_occurrence`. A missing copy therefore means the two have drifted apart.
+fn class_field<'a, P: Polarity>(
+    plan: &'a SplitPlan,
+    root: &Label,
+    xtor: &XtorSig<P>,
+    index: usize,
+) -> &'a Ty {
+    plan.class_fields
+        .get(root, &xtor.name, index)
+        .unwrap_or_else(|| {
+            panic!(
+                "class {} uses {} but holds no copy of its field {index} -- this indicates a bug \
+                 in labeling or in dead-xtor dropping",
+                root.name, xtor.name.name
+            )
+        })
 }
 
 /// Applies an `old -> new` `Identifier` renaming to a `type_params` list, leaving it unchanged if
@@ -331,6 +350,26 @@ mod rewrite_tests {
         }
     }
 
+    /// The class data a real walk leaves behind for `decl`: every root holds a copy of every
+    /// field of every xtor. A class's field copy keeps the declared shape (type parameters stay
+    /// variables), so for these tests the declared type is exactly that copy.
+    fn fields_for(decl: &DataDeclaration, roots: &[Label]) -> ClassFields {
+        roots
+            .iter()
+            .flat_map(|root| {
+                decl.xtors.iter().flat_map(move |xtor| {
+                    xtor.args
+                        .bindings
+                        .iter()
+                        .enumerate()
+                        .map(move |(i, binding)| {
+                            ((root.clone(), xtor.name.clone(), i), binding.ty.clone())
+                        })
+                })
+            })
+            .collect()
+    }
+
     fn used_for(xtor: Identifier, labels: &[Label]) -> UsedXtors {
         labels
             .iter()
@@ -411,10 +450,10 @@ mod rewrite_tests {
         let b = box_label(2);
         let label_origin = vec![(a.clone(), id!("Box")), (b.clone(), id!("Box"))];
         let used = used_for(id!("Wrap"), &[a.clone(), b.clone()]);
+        let class_fields = fields_for(&box_decl(), &[a.clone(), b.clone()]);
         let table = SplitTable::build(&mut uf, &label_origin, &[box_decl()], &[]);
 
         let mut max_id = 0;
-        let class_fields = ClassFields::default();
         let copies = split_declaration(
             &box_decl(),
             &plan_of(table, class_fields, used),
@@ -453,11 +492,11 @@ mod rewrite_tests {
         let a = box_label(1);
         let b = box_label(2);
         let label_origin = vec![(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))];
+        let class_fields = fields_for(&pack_decl(), &[a.clone(), b.clone()]);
         let used = used_for(id!("Wrap"), &[a, b]);
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
         let mut max_id = 0;
-        let class_fields = ClassFields::default();
         let copies = split_declaration(
             &pack_decl(),
             &plan_of(table, class_fields, used),
@@ -480,11 +519,11 @@ mod rewrite_tests {
         let a = box_label(1);
         let b = box_label(2);
         let label_origin = vec![(a.clone(), id!("Pack")), (b.clone(), id!("Pack"))];
+        let class_fields = fields_for(&pack_decl(), &[a.clone(), b.clone()]);
         let used = used_for(id!("Wrap"), &[a, b]);
         let table = SplitTable::build(&mut uf, &label_origin, &[pack_decl()], &[]);
 
         let mut max_id = 0;
-        let class_fields = ClassFields::default();
         let copies = split_declaration(
             &pack_decl(),
             &plan_of(table, class_fields, used),
@@ -577,25 +616,17 @@ mod rewrite_tests {
     }
 
     #[test]
-    fn split_declaration_falls_back_to_declared_shape_when_never_constructed() {
-        let mut state = SplitState::default();
-        let bar = state.label_ty(&ty!(id!("Bar")));
-
-        let label_origin = vec![(label_in(&bar).clone(), id!("Bar"))];
+    fn split_declaration_falls_back_to_the_declared_field_shape_when_unreferenced() {
+        // Nothing references `Bar`, so it has no equivalence class and no class copy of its
+        // field: the declared shape is all `build_field_args` has to go on. `Foo` was never split
+        // either, so it keeps its bare name.
+        let mut uf = UnionFind::default();
         let decl = bar_decl(ty!(id!("Foo")));
-        // `MkBar` itself was constructed (so it isn't dropped), only its field was never
-        // touched, so the class holds no copy of it.
-        let used = used_for(id!("MkBar"), &[label_in(&bar).clone()]);
-        let table = SplitTable::build(
-            &mut state.uf,
-            &label_origin,
-            std::slice::from_ref(&decl),
-            &[],
-        );
+        let table = SplitTable::build(&mut uf, &[], std::slice::from_ref(&decl), &[]);
 
-        let class_fields = ClassFields::default();
         let mut max_id = 0;
-        let copies = split_declaration(&decl, &plan_of(table, class_fields, used), &mut max_id);
+        let plan = plan_of(table, ClassFields::default(), UsedXtors::default());
+        let copies = split_declaration(&decl, &plan, &mut max_id);
 
         assert_eq!(copies.len(), 1);
         assert_eq!(copies[0].xtors[0].args.bindings[0].ty, ty!(id!("Foo")));

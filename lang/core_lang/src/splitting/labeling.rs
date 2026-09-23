@@ -110,9 +110,19 @@ impl UsedXtors {
     }
 }
 
+/// Builds the view directly from `((root, xtor, field index), ty)` pairs, bypassing the
+/// union-find. Only for tests that exercise the rewrite phase against a hand-built class layout.
+#[cfg(test)]
+impl FromIterator<((Label, Identifier, usize), Ty)> for ClassFields {
+    fn from_iter<I: IntoIterator<Item = ((Label, Identifier, usize), Ty)>>(iter: I) -> Self {
+        ClassFields(iter.into_iter().collect())
+    }
+}
+
+/// Builds the view directly from `(root, xtor)` pairs, bypassing the union-find. Only for tests
+/// that exercise the rewrite phase against a hand-built class layout.
+#[cfg(test)]
 impl FromIterator<(Label, Identifier)> for UsedXtors {
-    /// Builds the view directly from `(root, xtor)` pairs, bypassing the union-find. Only for
-    /// tests that exercise the rewrite phase against a hand-built class layout.
     fn from_iter<I: IntoIterator<Item = (Label, Identifier)>>(iter: I) -> Self {
         UsedXtors(iter.into_iter().collect())
     }
