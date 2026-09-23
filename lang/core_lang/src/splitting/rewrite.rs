@@ -126,16 +126,6 @@ fn build_declaration_copy<P: Polarity + Clone>(
         _ => vec![],
     };
 
-    // Whether *no* xtor of `decl` is used for this equivalence class at all. Computed once
-    // here, over all of `decl.xtors`, rather than inside `keeps_xtor` itself, which would redo
-    // this same full scan for every one of `decl.xtors`, making the filter below quadratic in
-    // their count.
-    let class_unused = root.is_some_and(|(root, _)| {
-        decl.xtors
-            .iter()
-            .all(|xtor| !used.contains(root, &xtor.name))
-    });
-
     TypeDeclaration {
         dat: decl.dat.clone(),
         name: match root {
@@ -145,7 +135,7 @@ fn build_declaration_copy<P: Polarity + Clone>(
         xtors: decl
             .xtors
             .iter()
-            .filter(|xtor| keeps_xtor(xtor, used, root.map(|(r, _)| r), class_unused))
+            .filter(|xtor| keeps_xtor(xtor, used, root.map(|(r, _)| r)))
             .map(|xtor| split_xtor_sig(xtor, table, class_fields, root, &decl_subst, max_id))
             .collect(),
         type_params: rename_params(&decl.type_params, &decl_subst),
@@ -158,20 +148,19 @@ fn build_declaration_copy<P: Polarity + Clone>(
 /// An xtor is dropped exactly when it is *unused* for that equivalence class: neither constructed
 /// or observed at any `Xtor` node, nor matched or defined by any `case`/`new` clause (see
 /// [`crate::splitting::labeling::SplitState::record_xtor_use`]). Merely matching an xtor keeps it,
-/// so no term ever loses a clause and every name a term uses still resolves. `class_unused` is
-/// whether *no* xtor of the owning declaration is used for this equivalence class at all.
-/// The caller computes it once, over every xtor, rather than this function recomputing it on
-/// every call.
-pub fn keeps_xtor<P: Polarity>(
-    xtor: &XtorSig<P>,
-    used: &UsedXtors,
-    root: Option<&Label>,
-    class_unused: bool,
-) -> bool {
+/// so no term ever loses a clause and every name a term uses still resolves.
+///
+/// A class that uses none of them keeps none, so its copy is emitted with an empty xtor list. That
+/// is sound for the same reason the partial case is: a value of the copy can only come from an
+/// occurrence in its own class, so a class that never constructs one has no values at all, and
+/// every position typed by that copy is dead. `core2axcut`s `shrink_unknown_cuts` turns the one
+/// place that would otherwise need a clause, the eta-expansion of a cut of a variable against a
+/// covariable, into `unreachable`.
+pub fn keeps_xtor<P: Polarity>(xtor: &XtorSig<P>, used: &UsedXtors, root: Option<&Label>) -> bool {
     let Some(root) = root else {
         return true;
     };
-    used.contains(root, &xtor.name) || class_unused
+    used.contains(root, &xtor.name)
 }
 
 /// Rewrites one xtor's field types and, if `root` is given, renames it to its split copy's name
@@ -353,12 +342,14 @@ mod rewrite_tests {
         let root = box_label(1);
         let used = used_for(id!("Left"), std::slice::from_ref(&root));
 
-        assert!(keeps_xtor(&decl.xtors[0], &used, Some(&root), false));
-        assert!(!keeps_xtor(&decl.xtors[1], &used, Some(&root), false));
+        assert!(keeps_xtor(&decl.xtors[0], &used, Some(&root)));
+        assert!(!keeps_xtor(&decl.xtors[1], &used, Some(&root)));
     }
 
+    /// A class that uses no xtor at all has no values, so its copy keeps nothing. The resulting
+    /// empty declaration is only ever referenced from dead positions.
     #[test]
-    fn keeps_xtor_keeps_everything_for_a_class_that_uses_no_xtor_at_all() {
+    fn keeps_xtor_drops_every_xtor_of_a_class_that_uses_none() {
         let decl = choice_decl();
         let root = box_label(1);
         let used = UsedXtors::default();
@@ -366,7 +357,7 @@ mod rewrite_tests {
         assert!(
             decl.xtors
                 .iter()
-                .all(|xtor| keeps_xtor(xtor, &used, Some(&root), true))
+                .all(|xtor| !keeps_xtor(xtor, &used, Some(&root)))
         );
     }
 
@@ -377,11 +368,7 @@ mod rewrite_tests {
         let decl = choice_decl();
         let used = UsedXtors::default();
 
-        assert!(
-            decl.xtors
-                .iter()
-                .all(|xtor| keeps_xtor(xtor, &used, None, false))
-        );
+        assert!(decl.xtors.iter().all(|xtor| keeps_xtor(xtor, &used, None)));
     }
 
     /// A generic `Pack[C] { Wrap(x: C) }`, whose field type references its own decl-level type

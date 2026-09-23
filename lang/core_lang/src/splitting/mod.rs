@@ -1091,7 +1091,7 @@ mod split_program_tests {
     }
 
     #[test]
-    fn split_program_keeps_everything_for_a_case_whose_scrutinee_is_never_constructed_anywhere() {
+    fn split_program_keeps_matched_xtors_but_empties_a_class_nothing_touches() {
         let dead = def!(
             id!("dead"),
             [
@@ -1136,17 +1136,6 @@ mod split_program_tests {
         let result = split_program(&prog);
         assert_split_program_typechecks(&result);
 
-        assert!(!result.data_types.is_empty());
-        for copy in &result.data_types {
-            assert_eq!(
-                copy.xtors.len(),
-                2,
-                "expected both Nil and Cons to survive since neither was ever constructed for \
-                 this class, got: {:#?}",
-                copy.xtors
-            );
-        }
-
         let dead_def = result
             .defs
             .iter()
@@ -1166,6 +1155,129 @@ mod split_program_tests {
             2,
             "expected both clauses to survive, got: {:#?}",
             xcase.clauses
+        );
+
+        // matching counts as using an xtor, so the copy the `case` matches on keeps both of them
+        // even though nothing ever constructs a `List`
+        let Ty::Decl {
+            name: matched_name, ..
+        } = &xcase.ty
+        else {
+            panic!(
+                "expected the case's type to be a Ty::Decl, got {:?}",
+                xcase.ty
+            );
+        };
+        let matched_copy = result
+            .data_types
+            .iter()
+            .find(|decl| &decl.name == matched_name)
+            .expect("expected the matched copy to be emitted");
+        assert_eq!(
+            matched_copy.xtors.len(),
+            2,
+            "expected both Nil and Cons to survive in the matched copy, got: {:#?}",
+            matched_copy.xtors
+        );
+
+        // the `tail` binder of the `Cons` clause is its own class, and nothing constructs or
+        // matches *that* one, so its copy keeps nothing
+        let cons_clause = xcase
+            .clauses
+            .iter()
+            .find(|clause| clause.xtor.name.starts_with("Cons"))
+            .expect("expected the Cons clause to survive");
+        let Ty::Decl {
+            name: tail_name, ..
+        } = &cons_clause.context.bindings[1].ty
+        else {
+            panic!(
+                "expected the tail binder to have a Ty::Decl, got {:?}",
+                cons_clause.context.bindings[1].ty
+            );
+        };
+        assert_ne!(
+            tail_name, matched_name,
+            "expected the tail binder to be its own class"
+        );
+        let tail_copy = result
+            .data_types
+            .iter()
+            .find(|decl| &decl.name == tail_name)
+            .expect("expected the tail binder's copy to be emitted");
+        assert!(
+            tail_copy.xtors.is_empty(),
+            "expected the tail binder's copy to keep nothing, got: {:#?}",
+            tail_copy.xtors
+        );
+    }
+
+    /// The plainest form of the case above: a declaration that only ever occurs in a signature,
+    /// with nothing constructing or matching it, is emitted as an empty declaration. Its values
+    /// cannot exist, so every position typed by it is dead.
+    #[test]
+    fn split_program_empties_a_declaration_no_occurrence_ever_touches() {
+        let forward = def!(
+            id!("forward"),
+            [
+                bind!(id!("x"), prd!(), ty!(id!("Box"))),
+                bind!(id!("ret"), cns!(), ty!(id!("Box")))
+            ],
+            cut!(
+                var!(id!("x"), ty!(id!("Box"))),
+                covar!(id!("ret"), ty!(id!("Box"))),
+                ty!(id!("Box"))
+            )
+        );
+        let prog = Prog {
+            defs: vec![forward],
+            data_types: vec![box_decl()],
+            codata_types: vec![],
+            max_id: 0,
+        };
+
+        let result = split_program(&prog);
+        assert_split_program_typechecks(&result);
+
+        assert_eq!(result.data_types.len(), 1);
+        assert!(
+            result.data_types[0].xtors.is_empty(),
+            "expected Box's only class to keep no xtor, got: {:#?}",
+            result.data_types[0].xtors
+        );
+    }
+
+    /// The same for codata: a class that is never defined by a `new` and never observed at a
+    /// destructor keeps no dtor either.
+    #[test]
+    fn split_program_empties_a_codata_declaration_no_occurrence_ever_touches() {
+        let forward = def!(
+            id!("forward"),
+            [
+                bind!(id!("x"), prd!(), ty!(id!("Pair"))),
+                bind!(id!("ret"), cns!(), ty!(id!("Pair")))
+            ],
+            cut!(
+                var!(id!("x"), ty!(id!("Pair"))),
+                covar!(id!("ret"), ty!(id!("Pair"))),
+                ty!(id!("Pair"))
+            )
+        );
+        let prog = Prog {
+            defs: vec![forward],
+            data_types: vec![],
+            codata_types: vec![pair_decl()],
+            max_id: 0,
+        };
+
+        let result = split_program(&prog);
+        assert_split_program_typechecks(&result);
+
+        assert_eq!(result.codata_types.len(), 1);
+        assert!(
+            result.codata_types[0].xtors.is_empty(),
+            "expected Pair's only class to keep no dtor, got: {:#?}",
+            result.codata_types[0].xtors
         );
     }
 }
