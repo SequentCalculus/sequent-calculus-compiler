@@ -35,8 +35,18 @@ impl CodeStatement for Switch {
         let fresh_label = format!("{}_{}", asm_safe_ty_name(&self.ty), fresh_label());
 
         let number_of_clauses = self.clauses.len();
-        // the case < 1 cannot happen
-        if number_of_clauses <= 1 {
+        // A type without xtors has no values, so a switch on one can never be reached:
+        // `core2axcut`s `shrink_unknown_cuts` eta-expands a cut of a variable against a
+        // covariable into one clause per xtor, and without any xtor there is nothing to dispatch
+        // to. Trapping keeps control from falling through into whatever code follows.
+        if number_of_clauses == 0 {
+            instructions.push(Backend::comment(
+                "#no clauses, so this switch is unreachable".to_string(),
+            ));
+            Backend::unreachable(instructions);
+            return;
+        }
+        if number_of_clauses == 1 {
             instructions.push(Backend::comment(
                 "#there is only one clause, so we can just fall through".to_string(),
             ));
