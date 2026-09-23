@@ -113,6 +113,12 @@ fn shrink_unknown_cuts(
                 )
             };
 
+            // a type without xtors has no values, so nothing can ever reach this cut: there is
+            // no clause to eta-expand into, and no value that could arrive here to be matched
+            if xtors.is_empty() {
+                return axcut::syntax::statements::Unreachable.into();
+            }
+
             let translated_ty = shrink_ty(ty);
 
             // we generate clauses binding fresh variables for the eta-expansion according to the
@@ -798,5 +804,51 @@ impl Shrinking for FsCut {
             // all other cases are impossible by typing
             _ => panic!("cannot happen"),
         }
+    }
+}
+
+#[cfg(test)]
+mod shrink_unknown_cuts_tests {
+    use crate::program::shrink_prog;
+    use core_lang::syntax::{Prog, program::FsProg};
+    use core_macros::{bind, cns, covar, data, fs_cut, fs_def, id, prd, ty, var};
+
+    /// A cut of a variable against a covariable is eta-expanded into one clause per xtor of the
+    /// type's declaration. A declaration without xtors has no values, so there is nothing to
+    /// expand into and nothing that could ever arrive here: the cut becomes `unreachable` rather
+    /// than a `Switch` with no clauses, which the backend would have to trap on instead.
+    #[test]
+    fn a_cut_on_a_type_without_xtors_becomes_unreachable() {
+        let forward = fs_def!(
+            id!("forward"),
+            [
+                bind!(id!("x"), prd!(), ty!(id!("Empty"))),
+                bind!(id!("ret"), cns!(), ty!(id!("Empty")))
+            ],
+            fs_cut!(
+                var!(id!("x"), ty!(id!("Empty"))),
+                covar!(id!("ret"), ty!(id!("Empty"))),
+                ty!(id!("Empty"))
+            )
+        );
+        let prog: FsProg = Prog {
+            defs: vec![forward],
+            data_types: vec![data!(id!("Empty"), [], [])],
+            codata_types: vec![],
+            max_id: 10,
+        };
+
+        let shrunk = shrink_prog(prog);
+
+        let def = shrunk
+            .defs
+            .iter()
+            .find(|d| d.name.name == "forward")
+            .expect("expected forward to survive shrinking");
+        assert!(
+            matches!(def.body, axcut::syntax::Statement::Unreachable(_)),
+            "expected an unreachable body, got {:?}",
+            def.body
+        );
     }
 }
