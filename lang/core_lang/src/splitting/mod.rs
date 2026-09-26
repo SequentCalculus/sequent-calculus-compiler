@@ -12,16 +12,16 @@ use crate::splitting::rewrite::{Rewrite, split_declaration};
 use crate::splitting::split_table::SplitPlan;
 use crate::syntax::{Def, Prog, TypingContext};
 
-/// Type-splitting preprocessing pass, run before constraint collection (see
-/// `mono::monomorphize_program`). Labels every declared-type occurrence and eagerly unifies label
-/// pairs wherever the type system already requires equality (Phase 1, [`labeling`]), then produces
+/// Type-splitting pass on a Core program. Labels every declared-type occurrence and eagerly
+/// unifies label pairs wherever the type system already requires equality (Phase 1, [`labeling`]), then produces
 /// one physical copy of each data/codata declaration per resulting equivalence class and rewrites
 /// every reference to point at the correct copy (Phase 2, [`rewrite`]). Each copy keeps only the
 /// xtors its own equivalence class actually uses -- constructed or observed at an `Xtor` node, or
 /// matched or defined by a `case`/`new` clause (see [`rewrite::keeps_xtor`]). Splitting is a pure
 /// bookkeeping refinement: it never changes program semantics, only how many physical
-/// declarations later phases see, and how many xtors each of them still carries. It just runs the existing, unmodified monomorphization pipeline over a more finely
-/// divided program, so it finds no more, but possibly fewer, growing cycles.
+/// declarations the program has, and how many xtors each of them still carries. The pass depends
+/// neither on polymorphism nor on the shape of any recursion: it also separates unconnected uses
+/// of a declaration without type parameters.
 pub fn split_program(prog: &Prog) -> Prog {
     let mut state = SplitState::default();
     let sigs = build_decl_signatures(prog, &mut state);
@@ -39,9 +39,8 @@ pub fn split_program(prog: &Prog) -> Prog {
     let mut max_id = prog.max_id;
 
     // Physical copies of a split declaration are alpha-renamed here (fresh `type_params` ids),
-    // since the constraint graph indexes its nodes directly by these identifiers, unrenamed
-    // copies would collapse onto the same node, leaving splitting unable to ever separate a
-    // growing cycle (see `splitting::rewrite::build_declaration_copy`).
+    // since a type parameter is identified by its `Identifier`, unrenamed copies would share
+    // their parameters (see `splitting::rewrite::build_declaration_copy`).
     let data_types = prog
         .data_types
         .iter()
@@ -90,11 +89,12 @@ mod split_program_tests {
         )
     }
 
-    /// Runs the exact machinery `mono::constraints_of` runs on a split program next (Core-level
-    /// `Checked::check`, then constraint collection) and asserts it succeeds. Splitting renames and
-    /// duplicates declarations and drops xtors from individual copies -- easy to get subtly wrong
-    /// in a way that only a real re-check against a `GlobalEnv` built from the split program's own
-    /// (renamed) declarations catches; asserting on e.g. `data_types.len()` alone would not.
+    /// Type-checks a split program at the Core level and asserts that it succeeds, using the
+    /// check that `collect_constraints` performs while it walks the program (the collected
+    /// constraints themselves are ignored). Splitting renames and duplicates declarations and drops
+    /// xtors from individual copies -- easy to get subtly wrong in a way that only a real re-check
+    /// against a `GlobalEnv` built from the split program's own (renamed) declarations catches;
+    /// asserting on e.g. `data_types.len()` alone would not.
     fn assert_split_program_typechecks(result: &Prog) {
         let env = GlobalEnv::new(&result.data_types, &result.codata_types, &result.defs);
         if let Err(err) = result.collect_constraints(&env) {

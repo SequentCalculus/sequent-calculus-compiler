@@ -45,6 +45,8 @@ pub struct Driver {
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Type-split in core
+    split: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Monomorphized in core, but not yet uniquified or focused
     monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
@@ -55,12 +57,11 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
-    /// Whether `monomorphized` runs type splitting on a growing cycle (see
-    /// [`core_lang::mono::monomorphize_program`]'s `split` parameter). Set once via
-    /// [`Driver::set_split`] before any of the cached methods run, since it isn't part of any
-    /// cache key, calling one of them again with a different setting on the same `Driver` would
-    /// silently return the stale result.
-    split: bool,
+    /// Whether the later stages start from the type-split program (see [`Driver::split`]) instead
+    /// of the compiled one. Set once via [`Driver::set_split`] before any of the cached methods
+    /// run, since it isn't part of any cache key, calling one of them again with a different
+    /// setting on the same `Driver` would silently return the stale result.
+    splitting: bool,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -80,22 +81,23 @@ impl Driver {
             parsed: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
+            split: HashMap::new(),
             monomorphized: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
-            split: true,
+            splitting: true,
         }
     }
 
-    /// Sets whether `monomorphized` runs type splitting on a growing cycle. Call this before any
-    /// other method that ends up monomorphizing (`monomorphized`, `uniquified`, `focused`,
-    /// `shrunk`, `linearized`, or any of their `print_*`/`compile_*` callers), once one of them
-    /// has run and cached its result for a given path, this setting no longer has any effect on
-    /// that path.
+    /// Sets whether the stages after `compiled` start from the type-split program. Call this
+    /// before any of them (`monomorphized`, `uniquified`, `focused`, `shrunk`, `linearized`, or any
+    /// of their `print_*`/`compile_*` callers), once one of them has run and cached its result for
+    /// a given path, this setting no longer has any effect on that path. It does not affect
+    /// [`Driver::split`] itself, which always splits.
     pub fn set_split(&mut self, split: bool) {
-        self.split = split;
+        self.splitting = split;
     }
 
     /// This function returns the unparsed source code for the given file.
@@ -186,7 +188,60 @@ impl Driver {
         Ok(())
     }
 
-    /// This function returns the monomorphized version of the [Core](core_lang) code.
+    /// This function returns the [Core](core_lang) code after type splitting, whether or not
+    /// [`Driver::set_split`] disabled splitting for the pipeline. Type splitting is a pass of its
+    /// own, it needs neither polymorphism nor any particular recursion to have an effect.
+    pub fn split(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.split.get(path) {
+            return Ok(res.clone());
+        }
+
+        let compiled = self.compiled(path)?;
+        let split = core_lang::splitting::split_program(&compiled);
+
+        self.split.insert(path.clone(), split.clone());
+        Ok(split)
+    }
+
+    /// This function prints the type-split code to a file in the target directory.
+    pub fn print_split(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let split = self.split(path)?;
+
+        Paths::create_split_dir();
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+
+        let filename = Paths::split_dir().join(filename);
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                split
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                split
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    /// This function returns the monomorphized version of the [Core](core_lang) code. It starts
+    /// from the type-split program (see [`Driver::split`]) unless splitting was disabled via
+    /// [`Driver::set_split`], in which case it starts from the compiled one.
     ///
     /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
     /// the result is cached by path alone, so a later call reusing the cache does not repeat a
@@ -202,8 +257,12 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let mono_prog = core_lang::mono::monomorphize_program(compiled, debug, viz, self.split)
+        let input = if self.splitting {
+            self.split(path)?
+        } else {
+            self.compiled(path)?
+        };
+        let mono_prog = core_lang::mono::monomorphize_program(input, debug, viz)
             .map_err(DriverError::MonoError)?;
 
         self.monomorphized.insert(path.clone(), mono_prog.clone());

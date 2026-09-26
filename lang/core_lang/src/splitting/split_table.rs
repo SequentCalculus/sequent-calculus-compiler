@@ -1,8 +1,8 @@
 //! Resolves the finished union-find into everything the rewrite phase consults, bundled as a
 //! [`SplitPlan`]: the [`SplitTable`], which turns each label into the name of the physical
 //! declaration copy its equivalence class was assigned, alongside the per-class lookups from
-//! [`crate::splitting::labeling`]. Mirrors `mono::naming_table::NamingTable`: resolved once, up
-//! front, so the rewrite phase itself never needs live access to the union-find.
+//! [`crate::splitting::labeling`]. Everything is resolved once, up front, so the rewrite phase
+//! itself never needs live access to the union-find.
 
 use std::collections::HashMap;
 

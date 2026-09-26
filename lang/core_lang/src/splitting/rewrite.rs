@@ -1,7 +1,7 @@
 //! Applies a finished [`SplitTable`](crate::splitting::split_table::SplitTable) to a labeled
 //! program, rewriting every label into its split-copy name and physically duplicating each
-//! data/codata declaration once per equivalence class. Mirrors `mono::specialize`'s "table built
-//! once, then `flat_map` every declaration through a trait that walks and renames" shape.
+//! data/codata declaration once per equivalence class. The table is built once, then every
+//! declaration is `flat_map`ped through a trait that walks and renames.
 
 use std::rc::Rc;
 
@@ -106,10 +106,10 @@ fn build_declaration_copy<P: Polarity + Clone>(
     max_id: &mut ID,
 ) -> TypeDeclaration<P> {
     // Every physical copy of a split declaration shares the same `type_params` `Identifier`s
-    // (`decl.type_params.clone()`) unless renamed here. Since the constraint graph indexes its
-    // nodes directly by these `Identifier`s (see `mono::constraint_graph::Node`), unrenamed copies
-    // would collapse onto the very same graph node, making splitting unable to ever separate a
-    // growing cycle. Minting fresh `id`s keeps each copy's node distinct.
+    // (`decl.type_params.clone()`) unless renamed here. A type parameter is identified by its
+    // `Identifier` (name and id), so unrenamed copies would share their parameters with each
+    // other and could no longer be told apart. Minting fresh `id`s gives every copy parameters of
+    // its own.
     let decl_subst: Vec<(Identifier, Identifier)> = match copy {
         CopyOf::Class {
             alpha_rename: true, ..
@@ -262,8 +262,8 @@ fn class_field<'a, P: Polarity>(
 
 /// Applies an `old -> new` `Identifier` renaming to a `type_params` list, leaving it unchanged if
 /// `subst` is empty. Each parameter's declared `ParamPolarity` is preserved across the rename,
-/// only the `Identifier` changes, since renaming is purely an alpha-renaming for constraint-graph
-/// node freshness, never a change in what polarity was actually declared.
+/// only the `Identifier` changes, since renaming is purely an alpha-renaming that makes the
+/// parameters of each copy distinct, never a change in what polarity was actually declared.
 fn rename_params(params: &[TypeParam], subst: &[(Identifier, Identifier)]) -> Vec<TypeParam> {
     if subst.is_empty() {
         return params.to_vec();
@@ -506,8 +506,8 @@ mod rewrite_tests {
         assert_eq!(copies.len(), 2);
         assert_eq!(copies[0].type_params.len(), 1);
         assert_eq!(copies[1].type_params.len(), 1);
-        // both copies must get fresh, mutually distinct, nonzero ids, otherwise the constraint
-        // graph would index both copies' type parameter under the same node
+        // both copies must get fresh, mutually distinct, nonzero ids, otherwise both copies'
+        // type parameter would be the very same identifier
         assert_ne!(copies[0].type_params[0], copies[1].type_params[0]);
         assert_ne!(copies[0].type_params[0].name.id, 0);
         assert_ne!(copies[1].type_params[0].name.id, 0);

@@ -330,8 +330,8 @@ pub fn build_decl_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatu
 /// [`constrain_xtor_occurrence`]).
 ///
 /// This is the combined labeling-and-unification pass of type splitting; running it eagerly
-/// during a single tree walk avoids a separate constraint-collection pass, which is safe because
-/// the resulting partition does not depend on the order of the unions. `Def` signatures are
+/// during a single tree walk avoids collecting the required equalities in a separate pass first,
+/// which is safe because the resulting partition does not depend on the order of the unions. `Def` signatures are
 /// labeled once up front (see [`build_decl_signatures`]) so that every call site unifies against
 /// one shared, stable label rather than against each other pairwise.
 ///

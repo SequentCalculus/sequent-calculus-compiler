@@ -13,9 +13,7 @@ pub struct Args {
     viz: Option<Option<PathBuf>>,
     #[arg(long = "debug", short = 'd')]
     debug: bool,
-    /// Disable type splitting: a growing cycle is erased directly on the unsplit program instead
-    /// (widening more declarations than necessary). On by default, since splitting only ever
-    /// helps precision; useful for comparing against the unsplit baseline.
+    /// Skip type splitting, which is otherwise applied to every program (see `scc split`).
     #[arg(long = "no-split")]
     no_split: bool,
 }

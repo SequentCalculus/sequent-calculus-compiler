@@ -17,9 +17,7 @@ pub struct Args {
     /// Write intermediate representations to disk
     #[arg(long)]
     print_ir: bool,
-    /// Disable type splitting: a growing cycle is erased directly on the unsplit program instead
-    /// (widening more declarations than necessary). On by default, since splitting only ever
-    /// helps precision; useful for comparing against the unsplit baseline in benchmarks.
+    /// Skip type splitting, which is otherwise applied to every program (see `scc split`).
     #[arg(long = "no-split")]
     no_split: bool,
 }
@@ -34,6 +32,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
     if cmd.print_ir {
         drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
+        if !cmd.no_split {
+            drv.print_split(&cmd.filepath, PrintMode::Textual)?;
+        }
         drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
         drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
         drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
