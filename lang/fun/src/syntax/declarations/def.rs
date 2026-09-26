@@ -9,12 +9,13 @@ use crate::syntax::*;
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, a return type, and the body
+/// (unique in the program), optional type parameters, a typing context defining the parameters, a return type, and the body
 /// term.
 ///
-/// Example:
+/// Examples:
 /// ```text
 /// def fac(n: i64): i64 { if n == 0 { 1 } else { n * fac(n - 1) } }
+/// def id[A](x: A): A { x }
 /// ```
 /// The top-level function named `fac` has a single (producer) parameter of type `i64` and returns
 /// an `i64`. Its body is contained within `{...}`
@@ -26,6 +27,8 @@ pub struct Def {
     pub span: SourceSpan,
     /// The name of the definition
     pub name: Name,
+    /// The type parameters
+    pub type_params: TypeParams,
     /// The parameters
     pub context: TypingContext,
     /// The return type
@@ -35,16 +38,39 @@ pub struct Def {
 }
 
 impl Def {
+    fn push_type_param_scope(&self, symbol_table: &mut SymbolTable) -> Vec<Name> {
+        let mut inserted = vec![];
+        for param in &self.type_params.bindings {
+            symbol_table.type_templates.insert(
+                param.name.clone(),
+                (param.polarity, TypeParams::default(), vec![]),
+            );
+            inserted.push(param.name.clone());
+        }
+        inserted
+    }
+
+    fn pop_type_param_scope(inserted: &[Name], symbol_table: &mut SymbolTable) {
+        for param in inserted {
+            symbol_table.type_templates.remove(param);
+            symbol_table.types.remove(param);
+        }
+    }
+
     /// This function checks the well-formedness of the top-level function. This consists of
     /// checking the well-formedness of the paramater list and return type, and typechecking the
     /// body in the context given by the parameters.
     pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+        self.type_params.no_dups(&self.name)?;
         self.context.no_dups(&self.name)?;
+
+        let inserted = self.push_type_param_scope(symbol_table);
+
         self.context.check(symbol_table)?;
         self.ret_ty.check(&Some(self.span), symbol_table)?;
-
         self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
 
+        Self::pop_type_param_scope(&inserted, symbol_table);
         Ok(self)
     }
 }
@@ -55,6 +81,7 @@ impl Print for Def {
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
+            .append(self.type_params.print(cfg, alloc))
             .append(self.context.print(cfg, alloc).parens())
             .append(COLON)
             .append(alloc.space())
@@ -85,7 +112,8 @@ mod def_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
+            Chirality, Polarity, TypeArgs, TypeParams, XVar,
+            context::{ContextBinding, TypingContext},
             program::Program,
             terms::{Lit, Term},
             types::Ty,
@@ -102,6 +130,7 @@ mod def_tests {
         Def {
             span: dummy_span(),
             name: "x".to_string(),
+            type_params: TypeParams::default(),
             context: TypingContext {
                 span: None,
                 bindings: vec![],
@@ -111,11 +140,37 @@ mod def_tests {
         }
     }
 
+    fn id_def() -> Def {
+        Def {
+            span: dummy_span(),
+            name: "id".to_string(),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+            context: TypingContext {
+                span: None,
+                bindings: vec![ContextBinding {
+                    var: "x".to_string(),
+                    chi: Chirality::Prd,
+                    ty: Ty::mk_decl("A", TypeArgs::default()),
+                }],
+            },
+            body: Term::XVar(XVar::mk("x")),
+            ret_ty: Ty::mk_decl("A", TypeArgs::default()),
+        }
+    }
+
     #[test]
     fn display_simple() {
         assert_eq!(
             simple_def().print_to_string(Default::default()),
             "def x(): i64 {\n    4\n}".to_string()
+        )
+    }
+
+    #[test]
+    fn display_id() {
+        assert_eq!(
+            id_def().print_to_string(Default::default()),
+            "def id[A+](x: A): A {\n    x\n}".to_string()
         )
     }
 
@@ -129,6 +184,16 @@ mod def_tests {
     }
 
     #[test]
+    fn parse_poly_def() {
+        let parser = fun::ProgParser::new();
+        let module = Program {
+            declarations: vec![id_def().into()],
+        };
+        println!("{}", id_def().print_to_string(None));
+        assert_eq!(parser.parse("def id[A+](x: A): A { x }"), Ok(module));
+    }
+
+    #[test]
     fn def_check() {
         let mut symbol_table = SymbolTable::default();
         def_mult().build(&mut symbol_table).unwrap();
@@ -136,5 +201,24 @@ mod def_tests {
         let result = def_mult().check(&mut symbol_table).unwrap();
         let expected = def_mult_typed();
         assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn poly_def_body_mismatch_fails() {
+        let mut symbol_table = SymbolTable::default();
+        let bad = Def {
+            span: dummy_span(),
+            name: "bad".to_string(),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+            context: TypingContext {
+                span: None,
+                bindings: vec![],
+            },
+            body: Term::Lit(Lit::mk(4)),
+            ret_ty: Ty::mk_decl("A", TypeArgs::default()),
+        };
+
+        let result = bad.check(&mut symbol_table);
+        assert!(result.is_err());
     }
 }

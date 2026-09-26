@@ -1,4 +1,4 @@
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
 
 def head(l: List[i64]): i64 {
     l.case[i64] {

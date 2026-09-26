@@ -12,10 +12,19 @@ pub use data::*;
 pub use def::*;
 
 /// This enum encodes whether a user-declared type is a data or codata type.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Polarity {
     Data,
     Codata,
+}
+
+impl std::fmt::Display for Polarity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Polarity::Data => write!(f, "+"),
+            Polarity::Codata => write!(f, "-"),
+        }
+    }
 }
 
 // TODO: contemplate boxing large variants here

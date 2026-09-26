@@ -6,15 +6,21 @@ use printer::tokens::{COMMA, DATA};
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::check::check_overlapping_type_params;
 use crate::typing::*;
 
-/// This struct defines a data type constructor. It consists of a name (unique within its type) and
+use std::collections::HashSet;
+
+/// This struct defines a data type constructor. It consists of a name (unique within its type), optional type parameters, and
 /// a typing context defining its argument types. The latter can contain type parameters abstracted
-/// by the data type template.
+/// by the data type template or the signature itself.
 ///
 /// Example:
 /// ```text
 /// Cons(x: A, xs: List[A])
+/// ```
+/// ```text
+/// Pack[B](x: B)
 /// ```
 /// The constructor `Cons` has two producer arguments, one of type `A` and one of `List[A]`,
 /// where `A` is a type parameter.
@@ -26,6 +32,8 @@ pub struct CtorSig {
     pub span: Option<SourceSpan>,
     /// The constructor name
     pub name: Name,
+    /// The type parameters
+    pub type_params: TypeParams,
     /// The argument context
     pub args: TypingContext,
 }
@@ -36,7 +44,10 @@ impl CtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
+        self.args.check_template(
+            symbol_table,
+            &type_params.extend(self.type_params.to_type_context()),
+        )?;
         Ok(())
     }
 }
@@ -49,7 +60,10 @@ impl Print for CtorSig {
             self.args.print(cfg, alloc).parens()
         };
 
-        alloc.ctor(&self.name).append(args.group())
+        alloc
+            .ctor(&self.name)
+            .append(self.type_params.print(cfg, alloc))
+            .append(args.group())
     }
 }
 
@@ -71,19 +85,53 @@ pub struct Data {
     /// The data type name
     pub name: Name,
     /// The type paramenters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The constructors
     pub ctors: Vec<CtorSig>,
 }
 
 impl Data {
     /// This function checks the well-formedness of the data type template by checking each
-    /// constructor.
+    /// constructor and checks for overlapping type parameters.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        let ctor_params: Vec<String> = self
+            .ctors
+            .iter()
+            .flat_map(|ctor| ctor.type_params.names())
+            .collect();
+
+        if let Some(overlaps) =
+            check_overlapping_type_params(&self.type_params.names(), &ctor_params)
+        {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span,
+                name: overlaps
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            });
+        }
+
         for ctor in &self.ctors {
-            ctor.check(symbol_table, &self.type_params)?;
+            ctor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
+    }
+
+    /// This function collects the names of all user-declared types referenced by any
+    /// constructor's argument types, excluding this type's own and each constructor's own type
+    /// parameters.
+    pub fn referenced_types(&self) -> HashSet<Name> {
+        let mut out = HashSet::new();
+        for ctor in &self.ctors {
+            let mut bound: HashSet<Name> = self.type_params.names().into_iter().collect();
+            bound.extend(ctor.type_params.names());
+            for binding in &ctor.args.bindings {
+                binding.ty.collect_referenced_types(&bound, &mut out);
+            }
+        }
+        out
     }
 }
 
@@ -124,14 +172,15 @@ mod data_tests {
     use printer::Print;
 
     use crate::{
+        syntax::{CtorSig, Data, Polarity, TypeParams, TypingContext},
         test_common::data_list,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::symbol_table::{self, BuildSymbolTable, SymbolTable},
     };
 
     #[test]
     fn display_list() {
         let result = data_list().print_to_string(Default::default());
-        let expected = "data List[A] { Nil, Cons(x: A, xs: List[A]) }";
+        let expected = "data List[A+] { Nil, Cons(x: A, xs: List[A]) }";
         assert_eq!(result, expected)
     }
 
@@ -141,5 +190,23 @@ mod data_tests {
         data_list().build(&mut symbol_table).unwrap();
         let result = data_list().check(&mut symbol_table);
         assert!(result.is_ok())
+    }
+
+    #[test]
+    fn check_overlapping_type_params() {
+        let data = Data {
+            span: None,
+            name: "Box".to_owned(),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+            ctors: vec![CtorSig {
+                span: None,
+                name: "Pack".to_owned(),
+                type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+                args: TypingContext::default(),
+            }],
+        };
+        let mut symbol_table = symbol_table::SymbolTable::default();
+        data.build(&mut symbol_table).unwrap();
+        assert!(data.check(&symbol_table).is_err());
     }
 }

@@ -4,9 +4,9 @@ use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns, type_params::ParamPolarity};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::Exit {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -21,13 +21,15 @@ impl Compile for fun::syntax::terms::Exit {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::Exit {
-            arg: Rc::new(self.arg.compile(state, Ty::I64)),
+            arg: Rc::new(self.arg.compile(state, Ty::I64, type_params.clone())),
             ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
+                type_params,
             ),
         }
         .into()

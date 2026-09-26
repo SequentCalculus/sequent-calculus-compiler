@@ -1,5 +1,5 @@
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
-codata Fun[A, B] { apply(x: A): B }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
+codata Fun[A+, B+] { apply(x: A): B }
 
 def map(f: Fun[i64, i64] , l: List[i64]): List[i64] {
     l.case[i64] { Nil => Nil,
@@ -9,7 +9,7 @@ def len(l: List[i64]): i64 {
     l.case[i64] { Nil => 0,
                   Cons(x,xs) => 1 + len(xs) }}
 
-codata Fun2[A, B, C] { apply2(x: A, y: B): C }
+codata Fun2[A+, B+, C+] { apply2(x: A, y: B): C }
 
 def foldr(f: Fun2[i64, i64, i64], st: i64, l: List[i64]): i64 {
     l.case[i64] { Nil => st,

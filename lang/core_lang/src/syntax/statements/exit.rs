@@ -3,8 +3,21 @@
 use printer::tokens::EXIT;
 use printer::*;
 
+use crate::bail;
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -121,5 +134,70 @@ impl TypedFreeVars for FsExit {
             chi: Chirality::Prd,
             ty: Ty::I64,
         });
+    }
+}
+
+impl ConstraintCollector for Exit {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        constraints.extend(self.arg.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl Specialize for Exit {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Exit {
+            arg: self.arg.specialize(context),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl Checked for Exit {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty.check(type_params, context, env)?;
+
+        // check that the argument of the exit statement has type i64
+        if self.arg.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.arg.get_type().print_to_string(None),
+                msg: Some("Exit argument must have type i64".to_string()),
+            });
+        }
+        // check the argument of the exit statement
+        self.arg.check(type_params, context, env)?;
+
+        Ok(())
+    }
+}
+
+impl LabelAndUnify for Exit {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        Exit {
+            arg: self.arg.label_and_unify(state, sigs, scope),
+            ty: state.label_ty(&self.ty),
+        }
+    }
+}
+
+impl Rewrite for Exit {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Exit {
+            arg: self.arg.rewrite(table),
+            ty: self.ty.rewrite(table),
+        }
     }
 }

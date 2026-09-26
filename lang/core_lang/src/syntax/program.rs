@@ -1,8 +1,22 @@
 //! This module defines programs in Core.
 
+use std::collections::HashSet;
+
 use printer::*;
 
-use crate::syntax::*;
+use crate::{
+    bail,
+    mono::{
+        constraints::{ConstraintCollector, FlowConstraintSet},
+        errors::MonoError,
+    },
+    syntax::*,
+    typing::{
+        check::Checked,
+        env::GlobalEnv,
+        errors::{LocatedTypeError, TypeError},
+    },
+};
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
 /// user-declared data types, and a list of user-declared codata types. Moreover, it contains the
@@ -75,9 +89,90 @@ impl<D: Print> Print for Prog<D> {
     }
 }
 
+impl ConstraintCollector for Prog {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        // type check the program before collecting constraints, to ensure that all type annotations in the program are well-formed
+        self.check(&[], &TypingContext::default(), env).unwrap();
+
+        let mut constraints = FlowConstraintSet::new();
+
+        for def in &self.defs {
+            constraints.extend(def.collect_constraints(env)?);
+        }
+
+        for data in &self.data_types {
+            constraints.extend(data.collect_constraints(env)?);
+        }
+
+        for codata in &self.codata_types {
+            constraints.extend(codata.collect_constraints(env)?);
+        }
+
+        Ok(constraints)
+    }
+}
+
+impl Checked for Prog {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        let mut seen_types: HashSet<&str> = HashSet::new();
+        let mut seen_defs: HashSet<&str> = HashSet::new();
+        let mut seen_xtors: HashSet<&str> = HashSet::new();
+
+        // check for duplicate type names in data declarations
+        for data in &self.data_types {
+            if !seen_types.insert(&data.name.name) {
+                bail!(TypeError::DuplicateTypeName(data.name.name.clone()));
+            }
+            // check for duplicate xtor names in data declarations
+            for ctor in &data.xtors {
+                if !seen_xtors.insert(&ctor.name.name) {
+                    bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
+                }
+            }
+        }
+
+        // check for duplicate type names in codata declarations
+        for codata in &self.codata_types {
+            if !seen_types.insert(&codata.name.name) {
+                bail!(TypeError::DuplicateTypeName(codata.name.name.clone()));
+            }
+            // check for duplicate xtor names in codata declarations
+            for ctor in &codata.xtors {
+                if !seen_xtors.insert(&ctor.name.name) {
+                    bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
+                }
+            }
+        }
+
+        // check for duplicate function names in defs
+        for def in &self.defs {
+            if !seen_defs.insert(&def.name.name) {
+                bail!(TypeError::DuplicateDefName(def.name.name.clone()));
+            }
+        }
+
+        for data in &self.data_types {
+            data.check(&data.type_params, context, env)?;
+        }
+        for codata in &self.codata_types {
+            codata.check(&codata.type_params, context, env)?;
+        }
+        for def in &self.defs {
+            def.check(type_params, context, env)?;
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod program_tests {
     use crate::syntax::*;
+
     extern crate self as core_lang;
     use core_macros::{bind, cns, covar, cut, def, fs_cut, fs_def, id, prd, prog, var};
 
@@ -104,5 +199,298 @@ mod program_tests {
 
         let expected = prog!([example_def2_var()], [], [], 2);
         assert_eq!(result, expected)
+    }
+}
+#[cfg(test)]
+mod constraint_tests {
+
+    use std::collections::BTreeSet;
+
+    use crate::mono::constraints::{ConstraintCollector, FlowConstraint, FlowConstraintSet};
+    use crate::syntax::*;
+    use crate::typing::env::GlobalEnv;
+    extern crate self as core_lang;
+    use core_macros::{bind, ctor_sig, data, def, exit, id, lit, prd, prog, tparam, tvar, ty};
+
+    #[test]
+    fn collect_constraints_prog() {
+        let list = data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                        bind!(id!("xs"), prd!(), ty!(id!("List"), [tvar!(id!("A", 1))]))
+                    ]
+                )
+            ],
+            [tparam!(id!("A", 1), "+")]
+        );
+
+        let prog = prog!(
+            [def!(
+                id!("main"),
+                [],
+                exit!(lit!(1), ty!(id!("List"), [ty!("int")]))
+            )],
+            [list],
+            []
+        );
+
+        let constraints = prog
+            .collect_constraints(&GlobalEnv::new(
+                &prog.data_types,
+                &prog.codata_types,
+                &prog.defs,
+            ))
+            .unwrap();
+
+        let expected = FlowConstraintSet {
+            constraints: BTreeSet::from_iter(vec![
+                FlowConstraint {
+                    from: vec![Ty::I64],
+                    to: vec![id!("A", 1)],
+                },
+                FlowConstraint {
+                    from: vec![tvar!(id!("A", 1))],
+                    to: vec![id!("A", 1)],
+                },
+            ]),
+        };
+
+        assert_eq!(constraints, expected)
+    }
+}
+
+#[cfg(test)]
+mod check_tests {
+
+    use crate::syntax::*;
+    use crate::typing::check::Checked;
+    use crate::typing::env::GlobalEnv;
+    extern crate self as core_lang;
+    use core_macros::{
+        bind, cns, codata, ctor_sig, data, def, dtor_sig, exit, id, lit, prd, prog, tparam, tvar,
+        ty,
+    };
+
+    #[test]
+    fn check_undeclared_type_in_prog() {
+        // program uses an undeclared type in a top-level definition
+        let prog = prog!(
+            [def!(
+                id!("main"),
+                [],
+                exit!(lit!(1), ty!(id!("NonExistent")))
+            )],
+            [],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
+            "expected error for undeclared type in program"
+        );
+    }
+
+    #[test]
+    fn check_declared_type_annotation_ok() {
+        // declared type exists and is used as an annotation on an exit statement
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_ok(),
+            "expected declared type annotation to be accepted"
+        );
+    }
+
+    #[test]
+    fn check_type_arity_mismatch_in_prog() {
+        // data declaration with one type parameter but used without arguments in a def
+        let list = data!(
+            id!("List"),
+            [ctor_sig!(id!("Nil"), [], [])],
+            [tparam!(id!("A", 1), "+")]
+        );
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            []
+        );
+
+        let type_params: Vec<TypeParam> = prog
+            .data_types
+            .iter()
+            .flat_map(|data| data.type_params.iter().cloned())
+            .chain(
+                prog.codata_types
+                    .iter()
+                    .flat_map(|codata| codata.type_params.iter().cloned()),
+            )
+            .collect();
+
+        assert!(
+            prog.check(
+                &type_params,
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
+            "expected arity mismatch for type application in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_type_name_in_prog() {
+        // two data declarations with the same name
+        let list1 = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let list2 = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list1, list2],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
+            "expected error for duplicate type name in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_def_name_in_prog() {
+        // two defs with the same name
+        let def1 = def!(id!("my_func"), [], exit!(lit!(1), ty!("int")));
+        let def2 = def!(id!("my_func"), [], exit!(lit!(2), ty!("int")));
+
+        let prog = prog!([def1, def2], [], []);
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
+            "expected error for duplicate function name in program"
+        );
+    }
+
+    #[test]
+    fn check_duplicate_xtor_name_in_prog() {
+        // two xtors with the same name across data and codata declarations
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let stream = codata!(id!("Stream"), [dtor_sig!(id!("Nil"), [], [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
+            [list],
+            [stream]
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err(),
+            "expected error for duplicate xtor name in program"
+        );
+    }
+
+    #[test]
+    fn check_existential_and_universal_ok() {
+        let exists_any = data!(
+            id!("ExistsAny"),
+            [ctor_sig!(
+                id!("Pack"),
+                [tparam!(id!("A", 1), "+")],
+                [bind!(id!("val"), prd!(), tvar!(id!("A", 1)))]
+            )],
+            []
+        );
+
+        let forall_id = codata!(
+            id!("ForallId"),
+            [dtor_sig!(
+                id!("Inst"),
+                [tparam!(id!("A", 1), "+")],
+                [
+                    bind!(id!("arg"), prd!(), tvar!(id!("A", 1))),
+                    bind!(id!("cont"), cns!(), tvar!(id!("A", 1)))
+                ]
+            )],
+            []
+        );
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!("int")))],
+            [exists_any],
+            [forall_id]
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn check_existential_unbound_type_variable() {
+        let exists_err = data!(
+            id!("ExistsErr"),
+            [ctor_sig!(
+                id!("Pack"),
+                [tparam!(id!("A", 1), "+")],
+                [bind!(id!("val"), prd!(), tvar!(id!("B", 2)))]
+            )],
+            []
+        );
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!("int")))],
+            [exists_err],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_err()
+        );
     }
 }

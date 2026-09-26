@@ -1,10 +1,12 @@
 //! This module defines the translation of arguments.
 
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
 };
-use core_lang::syntax::{names::Identifier, terms::Cns};
+use core_lang::syntax::{names::Identifier, terms::Cns, type_params::ParamPolarity};
 use fun::traits::OptTyped;
 
 /// This function translates [arguments in Fun](fun::syntax::arguments::Arguments) to
@@ -16,6 +18,7 @@ use fun::traits::OptTyped;
 pub fn compile_subst(
     arguments: fun::syntax::arguments::Arguments,
     state: &mut CompileState,
+    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
 ) -> core_lang::syntax::arguments::Arguments {
     core_lang::syntax::arguments::Arguments {
         entries: arguments
@@ -31,7 +34,10 @@ pub fn compile_subst(
                     core_lang::syntax::terms::XVar {
                         prdcns: Cns,
                         var: Identifier::new(var),
-                        ty: compile_ty(&ty.expect("Types should be annotated before translation")),
+                        ty: compile_ty(
+                            &ty.expect("Types should be annotated before translation"),
+                            type_params.clone(),
+                        ),
                     }
                     .into(),
                 ),
@@ -40,8 +46,13 @@ pub fn compile_subst(
                         &term
                             .get_type()
                             .expect("Types should be annotated before translation"),
+                        type_params.clone(),
                     );
-                    core_lang::syntax::arguments::Argument::Producer(term.compile(state, ty))
+                    core_lang::syntax::arguments::Argument::Producer(term.compile(
+                        state,
+                        ty,
+                        type_params.clone(),
+                    ))
                 }
             })
             .collect(),

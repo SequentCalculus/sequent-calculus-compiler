@@ -1,5 +1,7 @@
 //! This module defines the translation for the goto control operator.
 
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
     compile::{Compile, CompileState},
     types::compile_ty,
@@ -8,9 +10,8 @@ use core_lang::syntax::{
     Ty,
     names::Identifier,
     terms::{Cns, Prd},
+    type_params::ParamPolarity,
 };
-
-use std::rc::Rc;
 
 impl Compile for fun::syntax::terms::Label {
     /// This implementation of [Compile::compile] proceeds as follows.
@@ -21,11 +22,17 @@ impl Compile for fun::syntax::terms::Label {
     /// # Panics
     ///
     /// A panic is caused if the types are not annotated in the program.
-    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    fn compile(
+        self,
+        state: &mut CompileState,
+        _ty: Ty,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
         let var_ty = compile_ty(
             &self
                 .ty
                 .expect("Types should be annotated before translation"),
+            type_params.clone(),
         );
         let cont = core_lang::syntax::terms::XVar {
             prdcns: Cns,
@@ -38,7 +45,7 @@ impl Compile for fun::syntax::terms::Label {
             prdcns: Prd,
             variable: Identifier::new(self.label),
             ty: var_ty,
-            statement: Rc::new(self.term.compile_with_cont(cont, state)),
+            statement: Rc::new(self.term.compile_with_cont(cont, state, type_params)),
         }
         .into()
     }
@@ -55,15 +62,17 @@ impl Compile for fun::syntax::terms::Label {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self
                 .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
+            type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile(state, ty.clone())),
+            producer: Rc::new(self.compile(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }
@@ -76,7 +85,10 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, lit, mu, ty};
     use fun::{parse_term, typing::check::Check};
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_label1() {
@@ -92,11 +104,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)
@@ -116,11 +130,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(id!("a"), cut!(lit!(1), covar!(id!("a")))).into();
         assert_eq!(result, expected)

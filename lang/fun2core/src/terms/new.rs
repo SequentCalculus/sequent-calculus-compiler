@@ -6,11 +6,12 @@ use crate::{
     types::compile_ty,
 };
 use core_lang::syntax::{
-    Ty,
+    Identifier, Ty,
     terms::{Cns, Prd},
+    type_params::ParamPolarity,
 };
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::New {
     /// This implementation of [Compile::compile] proceeds as follows.
@@ -21,18 +22,24 @@ impl Compile for fun::syntax::terms::New {
     /// # Panics
     ///
     /// A panic is caused if the types are not annotated in the program.
-    fn compile(self, state: &mut CompileState, _ty: Ty) -> core_lang::syntax::terms::Term<Prd> {
+    fn compile(
+        self,
+        state: &mut CompileState,
+        _ty: Ty,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
             clauses: self
                 .clauses
                 .into_iter()
-                .map(|clause| compile_coclause(clause, state))
+                .map(|clause| compile_coclause(clause, state, type_params.clone()))
                 .collect(),
             ty: compile_ty(
                 &self
                     .ty
                     .expect("Types should be annotated before translation"),
+                type_params,
             ),
         }
         .into()
@@ -51,15 +58,17 @@ impl Compile for fun::syntax::terms::New {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self
                 .ty
                 .clone()
                 .expect("Types should be annotated before translation"),
+            type_params.clone(),
         );
         core_lang::syntax::statements::Cut {
-            producer: Rc::new(self.compile(state, ty.clone())),
+            producer: Rc::new(self.compile(state, ty.clone(), type_params)),
             ty,
             consumer: Rc::new(cont),
         }
@@ -71,12 +80,17 @@ impl Compile for fun::syntax::terms::New {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax as core_syntax;
-    use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
+    use core_macros::{
+        bind, clause, cns, cocase, codata, covar, cut, dtor_sig, id, lit, prd, tparam, tvar, ty,
+    };
     use fun::{
         parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
         typing::check::Check,
     };
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashMap, HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_lpair() {
@@ -95,33 +109,56 @@ mod compile_tests {
             )
             .unwrap();
 
-        let lpair_declaration = codata!(id!("LPair"), []);
+        let lpair_declaration = codata!(
+            id!("LPair"),
+            [
+                dtor_sig!(
+                    id!("fst"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("A", 1)))]
+                ),
+                dtor_sig!(
+                    id!("snd"),
+                    [],
+                    [bind!(id!("out"), prd!(), tvar!(id!("B", 2)))]
+                )
+            ],
+            [tparam!(id!("A", 1), "+"), tparam!(id!("B", 2), "+")]
+        );
 
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[lpair_declaration],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!(id!("LPair[i64, i64]")));
+        let result = term_typed.compile(
+            &mut state,
+            ty!(id!("LPair"), vec![ty!("int"), ty!("int")]),
+            Rc::new(HashMap::default()),
+        );
 
         let expected = cocase!(
             [
                 clause!(
                     core_syntax::Prd,
                     id!("fst"),
+                    [],
                     [bind!(id!("a0"), cns!()),],
                     cut!(lit!(1), covar!(id!("a0")))
                 ),
                 clause!(
                     core_syntax::Prd,
                     id!("snd"),
+                    [],
                     [bind!(id!("a1"), cns!())],
                     cut!(lit!(2), covar!(id!("a1")))
                 )
             ],
-            ty!(id!("LPair[i64, i64]"))
+            ty!(id!("LPair"), vec![ty!("int"), ty!("int")])
         )
         .into();
 

@@ -1,5 +1,5 @@
-codata Stream[A] { head : A, tail : Stream[A] }
-data List[A] { Nil, Cons(x: A, xs: List[A]) }
+codata Stream[A+] { head : A, tail : Stream[A] }
+data List[A+] { Nil, Cons(x: A, xs: List[A]) }
 
 def repeat(x: i64) : Stream[i64] { new { tail => repeat(x), head => x } }
 def const1() : Stream[i64] { new { head => 1, tail => const1() } }

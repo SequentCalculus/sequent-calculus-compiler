@@ -17,10 +17,14 @@ pub struct Args {
     /// Write intermediate representations to disk
     #[arg(long)]
     print_ir: bool,
+    /// Skip type splitting, which is otherwise applied to every program (see `scc split`).
+    #[arg(long = "no-split")]
+    no_split: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
+    drv.set_split(!cmd.no_split);
     let linearized = drv.linearized(&cmd.filepath);
     let _linearized = match linearized {
         Ok(linearized) => linearized,
@@ -28,6 +32,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
     if cmd.print_ir {
         drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
+        if !cmd.no_split {
+            drv.print_split(&cmd.filepath, PrintMode::Textual)?;
+        }
         drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
         drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
         drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;

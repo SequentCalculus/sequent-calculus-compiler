@@ -1,9 +1,9 @@
 //! This module defines the translation for the conditionals comparing two terms.
 
 use crate::compile::{Compile, CompileState, share};
-use core_lang::syntax::{Ty, terms::Cns};
+use core_lang::syntax::{Identifier, Ty, terms::Cns, type_params::ParamPolarity};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 impl Compile for fun::syntax::terms::IfC {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
@@ -20,6 +20,7 @@ impl Compile for fun::syntax::terms::IfC {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
+        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
     ) -> core_lang::syntax::Statement {
         // if the consumer is a not a leaf, we share it by lifting it to the top level to avoid
         // exponential blowup
@@ -54,10 +55,18 @@ impl Compile for fun::syntax::terms::IfC {
                     core_lang::syntax::statements::IfSort::GreaterOrEqual
                 }
             },
-            fst: Rc::new(self.fst.compile(state, Ty::I64)),
-            snd: self.snd.map(|term| Rc::new(term.compile(state, Ty::I64))),
-            thenc: Rc::new(self.thenc.compile_with_cont(cont.clone(), state)),
-            elsec: Rc::new(self.elsec.compile_with_cont(cont, state)),
+            fst: Rc::new(self.fst.compile(state, Ty::I64, type_params.clone())),
+            snd: self
+                .snd
+                .map(|term| Rc::new(term.compile(state, Ty::I64, type_params.clone()))),
+            thenc: Rc::new(
+                self.thenc
+                    .compile_with_cont(cont.clone(), state, type_params.clone()),
+            ),
+            elsec: Rc::new(
+                self.elsec
+                    .compile_with_cont(cont, state, type_params.clone()),
+            ),
         }
         .into()
     }
@@ -69,7 +78,10 @@ mod compile_tests {
     use core_macros::{covar, cut, id, ife, lit, mu, ty, var};
     use fun::{parse_term, typing::check::Check};
 
-    use std::collections::{HashSet, VecDeque};
+    use std::{
+        collections::{HashSet, VecDeque},
+        rc::Rc,
+    };
 
     #[test]
     fn compile_ife1() {
@@ -78,11 +90,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -113,11 +127,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -139,11 +155,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::default(),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term.compile(&mut state, ty!("int"));
+        let result = term.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),
@@ -173,11 +191,13 @@ mod compile_tests {
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
             codata_types: &[],
+            data_types: &[],
             used_labels: &mut HashSet::default(),
             current_label: "",
             lifted_statements: &mut VecDeque::default(),
+            max_id: &mut 0,
         };
-        let result = term_typed.compile(&mut state, ty!("int"));
+        let result = term_typed.compile(&mut state, ty!("int"), Rc::default());
 
         let expected = mu!(
             id!("a0"),

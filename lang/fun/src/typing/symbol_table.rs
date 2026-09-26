@@ -10,6 +10,7 @@ use crate::syntax::{
     declarations::{Codata, CtorSig, Data, Declaration, Def, DtorSig, Polarity},
     names::Name,
     program::Program,
+    type_params::TypeParams,
     types::{Ty, TypeArgs},
 };
 
@@ -29,30 +30,67 @@ use crate::parser::util::ToMiette;
 pub struct SymbolTable {
     /// Maps names of top-level [definitions][Def] to their signatures, i.e., their parameter list
     /// and return type.
-    pub defs: HashMap<Name, (TypingContext, Ty)>,
-    /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
-    /// list.
-    pub ctors: HashMap<Name, TypingContext>,
-    /// Maps names of monomorphic [destructors][DtorSig] to their signatures, i.e., their argument
-    /// list and return type.
-    pub dtors: HashMap<Name, (TypingContext, Ty)>,
+    pub defs: HashMap<Name, (TypeParams, TypingContext, Ty)>,
+    /// Maps names of monomorphic [constructors][CtorSig] (with the type arguments of the
+    /// surrounding data type instance already substituted) to their own (still open) type
+    /// parameters and their argument list.
+    pub ctors: HashMap<Name, (TypeParams, TypingContext)>,
+    /// Maps names of monomorphic [destructors][DtorSig] (with the type arguments of the
+    /// surrounding codata type instance already substituted) to their own (still open) type
+    /// parameters, their argument list, and their return type.
+    pub dtors: HashMap<Name, (TypeParams, TypingContext, Ty)>,
     /// Maps names of instances of user-declared [data](Data) and [codata](Codata) types to their
     /// [polarity](Polarity) determinig whether they are data or codata, to their type arguments
     /// instantiating the type parameters of the corresponding template, and to their name of xtors.
     pub types: HashMap<Name, (Polarity, TypeArgs, Vec<Name>)>,
-    /// Maps names of [constructors][CtorSig] of a template to their signatures, i.e., their
-    /// argument list.
-    pub ctor_templates: HashMap<Name, TypingContext>,
-    /// Maps names of [destructors][DtorSig] of a template to their signatures, i.e., their argument
-    /// list and return type.
-    pub dtor_templates: HashMap<Name, (TypingContext, Ty)>,
+    /// Maps names of [constructors][CtorSig] of a template to their own (existential) type
+    /// parameters and their signatures, i.e., their argument list.
+    pub ctor_templates: HashMap<Name, (TypeParams, TypingContext)>,
+    /// Maps names of [destructors][DtorSig] of a template to their own (existential) type
+    /// parameters and their signatures, i.e., their argument list and return type.
+    pub dtor_templates: HashMap<Name, (TypeParams, TypingContext, Ty)>,
     /// Maps names of user-declared type templates for [data](Data) and [codata](Codata) types to
     /// their [polarity](Polarity) determining whether they are data or codata, to their type
     /// parameters, and to their name of xtors.
-    pub type_templates: HashMap<Name, (Polarity, TypeContext, Vec<Name>)>,
+    pub type_templates: HashMap<Name, (Polarity, TypeParams, Vec<Name>)>,
+    /// Maps type variables that are currently in scope as abstract type variables to their
+    /// declared [polarity](Polarity), e.g. bound by an existential constructor pattern in a
+    /// `case` clause (`Cons[B](x, xs)`) or a universal destructor parameter in a `new` clause
+    /// (`head[B]`). Such names are treated as valid, opaque monomorphic types without requiring
+    /// an instance or template to exist for them.
+    pub abstract_type_vars: HashMap<Name, Polarity>,
 }
 
 impl SymbolTable {
+    /// This function instantiates the signature of a top-level definition with given type
+    /// arguments.
+    pub fn instantiate_def_signature(
+        &mut self,
+        span: Option<SourceSpan>,
+        name: &Name,
+        type_args: &TypeArgs,
+    ) -> Result<(TypingContext, Ty), Error> {
+        let Some((type_params, context_template, ret_ty_template)) = self.defs.get(name).cloned()
+        else {
+            return Err(Error::Undefined {
+                span,
+                name: name.clone(),
+            });
+        };
+
+        type_args.is_instance(&type_params, self)?;
+        let mappings: HashMap<Name, Ty> = type_params
+            .names()
+            .into_iter()
+            .zip(type_args.args.clone())
+            .collect();
+
+        Ok((
+            context_template.subst_ty(&mappings),
+            ret_ty_template.subst_ty(&mappings),
+        ))
+    }
+
     /// This function returns the monomorphic type of a monomorphic destructor from its name.
     pub fn lookup_ty_for_dtor(&self, span: &SourceSpan, dtor: &Name) -> Result<Ty, Error> {
         for (name, (pol, type_args, xtors)) in &self.types {
@@ -158,20 +196,172 @@ impl SymbolTable {
         })
     }
 
+    /// This function resolves a constructor invocation against an expected data type.
+    ///
+    /// It checks the well-formedness of `data_ty` (creating a monomorphic instance of the
+    /// corresponding data type template if necessary) and looks up the monomorphic constructor
+    /// signature for `ctor` instantiated with `data_ty`'s type arguments.
+    ///
+    /// Note that the returned argument context may still contain the constructor's own
+    /// (existential) type parameters, since those are not determined by `data_ty` and must be
+    /// substituted separately by the caller using the returned [TypeContext].
+    /// - `span` is the source location of the constructor invocation.
+    /// - `ctor` is the name of the constructor.
+    /// - `data_ty` is the expected (fully instantiated) data type, e.g. `List[i64]`.
+    pub fn lookup_ctor_signature(
+        &mut self,
+        span: &SourceSpan,
+        ctor: &Name,
+        data_ty: &Ty,
+    ) -> Result<(TypeParams, TypingContext), Error> {
+        data_ty.check(&Some(*span), self)?;
+
+        let Ty::Decl { type_args, .. } = data_ty else {
+            return Err(Error::ExpectedI64ForConstructor {
+                span: *span,
+                name: ctor.clone(),
+            });
+        };
+
+        let ctor_instance_name = ctor.clone() + &type_args.print_to_string(None);
+        self.ctors
+            .get(&ctor_instance_name)
+            .cloned()
+            .ok_or_else(|| Error::Undefined {
+                span: Some(*span),
+                name: ctor.clone(),
+            })
+    }
+
+    /// This function resolves a destructor invocation from its name and the full list of type
+    /// arguments as written at the call site.
+    ///
+    /// The type arguments syntactically appear as a single list (e.g. `x.head[i64, T]`), but they
+    /// actually consist of two logically distinct parts: the type arguments instantiating the
+    /// type parameters of the codata type the destructor belongs to (e.g. `A` in `Stream[A]`),
+    /// followed by the destructor's own (existential) type parameters (e.g. `T`). This function
+    /// splits the list according to the arity known from the codata type template, creates the
+    /// codata type instance if necessary, and fully substitutes both the codata type parameters
+    /// and the destructor's own type parameters in the argument context and return type.
+    /// - `span` is the source location of the destructor invocation.
+    /// - `dtor` is the name of the destructor.
+    /// - `all_type_args` is the full, unsplit list of type arguments as written at the call site.
+    ///
+    /// Returns the (fully instantiated) type of the scrutinee, the fully substituted argument
+    /// context, and the fully substituted return type of the destructor.
+    pub fn lookup_dtor_signature(
+        &mut self,
+        span: &SourceSpan,
+        dtor: &Name,
+        all_type_args: &TypeArgs,
+    ) -> Result<(Ty, TypingContext, Ty), Error> {
+        // Find the codata type template the destructor belongs to, together with its type
+        // parameters, in order to determine the split point in `all_type_args`.
+        let (codata_name, codata_type_params) = self
+            .type_templates
+            .iter()
+            .find_map(|(name, (pol, type_params, xtors))| {
+                (*pol == Polarity::Codata && xtors.contains(dtor))
+                    .then(|| (name.clone(), type_params.clone()))
+            })
+            .ok_or_else(|| Error::Undefined {
+                span: Some(*span),
+                name: dtor.clone(),
+            })?;
+
+        // Look up the destructor's own type parameters to validate the total arity.
+        let (own_type_params, _, _) =
+            self.dtor_templates
+                .get(dtor)
+                .cloned()
+                .ok_or_else(|| Error::Undefined {
+                    span: Some(*span),
+                    name: dtor.clone(),
+                })?;
+
+        let split = codata_type_params.bindings.len();
+        if all_type_args.args.len() < split {
+            return Err(Error::WrongNumberOfTypeArguments {
+                span: all_type_args.span.to_miette(),
+                expected: split + own_type_params.bindings.len(),
+                got: all_type_args.args.len(),
+            });
+        }
+
+        // Split off the leading type arguments instantiating the codata type's own type
+        // parameters from the trailing type arguments belonging to the destructor itself.
+        let (codata_args, dtor_own_args) = all_type_args.args.split_at(split);
+        let codata_type_args = TypeArgs {
+            span: all_type_args.span,
+            args: codata_args.to_vec(),
+        };
+        let dtor_own_type_args = TypeArgs {
+            span: all_type_args.span,
+            args: dtor_own_args.to_vec(),
+        };
+
+        // Create/check the codata type instance, e.g. `Stream[i64]`, and check the scrutinee against it.
+        let scrutinee_ty = Ty::Decl {
+            span: None,
+            name: codata_name,
+            type_args: codata_type_args.clone(),
+        };
+        scrutinee_ty.check(&all_type_args.span, self)?;
+
+        // Look up the monomorphic destructor template (with the codata type parameters already
+        // substituted by `scrutinee_ty.check`) and substitute the destructor's own type
+        // parameters with `dtor_own_type_args`.
+        let dtor_instance_name = dtor.clone() + &codata_type_args.print_to_string(None);
+        let (own_type_params, args_template, cont_ty_template) = self
+            .dtors
+            .get(&dtor_instance_name)
+            .cloned()
+            .ok_or_else(|| Error::Undefined {
+                span: Some(*span),
+                name: dtor.clone(),
+            })?;
+
+        dtor_own_type_args.is_instance(&own_type_params, self)?;
+
+        let mappings: HashMap<Name, Ty> = own_type_params
+            .names()
+            .into_iter()
+            .zip(dtor_own_type_args.args.iter().cloned())
+            .collect();
+
+        let args = args_template.subst_ty(&mappings);
+        let cont_ty = cont_ty_template.subst_ty(&mappings);
+
+        Ok((scrutinee_ty, args, cont_ty))
+    }
+
     /// This function checks the well-formedness of all lists of type parameters in all type
     /// templates in the symbol table.
     pub fn check_type_params(&self) -> Result<(), Error> {
         for (name, (_, type_params, _)) in &self.type_templates {
             type_params.no_dups(name)?;
             for param in &type_params.bindings {
-                if self.type_templates.contains_key(param) {
+                if self.type_templates.contains_key(&param.name) {
                     return Err(Error::DefinedMultipleTimes {
                         span: type_params.span.to_miette(),
-                        name: param.clone(),
+                        name: param.name.clone(),
                     });
                 }
             }
         }
+
+        for (name, (type_params, _, _)) in &self.defs {
+            type_params.no_dups(name)?;
+            for param in &type_params.bindings {
+                if self.type_templates.contains_key(&param.name) {
+                    return Err(Error::DefinedMultipleTimes {
+                        span: type_params.span.to_miette(),
+                        name: param.name.clone(),
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -184,6 +374,65 @@ impl SymbolTable {
         self.ctor_templates.extend(other.ctor_templates);
         self.dtor_templates.extend(other.dtor_templates);
         self.type_templates.extend(other.type_templates);
+    }
+
+    /// This function brings the given names into scope as abstract type variables, e.g.
+    /// the type parameters bound by a `case`/`new` clause. It returns the corresponding list of
+    /// opaque types (one `Ty::Decl` per name, in order), so callers can use them directly for
+    /// substitution.
+    ///
+    /// Fails if any of the given names already denotes a declared data/codata type template, or
+    /// is already in scope as a rigid variable (e.g. due to a nested clause shadowing an outer
+    /// one), since that would silently shadow an existing type and lead to confusing errors
+    /// elsewhere.
+    ///
+    /// Each user-chosen name in `names` is paired positionally with the corresponding
+    /// `TypeParam` in `own_type_params` (the ctor's/dtor's own declared existential/universal
+    /// parameter list), so that the name is brought into scope with the *declared* polarity
+    /// rather than a guessed default. Callers must ensure both lists have equal length (an arity
+    /// mismatch is a separate, earlier error).
+    /// - `span` is the source location of the clause introducing the names.
+    /// - `names` are the type parameter names to bring into scope.
+    /// - `own_type_params` is the ctor's/dtor's own declared type parameter list, in the same
+    ///   order as `names`.
+    pub fn push_abstract_vars(
+        &mut self,
+        span: &SourceSpan,
+        names: &TypeContext,
+        own_type_params: &TypeParams,
+    ) -> Result<Vec<Ty>, Error> {
+        let mut result = vec![];
+        for (name, own_param) in names.bindings.iter().zip(&own_type_params.bindings) {
+            if self.type_templates.contains_key(name) {
+                return Err(Error::DefinedMultipleTimes {
+                    span: Some(*span),
+                    name: name.clone(),
+                });
+            }
+            if self.abstract_type_vars.contains_key(name) {
+                return Err(Error::DefinedMultipleTimes {
+                    span: Some(*span),
+                    name: name.clone(),
+                });
+            }
+            self.abstract_type_vars
+                .insert(name.clone(), own_param.polarity);
+            result.push(Ty::Decl {
+                span: None,
+                name: name.clone(),
+                type_args: TypeArgs::default(),
+            });
+        }
+        Ok(result)
+    }
+
+    /// This function removes the given names from the set of abstract type variables again, e.g.
+    /// after typechecking the clause body that bound them, so that they cannot leak into later,
+    /// unrelated clauses.
+    pub fn pop_abstract_vars(&mut self, names: &TypeContext) {
+        for name in &names.bindings {
+            self.abstract_type_vars.remove(name);
+        }
     }
 }
 
@@ -230,7 +479,11 @@ impl BuildSymbolTable for Def {
         }
         symbol_table.defs.insert(
             self.name.clone(),
-            (self.context.clone(), self.ret_ty.clone()),
+            (
+                self.type_params.clone(),
+                self.context.clone(),
+                self.ret_ty.clone(),
+            ),
         );
         Ok(())
     }
@@ -268,9 +521,10 @@ impl BuildSymbolTable for CtorSig {
                 name: self.name.clone(),
             });
         }
-        symbol_table
-            .ctor_templates
-            .insert(self.name.clone(), self.args.clone());
+        symbol_table.ctor_templates.insert(
+            self.name.clone(),
+            (self.type_params.clone(), self.args.clone()),
+        );
         Ok(())
     }
 }
@@ -307,9 +561,14 @@ impl BuildSymbolTable for DtorSig {
                 name: self.name.clone(),
             });
         }
-        symbol_table
-            .dtor_templates
-            .insert(self.name.clone(), (self.args.clone(), self.cont_ty.clone()));
+        symbol_table.dtor_templates.insert(
+            self.name.clone(),
+            (
+                self.type_params.clone(),
+                self.args.clone(),
+                self.cont_ty.clone(),
+            ),
+        );
         Ok(())
     }
 }
@@ -321,6 +580,7 @@ mod symbol_table_tests {
         syntax::{
             context::{Chirality::Prd, ContextBinding, TypingContext},
             program::Program,
+            type_params::TypeParams,
             types::{Ty, TypeArgs},
             util::dummy_span,
         },
@@ -347,6 +607,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
+                TypeParams::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {
@@ -385,6 +646,7 @@ mod symbol_table_tests {
         expected.defs.insert(
             "mult".to_owned(),
             (
+                TypeParams::default(),
                 TypingContext {
                     span: None,
                     bindings: vec![ContextBinding {

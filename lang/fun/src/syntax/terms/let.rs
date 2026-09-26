@@ -158,6 +158,7 @@ mod test {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![XVar::mk("x").into()].into(),
                     ty: None,
                 }
