@@ -380,7 +380,11 @@ impl Print for Code {
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("// {msg}"))),
-            UDF => alloc.text(INDENT).append(alloc.keyword("UDF")),
+            UDF => alloc
+                .text(INDENT)
+                .append(alloc.keyword("UDF"))
+                .append(alloc.space())
+                .append(Immediate { val: 0 }.print(cfg, alloc)),
         }
     }
 }
