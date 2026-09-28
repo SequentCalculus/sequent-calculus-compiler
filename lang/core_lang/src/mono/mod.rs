@@ -9,6 +9,7 @@ use crate::{
         erasure::ErasedDecls,
         errors::MonoError,
         graph_viz::VizOutput,
+        growing_cycle::find_all_growing_cycles,
         solver::{Solution, solve_with_erasure},
         specialize::specialize_program,
     },
@@ -44,8 +45,9 @@ fn debug_print_cfg() -> PrintCfg {
     }
 }
 
-/// Reports the program monomorphization starts from and the flow constraints collected from it.
-fn print_input_debug(program: &Prog, constraints: &FlowConstraintSet) {
+/// Reports the program monomorphization starts from, the flow constraints collected from it, and
+/// how many growing cycles its constraint graph contains.
+fn print_input_debug(program: &Prog, constraints: &FlowConstraintSet, graph: &ConstraintGraph) {
     let cfg = debug_print_cfg();
     println!(
         "Input program:\n{}",
@@ -55,6 +57,7 @@ fn print_input_debug(program: &Prog, constraints: &FlowConstraintSet) {
         "Flow Constraints: \n{}",
         constraints.print_to_colored_string(Some(&cfg))
     );
+    println!("Growing Cycles: {}", find_all_growing_cycles(graph).len());
 }
 
 /// Reports the outcome of `solve_with_erasure`: which constraints and declarations, if any, were
@@ -108,7 +111,7 @@ pub fn monomorphize_program(program: Prog, debug: bool, viz: VizOutput) -> Resul
     let constraints = constraints_of(&program)?;
     let graph = ConstraintGraph::from(constraints.clone());
     if debug {
-        print_input_debug(&program, &constraints);
+        print_input_debug(&program, &constraints, &graph);
     }
 
     let (solution, erased_decls, erased_constraints) = solve_with_erasure(constraints);

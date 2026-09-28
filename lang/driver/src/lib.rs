@@ -9,6 +9,7 @@ use std::{
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
+    time::{Duration, Instant},
 };
 
 pub use core_lang::mono::graph_viz::VizOutput;
@@ -57,6 +58,9 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// How long each stage took on its own, in the order the stages ran, see
+    /// [`Driver::timings_report`]
+    stage_times: Vec<(&'static str, Duration)>,
     /// Whether the later stages start from the type-split program (see [`Driver::split`]) instead
     /// of the compiled one. Set once via [`Driver::set_split`] before any of the cached methods
     /// run, since it isn't part of any cache key, calling one of them again with a different
@@ -87,6 +91,7 @@ impl Driver {
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
+            stage_times: Vec::new(),
             splitting: true,
         }
     }
@@ -100,6 +105,22 @@ impl Driver {
         self.splitting = split;
     }
 
+    /// This function notes how long a stage took on its own, without the stages it builds on.
+    fn record_stage(&mut self, stage: &'static str, duration: Duration) {
+        self.stage_times.push((stage, duration));
+    }
+
+    /// This function reports how long each stage took on its own, one stage per line, in the order
+    /// the stages ran: the name of the stage and its duration in microseconds, separated by spaces.
+    /// Only the stages that actually ran are listed, and a stage that ran for several files (on a
+    /// driver used for more than one) is listed once per file.
+    pub fn timings_report(&self) -> String {
+        self.stage_times
+            .iter()
+            .map(|(stage, duration)| format!("{:<14}{}μs\n", stage, duration.as_micros()))
+            .collect()
+    }
+
     /// This function returns the unparsed source code for the given file.
     pub fn source(&mut self, path: &PathBuf) -> Result<String, DriverError> {
         // Check for a cache hit.
@@ -107,8 +128,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
+        let start = Instant::now();
         let content =
             fs::read_to_string(path.clone()).expect("Should have been able to read the file");
+        self.record_stage("read", start.elapsed());
         self.sources.insert(path.clone(), content.clone());
         Ok(content)
     }
@@ -121,7 +144,9 @@ impl Driver {
         }
 
         let content = self.source(path)?;
+        let start = Instant::now();
         let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
+        self.record_stage("parse", start.elapsed());
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
@@ -134,7 +159,9 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
+        let start = Instant::now();
         let checked = parsed.check().map_err(DriverError::TypeError)?;
+        self.record_stage("typecheck", start.elapsed());
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -147,7 +174,9 @@ impl Driver {
         }
 
         let checked = self.checked(path)?;
+        let start = Instant::now();
         let compiled = compile_prog(checked);
+        self.record_stage("compile", start.elapsed());
 
         self.compiled.insert(path.clone(), compiled.clone());
         Ok(compiled)
@@ -198,7 +227,9 @@ impl Driver {
         }
 
         let compiled = self.compiled(path)?;
+        let start = Instant::now();
         let split = core_lang::splitting::split_program(&compiled);
+        self.record_stage("split", start.elapsed());
 
         self.split.insert(path.clone(), split.clone());
         Ok(split)
@@ -262,8 +293,10 @@ impl Driver {
         } else {
             self.compiled(path)?
         };
+        let start = Instant::now();
         let mono_prog = core_lang::mono::monomorphize_program(input, debug, viz)
             .map_err(DriverError::MonoError)?;
+        self.record_stage("monomorphize", start.elapsed());
 
         self.monomorphized.insert(path.clone(), mono_prog.clone());
         Ok(mono_prog)
@@ -276,7 +309,9 @@ impl Driver {
         }
 
         let mut monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let start = Instant::now();
         monomorphized.uniquify();
+        self.record_stage("uniquify", start.elapsed());
         self.uniquified.insert(path.clone(), monomorphized.clone());
         Ok(monomorphized)
     }
@@ -324,7 +359,9 @@ impl Driver {
         }
 
         let monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let start = Instant::now();
         let focused = monomorphized.focus();
+        self.record_stage("focus", start.elapsed());
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }
@@ -372,7 +409,9 @@ impl Driver {
         }
 
         let focused = self.focused(path)?;
+        let start = Instant::now();
         let shrunk = shrink_prog(focused);
+        self.record_stage("shrink", start.elapsed());
         self.shrunk.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
@@ -420,7 +459,9 @@ impl Driver {
         }
 
         let mut shrunk = self.shrunk(path)?;
+        let start = Instant::now();
         shrunk.linearize();
+        self.record_stage("linearize", start.elapsed());
         self.linearized.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }

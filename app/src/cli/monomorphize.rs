@@ -16,6 +16,10 @@ pub struct Args {
     /// Skip type splitting, which is otherwise applied to every program (see `scc split`).
     #[arg(long = "no-split")]
     no_split: bool,
+    /// Print how long each compilation stage took to stderr, one stage per line: its name
+    /// and its duration in microseconds.
+    #[arg(long)]
+    timings: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -31,5 +35,8 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
     drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
     print_stdout(&monomorphized, true);
+    if cmd.timings {
+        eprint!("{}", drv.timings_report());
+    }
     Ok(())
 }
