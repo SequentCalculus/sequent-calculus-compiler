@@ -13,7 +13,9 @@ use std::{
 };
 
 pub use core_lang::mono::graph_viz::VizOutput;
-use core_lang::syntax::Prog;
+use core_lang::syntax::{Prog, TypingContext};
+use core_lang::typing::check::Checked;
+use core_lang::typing::env::GlobalEnv;
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
@@ -48,6 +50,8 @@ pub struct Driver {
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Type-split in core
     split: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Type-checked at the Core level
+    core_checked: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Monomorphized in core, but not yet uniquified or focused
     monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
@@ -86,6 +90,7 @@ impl Driver {
             checked: HashMap::new(),
             compiled: HashMap::new(),
             split: HashMap::new(),
+            core_checked: HashMap::new(),
             monomorphized: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
@@ -270,9 +275,29 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the typechecked core code of the given file.
+    pub fn core_checked(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.core_checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let input = if self.splitting {
+            self.split(path)?
+        } else {
+            self.compiled(path)?
+        };
+        let start = Instant::now();
+        let env = GlobalEnv::new(&input.data_types, &input.codata_types, &input.defs);
+        input.check(&[], &TypingContext::default(), &env)?;
+        self.record_stage("core_check", start.elapsed());
+
+        self.core_checked.insert(path.clone(), input.clone());
+        Ok(input)
+    }
+
     /// This function returns the monomorphized version of the [Core](core_lang) code. It starts
-    /// from the type-split program (see [`Driver::split`]) unless splitting was disabled via
-    /// [`Driver::set_split`], in which case it starts from the compiled one.
+    /// from the type-checked, possibly type-split program (see [`Driver::core_checked`]).
     ///
     /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
     /// the result is cached by path alone, so a later call reusing the cache does not repeat a
@@ -288,11 +313,7 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let input = if self.splitting {
-            self.split(path)?
-        } else {
-            self.compiled(path)?
-        };
+        let input = self.core_checked(path)?;
         let start = Instant::now();
         let mono_prog = core_lang::mono::monomorphize_program(input, debug, viz)
             .map_err(DriverError::MonoError)?;

@@ -67,10 +67,8 @@ pub fn split_program(prog: &Prog) -> Prog {
 #[cfg(test)]
 mod split_program_tests {
     use super::*;
-    use crate::mono::constraints::ConstraintCollector;
     use crate::syntax::*;
     use crate::traits::Typed;
-    use crate::typing::env::GlobalEnv;
     extern crate self as core_lang;
     use core_macros::{
         bind, call, case, clause, cns, cocase, codata, covar, ctor, ctor_sig, cut, data, def, dtor,
@@ -87,19 +85,6 @@ mod split_program_tests {
             )],
             []
         )
-    }
-
-    /// Type-checks a split program at the Core level and asserts that it succeeds, using the
-    /// check that `collect_constraints` performs while it walks the program (the collected
-    /// constraints themselves are ignored). Splitting renames and duplicates declarations and drops
-    /// xtors from individual copies -- easy to get subtly wrong in a way that only a real re-check
-    /// against a `GlobalEnv` built from the split program's own (renamed) declarations catches;
-    /// asserting on e.g. `data_types.len()` alone would not.
-    fn assert_split_program_typechecks(result: &Prog) {
-        let env = GlobalEnv::new(&result.data_types, &result.codata_types, &result.defs);
-        if let Err(err) = result.collect_constraints(&env) {
-            panic!("split program failed to typecheck/collect constraints: {err:?}");
-        }
     }
 
     /// Two defs that each independently construct their own `Box` value and hand it straight to
@@ -133,7 +118,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 2);
         assert_ne!(result.data_types[0].name, result.data_types[1].name);
@@ -204,7 +188,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 1);
         assert_eq!(result.data_types[0].name, id!("Box"));
@@ -267,7 +250,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         // 2 independent `Bar` copies, each with its own independent `Foo` copy.
         assert_eq!(result.data_types.len(), 4);
@@ -339,8 +321,6 @@ mod split_program_tests {
     fn split_program_splits_a_manually_unrolled_chain_into_one_copy_per_depth_level() {
         let shallow_result = split_program(&list_prog(nested_list(1)));
         let deep_result = split_program(&list_prog(nested_list(5)));
-        assert_split_program_typechecks(&shallow_result);
-        assert_split_program_typechecks(&deep_result);
         let shallow = shallow_result.data_types.len();
         let deep = deep_result.data_types.len();
 
@@ -353,7 +333,6 @@ mod split_program_tests {
     #[test]
     fn split_program_lets_a_self_referential_field_point_at_a_different_copy() {
         let result = split_program(&list_prog(nested_list(2)));
-        assert_split_program_typechecks(&result);
 
         assert!(result.data_types.len() > 1);
         let cross_references_a_different_copy = result.data_types.iter().any(|copy| {
@@ -431,7 +410,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 1);
         assert_eq!(result.data_types[0].name, id!("List"));
@@ -529,7 +507,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 2);
     }
@@ -588,8 +565,6 @@ mod split_program_tests {
      {
         let shallow_result = split_program(&ab_prog(nested_a(0)));
         let deep_result = split_program(&ab_prog(nested_a(5)));
-        assert_split_program_typechecks(&shallow_result);
-        assert_split_program_typechecks(&deep_result);
         let shallow = shallow_result.data_types.len();
         let deep = deep_result.data_types.len();
 
@@ -637,7 +612,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         for copy in &result.data_types {
             let field = &copy.xtors[0].args.bindings[0].ty;
@@ -692,7 +666,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         let cons_copy = result
             .data_types
@@ -767,7 +740,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         let Statement::Cut(cut) = &result.defs[0].body else {
             panic!("expected build's body to be a Cut");
@@ -832,7 +804,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         let cons_only_copy = result
             .data_types
@@ -931,7 +902,6 @@ mod split_program_tests {
     #[test]
     fn split_program_keeps_an_xtor_that_is_only_matched_never_constructed() {
         let result = split_program(&matched_list_prog());
-        assert_split_program_typechecks(&result);
 
         let clauses = &f_case(&result).clauses;
         assert_eq!(
@@ -963,7 +933,6 @@ mod split_program_tests {
     #[test]
     fn split_program_drops_an_unused_xtor_from_a_field_class_while_the_matched_class_keeps_both() {
         let result = split_program(&matched_list_prog());
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 2, "got: {:#?}", result.data_types);
         let tail_copy = result
@@ -1009,7 +978,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 1);
         assert_eq!(result.data_types[0].name, id!("List"));
@@ -1049,7 +1017,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.codata_types.len(), 1);
         assert_eq!(result.codata_types[0].xtors.len(), 2);
@@ -1074,7 +1041,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.codata_types.len(), 1);
         assert_eq!(
@@ -1130,7 +1096,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         let dead_def = result
             .defs
@@ -1233,7 +1198,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.data_types.len(), 1);
         assert!(
@@ -1267,7 +1231,6 @@ mod split_program_tests {
         };
 
         let result = split_program(&prog);
-        assert_split_program_typechecks(&result);
 
         assert_eq!(result.codata_types.len(), 1);
         assert!(

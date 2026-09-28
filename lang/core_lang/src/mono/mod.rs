@@ -103,10 +103,14 @@ fn render_viz(graph: &ConstraintGraph, viz: VizOutput) -> Result<(), MonoError> 
 
 /// Monomorphizes a program and returns the monomorphized program.
 ///
-/// Fails if constraint collection rejects the program (a bug in an earlier phase, since Fun/Core
-/// type checking already ran) or, when `viz` requests rendering, if rendering the constraint
-/// graph visualization fails (e.g. the `dot` binary is missing or the output path is not
-/// writable).
+/// Assumes `program` is already known to be well-typed at the Core level (see
+/// [`Checked`](crate::typing::check::Checked) and `Driver::core_checked`); this function does not
+/// check that itself, so feeding it an ill-typed program is a caller bug, not something it is
+/// guaranteed to reject cleanly.
+///
+/// Fails if constraint collection otherwise rejects the program (e.g. an unresolved name, a bug in
+/// an earlier phase) or, when `viz` requests rendering, if rendering the constraint graph
+/// visualization fails (e.g. the `dot` binary is missing or the output path is not writable).
 pub fn monomorphize_program(program: Prog, debug: bool, viz: VizOutput) -> Result<Prog, MonoError> {
     let constraints = constraints_of(&program)?;
     let graph = ConstraintGraph::from(constraints.clone());

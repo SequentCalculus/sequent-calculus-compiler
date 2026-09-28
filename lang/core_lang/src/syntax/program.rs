@@ -91,9 +91,6 @@ impl<D: Print> Print for Prog<D> {
 
 impl ConstraintCollector for Prog {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
-        // type check the program before collecting constraints, to ensure that all type annotations in the program are well-formed
-        self.check(&[], &TypingContext::default(), env).unwrap();
-
         let mut constraints = FlowConstraintSet::new();
 
         for def in &self.defs {
