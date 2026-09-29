@@ -138,9 +138,14 @@ impl<X: Specialize> Specialize for std::rc::Rc<X> {
     }
 }
 
-/// Recovers the extra type arguments an erased declaration's own type parameters were widened
-/// to, from a concrete occurrence's type. Returns`None` if `ty` is not a declaration type, or
-/// if it is but was not erased.
+/// Erases `ty` and then grounds it under the context's substitution.
+pub fn erase_and_substitute(ty: &Ty, ctx: &SpecializeContext) -> Ty {
+    erase_ty(ty, ctx.erased_decls).substitute(ctx.subst.as_slices())
+}
+
+/// Recovers the arguments an erased declaration's erased type parameters were instantiated
+/// with, from a concrete occurrence's type, in erased form. Returns `None` if `ty` is not a
+/// declaration type, or if it is but none of its parameters was erased.
 pub fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
     let Ty::Decl { name, type_args } = ty else {
         return None;
@@ -149,12 +154,46 @@ pub fn recover_extra_args(ty: &Ty, ctx: &SpecializeContext) -> Option<Vec<Ty>> {
         return None;
     }
     Some(
-        type_args
-            .args
+        ctx.erased_decls
+            .erased_args(name, &type_args.args)
             .iter()
-            .map(|a| erase_ty(&a.substitute(ctx.subst.as_slices()), ctx.erased_decls))
+            .map(|a| erase_and_substitute(a, ctx))
             .collect(),
     )
+}
+
+/// What specializing a `XCase` knows about its scrutinee when the scrutinee's type is a
+/// declaration with erased type parameters.
+pub struct ErasedScrutinee {
+    /// The erased declaration the scrutinee belongs to.
+    pub decl: Identifier,
+    /// The instantiation of the declaration's kept parameters, selecting the copy of the
+    /// declaration the scrutinee has, and with it the xtor variants its clauses must cover.
+    pub kept_args: Vec<Ty>,
+    /// The instantiation of the declaration's erased parameters, if it can be read off the
+    /// scrutinee's type (see [`recover_extra_args`]); used to mark the clauses of every other
+    /// variant unreachable.
+    pub erased_args: Option<Vec<Ty>>,
+}
+
+impl ErasedScrutinee {
+    /// Inspects the scrutinee type `ty` of a `XCase`. Returns `None` if it is not a declaration
+    /// with erased type parameters. The kept arguments are always available, even if `ty` is a
+    /// bare type variable, since the value it is substituted with is already in erased form and
+    /// thus carries exactly the kept arguments.
+    pub fn of(ty: &Ty, ctx: &SpecializeContext) -> Option<Self> {
+        let Ty::Decl { name, type_args } = erase_and_substitute(ty, ctx) else {
+            return None;
+        };
+        if !ctx.erased_decls.is_erased(&name) {
+            return None;
+        }
+        Some(ErasedScrutinee {
+            decl: name,
+            kept_args: type_args.args,
+            erased_args: recover_extra_args(ty, ctx),
+        })
+    }
 }
 
 /// This function is the entry point for specializing a program from polymorphic to monomorphic
@@ -210,16 +249,18 @@ fn specialize_declaration<P: Polarity + Clone>(
     erased_decls: &ErasedDecls,
 ) -> Vec<TypeDeclaration<P>> {
     let params: Vec<Identifier> = TypeParam::names(&decl.type_params);
-    let is_erased = erased_decls.is_erased(&decl.name);
 
-    if params.is_empty() || is_erased {
-        if !is_erased && decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
+    if erased_decls.is_erased(&decl.name) {
+        return specialize_erased_declaration(decl, &params, table, erased_decls);
+    }
+
+    if params.is_empty() {
+        if decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
             // This is already a monomorphic declaration, so we can return it as-is
             return vec![decl.clone()];
         }
 
         let ctx = SpecializeContext::ground(table, erased_decls);
-        let extra_params: &[Identifier] = if is_erased { &params } else { &[] };
 
         // This is already a monomorphic declaration, so we only need to specialize its xtors.
         return vec![TypeDeclaration {
@@ -228,7 +269,7 @@ fn specialize_declaration<P: Polarity + Clone>(
             xtors: decl
                 .xtors
                 .iter()
-                .flat_map(|xtor| specialize_xtor_sig(xtor, extra_params, &ctx))
+                .flat_map(|xtor| specialize_xtor_sig(xtor, &[], None, &ctx))
                 .collect(),
             type_params: vec![],
         }];
@@ -245,7 +286,7 @@ fn specialize_declaration<P: Polarity + Clone>(
                 xtors: decl
                     .xtors
                     .iter()
-                    .flat_map(|xtor| specialize_xtor_sig(xtor, &[], &ctx))
+                    .flat_map(|xtor| specialize_xtor_sig(xtor, &[], None, &ctx))
                     .collect(),
                 type_params: vec![],
             }
@@ -253,12 +294,52 @@ fn specialize_declaration<P: Polarity + Clone>(
         .collect()
 }
 
-/// Specialization of polymorphic constructor/destructor signatures into monomorphic ones
+/// Specialization of a type declaration with erased type parameters: one copy per
+/// instantiation of its kept parameters (a single, unmangled copy if every parameter is
+/// erased), each containing one variant of every xtor per erased instantiation that occurs
+/// together with that copy's kept instantiation in the solution.
+fn specialize_erased_declaration<P: Polarity + Clone>(
+    decl: &TypeDeclaration<P>,
+    params: &[Identifier],
+    table: &NamingTable,
+    erased_decls: &ErasedDecls,
+) -> Vec<TypeDeclaration<P>> {
+    let kept_params = erased_decls.kept_args(&decl.name, params);
+    let erased_params = erased_decls.erased_args(&decl.name, params);
+
+    table
+        .instantiations_for(&decl.name)
+        .iter()
+        .map(|kept| {
+            let ctx = SpecializeContext::with_subst(table, &kept_params, kept, erased_decls);
+            TypeDeclaration {
+                dat: decl.dat.clone(),
+                name: table.lookup(&decl.name, kept).clone(),
+                xtors: decl
+                    .xtors
+                    .iter()
+                    .flat_map(|xtor| {
+                        specialize_xtor_sig(xtor, &erased_params, Some((&decl.name, kept)), &ctx)
+                    })
+                    .collect(),
+                type_params: vec![],
+            }
+        })
+        .collect()
+}
+
+/// Specialization of polymorphic constructor/destructor signatures into monomorphic ones.
+///
+/// `extra_params` are the erased type parameters of the surrounding declaration, if any. In that
+/// case `erased_copy` names the declaration and the kept instantiation of the copy being built,
+/// and only the variants whose erased instantiation belongs to that copy are generated.
 fn specialize_xtor_sig<P: Polarity + Clone>(
     xtor_sig: &XtorSig<P>,
     extra_params: &[Identifier],
+    erased_copy: Option<(&Identifier, &[Ty])>,
     ctx: &SpecializeContext,
 ) -> Vec<XtorSig<P>> {
+    let own_len = xtor_sig.type_params.len();
     let mut params: Vec<Identifier> = TypeParam::names(&xtor_sig.type_params);
     params.extend_from_slice(extra_params);
 
@@ -275,6 +356,10 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
     ctx.table
         .instantiations_for(&xtor_sig.name)
         .iter()
+        .filter(|tuple| match erased_copy {
+            Some((decl, kept)) => ctx.table.has_erased_variant(decl, kept, &tuple[own_len..]),
+            None => true,
+        })
         .map(|tuple| {
             let extended_ctx = ctx.extend_with_substs(&params, tuple);
             XtorSig {
@@ -288,10 +373,14 @@ fn specialize_xtor_sig<P: Polarity + Clone>(
 }
 
 /// Specialization of polymorphic clauses into monomorphic ones.
+///
+/// If the scrutinee belongs to a declaration with erased type parameters, `scrutinee` describes
+/// it: only the variants of the scrutinee's own copy of the declaration get a clause, and among
+/// those, every variant whose erased instantiation differs from the scrutinee's is unreachable.
 pub fn specialize_clause<C: Chi>(
     clause: &Clause<C>,
     ctx: &SpecializeContext,
-    scrutinee_extra_args: Option<&[Ty]>,
+    scrutinee: Option<&ErasedScrutinee>,
 ) -> Vec<Clause<C>> {
     let extra_params = ctx.table.extra_params_for(&clause.xtor);
     let mut full_params = clause.type_params.clone();
@@ -312,6 +401,15 @@ pub fn specialize_clause<C: Chi>(
     ctx.table
         .instantiations_for(&clause.xtor)
         .iter()
+        // variants of every other copy of the declaration do not belong in this case at all
+        .filter(|tuple| match scrutinee {
+            Some(s) => ctx.table.has_erased_variant(
+                &s.decl,
+                &s.kept_args,
+                &tuple[clause.type_params.len()..],
+            ),
+            None => true,
+        })
         .map(|tuple| {
             let (_own_args, extra_args) = tuple.split_at(clause.type_params.len());
             let extended_ctx = ctx.extend_with_substs(&full_params, tuple);
@@ -319,7 +417,7 @@ pub fn specialize_clause<C: Chi>(
 
             let context = clause.context.specialize(&extended_ctx);
 
-            let reachable = match scrutinee_extra_args {
+            let reachable = match scrutinee.and_then(|s| s.erased_args.as_deref()) {
                 Some(active) => extra_args == active,
                 None => true,
             };
@@ -1440,7 +1538,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_erased_declaration_keeps_one_copy_with_two_xtor_variants() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1467,7 +1565,7 @@ mod erasure_tests {
         // Wrap(123) : Box[i64]
         // Box is erased, so `type_args` on the Xtor term itself is
         // empty; the concrete instantiation must be recovere d from `self.ty`.
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")]]),
@@ -1508,7 +1606,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_clause_marks_the_non_matching_erased_instantiation_unreachable() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1518,7 +1616,12 @@ mod erasure_tests {
         let ctx = SpecializeContext::ground(&table, &erased);
 
         // mirrors a scrutinee whose own active instantiation of the erased Box is `int`
-        let copies = specialize_clause(&wrap_clause(), &ctx, Some(&[ty!("int")]));
+        let scrutinee = ErasedScrutinee {
+            decl: id!("Box"),
+            kept_args: vec![],
+            erased_args: Some(vec![ty!("int")]),
+        };
+        let copies = specialize_clause(&wrap_clause(), &ctx, Some(&scrutinee));
         assert_eq!(copies.len(), 2);
 
         let reachable_name = table.lookup(&id!("Wrap"), &[ty!("int")]);
@@ -1547,7 +1650,7 @@ mod erasure_tests {
 
     #[test]
     fn specialize_clause_keeps_every_instantiation_reachable_without_a_scrutinee_type() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -1573,7 +1676,7 @@ mod erasure_tests {
     fn call_specialize_erases_nested_recursive_type_argument() {
         // nest[Box[C]](...) while specializing nest's own C := Box: after substitution the
         // call's type argument is Box[Box], which must be erased to bare Box before lookup.
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let mut solution_map = HashMap::new();
         solution_map.insert(
             vec![id!("C", 1)],
@@ -1614,5 +1717,129 @@ mod erasure_tests {
         let expected_name = table.lookup(&id!("nest"), &[ty!(id!("Box"))]).clone();
         assert_eq!(result.name, expected_name);
         assert!(result.type_args.args.is_empty());
+    }
+
+    /// `data Tag[V+, W+] { MkTag(val: V, label: W) }`
+    fn tag_decl() -> DataDeclaration {
+        data!(
+            id!("Tag"),
+            [ctor_sig!(
+                id!("MkTag"),
+                [],
+                [
+                    bind!(id!("val"), prd!(), tvar!(id!("V", 1))),
+                    bind!(id!("label"), prd!(), tvar!(id!("W", 2)))
+                ]
+            )],
+            [tparam!(id!("V", 1), "+"), tparam!(id!("W", 2), "+")]
+        )
+    }
+
+    /// [`tag_decl`] plus a monomorphic `Bool` its instantiations refer to.
+    fn tag_decls() -> Vec<DataDeclaration> {
+        vec![tag_decl(), data!(id!("Bool"), [], [])]
+    }
+
+    /// `Tag` with only `V` erased, and a solution in which `V` grew once (`Tag[i64]`, already
+    /// in erased form) together with `W = i64`, while `W = Bool` only occurs with `V = i64`.
+    fn partially_erased_tag() -> (ErasedDecls, Solution) {
+        let erased = ErasedDecls::from(HashSet::from([(id!("Tag"), 0)]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("V", 1), id!("W", 2)],
+            HashSet::from([
+                vec![ty!("int"), ty!("int")],
+                vec![ty!(id!("Tag"), [ty!("int")]), ty!("int")],
+                vec![ty!("int"), ty!(id!("Bool"))],
+            ]),
+        )]));
+        (erased, solution)
+    }
+
+    #[test]
+    fn partially_erased_declaration_gets_one_copy_per_kept_instantiation() {
+        let (erased, solution) = partially_erased_tag();
+        let table = NamingTable::build(&solution, &tag_decls(), &[], &[], &erased)
+            .expect("test fixture must not collide");
+        let copies = specialize_declaration(&tag_decl(), &table, &erased);
+
+        let variants_of = |copy: &str| -> Vec<Vec<Ty>> {
+            let copy = copies
+                .iter()
+                .find(|d| d.name.name == copy)
+                .unwrap_or_else(|| panic!("expected a copy named {copy}"));
+            copy.xtors
+                .iter()
+                .map(|x| x.args.bindings.iter().map(|b| b.ty.clone()).collect())
+                .collect()
+        };
+
+        assert_eq!(copies.len(), 2, "one copy per instantiation of the kept W");
+
+        // Tag[i64] holds both variants of the erased V that occur with W = i64; the grown V is
+        // the copy Tag[i64] itself, referenced by its mangled name without being erased twice
+        let mut int_copy = variants_of("Tag[i64]");
+        int_copy.sort();
+        assert_eq!(
+            int_copy,
+            vec![vec![Ty::I64, Ty::I64], vec![ty!(id!("Tag[i64]")), Ty::I64],]
+        );
+
+        // Tag[Bool] only holds the variant its solution tuple correlates it with
+        assert_eq!(
+            variants_of("Tag[Bool]"),
+            vec![vec![Ty::I64, ty!(id!("Bool"))]]
+        );
+    }
+
+    #[test]
+    fn specialize_clause_only_covers_the_scrutinees_own_copy() {
+        let (erased, solution) = partially_erased_tag();
+        let table = NamingTable::build(&solution, &tag_decls(), &[], &[], &erased)
+            .expect("test fixture must not collide");
+        let ctx = SpecializeContext::ground(&table, &erased);
+
+        let clause = clause!(
+            Cns,
+            id!("MkTag"),
+            [],
+            [
+                bind!(id!("val"), prd!(), ty!("int")),
+                bind!(id!("label"), prd!(), ty!(id!("Bool")))
+            ],
+            cut!(lit!(0), covar!(id!("ret"), ty!("int")), ty!("int"))
+        );
+        let scrutinee = ErasedScrutinee {
+            decl: id!("Tag"),
+            kept_args: vec![ty!(id!("Bool"))],
+            erased_args: Some(vec![ty!("int")]),
+        };
+
+        let copies = specialize_clause(&clause, &ctx, Some(&scrutinee));
+
+        // MkTag[Tag[i64]] exists, but only in the copy Tag[i64], so it gets no clause here
+        assert_eq!(copies.len(), 1);
+        assert_eq!(&copies[0].xtor, table.lookup(&id!("MkTag"), &[ty!("int")]));
+        assert!(!matches!(
+            copies[0].body.as_ref(),
+            Statement::Unreachable(_)
+        ));
+    }
+
+    #[test]
+    fn scrutinee_kept_args_are_recovered_from_a_type_variable() {
+        // case on x: C with C := Tag[Bool] (erased form): the copy is known even though the
+        // erased argument itself is not
+        let (erased, solution) = partially_erased_tag();
+        let table = NamingTable::build(&solution, &tag_decls(), &[], &[], &erased)
+            .expect("test fixture must not collide");
+        let params = vec![id!("C", 5)];
+        let args = vec![ty!(id!("Tag"), [ty!(id!("Bool"))])];
+        let ctx = SpecializeContext::with_subst(&table, &params, &args, &erased);
+
+        let scrutinee =
+            ErasedScrutinee::of(&tvar!(id!("C", 5)), &ctx).expect("Tag has an erased parameter");
+        assert_eq!(scrutinee.decl, id!("Tag"));
+        assert_eq!(scrutinee.kept_args, vec![ty!(id!("Bool"))]);
+        assert_eq!(scrutinee.erased_args, None);
     }
 }

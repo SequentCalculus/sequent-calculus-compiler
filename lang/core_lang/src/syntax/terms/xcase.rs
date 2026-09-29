@@ -5,9 +5,7 @@ use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{
-    Specialize, SpecializeContext, recover_extra_args, specialize_clause,
-};
+use crate::mono::specialize::{ErasedScrutinee, Specialize, SpecializeContext, specialize_clause};
 use crate::splitting::labeling::{
     DeclSignatures, LabelAndUnify, SplitState, label_and_unify_clause, label_in,
 };
@@ -170,13 +168,13 @@ impl<C: Chi> ConstraintCollector for XCase<C> {
 
 impl<C: Chi> Specialize for XCase<C> {
     fn specialize(&self, context: &SpecializeContext) -> Self {
-        let extra_args = recover_extra_args(&self.ty, context);
+        let scrutinee = ErasedScrutinee::of(&self.ty, context);
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self
                 .clauses
                 .iter()
-                .flat_map(|clause| specialize_clause(clause, context, extra_args.as_deref()))
+                .flat_map(|clause| specialize_clause(clause, context, scrutinee.as_ref()))
                 .collect(),
             ty: self.ty.specialize(context),
         }

@@ -1,7 +1,7 @@
 //! Builds the table mapping every polymorphic declaration, xtor, and def, together with its
 //! concrete instantiation, to its mangled monomorphic name.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::{
     mono::{erasure::ErasedDecls, errors::MonoError, solver::Solution},
@@ -22,6 +22,11 @@ use crate::{
 pub struct NamingTable {
     names: BTreeMap<(Identifier, Vec<Ty>), Identifier>,
     xtor_extra_params: HashMap<Identifier, Vec<Identifier>>,
+    /// For every copy of a declaration with erased type parameters, keyed by the declaration's
+    /// name and the instantiation of its kept parameters, the instantiations of its erased
+    /// parameters that occur together with it in the solution. These are exactly the xtor
+    /// variants that copy contains.
+    erased_variants: BTreeMap<(Identifier, Vec<Ty>), BTreeSet<Vec<Ty>>>,
     /// Tracks which (name, instantiation) pair first claimed each mangled name, so a second,
     /// distinct pair mangling to the same name is reported as a [`MonoError::NameCollision`]
     /// instead of silently overwriting the first one.
@@ -47,6 +52,7 @@ impl NamingTable {
         let mut table = NamingTable {
             names: BTreeMap::new(),
             xtor_extra_params: HashMap::new(),
+            erased_variants: BTreeMap::new(),
             mangled_owners: HashMap::new(),
         };
 
@@ -73,11 +79,14 @@ impl NamingTable {
 
     /// Registers a single data or codata declaration and its xtors.
     ///
-    /// If the declaration is erased (widened to a single recursive type), it keeps its name
-    /// unchanged and unduplicated, and each of its xtors is registered under the combination of
-    /// its own type parameters plus the declaration's
-    /// own (now-erased) type parameters, exactly as if the latter had been declared on the xtor
-    /// itself. Otherwise, behavior matches the ordinary (non-erased) path used so far.
+    /// If some of the declaration's type parameters are erased (see [`ErasedDecls`]), the
+    /// declaration is registered once per instantiation of its *kept* parameters only, e.g.
+    /// `Pair[i64]` for `Pair[A, B]` with `A` erased, or just `Box` if every parameter is erased.
+    /// Each of its xtors is registered under the combination of its own type parameters plus
+    /// the declaration's *erased* parameters, exactly as if the latter had been declared on the
+    /// xtor itself. Which erased instantiations belong to which copy is recorded in
+    /// `erased_variants`, since the solver tracks all of the declaration's parameters as one
+    /// correlated node. Otherwise, behavior matches the ordinary (non-erased) path.
     fn register_decl<P: Polarity>(
         &mut self,
         decl: &TypeDeclaration<P>,
@@ -86,27 +95,64 @@ impl NamingTable {
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) -> Result<(), MonoError> {
         let decl_type_param_ids: Vec<Identifier> = TypeParam::names(&decl.type_params);
-        if erased_decls.is_erased(&decl.name) {
-            self.insert_name((decl.name.clone(), vec![]), decl.name.clone())?;
-            for xtor in &decl.xtors {
-                // Record the declaration's own type parameters as extra parameters for the xtor.
-                self.xtor_extra_params
-                    .insert(xtor.name.clone(), decl_type_param_ids.clone());
-
-                let xtor_type_param_ids: Vec<Identifier> = TypeParam::names(&xtor.type_params);
-                self.register_combined(
-                    &xtor.name,
-                    &xtor_type_param_ids,
-                    &decl_type_param_ids,
-                    solution,
-                    mangle,
-                )?;
-            }
-        } else {
+        if !erased_decls.is_erased(&decl.name) {
             self.register(&decl.name, &decl_type_param_ids, solution, mangle)?;
             for xtor in &decl.xtors {
                 let xtor_type_param_ids: Vec<Identifier> = TypeParam::names(&xtor.type_params);
                 self.register(&xtor.name, &xtor_type_param_ids, solution, mangle)?;
+            }
+            return Ok(());
+        }
+
+        let erased_param_ids = erased_decls.erased_args(&decl.name, &decl_type_param_ids);
+
+        // Split every correlated solution tuple of the declaration into its kept part (which
+        // selects the copy) and its erased part (which selects the xtor variant in that copy).
+        let mut variants: BTreeMap<Vec<Ty>, BTreeSet<Vec<Ty>>> = BTreeMap::new();
+        if erased_param_ids.len() == decl_type_param_ids.len() {
+            // A fully erased declaration always keeps its single, unmangled copy.
+            variants.entry(vec![]).or_default();
+        }
+        for tuple in solution.get(&decl_type_param_ids).into_iter().flatten() {
+            variants
+                .entry(erased_decls.kept_args(&decl.name, tuple))
+                .or_default()
+                .insert(erased_decls.erased_args(&decl.name, tuple));
+        }
+
+        let all_erased_tuples: BTreeSet<Vec<Ty>> = variants.values().flatten().cloned().collect();
+        for (kept, erased_tuples) in variants {
+            let mangled = Identifier::new(mangle(&decl.name, &kept));
+            self.insert_name((decl.name.clone(), kept.clone()), mangled)?;
+            self.erased_variants
+                .insert((decl.name.clone(), kept), erased_tuples);
+        }
+
+        for xtor in &decl.xtors {
+            self.xtor_extra_params
+                .insert(xtor.name.clone(), erased_param_ids.clone());
+
+            // The erased parameters are not a solver node of their own, so their instantiations
+            // come from the projections collected above, combined with every instantiation of
+            // the xtor's own parameters.
+            let xtor_type_param_ids: Vec<Identifier> = TypeParam::names(&xtor.type_params);
+            let own_tuples: Vec<Vec<Ty>> = if xtor_type_param_ids.is_empty() {
+                vec![vec![]]
+            } else {
+                solution
+                    .get(&xtor_type_param_ids)
+                    .into_iter()
+                    .flatten()
+                    .cloned()
+                    .collect()
+            };
+            for own in &own_tuples {
+                for erased in &all_erased_tuples {
+                    let mut combined = own.clone();
+                    combined.extend(erased.iter().cloned());
+                    let mangled = Identifier::new(mangle(&xtor.name, &combined));
+                    self.insert_name((xtor.name.clone(), combined), mangled)?;
+                }
             }
         }
         Ok(())
@@ -124,59 +170,13 @@ impl NamingTable {
         solution: &Solution,
         mangle: fn(&Identifier, &[Ty]) -> String,
     ) -> Result<(), MonoError> {
-        self.register_combined(name, type_params, &[], solution, mangle)
-    }
-
-    /// Registers every instantiation of `name` under the combination of `own_params` (the
-    /// name's own declared parameters) and `extra_params` (any additional parameters pushed down
-    /// from an erased surrounding declaration). If both are non-empty, the solver currently
-    /// tracks them as two independent nodes rather than one correlated one, so we take their
-    /// cartesian product.
-    fn register_combined(
-        &mut self,
-        name: &Identifier,
-        own_params: &[Identifier],
-        extra_params: &[Identifier],
-        solution: &Solution,
-        mangle: fn(&Identifier, &[Ty]) -> String,
-    ) -> Result<(), MonoError> {
-        if own_params.is_empty() && extra_params.is_empty() {
+        if type_params.is_empty() {
             return self.insert_name((name.clone(), vec![]), name.clone());
         }
 
-        let tuples: Vec<Vec<Ty>> = if extra_params.is_empty() {
-            solution
-                .get(own_params)
-                .cloned()
-                .unwrap_or_default()
-                .into_iter()
-                .collect()
-        } else if own_params.is_empty() {
-            solution
-                .get(extra_params)
-                .cloned()
-                .unwrap_or_default()
-                .into_iter()
-                .collect()
-        } else {
-            let own_tuples = solution.get(own_params).cloned().unwrap_or_default();
-            let extra_tuples = solution.get(extra_params).cloned().unwrap_or_default();
-
-            own_tuples
-                .into_iter()
-                .flat_map(|o| {
-                    extra_tuples.iter().map(move |e| {
-                        let mut combined = o.clone();
-                        combined.extend(e.clone());
-                        combined
-                    })
-                })
-                .collect()
-        };
-
-        for tuple in tuples {
-            let mangled = Identifier::new(mangle(name, &tuple));
-            self.insert_name((name.clone(), tuple), mangled)?;
+        for tuple in solution.get(type_params).into_iter().flatten() {
+            let mangled = Identifier::new(mangle(name, tuple));
+            self.insert_name((name.clone(), tuple.clone()), mangled)?;
         }
         Ok(())
     }
@@ -230,13 +230,22 @@ impl NamingTable {
             .collect()
     }
 
-    /// Returns any extra type parameters pushed down to this xtor from an erased declaration.
+    /// Returns the extra type parameters pushed down to this xtor from its declaration.
     /// Returns an empty slice if the xtor belongs to a non-erased declaration.
     pub fn extra_params_for(&self, xtor: &Identifier) -> &[Identifier] {
         self.xtor_extra_params
             .get(xtor)
             .map(|params| params.as_slice())
             .unwrap_or(&[])
+    }
+
+    /// True iff the copy of the erased declaration `decl` for the kept instantiation `kept`
+    /// contains the xtor variants for the erased instantiation `erased`, i.e. iff both occur
+    /// together in one solution tuple of the declaration.
+    pub fn has_erased_variant(&self, decl: &Identifier, kept: &[Ty], erased: &[Ty]) -> bool {
+        self.erased_variants
+            .get(&(decl.clone(), kept.to_vec()))
+            .is_some_and(|tuples| tuples.contains(erased))
     }
 }
 
@@ -308,7 +317,7 @@ mod erasure_tests {
 
     #[test]
     fn erased_decl_keeps_single_unmangled_name() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -323,7 +332,7 @@ mod erasure_tests {
 
     #[test]
     fn erased_decl_registers_two_xtor_instantiations() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")], vec![ty!(id!("Box"))]]),
@@ -357,7 +366,7 @@ mod erasure_tests {
             )],
             [tparam!(id!("L", 2), "+")]
         );
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([
             (
                 vec![id!("A", 1)],
@@ -389,7 +398,7 @@ mod erasure_tests {
 
     #[test]
     fn extra_params_for_returns_declarations_own_params_when_erased() {
-        let erased = ErasedDecls::from(HashSet::from([id!("Box")]));
+        let erased = ErasedDecls::from(HashSet::from([(id!("Box"), 0)]));
         let solution = Solution::from(HashMap::from([(
             vec![id!("A", 1)],
             HashSet::from([vec![ty!("int")]]),
@@ -413,5 +422,51 @@ mod erasure_tests {
             .expect("test fixture must not collide");
 
         assert!(table.extra_params_for(&id!("Wrap")).is_empty());
+    }
+
+    #[test]
+    fn partially_erased_decl_pushes_only_erased_params_onto_its_xtors() {
+        // Pair[A, B] with only A erased: copies per B, MkPair variants per A, and each copy only
+        // owns the A instantiations its solution tuples correlate it with
+        let pair_decl = data!(
+            id!("Pair"),
+            [ctor_sig!(
+                id!("MkPair"),
+                [],
+                [
+                    bind!(id!("x"), prd!(), tvar!(id!("A", 1))),
+                    bind!(id!("y"), prd!(), tvar!(id!("B", 2)))
+                ]
+            )],
+            [tparam!(id!("A", 1), "+"), tparam!(id!("B", 2), "+")]
+        );
+        let erased = ErasedDecls::from(HashSet::from([(id!("Pair"), 0)]));
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1), id!("B", 2)],
+            HashSet::from([
+                vec![ty!("int"), ty!("int")],
+                vec![ty!(id!("Pair"), [ty!("int")]), ty!("int")],
+                vec![ty!("int"), ty!(id!("Bool"))],
+            ]),
+        )]));
+
+        let table = NamingTable::build(&solution, &[pair_decl], &[], &[], &erased)
+            .expect("test fixture must not collide");
+
+        assert_eq!(
+            table.instantiations_for(&id!("Pair")),
+            vec![vec![ty!("int")], vec![ty!(id!("Bool"))]]
+        );
+        assert_eq!(table.extra_params_for(&id!("MkPair")), &[id!("A", 1)]);
+        assert_eq!(
+            table.instantiations_for(&id!("MkPair")),
+            vec![vec![ty!("int")], vec![ty!(id!("Pair"), [ty!("int")])]]
+        );
+
+        let grown = [ty!(id!("Pair"), [ty!("int")])];
+        assert!(table.has_erased_variant(&id!("Pair"), &[ty!("int")], &[ty!("int")]));
+        assert!(table.has_erased_variant(&id!("Pair"), &[ty!("int")], &grown));
+        assert!(table.has_erased_variant(&id!("Pair"), &[ty!(id!("Bool"))], &[ty!("int")]));
+        assert!(!table.has_erased_variant(&id!("Pair"), &[ty!(id!("Bool"))], &grown));
     }
 }

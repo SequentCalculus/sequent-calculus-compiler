@@ -226,6 +226,19 @@ impl ConstraintGraph {
     pub fn outgoing(&self, node: &Node) -> &[Edge] {
         self.edges.get(node).map(Vec::as_slice).unwrap_or(&[])
     }
+
+    /// Returns the variables `var`'s values flow into along one edge: for every outgoing edge of
+    /// `var`'s node, the target variable of each position that mentions `var`. This follows a
+    /// single component of a node through the graph, e.g. in `[Pair[A, B], B] ⊑ [A, B]` the
+    /// values of `B` flow into both `A` and `B`, those of `A` only into `A`.
+    pub fn flows_into(&self, var: &Identifier) -> Vec<Identifier> {
+        self.outgoing(&self.locations.node_of(var))
+            .iter()
+            .flat_map(|edge| edge.positions.iter().zip(&edge.into))
+            .filter(|(position, _)| position.vars().contains(var))
+            .map(|(_, target)| target.clone())
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -386,5 +399,26 @@ mod tests {
 
         assert!(outgoing_a[0].has_constructor_position());
         assert!(outgoing_b[0].has_constructor_position());
+    }
+
+    #[test]
+    fn flows_into_follows_single_components() {
+        // [Pair[A, B], B] ⊑ [A, B]: A only flows into A (through Pair), B into both A and B
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint {
+            from: vec![
+                ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("B", 2))]),
+                tvar!(id!("B", 2)),
+            ],
+            to: vec![id!("A", 1), id!("B", 2)],
+        });
+
+        let graph = ConstraintGraph::from(set);
+
+        assert_eq!(graph.flows_into(&id!("A", 1)), vec![id!("A", 1)]);
+        assert_eq!(
+            graph.flows_into(&id!("B", 2)),
+            vec![id!("A", 1), id!("B", 2)]
+        );
     }
 }

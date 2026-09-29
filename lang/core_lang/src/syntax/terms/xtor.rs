@@ -3,9 +3,10 @@
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
-use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext, recover_extra_args};
+use crate::mono::specialize::{
+    Specialize, SpecializeContext, erase_and_substitute, recover_extra_args,
+};
 use crate::splitting::labeling::{
     DeclSignatures, LabelAndUnify, SplitState, constrain_xtor_occurrence, label_in,
 };
@@ -229,8 +230,8 @@ impl<C: Chi> Specialize for Xtor<C> {
     fn specialize(&self, context: &SpecializeContext) -> Self {
         let specialized_ty = self.ty.specialize(context);
 
-        // If the surrounding declaration was erased, its own type arguments are no longer
-        // reflected in `specialized_ty`, but they're still needed to pick the right
+        // If some of the surrounding declaration's parameters were erased, their arguments are no
+        // longer reflected in `specialized_ty`, but they're still needed to pick the right
         // specialized xtor. Surface syntax never carries them explicitly at the call site
         // (they were always implicit via the expected type), so we recover them from `self.ty`.
         let extra_args: Vec<Ty> = recover_extra_args(&self.ty, context).unwrap_or_default();
@@ -239,12 +240,7 @@ impl<C: Chi> Specialize for Xtor<C> {
             .type_args
             .args
             .iter()
-            .map(|a| {
-                erase_ty(
-                    &a.substitute(context.subst.as_slices()),
-                    context.erased_decls,
-                )
-            })
+            .map(|a| erase_and_substitute(a, context))
             .collect();
         ground_type_args.extend(extra_args);
 

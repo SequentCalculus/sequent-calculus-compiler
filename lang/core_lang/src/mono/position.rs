@@ -56,7 +56,7 @@ impl Position {
 ///
 /// Handles arbitrary nesting, e.g. `Box[List[A]]` correctly yields `[A]`,
 /// and a multi-argument declaration like `Pair[A, B]` yields `[A, B]`.
-fn collect_vars(ty: &Ty) -> Vec<Identifier> {
+pub fn collect_vars(ty: &Ty) -> Vec<Identifier> {
     let mut vars = Vec::new();
     let mut seen = HashSet::new();
     collect_vars_into(ty, &mut vars, &mut seen);

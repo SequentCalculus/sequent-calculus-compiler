@@ -6,10 +6,10 @@ use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::constraints::collect_type_flow;
-use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
 use crate::mono::specialize::Specialize;
 use crate::mono::specialize::SpecializeContext;
+use crate::mono::specialize::erase_and_substitute;
 use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
@@ -177,12 +177,7 @@ impl Specialize for Call {
             .type_args
             .args
             .iter()
-            .map(|ty| {
-                erase_ty(
-                    &ty.substitute(context.subst.as_slices()),
-                    context.erased_decls,
-                )
-            })
+            .map(|ty| erase_and_substitute(ty, context))
             .collect();
 
         let specialized_name = if ground_type_args.is_empty() {

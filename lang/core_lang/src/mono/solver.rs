@@ -109,17 +109,19 @@ pub fn solve(graph: &ConstraintGraph) -> Result<Solution, MonoError> {
 }
 
 /// Performs total monomorphization: detects every growing cycle in the constraint set in one
-/// pass and erases the type parameters of every declaration responsible for one, then computes
-/// the fixpoint solution over the resulting (necessarily acyclic-in-growth) constraint graph.
+/// pass and erases exactly the declaration type parameters through which one of them grows, then
+/// computes the fixpoint solution over the resulting constraint graph.
+/// Parameters of the same declaration that no cycle grows through stay monomorphized.
 ///
 /// Unlike [`solve`], this function always succeeds, including for programs with polymorphic
-/// recursion of any kind. A single erasure pass suffices: `erase_ty` flattens *every* occurrence
-/// of a targeted declaration's head to its bare, argument-less name in one step, so a single edge
-/// that grows at several positions at once (e.g. `[Box[A], Bag[B]] ⊑ [A, B]`) is fully de-grown as
-/// long as every one of its own growing heads is included in `targets`, not just the first.
-/// [`GrowingCycle::trigger_targets`] collects all of them for exactly this reason. Beyond the
-/// triggering edge itself, erasure also never adds structure elsewhere in the graph (it only ever
-/// removes type arguments), so it can only remove growing edges, never introduce new ones.
+/// recursion of any kind. A single erasure pass suffices: for every triggering (edge, source)
+/// pair, [`GrowingCycle::trigger_params`] selects every argument of every constructor the edge
+/// applies that mentions one of the source's cycle variables (those whose values flow back from
+/// the constructor's target), including several positions of one edge at once (e.g.
+/// `[Box[A], Bag[B]] ⊑ [A, B]`). `erase_ty` drops all those arguments in one step, so afterwards
+/// no constructor of the edge wraps a cycle variable any more. Erasure never adds structure
+/// elsewhere in the graph (it only ever removes type arguments), so it can only remove variable
+/// edges and paths, never introduce new ones.
 pub fn solve_with_erasure(
     constraints: FlowConstraintSet,
 ) -> (Solution, ErasedDecls, FlowConstraintSet) {
@@ -134,7 +136,7 @@ pub fn solve_with_erasure(
         );
     }
 
-    let targets: HashSet<_> = cycles.iter().flat_map(|c| c.trigger_targets()).collect();
+    let targets: HashSet<_> = cycles.iter().flat_map(|c| c.trigger_params()).collect();
     let erased = ErasedDecls::from(targets);
 
     let erased_constraints = erase_constraints(&constraints, &erased);
@@ -474,7 +476,7 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([(id!("Box"), 0)])));
 
         let node = vec![id!("A", 1)];
         let sols = solution
@@ -508,7 +510,7 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([(id!("Box"), 0)])));
 
         let node = vec![id!("C", 6)];
         let sols = solution.get(&node).unwrap();
@@ -531,8 +533,38 @@ mod solve_with_erasure_tests {
 
         let (solution, erased, _) = solve_with_erasure(set);
 
-        assert_eq!(erased, ErasedDecls::from(HashSet::from([id!("Box")])));
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([(id!("Box"), 0)])));
         let node = vec![id!("A", 1)];
         assert!(solution.get(&node).unwrap().len() <= 2);
+    }
+
+    #[test]
+    fn solve_with_erasure_keeps_the_parameter_no_cycle_grows_through() {
+        // Pair[A, B] ⊑ A with B fed independently by i64 and Bool: only Pair's first parameter
+        // carries the cycle, so the second one must keep its full precision.
+        let mut set = FlowConstraintSet::new();
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Pair"), [tvar!(id!("A", 1)), tvar!(id!("B", 2))])],
+            vec![id!("A", 1)],
+        )));
+        set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("A", 1)])));
+        set.insert(FlowConstraint::from((vec![ty!("int")], vec![id!("B", 2)])));
+        set.insert(FlowConstraint::from((
+            vec![ty!(id!("Bool"))],
+            vec![id!("B", 2)],
+        )));
+
+        let (solution, erased, _) = solve_with_erasure(set);
+
+        assert_eq!(erased, ErasedDecls::from(HashSet::from([(id!("Pair"), 0)])));
+        let sols = solution.get(&vec![id!("A", 1)]).unwrap();
+        assert_eq!(
+            sols,
+            &HashSet::from([
+                vec![ty!("int")],
+                vec![ty!(id!("Pair"), [ty!("int")])],
+                vec![ty!(id!("Pair"), [ty!(id!("Bool"))])],
+            ])
+        );
     }
 }

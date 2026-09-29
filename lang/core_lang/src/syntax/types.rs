@@ -4,9 +4,8 @@ use printer::tokens::I64;
 use printer::*;
 
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
-use crate::mono::erasure::erase_ty;
 use crate::mono::errors::MonoError;
-use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::mono::specialize::{Specialize, SpecializeContext, erase_and_substitute};
 use crate::splitting::rewrite::Rewrite;
 use crate::splitting::split_table::SplitTable;
 use crate::typing::check::{Checked, check_type_args};
@@ -169,39 +168,29 @@ impl Specialize for Ty {
                         param.print_to_string(None)
                     )
                 });
-                args[pos].specialize(&SpecializeContext::ground(
-                    context.table,
-                    context.erased_decls,
-                ))
+                // substituted values come from the solution and are already erased, so they
+                // must not be erased a second time
+                lookup_erased_ground(&args[pos], context)
             }
 
-            Ty::Decl { name, type_args } => {
-                let substituted: Vec<Ty> = type_args
-                    .args
-                    .iter()
-                    .map(|a| a.substitute(context.subst.as_slices()))
-                    .collect();
-                let candidate = Ty::Decl {
-                    name: name.clone(),
-                    type_args: TypeArgs { args: substituted },
-                };
-
-                // Erase the type inline to match the right candidate for the lookup
-                let erased_candidate = erase_ty(&candidate, context.erased_decls);
-                let Ty::Decl {
-                    name: erased_name,
-                    type_args: erased_args,
-                } = &erased_candidate
-                else {
-                    unreachable!("erase_ty always preserves the Decl variant");
-                };
-                let mangled = context.table.lookup(erased_name, &erased_args.args).clone();
-                Ty::Decl {
-                    name: mangled,
-                    type_args: TypeArgs::default(),
-                }
-            }
+            Ty::Decl { .. } => lookup_erased_ground(&erase_and_substitute(self, context), context),
         }
+    }
+}
+
+/// Replaces a ground type that is already in erased form by its monomorphic counterpart, i.e. a
+/// declaration type by the argument-less mangled name the naming table recorded for it.
+fn lookup_erased_ground(ty: &Ty, context: &SpecializeContext) -> Ty {
+    match ty {
+        Ty::I64 => Ty::I64,
+        Ty::Decl { name, type_args } => Ty::Decl {
+            name: context.table.lookup(name, &type_args.args).clone(),
+            type_args: TypeArgs::default(),
+        },
+        Ty::Var(param) => panic!(
+            "type variable {} left after substitution",
+            param.print_to_string(None)
+        ),
     }
 }
 

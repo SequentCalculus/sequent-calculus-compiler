@@ -60,7 +60,7 @@ fn print_input_debug(program: &Prog, constraints: &FlowConstraintSet, graph: &Co
     println!("Growing Cycles: {}", find_all_growing_cycles(graph).len());
 }
 
-/// Reports the outcome of `solve_with_erasure`: which constraints and declarations, if any, were
+/// Reports the outcome of `solve_with_erasure`: which constraints and declaration parameters, if any, were
 /// erased to break a growing cycle, and the resulting solution.
 fn print_solving_debug(
     erased_constraints: &FlowConstraintSet,
@@ -75,11 +75,20 @@ fn print_solving_debug(
         );
     }
     if !erased_decls.is_empty() {
+        // each declaration with the zero-based indices of its erased parameters, e.g. `Pair[0]`
         println!(
             "Erased Declarations: {}",
             erased_decls
                 .iter()
-                .map(|id| id.print_to_string(Some(&cfg)))
+                .map(|(id, indices)| format!(
+                    "{}[{}]",
+                    id.print_to_string(Some(&cfg)),
+                    indices
+                        .iter()
+                        .map(usize::to_string)
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ))
                 .collect::<Vec<_>>()
                 .join(", ")
         );
