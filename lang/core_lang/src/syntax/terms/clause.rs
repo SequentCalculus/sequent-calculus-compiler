@@ -304,7 +304,7 @@ impl<C: Chi> Checked for Clause<C> {
 #[cfg(test)]
 mod label_and_unify_tests {
     use crate::splitting::labeling::{
-        DeclSignature, DeclSignatures, SplitState, finish_classes, label_and_unify_clause, label_in,
+        DeclSignature, DeclSignatures, SplitState, finish_classes, label_and_unify_clause,
     };
     use crate::syntax::*;
     extern crate self as core_lang;
@@ -354,18 +354,15 @@ mod label_and_unify_tests {
             label_and_unify_clause(&example, &mut state, &sigs, &scope, &owner);
         let binding_ty = result.context.bindings[0].ty.clone();
 
-        // the owner's class now holds its own copy of the field, and the binder is tied to it,
-        // which is where a second occurrence of the same class would meet it
+        // the owner's class now holds its own copy of the field, and the binder's type is that
+        // copy itself, which is where a second occurrence of the same class would meet it
         let (class_fields, used_xtors) = finish_classes(&state);
         let root = state.uf.find(&owner_label);
         let copy = class_fields
             .get(&root, &id!("Cons"), 0)
             .expect("the owner's class holds Cons.0")
             .clone();
-        assert_eq!(
-            state.uf.find(label_in(&copy)),
-            state.uf.find(label_in(&binding_ty))
-        );
+        assert_eq!(binding_ty, copy);
         assert!(used_xtors.contains(&root, &id!("Cons")));
 
         // scope threading: the body's occurrence of `x` must carry exactly the binding's label

@@ -242,7 +242,7 @@ impl<C: Chi> LabelAndUnify for XCase<C> {
         // `label_and_unify_clause`), since a `Clause` itself carries no `.ty` to derive this from.
         let ty = state.label_ty(&self.ty);
         // Each clause records itself as a use of its xtor and derives both its owner label and the
-        // declaration's type-parameter instantiation from `ty`, see `constrain_xtor_occurrence`.
+        // declaration's type-parameter instantiation from `ty`, see `instantiate_xtor_fields`.
         XCase {
             prdcns: self.prdcns.clone(),
             clauses: self

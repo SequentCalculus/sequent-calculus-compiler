@@ -242,7 +242,7 @@ fn build_field_args<P: Polarity + Clone>(
 /// That copy always exists for an xtor the class actually uses, and `build_declaration_copy` only
 /// ever builds a field list for such an xtor, since `keeps_xtor` drops every other one: recording
 /// a use and creating the class's copy of every one of that xtor's fields happen in the same step,
-/// in `constrain_xtor_occurrence`. A missing copy therefore means the two have drifted apart.
+/// in `instantiate_xtor_fields`. A missing copy therefore means the two have drifted apart.
 fn class_field<'a, P: Polarity>(
     plan: &'a SplitPlan,
     root: &Label,

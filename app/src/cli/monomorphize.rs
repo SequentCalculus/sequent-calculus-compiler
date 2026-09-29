@@ -22,7 +22,7 @@ pub struct Args {
     timings: bool,
 }
 
-pub fn exec(cmd: Args) -> miette::Result<()> {
+pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mut drv = Driver::new();
     drv.set_split(!cmd.no_split);
     let viz = VizOutput::from_cli_flag(cmd.viz);
@@ -34,7 +34,7 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         }
     };
     drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
-    print_stdout(&monomorphized, true);
+    print_stdout(&monomorphized, colored);
     if cmd.timings {
         eprint!("{}", drv.timings_report());
     }

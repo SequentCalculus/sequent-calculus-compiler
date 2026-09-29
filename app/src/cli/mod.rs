@@ -51,7 +51,7 @@ pub fn exec() -> miette::Result<()> {
         Split(args) => split::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
-        Monomorphize(args) => monomorphize::exec(args),
+        Monomorphize(args) => monomorphize::exec(args, !cli.no_color),
     }
 }
 

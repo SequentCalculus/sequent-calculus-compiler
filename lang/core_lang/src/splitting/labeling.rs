@@ -53,12 +53,12 @@ pub fn label_in(ty: &Ty) -> &Label {
 }
 
 /// Pairs a signature's type parameters with an occurrence's labeled type arguments, in the
-/// `(params, args)` shape [`Ty::substitute`] expects, for [`constrain_xtor_occurrence`]. Mirrors
+/// `(params, args)` shape [`Ty::substitute`] expects, for [`instantiate_xtor_fields`]. Mirrors
 /// the double substitution in `check_xcase_against_decl`:
 /// `decl_type_args` instantiate the enclosing declaration's own parameters (e.g. `Fun`'s `A`, `B`),
-/// `own_type_args` the xtor's own existential/universal ones (e.g. `Pack`'s own `B`). A clause
-/// passes an empty `own_type_args`: it binds fresh, abstract names for those rather than knowing a
-/// concrete instantiation.
+/// `own_type_args` the xtor's own existential/universal ones (e.g. `Pack`'s own `B`). An `Xtor`
+/// term passes its explicit type arguments, a clause the abstract names it binds for them, as
+/// `Ty::Var`s.
 fn type_param_subst(
     sig: &DeclSignature,
     decl_type_args: &[Ty],
@@ -192,7 +192,7 @@ impl SplitState {
     /// declaration head labeled freshly, every type parameter left as a variable. The heads are
     /// this copy's decisions (which copy of `List` does `tail: List[A]` point at?), shared by
     /// every occurrence of the class; the type parameters are not, since one generic copy can be
-    /// instantiated differently at every occurrence (see [`constrain_xtor_occurrence`]).
+    /// instantiated differently at every occurrence (see [`instantiate_xtor_fields`]).
     pub fn class_field(
         &mut self,
         owner: &Label,
@@ -272,7 +272,7 @@ fn label_def_signature(def: &Def, state: &mut SplitState) -> Vec<Ty> {
 
 /// Labels every def's own signature (see [`label_def_signature`]) and collects a
 /// [`DeclSignature`] for every def, constructor, and destructor in `prog`, for later use at every
-/// call site (`Call::label_and_unify`) and every xtor occurrence ([`constrain_xtor_occurrence`]).
+/// call site (`Call::label_and_unify`) and every xtor occurrence ([`instantiate_xtor_fields`]).
 ///
 /// Only the defs' signatures are labeled. An xtor's entry carries the declaration's field types
 /// unchanged, as the unlabeled template every equivalence class instantiates its own copy from
@@ -325,9 +325,10 @@ pub fn build_decl_signatures(prog: &Prog, state: &mut SplitState) -> DeclSignatu
 /// This trait assigns fresh labels to every declared-type occurrence within a syntax element and
 /// eagerly unifies label pairs wherever the existing type system already requires
 /// two types to be equal at that position, e.g. a `Cut`'s producer/consumer type, a `Call`'s
-/// argument against the callee's declared parameter type, or an `Xtor`'s argument and an `XCase`
-/// clause's binder against the owner class's copy of that field (see
-/// [`constrain_xtor_occurrence`]).
+/// argument against the callee's declared parameter type, or an `Xtor`'s argument against the
+/// owner class's copy of that field (see [`constrain_xtor_occurrence`]). An `XCase` clause's
+/// binders need no unification: they are given the owner class's copy of each field directly
+/// (see [`label_and_unify_clause`]).
 ///
 /// This is the combined labeling-and-unification pass of type splitting; running it eagerly
 /// during a single tree walk avoids collecting the required equalities in a separate pass first,
@@ -384,42 +385,32 @@ impl<X: LabelAndUnify> LabelAndUnify for Option<X> {
     }
 }
 
-/// Everything one occurrence of an xtor contributes to type splitting, shared by an `Xtor` term
-/// and a `case`/`new` clause, which are the two ways an xtor can occur.
+/// What every occurrence of an xtor has in common, for an `Xtor` term and a `case`/`new` clause
+/// alike (the two ways an xtor can occur): records the xtor as used for the owner's class (see
+/// [`SplitState::record_xtor_use`]) and returns the owner class's copy of every field (see
+/// [`SplitState::class_field`]), instantiated for this occurrence, i.e. the labeled type this
+/// occurrence has to have at each field.
 ///
 /// `owner_ty` is the labeled type of the value the xtor constructs, observes, matches or defines
 /// (an `Xtor`'s own `.ty`, or the owning `XCase`'s `.ty` for a clause); its label owns everything
 /// recorded here, and its type arguments instantiate the declaration's own type parameters.
 /// `own_type_args` instantiate the xtor's own existential/universal ones: an `Xtor` term supplies
-/// them explicitly, a clause passes none, since it binds them as abstract names. `field_tys` are
-/// the labeled types the occurrence actually has at the xtor's fields, i.e. an `Xtor`'s argument
-/// types or a clause's binder types.
+/// them explicitly, a clause passes the abstract names it binds for them.
 ///
-/// The xtor is recorded as used for the owner's class (see [`SplitState::record_xtor_use`]), and
-/// every field's actual type is unified with the owner class's copy of that field (see
-/// [`SplitState::class_field`]), instantiated for this occurrence by substituting its type
-/// arguments. That one unification does both jobs a field has:
+/// The instantiated copy carries both things a field decides:
 /// - the *heads* are the class's own labels, so every occurrence of the class ends up agreeing on
 ///   which split copy a field such as `tail: List[A]` points at;
 /// - the *type parameters* are replaced per occurrence, so a field such as `head: A` is tied to
 ///   this occurrence's own type argument, and nothing else. Two occurrences sharing one generic
 ///   copy (e.g. through a polymorphic `Def` called at two types), or two values of one type hiding
 ///   different existentials, therefore keep their instantiations apart.
-///
-/// Take `data List[A] { Nil, Cons(head: A, tail: List[A]) }` and the occurrence
-/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`, with the arguments
-/// `Wrap(1) : Box#2` and `Nil : List#2[Box#3]`. Its class holds the fields `head: A` and
-/// `tail: List#3[A]`, which instantiate to `Box#1` and `List#3[Box#1]`. Unifying the first with
-/// `Box#2` ties the annotation `List[Box]` to the value stored in it; unifying the second with
-/// `Nil`'s type ties its head `List#2` to the class's `List#3`, and its `Box#3` to `Box#1`.
-pub fn constrain_xtor_occurrence(
+pub fn instantiate_xtor_fields(
     state: &mut SplitState,
     sigs: &DeclSignatures,
     xtor: &Identifier,
     owner_ty: &Ty,
     own_type_args: &[Ty],
-    field_tys: &[Ty],
-) {
+) -> Vec<Ty> {
     let Some(sig) = sigs.get(xtor) else {
         panic!("missing signature for xtor: {}", xtor.name);
     };
@@ -436,20 +427,46 @@ pub fn constrain_xtor_occurrence(
     let subst = type_param_subst(sig, &decl_type_args.args, own_type_args);
 
     state.record_xtor_use(owner, xtor);
-    for (i, (actual, declared)) in field_tys.iter().zip(&sig.tys).enumerate() {
-        let field = state.class_field(owner, xtor, i, declared);
-        let expected = field.substitute((subst.0.as_slice(), subst.1.as_slice()));
-        state.unify_ty(actual, &expected);
+    sig.tys
+        .iter()
+        .enumerate()
+        .map(|(i, declared)| {
+            state
+                .class_field(owner, xtor, i, declared)
+                .substitute((subst.0.as_slice(), subst.1.as_slice()))
+        })
+        .collect()
+}
+
+/// Constrains an `Xtor` term. Its arguments are terms with labels of their own, so each argument's
+/// type in `field_tys` is unified with the field type this occurrence has to have (see
+/// [`instantiate_xtor_fields`]).
+///
+/// Take `data List[A] { Nil, Cons(head: A, tail: List[A]) }` and the occurrence
+/// `Cons(Wrap(1), Nil) : List[Box]`, labeled as `List#1[Box#1]`, with the arguments
+/// `Wrap(1) : Box#2` and `Nil : List#2[Box#3]`. Its class holds the fields `head: A` and
+/// `tail: List#3[A]`, which instantiate to `Box#1` and `List#3[Box#1]`. Unifying the first with
+/// `Box#2` ties the annotation `List[Box]` to the value stored in it; unifying the second with
+/// `Nil`'s type ties its head `List#2` to the class's `List#3`, and its `Box#3` to `Box#1`.
+pub fn constrain_xtor_occurrence(
+    state: &mut SplitState,
+    sigs: &DeclSignatures,
+    xtor: &Identifier,
+    owner_ty: &Ty,
+    own_type_args: &[Ty],
+    field_tys: &[Ty],
+) {
+    let expected = instantiate_xtor_fields(state, sigs, xtor, owner_ty, own_type_args);
+    for (actual, expected) in field_tys.iter().zip(&expected) {
+        state.unify_ty(actual, expected);
     }
 }
 
-/// Labels and unifies one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every
-/// other node, a `Clause` carries no `.ty` of its own, the matched/constructed value's type is only
-/// known from the owning `XCase`, so the caller must pass it in (mirrors
+/// Labels one clause of a match/comatch. Not a `LabelAndUnify` impl: unlike every other node, a
+/// `Clause` carries no `.ty` of its own, the matched/constructed value's type is only known from
+/// the owning `XCase`, so the caller must pass it in (mirrors
 /// [`crate::splitting::rewrite::rewrite_clause`], which needs the analogous owner label for the
-/// same structural reason). A clause is a real occurrence of its xtor, for `case` and `new` alike,
-/// so once its binders are labeled it is constrained exactly like an `Xtor` term (see
-/// [`constrain_xtor_occurrence`]).
+/// same structural reason).
 pub fn label_and_unify_clause<C: Chi>(
     clause: &Clause<C>,
     state: &mut SplitState,
@@ -457,21 +474,22 @@ pub fn label_and_unify_clause<C: Chi>(
     scope: &TypingContext,
     owner_ty: &Ty,
 ) -> Clause<C> {
+    // The clause binds the xtor's own type parameters under its own names, just as
+    // `check_xcase_against_decl` instantiates them, so the field types come out spelled exactly
+    // like the binders' declared types, only labeled.
+    let own_type_args: Vec<Ty> = clause.type_params.iter().cloned().map(Ty::Var).collect();
+    let field_tys = instantiate_xtor_fields(state, sigs, &clause.xtor, owner_ty, &own_type_args);
     let labeled_bindings: Vec<ContextBinding> = clause
         .context
         .bindings
         .iter()
-        .map(|binding| ContextBinding {
+        .zip(field_tys)
+        .map(|(binding, ty)| ContextBinding {
             var: binding.var.clone(),
             chi: binding.chi.clone(),
-            ty: state.label_ty(&binding.ty),
+            ty,
         })
         .collect();
-
-    // Constrained here rather than in `XCase::label_and_unify`, since this is the only place that
-    // sees the owner type and the clause's xtor together, for both polarities.
-    let binder_tys: Vec<Ty> = labeled_bindings.iter().map(|b| b.ty.clone()).collect();
-    constrain_xtor_occurrence(state, sigs, &clause.xtor, owner_ty, &[], &binder_tys);
 
     let mut extended_scope = scope.clone();
     extended_scope.bindings.extend(labeled_bindings.clone());
