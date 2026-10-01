@@ -41,7 +41,7 @@ pub fn check_polarity(expected: ParamPolarity, got: ParamPolarity) -> Result<(),
 
 /// Checks a sequence of type arguments against the declaration-site type parameters they
 /// instantiate: arity, then per argument well-formedness (via [`Checked::check`]) and that the
-/// argument's own polarity matches the parameter's declared one.
+/// argument's own polarity matches the parameter's declared one, if it has one.
 ///
 /// `type_params` is the ambient list of declaration-site type parameters currently in scope (see
 /// [`Checked::check`]), needed to resolve a `Ty::Var` argument's own polarity; it is unrelated to
@@ -56,12 +56,26 @@ pub fn check_type_args(
     check_arity(declared_params.len(), args.len())?;
     for (arg, declared_param) in args.iter().zip(declared_params) {
         arg.check(type_params, context, env)?;
+        // A parameter without a declared polarity accepts arguments of either polarity
+        let Some(expected) = declared_param.polarity else {
+            continue;
+        };
+        // A type variable without a polarity (a parameter of the enclosing type declaration) has
+        // none to compare, so it is accepted as well
+        if let Ty::Var(var) = arg {
+            if type_params
+                .iter()
+                .any(|param| param == var && param.polarity.is_none())
+            {
+                continue;
+            }
+        }
         let got = if arg.is_codata(env.codata_decls, type_params) {
             ParamPolarity::Codata
         } else {
             ParamPolarity::Data
         };
-        check_polarity(declared_param.polarity, got)?;
+        check_polarity(expected, got)?;
     }
     Ok(())
 }

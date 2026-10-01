@@ -14,7 +14,7 @@ impl Compile for fun::syntax::terms::PrintI64 {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::PrintI64 {
             newline: self.newline,

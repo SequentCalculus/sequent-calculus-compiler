@@ -22,7 +22,7 @@ impl Compile for fun::syntax::terms::Call {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state, type_params.clone());
         args.entries.push(cont.into());
@@ -222,7 +222,7 @@ mod compile_tests {
         let fresh_target_id = id!("A", 42);
         type_params_subst.insert(
             "A".to_string(),
-            (fresh_target_id.clone(), ParamPolarity::Data),
+            (fresh_target_id.clone(), Some(ParamPolarity::Data)),
         );
         let type_params_rc = Rc::new(type_params_subst);
 

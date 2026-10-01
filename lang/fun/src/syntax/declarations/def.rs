@@ -43,7 +43,13 @@ impl Def {
         for param in &self.type_params.bindings {
             symbol_table.type_templates.insert(
                 param.name.clone(),
-                (param.polarity, TypeParams::default(), vec![]),
+                (
+                    param
+                        .polarity
+                        .expect("the parser enforces a polarity on definition type parameters"),
+                    TypeParams::default(),
+                    vec![],
+                ),
             );
             inserted.push(param.name.clone());
         }

@@ -1,8 +1,8 @@
-data List[A+] { Nil, Cons(x: A, xs: List[A]) }
-data Option[A+] { None, Some(value: A) }
+data List[A] { Nil, Cons(x: A, xs: List[A]) }
+data Option[A] { None, Some(value: A) }
 
-codata Fun[A+, B+] { apply(x: A): B }
-codata Fun2[A+, B+, C+] { apply2(x: A, y: B): C }
+codata Fun[A, B] { apply(x: A): B }
+codata Fun2[A, B, C] { apply2(x: A, y: B): C }
 
 def map[A+, B+](f: Fun[A, B], l: List[A]): List[B] {
     l.case[A] {

@@ -22,7 +22,7 @@ pub fn compile_clause(
     clause: fun::syntax::terms::Clause,
     cont: core_lang::syntax::terms::Term<Cns>,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> core_lang::syntax::terms::Clause<Cns, Statement> {
     // lookup the concrete constructor (name and own declared type parameters) in the data types
     let Some(ctor) = state.data_types.iter().find_map(|data_decl| {
@@ -50,7 +50,7 @@ pub fn compile_clause(
         })
         .collect();
 
-    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
+    let type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
@@ -83,7 +83,7 @@ pub fn compile_clause(
 pub fn compile_coclause(
     clause: fun::syntax::terms::Clause,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> core_lang::syntax::terms::Clause<Prd, Statement> {
     // lookup the concrete destructor (name and own declared type parameters) in the codata types
     let Some(dtor) = state.codata_types.iter().find_map(|codata_decl| {
@@ -110,7 +110,7 @@ pub fn compile_coclause(
         })
         .collect();
 
-    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
+    let type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()

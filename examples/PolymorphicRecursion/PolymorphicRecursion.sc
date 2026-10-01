@@ -1,4 +1,4 @@
-data Nested[A+] {
+data Nested[A] {
     Base(x: A),
     Grow[E+](tag: E, inner: Nested[Nested[A]])
 }
@@ -12,12 +12,12 @@ data Box {
     Pack[V+](val: V, tag: i64)
 }
 
-data List[D+] {
+data List[D] {
     Nil,
     Cons(x: D, xs: List[D])
 }
 
-codata Holder[H+] {
+codata Holder[H] {
     put[S+](val: S, tag: H): H
 }
 

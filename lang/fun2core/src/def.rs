@@ -35,7 +35,7 @@ pub fn compile_def(
     data_types: &[DataDeclaration],
     used_labels: &mut HashSet<Name>,
     max_id: &mut usize,
-    type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     type_params: Vec<TypeParam>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
@@ -109,7 +109,7 @@ pub fn compile_main(
     data_types: &[DataDeclaration],
     used_labels: &mut HashSet<Name>,
     max_id: &mut usize,
-    type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> VecDeque<core_lang::syntax::Def> {
     let mut used_vars = def.context.vars();
     let context = compile_context(def.context, type_params_subst.clone());

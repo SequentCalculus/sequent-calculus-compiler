@@ -415,8 +415,12 @@ impl SymbolTable {
                     name: name.clone(),
                 });
             }
-            self.abstract_type_vars
-                .insert(name.clone(), own_param.polarity);
+            self.abstract_type_vars.insert(
+                name.clone(),
+                own_param.polarity.expect(
+                    "the parser enforces a polarity on constructor/destructor type parameters",
+                ),
+            );
             result.push(Ty::Decl {
                 span: None,
                 name: name.clone(),

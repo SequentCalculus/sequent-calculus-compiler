@@ -27,7 +27,7 @@ impl Compile for fun::syntax::terms::Constructor {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         // lookup the concret name of the constructor in the data types
         let Some(name) = state.data_types.iter().find_map(|data_decl| {
@@ -67,7 +67,7 @@ impl Compile for fun::syntax::terms::Constructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self

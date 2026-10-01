@@ -3,6 +3,9 @@
 //! parameters. Unlike [`TypeContext`](crate::syntax::context::TypeContext) (used for
 //! pattern-binding occurrences in `case`/`new` clauses, where the polarity is inherited from the
 //! declaration and not re-annotated), every binding here carries its own declared [`Polarity`].
+//! The polarity is optional only for the parameters of a `data`/`codata` declaration, since those
+//! live purely on the type level. All other declaration-site parameters must carry one, which the
+//! parser enforces.
 
 use derivative::Derivative;
 use miette::SourceSpan;
@@ -17,9 +20,10 @@ use crate::typing::errors::Error;
 use std::collections::HashSet;
 
 /// This struct defines a single type parameter at a declaration site (`data`/`codata`/`def`, or a
-/// constructor's/destructor's own existential parameters). Every such type parameter must carry an
-/// explicit, mandatory [`Polarity`] annotation (`A+` for data/positive, `A-` for codata/negative) —
-/// there is no default and no inference.
+/// constructor's/destructor's own existential parameters). The [`Polarity`] annotation is `A+` for
+/// data/positive and `A-` for codata/negative; there is no default and no inference. It may only be
+/// omitted (`None`) on the parameters of a `data`/`codata` declaration, where it means that the
+/// parameter accepts type arguments of either polarity.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct TypeParam {
@@ -28,8 +32,8 @@ pub struct TypeParam {
     pub span: Option<SourceSpan>,
     /// The parameter name
     pub name: Name,
-    /// The declared polarity of the parameter
-    pub polarity: Polarity,
+    /// The declared polarity of the parameter, `None` if it was omitted
+    pub polarity: Option<Polarity>,
 }
 
 /// This struct defines a declaration-site list of [`TypeParam`]s.
@@ -71,7 +75,7 @@ impl TypeParams {
                 .map(|(name, polarity)| TypeParam {
                     span: None,
                     name: name.to_string(),
-                    polarity: *polarity,
+                    polarity: Some(*polarity),
                 })
                 .collect(),
         }
@@ -97,9 +101,11 @@ impl TypeParams {
 
 impl Print for TypeParam {
     fn print<'a>(&'a self, _cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        alloc
-            .text(self.name.clone())
-            .append(alloc.text(self.polarity.to_string()))
+        let polarity = match self.polarity {
+            Some(polarity) => alloc.text(polarity.to_string()),
+            None => alloc.nil(),
+        };
+        alloc.text(self.name.clone()).append(polarity)
     }
 }
 
@@ -170,14 +176,24 @@ mod tests {
         let plus = TypeParam {
             span: None,
             name: "A".to_string(),
-            polarity: Polarity::Data,
+            polarity: Some(Polarity::Data),
         };
         let minus = TypeParam {
             span: None,
             name: "B".to_string(),
-            polarity: Polarity::Codata,
+            polarity: Some(Polarity::Codata),
         };
         assert_eq!(plus.print_to_string(None), "A+");
         assert_eq!(minus.print_to_string(None), "B-");
+    }
+
+    #[test]
+    fn type_param_print_without_polarity() {
+        let param = TypeParam {
+            span: None,
+            name: "A".to_string(),
+            polarity: None,
+        };
+        assert_eq!(param.print_to_string(None), "A");
     }
 }

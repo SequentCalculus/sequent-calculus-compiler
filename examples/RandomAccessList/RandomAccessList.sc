@@ -5,11 +5,11 @@
 // the *type argument* to `RList` that keeps doubling, exactly the pattern `cons`/`lookup` must
 // follow polymorphically to stay well-typed at every depth.
 
-data Pair[A+] {
+data Pair[A] {
     MkPair(fst: A, snd: A)
 }
 
-data RList[A+] {
+data RList[A] {
     Nil,
     Zero(rest: RList[Pair[A]]),
     One(x: A, rest: RList[Pair[A]])

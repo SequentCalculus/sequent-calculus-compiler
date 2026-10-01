@@ -23,7 +23,7 @@ impl Compile for fun::syntax::terms::XVar {
         self,
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XVar {
             prdcns: Prd,
@@ -50,7 +50,7 @@ impl Compile for fun::syntax::terms::XVar {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         _state: &mut crate::compile::CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self

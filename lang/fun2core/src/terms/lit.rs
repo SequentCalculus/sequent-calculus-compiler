@@ -18,7 +18,7 @@ impl Compile for fun::syntax::terms::Lit {
         self,
         _state: &mut crate::compile::CompileState,
         _ty: Ty,
-        _typed_args: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        _typed_args: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::Literal { lit: self.lit }.into()
     }
@@ -31,7 +31,7 @@ impl Compile for fun::syntax::terms::Lit {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         _state: &mut crate::compile::CompileState,
-        _type_args: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        _type_args: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let new_lit: core_lang::syntax::terms::Term<Prd> =
             core_lang::syntax::terms::Literal { lit: self.lit }.into();

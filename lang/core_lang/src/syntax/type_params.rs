@@ -1,5 +1,7 @@
 //! This module defines the polarity annotation carried by declaration-site type parameters
-//! (`TypeDeclaration`/`XtorSig`/`Def`), mirroring the `+`/`-` annotation on the Fun side.
+//! (`TypeDeclaration`/`XtorSig`/`Def`), mirroring the `+`/`-` annotation on the Fun side. The
+//! polarity is only optional for the parameters of a `TypeDeclaration`, which live purely on the
+//! type level.
 
 use printer::*;
 
@@ -41,12 +43,14 @@ impl std::fmt::Display for ParamPolarity {
     }
 }
 
-/// A single declaration-site type parameter: an [`Identifier`] paired with its mandatory
-/// declared [`ParamPolarity`].
+/// A single declaration-site type parameter: an [`Identifier`] paired with its declared
+/// [`ParamPolarity`]. The polarity is `None` only on the parameters of a `TypeDeclaration`, where
+/// it means that the parameter accepts type arguments of either polarity. The parameters of an
+/// `XtorSig` or a `Def` always carry one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParam {
     pub name: Identifier,
-    pub polarity: ParamPolarity,
+    pub polarity: Option<ParamPolarity>,
 }
 
 impl TypeParam {
@@ -66,8 +70,10 @@ impl PartialEq<Identifier> for TypeParam {
 
 impl Print for TypeParam {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
-        self.name
-            .print(cfg, alloc)
-            .append(self.polarity.print(cfg, alloc))
+        let polarity = match &self.polarity {
+            Some(polarity) => polarity.print(cfg, alloc),
+            None => alloc.nil(),
+        };
+        self.name.print(cfg, alloc).append(polarity)
     }
 }

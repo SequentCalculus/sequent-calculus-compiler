@@ -18,11 +18,11 @@ use std::rc::Rc;
 /// - `type_params` maps Fun type parameter names to their fresh Core identifier and polarity.
 pub fn compile_ctor(
     ctor: fun::syntax::declarations::CtorSig,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Data> {
     let ctor_type_params = compile_type_params(&ctor.type_params, max_id);
-    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
+    let type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()
@@ -48,13 +48,13 @@ pub fn compile_ctor(
 /// - `type_params` maps Fun type parameter names to their fresh Core identifier and polarity.
 pub fn compile_dtor(
     dtor: fun::syntax::declarations::DtorSig,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     max_id: &mut usize,
 ) -> core_lang::syntax::declaration::XtorSig<core_lang::syntax::declaration::Codata> {
     let new_covar = fresh_covar(&mut dtor.args.vars());
 
     let dtor_type_params = compile_type_params(&dtor.type_params, max_id);
-    let type_params_subst: Rc<HashMap<String, (Identifier, ParamPolarity)>> = Rc::new(
+    let type_params_subst: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>> = Rc::new(
         (*type_params)
             .clone()
             .into_iter()

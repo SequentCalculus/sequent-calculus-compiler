@@ -4,7 +4,7 @@
 // different types for `L`, the partially erased `Tag` is still duplicated per kept parameter
 // (`Tag[i64]` and `Tag[Bool]`), each copy with only its own xtor variants, and every `case` in
 // `depth` covers exactly the variants of its own copy.
-data Tag[V+, W+] {
+data Tag[V, W] {
     MkTag(val: V, mark: W)
 }
 
@@ -13,12 +13,12 @@ data Bool {
     False
 }
 
-data Pair[X+, Y+] {
+data Pair[X, Y] {
     MkPair(x: X, y: Y)
 }
 
 // the cycle runs through the node of this declaration's own parameters `[A, B]`
-data Foo[A+, B+] {
+data Foo[A, B] {
     Leaf(a: A, b: B),
     Grow(next: Foo[Pair[A, B], B])
 }

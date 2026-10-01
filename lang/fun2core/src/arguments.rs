@@ -18,7 +18,7 @@ use fun::traits::OptTyped;
 pub fn compile_subst(
     arguments: fun::syntax::arguments::Arguments,
     state: &mut CompileState,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> core_lang::syntax::arguments::Arguments {
     core_lang::syntax::arguments::Arguments {
         entries: arguments

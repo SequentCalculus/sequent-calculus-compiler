@@ -24,7 +24,7 @@ pub fn translate_polarity(polarity: &fun::syntax::declarations::Polarity) -> Par
 ///   polarity.
 pub fn compile_ty(
     ty: &fun::syntax::types::Ty,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> core_lang::syntax::types::Ty {
     match ty {
         fun::syntax::types::Ty::I64 { .. } => core_lang::syntax::types::Ty::I64,
@@ -67,7 +67,7 @@ pub fn compile_type_params(
         .iter()
         .map(|param| TypeParam {
             name: fresh_identifier(max_id, &param.name),
-            polarity: translate_polarity(&param.polarity),
+            polarity: param.polarity.as_ref().map(translate_polarity),
         })
         .collect()
 }
@@ -76,7 +76,7 @@ pub fn compile_type_params(
 /// [type arguments in Core](core_lang::syntax::types::TypeArgs).
 pub fn compile_type_args(
     args: &fun::syntax::types::TypeArgs,
-    type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+    type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
 ) -> core_lang::syntax::types::TypeArgs {
     core_lang::syntax::types::TypeArgs {
         args: args
@@ -112,7 +112,7 @@ mod compile_tests {
                     name: "A".to_string(),
                     id: 1,
                 },
-                ParamPolarity::Data,
+                Some(ParamPolarity::Data),
             ),
         )]);
 

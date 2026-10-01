@@ -21,7 +21,7 @@ impl Compile for fun::syntax::terms::Exit {
         self,
         _: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         core_lang::syntax::statements::Exit {
             arg: Rc::new(self.arg.compile(state, Ty::I64, type_params.clone())),

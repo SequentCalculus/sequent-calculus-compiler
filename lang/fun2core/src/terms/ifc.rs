@@ -20,7 +20,7 @@ impl Compile for fun::syntax::terms::IfC {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         // if the consumer is a not a leaf, we share it by lifting it to the top level to avoid
         // exponential blowup

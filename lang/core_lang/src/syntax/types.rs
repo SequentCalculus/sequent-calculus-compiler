@@ -34,6 +34,7 @@ impl Ty {
     ///   scope (with their declared polarity), used to resolve `Ty::Var`. A `Ty::Var` not found
     ///   in this list indicates a checker bug (an out-of-scope type variable should never reach
     ///   this point) and is reported loudly via `unreachable!` rather than silently defaulting.
+    ///   The same holds for a type parameter without a declared polarity.
     pub fn is_codata(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
         match self {
             Ty::I64 => false,
@@ -52,7 +53,14 @@ impl Ty {
                             type_params
                         )
                     });
-                matches!(declared.polarity, ParamPolarity::Codata)
+                match declared.polarity {
+                    Some(polarity) => matches!(polarity, ParamPolarity::Codata),
+                    None => unreachable!(
+                        "Ty::Var {} has no polarity, but only type parameters of a type \
+                         declaration may omit it and those never occur on the term level",
+                        param.print_to_string(None)
+                    ),
+                }
             }
         }
     }
@@ -251,6 +259,7 @@ impl Print for TypeArgs {
 #[cfg(test)]
 mod type_tests {
     use super::{Identifier, Ty, TypeArgs};
+    use crate::syntax::type_params::TypeParam;
     use printer::Print;
 
     #[test]
@@ -298,11 +307,11 @@ mod type_tests {
         let type_params = vec![
             TypeParam {
                 name: positive.clone(),
-                polarity: ParamPolarity::Data,
+                polarity: Some(ParamPolarity::Data),
             },
             TypeParam {
                 name: negative.clone(),
-                polarity: ParamPolarity::Codata,
+                polarity: Some(ParamPolarity::Codata),
             },
         ];
 
@@ -322,6 +331,23 @@ mod type_tests {
         };
         let _ = Ty::Var(stray).is_codata(&[], &[]);
     }
+
+    #[test]
+    #[should_panic(expected = "has no polarity")]
+    fn is_codata_panics_loudly_on_ty_var_without_polarity() {
+        // Only the parameters of a type declaration may omit their polarity, and those never
+        // reach `is_codata`, so this indicates a bug.
+
+        let param = Identifier {
+            name: "A".to_string(),
+            id: 1,
+        };
+        let type_params = vec![TypeParam {
+            name: param.clone(),
+            polarity: None,
+        }];
+        let _ = Ty::Var(param).is_codata(&[], &type_params);
+    }
 }
 
 #[cfg(test)]
@@ -332,6 +358,7 @@ mod check_tests {
         typing::{check::Checked, env::GlobalEnv},
     };
     extern crate self as core_lang;
+    use crate::syntax::type_params::TypeParam;
     use core_macros::{codata, data, id, tparam, tvar, ty};
 
     #[test]
@@ -393,6 +420,46 @@ mod check_tests {
             &[tparam!(id!("A", 1), "+")],
             &TypingContext::default(),
             &GlobalEnv::new(&[list], &[], &[]),
+        );
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn check_accepts_any_argument_for_param_without_polarity() {
+        // data Box[A] { ... } - A has no declared polarity
+        let box_decl = data!(
+            id!("Box"),
+            [],
+            [TypeParam {
+                name: id!("A", 1),
+                polarity: None
+            }]
+        );
+        let stream_decl = codata!(id!("Stream"), [], []);
+        let (data_decls, codata_decls) = ([box_decl], [stream_decl]);
+        let env = GlobalEnv::new(&data_decls, &codata_decls, &[]);
+
+        // Box[i64] (data) and Box[Stream] (codata) are both accepted
+        for arg in [ty!("int"), ty!(id!("Stream"))] {
+            let res = ty!(id!("Box"), [arg]).check(&[], &TypingContext::default(), &env);
+            assert!(res.is_ok());
+        }
+    }
+
+    #[test]
+    fn check_accepts_type_var_without_polarity_for_annotated_param() {
+        // data Box[A+] { ... } and a type variable B without polarity in scope, as in the
+        // constructors of `data Foo[B] { Mk(x: Box[B]) }`
+        let box_decl = data!(id!("Box"), [], [tparam!(id!("A", 1), "+")]);
+        let ambient = [TypeParam {
+            name: id!("B", 2),
+            polarity: None,
+        }];
+
+        let res = ty!(id!("Box"), [tvar!(id!("B", 2))]).check(
+            &ambient,
+            &TypingContext::default(),
+            &GlobalEnv::new(&[box_decl], &[], &[]),
         );
         assert!(res.is_ok());
     }

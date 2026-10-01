@@ -435,8 +435,10 @@ pub OptTypeContext: TypeContext = {
     <l: @L> <bindings: OptBracketedList<TypeName>> <r: @R> => TypeContext { span: Some(span(l, r)), bindings, },
 }
 
-// A type parameter's polarity is mandatory (no default, no inference): `+` for data/positive,
-// `-` for codata/negative.
+// A type parameter's polarity (no default, no inference): `+` for data/positive, `-` for
+// codata/negative. It is mandatory for the parameters of definitions and constructors/destructors
+// and optional for the parameters of `data`/`codata` declarations, which live purely on the type
+// level.
 PolaritySigil: Polarity = {
     "+" => Polarity::Data,
     "-" => Polarity::Codata,
@@ -444,15 +446,24 @@ PolaritySigil: Polarity = {
 
 TypeParam: TypeParam = {
     <l: @L> <name: TypeName> <polarity: PolaritySigil> <r: @R> =>
-        TypeParam { span: Some(span(l, r)), name, polarity },
+        TypeParam { span: Some(span(l, r)), name, polarity: Some(polarity) },
 }
 
 pub OptTypeParams: TypeParams = {
     <l: @L> <bindings: OptBracketedList<TypeParam>> <r: @R> => TypeParams { span: Some(span(l, r)), bindings, },
 }
 
+DeclTypeParam: TypeParam = {
+    <l: @L> <name: TypeName> <polarity: PolaritySigil?> <r: @R> =>
+        TypeParam { span: Some(span(l, r)), name, polarity },
+}
+
+OptDeclTypeParams: TypeParams = {
+    <l: @L> <bindings: OptBracketedList<DeclTypeParam>> <r: @R> => TypeParams { span: Some(span(l, r)), bindings, },
+}
+
 Data: Data = {
-    <l: @L> "data" <name: TypeName> <type_params: OptTypeParams> <ctors: BracedList<Ctor>> <r: @R> =>
+    <l: @L> "data" <name: TypeName> <type_params: OptDeclTypeParams> <ctors: BracedList<Ctor>> <r: @R> =>
         Data {
             span: Some(span(l, r)),
             name,
@@ -462,7 +473,7 @@ Data: Data = {
 }
 
 Codata: Codata = {
-    <l: @L> "codata" <name: TypeName> <type_params: OptTypeParams> <dtors: BracedList<Dtor>> <r: @R> =>
+    <l: @L> "codata" <name: TypeName> <type_params: OptDeclTypeParams> <dtors: BracedList<Dtor>> <r: @R> =>
         Codata {
             span: Some(span(l, r)),
             name,

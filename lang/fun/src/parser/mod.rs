@@ -124,12 +124,35 @@ mod parser_tests {
     }
 
     #[test]
-    fn parse_type_param_without_sigil_fails() {
+    fn parse_decl_type_param_without_sigil() {
         let parser = fun::ProgParser::new();
-        let result = parser.parse("data Box[A] { Pack(x: A) }");
+        let result = parser.parse(
+            "data List[A] { Nil, Cons(x: A, xs: List[A]) }
+            codata Stream[A, B-] { head : A, tail : Stream[A, B] }",
+        );
+        assert!(
+            result.is_ok(),
+            "the type parameters of a data/codata declaration may omit the polarity, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn parse_xtor_type_param_without_sigil_fails() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("data Box[A] { Pack[B](x: A, y: B) }");
         assert!(
             result.is_err(),
-            "a type parameter without an explicit polarity sigil must not parse"
+            "a constructor type parameter without an explicit polarity sigil must not parse"
+        );
+    }
+
+    #[test]
+    fn parse_def_type_param_without_sigil_fails() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("def id[A](x: A): A { x }");
+        assert!(
+            result.is_err(),
+            "a definition type parameter without an explicit polarity sigil must not parse"
         );
     }
 

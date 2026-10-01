@@ -4,19 +4,19 @@
 // nested-type structure itself plus `pushFront`/`pushBack`, both of which have to call themselves
 // polymorphically whenever a boundary digit overflows.
 
-data Digit[A+] {
+data Digit[A] {
     One(a: A),
     Two(a: A, b: A),
     Three(a: A, b: A, c: A),
     Four(a: A, b: A, c: A, d: A)
 }
 
-data Node[A+] {
+data Node[A] {
     Node2(a: A, b: A),
     Node3(a: A, b: A, c: A)
 }
 
-data FingerTree[A+] {
+data FingerTree[A] {
     Empty,
     Single(a: A),
     Deep(prefix: Digit[A], deeper: FingerTree[Node[A]], suffix: Digit[A])

@@ -342,14 +342,17 @@ impl TypeArgs {
         }
         for (typ, param) in self.args.iter().zip(&template.bindings) {
             typ.check(&self.span, symbol_table)?;
-            let got = typ.polarity(symbol_table)?;
-            if got != param.polarity {
-                return Err(Error::PolarityMismatch {
-                    span: self.span.to_miette(),
-                    param: param.name.clone(),
-                    expected: param.polarity,
-                    got,
-                });
+            // A parameter without a declared polarity accepts arguments of either polarity
+            if let Some(expected) = param.polarity {
+                let got = typ.polarity(symbol_table)?;
+                if got != expected {
+                    return Err(Error::PolarityMismatch {
+                        span: self.span.to_miette(),
+                        param: param.name.clone(),
+                        expected,
+                        got,
+                    });
+                }
             }
         }
         Ok(())

@@ -10,8 +10,8 @@ pub fn tparam(input: TokenStream) -> TokenStream {
     let id_expr = &args[0];
     let polarity_str = expr_to_string(&args[1], 1);
     let polarity = match polarity_str.as_str() {
-        "+" => quote! { core_lang::syntax::type_params::ParamPolarity::Data },
-        "-" => quote! { core_lang::syntax::type_params::ParamPolarity::Codata },
+        "+" => quote! { Some(core_lang::syntax::type_params::ParamPolarity::Data) },
+        "-" => quote! { Some(core_lang::syntax::type_params::ParamPolarity::Codata) },
         other => panic!("invalid polarity sigil {other:?}, expected \"+\" or \"-\""),
     };
 

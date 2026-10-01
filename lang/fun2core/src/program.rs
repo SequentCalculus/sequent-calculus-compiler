@@ -102,7 +102,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
 pub fn build_type_param_subst(
     names: &[String],
     params: &[TypeParam],
-) -> HashMap<String, (Identifier, ParamPolarity)> {
+) -> HashMap<String, (Identifier, Option<ParamPolarity>)> {
     names
         .iter()
         .cloned()
@@ -418,7 +418,10 @@ mod compile_tests {
     fn compile_poly_def() {
         let fresh_param = id!("A", 1);
         let mut subst = HashMap::new();
-        subst.insert("A".to_string(), (fresh_param.clone(), ParamPolarity::Data));
+        subst.insert(
+            "A".to_string(),
+            (fresh_param.clone(), Some(ParamPolarity::Data)),
+        );
 
         let mut used_labels = HashSet::from(["id_poly".to_string()]);
         let mut max_id = 0;
@@ -432,7 +435,7 @@ mod compile_tests {
             Rc::new(subst),
             vec![TypeParam {
                 name: fresh_param.clone(),
-                polarity: ParamPolarity::Data,
+                polarity: Some(ParamPolarity::Data),
             }],
         );
 

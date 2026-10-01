@@ -1,8 +1,8 @@
-data Box[V+] {
+data Box[V] {
     Wrap(val: V)
 }
 
-data Bag[V+] {
+data Bag[V] {
     Put(val: V)
 }
 

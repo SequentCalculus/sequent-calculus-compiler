@@ -28,7 +28,7 @@ impl Compile for fun::syntax::terms::Destructor {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let ambient_type_params: Rc<Vec<TypeParam>> = Rc::new(
             type_params

@@ -70,7 +70,7 @@ pub trait Compile: Sized {
         self,
         consumer: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement;
 
     /// This method translates a term from the surface language [Fun](fun) into the intermediate
@@ -93,7 +93,7 @@ pub trait Compile: Sized {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         let new_covar = state.fresh_covar();
         let new_statement = self.compile_with_cont(
@@ -121,7 +121,7 @@ impl<T: Compile + Clone> Compile for Rc<T> {
         self,
         state: &mut CompileState,
         ty: Ty,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         Rc::unwrap_or_clone(self).compile(state, ty, type_params)
     }
@@ -130,7 +130,7 @@ impl<T: Compile + Clone> Compile for Rc<T> {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         Rc::unwrap_or_clone(self).compile_with_cont(cont, state, type_params)
     }

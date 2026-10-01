@@ -26,7 +26,7 @@ impl Compile for fun::syntax::terms::New {
         self,
         state: &mut CompileState,
         _ty: Ty,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::terms::Term<Prd> {
         core_lang::syntax::terms::XCase {
             prdcns: Prd,
@@ -58,7 +58,7 @@ impl Compile for fun::syntax::terms::New {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(
             &self

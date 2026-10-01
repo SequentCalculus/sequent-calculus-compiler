@@ -25,7 +25,7 @@ impl Compile for fun::syntax::terms::Let {
         self,
         cont: core_lang::syntax::terms::Term<Cns>,
         state: &mut CompileState,
-        type_params: Rc<HashMap<String, (Identifier, ParamPolarity)>>,
+        type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let ty = compile_ty(&self.var_ty, type_params.clone());
         // new continuation: μ~x.〚t_2 〛_{c}
@@ -241,7 +241,10 @@ mod compile_tests {
 
         let fresh_a = id!("A", 1);
         let mut subst = HashMap::new();
-        subst.insert("A".to_string(), (fresh_a.clone(), ParamPolarity::Codata));
+        subst.insert(
+            "A".to_string(),
+            (fresh_a.clone(), Some(ParamPolarity::Codata)),
+        );
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
@@ -280,7 +283,10 @@ mod compile_tests {
 
         let fresh_a = id!("A", 1);
         let mut subst = HashMap::new();
-        subst.insert("A".to_string(), (fresh_a.clone(), ParamPolarity::Data));
+        subst.insert(
+            "A".to_string(),
+            (fresh_a.clone(), Some(ParamPolarity::Data)),
+        );
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
