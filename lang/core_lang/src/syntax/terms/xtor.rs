@@ -215,9 +215,15 @@ impl<C: Chi> ConstraintCollector for Xtor<C> {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
         let mut constraints = self.ty.collect_constraints(env)?;
         let xtor_params: Vec<Identifier> = if self.prdcns.is_prd() {
-            TypeParam::names(&env.lookup_xtor_for_data_decl(&self.name)?.type_params)
+            TypeParam::names(
+                &env.lookup_xtor_for_data_decl(&self.ty, &self.name)?
+                    .type_params,
+            )
         } else {
-            TypeParam::names(&env.lookup_xtor_for_codata_decl(&self.name)?.type_params)
+            TypeParam::names(
+                &env.lookup_xtor_for_codata_decl(&self.ty, &self.name)?
+                    .type_params,
+            )
         };
 
         constraints.extend(collect_type_flow(&self.type_args.args, &xtor_params)?);

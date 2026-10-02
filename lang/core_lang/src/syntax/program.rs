@@ -118,14 +118,16 @@ impl Checked for Prog {
     ) -> Result<(), LocatedTypeError> {
         let mut seen_types: HashSet<&str> = HashSet::new();
         let mut seen_defs: HashSet<&str> = HashSet::new();
-        let mut seen_xtors: HashSet<&str> = HashSet::new();
 
         // check for duplicate type names in data declarations
         for data in &self.data_types {
             if !seen_types.insert(&data.name.name) {
                 bail!(TypeError::DuplicateTypeName(data.name.name.clone()));
             }
-            // check for duplicate xtor names in data declarations
+            // check for duplicate xtor names within the declaration; across declarations they
+            // may repeat, e.g. `Nil` in every monomorphic copy of `List`, since Core resolves an
+            // xtor through the declaration of its type
+            let mut seen_xtors: HashSet<&str> = HashSet::new();
             for ctor in &data.xtors {
                 if !seen_xtors.insert(&ctor.name.name) {
                     bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
@@ -138,7 +140,10 @@ impl Checked for Prog {
             if !seen_types.insert(&codata.name.name) {
                 bail!(TypeError::DuplicateTypeName(codata.name.name.clone()));
             }
-            // check for duplicate xtor names in codata declarations
+            // check for duplicate xtor names within the declaration; across declarations they
+            // may repeat, e.g. `Nil` in every monomorphic copy of `List`, since Core resolves an
+            // xtor through the declaration of its type
+            let mut seen_xtors: HashSet<&str> = HashSet::new();
             for ctor in &codata.xtors {
                 if !seen_xtors.insert(&ctor.name.name) {
                     bail!(TypeError::DuplicateXtorName(ctor.name.name.clone()));
@@ -400,15 +405,18 @@ mod check_tests {
     }
 
     #[test]
-    fn check_duplicate_xtor_name_in_prog() {
-        // two xtors with the same name across data and codata declarations
-        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
-        let stream = codata!(id!("Stream"), [dtor_sig!(id!("Nil"), [], [])], []);
+    fn check_duplicate_xtor_name_in_decl() {
+        // two xtors with the same name in one declaration
+        let list = data!(
+            id!("List"),
+            [ctor_sig!(id!("Nil"), [], []), ctor_sig!(id!("Nil"), [], [])],
+            []
+        );
 
         let prog = prog!(
             [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List"))))],
             [list],
-            [stream]
+            []
         );
 
         assert!(
@@ -418,7 +426,31 @@ mod check_tests {
                 &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
             )
             .is_err(),
-            "expected error for duplicate xtor name in program"
+            "expected error for duplicate xtor name in declaration"
+        );
+    }
+
+    #[test]
+    fn check_same_xtor_name_in_different_decls() {
+        // the same xtor name in two declarations, as in two monomorphic copies of one
+        // polymorphic declaration
+        let list_i64 = data!(id!("List[i64]"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let list_bool = data!(id!("List[Bool]"), [ctor_sig!(id!("Nil"), [], [])], []);
+
+        let prog = prog!(
+            [def!(id!("main"), [], exit!(lit!(1), ty!(id!("List[i64]"))))],
+            [list_i64, list_bool],
+            []
+        );
+
+        assert!(
+            prog.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs),
+            )
+            .is_ok(),
+            "expected the same xtor name in different declarations to be accepted"
         );
     }
 

@@ -3,7 +3,10 @@
 
 use crate::{
     mono::errors::MonoError,
-    syntax::{CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier, TypeParam},
+    syntax::{
+        CodataDeclaration, CtorSig, DataDeclaration, Def, DtorSig, Identifier, Ty, TypeParam,
+        declaration::{Polarity, TypeDeclaration, XtorSig},
+    },
 };
 
 /// Global environment holding immutable references to all top-level program declarations used during type checking.
@@ -38,26 +41,26 @@ impl<'a> GlobalEnv<'a> {
         self.codata_decls.iter().find(|d| d.name == *name)
     }
 
-    /// Looks up a constructor signature ([`CtorSig`]) by its identifier.
-    pub fn lookup_xtor_for_data_decl(&self, name: &Identifier) -> Result<CtorSig, MonoError> {
-        self.data_decls
-            .iter()
-            .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == *name).cloned())
-            .ok_or_else(|| MonoError::UndeclaredXtor {
-                type_name: "unknown".to_owned(),
-                xtor_name: name.name.clone(),
-            })
+    /// Looks up the constructor signature ([`CtorSig`]) `name` in the data declaration of `ty`.
+    /// Xtor names are only unique within one declaration, so the lookup goes through the type
+    /// the constructor belongs to.
+    pub fn lookup_xtor_for_data_decl(
+        &self,
+        ty: &Ty,
+        name: &Identifier,
+    ) -> Result<CtorSig, MonoError> {
+        lookup_xtor_in(self.data_decls, ty, name)
     }
 
-    /// Looks up a destructor signature ([`DtorSig`]) by its identifier.
-    pub fn lookup_xtor_for_codata_decl(&self, name: &Identifier) -> Result<DtorSig, MonoError> {
-        self.codata_decls
-            .iter()
-            .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == *name).cloned())
-            .ok_or_else(|| MonoError::UndeclaredXtor {
-                type_name: "unknown".to_owned(),
-                xtor_name: name.name.clone(),
-            })
+    /// Looks up the destructor signature ([`DtorSig`]) `name` in the codata declaration of `ty`.
+    /// Xtor names are only unique within one declaration, so the lookup goes through the type
+    /// the destructor belongs to.
+    pub fn lookup_xtor_for_codata_decl(
+        &self,
+        ty: &Ty,
+        name: &Identifier,
+    ) -> Result<DtorSig, MonoError> {
+        lookup_xtor_in(self.codata_decls, ty, name)
     }
 
     /// Looks up a top-level function definition ([`Def`]) by its identifier.
@@ -74,4 +77,28 @@ impl<'a> GlobalEnv<'a> {
                     .map(|decl| decl.type_params.as_slice())
             })
     }
+}
+
+/// Finds the xtor `name` in the declaration among `decls` that `ty` refers to.
+fn lookup_xtor_in<P: Polarity + Clone>(
+    decls: &[TypeDeclaration<P>],
+    ty: &Ty,
+    name: &Identifier,
+) -> Result<XtorSig<P>, MonoError> {
+    let undeclared = |type_name: String| MonoError::UndeclaredXtor {
+        type_name,
+        xtor_name: name.name.clone(),
+    };
+    let Ty::Decl {
+        name: type_name, ..
+    } = ty
+    else {
+        return Err(undeclared("unknown".to_owned()));
+    };
+    decls
+        .iter()
+        .find(|decl| decl.name == *type_name)
+        .and_then(|decl| decl.xtors.iter().find(|xtor| xtor.name == *name))
+        .cloned()
+        .ok_or_else(|| undeclared(type_name.name.clone()))
 }

@@ -156,7 +156,7 @@ impl<C: Chi> ConstraintCollector for XCase<C> {
         constraints.extend(
             self.clauses
                 .iter()
-                .map(|clause| clause.collect_constraints(env))
+                .map(|clause| clause.collect_constraints(&self.ty, env))
                 .try_fold(FlowConstraintSet::new(), |mut acc, res| {
                     acc.extend(res?);
                     Ok(acc)
@@ -301,9 +301,6 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
             });
         }
 
-        // check well-formedness of the clause
-        clause.check(type_params, context, env)?;
-
         // check that the xtor exists in the declaration and get its signature
         let Some(sig) = decl.xtors.iter().find(|xt| xt.name == clause.xtor) else {
             bail!(TypeError::UndeclaredXtor {
@@ -312,8 +309,18 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
             });
         };
 
+        // check well-formedness of the clause
+        clause.check(&sig.type_params, type_params, context, env)?;
+
         // check that the number of type parameter binders in the clause matches the number of the xtor's own (existential/universal) type parameters
         check_arity(sig.type_params.len(), clause.type_params.len())?;
+
+        // an unreachable clause `K => unreachable` binds nothing, so there are no binders to
+        // check against the signature; this is the form monomorphization gives every variant
+        // of an erased declaration that the scrutinee cannot have
+        if is_unreachable_clause(clause) {
+            continue;
+        }
 
         // check that the number of binders in the clause matches the number of arguments in the xtor signature
         check_arity(sig.args.bindings.len(), clause.context.bindings.len())?;
@@ -372,6 +379,12 @@ fn check_xcase_against_decl<P: Polarity, C: Chi>(
     }
 
     Ok(())
+}
+
+/// True iff `clause` has the form `K => unreachable`: no binders and the body
+/// [`Statement::Unreachable`].
+fn is_unreachable_clause<C: Chi>(clause: &Clause<C>) -> bool {
+    clause.context.bindings.is_empty() && matches!(clause.body.as_ref(), Statement::Unreachable(_))
 }
 
 #[cfg(test)]
@@ -634,6 +647,70 @@ mod check_tests {
             &[],
             &TypingContext::default(),
             &GlobalEnv::new(&[list], &[], &[]),
+        );
+
+        assert!(result.is_err());
+    }
+
+    /// `data List { Nil, Cons(x: i64, xs: List) }`
+    fn int_list_decl() -> DataDeclaration {
+        data!(
+            id!("List"),
+            [
+                ctor_sig!(id!("Nil"), [], []),
+                ctor_sig!(
+                    id!("Cons"),
+                    [],
+                    [
+                        bind!(id!("x"), prd!()),
+                        bind!(id!("xs"), prd!(), ty!(id!("List")))
+                    ],
+                )
+            ],
+            []
+        )
+    }
+
+    #[test]
+    fn check_unreachable_clause_without_binders() {
+        // `Cons => unreachable` binds nothing, as monomorphization emits it
+        let case: XCase<Cns> = case!(
+            [
+                clause!(Cns, id!("Nil"), [], [], exit!(lit!(0))),
+                clause!(
+                    Cns,
+                    id!("Cons"),
+                    [],
+                    [],
+                    statements::Unreachable { ty: ty!("int") }
+                )
+            ],
+            ty!(id!("List"))
+        );
+
+        case.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[int_list_decl()], &[], &[]),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn check_reachable_clause_without_binders_err() {
+        // only an unreachable clause may omit the binders of its xtor
+        let case: XCase<Cns> = case!(
+            [
+                clause!(Cns, id!("Nil"), [], [], exit!(lit!(0))),
+                clause!(Cns, id!("Cons"), [], [], exit!(lit!(1)))
+            ],
+            ty!(id!("List"))
+        );
+
+        let result = case.check(
+            &[],
+            &TypingContext::default(),
+            &GlobalEnv::new(&[int_list_decl()], &[], &[]),
         );
 
         assert!(result.is_err());

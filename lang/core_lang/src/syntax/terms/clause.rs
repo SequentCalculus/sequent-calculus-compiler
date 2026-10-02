@@ -9,7 +9,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -221,16 +221,23 @@ impl<C: Chi> Focusing for Clause<C> {
     }
 }
 
-impl<C: Chi> ConstraintCollector for Clause<C> {
-    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+impl<C: Chi> Clause<C> {
+    /// Collects the flow constraints of the clause, for a clause of a `case`/`new` of type `ty`.
+    /// The xtor is resolved through the declaration of `ty`, since xtor names are only unique
+    /// within one declaration.
+    pub fn collect_constraints(
+        &self,
+        ty: &Ty,
+        env: &GlobalEnv,
+    ) -> Result<FlowConstraintSet, MonoError> {
         let xtor_params: Vec<Ty> = if self.prdcns.is_cns() {
-            env.lookup_xtor_for_data_decl(&self.xtor)?
+            env.lookup_xtor_for_data_decl(ty, &self.xtor)?
                 .type_params
                 .into_iter()
                 .map(|p| Ty::Var(p.name))
                 .collect()
         } else {
-            env.lookup_xtor_for_codata_decl(&self.xtor)?
+            env.lookup_xtor_for_codata_decl(ty, &self.xtor)?
                 .type_params
                 .into_iter()
                 .map(|p| Ty::Var(p.name))
@@ -245,9 +252,14 @@ impl<C: Chi> ConstraintCollector for Clause<C> {
     }
 }
 
-impl<C: Chi> Checked for Clause<C> {
-    fn check(
+impl<C: Chi> Clause<C> {
+    /// Checks the well-formedness of the clause's binders and its body, for a clause of the xtor
+    /// whose own declared type parameters are `declared_params`. The xtor is resolved by the
+    /// caller through the declaration of the matched type, since xtor names are only unique
+    /// within one declaration.
+    pub fn check(
         &self,
+        declared_params: &[TypeParam],
         type_params: &[TypeParam],
         context: &TypingContext,
         env: &GlobalEnv,
@@ -256,27 +268,10 @@ impl<C: Chi> Checked for Clause<C> {
         // their own - they inherit their polarity from the xtor's own declared parameters,
         // matched positionally, mirroring how Fun's `push_abstract_vars` threads the ctor's/
         // dtor's declared polarity into a `case`/`new` clause's pattern-bound names.
-        let own_declared_params: &[TypeParam] = if self.prdcns.is_cns() {
-            env.data_decls
-                .iter()
-                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
-                .map(|xtor| xtor.type_params.as_slice())
-        } else {
-            env.codata_decls
-                .iter()
-                .find_map(|decl| decl.xtors.iter().find(|xtor| xtor.name == self.xtor))
-                .map(|xtor| xtor.type_params.as_slice())
-        }
-        .ok_or_else(|| {
-            LocatedTypeError::new(TypeError::UndeclaredXtor {
-                type_name: "unknown".to_string(),
-                xtor_name: self.xtor.name.clone(),
-            })
-        })?;
         let own_type_params: Vec<TypeParam> = self
             .type_params
             .iter()
-            .zip(own_declared_params)
+            .zip(declared_params)
             .map(|(id, declared)| TypeParam {
                 name: id.clone(),
                 polarity: declared.polarity,
