@@ -6,7 +6,7 @@ use std::{rc::Rc, vec};
 use crate::{
     mono::{erasure::ErasedDecls, erasure::erase_ty, naming_table::NamingTable, solver::Solution},
     syntax::{
-        Chi, Clause, Def, Identifier, Prog, Ty, TypeParam,
+        Chi, Clause, Def, Identifier, Prog, Ty, TypeParam, TypingContext,
         declaration::{Polarity, TypeDeclaration, XtorSig},
         statements::Unreachable,
     },
@@ -255,14 +255,11 @@ fn specialize_declaration<P: Polarity + Clone>(
     }
 
     if params.is_empty() {
-        if decl.xtors.iter().all(|xtor| xtor.type_params.is_empty()) {
-            // This is already a monomorphic declaration, so we can return it as-is
-            return vec![decl.clone()];
-        }
-
         let ctx = SpecializeContext::ground(table, erased_decls);
 
-        // This is already a monomorphic declaration, so we only need to specialize its xtors.
+        // The declaration itself is monomorphic, but its xtors may still have own type
+        // parameters, and their fields may mention polymorphic declarations (e.g. `List[Expr]`)
+        // whose mangled names must be looked up like every other type occurrence.
         return vec![TypeDeclaration {
             dat: decl.dat.clone(),
             name: decl.name.clone(),
@@ -415,21 +412,28 @@ pub fn specialize_clause<C: Chi>(
             let extended_ctx = ctx.extend_with_substs(&full_params, tuple);
             let xtor_name = extended_ctx.table.lookup(&clause.xtor, tuple).clone();
 
-            let context = clause.context.specialize(&extended_ctx);
-
             let reachable = match scrutinee.and_then(|s| s.erased_args.as_deref()) {
                 Some(active) => extra_args == active,
                 None => true,
             };
 
-            let body = if reachable {
-                clause.body.specialize(&extended_ctx)
+            // An unreachable clause binds nothing: the binder types written in the clause
+            // describe the variant the scrutinee actually has, not this one, and the body never
+            // refers to them.
+            let (context, body) = if reachable {
+                (
+                    clause.context.specialize(&extended_ctx),
+                    clause.body.specialize(&extended_ctx),
+                )
             } else {
-                Rc::new(
-                    Unreachable {
-                        ty: clause.body.get_type().specialize(&extended_ctx),
-                    }
-                    .into(),
+                (
+                    TypingContext::default(),
+                    Rc::new(
+                        Unreachable {
+                            ty: clause.body.get_type().specialize(&extended_ctx),
+                        }
+                        .into(),
+                    ),
                 )
             };
 
@@ -643,6 +647,49 @@ mod specialize_tests {
             // and must match the mangled name used for `xs`'s List[...] field.
             assert!(matches!(x_binding.ty, Ty::I64) || matches!(&x_binding.ty, Ty::Decl { .. }));
         }
+    }
+
+    #[test]
+    fn specialize_monomorphic_declaration_mangles_polymorphic_field_types() {
+        // data Expr { Add(sums: List[Expr]) }
+        // Expr has no type parameters of its own, but its field mentions List at Expr, which
+        // must become the argument-less mangled name of that copy like any other occurrence.
+        let expr_decl = data!(
+            id!("Expr"),
+            [ctor_sig!(
+                id!("Add"),
+                [],
+                [bind!(
+                    id!("sums"),
+                    prd!(),
+                    ty!(id!("List"), [ty!(id!("Expr"))])
+                )]
+            )],
+            []
+        );
+        let solution = Solution::from(HashMap::from([(
+            vec![id!("A", 1)],
+            HashSet::from([vec![ty!(id!("Expr"))]]),
+        )]));
+        let table = NamingTable::build(
+            &solution,
+            &[list_decl(), expr_decl.clone()],
+            &[],
+            &[],
+            &ErasedDecls::default(),
+        )
+        .expect("test fixture must not collide");
+
+        let copies = specialize_declaration(&expr_decl, &table, &ErasedDecls::default());
+
+        assert_eq!(copies.len(), 1);
+        assert_eq!(
+            copies[0].xtors[0].args.bindings[0].ty,
+            Ty::Decl {
+                name: table.lookup(&id!("List"), &[ty!(id!("Expr"))]).clone(),
+                type_args: TypeArgs::default(),
+            }
+        );
     }
 
     #[test]
@@ -1645,6 +1692,12 @@ mod erasure_tests {
             matches!(unreachable_clause.body.as_ref(), Statement::Unreachable(_)),
             "expected the non-matching instantiation's body to become Unreachable, got {:?}",
             unreachable_clause.body
+        );
+        assert_eq!(reachable_clause.context.bindings.len(), 1);
+        assert!(
+            unreachable_clause.context.bindings.is_empty(),
+            "expected the unreachable clause to bind nothing, got {:?}",
+            unreachable_clause.context
         );
     }
 
