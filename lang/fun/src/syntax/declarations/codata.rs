@@ -6,15 +6,21 @@ use printer::tokens::{CODATA, COLON, COMMA};
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::check::check_overlapping_type_params;
 use crate::typing::*;
 
-/// This struct defines a codata type destructor. It consists of a name (unique within its type),
+use std::collections::HashSet;
+
+/// This struct defines a codata type destructor. It consists of a name (unique within its type), an optional list of type parameters,
 /// a typing context defining its argument types, and a return type. The latter two can contain
-/// type parameters abstracted by the codata type template.
+/// type parameters abstracted by the codata type template or the signature itself.
 ///
 /// Example:
 /// ```text
 /// apply(x: A): B
+/// ```
+/// ```text
+/// head[B]: B
 /// ```
 /// `apply` is a destructor with a single (producer) argument `x` of type `A` and return type `B`,
 /// where `A` and `B` are type parameter.
@@ -26,6 +32,8 @@ pub struct DtorSig {
     pub span: Option<SourceSpan>,
     /// The dstructor name
     pub name: Name,
+    /// The type parameters instantiating the type parameters of the codata type and the destructor
+    pub type_params: TypeParams,
     /// The argument context
     pub args: TypingContext,
     /// The return type
@@ -38,9 +46,11 @@ impl DtorSig {
     /// - `symbol_table` is the symbol table during typechecking.
     /// - `type_params` is the list of type parameters of the template the constructor is in.
     fn check(&self, symbol_table: &SymbolTable, type_params: &TypeContext) -> Result<(), Error> {
-        self.args.check_template(symbol_table, type_params)?;
+        let extended_type_params = type_params.extend(self.type_params.to_type_context());
+        self.args
+            .check_template(symbol_table, &extended_type_params)?;
         self.cont_ty
-            .check_template(self.span, symbol_table, type_params)?;
+            .check_template(self.span, symbol_table, &extended_type_params)?;
         Ok(())
     }
 }
@@ -55,6 +65,7 @@ impl Print for DtorSig {
 
         alloc
             .dtor(&self.name)
+            .append(self.type_params.print(cfg, alloc))
             .append(args.group())
             .append(COLON)
             .append(alloc.space())
@@ -80,19 +91,54 @@ pub struct Codata {
     /// The codata type name
     pub name: Name,
     /// The type parameters
-    pub type_params: TypeContext,
+    pub type_params: TypeParams,
     /// The list of destructors
     pub dtors: Vec<DtorSig>,
 }
 
 impl Codata {
     /// This function checks the well-formedness of the codata type template by checking each
-    /// destructor.
+    /// destructor and checks for overlapping type parameters.
     pub fn check(&self, symbol_table: &SymbolTable) -> Result<(), Error> {
+        let dtor_params: Vec<String> = self
+            .dtors
+            .iter()
+            .flat_map(|dtor| dtor.type_params.names())
+            .collect();
+
+        if let Some(overlaps) =
+            check_overlapping_type_params(&self.type_params.names(), &dtor_params)
+        {
+            return Err(Error::DefinedMultipleTimes {
+                span: self.span,
+                name: overlaps
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            });
+        }
+
         for dtor in &self.dtors {
-            dtor.check(symbol_table, &self.type_params)?;
+            dtor.check(symbol_table, &self.type_params.to_type_context())?;
         }
         Ok(())
+    }
+
+    /// This function collects the names of all user-declared types referenced by any
+    /// destructor's argument or continuation types, excluding this type's own and each
+    /// destructor's own type parameters.
+    pub fn referenced_types(&self) -> HashSet<Name> {
+        let mut out = HashSet::new();
+        for dtor in &self.dtors {
+            let mut bound: HashSet<Name> = self.type_params.names().into_iter().collect();
+            bound.extend(dtor.type_params.names());
+            for binding in &dtor.args.bindings {
+                binding.ty.collect_referenced_types(&bound, &mut out);
+            }
+            dtor.cont_ty.collect_referenced_types(&bound, &mut out);
+        }
+        out
     }
 }
 
@@ -131,15 +177,16 @@ impl Print for Codata {
 #[cfg(test)]
 mod codata_tests {
     use crate::{
+        syntax::{Codata, DtorSig, Polarity, Ty, TypeArgs, TypeParams, TypingContext},
         test_common::codata_stream,
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::symbol_table::{self, BuildSymbolTable, SymbolTable},
     };
     use printer::Print;
 
     #[test]
     fn display_stream() {
         let result = codata_stream().print_to_string(Default::default());
-        let expected = "codata Stream[A] { head: A, tail: Stream[A] }";
+        let expected = "codata Stream[A+] { head: A, tail: Stream[A] }";
         assert_eq!(result, expected)
     }
 
@@ -149,5 +196,25 @@ mod codata_tests {
         codata_stream().build(&mut symbol_table).unwrap();
         let result = codata_stream().check(&mut symbol_table);
         assert!(result.is_ok())
+    }
+
+    #[test]
+    fn check_overlapping_type_params() {
+        let data = Codata {
+            span: None,
+            name: "Box".to_owned(),
+            type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+            dtors: vec![DtorSig {
+                span: None,
+                name: "Pack".to_owned(),
+                type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+                args: TypingContext::default(),
+                cont_ty: Ty::mk_decl(&"A", TypeArgs::default()),
+            }],
+        };
+
+        let mut symbol_table = symbol_table::SymbolTable::default();
+        data.build(&mut symbol_table).unwrap();
+        assert!(data.check(&symbol_table).is_err());
     }
 }

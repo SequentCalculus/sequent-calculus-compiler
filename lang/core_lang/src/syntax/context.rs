@@ -3,8 +3,14 @@
 use printer::tokens::{CNS, COLON, PRD};
 use printer::*;
 
+use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{HashSet, VecDeque};
 
@@ -60,6 +66,26 @@ impl SubstVar for ContextBinding {
     }
 }
 
+impl Specialize for ContextBinding {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        ContextBinding {
+            var: self.var.clone(),
+            chi: self.chi.clone(),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl Rewrite for ContextBinding {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        ContextBinding {
+            var: self.var.clone(),
+            chi: self.chi.clone(),
+            ty: self.ty.rewrite(table),
+        }
+    }
+}
+
 /// This struct defines a typing context. It consists of a list of [`ContextBinding`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TypingContext {
@@ -91,6 +117,14 @@ impl TypingContext {
             vars.push(binding.var.id);
         }
         vars
+    }
+
+    /// This function looks up a variable in the context and returns its binding, if it exists.
+    pub fn lookup(&self, name: &Identifier) -> Option<&ContextBinding> {
+        self.bindings
+            .iter()
+            .rev()
+            .find(|binding| &binding.var == name)
     }
 }
 
@@ -132,5 +166,36 @@ impl SubstVar for TypingContext {
     fn subst_sim(mut self, subst: &[(ID, Identifier)]) -> TypingContext {
         self.bindings = self.bindings.subst_sim(subst);
         self
+    }
+}
+
+impl Checked for TypingContext {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // check that all types in the context are well-formed
+        for binding in &self.bindings {
+            binding.ty.check(type_params, context, env)?;
+        }
+        Ok(())
+    }
+}
+
+impl Specialize for TypingContext {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        TypingContext {
+            bindings: self.bindings.specialize(context),
+        }
+    }
+}
+
+impl Rewrite for TypingContext {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        TypingContext {
+            bindings: self.bindings.rewrite(table),
+        }
     }
 }

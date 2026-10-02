@@ -1,13 +1,23 @@
 //! This module defines top-level functions in Core.
 
+use printer::tokens::COMMA;
 use printer::tokens::DEF;
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
-/// (unique in the program), a typing context defining the parameters, and the body statement. The
+/// (unique in the program), optional type parameters, a typing context defining the parameters, and the body statement. The
 /// type parameter `S` determines whether this is the unfocused variant (if `S` is instantiated
 /// with [`Statement`], which is the default) or the focused variant (if `S` is instantiated with
 /// [`FsStatement`]).
@@ -15,6 +25,8 @@ use crate::traits::*;
 pub struct Def<S = Statement> {
     /// The name of the definition
     pub name: Identifier,
+    /// The type parameters
+    pub type_params: Vec<TypeParam>,
     /// The parameter context
     pub context: TypingContext,
     /// The body statement
@@ -28,6 +40,7 @@ impl Def {
     pub fn focus(self, max_id: &mut ID) -> FsDef {
         FsDef {
             name: self.name,
+            type_params: self.type_params,
             context: self.context,
             body: self.body.focus(max_id),
         }
@@ -94,6 +107,21 @@ impl<S: Print> Print for Def<S> {
             .keyword(DEF)
             .append(alloc.space())
             .append(self.name.print(cfg, alloc))
+            .append(if self.type_params.is_empty() {
+                alloc.nil()
+            } else {
+                alloc
+                    .text("[")
+                    .append(
+                        alloc.intersperse(
+                            self.type_params
+                                .iter()
+                                .map(|param| alloc.typ(&param.print_to_string(Some(cfg)))),
+                            alloc.text(COMMA).append(alloc.space()),
+                        ),
+                    )
+                    .append(alloc.text("]"))
+            })
             .append(self.context.print(cfg, alloc).parens())
             .append(alloc.space());
 
@@ -105,5 +133,84 @@ impl<S: Print> Print for Def<S> {
             .braces_anno();
 
         head.group().append(body)
+    }
+}
+
+impl ConstraintCollector for Def {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        self.body.collect_constraints(env)
+    }
+}
+
+impl Checked for Def {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // extend the type parameters of the clause with the type parameters of the definition
+        let extended_type_params = [type_params, &self.type_params].concat();
+
+        // check well-formedness of the context
+        self.context.check(&extended_type_params, context, env)?;
+
+        // extend the context of the clause with the bindings of the definition
+        let mut extended_context = context.clone();
+        for binding in &self.context.bindings {
+            extended_context.bindings.push(binding.clone());
+        }
+
+        // check the body of the function under the context of the function
+        self.body
+            .check(&extended_type_params, &extended_context, env)
+    }
+}
+
+impl LabelAndUnify for Def {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        _scope: &TypingContext,
+    ) -> Def {
+        // ignores the incoming scope: a `Def` is always closed/top-level, so it builds its own
+        // scope from its own already-labeled parameter signature rather than inheriting one
+        let sig = sigs
+            .get(&self.name)
+            .unwrap_or_else(|| panic!("missing signature for def: {}", self.name.name));
+        let labeled_bindings: Vec<ContextBinding> = self
+            .context
+            .bindings
+            .iter()
+            .zip(&sig.tys)
+            .map(|(binding, ty)| ContextBinding {
+                var: binding.var.clone(),
+                chi: binding.chi.clone(),
+                ty: ty.clone(),
+            })
+            .collect();
+        let scope = TypingContext {
+            bindings: labeled_bindings.clone(),
+        };
+        Def {
+            name: self.name.clone(),
+            type_params: self.type_params.clone(),
+            context: TypingContext {
+                bindings: labeled_bindings,
+            },
+            body: self.body.label_and_unify(state, sigs, &scope),
+        }
+    }
+}
+
+impl Rewrite for Def {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Def {
+            name: self.name.clone(),
+            type_params: self.type_params.clone(),
+            context: self.context.rewrite(table),
+            body: self.body.rewrite(table),
+        }
     }
 }

@@ -8,6 +8,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
@@ -24,6 +25,8 @@ pub struct Constructor {
     pub span: SourceSpan,
     /// The constructor name
     pub id: Name,
+    /// The type arguments instantiating the type parameters of the constructor
+    pub type_args: TypeArgs,
     /// The arguments of the constructor
     pub args: Arguments,
     /// The (inferred) type of the constructor
@@ -44,7 +47,10 @@ impl Print for Constructor {
             self.args.print(cfg, alloc).parens()
         };
 
-        alloc.ctor(&self.id).append(args.group())
+        alloc
+            .ctor(&self.id)
+            .append(self.type_args.print(cfg, alloc))
+            .append(args.group())
     }
 }
 
@@ -61,36 +67,28 @@ impl Check for Constructor {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        let type_args = match expected {
-            Ty::Decl { type_args, .. } => type_args,
-            Ty::I64 { .. } => {
-                return Err(Error::ExpectedI64ForConstructor {
-                    span: self.span,
-                    name: self.id,
-                });
-            }
-        };
+        // Resolve the constructor against the expected data type, creating a monomorphic
+        // instance if necessary. `args_template` has the surrounding data type's type
+        // parameters already substituted, but may still contain the constructor's own
+        // (existential) type parameters.
+        let (own_type_params, args_template) =
+            symbol_table.lookup_ctor_signature(&self.span, &self.id, expected)?;
 
-        // the name of the constructor in the symbol table for the instantiated data type, the
-        // instance must exists already
-        let name = self.id.clone() + &type_args.print_to_string(None);
-        match symbol_table.ctors.get(&name) {
-            Some(types) => {
-                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span, &name)?;
+        // Check that the syntactically given type arguments match the arity of the
+        // constructor's own type parameters, and substitute them.
+        self.type_args.is_instance(&own_type_params, symbol_table)?;
 
-                self.args =
-                    check_args(&self.span, symbol_table, context, self.args, &types.clone())?;
+        let mappings: HashMap<Name, Ty> = own_type_params
+            .names()
+            .into_iter()
+            .zip(self.type_args.args.iter().cloned())
+            .collect();
+        let types = args_template.subst_ty(&mappings);
 
-                check_equality(&self.span, symbol_table, expected, &ty)?;
+        self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
 
-                self.ty = Some(expected.clone());
-                Ok(self)
-            }
-            None => Err(Error::Undefined {
-                span: Some(self.span),
-                name: self.id.clone(),
-            }),
-        }
+        self.ty = Some(expected.clone());
+        Ok(self)
     }
 }
 
@@ -105,6 +103,7 @@ mod test {
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::context::ContextBinding;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
@@ -115,6 +114,7 @@ mod test {
         let result = Constructor {
             span: dummy_span(),
             id: "Nil".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
             ty: None,
         }
@@ -127,6 +127,7 @@ mod test {
         let expected = Constructor {
             span: dummy_span(),
             id: "Nil".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
             ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
         };
@@ -140,11 +141,13 @@ mod test {
         let result = Constructor {
             span: dummy_span(),
             id: "Cons".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![
                 XVar::mk("x").into(),
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: None,
                 }
@@ -162,6 +165,7 @@ mod test {
         let expected = Constructor {
             span: dummy_span(),
             id: "Cons".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![
                 XVar {
                     span: dummy_span(),
@@ -173,6 +177,7 @@ mod test {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
                 }
@@ -189,10 +194,12 @@ mod test {
         let result = Constructor {
             span: dummy_span(),
             id: "Cons".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: None,
                 }
@@ -200,6 +207,7 @@ mod test {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: None,
                 }
@@ -219,10 +227,31 @@ mod test {
         assert!(result.is_err());
     }
 
+    fn existential_ctor() -> Constructor {
+        Constructor {
+            span: dummy_span(),
+            id: "Mk".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_decl("B", TypeArgs::default())]),
+            args: vec![
+                XVar {
+                    span: dummy_span(),
+                    var: "x".to_owned(),
+                    ty: None,
+                    chi: None,
+                }
+                .into(),
+            ]
+            .into(),
+            ty: None,
+        }
+        .into()
+    }
+
     fn example_nil() -> Constructor {
         Constructor {
             span: dummy_span(),
             id: "Nil".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
             ty: None,
         }
@@ -232,6 +261,7 @@ mod test {
         Constructor {
             span: dummy_span(),
             id: "Tup".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![Term::Lit(Lit::mk(2)).into(), Term::Lit(Lit::mk(4)).into()].into(),
             ty: None,
         }
@@ -260,5 +290,91 @@ mod test {
     fn parse_tup() {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("Tup(2,4)"), Ok(example_tup().into()));
+    }
+
+    #[test]
+    fn parse_existential_ctor() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("Mk[B](x)"), Ok(existential_ctor().into()));
+    }
+
+    #[test]
+    fn display_existential_ctor() {
+        assert_eq!(
+            existential_ctor().print_to_string(Default::default()),
+            "Mk[B](x)"
+        )
+    }
+
+    /// Builds a symbol table containing `data Any { Mk[B](x: B) }`, i.e. a data type without its own
+    /// type parameters whose single constructor has its own existential type parameter `B`.
+    fn symbol_table_any_existential() -> SymbolTable {
+        let mut symbol_table = SymbolTable::default();
+
+        symbol_table.type_templates.insert(
+            "Any".to_owned(),
+            (Polarity::Data, TypeParams::default(), vec!["Mk".to_owned()]),
+        );
+
+        symbol_table.ctor_templates.insert(
+            "Mk".to_owned(),
+            (
+                TypeParams::mk(&[("B", Polarity::Data)]),
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "x".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }],
+                },
+            ),
+        );
+
+        symbol_table
+    }
+
+    #[test]
+    fn check_existential_ctor() {
+        let result = Constructor {
+            span: dummy_span(),
+            id: "Mk".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![Lit::mk(5).into()].into(),
+            ty: None,
+        }
+        .check(
+            &mut symbol_table_any_existential(),
+            &TypingContext::default(),
+            &Ty::mk_decl("Any", TypeArgs::default()),
+        )
+        .unwrap();
+
+        let expected = Constructor {
+            span: dummy_span(),
+            id: "Mk".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![Lit::mk(5).into()].into(),
+            ty: Some(Ty::mk_decl("Any", TypeArgs::default())),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_existential_ctor_wrong_arity() {
+        // "Mk(5)" without the required type argument for `B` must fail.
+        let result = Constructor {
+            span: dummy_span(),
+            id: "Mk".to_owned(),
+            type_args: TypeArgs::default(),
+            args: vec![Lit::mk(5).into()].into(),
+            ty: None,
+        }
+        .check(
+            &mut symbol_table_any_existential(),
+            &TypingContext::default(),
+            &Ty::mk_decl("Any", TypeArgs::default()),
+        );
+        assert!(result.is_err())
     }
 }

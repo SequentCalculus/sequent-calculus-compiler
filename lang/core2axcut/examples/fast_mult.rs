@@ -11,9 +11,10 @@ fn main() {
     let ty_list = data!(
         id!("ListInt"),
         [
-            ctor_sig!(id!("Nil"), []),
+            ctor_sig!(id!("Nil"), [], []),
             ctor_sig!(
                 id!("Cons"),
+                [],
                 [
                     bind!(id!("x"), prd!()),
                     bind!(id!("xs"), prd!(), ty!(id!("ListInt")))
@@ -55,10 +56,11 @@ fn main() {
             var!(id!("l"), ty!(id!("ListInt"))),
             case!(
                 [
-                    clause!(Cns, id!("Nil"), [], cut!(lit!(1), covar!(id!("a")))),
+                    clause!(Cns, id!("Nil"), [], [], cut!(lit!(1), covar!(id!("a")))),
                     clause!(
                         Cns,
                         id!("Cons"),
+                        [],
                         [
                             bind!(id!("x"), prd!()),
                             bind!(id!("xs"), prd!(), ty!(id!("ListInt")))
@@ -92,11 +94,11 @@ fn main() {
         ),
     );
 
-    let nil = ctor!(id!("Nil"), [], ty!(id!("ListInt")));
-    let cons1 = ctor!(id!("Cons"), [lit!(3), nil], ty!(id!("ListInt")));
-    let cons2 = ctor!(id!("Cons"), [lit!(3), cons1]);
-    let cons3 = ctor!(id!("Cons"), [lit!(0), cons2]);
-    let cons4 = ctor!(id!("Cons"), [lit!(2), cons3]);
+    let nil = ctor!(id!("Nil"), [], [], ty!(id!("ListInt")));
+    let cons1 = ctor!(id!("Cons"), [], [lit!(3), nil], ty!(id!("ListInt")));
+    let cons2 = ctor!(id!("Cons"), [], [lit!(3), cons1]);
+    let cons3 = ctor!(id!("Cons"), [], [lit!(0), cons2]);
+    let cons4 = ctor!(id!("Cons"), [], [lit!(2), cons3]);
 
     let main = def!(
         id!("main"),
