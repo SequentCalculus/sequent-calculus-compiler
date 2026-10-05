@@ -1,7 +1,7 @@
 //! This module implements the abstract methods for machine instructions.
 
 use super::Backend;
-use super::config::{Immediate, Register, TEMP, ZERO};
+use super::config::{Immediate, Register, ZERO};
 
 use axcut::syntax::ContextBinding;
 use axcut2backend::code::Instructions;
@@ -186,8 +186,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn add_and_jump(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
-        instructions.push(Code::ADDI(TEMP, temporary, immediate));
-        instructions.push(Code::JALR(ZERO, TEMP, 0));
+        instructions.push(Code::JALR(ZERO, temporary, immediate));
     }
 
     fn add(

@@ -536,12 +536,16 @@ enum BlockPosition {
 ///   last one in the linked list. This should be [`BlockPosition::Last`] in non-recursive calls of
 ///   this function, since we store the right-most values into the last block first.
 /// - `linear` is a flag whether the block is known to be used linearly.
+/// - `register_freed` tracks whether a register for memory blocks in a spill position has been
+///   freed. This should be [`false`] in non-recursive calls of this function, since the register
+///   is freed by need in a recursive call.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn store_fields(
     mut to_store: TypingContext,
     remaining_context: &TypingContext,
     block_position: BlockPosition,
     linear: bool,
+    register_freed: &mut bool,
     instructions: &mut Vec<Code>,
 ) {
     if to_store.bindings.is_empty() {
@@ -555,6 +559,13 @@ fn store_fields(
                 instructions,
             );
         }
+
+        if *register_freed {
+            // we are done with storing, so we restore the evacuated register if we did not do so
+            // before
+            instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+            instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+        }
     } else {
         // the full context is the context remaining after all stores...
         let mut remaining_plus_to_store = remaining_context.clone();
@@ -565,15 +576,28 @@ fn store_fields(
 
         // if we do not currently store the last block, we have to store a link to the next block
         if block_position == BlockPosition::Other {
-            instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-            store_slot(
-                Fst,
-                &remaining_plus_to_store,
-                HEAP,
-                fields_per_block(linear) - 1,
-                linear,
-                instructions,
-            );
+            // if we had to evacuate a register for a block, the link is still in there at this
+            // point
+            if *register_freed {
+                instructions.push(Code::COMMENT(
+                    "##store link to previous block (still in evacuated register)".to_string(),
+                ));
+                instructions.push(Code::MOVS(
+                    TEMPORARY_TEMP,
+                    HEAP,
+                    field_offset(Fst, fields_per_block(linear) - 1, linear),
+                ))
+            } else {
+                instructions.push(Code::COMMENT("##store link to previous block".to_string()));
+                store_slot(
+                    Fst,
+                    &remaining_plus_to_store,
+                    HEAP,
+                    fields_per_block(linear) - 1,
+                    linear,
+                    instructions,
+                );
+            }
         }
 
         // we can store at most `fields_per_block` variables in the last memory block, or
@@ -597,8 +621,16 @@ fn store_fields(
             .append(&mut to_store.bindings.clone());
 
         // if the block is used linearly and all fields are needed, we need to change the order of
-        // stores to treat the first field specially
+        // stores to treat the first field specially: the second slot of the first field of the
+        // newly acquired block contains information needed by `acquire_block`, so we have to call
+        // the latter before performing the store to that field; but this puts the pointer to the
+        // memory block into the temporary that must be stored into the first slot, so we have to
+        // perform that store before calling `acquire_block`
         if linear && to_store_next.len() + block_position as usize == fields_per_block(linear) {
+            if block_position == BlockPosition::Last {
+                instructions.push(Code::COMMENT("#allocate memory".to_string()));
+            }
+
             let mut to_store_next = to_store_next;
             let first_field = to_store_next.remove(0);
 
@@ -625,7 +657,9 @@ fn store_fields(
                 "##acquire free block from heap register".to_string(),
             ));
             // this puts the pointer to the memory block for the variables just stored into the first
-            // free temporary after the remaining context
+            // free temporary after the remaining context, and `HEAP` does not point to that memory
+            // block anymore; the store of the second slot must hence use the temporary and not
+            // `HEAP`!
             acquire_block(
                 Backend::fresh_temporary(Fst, &remaining_plus_rest),
                 linear,
@@ -637,16 +671,41 @@ fn store_fields(
             ));
             match Backend::fresh_temporary(Fst, &remaining_plus_rest) {
                 Temporary::Register(register) => {
+                    if *register_freed {
+                        // this and the following blocks don't need the evacuated register, so we
+                        // restore it (it's fine to do this only now, as the evacuated register will
+                        // never be stored into a block after one that stored spills)
+                        instructions
+                            .push(Code::COMMENT("###restore evacuated register".to_string()));
+                        instructions.push(Code::MOVL(
+                            TEMPORARY_TEMP,
+                            STACK,
+                            stack_offset(SPILL_TEMP),
+                        ));
+                        *register_freed = false;
+                    }
                     store_slot(Snd, &remaining_plus_rest, register, 0, linear, instructions);
                 }
                 Temporary::Spill(memory_block_position) => {
-                    // Evacuate an additional scratch register, do the load and restore it
-                    // immediately. This is not very efficient.
-
-                    instructions.push(Code::COMMENT(
-                        "###evacuate additional scratch register for memory block".to_string(),
-                    ));
-                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                    // as the temporary we have to use for the store is a spill, we evacuate an
+                    // additional scratch register, because the temporary to store will also be a
+                    // spill and hence need `TEMP`; we only evacuate once when storing the last
+                    // block (if the last block has no spill, none of the others will) and restore
+                    // when there is nothing left to store or when the next block doesn't the
+                    // scratch register for storing (we cannot wait until the end of all stores,
+                    // because in the extreme case we may need to store the evacuated register
+                    // itself)
+                    if block_position == BlockPosition::Last {
+                        instructions.push(Code::COMMENT(
+                            "###evacuate additional scratch register for memory block".to_string(),
+                        ));
+                        instructions.push(Code::MOVS(
+                            TEMPORARY_TEMP,
+                            STACK,
+                            stack_offset(SPILL_TEMP),
+                        ));
+                        *register_freed = true;
+                    }
                     instructions.push(Code::MOVL(
                         TEMPORARY_TEMP,
                         STACK,
@@ -661,15 +720,20 @@ fn store_fields(
                         linear,
                         instructions,
                     );
-
-                    instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
-                    instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
                 }
             }
         } else {
             if block_position == BlockPosition::Last {
                 instructions.push(Code::COMMENT("#allocate memory".to_string()));
             }
+
+            if *register_freed {
+                // if we have evacuated a register, we are in the linear case and thus don't have a
+                // full block left to store here, so we restore the evacuated register now
+                instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+            }
+
             store_values(
                 to_store_next.into(),
                 &remaining_plus_rest,
@@ -696,6 +760,7 @@ fn store_fields(
             remaining_context,
             BlockPosition::Other,
             linear,
+            register_freed,
             instructions,
         );
     }
@@ -1035,11 +1100,15 @@ impl Memory<Code, Temporary> for Backend {
         linear: bool,
         instructions: &mut Vec<Code>,
     ) {
+        // tracks whether a register for memory blocks in a spill position has been freed
+        let mut register_freed = false;
+
         store_fields(
             to_store,
             remaining_context,
             BlockPosition::Last,
             linear,
+            &mut register_freed,
             instructions,
         );
     }
