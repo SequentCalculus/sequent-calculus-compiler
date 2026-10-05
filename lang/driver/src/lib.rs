@@ -54,6 +54,8 @@ pub struct Driver {
     core_checked: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Monomorphized in core, but not yet uniquified or focused
     monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Monomorphized and type-checked again at the Core level
+    mono_checked: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
     uniquified: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -92,6 +94,7 @@ impl Driver {
             split: HashMap::new(),
             core_checked: HashMap::new(),
             monomorphized: HashMap::new(),
+            mono_checked: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
@@ -288,8 +291,7 @@ impl Driver {
             self.compiled(path)?
         };
         let start = Instant::now();
-        let env = GlobalEnv::new(&input.data_types, &input.codata_types, &input.defs);
-        input.check(&[], &TypingContext::default(), &env)?;
+        check_core(&input)?;
         self.record_stage("core_check", start.elapsed());
 
         self.core_checked.insert(path.clone(), input.clone());
@@ -297,7 +299,8 @@ impl Driver {
     }
 
     /// This function returns the monomorphized version of the [Core](core_lang) code. It starts
-    /// from the type-checked, possibly type-split program (see [`Driver::core_checked`]).
+    /// from the type-checked, possibly type-split program (see [`Driver::core_checked`]). The
+    /// result is not checked yet, the later stages start from [`Driver::mono_checked`].
     ///
     /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
     /// the result is cached by path alone, so a later call reusing the cache does not repeat a
@@ -323,13 +326,30 @@ impl Driver {
         Ok(mono_prog)
     }
 
+    /// This function returns the monomorphized [Core](core_lang) code after checking it with the
+    /// Core type checker once more.
+    pub fn mono_checked(&mut self, path: &PathBuf) -> Result<Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.mono_checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let input = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let start = Instant::now();
+        check_core(&input)?;
+        self.record_stage("mono_check", start.elapsed());
+
+        self.mono_checked.insert(path.clone(), input.clone());
+        Ok(input)
+    }
+
     /// This function returns the uniquified version of the [Core](core_lang) code.
     pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         if let Some(res) = self.uniquified.get(path) {
             return Ok(res.clone());
         }
 
-        let mut monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let mut monomorphized = self.mono_checked(path)?;
         let start = Instant::now();
         monomorphized.uniquify();
         self.record_stage("uniquify", start.elapsed());
@@ -379,7 +399,7 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let monomorphized = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let monomorphized = self.mono_checked(path)?;
         let start = Instant::now();
         let focused = monomorphized.focus();
         self.record_stage("focus", start.elapsed());
@@ -593,6 +613,14 @@ impl Driver {
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
     }
+}
+
+/// This function checks a whole [Core](core_lang) program with the Core type checker, starting
+/// without any type parameters or bindings in scope.
+fn check_core(prog: &Prog) -> Result<(), DriverError> {
+    let env = GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs);
+    prog.check(&[], &TypingContext::default(), &env)?;
+    Ok(())
 }
 
 /// This function appends a string to a path.
