@@ -1,0 +1,2 @@
+test_args = []
+expected = "90\n60\n10"

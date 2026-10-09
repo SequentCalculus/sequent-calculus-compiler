@@ -3,8 +3,17 @@
 use printer::tokens::{DIVIDE, MINUS, MODULO, PLUS, TIMES};
 use printer::*;
 
-use crate::syntax::*;
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -192,6 +201,81 @@ impl Bind for Op {
             }),
             max_id,
         )
+    }
+}
+
+impl ConstraintCollector for Op {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::new();
+        constraints.extend(self.fst.collect_constraints(env)?);
+        constraints.extend(self.snd.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl Specialize for Op {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Op {
+            fst: self.fst.specialize(context),
+            op: self.op.clone(),
+            snd: self.snd.specialize(context),
+        }
+    }
+}
+
+impl Checked for Op {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // check that both operands of the binary operator have type i64
+        if self.fst.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.fst.get_type().print_to_string(None),
+                msg: Some("First operand of binary operator must have type i64".to_string()),
+            });
+        }
+
+        if self.snd.get_type() != Ty::I64 {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.snd.get_type().print_to_string(None),
+                msg: Some("Second operand of binary operator must have type i64".to_string()),
+            });
+        }
+
+        self.fst.check(type_params, context, env)?;
+        self.snd.check(type_params, context, env)?;
+
+        Ok(())
+    }
+}
+
+impl LabelAndUnify for Op {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        Op {
+            fst: self.fst.label_and_unify(state, sigs, scope),
+            op: self.op.clone(),
+            snd: self.snd.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for Op {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Op {
+            fst: self.fst.rewrite(table),
+            op: self.op.clone(),
+            snd: self.snd.rewrite(table),
+        }
     }
 }
 

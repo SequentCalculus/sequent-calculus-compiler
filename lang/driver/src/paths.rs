@@ -17,6 +17,9 @@ pub const TARGET_PATH: &str = "target_scc";
 /// Path for compiled files
 pub const COMPILED_PATH: &str = "compiled";
 
+/// Path for type-split files
+pub const SPLIT_PATH: &str = "split";
+
 /// Path for focused files
 pub const FOCUSED_PATH: &str = "focused";
 
@@ -82,6 +85,20 @@ impl Paths {
     /// Create the directory for files after compilation to sequent calculus, if it doesn't exist yet.
     pub fn create_compiled_dir() {
         create_dir_all(Paths::compiled_dir()).expect("Could not create path");
+    }
+
+    /// Return the directory for files after type splitting.
+    /// ```rust
+    /// use driver::paths::Paths;
+    /// assert_eq!(Paths::split_dir().to_str().unwrap(), "target_scc/split")
+    /// ```
+    pub fn split_dir() -> PathBuf {
+        Path::new(TARGET_PATH).join(SPLIT_PATH)
+    }
+
+    /// Create the directory for files after type splitting, if it doesn't exist yet.
+    pub fn create_split_dir() {
+        create_dir_all(Paths::split_dir()).expect("Could not create path");
     }
 
     /// Return the directory for files after focusing.

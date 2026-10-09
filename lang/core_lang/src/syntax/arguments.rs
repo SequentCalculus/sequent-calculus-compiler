@@ -2,8 +2,19 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::{BTreeSet, VecDeque};
 
@@ -47,10 +58,10 @@ impl Typed for Argument {
 }
 
 impl IsCoValue for Argument {
-    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
+    fn is_co_value(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
         match self {
-            Argument::Producer(prd) => prd.is_value(codata_types),
-            Argument::Consumer(cns) => cns.is_covalue(codata_types),
+            Argument::Producer(prd) => prd.is_value(codata_types, type_params),
+            Argument::Consumer(cns) => cns.is_covalue(codata_types, type_params),
         }
     }
 }
@@ -100,6 +111,65 @@ impl Bind for Argument {
     }
 }
 
+impl ConstraintCollector for Argument {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        match self {
+            Argument::Producer(term) => term.collect_constraints(env),
+            Argument::Consumer(term) => term.collect_constraints(env),
+        }
+    }
+}
+
+impl Specialize for Argument {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        match self {
+            Argument::Producer(term) => Argument::Producer(term.specialize(context)),
+            Argument::Consumer(term) => Argument::Consumer(term.specialize(context)),
+        }
+    }
+}
+
+impl Checked for Argument {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Argument::Producer(term) => term.check(type_params, context, env),
+            Argument::Consumer(term) => term.check(type_params, context, env),
+        }
+    }
+}
+
+impl LabelAndUnify for Argument {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        match self {
+            Argument::Producer(term) => {
+                Argument::Producer(term.label_and_unify(state, sigs, scope))
+            }
+            Argument::Consumer(term) => {
+                Argument::Consumer(term.label_and_unify(state, sigs, scope))
+            }
+        }
+    }
+}
+
+impl Rewrite for Argument {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        match self {
+            Argument::Producer(term) => Argument::Producer(term.rewrite(table)),
+            Argument::Consumer(term) => Argument::Consumer(term.rewrite(table)),
+        }
+    }
+}
+
 /// This struct defines arguments in Core. They consist of a list of [`Argument`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Arguments {
@@ -144,8 +214,8 @@ impl From<VecDeque<Argument>> for Arguments {
 }
 
 impl IsCoValue for Arguments {
-    fn is_co_value(&self, codata_types: &[CodataDeclaration]) -> bool {
-        self.entries.is_co_value(codata_types)
+    fn is_co_value(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
+        self.entries.is_co_value(codata_types, type_params)
     }
 }
 
@@ -171,5 +241,57 @@ impl Uniquify for Arguments {
     fn uniquify(mut self, max_id: &mut ID) -> Arguments {
         self.entries = self.entries.uniquify(max_id);
         self
+    }
+}
+
+impl ConstraintCollector for Arguments {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::new();
+        for arg in &self.entries {
+            constraints.extend(arg.collect_constraints(env)?);
+        }
+        Ok(constraints)
+    }
+}
+
+impl Specialize for Arguments {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Arguments {
+            entries: self.entries.specialize(context),
+        }
+    }
+}
+
+impl Checked for Arguments {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        self.entries
+            .iter()
+            .try_for_each(|arg| arg.check(type_params, context, env))
+    }
+}
+
+impl LabelAndUnify for Arguments {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        Arguments {
+            entries: self.entries.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for Arguments {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Arguments {
+            entries: self.entries.rewrite(table),
+        }
     }
 }

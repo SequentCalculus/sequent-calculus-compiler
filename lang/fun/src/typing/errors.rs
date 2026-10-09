@@ -7,6 +7,7 @@
 use miette::{Diagnostic, SourceSpan};
 use thiserror::Error;
 
+use crate::syntax::declarations::Polarity;
 use crate::syntax::names::{Covar, Name, Var};
 
 /// This enum defines the errors that can occur during typechecking.
@@ -251,5 +252,20 @@ pub enum Error {
         name: Name,
         /// The provided type arguments
         type_args: String,
+    },
+    /// A type argument's polarity does not match the declared polarity of the corresponding type
+    /// parameter (`data`/`+` = positive, `codata`/`-` = negative)
+    #[error("Polarity mismatch for type parameter `{param}`.\nExpected: {expected}\nGot: {got}")]
+    #[diagnostic(code("T-024"))]
+    PolarityMismatch {
+        /// The source location
+        #[label]
+        span: Option<SourceSpan>,
+        /// The type parameter whose declared polarity was violated
+        param: Name,
+        /// The declared polarity of the parameter
+        expected: Polarity,
+        /// The actual polarity of the supplied type argument
+        got: Polarity,
     },
 }

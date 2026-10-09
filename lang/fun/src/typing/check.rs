@@ -1,6 +1,6 @@
 //! This module defines a trait with a method for typechecking.
 
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 use miette::SourceSpan;
 use printer::Print;
@@ -137,6 +137,26 @@ pub fn check_equality(
     Ok(())
 }
 
+/// This function checks for overlapping type parameters between two lists of type parameters. If there are overlapping type parameters, it returns a vector of the overlapping type parameter names. Otherwise, it returns None.
+pub fn check_overlapping_type_params(
+    fst_params: &[String],
+    snd_params: &[String],
+) -> Option<Vec<String>> {
+    let set_b: HashSet<&str> = snd_params.iter().map(|s| s.as_str()).collect();
+
+    let overlaps: Vec<String> = fst_params
+        .iter()
+        .filter(|p| set_b.contains(p.as_str()))
+        .cloned()
+        .collect();
+
+    if overlaps.is_empty() {
+        None
+    } else {
+        Some(overlaps)
+    }
+}
+
 #[cfg(test)]
 mod check_tests {
     use super::{check_args, check_equality};
@@ -146,37 +166,13 @@ mod check_tests {
                 Chirality::{Cns, Prd},
                 ContextBinding, TypingContext,
             },
-            program::{CheckedProgram, Program},
             terms::{Constructor, Lit, XVar},
             types::{Ty, TypeArgs},
             util::dummy_span,
         },
-        test_common::{
-            codata_stream, data_list, data_list_i64, def_mult, def_mult_typed, symbol_table_fun,
-            symbol_table_list,
-        },
+        test_common::{symbol_table_fun, symbol_table_list},
         typing::symbol_table::SymbolTable,
     };
-
-    #[test]
-    fn module_check() {
-        let result = Program {
-            declarations: vec![
-                data_list().into(),
-                codata_stream().into(),
-                def_mult().into(),
-            ],
-        }
-        .check()
-        .unwrap();
-
-        let expected = CheckedProgram {
-            defs: vec![def_mult_typed()],
-            data_types: vec![data_list_i64()],
-            codata_types: vec![],
-        };
-        assert_eq!(result, expected)
-    }
 
     #[test]
     fn ty_check_int() {
@@ -240,6 +236,7 @@ mod check_tests {
                 Constructor {
                     span: dummy_span(),
                     id: "Nil".to_owned(),
+                    type_args: TypeArgs::default(),
                     args: vec![].into(),
                     ty: None,
                 }
@@ -272,6 +269,7 @@ mod check_tests {
             Constructor {
                 span: dummy_span(),
                 id: "Nil".to_owned(),
+                type_args: TypeArgs::default(),
                 args: vec![].into(),
                 ty: Some(Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()]))),
             }

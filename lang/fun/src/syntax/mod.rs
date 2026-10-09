@@ -6,6 +6,7 @@ pub mod declarations;
 pub mod names;
 pub mod program;
 pub mod terms;
+pub mod type_params;
 pub mod types;
 pub mod util;
 
@@ -16,4 +17,5 @@ pub use context::{
 pub use declarations::*;
 pub use names::{Covar, Name, Var, fresh_covar};
 pub use terms::*;
+pub use type_params::{TypeParam, TypeParams};
 pub use types::{Ty, TypeArgs};
