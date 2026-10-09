@@ -3,13 +3,14 @@
 use printer::tokens::{COMMA, FAT_ARROW};
 use printer::*;
 
+use crate::bail;
 use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet, collect_type_flow};
 use crate::mono::errors::MonoError;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -264,6 +265,13 @@ impl<C: Chi> Clause<C> {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // a monomorphic program must not declare any type parameter
+        if env.forbid_type_vars && !self.type_params.is_empty() {
+            bail!(TypeError::UnexpectedTypeVar(
+                self.type_params[0].print_to_string(None)
+            ))
+        }
+
         // The clause's own freshly-bound existential/universal parameters carry no annotation of
         // their own - they inherit their polarity from the xtor's own declared parameters,
         // matched positionally, mirroring how Fun's `push_abstract_vars` threads the ctor's/

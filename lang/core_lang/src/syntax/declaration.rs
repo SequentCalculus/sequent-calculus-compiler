@@ -4,11 +4,11 @@ use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
 use crate::mono::errors::MonoError;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
-use crate::syntax::*;
+use crate::{bail, syntax::*};
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.
@@ -119,6 +119,13 @@ impl<P: Polarity> Checked for XtorSig<P> {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // a monomorphic program must not declare any type parameter
+        if env.forbid_type_vars && !self.type_params.is_empty() {
+            bail!(TypeError::UnexpectedTypeVar(
+                self.type_params[0].name.print_to_string(None)
+            ))
+        }
+
         // extend the type parameters with the type parameters of the xtor
         let extended_type_params = [type_params, &self.type_params].concat();
         self.args.check(&extended_type_params, context, env)
@@ -234,6 +241,13 @@ impl<P: Polarity> Checked for TypeDeclaration<P> {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // a monomorphic program must not declare any type parameter
+        if env.forbid_type_vars && !self.type_params.is_empty() {
+            bail!(TypeError::UnexpectedTypeVar(
+                self.type_params[0].name.print_to_string(None)
+            ))
+        }
+
         // check xtors
         for xtor in &self.xtors {
             xtor.check(type_params, context, env)?;

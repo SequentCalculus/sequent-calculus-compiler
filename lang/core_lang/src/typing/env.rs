@@ -15,6 +15,8 @@ pub struct GlobalEnv<'a> {
     pub data_decls: &'a [DataDeclaration],
     pub codata_decls: &'a [CodataDeclaration],
     pub defs: &'a [Def],
+    /// Whether the type checker reports every type variable it encounters as an error.
+    pub forbid_type_vars: bool,
 }
 
 impl<'a> GlobalEnv<'a> {
@@ -28,6 +30,7 @@ impl<'a> GlobalEnv<'a> {
             data_decls,
             codata_decls,
             defs,
+            forbid_type_vars: false,
         }
     }
 

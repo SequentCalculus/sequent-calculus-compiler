@@ -109,6 +109,10 @@ impl Checked for Ty {
         match self {
             Ty::I64 => Ok(()),
             Ty::Var(param) => {
+                // a monomorphic program must not contain any type variable at all
+                if env.forbid_type_vars {
+                    bail!(TypeError::UnexpectedTypeVar(param.print_to_string(None)))
+                }
                 // check that the type variable is declared as a type parameter in the current context
                 if type_params.iter().any(|type_param| type_param == param) {
                     Ok(())
@@ -355,7 +359,7 @@ mod check_tests {
     use super::{Identifier, Ty, TypeArgs};
     use crate::{
         syntax::TypingContext,
-        typing::{check::Checked, env::GlobalEnv},
+        typing::{check::Checked, env::GlobalEnv, errors::TypeError},
     };
     extern crate self as core_lang;
     use crate::syntax::type_params::TypeParam;
@@ -379,6 +383,25 @@ mod check_tests {
             &GlobalEnv::default(),
         );
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn check_fails_for_declared_type_var_if_forbidden() {
+        let t = tvar!(id!("A", 1));
+        let env = GlobalEnv {
+            forbid_type_vars: true,
+            ..GlobalEnv::default()
+        };
+
+        let res = t.check(
+            &[tparam!(id!("A", 1), "+")],
+            &TypingContext::default(),
+            &env,
+        );
+        assert!(matches!(
+            res.map_err(|err| err.error),
+            Err(TypeError::UnexpectedTypeVar(_))
+        ));
     }
 
     #[test]

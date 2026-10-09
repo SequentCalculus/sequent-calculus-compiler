@@ -291,7 +291,7 @@ impl Driver {
             self.compiled(path)?
         };
         let start = Instant::now();
-        check_core(&input)?;
+        check_core(&input, true)?;
         self.record_stage("core_check", start.elapsed());
 
         self.core_checked.insert(path.clone(), input.clone());
@@ -336,7 +336,7 @@ impl Driver {
 
         let input = self.monomorphized(path, VizOutput::Disabled, false)?;
         let start = Instant::now();
-        check_core(&input)?;
+        check_core(&input, false)?;
         self.record_stage("mono_check", start.elapsed());
 
         self.mono_checked.insert(path.clone(), input.clone());
@@ -616,9 +616,13 @@ impl Driver {
 }
 
 /// This function checks a whole [Core](core_lang) program with the Core type checker, starting
-/// without any type parameters or bindings in scope.
-fn check_core(prog: &Prog) -> Result<(), DriverError> {
-    let env = GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs);
+/// without any type parameters or bindings in scope. If `allow_type_vars` is `false`, as after
+/// monomorphization, every type variable in the program is reported as an error.
+fn check_core(prog: &Prog, allow_type_vars: bool) -> Result<(), DriverError> {
+    let env = GlobalEnv {
+        forbid_type_vars: !allow_type_vars,
+        ..GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs)
+    };
     prog.check(&[], &TypingContext::default(), &env)?;
     Ok(())
 }

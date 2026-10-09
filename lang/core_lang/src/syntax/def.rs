@@ -4,6 +4,7 @@ use printer::tokens::COMMA;
 use printer::tokens::DEF;
 use printer::*;
 
+use crate::bail;
 use crate::mono::constraints::ConstraintCollector;
 use crate::mono::constraints::FlowConstraintSet;
 use crate::mono::errors::MonoError;
@@ -14,7 +15,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::check::Checked;
 use crate::typing::env::GlobalEnv;
-use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::{LocatedTypeError, TypeError};
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), optional type parameters, a typing context defining the parameters, and the body statement. The
@@ -149,6 +150,13 @@ impl Checked for Def {
         context: &TypingContext,
         env: &GlobalEnv,
     ) -> Result<(), LocatedTypeError> {
+        // a monomorphic program must not declare any type parameter
+        if env.forbid_type_vars && !self.type_params.is_empty() {
+            bail!(TypeError::UnexpectedTypeVar(
+                self.type_params[0].name.print_to_string(None)
+            ))
+        }
+
         // extend the type parameters of the clause with the type parameters of the definition
         let extended_type_params = [type_params, &self.type_params].concat();
 

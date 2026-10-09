@@ -60,6 +60,10 @@ pub enum TypeError {
     /// A referenced type name was not declared in the program.
     UndeclaredType(String),
 
+    /// A type variable is used or a type parameter is declared in a program that must be
+    /// monomorphic.
+    UnexpectedTypeVar(String),
+
     /// A referenced variable/covariable was not declared in the current scope.
     UndeclaredVariable(String),
 
@@ -129,6 +133,13 @@ impl fmt::Display for TypeError {
                 }
             }
             TypeError::UndeclaredType(name) => write!(f, "Undeclared type: '{}'", name),
+            TypeError::UnexpectedTypeVar(name) => {
+                write!(
+                    f,
+                    "Unexpected type variable in monomorphic program: '{}'",
+                    name
+                )
+            }
             TypeError::UndeclaredVariable(name) => write!(f, "Undeclared variable: '{}'", name),
             TypeError::ArityMismatch { expected, got } => write!(
                 f,
