@@ -3,6 +3,7 @@
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::Uniquify;
 
 /// This struct defines programs in Core. They consist of a list top-level functions, a list of
 /// user-declared data types, and a list of user-declared codata types. Moreover, it contains the
@@ -46,6 +47,18 @@ impl Prog {
 
     /// This function makes all binders in the program unique.
     pub fn uniquify(&mut self) {
+        let new_data_types = Vec::with_capacity(self.data_types.len());
+        for mut data_type in std::mem::replace(&mut self.data_types, new_data_types) {
+            data_type = data_type.uniquify(&mut self.max_id);
+            self.data_types.push(data_type);
+        }
+
+        let new_codata_types = Vec::with_capacity(self.codata_types.len());
+        for mut codata_type in std::mem::replace(&mut self.codata_types, new_codata_types) {
+            codata_type = codata_type.uniquify(&mut self.max_id);
+            self.codata_types.push(codata_type);
+        }
+
         let new_defs = Vec::with_capacity(self.defs.len());
         for mut def in std::mem::replace(&mut self.defs, new_defs) {
             def = def.uniquify(&mut self.max_id);

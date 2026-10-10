@@ -4,6 +4,7 @@ use printer::tokens::{CODATA, COMMA, DATA};
 use printer::*;
 
 use crate::syntax::*;
+use crate::traits::Uniquify;
 
 /// This marker trait allows to abstract over the information of whether something is for data or
 /// for codata.
@@ -97,6 +98,25 @@ impl<P: Polarity> Print for XtorSig<P> {
     }
 }
 
+impl<P: Polarity> Uniquify for XtorSig<P> {
+    fn uniquify(mut self, max_id: &mut ID) -> Self {
+        let mut new_args = TypingContext::default();
+
+        for binding in self.args.bindings {
+            debug_assert_eq!(binding.var.id, 0);
+            let new_var = fresh_identifier(max_id, &binding.var.name);
+            new_args.bindings.push(ContextBinding {
+                var: new_var.clone(),
+                chi: binding.chi.clone(),
+                ty: binding.ty.clone(),
+            });
+        }
+
+        self.args = new_args;
+        self
+    }
+}
+
 /// This struct defines an xtor which represents a constructor or destructor. It consists of a
 /// name (unique within its type) and a typing context defining its parameters. The type parameter
 /// `P` determines whether this is a [`Data`] type or [`Codata`] type.
@@ -142,6 +162,17 @@ impl<P: Print + Polarity> Print for TypeDeclaration<P> {
         };
 
         head.append(body.braces_anno().group())
+    }
+}
+
+impl<P: Polarity> Uniquify for TypeDeclaration<P> {
+    fn uniquify(mut self, max_id: &mut ID) -> Self {
+        let new_xtors = Vec::with_capacity(self.xtors.len());
+        for mut xtor in std::mem::replace(&mut self.xtors, new_xtors) {
+            xtor = xtor.uniquify(max_id);
+            self.xtors.push(xtor);
+        }
+        self
     }
 }
 
