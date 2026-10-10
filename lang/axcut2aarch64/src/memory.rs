@@ -774,6 +774,8 @@ impl Memory<Code, Temporary> for Backend {
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _linear: bool,
         instructions: &mut Vec<Code>,
     ) {
         store_fields(
@@ -787,6 +789,8 @@ impl Memory<Code, Temporary> for Backend {
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _linear: bool,
         instructions: &mut Vec<Code>,
     ) {
         #[allow(clippy::vec_init_then_push)]

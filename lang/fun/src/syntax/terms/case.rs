@@ -77,7 +77,7 @@ impl From<Case> for Term {
 impl Check for Case {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -87,11 +87,16 @@ impl Check for Case {
             Some(clause) => {
                 // the name of the constructor in the symbol table for the instantiated data type
                 let ctor_name = clause.xtor.clone() + &self.type_args.print_to_string(None);
-                match symbol_table.lookup_ty_for_ctor(&self.span, &ctor_name) {
+                match state
+                    .symbol_table
+                    .lookup_ty_for_ctor(&self.span, &ctor_name)
+                {
                     Ok(ty) => ty,
                     Err(_) => {
                         // if there is no instance yet, we create on from the template
-                        symbol_table.lookup_ty_template_for_ctor(&clause.xtor, &self.type_args)?
+                        state
+                            .symbol_table
+                            .lookup_ty_template_for_ctor(&clause.xtor, &self.type_args)?
                     }
                 }
             }
@@ -101,7 +106,7 @@ impl Check for Case {
         };
 
         // We check the scrutinee `e` in `e.case {...}` against this type.
-        self.scrutinee = self.scrutinee.check(symbol_table, context, &ty)?;
+        self.scrutinee = self.scrutinee.check(state, context, &ty)?;
 
         let mut new_clauses = vec![];
         for ctor in expected_ctors {
@@ -117,7 +122,7 @@ impl Check for Case {
                     ctor,
                 });
             };
-            match symbol_table.ctors.get(&ctor_name) {
+            match state.symbol_table.ctors.get(&ctor_name) {
                 None => {
                     return Err(Error::Undefined {
                         span: Some(self.span),
@@ -134,7 +139,7 @@ impl Check for Case {
                         .append(&mut context_clause.bindings.clone());
 
                     clause.context = context_clause;
-                    clause.body = clause.body.check(symbol_table, &new_context, expected)?;
+                    clause.body = clause.body.check(state, &new_context, expected)?;
                     new_clauses.push(clause);
                 }
             }
@@ -187,7 +192,10 @@ mod test {
         ctx_case.add_var("xs", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        let mut symbol_table = symbol_table_list_template();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list_template(),
+            ..Default::default()
+        };
         let result = Case {
             span: dummy_span(),
             clauses: vec![
@@ -212,7 +220,7 @@ mod test {
             type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
             ty: None,
         }
-        .check(&mut symbol_table, &ctx, &Ty::mk_i64())
+        .check(&mut state, &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Case {
             span: dummy_span(),
@@ -260,7 +268,10 @@ mod test {
         let mut ctx_names = NameContext::default();
         ctx_names.bindings.push("x".to_string());
         ctx_names.bindings.push("y".to_string());
-        let mut symbol_table = symbol_table_list_template();
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list_template(),
+            ..Default::default()
+        };
         let result = Case {
             span: dummy_span(),
             clauses: vec![Clause {
@@ -275,7 +286,7 @@ mod test {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
-        .check(&mut symbol_table, &TypingContext::default(), &Ty::mk_i64());
+        .check(&mut state, &TypingContext::default(), &Ty::mk_i64());
         assert!(result.is_err())
     }
 

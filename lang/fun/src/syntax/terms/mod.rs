@@ -39,7 +39,10 @@ use printer::Print;
 use crate::{
     syntax::names::Var,
     traits::*,
-    typing::{check::Check, errors::Error, symbol_table::SymbolTable},
+    typing::{
+        check::{Check, CheckingState},
+        errors::Error,
+    },
 };
 
 use super::{context::TypingContext, types::Ty};
@@ -133,32 +136,30 @@ impl Print for Term {
 impl Check for Term {
     fn check(
         self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
         match self {
-            Term::XVar(var) => var.check(symbol_table, context, expected).map(Into::into),
-            Term::Lit(lit) => lit.check(symbol_table, context, expected).map(Into::into),
-            Term::Op(op) => op.check(symbol_table, context, expected).map(Into::into),
-            Term::IfC(ifc) => ifc.check(symbol_table, context, expected).map(Into::into),
-            Term::PrintI64(print) => print.check(symbol_table, context, expected).map(Into::into),
-            Term::Let(r#letxp) => r#letxp
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Call(call) => call.check(symbol_table, context, expected).map(Into::into),
-            Term::Constructor(constructor) => constructor
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Destructor(destructor) => destructor
-                .check(symbol_table, context, expected)
-                .map(Into::into),
-            Term::Case(case) => case.check(symbol_table, context, expected).map(Into::into),
-            Term::New(new) => new.check(symbol_table, context, expected).map(Into::into),
-            Term::Goto(goto) => goto.check(symbol_table, context, expected).map(Into::into),
-            Term::Label(label) => label.check(symbol_table, context, expected).map(Into::into),
-            Term::Exit(exit) => exit.check(symbol_table, context, expected).map(Into::into),
-            Term::Paren(paren) => paren.check(symbol_table, context, expected).map(Into::into),
+            Term::XVar(var) => var.check(state, context, expected).map(Into::into),
+            Term::Lit(lit) => lit.check(state, context, expected).map(Into::into),
+            Term::Op(op) => op.check(state, context, expected).map(Into::into),
+            Term::IfC(ifc) => ifc.check(state, context, expected).map(Into::into),
+            Term::PrintI64(print) => print.check(state, context, expected).map(Into::into),
+            Term::Let(r#letxp) => r#letxp.check(state, context, expected).map(Into::into),
+            Term::Call(call) => call.check(state, context, expected).map(Into::into),
+            Term::Constructor(constructor) => {
+                constructor.check(state, context, expected).map(Into::into)
+            }
+            Term::Destructor(destructor) => {
+                destructor.check(state, context, expected).map(Into::into)
+            }
+            Term::Case(case) => case.check(state, context, expected).map(Into::into),
+            Term::New(new) => new.check(state, context, expected).map(Into::into),
+            Term::Goto(goto) => goto.check(state, context, expected).map(Into::into),
+            Term::Label(label) => label.check(state, context, expected).map(Into::into),
+            Term::Exit(exit) => exit.check(state, context, expected).map(Into::into),
+            Term::Paren(paren) => paren.check(state, context, expected).map(Into::into),
         }
     }
 }

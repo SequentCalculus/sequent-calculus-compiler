@@ -50,6 +50,7 @@ pub fn compile_prog(prog: fun::syntax::program::CheckedProgram) -> core_lang::sy
         data_types,
         codata_types,
         max_id: 0,
+        nonlinear_continuations: prog.nonlinear_continuations,
     }
 }
 
@@ -104,6 +105,7 @@ mod compile_tests {
             defs: vec![],
             data_types: vec![],
             codata_types: vec![],
+            nonlinear_continuations: false,
         }
     }
 
@@ -112,6 +114,7 @@ mod compile_tests {
             defs: vec![example_def1().into(), example_def2().into()],
             data_types: vec![],
             codata_types: vec![],
+            nonlinear_continuations: false,
         }
     }
 

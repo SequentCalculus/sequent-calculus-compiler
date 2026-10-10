@@ -71,12 +71,15 @@ impl From<Goto> for Term {
 impl Check for Goto {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
+        // any goto expression means that the whole program may contain nonlinear continuations
+        state.nonlinear_continuations = true;
+
         let cont_type = context.lookup_covar(&self.target, &self.span)?;
-        self.term = self.term.check(symbol_table, context, &cont_type)?;
+        self.term = self.term.check(state, context, &cont_type)?;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -110,7 +113,7 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64())
         .unwrap();
         let expected = Goto {
             span: dummy_span(),
@@ -130,11 +133,27 @@ mod test {
             ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         );
         assert!(result.is_err())
+    }
+
+    #[test]
+    fn detect_nonlinear_continuation_goto() {
+        let mut state = CheckingState::default();
+        let mut ctx = TypingContext::default();
+        ctx.add_covar("a", Ty::mk_i64());
+        Goto {
+            span: dummy_span(),
+            target: "a".to_owned(),
+            term: Rc::new(Lit::mk(1).into()),
+            ty: None,
+        }
+        .check(&mut state, &ctx, &Ty::mk_i64())
+        .unwrap();
+        assert!(state.nonlinear_continuations)
     }
 
     fn example() -> Goto {

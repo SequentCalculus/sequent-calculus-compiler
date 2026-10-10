@@ -61,7 +61,7 @@ impl From<XVar> for Term {
 impl Check for XVar {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -74,10 +74,10 @@ impl Check for XVar {
 
         let found_ty = context.lookup_var(&self.var, &self.span)?;
         if let Some(ty) = self.ty {
-            check_equality(&self.span, symbol_table, &ty, &found_ty)?;
+            check_equality(&self.span, state, &ty, &found_ty)?;
         }
 
-        check_equality(&self.span, symbol_table, expected, &found_ty)?;
+        check_equality(&self.span, state, expected, &found_ty)?;
 
         self.ty = Some(expected.clone());
         self.chi = Some(Prd);
@@ -96,7 +96,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         let result = XVar::mk("x")
-            .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64())
+            .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64())
             .unwrap();
         let expected = XVar {
             span: dummy_span(),
@@ -111,7 +111,7 @@ mod test {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         let result = XVar::mk("x").check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &ctx,
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );

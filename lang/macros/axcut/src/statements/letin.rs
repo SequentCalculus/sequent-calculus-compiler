@@ -9,6 +9,7 @@ pub fn letin(input: TokenStream) -> TokenStream {
         [
             "Variable",
             "Type",
+            "Linearity Annotation",
             "Tag",
             "Arguments",
             "Next Statement",
@@ -16,16 +17,18 @@ pub fn letin(input: TokenStream) -> TokenStream {
         ],
         &[
             (1, parse_str("axcut::syntax::types::Ty::I64").unwrap()),
-            (5, parse_str("::std::option::Option::None").unwrap()),
+            (2, parse_str("false").unwrap()),
+            (6, parse_str("::std::option::Option::None").unwrap()),
         ],
     );
     let var = &args[0];
     let ty = &args[1];
-    let tag = &args[2];
-    let let_args = expr_to_array(&args[3], 3);
-    let next = &args[4];
-    let free_vars = quote_option(&args[5], |expr| {
-        let free_vars = expr_to_array(expr, 5)
+    let linear = &args[2];
+    let tag = &args[3];
+    let let_args = expr_to_array(&args[4], 4);
+    let next = &args[5];
+    let free_vars = quote_option(&args[6], |expr| {
+        let free_vars = expr_to_array(expr, 6)
             .into_iter()
             .map(|expr| quote! {#expr})
             .collect::<Vec<_>>();
@@ -38,6 +41,7 @@ pub fn letin(input: TokenStream) -> TokenStream {
         axcut::syntax::statements::r#let::Let{
             var: #var,
             ty: #ty,
+            linear: #linear,
             tag: #tag,
             args: axcut::syntax::context::TypingContext{
                 bindings: vec![

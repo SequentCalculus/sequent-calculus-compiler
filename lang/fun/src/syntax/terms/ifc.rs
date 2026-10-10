@@ -126,14 +126,14 @@ impl From<IfC> for Term {
 impl Check for IfC {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
-        self.thenc = self.thenc.check(symbol_table, context, expected)?;
-        self.elsec = self.elsec.check(symbol_table, context, expected)?;
+        self.fst = self.fst.check(state, context, &Ty::mk_i64())?;
+        self.snd = self.snd.check(state, context, &Ty::mk_i64())?;
+        self.thenc = self.thenc.check(state, context, expected)?;
+        self.elsec = self.elsec.check(state, context, expected)?;
 
         self.ty = Some(expected.clone());
         Ok(self)
@@ -172,7 +172,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -202,7 +202,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 
@@ -247,7 +247,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -277,7 +277,7 @@ mod test {
             elsec: Rc::new(Lit::mk(2).into()),
             ty: None,
         }
-        .check(&mut SymbolTable::default(), &ctx, &Ty::mk_i64());
+        .check(&mut CheckingState::default(), &ctx, &Ty::mk_i64());
         assert!(result.is_err())
     }
 

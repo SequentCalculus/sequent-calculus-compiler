@@ -52,6 +52,7 @@ pub fn shrink_prog(mut program: core_lang::syntax::program::FsProg) -> axcut::sy
                     &program.codata_types,
                     &mut used_labels,
                     &mut max_id,
+                    program.nonlinear_continuations,
                 )
             })
             .collect(),

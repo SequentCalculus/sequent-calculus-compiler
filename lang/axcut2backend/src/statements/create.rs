@@ -32,7 +32,8 @@ impl CodeStatement for Create {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{CREATE} {}: {} = ({})\\{{ ... \\}};",
+            "{CREATE}{} {}: {} = ({})\\{{ ... \\}};",
+            if self.linear { "1" } else { "" },
             self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.context
@@ -51,7 +52,12 @@ impl CodeStatement for Create {
                     .bindings
                     .len(),
         );
-        Backend::store(closure_environment.clone().into(), &context, instructions);
+        Backend::store(
+            closure_environment.clone().into(),
+            &context,
+            self.linear,
+            instructions,
+        );
 
         let fresh_label = format!(
             "{}_{}",
@@ -87,6 +93,7 @@ impl CodeStatement for Create {
             self.clauses,
             &fresh_label,
             types,
+            self.linear,
             instructions,
         );
     }

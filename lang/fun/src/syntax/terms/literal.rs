@@ -52,11 +52,11 @@ impl From<Lit> for Term {
 impl Check for Lit {
     fn check(
         self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         _context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, expected, &Ty::mk_i64())?;
+        check_equality(&self.span, state, expected, &Ty::mk_i64())?;
         Ok(self)
     }
 }
@@ -70,7 +70,7 @@ mod test {
     fn check_lit() {
         let result = Lit::mk(1)
             .check(
-                &mut SymbolTable::default(),
+                &mut CheckingState::default(),
                 &TypingContext::default(),
                 &Ty::mk_i64(),
             )
@@ -82,7 +82,7 @@ mod test {
     #[test]
     fn check_lit_fail() {
         let result = Lit::mk(1).check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );

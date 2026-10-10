@@ -59,11 +59,11 @@ impl From<Paren> for Term {
 impl Check for Paren {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.inner = self.inner.check(symbol_table, context, expected)?;
+        self.inner = self.inner.check(state, context, expected)?;
         Ok(self)
     }
 }
@@ -83,7 +83,7 @@ mod test {
     fn check_parens() {
         let result = Paren::mk(Lit::mk(1))
             .check(
-                &mut SymbolTable::default(),
+                &mut CheckingState::default(),
                 &TypingContext::default(),
                 &Ty::mk_i64(),
             )

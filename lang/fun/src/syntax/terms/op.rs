@@ -80,13 +80,13 @@ impl From<Op> for Term {
 impl Check for Op {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        check_equality(&self.span, symbol_table, &Ty::mk_i64(), expected)?;
-        self.fst = self.fst.check(symbol_table, context, &Ty::mk_i64())?;
-        self.snd = self.snd.check(symbol_table, context, &Ty::mk_i64())?;
+        check_equality(&self.span, state, &Ty::mk_i64(), expected)?;
+        self.fst = self.fst.check(state, context, &Ty::mk_i64())?;
+        self.snd = self.snd.check(state, context, &Ty::mk_i64())?;
 
         Ok(self)
     }
@@ -119,7 +119,7 @@ mod test {
             snd: Rc::new(Lit::mk(2).into()),
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_i64(),
         )
@@ -142,7 +142,7 @@ mod test {
             snd: Rc::new(Lit::mk(2).into()),
         }
         .check(
-            &mut SymbolTable::default(),
+            &mut CheckingState::default(),
             &TypingContext::default(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         );

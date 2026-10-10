@@ -21,6 +21,7 @@ pub struct ShrinkingState<'a> {
     pub used_labels: &'a mut HashSet<Identifier>,
     pub current_label: &'a str,
     pub lifted_statements: &'a mut VecDeque<axcut::syntax::Def>,
+    pub nonlinear_continuations: bool,
 }
 
 /// This trait provides a method for the translation from the focused version of [Core](core_lang)

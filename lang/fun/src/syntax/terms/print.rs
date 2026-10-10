@@ -72,13 +72,13 @@ impl From<PrintI64> for Term {
 impl Check for PrintI64 {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        self.arg = self.arg.check(symbol_table, context, &Ty::mk_i64())?;
+        self.arg = self.arg.check(state, context, &Ty::mk_i64())?;
 
-        self.next = self.next.check(symbol_table, context, expected)?;
+        self.next = self.next.check(state, context, expected)?;
 
         self.ty = Some(expected.clone());
         Ok(self)

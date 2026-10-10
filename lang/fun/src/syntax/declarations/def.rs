@@ -38,12 +38,13 @@ impl Def {
     /// This function checks the well-formedness of the top-level function. This consists of
     /// checking the well-formedness of the paramater list and return type, and typechecking the
     /// body in the context given by the parameters.
-    pub fn check(mut self, symbol_table: &mut SymbolTable) -> Result<Def, Error> {
+    pub fn check(mut self, state: &mut CheckingState) -> Result<Def, Error> {
         self.context.no_dups(&self.name)?;
-        self.context.check(symbol_table)?;
-        self.ret_ty.check(&Some(self.span), symbol_table)?;
+        self.context.check(&mut state.symbol_table)?;
+        self.ret_ty
+            .check(&Some(self.span), &mut state.symbol_table)?;
 
-        self.body = self.body.check(symbol_table, &self.context, &self.ret_ty)?;
+        self.body = self.body.check(state, &self.context, &self.ret_ty)?;
 
         Ok(self)
     }
@@ -92,7 +93,7 @@ mod def_tests {
             util::dummy_span,
         },
         test_common::{data_list, def_mult, def_mult_typed},
-        typing::symbol_table::{BuildSymbolTable, SymbolTable},
+        typing::{CheckingState, symbol_table::BuildSymbolTable},
     };
 
     use super::Def;
@@ -130,10 +131,10 @@ mod def_tests {
 
     #[test]
     fn def_check() {
-        let mut symbol_table = SymbolTable::default();
-        def_mult().build(&mut symbol_table).unwrap();
-        data_list().build(&mut symbol_table).unwrap();
-        let result = def_mult().check(&mut symbol_table).unwrap();
+        let mut state = CheckingState::default();
+        def_mult().build(&mut state.symbol_table).unwrap();
+        data_list().build(&mut state.symbol_table).unwrap();
+        let result = def_mult().check(&mut state).unwrap();
         let expected = def_mult_typed();
         assert_eq!(result, expected)
     }

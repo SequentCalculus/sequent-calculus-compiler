@@ -28,7 +28,8 @@ impl CodeStatement for Let {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{LET} {}: {} = {}({});",
+            "{LET}{} {}: {} = {}({});",
+            if self.linear { "1" } else { "" },
             self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.tag.print_to_string(None),
@@ -44,7 +45,7 @@ impl CodeStatement for Let {
         let arguments = context
             .bindings
             .split_off(context.bindings.len() - self.args.bindings.len());
-        Backend::store(arguments.into(), &context, instructions);
+        Backend::store(arguments.into(), &context, self.linear, instructions);
 
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
