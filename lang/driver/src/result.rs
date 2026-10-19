@@ -15,4 +15,8 @@ pub enum DriverError {
     #[error("Unable to find binary {bin_name}")]
     #[diagnostic(code("D-001"))]
     BinaryNotFound { bin_name: String },
+    #[error(transparent)]
+    MonoError(#[from] core_lang::mono::errors::MonoError),
+    #[error(transparent)]
+    CoreTypeError(#[from] core_lang::typing::errors::LocatedTypeError),
 }

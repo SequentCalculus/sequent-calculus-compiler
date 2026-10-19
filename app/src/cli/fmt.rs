@@ -19,6 +19,10 @@ pub struct Args {
     indent: isize,
     #[clap(short, long, value_name = "FILE")]
     output: Option<PathBuf>,
+    /// Print how long each compilation stage took to stderr, one stage per line: its name
+    /// and its duration in microseconds.
+    #[arg(long)]
+    timings: bool,
 }
 
 /// This function computes the output stream for the "fmt" subcommand. If an output filepath is
@@ -65,6 +69,9 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
         parsed
             .print_io(&cfg, &mut stream)
             .expect("Failed to print to stdout");
+    }
+    if cmd.timings {
+        eprint!("{}", drv.timings_report());
     }
     Ok(())
 }

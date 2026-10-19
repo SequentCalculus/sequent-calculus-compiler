@@ -1,7 +1,7 @@
 //! This module contains the compiler logic for generating RISC-V assembly files. There is
 //! currently no compilation to object files and linking.
 
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf, time::Instant};
 
 use axcut2backend::coder::compile;
 
@@ -14,8 +14,10 @@ impl Driver {
     /// - `mode` determines whether the assembly code is printed in textual mode or as LaTeX code.
     pub fn print_rv_64(&mut self, path: &PathBuf, _mode: PrintMode) -> Result<(), DriverError> {
         let linearized = self.linearized(path)?;
+        let start = Instant::now();
         let code = compile::<axcut2rv64::Backend, _, _, _>(linearized);
         let code_str = axcut2rv64::into_routine::into_rv64_routine(code).to_string();
+        self.record_stage("codegen", start.elapsed());
 
         Paths::create_risc_v_assembly_dir();
 

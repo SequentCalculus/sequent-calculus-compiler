@@ -11,10 +11,13 @@ use crate::typing::*;
 use std::collections::HashSet;
 
 /// This struct defines the call of a top-level function in Fun. It consists of the name of the
-/// top-level function to call, the arguments, and after typechecking also the inferred type.
+/// top-level function to call, the type arguments, the arguments, and after typechecking also the inferred type.
 ///
-/// Example:
+/// Examples:
+///
 /// `fac(10)`, calls the top-level function `fac` with argument `10`.
+///
+/// `id[i64](x)` calls the top-level function `id` with type argument `i64` and argument `x`.
 #[derive(Derivative, Debug, Clone)]
 #[derivative(PartialEq, Eq)]
 pub struct Call {
@@ -23,6 +26,8 @@ pub struct Call {
     pub span: SourceSpan,
     /// The name of the top-level function being called
     pub name: Name,
+    /// The type arguments
+    pub type_args: TypeArgs,
     /// The arguments
     pub args: Arguments,
     /// The (inferred) return type
@@ -39,6 +44,7 @@ impl Print for Call {
     fn print<'a>(&'a self, cfg: &PrintCfg, alloc: &'a Alloc<'a>) -> Builder<'a> {
         self.name
             .print(cfg, alloc)
+            .append(self.type_args.print(cfg, alloc))
             .append(self.args.print(cfg, alloc).parens().group())
     }
 }
@@ -56,21 +62,13 @@ impl Check for Call {
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
-        match symbol_table.defs.get(&self.name) {
-            Some(signature) => {
-                let (types, ret_ty) = signature.clone();
-                check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+        let (types, ret_ty) =
+            symbol_table.instantiate_def_signature(Some(self.span), &self.name, &self.type_args)?;
 
-                self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
-
-                self.ret_ty = Some(expected.clone());
-                Ok(self)
-            }
-            None => Err(Error::Undefined {
-                span: None,
-                name: self.name.clone(),
-            }),
-        }
+        check_equality(&self.span, symbol_table, expected, &ret_ty)?;
+        self.args = check_args(&self.span, symbol_table, context, self.args, &types)?;
+        self.ret_ty = Some(expected.clone());
+        Ok(self)
     }
 }
 
@@ -95,9 +93,10 @@ mod test {
         let mut symbol_table = symbol_table_list();
         let mut ctx = TypingContext::default();
         ctx.add_var("l", Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])));
-        symbol_table
-            .defs
-            .insert("mult".to_owned(), (ctx.clone(), Ty::mk_i64()));
+        symbol_table.defs.insert(
+            "mult".to_owned(),
+            (TypeParams::default(), ctx.clone(), Ty::mk_i64()),
+        );
         let result = def_mult()
             .body
             .check(&mut symbol_table, &ctx, &Ty::mk_i64())
@@ -111,6 +110,7 @@ mod test {
         let result = Call {
             span: dummy_span(),
             name: "main".to_owned(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
             ret_ty: None,
         }
@@ -125,11 +125,70 @@ mod test {
         assert!(result.is_err())
     }
 
+    #[test]
+    fn check_poly_call_missing_type_args_fails() {
+        let mut symbol_table = SymbolTable::default();
+        let mut poly_ctx = TypingContext::default();
+        poly_ctx.add_var("x", Ty::mk_decl("A", TypeArgs::default()));
+        symbol_table.defs.insert(
+            "id".to_owned(),
+            (
+                TypeParams::mk(&[("A", Polarity::Data)]),
+                poly_ctx,
+                Ty::mk_decl("A", TypeArgs::default()),
+            ),
+        );
+
+        let result = Call {
+            span: dummy_span(),
+            name: "id".to_owned(),
+            type_args: TypeArgs::default(),
+            args: vec![Term::Lit(Lit::mk(1)).into()].into(),
+            ret_ty: None,
+        }
+        .check(&mut symbol_table, &TypingContext::default(), &Ty::mk_i64());
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn check_mono_call_with_type_args_fails() {
+        let mut symbol_table = SymbolTable::default();
+        let mut mono_ctx = TypingContext::default();
+        mono_ctx.add_var("x", Ty::mk_i64());
+        symbol_table.defs.insert(
+            "id".to_owned(),
+            (TypeParams::default(), mono_ctx, Ty::mk_i64()),
+        );
+
+        let result = Call {
+            span: dummy_span(),
+            name: "id".to_owned(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![Term::Lit(Lit::mk(1)).into()].into(),
+            ret_ty: None,
+        }
+        .check(&mut symbol_table, &TypingContext::default(), &Ty::mk_i64());
+
+        assert!(result.is_err());
+    }
+
     fn example_simple() -> Call {
         Call {
             span: dummy_span(),
             name: "foo".to_string(),
+            type_args: TypeArgs::default(),
             args: vec![].into(),
+            ret_ty: None,
+        }
+    }
+
+    fn example_id() -> Call {
+        Call {
+            span: dummy_span(),
+            name: "id".to_string(),
+            type_args: TypeArgs::mk(vec![Ty::mk_i64()]),
+            args: vec![XVar::mk("x").into()].into(),
             ret_ty: None,
         }
     }
@@ -143,15 +202,30 @@ mod test {
     }
 
     #[test]
+    fn display_id() {
+        assert_eq!(
+            example_id().print_to_string(Default::default()),
+            "id[i64](x)"
+        )
+    }
+
+    #[test]
     fn parse_simple() {
         let parser = fun::TermParser::new();
         assert_eq!(parser.parse("foo()"), Ok(example_simple().into()));
+    }
+
+    #[test]
+    fn parse_id() {
+        let parser = fun::TermParser::new();
+        assert_eq!(parser.parse("id[i64](x)"), Ok(example_id().into()));
     }
 
     fn example_extended() -> Call {
         Call {
             span: dummy_span(),
             name: "foo".to_string(),
+            type_args: TypeArgs::default(),
             args: vec![Term::Lit(Lit::mk(2)).into(), XVar::mk("a").into()].into(),
             ret_ty: None,
         }

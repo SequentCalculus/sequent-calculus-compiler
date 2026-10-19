@@ -31,9 +31,11 @@ pub fn shrink_binding(
                 ty: axcut::syntax::Ty::I64,
             }
         }
-    } else if !binding.ty.is_codata(codata_types)
+    // This runs post-monomorphization, where `Ty::Var` can no longer occur (every type is
+    // ground), so `is_codata`'s ambient type-parameter list is never actually consulted here.
+    } else if !binding.ty.is_codata(codata_types, &[])
         && binding.chi == core_lang::syntax::context::Chirality::Prd
-        || binding.ty.is_codata(codata_types)
+        || binding.ty.is_codata(codata_types, &[])
             && binding.chi == core_lang::syntax::context::Chirality::Cns
     {
         axcut::syntax::ContextBinding {

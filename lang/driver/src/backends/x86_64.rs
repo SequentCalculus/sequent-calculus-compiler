@@ -1,7 +1,7 @@
 //! This module contains the compiler logic for generating x86-64 assembly files and subsequent
 //! compilation to object files and linking against the runtime.
 
-use std::{fs::File, io::Write, path::PathBuf, process::Command};
+use std::{fs::File, io::Write, path::PathBuf, process::Command, time::Instant};
 
 use axcut2backend::coder::compile;
 use printer::Print;
@@ -20,6 +20,7 @@ impl Driver {
     /// - `mode` determines whether the assembly code is printed in textual mode or as LaTeX code.
     pub fn print_x86_64(&mut self, path: &PathBuf, mode: PrintMode) -> Result<usize, DriverError> {
         let linearized = self.linearized(path)?;
+        let start = Instant::now();
         let code = compile::<axcut2x86_64::Backend, _, _, _>(linearized);
         let number_of_arguments = code.number_of_arguments;
         Paths::create_x86_64_assembly_dir();
@@ -53,6 +54,7 @@ impl Driver {
                 file.write_all(LATEX_END.as_bytes()).unwrap();
             }
         }
+        self.record_stage("codegen", start.elapsed());
         Ok(number_of_arguments)
     }
 
@@ -78,6 +80,7 @@ impl Driver {
         dist_path.set_extension("o");
 
         // yasm -f elf64 filename.asm
+        let assemble_start = Instant::now();
         Command::new("yasm")
             .args(["-f", "elf64"])
             .args(["-o", dist_path.to_str().unwrap()])
@@ -86,6 +89,7 @@ impl Driver {
             .map_err(|_| DriverError::BinaryNotFound {
                 bin_name: "yasm".to_string(),
             })?;
+        self.record_stage("assemble", assemble_start.elapsed());
 
         Paths::create_x86_64_binary_dir();
 
@@ -97,6 +101,7 @@ impl Driver {
         let io_runtime_path = generate_io_runtime();
 
         // gcc -o filename path/to/driver.c path/to/io.c filename.o
+        let link_start = Instant::now();
         Command::new("gcc")
             .args(["-o", bin_path.to_str().unwrap()])
             .arg(c_driver_path.to_str().unwrap())
@@ -106,6 +111,7 @@ impl Driver {
             .map_err(|_| DriverError::BinaryNotFound {
                 bin_name: "gcc".to_string(),
             })?;
+        self.record_stage("link", link_start.elapsed());
         Ok(())
     }
 }
