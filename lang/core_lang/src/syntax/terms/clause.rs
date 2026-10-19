@@ -46,12 +46,19 @@ impl<C: Chi, S: Print> Print for Clause<C, S> {
             self.context.print(cfg, alloc).parens()
         };
 
+        let type_params = if self.type_params.is_empty() {
+            alloc.nil()
+        } else {
+            self.type_params.print(cfg, alloc).brackets()
+        };
+
         let xtor = if self.prdcns.is_prd() {
             alloc.dtor(&self.xtor.name.print_to_string(Some(cfg)))
         } else {
             alloc.ctor(&self.xtor.name.print_to_string(Some(cfg)))
         };
-        xtor.append(context.group())
+        xtor.append(type_params)
+            .append(context.group())
             .append(alloc.space())
             .append(FAT_ARROW)
             .align()
