@@ -1,9 +1,7 @@
 # Compiling with the Sequent Calculus
 
-This repository contains a compiler which compiles a high-level functional
-programming language to machine code, based on the accompanying paper "Compiling
-with the Sequent Calculus". The intermediate languages are based on the sequent
-calculus.
+This repository contains a compiler which compiles a high-level functional programming language to machine code, based on the accompanying paper ["Compiling with the Sequent Calculus"](https://doi.org/10.1145/3845991).
+The intermediate languages are based on the classical sequent calculus.
 
 To use this project, you need a working installation of Rust 2024.
 
@@ -25,8 +23,7 @@ make uninstall
 
 ## Usage
 
-With the compiler binary installed (and assuming that your `cargo`-binary directory is in your path),
-run
+With the compiler binary installed (and assuming that your `cargo`-binary directory is in your path), run
 
 ```console
 scc help
@@ -76,10 +73,8 @@ The documentation then is in `target/doc` in html for viewing in a web browser.
 
 ## Using the latex backend
 
-It is possible to generate colorized latex output for code snippets using the
-`scc texify` subcommand. The colors used for syntax highlighting are not
-predefined but must be declared in the header of the latex file, using, for
-example, the following defaults:
+It is possible to generate colorized latex output for code snippets using the `scc texify` subcommand.
+The colors used for syntax highlighting are not predefined but must be declared in the header of the latex file, using, for example, the following defaults:
 
 ```latex
 \usepackage{xcolor}
@@ -96,10 +91,9 @@ example, the following defaults:
 
 ## The Language Grammar
 
-The Grammar for the surface language **Fun** is defined in `lalrpop` syntax in
-the file `lang/fun/src/parser/fun.lalrpop`. Here is the grammar in a more
-standard form. For more concrete examples, look at the [examples](./examples) directory
-or at the [benchmark](./benchmarks) programs.
+The Grammar for the surface language **Fun** is defined in `lalrpop` syntax in the file `lang/fun/src/parser/fun.lalrpop`.
+Here is the grammar in a more standard form.
+For more concrete examples, look at the [examples](./examples) directory or at the [benchmark](./benchmarks) programs.
 
 ```
 Var ::= alphanumerical String with underlines, starting with small letter
@@ -157,11 +151,8 @@ Declaration ::= Data | Codata | Def
 Program ::= Declaration+
 ```
 
-Note that while data and codata declarations may have type parameters, which can also be used
-by their constructors and destructors in the declaration. On the term level, however, these
-type parameters must be instantiated by monomorphic types, as is visible in destructor calls and
-pattern matches. That is, there is no type polymorphism on the term level, only in declarations.
+Note that while data and codata declarations may have type parameters, which can also be used by their constructors and destructors in the declaration.
+On the term level, however, these type parameters must be instantiated by monomorphic types, as is visible in destructor calls and pattern matches.
+That is, there is no type polymorphism on the term level, only in declarations.
 
-Moreover, to make a program runnable, it must contain a top-level definition called `main`, which
-can take several integer parameters (these are the command-line arguments) and returns an integer
-(the exit code of the program).
+Moreover, to make a program runnable, it must contain a top-level definition called `main`, which can take several integer parameters (these are the command-line arguments) and returns an integer (the exit code of the program).
