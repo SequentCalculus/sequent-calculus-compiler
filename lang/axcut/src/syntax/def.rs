@@ -6,7 +6,7 @@ use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
 /// (unique in the program), a typing context defining the parameters, and the body statement.
@@ -18,6 +18,10 @@ pub struct Def {
 }
 
 impl Def {
+    pub fn inline_defs(&mut self, occurences: &mut HashMap<ID, i32>) {
+        unimplemented!()
+    }
+
     /// This function applies the linearization procedure to the body of the top-level function.
     pub fn linearize(mut self, max_id: &mut ID) -> Def {
         // we only call this function to annotate the free variables for all substatements which

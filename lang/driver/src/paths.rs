@@ -26,6 +26,8 @@ pub const UNIQUIFIED_PATH: &str = "uniquified";
 /// Path for non-linearized axcut files
 pub const SHRUNK_PATH: &str = "shrunk";
 
+pub const INLINED_PATH: &str = "inlined";
+
 /// Path for linearized axcut files
 pub const LINEARIZED_PATH: &str = "linearized";
 
@@ -124,6 +126,11 @@ impl Paths {
     /// Create the directory for files after shrinking, if it doesn't exist yet.
     pub fn create_shrunk_dir() {
         create_dir_all(Paths::shrunk_dir()).expect("Could not create path");
+    }
+
+    pub fn create_ir_dir(irpath: &str) {
+        let path = Path::new(TARGET_PATH).join(irpath);
+        create_dir_all(path).expect("Could not create path");
     }
 
     /// Return the directory for files after linearization.
