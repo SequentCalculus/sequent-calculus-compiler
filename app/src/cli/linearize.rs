@@ -7,6 +7,10 @@ use std::path::PathBuf;
 #[derive(clap::Args)]
 pub struct Args {
     filepath: PathBuf,
+    /// Print how long each compilation stage took to stderr, one stage per line: its name
+    /// and its duration in microseconds.
+    #[arg(long)]
+    timings: bool,
 }
 
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
@@ -18,5 +22,8 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     };
     drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
     print_stdout(&linearized, colored);
+    if cmd.timings {
+        eprint!("{}", drv.timings_report());
+    }
     Ok(())
 }
