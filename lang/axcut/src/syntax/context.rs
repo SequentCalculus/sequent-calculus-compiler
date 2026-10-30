@@ -96,6 +96,12 @@ impl TypingContext {
         self.bindings.into_iter().map(|binding| binding.var)
     }
 
+    /// This function returns an iterator over the [`ID`]s of the variables in a typing context,
+    /// consuming the context.
+    pub fn iter_ids(&self) -> impl Iterator<Item = ID> {
+        self.bindings.iter().map(|binding| binding.var.id)
+    }
+
     /// This function picks fresh names for variables that are duplicated in a context.
     /// - `context` is the context in which to pick fresh names.
     /// - `clashes` is the set of [`ID`]s of variables for which a fresh name must be picked if

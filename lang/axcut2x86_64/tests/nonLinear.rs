@@ -8,7 +8,6 @@ use std::io::prelude::*;
 #[test]
 fn test_non_linear() {
     let program = axcut_examples::non_linear_print();
-
     let assembly_prog = compile::<Backend, _, _, _>(program);
     let assembler_code = into_x86_64_routine(assembly_prog);
 

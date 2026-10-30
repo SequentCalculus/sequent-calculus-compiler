@@ -13,6 +13,7 @@ members = [
     "lang/driver",
     "lang/fun",
     "lang/fun2core",
+    "lang/optimizations",
     "lang/printer",
     "lang/macros/utils",
     "lang/macros/core",
@@ -57,6 +58,7 @@ driver         = { version = "0.1.0", path = "./lang/driver" }
 fun            = { version = "0.1.0", path = "./lang/fun" }
 fun2core       = { version = "0.1.0", path = "./lang/fun2core" }
 printer        = { version = "0.1.0", path = "./lang/printer", package = "scc-printer" }
+optimizations  = { version = "0.1.0", path = "./lang/optimizations" }
 # Workspace members which are dev-dependencies
 # They don't have a version because of https://github.com/rust-lang/cargo/issues/4242
 axcut_examples = { path = "./lang/axcut_examples" }
