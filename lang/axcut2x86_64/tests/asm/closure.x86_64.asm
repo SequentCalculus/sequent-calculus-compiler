@@ -26,11 +26,11 @@ asm_main:
 
 main_:
     ; lit a_1 <- 9;
-    mov rdx, 9
+    mov rax, 9
     ; create ω f_2: Fun = (a_1)\{ ... \};
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdx
+    mov [rbx + 56], rax
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
@@ -130,34 +130,36 @@ lab13:
     ; #load tag
     lea rdi, [rel Cont_15]
     ; lit y_9 <- 1;
-    mov r9, 1
+    mov r8, 1
     ; substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
     ; #move variables
-    mov r8, rax
-    mov rcx, r9
-    mov r9, rdx
-    mov rdx, rcx
+    mov rcx, r8
+    mov r8, rdx
+    mov rdx, rsi
+    mov rsi, rdi
+    mov rdi, rax
+    mov rax, rcx
     ; invoke ω f_2 apply
     ; #there is only one clause, so we can jump there directly
-    jmp r9
+    jmp r8
 
 Cont_15:
 
 Cont_15_Ret:
     ; println_i64 r_7;
     ; #save caller-save registers
-    mov r12, rdx
+    mov r12, rax
     sub rsp, 8
     ; #move argument into place
-    mov rdi, rdx
+    mov rdi, rax
     call println_i64
     ; #restore caller-save registers
-    mov rdx, r12
+    mov rax, r12
     add rsp, 8
     ; lit ret_8 <- 0;
-    mov rdi, 0
+    mov rdx, 0
     ; exit ret_8
-    mov rax, rdi
+    mov rax, rdx
     jmp cleanup
 
 Fun_14:
@@ -165,32 +167,32 @@ Fun_14:
 Fun_14_apply:
     ; #load from memory
     ; ##check refcount
-    cmp qword [r8 + 8], 0
+    cmp qword [rdi + 8], 0
     je lab16
     ; ##either decrement refcount and share children...
-    add qword [r8 + 8], -1
+    add qword [rdi + 8], -1
     ; ###load values
-    mov r9, [r8 + 56]
+    mov rdi, [rdi + 56]
     jmp lab17
 
 lab16:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
-    mov [r8 + 8], rbx
-    mov rbx, r8
+    mov [rdi + 8], rbx
+    mov rbx, rdi
     ; ###load values
-    mov r9, [r8 + 56]
+    mov rdi, [rdi + 56]
 
 lab17:
     ; b_5 <- a_1 + x_3;
-    mov r11, r9
-    add r11, rdx
+    mov r8, rdi
+    add r8, rax
     ; substitute (b_5 := b_5)(k_4 := k_4);
     ; #move variables
-    mov rdx, r11
+    mov rax, r8
     ; invoke ω k_4 Ret
     ; #there is only one clause, so we can jump there directly
-    jmp rdi
+    jmp rsi
 
 cleanup:
     ; free space for register spills

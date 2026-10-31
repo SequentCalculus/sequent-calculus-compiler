@@ -7,12 +7,55 @@ use crate::{
     parallel_moves::ParallelMoves,
     statements::CodeStatement,
 };
-use axcut::syntax::{ID, Identifier, Ty, TypeDeclaration, TypingContext, statements::Clause};
+use axcut::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Quantity, Ty, TypeDeclaration, TypingContext,
+    statements::Clause,
+};
 
 use std::hash::Hash;
 
+/// This function calculates the number of temporaries used by a context before a given variable.
+/// - `context` is the context.
+/// - `variable_id` is the variable or `None`. In the latter case all temporaries are counted.
+///
+/// # Panics
+///
+/// A panic is caused if the `context` does not contain the given variable.
+pub fn used_temporaries(context: &[ContextBinding], variable_id: Option<ID>) -> usize {
+    let mut number = 0;
+    let mut found = false;
+    for binding in context {
+        if let Some(id) = variable_id
+            && binding.var.id == id
+        {
+            found = true;
+            break;
+        }
+        if binding.chi == Chirality::Ext {
+            number += 1;
+        } else {
+            number += 2
+        }
+    }
+
+    if variable_id.is_some() && !found {
+        panic!("Variable {variable_id:?} not found in context {context:?}")
+    }
+
+    number
+}
+
 /// This trait abstracts some utilities used during code generation.
 pub trait Utils<Temporary> {
+    /// This method calculates the temporary corresponding to a position in the list of available
+    /// temporaries.
+    /// - `position` is the position of the temporary.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the program contains too many live variables at some point, so that we
+    /// run out of temporaries.
+    fn temporary_from_position(position: usize) -> Temporary;
     /// This method calculates the temporaries corresponding to a variable in a typing context.
     /// - `number` decides whether the first or second temporary for the variable is returned.
     /// - `context` is the typing context the variable is in.
@@ -20,13 +63,16 @@ pub trait Utils<Temporary> {
     ///
     /// # Panics
     ///
-    /// A panic is caused if the `program` contains too many live variables at some point, so that we
-    /// run out of temporaries.
+    /// A panic is caused if the program contains too many live variables at some point, so that we
+    /// run out of temporaries, or if the variable is not found in the context.
     fn variable_temporary(
         number: TemporaryNumber,
         context: &TypingContext,
         variable_id: ID,
-    ) -> Temporary;
+    ) -> Temporary {
+        let position = used_temporaries(&context.bindings, Some(variable_id)) + number as usize;
+        Self::temporary_from_position(position)
+    }
     /// This method calculates the next free temporaries for a variable after a given typing
     /// context.
     /// - `number` decides whether the first or second temporary for the variable is returned.
@@ -34,9 +80,12 @@ pub trait Utils<Temporary> {
     ///
     /// # Panics
     ///
-    /// A panic is caused if the `program` contains too many live variables at some point, so that we
+    /// A panic is caused if the program contains too many live variables at some point, so that we
     /// run out of temporaries.
-    fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary;
+    fn fresh_temporary(number: TemporaryNumber, context: &TypingContext) -> Temporary {
+        let position = used_temporaries(&context.bindings, None) + number as usize;
+        Self::temporary_from_position(position)
+    }
 }
 
 /// Builds the assembler-safe form of an identifier's name, replacing every character a human-

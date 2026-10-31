@@ -132,7 +132,7 @@ lab14:
     // #load tag
     MOVZ X7, 0, LSL 0
     // lit n_7 <- 3;
-    MOVZ X9, 3, LSL 0
+    MOVZ X8, 3, LSL 0
     // substitute (k_4 := k_4)(zs_6 := zs_6)(n_7 := n_7);
     // range(...)
     B range_
@@ -187,54 +187,54 @@ ContInt_1:
 ContInt_1_Reti:
     // println_i64 r_2;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X5
+    MOV X19, X4
+    MOV X20, X0
+    MOV X21, X1
     // #move argument into place
-    MOV X0, X5
+    MOV X0, X4
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X5, X21
+    MOV X4, X19
+    MOV X0, X20
+    MOV X1, X21
     // lit ret_3 <- 0;
-    MOVZ X7, 0, LSL 0
+    MOVZ X5, 0, LSL 0
     // exit ret_3
-    MOV X0, X7
+    MOV X0, X5
     B cleanup
 
 range_:
     // if i_10 == 0 \{ ... \}
-    CMP X9, 0
+    CMP X8, 0
     BEQ lab19
     // else branch
     // substitute (n_11 := i_10)(k_8 := k_8)(xs_9 := xs_9)(i_10 := i_10);
     // #move variables
-    MOV X8, X6
-    MOV X6, X4
-    MOV X2, X9
-    MOV X11, X9
-    MOV X9, X7
-    MOV X7, X5
-    MOV X5, X2
+    MOV X2, X8
+    MOV X9, X8
+    MOV X8, X7
+    MOV X7, X6
+    MOV X6, X5
+    MOV X5, X4
+    MOV X4, X2
     // let ω ys_12: List = Cons(xs_9, i_10);
     // #allocate memory
     // ##store values
-    STR X11, [ X0, 56 ]
+    STR X9, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
-    STR X9, [ X0, 40 ]
-    STR X8, [ X0, 32 ]
+    STR X8, [ X0, 40 ]
+    STR X7, [ X0, 32 ]
     // ##mark unused fields with null
     STR XZR, [ X0, 16 ]
     // ##acquire free block from heap register
-    MOV X8, X0
+    MOV X7, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab31
     // ####initialize refcount of just acquired block
-    STR XZR, [ X8, 0 ]
+    STR XZR, [ X7, 0 ]
     B lab32
 
 lab31:
@@ -319,18 +319,18 @@ lab30:
 
 lab32:
     // #load tag
-    MOVZ X9, 4, LSL 0
+    MOVZ X8, 4, LSL 0
     // lit o_13 <- -1;
-    MOVN X11, 0, LSL 0
+    MOVN X9, 0, LSL 0
     // j_14 <- n_11 + o_13;
-    ADD X13, X5, X11
+    ADD X10, X4, X9
     // substitute (k_8 := k_8)(ys_12 := ys_12)(j_14 := j_14);
     // #move variables
-    MOV X4, X6
-    MOV X5, X7
-    MOV X6, X8
-    MOV X7, X9
-    MOV X9, X13
+    MOV X4, X5
+    MOV X5, X6
+    MOV X6, X7
+    MOV X7, X8
+    MOV X8, X10
     // range(...)
     B range_
 
@@ -360,16 +360,16 @@ List_33:
 
 List_33_Nil:
     // lit z_17 <- 0;
-    MOVZ X7, 0, LSL 0
+    MOVZ X6, 0, LSL 0
     // substitute (z_17 := z_17)(k_15 := k_15);
     // #move variables
-    MOV X6, X4
-    MOV X2, X7
-    MOV X7, X5
-    MOV X5, X2
+    MOV X2, X6
+    MOV X6, X5
+    MOV X5, X4
+    MOV X4, X2
     // invoke ω k_15 Reti
     // #there is only one clause, so we can jump there directly
-    BR X7
+    BR X6
 
 List_33_Cons:
     // #load from memory
@@ -381,7 +381,7 @@ List_33_Cons:
     SUB X3, X3, 1
     STR X3, [ X6, 0 ]
     // ###load values
-    LDR X9, [ X6, 56 ]
+    LDR X8, [ X6, 56 ]
     LDR X7, [ X6, 40 ]
     LDR X6, [ X6, 32 ]
     CMP X6, 0
@@ -400,7 +400,7 @@ lab35:
     STR X0, [ X6, 0 ]
     MOV X0, X6
     // ###load values
-    LDR X9, [ X6, 56 ]
+    LDR X8, [ X6, 56 ]
     LDR X7, [ X6, 40 ]
     LDR X6, [ X6, 32 ]
 
@@ -416,7 +416,7 @@ lab36:
     // create ω j_20: ContInt = (k_15, y_19)\{ ... \};
     // #allocate memory
     // ##store values
-    STR X9, [ X0, 56 ]
+    STR X8, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     STR X7, [ X0, 40 ]
     STR X6, [ X0, 32 ]
@@ -531,23 +531,23 @@ ContInt_50:
 
 ContInt_50_Reti:
     // #load from memory
-    LDR X3, [ X6, 0 ]
+    LDR X3, [ X5, 0 ]
     // ##check refcount
     CMP X3, 0
     BEQ lab52
     // ##either decrement refcount and share children...
     SUB X3, X3, 1
-    STR X3, [ X6, 0 ]
+    STR X3, [ X5, 0 ]
     // ###load values
-    LDR X9, [ X6, 56 ]
-    LDR X7, [ X6, 40 ]
-    LDR X6, [ X6, 32 ]
-    CMP X6, 0
+    LDR X7, [ X5, 56 ]
+    LDR X6, [ X5, 40 ]
+    LDR X5, [ X5, 32 ]
+    CMP X5, 0
     BEQ lab51
     // ####increment refcount
-    LDR X3, [ X6, 0 ]
+    LDR X3, [ X5, 0 ]
     ADD X3, X3, 1
-    STR X3, [ X6, 0 ]
+    STR X3, [ X5, 0 ]
 
 lab51:
     B lab53
@@ -555,22 +555,22 @@ lab51:
 lab52:
     // ##... or release blocks onto linear free list when loading
     // ###release block
-    STR X0, [ X6, 0 ]
-    MOV X0, X6
+    STR X0, [ X5, 0 ]
+    MOV X0, X5
     // ###load values
-    LDR X9, [ X6, 56 ]
-    LDR X7, [ X6, 40 ]
-    LDR X6, [ X6, 32 ]
+    LDR X7, [ X5, 56 ]
+    LDR X6, [ X5, 40 ]
+    LDR X5, [ X5, 32 ]
 
 lab53:
     // s_22 <- y_19 + r_21;
-    ADD X11, X9, X5
+    ADD X8, X7, X4
     // substitute (s_22 := s_22)(k_15 := k_15);
     // #move variables
-    MOV X5, X11
+    MOV X4, X8
     // invoke ω k_15 Reti
     // #there is only one clause, so we can jump there directly
-    BR X7
+    BR X6
 
 cleanup:
     // free space for register spills

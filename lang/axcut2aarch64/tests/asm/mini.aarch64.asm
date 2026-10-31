@@ -24,35 +24,35 @@ main_:
 
 l_:
     // lit x_1 <- 1;
-    MOVZ X5, 1, LSL 0
+    MOVZ X4, 1, LSL 0
     // lit y_2 <- 9;
-    MOVZ X7, 9, LSL 0
+    MOVZ X5, 9, LSL 0
     // j(...)
     B j_
 
 j_:
     // z_5 <- x_4 + y_3;
-    ADD X9, X7, X5
+    ADD X6, X5, X4
     // println_i64 z_5;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X5
-    MOV X22, X7
-    MOV X23, X9
+    MOV X19, X4
+    MOV X20, X5
+    MOV X21, X6
+    MOV X22, X0
+    MOV X23, X1
     // #move argument into place
-    MOV X0, X9
+    MOV X0, X6
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X5, X21
-    MOV X7, X22
-    MOV X9, X23
+    MOV X4, X19
+    MOV X5, X20
+    MOV X6, X21
+    MOV X0, X22
+    MOV X1, X23
     // lit ret_6 <- 0;
-    MOVZ X11, 0, LSL 0
+    MOVZ X7, 0, LSL 0
     // exit ret_6
-    MOV X0, X11
+    MOV X0, X7
     B cleanup
 
 cleanup:

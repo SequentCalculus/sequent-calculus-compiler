@@ -26,40 +26,38 @@ asm_main:
 
 main_:
     ; lit f_1 <- 3;
-    mov rdx, 3
+    mov rax, 3
     ; lit f_2 <- 3;
-    mov rdi, 3
+    mov rdx, 3
     ; lit f_3 <- 3;
-    mov r9, 3
+    mov rsi, 3
     ; lit f_4 <- 3;
-    mov r11, 3
+    mov rdi, 3
     ; lit f_5 <- 3;
-    mov r13, 3
+    mov r8, 3
     ; lit f_6 <- 3;
-    mov r15, 3
+    mov r9, 3
     ; lit f_7 <- 3;
-    mov qword [rsp + 2024], 3
+    mov r10, 3
     ; lit x_8 <- 3;
-    mov qword [rsp + 2008], 3
+    mov r11, 3
     ; let ω b_9: Box = B(x_8);
     ; #allocate memory
     ; ##store values
-    mov rcx, [rsp + 2008]
-    mov [rbx + 56], rcx
+    mov [rbx + 56], r11
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
     mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
-    mov rcx, rbx
-    mov [rsp + 2016], rbx
+    mov r11, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab12
     ; ####initialize refcount of just acquired block
-    mov qword [rcx + 8], 0
+    mov qword [r11 + 8], 0
     jmp lab13
 
 lab12:
@@ -139,27 +137,24 @@ lab11:
 
 lab13:
     ; #load tag
-    mov qword [rsp + 2008], 0
+    mov r12, 0
     ; let ω bb_10: BoxBox = BB(b_9);
     ; #allocate memory
     ; ##store values
-    mov rcx, [rsp + 2008]
-    mov [rbx + 56], rcx
-    mov rcx, [rsp + 2016]
-    mov [rbx + 48], rcx
+    mov [rbx + 56], r12
+    mov [rbx + 48], r11
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
     mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
-    mov rcx, rbx
-    mov [rsp + 2016], rbx
+    mov r11, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab25
     ; ####initialize refcount of just acquired block
-    mov qword [rcx + 8], 0
+    mov qword [r11 + 8], 0
     jmp lab26
 
 lab25:
@@ -239,30 +234,25 @@ lab24:
 
 lab26:
     ; #load tag
-    mov qword [rsp + 2008], 0
+    mov r12, 0
     ; substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_13 := bb_10)(bb_12 := bb_10)(bb_11 := bb_10);
     ; #share bb_10
-    cmp qword [rsp + 2016], 0
+    cmp r11, 0
     je lab27
     ; ####increment refcount
-    mov rcx, [rsp + 2016]
-    add qword [rcx + 8], 2
+    add qword [r11 + 8], 2
 
 lab27:
     ; #move variables
-    mov rcx, r13
-    mov r13, r15
-    mov r15, [rsp + 2024]
-    mov [rsp + 2024], r11
-    mov r11, rcx
-    mov rcx, [rsp + 2016]
-    mov [rsp + 2000], rcx
-    mov rcx, [rsp + 2016]
-    mov [rsp + 1984], rcx
-    mov rcx, [rsp + 2008]
-    mov [rsp + 1992], rcx
-    mov rcx, [rsp + 2008]
-    mov [rsp + 1976], rcx
+    mov rcx, r8
+    mov r8, r9
+    mov r9, r10
+    mov r10, rdi
+    mov rdi, rcx
+    mov r13, r11
+    mov r15, r11
+    mov r14, r12
+    mov [rsp + 2032], r12
     ; switch ω bb_11 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
@@ -270,45 +260,32 @@ BoxBox_28:
 
 BoxBox_28_BB:
     ; #load from memory
-    mov rcx, [rsp + 1984]
     ; ##check refcount
-    cmp qword [rcx + 8], 0
+    cmp qword [r15 + 8], 0
     je lab30
     ; ##either decrement refcount and share children...
-    add qword [rcx + 8], -1
-    ; ###evacuate additional scratch register for memory block
-    mov [rsp + 2040], rax
-    mov rax, [rsp + 1984]
+    add qword [r15 + 8], -1
     ; ###load values
-    mov rcx, [rax + 56]
-    mov [rsp + 1976], rcx
-    mov rcx, [rax + 48]
-    mov [rsp + 1984], rcx
-    cmp rcx, 0
+    mov rcx, [r15 + 56]
+    mov [rsp + 2032], rcx
+    mov r15, [r15 + 48]
+    cmp r15, 0
     je lab29
     ; ####increment refcount
-    add qword [rcx + 8], 1
+    add qword [r15 + 8], 1
 
 lab29:
-    ; ###restore evacuated register
-    mov rax, [rsp + 2040]
     jmp lab31
 
 lab30:
     ; ##... or release blocks onto linear free list when loading
-    ; ###evacuate additional scratch register for memory block
-    mov [rsp + 2040], rax
-    mov rax, [rsp + 1984]
     ; ###release block
-    mov [rax + 8], rbx
-    mov rbx, rax
+    mov [r15 + 8], rbx
+    mov rbx, r15
     ; ###load values
-    mov rcx, [rax + 56]
-    mov [rsp + 1976], rcx
-    mov rcx, [rax + 48]
-    mov [rsp + 1984], rcx
-    ; ###restore evacuated register
-    mov rax, [rsp + 2040]
+    mov rcx, [r15 + 56]
+    mov [rsp + 2032], rcx
+    mov r15, [r15 + 48]
 
 lab31:
     ; switch ω b_14 \{ ... \};
@@ -318,56 +295,41 @@ Box_32:
 
 Box_32_B:
     ; #load from memory
-    mov rcx, [rsp + 1984]
     ; ##check refcount
-    cmp qword [rcx + 8], 0
+    cmp qword [r15 + 8], 0
     je lab33
     ; ##either decrement refcount and share children...
-    add qword [rcx + 8], -1
-    ; ###evacuate additional scratch register for memory block
-    mov [rsp + 2040], rax
-    mov rax, [rsp + 1984]
+    add qword [r15 + 8], -1
     ; ###load values
-    mov rcx, [rax + 56]
-    mov [rsp + 1976], rcx
-    ; ###restore evacuated register
-    mov rax, [rsp + 2040]
+    mov r15, [r15 + 56]
     jmp lab34
 
 lab33:
     ; ##... or release blocks onto linear free list when loading
-    ; ###evacuate additional scratch register for memory block
-    mov [rsp + 2040], rax
-    mov rax, [rsp + 1984]
     ; ###release block
-    mov [rax + 8], rbx
-    mov rbx, rax
+    mov [r15 + 8], rbx
+    mov rbx, r15
     ; ###load values
-    mov rcx, [rax + 56]
-    mov [rsp + 1976], rcx
-    ; ###restore evacuated register
-    mov rax, [rsp + 2040]
+    mov r15, [r15 + 56]
 
 lab34:
     ; let ω d_16: Box = B(x_15);
     ; #allocate memory
     ; ##store values
-    mov rcx, [rsp + 1976]
-    mov [rbx + 56], rcx
+    mov [rbx + 56], r15
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
     mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
-    mov rcx, rbx
-    mov [rsp + 1984], rbx
+    mov r15, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab46
     ; ####initialize refcount of just acquired block
-    mov qword [rcx + 8], 0
+    mov qword [r15 + 8], 0
     jmp lab47
 
 lab46:
@@ -447,27 +409,25 @@ lab45:
 
 lab47:
     ; #load tag
-    mov qword [rsp + 1976], 0
+    mov qword [rsp + 2032], 0
     ; let ω dd_17: BoxBox = BB(d_16);
     ; #allocate memory
     ; ##store values
-    mov rcx, [rsp + 1976]
+    mov rcx, [rsp + 2032]
     mov [rbx + 56], rcx
-    mov rcx, [rsp + 1984]
-    mov [rbx + 48], rcx
+    mov [rbx + 48], r15
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
     mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
-    mov rcx, rbx
-    mov [rsp + 1984], rbx
+    mov r15, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab59
     ; ####initialize refcount of just acquired block
-    mov qword [rcx + 8], 0
+    mov qword [r15 + 8], 0
     jmp lab60
 
 lab59:
@@ -547,55 +507,53 @@ lab58:
 
 lab60:
     ; #load tag
-    mov qword [rsp + 1976], 0
+    mov qword [rsp + 2032], 0
     ; substitute (bb_12 := bb_12);
     ; #erase bb_13
-    mov rcx, [rsp + 2016]
-    cmp rcx, 0
+    cmp r11, 0
     je lab63
     ; ######check refcount
-    cmp qword [rcx + 8], 0
+    cmp qword [r11 + 8], 0
     je lab61
     ; ######either decrement refcount ...
-    add qword [rcx + 8], -1
+    add qword [r11 + 8], -1
     jmp lab62
 
 lab61:
     ; ######... or add block to lazy free list
-    mov [rcx + 8], rbp
-    mov rbp, rcx
+    mov [r11 + 8], rbp
+    mov rbp, r11
 
 lab62:
 
 lab63:
     ; #erase dd_17
-    mov rcx, [rsp + 1984]
-    cmp rcx, 0
+    cmp r15, 0
     je lab66
     ; ######check refcount
-    cmp qword [rcx + 8], 0
+    cmp qword [r15 + 8], 0
     je lab64
     ; ######either decrement refcount ...
-    add qword [rcx + 8], -1
+    add qword [r15 + 8], -1
     jmp lab65
 
 lab64:
     ; ######... or add block to lazy free list
-    mov [rcx + 8], rbp
-    mov rbp, rcx
+    mov [r15 + 8], rbp
+    mov rbp, r15
 
 lab65:
 
 lab66:
     ; #move variables
-    mov rax, [rsp + 2000]
-    mov rdx, [rsp + 1992]
+    mov rax, r13
+    mov rdx, r14
     ; lit y_18 <- 4;
-    mov rdi, 4
+    mov rsi, 4
     ; let ω a_19: Box = B(y_18);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rsi
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
@@ -743,7 +701,7 @@ Box_84_B:
     ; ##either decrement refcount and share children...
     add qword [rsi + 8], -1
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rsi, [rsi + 56]
     jmp lab86
 
 lab85:
@@ -752,13 +710,13 @@ lab85:
     mov [rsi + 8], rbx
     mov rbx, rsi
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rsi, [rsi + 56]
 
 lab86:
     ; let ω a_22: Box = B(x_21);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rsi
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
@@ -865,7 +823,7 @@ Box_100_B:
     ; ##either decrement refcount and share children...
     add qword [rsi + 8], -1
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rsi, [rsi + 56]
     jmp lab102
 
 lab101:
@@ -874,15 +832,15 @@ lab101:
     mov [rsi + 8], rbx
     mov rbx, rsi
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rsi, [rsi + 56]
 
 lab102:
     ; substitute (x_23 := x_23)(a_19 := a_19);
     ; #move variables
-    mov rsi, rax
-    mov rcx, rdi
-    mov rdi, rdx
-    mov rdx, rcx
+    mov rcx, rsi
+    mov rsi, rdx
+    mov rdx, rax
+    mov rax, rcx
     ; switch ω a_19 \{ ... \};
     ; #there is only one clause, so we can just fall through
 
@@ -891,44 +849,44 @@ Box_103:
 Box_103_B:
     ; #load from memory
     ; ##check refcount
-    cmp qword [rsi + 8], 0
+    cmp qword [rdx + 8], 0
     je lab104
     ; ##either decrement refcount and share children...
-    add qword [rsi + 8], -1
+    add qword [rdx + 8], -1
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
     jmp lab105
 
 lab104:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
-    mov [rsi + 8], rbx
-    mov rbx, rsi
+    mov [rdx + 8], rbx
+    mov rbx, rdx
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
 
 lab105:
     ; res_25 <- x_24 + x_23;
-    mov r9, rdi
-    add r9, rdx
+    mov rsi, rdx
+    add rsi, rax
     ; println_i64 res_25;
     ; #save caller-save registers
-    mov r12, rdx
-    mov r13, rdi
-    mov r14, r9
+    mov r12, rax
+    mov r13, rdx
+    mov r14, rsi
     sub rsp, 8
     ; #move argument into place
-    mov rdi, r9
+    mov rdi, rsi
     call println_i64
     ; #restore caller-save registers
-    mov rdx, r12
-    mov rdi, r13
-    mov r9, r14
+    mov rax, r12
+    mov rdx, r13
+    mov rsi, r14
     add rsp, 8
     ; lit ret_26 <- 0;
-    mov r11, 0
+    mov rdi, 0
     ; exit ret_26
-    mov rax, r11
+    mov rax, rdi
     jmp cleanup
 
 cleanup:

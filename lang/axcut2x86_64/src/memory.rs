@@ -227,15 +227,10 @@ fn release_block(to_release: Register, instructions: &mut Vec<Code>) {
 /// - `offset` is the offset of the field within the memory block.
 /// - `quantity` indicates whether the block is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn store_zero(
-    memory_block: Register,
-    offset: usize,
-    quantity: Quantity,
-    instructions: &mut Vec<Code>,
-) {
+fn store_zero(memory_block: Register, offset: usize, instructions: &mut Vec<Code>) {
     instructions.push(Code::MOVIM(
         memory_block,
-        field_offset(Fst, offset, quantity),
+        field_offset(Fst, offset, Quantity::Omega),
         0.into(),
     ));
 }
@@ -246,46 +241,44 @@ fn store_zero(
 /// - `memory_block` is the register pointing to the block.
 /// - `quantity` indicates whether the block is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn store_zeros(
-    free_fields: usize,
-    memory_block: Register,
-    quantity: Quantity,
-    instructions: &mut Vec<Code>,
-) {
+fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Vec<Code>) {
     for offset in 0..free_fields {
-        store_zero(memory_block, offset, quantity, instructions);
+        store_zero(memory_block, offset, instructions);
     }
 }
 
 /// This function generates code for storing a value into the first or second slot of some
 /// non-header field of a memory block. The value is in the first or second temporary after the
 /// given context.
-/// - `number` determines whether the first or the second slot is written.
+/// - `temporary_number` determines whether the first or the second temporary of a variable is
+///   written.
+/// - `slot_number` determines whether the first or the second slot is written.
 /// - `context` is the given context.
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
 /// - `quantity` indicates whether the block is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn store_slot(
-    number: TemporaryNumber,
+    temporary_number: TemporaryNumber,
+    slot_number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
     quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend::fresh_temporary(number, context) {
+    match Backend::fresh_temporary(temporary_number, context) {
         Temporary::Register(register) => instructions.push(Code::MOVS(
             register,
             memory_block,
-            field_offset(number, offset, quantity),
+            field_offset(slot_number, offset, quantity),
         )),
         Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
             instructions.push(Code::MOVS(
                 TEMP,
                 memory_block,
-                field_offset(number, offset, quantity),
+                field_offset(slot_number, offset, quantity),
             ));
         }
     }
@@ -294,33 +287,36 @@ fn store_slot(
 /// This function generates code for loading a value from the first or second slot of some
 /// non-header field of a memory block. The value is loaded into the first or second temporary
 /// after the given context.
-/// - `number` determines whether the first or the second slot is written.
+/// - `temporary_number` determines whether the first or the second temporary of a variable is
+///   loaded.
+/// - `slot_number` determines whether the first or the second slot is loaded.
 /// - `context` is the given context.
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
 /// - `quantity` indicates whether the block is used linearly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn load_slot(
-    number: TemporaryNumber,
+    temporary_number: TemporaryNumber,
+    slot_number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
     quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend::fresh_temporary(number, context) {
+    match Backend::fresh_temporary(temporary_number, context) {
         Temporary::Register(register) => {
             instructions.push(Code::MOVL(
                 register,
                 memory_block,
-                field_offset(number, offset, quantity),
+                field_offset(slot_number, offset, quantity),
             ));
         }
         Temporary::Spill(position) => {
             instructions.push(Code::MOVL(
                 TEMP,
                 memory_block,
-                field_offset(number, offset, quantity),
+                field_offset(slot_number, offset, quantity),
             ));
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
         }
@@ -328,7 +324,7 @@ fn load_slot(
 }
 
 /// This function generates code for storing a value into some non-header field of a memory block.
-/// The value is in the first and second temporary after the remaining context.
+/// The value is in the first and potentially second temporary after the remaining context.
 /// - `to_store` is the variable the value is bound to.
 /// - `remaining_context` is the remaining context after the store.
 /// - `memory_block` is the register pointing to the block.
@@ -343,7 +339,13 @@ fn store_value(
     quantity: Quantity,
     instructions: &mut Vec<Code>,
 ) {
+    // values of external types like integers occupy only the first temporary...
     store_slot(
+        if to_store.chi == Chirality::Ext {
+            Fst
+        } else {
+            Snd
+        },
         Snd,
         remaining_context,
         memory_block,
@@ -351,14 +353,15 @@ fn store_value(
         quantity,
         instructions,
     );
-    // values of external types like integers occupy only the second temporary, so we zero the
-    // first slot to indicate that there is no pointer to another memory block in this field
+    // ... so we zero the first slot to indicate that there is no pointer to another memory block in
+    // this field
     if to_store.chi == Chirality::Ext {
         if quantity == Quantity::Omega {
-            store_zero(memory_block, offset, quantity, instructions);
+            store_zero(memory_block, offset, instructions);
         }
     } else {
         store_slot(
+            Fst,
             Fst,
             remaining_context,
             memory_block,
@@ -380,7 +383,7 @@ enum LoadMode {
 }
 
 /// This function generates code for loading a value from some non-header field of a memory block.
-/// The value is loaded into the first and second temporary after the existing context.
+/// The value is loaded into the first and potentially second temporary after the existing context.
 /// - `to_store` is the variable the value is bound to.
 /// - `existing_context` is the existing context before the load.
 /// - `memory_block` is the register pointing to the block.
@@ -399,6 +402,11 @@ fn load_value(
     instructions: &mut Vec<Code>,
 ) {
     load_slot(
+        if to_load.chi == Chirality::Ext {
+            Fst
+        } else {
+            Snd
+        },
         Snd,
         existing_context,
         memory_block,
@@ -406,10 +414,11 @@ fn load_value(
         quantity,
         instructions,
     );
-    // values of external types like integers occupy only the second temporary, so we do not have to
-    // load the first slot
+    // values of external types like integers occupy only the first temporary, so we do not have to
+    // load the other slot
     if to_load.chi != Chirality::Ext {
         load_slot(
+            Fst,
             Fst,
             existing_context,
             memory_block,
@@ -417,7 +426,7 @@ fn load_value(
             quantity,
             instructions,
         );
-        if quantity == Quantity::Omega && load_mode == LoadMode::Share {
+        if load_mode == LoadMode::Share {
             let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
                 Temporary::Register(register) => register,
                 // if the field was loaded to a spill position by `load_field`, its contents are is
@@ -475,7 +484,7 @@ fn store_values(
         if free_fields > 0 {
             instructions.push(Code::COMMENT("##mark unused fields with null".to_string()));
         }
-        store_zeros(free_fields, memory_block, quantity, instructions);
+        store_zeros(free_fields, memory_block, instructions);
     }
 }
 
@@ -600,6 +609,7 @@ fn store_fields(
                 instructions.push(Code::COMMENT("##store link to previous block".to_string()));
                 store_slot(
                     Fst,
+                    Fst,
                     &remaining_plus_to_store,
                     HEAP,
                     fields_per_block(quantity) - 1,
@@ -632,9 +642,10 @@ fn store_fields(
         // if the block is used linearly and all fields are needed, we need to change the order of
         // stores to treat the first field specially: the second slot of the first field of the
         // newly acquired block contains information needed by `acquire_block`, so we have to call
-        // the latter before performing the store to that field; but this puts the pointer to the
-        // memory block into the temporary that must be stored into the first slot, so we have to
-        // perform that store before calling `acquire_block`
+        // the latter before performing the store to that slot; but this puts the pointer to the
+        // memory block into the first temporary that must be stored, so we have to perform that
+        // store before calling `acquire_block`; if there is only one temporary to be stored, we
+        // thus store it into the first slot instead of the second
         if quantity == Quantity::One
             && to_store_next.len() + block_position as usize == fields_per_block(quantity)
         {
@@ -662,7 +673,15 @@ fn store_fields(
             instructions.push(Code::COMMENT(
                 "##store first slot of first field".to_string(),
             ));
-            store_slot(Fst, &remaining_plus_rest, HEAP, 0, quantity, instructions);
+            store_slot(
+                Fst,
+                Fst,
+                &remaining_plus_rest,
+                HEAP,
+                0,
+                quantity,
+                instructions,
+            );
 
             instructions.push(Code::COMMENT(
                 "##acquire free block from heap register".to_string(),
@@ -670,7 +689,7 @@ fn store_fields(
             // this puts the pointer to the memory block for the variables just stored into the first
             // free temporary after the remaining context, and `HEAP` does not point to that memory
             // block anymore; the store of the second slot must hence use the temporary and not
-            // `HEAP`!
+            // `HEAP`
             acquire_block(
                 Backend::fresh_temporary(Fst, &remaining_plus_rest),
                 quantity,
@@ -695,14 +714,17 @@ fn store_fields(
                         ));
                         *register_freed = false;
                     }
-                    store_slot(
-                        Snd,
-                        &remaining_plus_rest,
-                        register,
-                        0,
-                        quantity,
-                        instructions,
-                    );
+                    if first_field.chi != Chirality::Ext {
+                        store_slot(
+                            Snd,
+                            Snd,
+                            &remaining_plus_rest,
+                            register,
+                            0,
+                            quantity,
+                            instructions,
+                        );
+                    }
                 }
                 Temporary::Spill(memory_block_position) => {
                     // as the temporary we have to use for the store is a spill, we evacuate an
@@ -730,14 +752,17 @@ fn store_fields(
                         stack_offset(memory_block_position),
                     ));
 
-                    store_slot(
-                        Snd,
-                        &remaining_plus_rest,
-                        TEMPORARY_TEMP,
-                        0,
-                        quantity,
-                        instructions,
-                    );
+                    if first_field.chi != Chirality::Ext {
+                        store_slot(
+                            Snd,
+                            Snd,
+                            &remaining_plus_rest,
+                            TEMPORARY_TEMP,
+                            0,
+                            quantity,
+                            instructions,
+                        );
+                    }
                 }
             }
         } else {
@@ -863,6 +888,7 @@ fn load_fields(
                     instructions.push(Code::COMMENT("###load link to next block".to_string()));
                     load_slot(
                         Fst,
+                        Fst,
                         &existing_plus_to_load,
                         memory_block_register,
                         fields_per_block(quantity) - 1,
@@ -871,8 +897,13 @@ fn load_fields(
                     );
                 }
 
-                // if the block is used linearly and all fields are needed, we need to change the order of
-                // loads to treat the first field specially
+                // if the block is used linearly and all fields are needed, we need to change the
+                // order of loads to treat the first field specially: the second slot of the first
+                // field of the block to be released is overwritten by `release_block`, so we have
+                // perform the load of that slot before calling the latter, unless there is only
+                // one temporary to be loaded, in which case there is nothing in the second slot;
+                // the register pointing to the block is in the first temporary, so we have to load
+                // that slot only after releasing
                 if quantity == Quantity::One
                     && to_load_next.len() + block_position as usize == fields_per_block(quantity)
                 {
@@ -897,14 +928,17 @@ fn load_fields(
                     instructions.push(Code::COMMENT(
                         "##load second slot of first field".to_string(),
                     ));
-                    load_slot(
-                        Snd,
-                        &existing_plus_rest,
-                        memory_block_register,
-                        0,
-                        quantity,
-                        instructions,
-                    );
+                    if first_field.chi != Chirality::Ext {
+                        load_slot(
+                            Snd,
+                            Snd,
+                            &existing_plus_rest,
+                            memory_block_register,
+                            0,
+                            quantity,
+                            instructions,
+                        );
+                    }
 
                     instructions.push(Code::COMMENT("###release block".to_string()));
                     release_block(memory_block_register, instructions);
@@ -913,6 +947,7 @@ fn load_fields(
                         "##load first slot of first field".to_string(),
                     ));
                     load_slot(
+                        Fst,
                         Fst,
                         &existing_plus_rest,
                         memory_block_register,
@@ -963,6 +998,7 @@ fn load_fields(
                     instructions.push(Code::COMMENT("###load link to next block".to_string()));
                     load_slot(
                         Fst,
+                        Fst,
                         &existing_plus_to_load,
                         TEMPORARY_TEMP,
                         fields_per_block(quantity) - 1,
@@ -971,8 +1007,13 @@ fn load_fields(
                     );
                 }
 
-                // if the block is used linearly and all fields are needed, we need to change the order of
-                // loads to treat the first field specially
+                // if the block is used linearly and all fields are needed, we need to change the
+                // order of loads to treat the first field specially: the second slot of the first
+                // field of the block to be released is overwritten by `release_block`, so we have
+                // perform the load of that slot before calling the latter, unless there is only
+                // one temporary to be loaded, in which case there is nothing in the second slot;
+                // the register pointing to the block is in the first temporary, so we have to load
+                // that slot only after releasing
                 if quantity == Quantity::One
                     && to_load_next.len() + block_position as usize == fields_per_block(quantity)
                 {
@@ -997,14 +1038,17 @@ fn load_fields(
                     instructions.push(Code::COMMENT(
                         "##load second slot of first field".to_string(),
                     ));
-                    load_slot(
-                        Snd,
-                        &existing_plus_rest,
-                        TEMPORARY_TEMP,
-                        0,
-                        quantity,
-                        instructions,
-                    );
+                    if first_field.chi != Chirality::Ext {
+                        load_slot(
+                            Snd,
+                            Snd,
+                            &existing_plus_rest,
+                            TEMPORARY_TEMP,
+                            0,
+                            quantity,
+                            instructions,
+                        );
+                    }
 
                     instructions.push(Code::COMMENT("###release block".to_string()));
                     release_block(TEMPORARY_TEMP, instructions);
@@ -1013,6 +1057,7 @@ fn load_fields(
                         "##load first slot of first field".to_string(),
                     ));
                     load_slot(
+                        Fst,
                         Fst,
                         &existing_plus_rest,
                         TEMPORARY_TEMP,

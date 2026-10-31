@@ -1,37 +1,37 @@
 // actual code
 main_:
 // lit f_1 <- 3;
-LI X5 3
+LI X4 3
 // lit f_2 <- 3;
-LI X7 3
+LI X5 3
 // lit f_3 <- 3;
-LI X9 3
+LI X6 3
 // lit f_4 <- 3;
-LI X11 3
+LI X7 3
 // lit f_5 <- 3;
-LI X13 3
+LI X8 3
 // lit f_6 <- 3;
-LI X15 3
+LI X9 3
 // lit f_7 <- 3;
-LI X17 3
+LI X10 3
 // lit x_8 <- 3;
-LI X19 3
+LI X11 3
 // let ω b_9: Box = B(x_8);
 // #allocate memory
 // ##store values
-SW X19 56 X2
+SW X11 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
 SW X0 32 X2
 // ##acquire free block from heap register
-MV X18 X2
+MV X11 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
 BEQ X2 X0 lab12
 // ####initialize refcount of just acquired block
-SW X0 0 X18
+SW X0 0 X11
 JAL X0 lab13
 
 lab12:
@@ -43,58 +43,58 @@ BEQ X3 X0 lab10
 SW X0 0 X2
 // ####erase children of next block
 // #####check child 1 for erasure
-LW X19 16 X2
-BEQ X19 X0 lab3
+LW X12 16 X2
+BEQ X12 X0 lab3
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab1
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab2
 
 lab1:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab2:
 
 lab3:
 // #####check child 2 for erasure
-LW X19 32 X2
-BEQ X19 X0 lab6
+LW X12 32 X2
+BEQ X12 X0 lab6
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab4
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab5
 
 lab4:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab5:
 
 lab6:
 // #####check child 3 for erasure
-LW X19 48 X2
-BEQ X19 X0 lab9
+LW X12 48 X2
+BEQ X12 X0 lab9
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab7
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab8
 
 lab7:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab8:
 
@@ -109,23 +109,23 @@ lab11:
 
 lab13:
 // #load tag
-LI X19 0
+LI X12 0
 // let ω bb_10: BoxBox = BB(b_9);
 // #allocate memory
 // ##store values
-SW X19 56 X2
-SW X18 48 X2
+SW X12 56 X2
+SW X11 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
 SW X0 32 X2
 // ##acquire free block from heap register
-MV X18 X2
+MV X11 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
 BEQ X2 X0 lab25
 // ####initialize refcount of just acquired block
-SW X0 0 X18
+SW X0 0 X11
 JAL X0 lab26
 
 lab25:
@@ -137,58 +137,58 @@ BEQ X3 X0 lab23
 SW X0 0 X2
 // ####erase children of next block
 // #####check child 1 for erasure
-LW X19 16 X2
-BEQ X19 X0 lab16
+LW X12 16 X2
+BEQ X12 X0 lab16
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab14
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab15
 
 lab14:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab15:
 
 lab16:
 // #####check child 2 for erasure
-LW X19 32 X2
-BEQ X19 X0 lab19
+LW X12 32 X2
+BEQ X12 X0 lab19
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab17
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab18
 
 lab17:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab18:
 
 lab19:
 // #####check child 3 for erasure
-LW X19 48 X2
-BEQ X19 X0 lab22
+LW X12 48 X2
+BEQ X12 X0 lab22
 // ######check refcount
-LW X1 0 X19
+LW X1 0 X12
 BEQ X1 X0 lab20
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X19
+SW X1 0 X12
 JAL X0 lab21
 
 lab20:
 // ######... or add block to lazy free list
-SW X3 0 X19
-MV X3 X19
+SW X3 0 X12
+MV X3 X12
 
 lab21:
 
@@ -203,26 +203,26 @@ lab24:
 
 lab26:
 // #load tag
-LI X19 0
+LI X12 0
 // substitute (f_1 := f_1)(f_2 := f_2)(f_3 := f_3)(f_5 := f_5)(f_6 := f_6)(f_7 := f_7)(f_4 := f_4)(bb_13 := bb_10)(bb_12 := bb_10)(bb_11 := bb_10);
 // #share bb_10
-BEQ X18 X0 lab27
+BEQ X11 X0 lab27
 // ####increment refcount
-LW X1 0 X18
+LW X1 0 X11
 ADD X1 X1 2
-SW X1 0 X18
+SW X1 0 X11
 
 lab27:
 // #move variables
-MV X1 X13
-MV X13 X15
-MV X15 X17
-MV X17 X11
-MV X11 X1
-MV X20 X18
-MV X22 X18
-MV X21 X19
-MV X23 X19
+MV X1 X8
+MV X8 X9
+MV X9 X10
+MV X10 X7
+MV X7 X1
+MV X13 X11
+MV X15 X11
+MV X14 X12
+MV X16 X12
 // switch ω bb_11 \{ ... \};
 // #there is only one clause, so we can just fall through
 
@@ -230,20 +230,20 @@ BoxBox_28:
 
 BoxBox_28_BB:
 // #load from memory
-LW X1 0 X22
+LW X1 0 X15
 // ##check refcount
 BEQ X1 X0 lab30
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
-SW X1 0 X22
+SW X1 0 X15
 // ###load values
-LW X23 56 X22
-LW X22 48 X22
-BEQ X22 X0 lab29
+LW X16 56 X15
+LW X15 48 X15
+BEQ X15 X0 lab29
 // ####increment refcount
-LW X1 0 X22
+LW X1 0 X15
 ADD X1 X1 1
-SW X1 0 X22
+SW X1 0 X15
 
 lab29:
 JAL X0 lab31
@@ -251,11 +251,11 @@ JAL X0 lab31
 lab30:
 // ##... or release blocks onto linear free list when loading
 // ###release block
-SW X2 0 X22
-MV X2 X22
+SW X2 0 X15
+MV X2 X15
 // ###load values
-LW X23 56 X22
-LW X22 48 X22
+LW X16 56 X15
+LW X15 48 X15
 
 lab31:
 // switch ω b_14 \{ ... \};
@@ -265,41 +265,41 @@ Box_32:
 
 Box_32_B:
 // #load from memory
-LW X1 0 X22
+LW X1 0 X15
 // ##check refcount
 BEQ X1 X0 lab33
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
-SW X1 0 X22
+SW X1 0 X15
 // ###load values
-LW X23 56 X22
+LW X15 56 X15
 JAL X0 lab34
 
 lab33:
 // ##... or release blocks onto linear free list when loading
 // ###release block
-SW X2 0 X22
-MV X2 X22
+SW X2 0 X15
+MV X2 X15
 // ###load values
-LW X23 56 X22
+LW X15 56 X15
 
 lab34:
 // let ω d_16: Box = B(x_15);
 // #allocate memory
 // ##store values
-SW X23 56 X2
+SW X15 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
 SW X0 32 X2
 // ##acquire free block from heap register
-MV X22 X2
+MV X15 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
 BEQ X2 X0 lab46
 // ####initialize refcount of just acquired block
-SW X0 0 X22
+SW X0 0 X15
 JAL X0 lab47
 
 lab46:
@@ -311,58 +311,58 @@ BEQ X3 X0 lab44
 SW X0 0 X2
 // ####erase children of next block
 // #####check child 1 for erasure
-LW X23 16 X2
-BEQ X23 X0 lab37
+LW X16 16 X2
+BEQ X16 X0 lab37
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab35
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab36
 
 lab35:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab36:
 
 lab37:
 // #####check child 2 for erasure
-LW X23 32 X2
-BEQ X23 X0 lab40
+LW X16 32 X2
+BEQ X16 X0 lab40
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab38
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab39
 
 lab38:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab39:
 
 lab40:
 // #####check child 3 for erasure
-LW X23 48 X2
-BEQ X23 X0 lab43
+LW X16 48 X2
+BEQ X16 X0 lab43
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab41
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab42
 
 lab41:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab42:
 
@@ -377,23 +377,23 @@ lab45:
 
 lab47:
 // #load tag
-LI X23 0
+LI X16 0
 // let ω dd_17: BoxBox = BB(d_16);
 // #allocate memory
 // ##store values
-SW X23 56 X2
-SW X22 48 X2
+SW X16 56 X2
+SW X15 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
 SW X0 32 X2
 // ##acquire free block from heap register
-MV X22 X2
+MV X15 X2
 // ##get next free block into heap register
 // ###(1) check linear free list for next block
 LW X2 0 X2
 BEQ X2 X0 lab59
 // ####initialize refcount of just acquired block
-SW X0 0 X22
+SW X0 0 X15
 JAL X0 lab60
 
 lab59:
@@ -405,58 +405,58 @@ BEQ X3 X0 lab57
 SW X0 0 X2
 // ####erase children of next block
 // #####check child 1 for erasure
-LW X23 16 X2
-BEQ X23 X0 lab50
+LW X16 16 X2
+BEQ X16 X0 lab50
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab48
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab49
 
 lab48:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab49:
 
 lab50:
 // #####check child 2 for erasure
-LW X23 32 X2
-BEQ X23 X0 lab53
+LW X16 32 X2
+BEQ X16 X0 lab53
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab51
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab52
 
 lab51:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab52:
 
 lab53:
 // #####check child 3 for erasure
-LW X23 48 X2
-BEQ X23 X0 lab56
+LW X16 48 X2
+BEQ X16 X0 lab56
 // ######check refcount
-LW X1 0 X23
+LW X1 0 X16
 BEQ X1 X0 lab54
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X23
+SW X1 0 X16
 JAL X0 lab55
 
 lab54:
 // ######... or add block to lazy free list
-SW X3 0 X23
-MV X3 X23
+SW X3 0 X16
+MV X3 X16
 
 lab55:
 
@@ -471,53 +471,53 @@ lab58:
 
 lab60:
 // #load tag
-LI X23 0
+LI X16 0
 // substitute (bb_12 := bb_12);
 // #erase bb_13
-BEQ X18 X0 lab63
+BEQ X11 X0 lab63
 // ######check refcount
-LW X1 0 X18
+LW X1 0 X11
 BEQ X1 X0 lab61
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X18
+SW X1 0 X11
 JAL X0 lab62
 
 lab61:
 // ######... or add block to lazy free list
-SW X3 0 X18
-MV X3 X18
+SW X3 0 X11
+MV X3 X11
 
 lab62:
 
 lab63:
 // #erase dd_17
-BEQ X22 X0 lab66
+BEQ X15 X0 lab66
 // ######check refcount
-LW X1 0 X22
+LW X1 0 X15
 BEQ X1 X0 lab64
 // ######either decrement refcount ...
 ADD X1 X1 -1
-SW X1 0 X22
+SW X1 0 X15
 JAL X0 lab65
 
 lab64:
 // ######... or add block to lazy free list
-SW X3 0 X22
-MV X3 X22
+SW X3 0 X15
+MV X3 X15
 
 lab65:
 
 lab66:
 // #move variables
-MV X4 X20
-MV X5 X21
+MV X4 X13
+MV X5 X14
 // lit y_18 <- 4;
-LI X7 4
+LI X6 4
 // let ω a_19: Box = B(y_18);
 // #allocate memory
 // ##store values
-SW X7 56 X2
+SW X6 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
@@ -665,7 +665,7 @@ BEQ X1 X0 lab85
 ADD X1 X1 -1
 SW X1 0 X6
 // ###load values
-LW X7 56 X6
+LW X6 56 X6
 JAL X0 lab86
 
 lab85:
@@ -674,13 +674,13 @@ lab85:
 SW X2 0 X6
 MV X2 X6
 // ###load values
-LW X7 56 X6
+LW X6 56 X6
 
 lab86:
 // let ω a_22: Box = B(x_21);
 // #allocate memory
 // ##store values
-SW X7 56 X2
+SW X6 56 X2
 SW X0 48 X2
 // ##mark unused fields with null
 SW X0 16 X2
@@ -785,7 +785,7 @@ BEQ X1 X0 lab101
 ADD X1 X1 -1
 SW X1 0 X6
 // ###load values
-LW X7 56 X6
+LW X6 56 X6
 JAL X0 lab102
 
 lab101:
@@ -794,15 +794,15 @@ lab101:
 SW X2 0 X6
 MV X2 X6
 // ###load values
-LW X7 56 X6
+LW X6 56 X6
 
 lab102:
 // substitute (x_23 := x_23)(a_19 := a_19);
 // #move variables
-MV X6 X4
-MV X1 X7
-MV X7 X5
-MV X5 X1
+MV X1 X6
+MV X6 X5
+MV X5 X4
+MV X4 X1
 // switch ω a_19 \{ ... \};
 // #there is only one clause, so we can just fall through
 
@@ -810,29 +810,29 @@ Box_103:
 
 Box_103_B:
 // #load from memory
-LW X1 0 X6
+LW X1 0 X5
 // ##check refcount
 BEQ X1 X0 lab104
 // ##either decrement refcount and share children...
 ADD X1 X1 -1
-SW X1 0 X6
+SW X1 0 X5
 // ###load values
-LW X7 56 X6
+LW X5 56 X5
 JAL X0 lab105
 
 lab104:
 // ##... or release blocks onto linear free list when loading
 // ###release block
-SW X2 0 X6
-MV X2 X6
+SW X2 0 X5
+MV X2 X5
 // ###load values
-LW X7 56 X6
+LW X5 56 X5
 
 lab105:
 // res_25 <- x_24 + x_23;
-ADD X9 X7 X5
+ADD X6 X5 X4
 // exit res_25
-MV X10 X9
+MV X10 X6
 JAL X0 cleanup
 
 cleanup:

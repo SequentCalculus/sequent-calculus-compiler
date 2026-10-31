@@ -26,26 +26,26 @@ asm_main:
 
 main_:
     ; lit z_1 <- 1;
-    mov rdx, 1
+    mov rax, 1
     ; lit x_2 <- 9;
-    mov rdi, 9
+    mov rdx, 9
     ; let ω p_3: Either = Right(x_2);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rdx
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
     mov qword [rbx + 32], 0
     ; ##acquire free block from heap register
-    mov rsi, rbx
+    mov rdx, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
     mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab12
     ; ####initialize refcount of just acquired block
-    mov qword [rsi + 8], 0
+    mov qword [rdx + 8], 0
     jmp lab13
 
 lab12:
@@ -125,10 +125,10 @@ lab11:
 
 lab13:
     ; #load tag
-    mov rdi, 5
+    mov rsi, 5
     ; switch ω p_3 \{ ... \};
     lea rcx, [rel Either_14]
-    add rcx, rdi
+    add rcx, rsi
     jmp rcx
 
 Either_14:
@@ -138,70 +138,70 @@ Either_14:
 Either_14_Left:
     ; #load from memory
     ; ##check refcount
-    cmp qword [rsi + 8], 0
+    cmp qword [rdx + 8], 0
     je lab15
     ; ##either decrement refcount and share children...
-    add qword [rsi + 8], -1
+    add qword [rdx + 8], -1
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
     jmp lab16
 
 lab15:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
-    mov [rsi + 8], rbx
-    mov rbx, rsi
+    mov [rdx + 8], rbx
+    mov rbx, rdx
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
 
 lab16:
     ; lit err_5 <- -1;
-    mov r9, -1
+    mov rsi, -1
     ; exit err_5
-    mov rax, r9
+    mov rax, rsi
     jmp cleanup
 
 Either_14_Right:
     ; #load from memory
     ; ##check refcount
-    cmp qword [rsi + 8], 0
+    cmp qword [rdx + 8], 0
     je lab17
     ; ##either decrement refcount and share children...
-    add qword [rsi + 8], -1
+    add qword [rdx + 8], -1
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
     jmp lab18
 
 lab17:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
-    mov [rsi + 8], rbx
-    mov rbx, rsi
+    mov [rdx + 8], rbx
+    mov rbx, rdx
     ; ###load values
-    mov rdi, [rsi + 56]
+    mov rdx, [rdx + 56]
 
 lab18:
     ; c_7 <- b_6 + z_1;
-    mov r9, rdi
-    add r9, rdx
+    mov rsi, rdx
+    add rsi, rax
     ; println_i64 c_7;
     ; #save caller-save registers
-    mov r12, rdx
-    mov r13, rdi
-    mov r14, r9
+    mov r12, rax
+    mov r13, rdx
+    mov r14, rsi
     sub rsp, 8
     ; #move argument into place
-    mov rdi, r9
+    mov rdi, rsi
     call println_i64
     ; #restore caller-save registers
-    mov rdx, r12
-    mov rdi, r13
-    mov r9, r14
+    mov rax, r12
+    mov rdx, r13
+    mov rsi, r14
     add rsp, 8
     ; lit ret_8 <- 0;
-    mov r11, 0
+    mov rdi, 0
     ; exit ret_8
-    mov rax, r11
+    mov rax, rdi
     jmp cleanup
 
 cleanup:

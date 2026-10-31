@@ -31,11 +31,11 @@ main_:
     ; #load tag
     mov rdx, 0
     ; lit z_2 <- 5;
-    mov rdi, 5
+    mov rsi, 5
     ; let ω zs_3: List = Cons(z_2, ws_1);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rsi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
     mov [rbx + 32], rax
@@ -131,11 +131,11 @@ lab13:
     ; #load tag
     mov rdx, 5
     ; lit y_4 <- 7;
-    mov rdi, 7
+    mov rsi, 7
     ; let ω ys_5: List = Cons(y_4, zs_3);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rsi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
     mov [rbx + 32], rax
@@ -231,11 +231,11 @@ lab26:
     ; #load tag
     mov rdx, 5
     ; lit x_6 <- 9;
-    mov rdi, 9
+    mov rsi, 9
     ; let ω xs_7: List = Cons(x_6, ys_5);
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdi
+    mov [rbx + 56], rsi
     mov qword [rbx + 48], 0
     mov [rbx + 40], rdx
     mov [rbx + 32], rax
@@ -341,9 +341,9 @@ List_40:
 
 List_40_Nil:
     ; lit err_8 <- -1;
-    mov rdx, -1
+    mov rax, -1
     ; exit err_8
-    mov rax, rdx
+    mov rax, rax
     jmp cleanup
 
 List_40_Cons:
@@ -354,7 +354,7 @@ List_40_Cons:
     ; ##either decrement refcount and share children...
     add qword [rax + 8], -1
     ; ###load values
-    mov rdi, [rax + 56]
+    mov rsi, [rax + 56]
     mov rdx, [rax + 40]
     mov rax, [rax + 32]
     cmp rax, 0
@@ -371,7 +371,7 @@ lab42:
     mov [rax + 8], rbx
     mov rbx, rax
     ; ###load values
-    mov rdi, [rax + 56]
+    mov rsi, [rax + 56]
     mov rdx, [rax + 40]
     mov rax, [rax + 32]
 
@@ -380,20 +380,20 @@ lab43:
     ; #save caller-save registers
     mov r12, rax
     mov r13, rdx
-    mov r14, rdi
+    mov r14, rsi
     sub rsp, 8
     ; #move argument into place
-    mov rdi, rdi
+    mov rdi, rsi
     call println_i64
     ; #restore caller-save registers
     mov rax, r12
     mov rdx, r13
-    mov rdi, r14
+    mov rsi, r14
     add rsp, 8
     ; lit ret_11 <- 0;
-    mov r9, 0
+    mov rdi, 0
     ; exit ret_11
-    mov rax, r9
+    mov rax, rdi
     jmp cleanup
 
 cleanup:

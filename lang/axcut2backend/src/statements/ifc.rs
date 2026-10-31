@@ -6,7 +6,7 @@ use printer::tokens::{EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use super::CodeStatement;
 use crate::{
     code::Instructions,
-    config::{Config, TemporaryNumber::Snd},
+    config::{Config, TemporaryNumber::Fst},
     fresh_labels::fresh_label,
     memory::Memory,
     parallel_moves::ParallelMoves,
@@ -49,70 +49,70 @@ impl CodeStatement for IfC {
         match self.snd {
             None => match self.sort {
                 IfSort::Equal => Backend::jump_label_if_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::NotEqual => Backend::jump_label_if_not_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::Less => Backend::jump_label_if_less_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::LessOrEqual => Backend::jump_label_if_less_or_equal_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::Greater => Backend::jump_label_if_greater_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::GreaterOrEqual => Backend::jump_label_if_greater_or_equal_zero(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
                     fresh_label.clone(),
                     instructions,
                 ),
             },
             Some(snd) => match self.sort {
                 IfSort::Equal => Backend::jump_label_if_equal(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::NotEqual => Backend::jump_label_if_not_equal(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::Less => Backend::jump_label_if_less(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::LessOrEqual => Backend::jump_label_if_less_or_equal(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::Greater => Backend::jump_label_if_greater(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),
                 IfSort::GreaterOrEqual => Backend::jump_label_if_greater_or_equal(
-                    Backend::variable_temporary(Snd, &context, self.fst.id),
-                    Backend::variable_temporary(Snd, &context, snd.id),
+                    Backend::variable_temporary(Fst, &context, self.fst.id),
+                    Backend::variable_temporary(Fst, &context, snd.id),
                     fresh_label.clone(),
                     instructions,
                 ),

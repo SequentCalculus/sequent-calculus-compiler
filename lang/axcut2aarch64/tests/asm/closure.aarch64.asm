@@ -20,11 +20,11 @@ asm_main:
 
 main_:
     // lit a_1 <- 9;
-    MOVZ X5, 9, LSL 0
+    MOVZ X4, 9, LSL 0
     // create ω f_2: Fun = (a_1)\{ ... \};
     // #allocate memory
     // ##store values
-    STR X5, [ X0, 56 ]
+    STR X4, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     // ##mark unused fields with null
     STR XZR, [ X0, 16 ]
@@ -129,70 +129,72 @@ lab13:
     // #load tag
     ADR X7, Cont_15
     // lit y_9 <- 1;
-    MOVZ X9, 1, LSL 0
+    MOVZ X8, 1, LSL 0
     // substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
     // #move variables
-    MOV X8, X4
-    MOV X2, X9
-    MOV X9, X5
-    MOV X5, X2
+    MOV X2, X8
+    MOV X8, X5
+    MOV X5, X6
+    MOV X6, X7
+    MOV X7, X4
+    MOV X4, X2
     // invoke ω f_2 apply
     // #there is only one clause, so we can jump there directly
-    BR X9
+    BR X8
 
 Cont_15:
 
 Cont_15_Ret:
     // println_i64 r_7;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X5
+    MOV X19, X4
+    MOV X20, X0
+    MOV X21, X1
     // #move argument into place
-    MOV X0, X5
+    MOV X0, X4
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X5, X21
+    MOV X4, X19
+    MOV X0, X20
+    MOV X1, X21
     // lit ret_8 <- 0;
-    MOVZ X7, 0, LSL 0
+    MOVZ X5, 0, LSL 0
     // exit ret_8
-    MOV X0, X7
+    MOV X0, X5
     B cleanup
 
 Fun_14:
 
 Fun_14_apply:
     // #load from memory
-    LDR X3, [ X8, 0 ]
+    LDR X3, [ X7, 0 ]
     // ##check refcount
     CMP X3, 0
     BEQ lab16
     // ##either decrement refcount and share children...
     SUB X3, X3, 1
-    STR X3, [ X8, 0 ]
+    STR X3, [ X7, 0 ]
     // ###load values
-    LDR X9, [ X8, 56 ]
+    LDR X7, [ X7, 56 ]
     B lab17
 
 lab16:
     // ##... or release blocks onto linear free list when loading
     // ###release block
-    STR X0, [ X8, 0 ]
-    MOV X0, X8
+    STR X0, [ X7, 0 ]
+    MOV X0, X7
     // ###load values
-    LDR X9, [ X8, 56 ]
+    LDR X7, [ X7, 56 ]
 
 lab17:
     // b_5 <- a_1 + x_3;
-    ADD X11, X9, X5
+    ADD X8, X7, X4
     // substitute (b_5 := b_5)(k_4 := k_4);
     // #move variables
-    MOV X5, X11
+    MOV X4, X8
     // invoke ω k_4 Ret
     // #there is only one clause, so we can jump there directly
-    BR X7
+    BR X6
 
 cleanup:
     // free space for register spills

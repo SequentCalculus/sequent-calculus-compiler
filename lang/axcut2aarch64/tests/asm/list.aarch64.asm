@@ -25,11 +25,11 @@ main_:
     // #load tag
     MOVZ X5, 0, LSL 0
     // lit z_2 <- 5;
-    MOVZ X7, 5, LSL 0
+    MOVZ X6, 5, LSL 0
     // let ω zs_3: List = Cons(z_2, ws_1);
     // #allocate memory
     // ##store values
-    STR X7, [ X0, 56 ]
+    STR X6, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     STR X5, [ X0, 40 ]
     STR X4, [ X0, 32 ]
@@ -130,11 +130,11 @@ lab13:
     // #load tag
     MOVZ X5, 4, LSL 0
     // lit y_4 <- 7;
-    MOVZ X7, 7, LSL 0
+    MOVZ X6, 7, LSL 0
     // let ω ys_5: List = Cons(y_4, zs_3);
     // #allocate memory
     // ##store values
-    STR X7, [ X0, 56 ]
+    STR X6, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     STR X5, [ X0, 40 ]
     STR X4, [ X0, 32 ]
@@ -235,11 +235,11 @@ lab26:
     // #load tag
     MOVZ X5, 4, LSL 0
     // lit x_6 <- 9;
-    MOVZ X7, 9, LSL 0
+    MOVZ X6, 9, LSL 0
     // let ω xs_7: List = Cons(x_6, ys_5);
     // #allocate memory
     // ##store values
-    STR X7, [ X0, 56 ]
+    STR X6, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     STR X5, [ X0, 40 ]
     STR X4, [ X0, 32 ]
@@ -350,9 +350,9 @@ List_40:
 
 List_40_Nil:
     // lit err_8 <- -1;
-    MOVN X5, 0, LSL 0
+    MOVN X4, 0, LSL 0
     // exit err_8
-    MOV X0, X5
+    MOV X0, X4
     B cleanup
 
 List_40_Cons:
@@ -365,7 +365,7 @@ List_40_Cons:
     SUB X3, X3, 1
     STR X3, [ X4, 0 ]
     // ###load values
-    LDR X7, [ X4, 56 ]
+    LDR X6, [ X4, 56 ]
     LDR X5, [ X4, 40 ]
     LDR X4, [ X4, 32 ]
     CMP X4, 0
@@ -384,31 +384,31 @@ lab42:
     STR X0, [ X4, 0 ]
     MOV X0, X4
     // ###load values
-    LDR X7, [ X4, 56 ]
+    LDR X6, [ X4, 56 ]
     LDR X5, [ X4, 40 ]
     LDR X4, [ X4, 32 ]
 
 lab43:
     // println_i64 a_10;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X4
-    MOV X22, X5
-    MOV X23, X7
+    MOV X19, X4
+    MOV X20, X5
+    MOV X21, X6
+    MOV X22, X0
+    MOV X23, X1
     // #move argument into place
-    MOV X0, X7
+    MOV X0, X6
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X4, X21
-    MOV X5, X22
-    MOV X7, X23
+    MOV X4, X19
+    MOV X5, X20
+    MOV X6, X21
+    MOV X0, X22
+    MOV X1, X23
     // lit ret_11 <- 0;
-    MOVZ X9, 0, LSL 0
+    MOVZ X7, 0, LSL 0
     // exit ret_11
-    MOV X0, X9
+    MOV X0, X7
     B cleanup
 
 cleanup:

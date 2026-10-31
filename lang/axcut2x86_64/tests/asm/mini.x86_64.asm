@@ -30,34 +30,34 @@ main_:
 
 l_:
     ; lit x_1 <- 1;
-    mov rdx, 1
+    mov rax, 1
     ; lit y_2 <- 9;
-    mov rdi, 9
+    mov rdx, 9
     ; j(...)
     jmp j_
 
 j_:
     ; z_5 <- x_4 + y_3;
-    mov r9, rdi
-    add r9, rdx
+    mov rsi, rdx
+    add rsi, rax
     ; println_i64 z_5;
     ; #save caller-save registers
-    mov r12, rdx
-    mov r13, rdi
-    mov r14, r9
+    mov r12, rax
+    mov r13, rdx
+    mov r14, rsi
     sub rsp, 8
     ; #move argument into place
-    mov rdi, r9
+    mov rdi, rsi
     call println_i64
     ; #restore caller-save registers
-    mov rdx, r12
-    mov rdi, r13
-    mov r9, r14
+    mov rax, r12
+    mov rdx, r13
+    mov rsi, r14
     add rsp, 8
     ; lit ret_6 <- 0;
-    mov r11, 0
+    mov rdi, 0
     ; exit ret_6
-    mov rax, r11
+    mov rax, rdi
     jmp cleanup
 
 cleanup:

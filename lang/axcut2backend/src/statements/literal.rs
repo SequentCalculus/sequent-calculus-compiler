@@ -5,7 +5,7 @@ use printer::{Print, tokens::LIT};
 use super::CodeStatement;
 use crate::{
     code::Instructions,
-    config::{Config, TemporaryNumber::Snd},
+    config::{Config, TemporaryNumber::Fst},
     memory::Memory,
     parallel_moves::ParallelMoves,
     utils::Utils,
@@ -39,7 +39,7 @@ impl CodeStatement for Literal {
             ty: Ty::I64,
         });
         Backend::load_immediate(
-            Backend::variable_temporary(Snd, &context, self.var.id),
+            Backend::variable_temporary(Fst, &context, self.var.id),
             Backend::i64_to_immediate(self.lit),
             instructions,
         );
