@@ -20,26 +20,26 @@ asm_main:
 
 main_:
     // lit z_1 <- 1;
-    MOVZ X5, 1, LSL 0
+    MOVZ X4, 1, LSL 0
     // lit x_2 <- 9;
-    MOVZ X7, 9, LSL 0
-    // let p_3: Either = Right(x_2);
+    MOVZ X5, 9, LSL 0
+    // let ω p_3: Either = Right(x_2);
     // #allocate memory
     // ##store values
-    STR X7, [ X0, 56 ]
+    STR X5, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
     // ##mark unused fields with null
     STR XZR, [ X0, 16 ]
     STR XZR, [ X0, 32 ]
     // ##acquire free block from heap register
-    MOV X6, X0
+    MOV X5, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab12
     // ####initialize refcount of just acquired block
-    STR XZR, [ X6, 0 ]
+    STR XZR, [ X5, 0 ]
     B lab13
 
 lab12:
@@ -124,10 +124,10 @@ lab11:
 
 lab13:
     // #load tag
-    MOVZ X7, 4, LSL 0
-    // switch p_3 \{ ... \};
+    MOVZ X6, 4, LSL 0
+    // switch ω p_3 \{ ... \};
     ADR X2, Either_14
-    ADD X2, X2, X7
+    ADD X2, X2, X6
     BR X2
 
 Either_14:
@@ -136,76 +136,76 @@ Either_14:
 
 Either_14_Left:
     // #load from memory
-    LDR X3, [ X6, 0 ]
+    LDR X3, [ X5, 0 ]
     // ##check refcount
     CMP X3, 0
     BEQ lab15
     // ##either decrement refcount and share children...
     SUB X3, X3, 1
-    STR X3, [ X6, 0 ]
+    STR X3, [ X5, 0 ]
     // ###load values
-    LDR X7, [ X6, 56 ]
+    LDR X5, [ X5, 56 ]
     B lab16
 
 lab15:
     // ##... or release blocks onto linear free list when loading
     // ###release block
-    STR X0, [ X6, 0 ]
-    MOV X0, X6
+    STR X0, [ X5, 0 ]
+    MOV X0, X5
     // ###load values
-    LDR X7, [ X6, 56 ]
+    LDR X5, [ X5, 56 ]
 
 lab16:
     // lit err_5 <- -1;
-    MOVN X9, 0, LSL 0
+    MOVN X6, 0, LSL 0
     // exit err_5
-    MOV X0, X9
+    MOV X0, X6
     B cleanup
 
 Either_14_Right:
     // #load from memory
-    LDR X3, [ X6, 0 ]
+    LDR X3, [ X5, 0 ]
     // ##check refcount
     CMP X3, 0
     BEQ lab17
     // ##either decrement refcount and share children...
     SUB X3, X3, 1
-    STR X3, [ X6, 0 ]
+    STR X3, [ X5, 0 ]
     // ###load values
-    LDR X7, [ X6, 56 ]
+    LDR X5, [ X5, 56 ]
     B lab18
 
 lab17:
     // ##... or release blocks onto linear free list when loading
     // ###release block
-    STR X0, [ X6, 0 ]
-    MOV X0, X6
+    STR X0, [ X5, 0 ]
+    MOV X0, X5
     // ###load values
-    LDR X7, [ X6, 56 ]
+    LDR X5, [ X5, 56 ]
 
 lab18:
     // c_7 <- b_6 + z_1;
-    ADD X9, X7, X5
+    ADD X6, X5, X4
     // println_i64 c_7;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X5
-    MOV X22, X7
-    MOV X23, X9
+    MOV X19, X4
+    MOV X20, X5
+    MOV X21, X6
+    MOV X22, X0
+    MOV X23, X1
     // #move argument into place
-    MOV X0, X9
+    MOV X0, X6
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X5, X21
-    MOV X7, X22
-    MOV X9, X23
+    MOV X4, X19
+    MOV X5, X20
+    MOV X6, X21
+    MOV X0, X22
+    MOV X1, X23
     // lit ret_8 <- 0;
-    MOVZ X11, 0, LSL 0
+    MOVZ X7, 0, LSL 0
     // exit ret_8
-    MOV X0, X11
+    MOV X0, X7
     B cleanup
 
 cleanup:

@@ -10,7 +10,9 @@ use crate::{
     parallel_moves::ParallelMoves,
     utils::Utils,
 };
-use axcut::syntax::{Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::Let};
+use axcut::syntax::{
+    Chirality, ContextBinding, Quantity, TypeDeclaration, TypingContext, statements::Let,
+};
 
 use std::hash::Hash;
 
@@ -28,7 +30,8 @@ impl CodeStatement for Let {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{LET} {}: {} = {}({});",
+            "{LET}{} {}: {} = {}({});",
+            self.quantity.print_to_string(None),
             self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.tag.print_to_string(None),
@@ -44,11 +47,12 @@ impl CodeStatement for Let {
         let arguments = context
             .bindings
             .split_off(context.bindings.len() - self.args.bindings.len());
-        Backend::store(arguments.into(), &context, instructions);
+        Backend::store(arguments.into(), &context, self.quantity, instructions);
 
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Prd,
+            quantity: Quantity::One,
             ty: self.ty,
         });
 

@@ -1,10 +1,9 @@
 //! This module implements the plumbing for generating a complete assembly routine.
 
-use super::config::{
-    FIELDS_PER_BLOCK, FREE, HEAP, Register, SPILL_SPACE, STACK, arg, field_offset,
-};
-use crate::code::Code;
+use super::config::{FREE, HEAP, Register, SPILL_SPACE, STACK, arg, field_offset};
+use crate::{code::Code, config::fields_per_block};
 
+use axcut::syntax::Quantity;
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 use printer::tokens::{PRINT_I64, PRINTLN_I64};
@@ -24,25 +23,24 @@ fn preamble() -> Vec<Code> {
 
 /// This function generates code for moving the command-line arguments into the correct registers.
 fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::COMMENT("move parameters into place".to_string()));
     match number_of_arguments {
         0 => {}
-        1 => instructions.push(Code::MOV(Register(5), arg(1))),
+        1 => instructions.push(Code::MOV(Register(4), arg(1))),
         2 => {
-            instructions.push(Code::MOV(Register(7), arg(2)));
             move_arguments(1, instructions);
+            //instructions.push(Code::MOV(Register(5), arg(2))); // arg(2) = Register(5)
         }
         3 => {
-            instructions.push(Code::MOV(Register(9), arg(3)));
             move_arguments(2, instructions);
+            instructions.push(Code::MOV(Register(6), arg(3)));
         }
         4 => {
-            instructions.push(Code::MOV(Register(11), arg(4)));
             move_arguments(3, instructions);
+            instructions.push(Code::MOV(Register(7), arg(4)));
         }
         5 => {
-            instructions.push(Code::MOV(Register(13), arg(5)));
             move_arguments(4, instructions);
+            instructions.push(Code::MOV(Register(8), arg(5)));
         }
         _ => panic!("too many arguments for main"),
     }
@@ -67,7 +65,11 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(MOV(HEAP, arg(0)));
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOV(FREE, HEAP));
-    instructions.push(ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
+    instructions.push(ADDI(
+        FREE,
+        field_offset(Fst, fields_per_block(Quantity::Omega), Quantity::Omega),
+    ));
+    instructions.push(Code::COMMENT("move parameters into place".to_string()));
     move_arguments(number_of_arguments, instructions);
 }
 

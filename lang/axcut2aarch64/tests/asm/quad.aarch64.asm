@@ -20,31 +20,31 @@ asm_main:
 
 main_:
     // lit z_1 <- 8;
-    MOVZ X5, 8, LSL 0
+    MOVZ X4, 8, LSL 0
     // lit y_2 <- 6;
-    MOVZ X7, 6, LSL 0
+    MOVZ X5, 6, LSL 0
     // lit x_3 <- 4;
-    MOVZ X9, 4, LSL 0
+    MOVZ X6, 4, LSL 0
     // lit w_4 <- 2;
-    MOVZ X11, 2, LSL 0
-    // let q_5: Quad = Q(z_1, y_2, x_3, w_4);
+    MOVZ X7, 2, LSL 0
+    // let ω q_5: Quad = Q(z_1, y_2, x_3, w_4);
     // #allocate memory
     // ##store values
-    STR X11, [ X0, 56 ]
+    STR X7, [ X0, 56 ]
     STR XZR, [ X0, 48 ]
-    STR X9, [ X0, 40 ]
+    STR X6, [ X0, 40 ]
     STR XZR, [ X0, 32 ]
-    STR X7, [ X0, 24 ]
+    STR X5, [ X0, 24 ]
     STR XZR, [ X0, 16 ]
     // ##acquire free block from heap register
-    MOV X6, X0
+    MOV X5, X0
     // ##get next free block into heap register
     // ###(1) check linear free list for next block
     LDR X0, [ X0, 0 ]
     CMP X0, 0
     BEQ lab12
     // ####initialize refcount of just acquired block
-    STR XZR, [ X6, 0 ]
+    STR XZR, [ X5, 0 ]
     B lab13
 
 lab12:
@@ -129,9 +129,9 @@ lab11:
 
 lab13:
     // ##store link to previous block
-    STR X6, [ X0, 48 ]
+    STR X5, [ X0, 48 ]
     // ##store values
-    STR X5, [ X0, 40 ]
+    STR X4, [ X0, 40 ]
     STR XZR, [ X0, 32 ]
     // ##mark unused fields with null
     STR XZR, [ X0, 16 ]
@@ -229,7 +229,7 @@ lab24:
 lab26:
     // #load tag
     MOVZ X5, 0, LSL 0
-    // switch q_5 \{ ... \};
+    // switch ω q_5 \{ ... \};
     // #there is only one clause, so we can just fall through
 
 Quad_27:
@@ -244,13 +244,13 @@ Quad_27_Q:
     SUB X3, X3, 1
     STR X3, [ X4, 0 ]
     // ###load link to next block
-    LDR X6, [ X4, 48 ]
+    LDR X5, [ X4, 48 ]
     // ###load values
-    LDR X5, [ X4, 40 ]
+    LDR X4, [ X4, 40 ]
     // ###load values
-    LDR X11, [ X6, 56 ]
-    LDR X9, [ X6, 40 ]
-    LDR X7, [ X6, 24 ]
+    LDR X7, [ X5, 56 ]
+    LDR X6, [ X5, 40 ]
+    LDR X5, [ X5, 24 ]
     B lab29
 
 lab28:
@@ -259,48 +259,48 @@ lab28:
     STR X0, [ X4, 0 ]
     MOV X0, X4
     // ###load link to next block
-    LDR X6, [ X4, 48 ]
+    LDR X5, [ X4, 48 ]
     // ###load values
-    LDR X5, [ X4, 40 ]
+    LDR X4, [ X4, 40 ]
     // ###release block
-    STR X0, [ X6, 0 ]
-    MOV X0, X6
+    STR X0, [ X5, 0 ]
+    MOV X0, X5
     // ###load values
-    LDR X11, [ X6, 56 ]
-    LDR X9, [ X6, 40 ]
-    LDR X7, [ X6, 24 ]
+    LDR X7, [ X5, 56 ]
+    LDR X6, [ X5, 40 ]
+    LDR X5, [ X5, 24 ]
 
 lab29:
     // lit z_10 <- 7;
-    MOVZ X13, 7, LSL 0
+    MOVZ X8, 7, LSL 0
     // e_11 <- d_6 + z_10;
-    ADD X15, X5, X13
+    ADD X9, X4, X8
     // println_i64 e_11;
     // #save caller-save registers
-    MOV X19, X0
-    MOV X20, X1
-    MOV X21, X5
+    MOV X19, X4
+    MOV X20, X5
+    MOV X21, X6
     MOV X22, X7
-    MOV X23, X9
-    MOV X24, X11
-    MOV X25, X13
-    MOV X26, X15
+    MOV X23, X8
+    MOV X24, X9
+    MOV X25, X0
+    MOV X26, X1
     // #move argument into place
-    MOV X0, X15
+    MOV X0, X9
     BL println_i64
     // #restore caller-save registers
-    MOV X0, X19
-    MOV X1, X20
-    MOV X5, X21
+    MOV X4, X19
+    MOV X5, X20
+    MOV X6, X21
     MOV X7, X22
-    MOV X9, X23
-    MOV X11, X24
-    MOV X13, X25
-    MOV X15, X26
+    MOV X8, X23
+    MOV X9, X24
+    MOV X0, X25
+    MOV X1, X26
     // lit ret_12 <- 0;
-    MOVZ X17, 0, LSL 0
+    MOVZ X10, 0, LSL 0
     // exit ret_12
-    MOV X0, X17
+    MOV X0, X10
     B cleanup
 
 cleanup:

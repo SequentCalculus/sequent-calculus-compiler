@@ -1,16 +1,16 @@
 // actual code
 main_:
-// let ws_1: List = Nil();
+// let ω ws_1: List = Nil();
 // #mark no allocation
 MV X4 X0
 // #load tag
 LI X5 0
 // lit z_2 <- 5;
-LI X7 5
-// let zs_3: List = Cons(z_2, ws_1);
+LI X6 5
+// let ω zs_3: List = Cons(z_2, ws_1);
 // #allocate memory
 // ##store values
-SW X7 56 X2
+SW X6 56 X2
 SW X0 48 X2
 SW X5 40 X2
 SW X4 32 X2
@@ -103,11 +103,11 @@ lab13:
 // #load tag
 LI X5 4
 // lit y_4 <- 7;
-LI X7 7
-// let ys_5: List = Cons(y_4, zs_3);
+LI X6 7
+// let ω ys_5: List = Cons(y_4, zs_3);
 // #allocate memory
 // ##store values
-SW X7 56 X2
+SW X6 56 X2
 SW X0 48 X2
 SW X5 40 X2
 SW X4 32 X2
@@ -200,11 +200,11 @@ lab26:
 // #load tag
 LI X5 4
 // lit x_6 <- 9;
-LI X7 9
-// let xs_7: List = Cons(x_6, ys_5);
+LI X6 9
+// let ω xs_7: List = Cons(x_6, ys_5);
 // #allocate memory
 // ##store values
-SW X7 56 X2
+SW X6 56 X2
 SW X0 48 X2
 SW X5 40 X2
 SW X4 32 X2
@@ -296,7 +296,7 @@ lab37:
 lab39:
 // #load tag
 LI X5 4
-// switch xs_7 \{ ... \};
+// switch ω xs_7 \{ ... \};
 LA X1 List_40
 ADD X1 X1 X5
 JALR X0 X1 0
@@ -307,9 +307,9 @@ JAL X0 List_40_Cons
 
 List_40_Nil:
 // lit err_8 <- -1;
-LI X5 -1
+LI X4 -1
 // exit err_8
-MV X10 X5
+MV X10 X4
 JAL X0 cleanup
 
 List_40_Cons:
@@ -321,7 +321,7 @@ BEQ X1 X0 lab42
 ADD X1 X1 -1
 SW X1 0 X4
 // ###load values
-LW X7 56 X4
+LW X6 56 X4
 LW X5 40 X4
 LW X4 32 X4
 BEQ X4 X0 lab41
@@ -339,13 +339,13 @@ lab42:
 SW X2 0 X4
 MV X2 X4
 // ###load values
-LW X7 56 X4
+LW X6 56 X4
 LW X5 40 X4
 LW X4 32 X4
 
 lab43:
 // exit a_10
-MV X10 X7
+MV X10 X6
 JAL X0 cleanup
 
 cleanup:

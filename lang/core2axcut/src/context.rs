@@ -22,29 +22,35 @@ pub fn shrink_binding(
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Cns,
+                quantity: axcut::syntax::Quantity::One,
                 ty: axcut::syntax::Ty::Decl(shrink_identifier(cont_int().name)),
             }
         } else {
             axcut::syntax::ContextBinding {
                 var: shrink_identifier(binding.var),
                 chi: axcut::syntax::Chirality::Ext,
+                quantity: axcut::syntax::Quantity::One,
                 ty: axcut::syntax::Ty::I64,
             }
         }
-    } else if !binding.ty.is_codata(codata_types)
+    // This runs post-monomorphization, where `Ty::Var` can no longer occur (every type is
+    // ground), so `is_codata`'s ambient type-parameter list is never actually consulted here.
+    } else if !binding.ty.is_codata(codata_types, &[])
         && binding.chi == core_lang::syntax::context::Chirality::Prd
-        || binding.ty.is_codata(codata_types)
+        || binding.ty.is_codata(codata_types, &[])
             && binding.chi == core_lang::syntax::context::Chirality::Cns
     {
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Prd,
+            quantity: axcut::syntax::Quantity::One,
             ty: shrink_ty(binding.ty),
         }
     } else {
         axcut::syntax::ContextBinding {
             var: shrink_identifier(binding.var),
             chi: axcut::syntax::Chirality::Cns,
+            quantity: axcut::syntax::Quantity::One,
             ty: shrink_ty(binding.ty),
         }
     }

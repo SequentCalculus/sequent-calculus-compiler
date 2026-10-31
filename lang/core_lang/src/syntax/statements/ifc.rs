@@ -3,8 +3,17 @@
 use printer::tokens::{ELSE, EQQ, GT, GTE, IF, LT, LTE, NEQ, ZERO};
 use printer::*;
 
-use crate::syntax::*;
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -224,6 +233,100 @@ impl Focusing for IfC {
     }
 }
 
+impl ConstraintCollector for IfC {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        // collect constraints from the first term, then the second term if it exists, then the then-branch and else-branch
+        let mut constraints = self.fst.collect_constraints(env)?;
+        if let Some(ref snd) = self.snd {
+            constraints.extend(snd.collect_constraints(env)?);
+        }
+        constraints.extend(self.thenc.collect_constraints(env)?);
+        constraints.extend(self.elsec.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl Specialize for IfC {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        IfC {
+            sort: self.sort,
+            fst: self.fst.specialize(context),
+            snd: self.snd.specialize(context),
+            thenc: self.thenc.specialize(context),
+            elsec: self.elsec.specialize(context),
+        }
+    }
+}
+
+impl Checked for IfC {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        if let Ty::I64 = self.fst.get_type() {
+        } else {
+            bail!(TypeError::TypeMismatch {
+                expected: Ty::I64.print_to_string(None),
+                got: self.fst.get_type().print_to_string(None),
+                msg: Some("Operands in if condition must be i64".to_string()),
+            });
+        }
+
+        // check that the second term of the comparison has type i64 if it exists
+        if let Some(ref snd) = self.snd {
+            if let Ty::I64 = snd.get_type() {
+            } else {
+                bail!(TypeError::TypeMismatch {
+                    expected: Ty::I64.print_to_string(None),
+                    got: snd.get_type().print_to_string(None),
+                    msg: Some("Operands in if condition must be i64".to_string()),
+                });
+            }
+        }
+
+        // check well-formedness of the terms
+        self.fst.check(type_params, context, env)?;
+        if let Some(ref snd) = self.snd {
+            snd.check(type_params, context, env)?;
+        }
+        self.thenc.check(type_params, context, env)?;
+        self.elsec.check(type_params, context, env)?;
+
+        Ok(())
+    }
+}
+
+impl LabelAndUnify for IfC {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        IfC {
+            sort: self.sort,
+            fst: self.fst.label_and_unify(state, sigs, scope),
+            snd: self.snd.label_and_unify(state, sigs, scope),
+            thenc: self.thenc.label_and_unify(state, sigs, scope),
+            elsec: self.elsec.label_and_unify(state, sigs, scope),
+        }
+    }
+}
+
+impl Rewrite for IfC {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        IfC {
+            sort: self.sort,
+            fst: self.fst.rewrite(table),
+            snd: self.snd.rewrite(table),
+            thenc: self.thenc.rewrite(table),
+            elsec: self.elsec.rewrite(table),
+        }
+    }
+}
+
 #[cfg(test)]
 mod transform_tests {
     use crate::traits::*;
@@ -320,5 +423,83 @@ mod transform_tests {
         )
         .into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod check_tests {
+
+    use crate::{
+        syntax::{Statement, TypingContext},
+        typing::{check::Checked, env::GlobalEnv},
+    };
+    extern crate self as core_lang;
+    use core_macros::{ctor, ctor_sig, data, exit, id, ife, lit, ty};
+
+    #[test]
+    fn ifc_check_ok_binary() {
+        let stmt: Statement = ife!(
+            lit!(1),
+            lit!(2),
+            exit!(lit!(1), ty!("int")),
+            exit!(lit!(2), ty!("int"))
+        )
+        .into();
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn ifc_check_branch_type_mismatch() {
+        let stmt: Statement = ife!(
+            lit!(1),
+            lit!(2),
+            exit!(lit!(1), ty!(id!("List"))),
+            exit!(lit!(2), ty!("int"))
+        )
+        .into();
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn ifc_check_fst_not_i64() {
+        let fst = ctor!(id!("Nil"), [], [], ty!(id!("List")));
+        let stmt: Statement = ife!(
+            fst,
+            lit!(1),
+            exit!(lit!(0), ty!("int")),
+            exit!(lit!(0), ty!("int"))
+        )
+        .into();
+        assert!(
+            stmt.check(&[], &TypingContext::default(), &GlobalEnv::default())
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn ifc_check_snd_not_i64() {
+        let list = data!(id!("List"), [ctor_sig!(id!("Nil"), [], [])], []);
+        let snd = ctor!(id!("Nil"), [], [], ty!(id!("List")));
+        let stmt: Statement = ife!(
+            lit!(1),
+            snd,
+            exit!(lit!(0), ty!("int")),
+            exit!(lit!(0), ty!("int"))
+        )
+        .into();
+        assert!(
+            stmt.check(
+                &[],
+                &TypingContext::default(),
+                &GlobalEnv::new(&[list], &[], &[])
+            )
+            .is_err()
+        );
     }
 }

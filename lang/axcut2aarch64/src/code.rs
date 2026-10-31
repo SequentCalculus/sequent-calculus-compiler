@@ -6,8 +6,9 @@ use super::config::{
     TEMP, TEMP2, TEMPORARY_TEMP, Temporary, address, stack_offset,
 };
 
-use axcut::syntax::{Chirality, ContextBinding};
+use axcut::syntax::ContextBinding;
 use axcut2backend::code::Instructions;
+use axcut2backend::utils::used_temporaries;
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
@@ -98,6 +99,8 @@ pub enum Code {
     GLOBAL(String),
     /// An assembly comment.
     COMMENT(String),
+    /// Trigger an illegal instruction exception (Trap for unreachable code)
+    UDF,
 }
 
 impl Print for Code {
@@ -378,6 +381,11 @@ impl Print for Code {
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("// {msg}"))),
+            UDF => alloc
+                .text(INDENT)
+                .append(alloc.keyword("UDF"))
+                .append(alloc.space())
+                .append(Immediate { val: 0 }.print(cfg, alloc)),
         }
     }
 }
@@ -601,30 +609,23 @@ fn compare_immediate(temporary: Temporary, immediate: Immediate, instructions: &
 }
 
 /// This function calculates information for adhering to the calling convention for calling C
-/// functions based on the current typing context. It returns the first register which can be used
+/// functions based on the current typing context. It returns the first register that can be used
 /// for evacuating registers needed during the function call and a list of the registers that have
 /// to be evacuated.
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
-    let first_free_register = 2 * context.len() + RESERVED;
+    let used_temporaries = used_temporaries(context, None);
+    let first_free_register = used_temporaries + RESERVED;
     let first_backup_register = std::cmp::max(first_free_register, CALLER_SAVE_LAST + 1);
 
     let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
-    let mut registers_to_save = Vec::with_capacity(caller_save_count + 3);
+    let mut registers_to_save: Vec<_> =
+        (RESERVED..RESERVED + std::cmp::min(used_temporaries, caller_save_count)).collect();
     // we always have to save the first two registers, containing `HEAP` and `FREE`
     registers_to_save.push(0);
     registers_to_save.push(1);
     // the last register will contain the return address, so it must be saved if in use
     if first_free_register > REGISTER_NUM {
         registers_to_save.push(REGISTER_NUM - 1);
-    }
-    for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
-        // values of external types like integers occupy only one register
-        if binding.chi == Chirality::Ext {
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
-        } else {
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset);
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
-        }
     }
 
     (first_backup_register, registers_to_save)
@@ -1090,5 +1091,9 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::BL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
+    }
+
+    fn unreachable(instructions: &mut Vec<Code>) {
+        instructions.push(Code::UDF);
     }
 }

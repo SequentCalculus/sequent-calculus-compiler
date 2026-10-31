@@ -70,10 +70,10 @@ pub fn code_exchange<Backend, Code, Temporary: Ord + Hash + Copy, Immediate>(
             // values of external types like integers occupy only one temporary
             if binding.chi == Chirality::Ext {
                 let _ = target_list_temporaries.insert(
-                    Backend::variable_temporary(Snd, context, binding.var.id),
+                    Backend::variable_temporary(Fst, context, binding.var.id),
                     targets
                         .iter()
-                        .map(|target| Backend::variable_temporary(Snd, new_context, *target))
+                        .map(|target| Backend::variable_temporary(Fst, new_context, *target))
                         .collect(),
                 );
             } else {

@@ -11,9 +11,10 @@ fn main() {
     let ty_list = codata!(
         id!("ListInt"),
         [
-            dtor_sig!(id!("Nil"), []),
+            dtor_sig!(id!("Nil"), [], []),
             dtor_sig!(
                 id!("Cons"),
+                [],
                 [
                     bind!(id!("x"), prd!()),
                     bind!(id!("xs"), prd!(), ty!(id!("ListInt")))
@@ -53,10 +54,11 @@ fn main() {
         cut!(
             cocase!(
                 [
-                    clause!(Prd, id!("Nil"), [], cut!(lit!(1), covar!(id!("a")))),
+                    clause!(Prd, id!("Nil"), [], [], cut!(lit!(1), covar!(id!("a")))),
                     clause!(
                         Prd,
                         id!("Cons"),
+                        [],
                         [
                             bind!(id!("x"), prd!()),
                             bind!(id!("xs"), cns!(), ty!(id!("ListInt")))
@@ -91,11 +93,11 @@ fn main() {
         ),
     );
 
-    let nil = dtor!(id!("Nil"), [], ty!(id!("ListInt")));
-    let cons1 = dtor!(id!("Cons"), [lit!(3), nil], ty!(id!("ListInt")));
-    let cons2 = dtor!(id!("Cons"), [lit!(3), cons1], ty!(id!("ListInt")));
-    let cons3 = dtor!(id!("Cons"), [lit!(0), cons2], ty!(id!("ListInt")));
-    let cons4 = dtor!(id!("Cons"), [lit!(2), cons3], ty!(id!("ListInt")));
+    let nil = dtor!(id!("Nil"), [], [], ty!(id!("ListInt")));
+    let cons1 = dtor!(id!("Cons"), [], [lit!(3), nil], ty!(id!("ListInt")));
+    let cons2 = dtor!(id!("Cons"), [], [lit!(3), cons1], ty!(id!("ListInt")));
+    let cons3 = dtor!(id!("Cons"), [], [lit!(0), cons2], ty!(id!("ListInt")));
+    let cons4 = dtor!(id!("Cons"), [], [lit!(2), cons3], ty!(id!("ListInt")));
 
     let main = def!(
         id!("main"),

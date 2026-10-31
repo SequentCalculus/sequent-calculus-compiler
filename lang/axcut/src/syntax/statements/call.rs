@@ -3,9 +3,12 @@
 use printer::Print;
 
 use super::Substitute;
-use crate::syntax::{ContextBinding, ID, Identifier, Statement, TypingContext};
+use crate::syntax::{ContextBinding, ID, Identifier, Prog, Statement, TypingContext};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -85,5 +88,27 @@ impl Linearizing for Call {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for Call {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let params = program
+            .find_def(&self.label)
+            .expect("label refers to existing def");
+
+        constraints.contexts_flow_together(context, &params.context.ids());
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Call {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.args = self.args.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

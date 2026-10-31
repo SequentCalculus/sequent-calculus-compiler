@@ -3,9 +3,15 @@
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::INVOKE};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
+use crate::syntax::context::Quantity;
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Prog, Statement, Ty, TypingContext,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -20,6 +26,7 @@ use std::rc::Rc;
 pub struct Invoke {
     pub var: Identifier,
     pub tag: Identifier,
+    pub quantity: Quantity,
     pub ty: Ty,
     pub args: TypingContext,
 }
@@ -38,6 +45,7 @@ impl Print for Invoke {
 
         alloc
             .keyword(INVOKE)
+            .append(self.quantity.print(cfg, alloc))
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(alloc.space())
@@ -66,6 +74,7 @@ impl TypedFreeVars for Invoke {
         vars.insert(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         });
     }
@@ -90,6 +99,7 @@ impl Linearizing for Invoke {
         let closure_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         };
         context_rearrange.bindings.push(closure_binding.clone());
@@ -113,5 +123,38 @@ impl Linearizing for Invoke {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for Invoke {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let Ty::Decl(type_name) = &self.ty else {
+            unreachable!("invoke must be called with (co)data");
+        };
+
+        let xtor = program
+            .find_xtor(type_name, &self.tag)
+            .expect("invoke must be called on a valid xtor");
+
+        let Some((var, args)) = context.split_last() else {
+            unreachable!("last variable in context is the scrutinee");
+        };
+        debug_assert_eq!(*var, self.var.id);
+        constraints.contexts_flow_together(args, &xtor.args.ids());
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Invoke {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        if quantity_constraints.contains(&self.var.id) {
+            self.quantity = Quantity::Omega;
+        }
+        self.args = self.args.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

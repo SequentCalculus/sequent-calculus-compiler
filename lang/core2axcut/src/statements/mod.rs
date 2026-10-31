@@ -12,6 +12,7 @@ pub mod cut;
 pub mod exit;
 pub mod ifc;
 pub mod print;
+pub mod unreachable;
 
 impl Shrinking for FsStatement {
     type Target = axcut::syntax::Statement;
@@ -23,6 +24,7 @@ impl Shrinking for FsStatement {
             FsStatement::PrintI64(print) => print.shrink(state),
             FsStatement::Call(call) => call.shrink(state),
             FsStatement::Exit(exit) => exit.shrink(state),
+            FsStatement::Unreachable(unreachable) => unreachable.shrink(state),
         }
     }
 }

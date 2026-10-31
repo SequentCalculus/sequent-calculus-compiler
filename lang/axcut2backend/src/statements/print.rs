@@ -6,7 +6,7 @@ use printer::tokens::{PRINT_I64, PRINTLN_I64};
 use super::CodeStatement;
 use crate::{
     code::Instructions,
-    config::{Config, TemporaryNumber::Snd},
+    config::{Config, TemporaryNumber::Fst},
     memory::Memory,
     parallel_moves::ParallelMoves,
     utils::Utils,
@@ -34,7 +34,7 @@ impl CodeStatement for PrintI64 {
 
         Backend::print_i64(
             self.newline,
-            Backend::variable_temporary(Snd, &context, self.var.id),
+            Backend::variable_temporary(Fst, &context, self.var.id),
             &context.bindings,
             instructions,
         );

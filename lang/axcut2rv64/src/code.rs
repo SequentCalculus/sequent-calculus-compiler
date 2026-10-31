@@ -1,7 +1,7 @@
 //! This module implements the abstract methods for machine instructions.
 
 use super::Backend;
-use super::config::{Immediate, Register, TEMP, ZERO};
+use super::config::{Immediate, Register, ZERO};
 
 use axcut::syntax::ContextBinding;
 use axcut2backend::code::Instructions;
@@ -39,6 +39,8 @@ pub enum Code {
     LAB(String),
     /// An assembly comment.
     COMMENT(String),
+    /// Trigger an illegal instruction exception (Trap for unreachable code)
+    UNIMP,
 }
 
 impl std::fmt::Display for Code {
@@ -66,6 +68,7 @@ impl std::fmt::Display for Code {
             BGE(x, y, l) => write!(f, "BGE {x} {y} {l}"),
             LAB(l) => write!(f, "\n{l}:"),
             COMMENT(msg) => write!(f, "// {msg}"),
+            UNIMP => write!(f, "UNIMP"),
         }
     }
 }
@@ -186,8 +189,7 @@ impl Instructions<Code, Register, Immediate> for Backend {
     }
 
     fn add_and_jump(temporary: Register, immediate: Immediate, instructions: &mut Vec<Code>) {
-        instructions.push(Code::ADDI(TEMP, temporary, immediate));
-        instructions.push(Code::JALR(ZERO, TEMP, 0));
+        instructions.push(Code::JALR(ZERO, temporary, immediate));
     }
 
     fn add(
@@ -266,5 +268,9 @@ impl Instructions<Code, Register, Immediate> for Backend {
         _instructions: &mut Vec<Code>,
     ) {
         panic!("not implemented in RISC-V backend");
+    }
+
+    fn unreachable(instructions: &mut Vec<Code>) {
+        instructions.push(Code::UNIMP);
     }
 }

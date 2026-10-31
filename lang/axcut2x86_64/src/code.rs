@@ -6,8 +6,9 @@ use super::config::{
     Register, STACK, Spill, TEMP, Temporary, address, arg, stack_offset,
 };
 
-use axcut::syntax::{Chirality, ContextBinding};
+use axcut::syntax::ContextBinding;
 use axcut2backend::code::Instructions;
+use axcut2backend::utils::used_temporaries;
 use printer::theme::ThemeExt;
 use printer::tokens::{COLON, COMMA, PLUS, PRINT_I64, PRINTLN_I64};
 use printer::{DocAllocator, Print};
@@ -106,6 +107,8 @@ pub enum Code {
     EXTERN(String),
     /// An assembly comment.
     COMMENT(String),
+    /// Trigger an illegal instruction exception (Trap for unreachable code)
+    UD2,
 }
 
 impl Print for Code {
@@ -469,6 +472,7 @@ impl Print for Code {
             COMMENT(msg) => alloc
                 .text(INDENT)
                 .append(alloc.comment(&format!("; {msg}"))),
+            UD2 => alloc.text(INDENT).append(alloc.keyword("ud2")),
         }
     }
 }
@@ -657,20 +661,14 @@ fn sub(
 }
 
 /// This function generates code for performing a division by the given temporary. It assumes that
-/// the dividend is located in register [`super::config::RETURN1`]. It further assumes that the
-/// contents of register [`super::config::RETURN2`] are backed up in register
-/// [`super::config::TEMP`] since [`super::config::RETURN2`] will contain the remainder afterwards.
-/// The result of the division will be in register [`super::config::RETURN1`].
+/// the dividend is located in register [`super::config::RETURN1`] and that register
+/// [`super::config::RETURN2`] is free. The result of the division will be in register
+/// [`super::config::RETURN1`].
 fn div(divisor: Temporary, instructions: &mut Vec<Code>) {
     match divisor {
         Temporary::Register(register) => {
-            if register == RETURN2 {
-                instructions.push(Code::CQO);
-                instructions.push(Code::IDIV(TEMP));
-            } else {
-                instructions.push(Code::CQO);
-                instructions.push(Code::IDIV(register));
-            }
+            instructions.push(Code::CQO);
+            instructions.push(Code::IDIV(register));
         }
         Temporary::Spill(position) => {
             instructions.push(Code::CQO);
@@ -709,23 +707,16 @@ pub fn compare_immediate(temporary: Temporary, immediate: Immediate, instruction
 }
 
 /// This function calculates information for adhering to the calling convention for calling C
-/// functions based on the current typing context. It returns the first register which can be used
+/// functions based on the current typing context. It returns the first register that can be used
 /// for evacuating registers needed during the function call and a list of the registers that have
 /// to be evacuated.
 fn caller_save_registers_info(context: &[ContextBinding]) -> (usize, Vec<usize>) {
-    let first_backup_register = std::cmp::max(2 * context.len() + RESERVED, CALLER_SAVE_LAST + 1);
+    let used_temporaries = used_temporaries(context, None);
+    let first_backup_register = std::cmp::max(used_temporaries + RESERVED, CALLER_SAVE_LAST + 1);
 
     let caller_save_count = CALLER_SAVE_LAST + 1 - CALLER_SAVE_FIRST;
-    let mut registers_to_save = Vec::with_capacity(caller_save_count);
-    for (offset, binding) in context.iter().take(caller_save_count / 2).enumerate() {
-        // values of external types like integers occupy only one register
-        if binding.chi == Chirality::Ext {
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
-        } else {
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset);
-            registers_to_save.push(CALLER_SAVE_FIRST + 2 * offset + 1);
-        }
-    }
+    let registers_to_save =
+        (RESERVED..RESERVED + std::cmp::min(used_temporaries, caller_save_count)).collect();
 
     (first_backup_register, registers_to_save)
 }
@@ -1018,22 +1009,45 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        // back up contents of RETURN2 in TEMP
-        instructions.push(Code::MOV(TEMP, RETURN2));
-        // target_temporary is free at this point, so we back up RETRUN1 there
-        move_from_register(target_temporary, RETURN1, instructions);
+        if source_temporary_2 == Temporary::Register(RETURN1) {
+            // back up contents of RETURN1 in TEMP
+            instructions.push(Code::MOV(TEMP, RETURN1));
+            // target_temporary is free at this point, so we back up RETURN2 there
+            move_from_register(target_temporary, RETURN2, instructions);
+        } else {
+            // back up contents of RETURN2 in TEMP
+            instructions.push(Code::MOV(TEMP, RETURN2));
+            // target_temporary is free at this point, so we back up RETURN1 there
+            move_from_register(target_temporary, RETURN1, instructions);
+        }
         // the dividend must be in RETURN1
         move_to_register(RETURN1, source_temporary_1, instructions);
-        div(source_temporary_2, instructions);
-        // the result of the division is in RETURN1 and RETURN2 contains the remainder which we do
-        // not need here, so we move the result there before restoring RETURN1
-        instructions.push(Code::MOV(RETURN2, RETURN1));
-        // restore RETURN1
-        move_to_register(RETURN1, target_temporary, instructions);
-        // move result to target_temporary
-        move_from_register(target_temporary, RETURN2, instructions);
-        // restore RETURN2
-        instructions.push(Code::MOV(RETURN2, TEMP));
+        let divisor = if source_temporary_2 == Temporary::Register(RETURN1)
+            || source_temporary_2 == Temporary::Register(RETURN2)
+        {
+            Temporary::Register(TEMP)
+        } else {
+            source_temporary_2
+        };
+        div(divisor, instructions);
+        // the result of the division is in RETURN1 and RETURN2 contains the remainder
+        if source_temporary_2 == Temporary::Register(RETURN1) {
+            // restore RETURN2
+            move_to_register(RETURN2, target_temporary, instructions);
+            // move result to target_temporary
+            move_from_register(target_temporary, RETURN1, instructions);
+            // restore RETURN1
+            instructions.push(Code::MOV(RETURN1, TEMP));
+        } else {
+            //  we do not need the remainder in RETURN2 here
+            instructions.push(Code::MOV(RETURN2, RETURN1));
+            // restore RETURN1
+            move_to_register(RETURN1, target_temporary, instructions);
+            // move result to target_temporary
+            move_from_register(target_temporary, RETURN2, instructions);
+            // restore RETURN2
+            instructions.push(Code::MOV(RETURN2, TEMP));
+        }
     }
 
     fn rem(
@@ -1042,19 +1056,45 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         source_temporary_2: Temporary,
         instructions: &mut Vec<Code>,
     ) {
-        // back up contents of RETURN2 in TEMP
-        instructions.push(Code::MOV(TEMP, RETURN2));
-        // target_temporary is free at this point, so we back up RETRUN1 there
-        move_from_register(target_temporary, RETURN1, instructions);
+        if source_temporary_2 == Temporary::Register(RETURN2) {
+            // back up contents of RETURN2 in TEMP
+            instructions.push(Code::MOV(TEMP, RETURN2));
+            // target_temporary is free at this point, so we back up RETURN1 there
+            move_from_register(target_temporary, RETURN1, instructions);
+        } else {
+            // back up contents of RETURN1 in TEMP
+            instructions.push(Code::MOV(TEMP, RETURN1));
+            // target_temporary is free at this point, so we back up RETURN2 there
+            move_from_register(target_temporary, RETURN2, instructions);
+        }
         // the dividend must be in RETURN1
         move_to_register(RETURN1, source_temporary_1, instructions);
-        div(source_temporary_2, instructions);
-        // restore RETURN1
-        move_to_register(RETURN1, target_temporary, instructions);
-        // move remainder to target_temporary
-        move_from_register(target_temporary, RETURN2, instructions);
-        // restore RETURN2
-        instructions.push(Code::MOV(RETURN2, TEMP));
+        let divisor = if source_temporary_2 == Temporary::Register(RETURN1)
+            || source_temporary_2 == Temporary::Register(RETURN2)
+        {
+            Temporary::Register(TEMP)
+        } else {
+            source_temporary_2
+        };
+        div(divisor, instructions);
+        // the result of the division is in RETURN1 and RETURN2 contains the remainder
+        if source_temporary_2 == Temporary::Register(RETURN2) {
+            // restore RETURN1
+            move_to_register(RETURN1, target_temporary, instructions);
+            // move result to target_temporary
+            move_from_register(target_temporary, RETURN2, instructions);
+            // restore RETURN2
+            instructions.push(Code::MOV(RETURN2, TEMP));
+        } else {
+            //  we do not need the result in RETURN1 here
+            instructions.push(Code::MOV(RETURN1, RETURN2));
+            // restore RETURN2
+            move_to_register(RETURN2, target_temporary, instructions);
+            // move result to target_temporary
+            move_from_register(target_temporary, RETURN1, instructions);
+            // restore RETURN1
+            instructions.push(Code::MOV(RETURN1, TEMP));
+        }
     }
 
     fn mov(target_temporary: Temporary, source_temporary: Temporary, instructions: &mut Vec<Code>) {
@@ -1098,5 +1138,9 @@ impl Instructions<Code, Temporary, Immediate> for Backend {
         instructions.push(Code::CALL(print_i64.to_string()));
         instructions.push(Code::COMMENT("#restore caller-save registers".to_string()));
         restore_caller_save_registers(first_backup_register, &registers_to_save, instructions);
+    }
+
+    fn unreachable(instructions: &mut Vec<Code>) {
+        instructions.push(Code::UD2);
     }
 }
