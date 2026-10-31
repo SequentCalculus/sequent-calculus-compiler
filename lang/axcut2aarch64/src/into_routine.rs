@@ -17,34 +17,33 @@ fn preamble() -> Vec<Code> {
 
 /// This function generates code for moving the command-line arguments into the correct registers.
 fn move_arguments(number_of_arguments: usize, instructions: &mut Vec<Code>) {
-    instructions.push(Code::COMMENT("move parameters into place".to_string()));
     match number_of_arguments {
         0 => {}
         1 => {
-            instructions.push(Code::MOVR(Register::X(5), Register::X(1)));
+            instructions.push(Code::MOVR(Register::X(4), Register::X(1)));
         }
         2 => {
-            instructions.push(Code::MOVR(Register::X(7), Register::X(2)));
+            instructions.push(Code::MOVR(Register::X(5), Register::X(2)));
             move_arguments(1, instructions);
         }
         3 => {
-            instructions.push(Code::MOVR(Register::X(9), Register::X(3)));
+            instructions.push(Code::MOVR(Register::X(6), Register::X(3)));
             move_arguments(2, instructions);
         }
         4 => {
-            instructions.push(Code::MOVR(Register::X(11), Register::X(4)));
+            instructions.push(Code::MOVR(Register::X(7), Register::X(4)));
             move_arguments(3, instructions);
         }
         5 => {
-            instructions.push(Code::MOVR(Register::X(13), Register::X(5)));
+            instructions.push(Code::MOVR(Register::X(8), Register::X(5)));
             move_arguments(4, instructions);
         }
         6 => {
-            instructions.push(Code::MOVR(Register::X(15), Register::X(6)));
+            instructions.push(Code::MOVR(Register::X(9), Register::X(6)));
             move_arguments(5, instructions);
         }
         7 => {
-            instructions.push(Code::MOVR(Register::X(17), Register::X(7)));
+            instructions.push(Code::MOVR(Register::X(10), Register::X(7)));
             move_arguments(6, instructions);
         }
         _ => panic!("too many arguments for main"),
@@ -96,6 +95,7 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     ));
     instructions.push(COMMENT("reserve space for register spills".to_string()));
     instructions.push(SUBI(Register::SP, Register::SP, SPILL_SPACE.into()));
+    instructions.push(Code::COMMENT("move parameters into place".to_string()));
     move_arguments(number_of_arguments, instructions);
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOVR(FREE, HEAP));
