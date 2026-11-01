@@ -22,6 +22,7 @@ use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use paths::{Paths, TARGET_PATH, INLINED_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
+use optimizations::inline::program::inline;
 
 pub mod backends;
 pub mod latex;
@@ -314,7 +315,7 @@ impl Driver {
         }
 
         let mut shrunk = self.shrunk(path)?;
-        shrunk.inline();
+        inline(&mut shrunk);
         self.inlined.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }

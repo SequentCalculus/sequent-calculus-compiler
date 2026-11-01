@@ -17,6 +17,7 @@ members = [
     "lang/macros/utils",
     "lang/macros/core",
     "lang/macros/axcut",
+    "lang/optimizations",
 ]
 default-members = ["app"]
 resolver = "3"
