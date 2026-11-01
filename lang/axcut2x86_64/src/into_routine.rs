@@ -1,9 +1,8 @@
 //! This module implements the plumbing for generating a complete assembly routine.
 
 use super::config::{FREE, HEAP, Register, SPILL_SPACE, STACK, arg, field_offset};
-use crate::{code::Code, config::fields_per_block};
+use crate::{code::Code, config::FIELDS_PER_BLOCK};
 
-use axcut::syntax::Quantity;
 use axcut2backend::{coder::AssemblyProg, config::TemporaryNumber::Fst};
 
 use printer::tokens::{PRINT_I64, PRINTLN_I64};
@@ -65,10 +64,7 @@ fn setup(number_of_arguments: usize, instructions: &mut Vec<Code>) {
     instructions.push(MOV(HEAP, arg(0)));
     instructions.push(COMMENT("initialize free pointer".to_string()));
     instructions.push(MOV(FREE, HEAP));
-    instructions.push(ADDI(
-        FREE,
-        field_offset(Fst, fields_per_block(Quantity::Omega), Quantity::Omega),
-    ));
+    instructions.push(ADDI(FREE, field_offset(Fst, FIELDS_PER_BLOCK)));
     instructions.push(Code::COMMENT("move parameters into place".to_string()));
     move_arguments(number_of_arguments, instructions);
 }
