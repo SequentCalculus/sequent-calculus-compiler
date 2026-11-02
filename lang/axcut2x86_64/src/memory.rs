@@ -444,23 +444,32 @@ fn store_values(
 /// - `to_store` is the number of temporaries to be stored.
 /// - `remaining_temporaries` is the number of remaining temporaries after the stores.
 /// - `memory_block` is the register pointing to the block.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn store_slots(
     mut to_store: usize,
     remaining_temporaries: usize,
     memory_block: Register,
+    block_position: BlockPosition,
     instructions: &mut Vec<Code>,
 ) {
+    let mut offset = if block_position == BlockPosition::Last {
+        field_offset(Snd, FIELDS_PER_BLOCK - 1)
+    } else {
+        field_offset(Fst, FIELDS_PER_BLOCK - 1)
+    };
     instructions.push(Code::COMMENT("##store values".to_string()));
     // we store the temporaries right to left
     while to_store > 0 {
         store_slot(
             Backend::temporary_from_position(remaining_temporaries + to_store - 1),
             memory_block,
-            address(to_store as isize + 1),
+            offset,
             instructions,
         );
         to_store -= 1;
+        offset.val -= 8;
     }
 }
 
@@ -514,23 +523,32 @@ fn load_values(
 /// - `to_load` is the number of temporaries to be loaded.
 /// - `existing_temporaries` is the number of existing temporaries before the loads.
 /// - `memory_block` is the register pointing to the block.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 fn load_slots(
     mut to_load: usize,
     existing_temporaries: usize,
     memory_block: Register,
+    block_position: BlockPosition,
     instructions: &mut Vec<Code>,
 ) {
-    instructions.push(Code::COMMENT("##load values".to_string()));
+    let mut offset = if block_position == BlockPosition::Last {
+        field_offset(Snd, FIELDS_PER_BLOCK - 1)
+    } else {
+        field_offset(Fst, FIELDS_PER_BLOCK - 1)
+    };
+    instructions.push(Code::COMMENT("###load values".to_string()));
     // we load the temporaries right to left
     while to_load > 0 {
         load_slot(
             Backend::temporary_from_position(existing_temporaries + to_load - 1),
             memory_block,
-            address(to_load as isize + 1),
+            offset,
             instructions,
         );
         to_load -= 1;
+        offset.val -= 8;
     }
 }
 
@@ -735,6 +753,7 @@ fn store_fields_sf(
             to_store_next,
             remaining_plus_rest + header_slots,
             HEAP,
+            block_position,
             instructions,
         );
 
@@ -1037,6 +1056,16 @@ fn load_fields_sf(
             .saturating_sub(2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - 2);
         *to_load_next -= header_slots;
 
+        if header_slots > 0 {
+            load_slots(
+                *to_load_next,
+                existing_plus_rest + header_slots,
+                memory_block_register,
+                block_position,
+                instructions,
+            );
+        }
+
         if header_slots == 2 {
             instructions.push(Code::COMMENT(
                 "##load second slot of first field".to_string(),
@@ -1052,12 +1081,15 @@ fn load_fields_sf(
         instructions.push(Code::COMMENT("###release block".to_string()));
         release_block(memory_block_register, instructions);
 
-        load_slots(
-            *to_load_next,
-            existing_plus_rest + header_slots,
-            memory_block_register,
-            instructions,
-        );
+        if header_slots == 0 {
+            load_slots(
+                *to_load_next,
+                existing_plus_rest + header_slots,
+                memory_block_register,
+                block_position,
+                instructions,
+            );
+        }
 
         if header_slots > 0 {
             instructions.push(Code::COMMENT(
