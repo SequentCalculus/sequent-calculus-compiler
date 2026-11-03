@@ -1,28 +1,41 @@
-use axcut::syntax::{ID, Prog};
+use axcut::syntax::{Def, Prog};
 use std::collections::HashMap;
 
-use crate::inline::{def, statements::count_used_functions};
+use super::statements::Inline;
+
+pub enum Mark {
+    None,
+    Once,
+    Retain,
+}
 
 pub fn inline(prog: &mut Prog) {
-    let mut occurences = count_occurences(prog);
-    inline_defs(prog, &mut occurences);
-    remove_unused(prog, &occurences);
-}
+    let defs = std::mem::take(&mut prog.defs);
+    let mut occurrences: HashMap<String, Mark> = HashMap::with_capacity(defs.len());
+    let mut def_map: HashMap<String, Def> = HashMap::with_capacity(defs.len());
+    occurrences.extend(defs.iter().enumerate().map(|(i, d)| {
+        let mark = if i == 0 {
+            Mark::Retain
+        } else { Mark::None };
+        (d.name.name.clone(), mark)
+    }));
 
-fn count_occurences(prog: &Prog) -> HashMap<ID, i32> {
-    let mut occurences: HashMap<ID, i32> = HashMap::with_capacity(prog.defs.len());
+    let mut def_iter = defs.into_iter();
+    let entry = def_iter.next().expect("Entry point should be defined");
+    let entry_name = String::clone(&entry.name.name);
+    def_map.insert(entry_name.clone(), entry);
+    def_map.extend(def_iter.map(|def| (def.name.name.clone(), def)));
+
+    let entry = def_map.get(&entry_name).unwrap();
+    entry.body.count_occurences(&def_map, &mut occurrences);
+
+    let mut entry = def_map.remove(&entry_name).unwrap();
+    println!("Entry is {}", entry.name.name);
+    let mut retain = Vec::new();
+    entry.body = entry.body.inline(&mut retain, &mut def_map, &occurrences);
+    retain.push(entry);
+    prog.defs = retain;
     for def in prog.defs.iter() {
-        count_used_functions(&def.body, &mut occurences);
+        println!("Retained: {}", def.name.name);
     }
-    occurences
-}
-
-fn inline_defs(prog: &mut Prog, occurences: &mut HashMap<ID, i32>) {
-    for def in prog.defs.iter_mut() {
-        def::inline(def, occurences);
-    }
-}
-
-fn remove_unused(prog: &mut Prog, occurences: &HashMap<ID, i32>) {
-    unimplemented!()
 }

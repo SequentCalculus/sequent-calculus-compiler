@@ -323,7 +323,8 @@ impl Driver {
     pub fn print_inlined(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let inlined = self.inlined(path)?;
         Paths::create_ir_dir(INLINED_PATH);
-        print_ir(&inlined, path, mode)
+        let target = Path::new(TARGET_PATH).join(INLINED_PATH);
+        print_ir(&inlined, target, mode)
     }
 
     /// This function returns the linearized [AxCut](axcut) version of the file.
@@ -454,19 +455,17 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.into()
 }
 
-pub fn print_ir(ir: &axcut::syntax::Prog, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
-    let mut filename = PathBuf::from(path.file_name().unwrap());
+pub fn print_ir(ir: &axcut::syntax::Prog, mut target: PathBuf, mode: PrintMode) -> Result<(), DriverError> {
     match mode {
         PrintMode::Textual => {
-            filename.set_extension("txt");
+            target.set_extension("txt");
         }
         PrintMode::Latex => {
-            filename.set_extension("tex");
+            target.set_extension("tex");
         }
     }
-    let filename = Paths::linearized_dir().join(filename);
 
-    let mut file = File::create(filename).expect("Could not create file");
+    let mut file = File::create(target).expect("Could not create file");
     match mode {
         PrintMode::Textual => {
             ir
