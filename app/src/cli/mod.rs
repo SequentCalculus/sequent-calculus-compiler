@@ -85,6 +85,7 @@ enum Command {
     Linearize(linearize::Args),
     /// Shrink the definitions of a file to AxCut
     Shrink(shrink::Args),
+    /// Run an inline pass on an AxCut program
     Inline(inline::Args),
     /// Print program representations as LaTeX code
     Texify(texify::Args),
