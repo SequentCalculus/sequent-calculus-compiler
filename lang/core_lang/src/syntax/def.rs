@@ -139,7 +139,12 @@ impl<S: Print> Print for Def<S> {
 
 impl ConstraintCollector for Def {
     fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
-        self.body.collect_constraints(env)
+        let mut constraints = FlowConstraintSet::new();
+        for binding in &self.context.bindings {
+            constraints.extend(binding.ty.collect_constraints(env)?);
+        }
+        constraints.extend(self.body.collect_constraints(env)?);
+        Ok(constraints)
     }
 }
 
