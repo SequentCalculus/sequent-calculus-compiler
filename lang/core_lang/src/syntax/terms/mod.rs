@@ -2,8 +2,19 @@
 
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 
@@ -104,26 +115,26 @@ impl<C: Chi> Print for Term<C> {
 }
 
 impl IsValue for Term<Prd> {
-    fn is_value(&self, codata_types: &[CodataDeclaration]) -> bool {
-        if self.get_type().is_codata(codata_types) {
+    fn is_value(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
+        if self.get_type().is_codata(codata_types, type_params) {
             true
         } else {
             match self {
                 Term::Op(_) | Term::Mu(_) => false,
-                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types, type_params),
                 Term::XVar(_) | Term::Literal(_) | Term::XCase(_) => true,
             }
         }
     }
 }
 impl IsCovalue for Term<Cns> {
-    fn is_covalue(&self, codata_types: &[CodataDeclaration]) -> bool {
-        if !self.get_type().is_codata(codata_types) {
+    fn is_covalue(&self, codata_types: &[CodataDeclaration], type_params: &[TypeParam]) -> bool {
+        if !self.get_type().is_codata(codata_types, type_params) {
             true
         } else {
             match self {
                 Term::Mu(_) => false,
-                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types),
+                Term::Xtor(xtor) => xtor.args.is_co_value(codata_types, type_params),
                 Term::XVar(_) | Term::XCase(_) => true,
                 Term::Literal(_) | Term::Op(_) => panic!("cannot happen"),
             }
@@ -236,6 +247,86 @@ impl Bind for Term<Cns> {
             Term::Mu(mu) => mu.bind(k, max_id),
             Term::Xtor(xtor) => xtor.bind(k, max_id),
             Term::XCase(xcase) => xcase.bind(k, max_id),
+        }
+    }
+}
+
+impl<C: Chi> ConstraintCollector for Term<C> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = FlowConstraintSet::new();
+        match self {
+            Term::XVar(var) => constraints.extend(var.collect_constraints(env)?),
+            Term::Literal(lit) => constraints.extend(lit.collect_constraints(env)?),
+            Term::Op(op) => constraints.extend(op.collect_constraints(env)?),
+            Term::Mu(mu) => constraints.extend(mu.collect_constraints(env)?),
+            Term::Xtor(xtor) => constraints.extend(xtor.collect_constraints(env)?),
+            Term::XCase(xcase) => constraints.extend(xcase.collect_constraints(env)?),
+        }
+        Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Term<C> {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        match self {
+            Term::XVar(var) => var.specialize(context).into(),
+            Term::Literal(_) => self.clone(),
+            Term::Op(op) => op.specialize(context).into(),
+            Term::Mu(mu) => mu.specialize(context).into(),
+            Term::Xtor(xtor) => xtor.specialize(context).into(),
+            Term::XCase(xcase) => xcase.specialize(context).into(),
+        }
+    }
+}
+
+impl<C: Chi> Checked for Term<C> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        match self {
+            Term::XVar(var) => var.check(type_params, context, env),
+            Term::Literal(lit) => lit.get_type().check(type_params, context, env),
+            Term::Op(op) => op.check(type_params, context, env),
+            Term::Mu(mu) => mu.check(type_params, context, env),
+            Term::Xtor(xtor) => xtor.check(type_params, context, env),
+            Term::XCase(xcase) => xcase.check(type_params, context, env),
+        }
+    }
+}
+
+impl<C: Chi> LabelAndUnify for Term<C> {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        // Constructed directly (rather than via `.into()`) since `From<Literal> for Term<C>` only
+        // exists for the concrete `Term<Prd>`, not generically over `C`.
+        match self {
+            Term::XVar(var) => Term::XVar(var.label_and_unify(state, sigs, scope)),
+            Term::Literal(lit) => Term::Literal(lit.label_and_unify(state, sigs, scope)),
+            Term::Op(op) => Term::Op(op.label_and_unify(state, sigs, scope)),
+            Term::Mu(mu) => Term::Mu(mu.label_and_unify(state, sigs, scope)),
+            Term::Xtor(xtor) => Term::Xtor(xtor.label_and_unify(state, sigs, scope)),
+            Term::XCase(xcase) => Term::XCase(xcase.label_and_unify(state, sigs, scope)),
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Term<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        // Constructed directly, same reason as the `LabelAndUnify` dispatcher above.
+        match self {
+            Term::XVar(var) => Term::XVar(var.rewrite(table)),
+            Term::Literal(lit) => Term::Literal(lit.rewrite(table)),
+            Term::Op(op) => Term::Op(op.rewrite(table)),
+            Term::Mu(mu) => Term::Mu(mu.rewrite(table)),
+            Term::Xtor(xtor) => Term::Xtor(xtor.rewrite(table)),
+            Term::XCase(xcase) => Term::XCase(xcase.rewrite(table)),
         }
     }
 }

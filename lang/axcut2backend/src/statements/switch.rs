@@ -4,7 +4,7 @@ use printer::{Print, tokens::SWITCH};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
-use crate::utils::{code_clauses, code_table};
+use crate::utils::{asm_safe_ty_name, code_clauses, code_table};
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber::Snd},
@@ -32,19 +32,21 @@ impl CodeStatement for Switch {
         let comment = format!("{SWITCH} {} \\{{ ... \\}};", self.var.print_to_string(None));
         instructions.push(Backend::comment(comment));
 
-        let fresh_label = format!(
-            "{}_{}",
-            self.ty
-                .print_to_string(None)
-                .replace('[', "_")
-                .replace(", ", "_")
-                .replace(']', ""),
-            fresh_label()
-        );
+        let fresh_label = format!("{}_{}", asm_safe_ty_name(&self.ty), fresh_label());
 
         let number_of_clauses = self.clauses.len();
-        // the case < 1 cannot happen
-        if number_of_clauses <= 1 {
+        // A type without xtors has no values, so a switch on one can never be reached:
+        // `core2axcut`s `shrink_unknown_cuts` eta-expands a cut of a variable against a
+        // covariable into one clause per xtor, and without any xtor there is nothing to dispatch
+        // to. Trapping keeps control from falling through into whatever code follows.
+        if number_of_clauses == 0 {
+            instructions.push(Backend::comment(
+                "#no clauses, so this switch is unreachable".to_string(),
+            ));
+            Backend::unreachable(instructions);
+            return;
+        }
+        if number_of_clauses == 1 {
             instructions.push(Backend::comment(
                 "#there is only one clause, so we can just fall through".to_string(),
             ));

@@ -17,13 +17,21 @@ fn xtor_sig<P: Polarity>(input: TokenStream, polarity: P) -> TokenStream {
     } else {
         quote! {core_lang::syntax::declaration::Codata}
     };
-    let args = parse_args(input.into(), ["Xtor Name", "Xtor Args"], &[]);
+    let args = parse_args(
+        input.into(),
+        ["Xtor Name", "Xtor Type Parameters", "Xtor Args"],
+        &[],
+    );
     let name = &args[0];
-    let xtor_args = expr_to_array(&args[1], 1);
+    let xtor_type_params = expr_to_array(&args[1], 2);
+    let xtor_args = expr_to_array(&args[2], 1);
     quote! {
         core_lang::syntax::declaration::XtorSig{
             xtor: #polarity,
             name: #name,
+            type_params: Vec::from([
+                #(#xtor_type_params),*
+            ]),
             args: core_lang::syntax::context::TypingContext {
                 bindings: ::std::vec::Vec::from([
                     #(#xtor_args),*

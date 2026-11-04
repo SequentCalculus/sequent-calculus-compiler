@@ -139,4 +139,6 @@ pub trait Instructions<Code, Temporary, Immediate> {
         context: &[ContextBinding],
         instructions: &mut Vec<Code>,
     );
+    /// This instruction aborts the program without any cleanup. This is used for unreachable code.
+    fn unreachable(instructions: &mut Vec<Code>);
 }

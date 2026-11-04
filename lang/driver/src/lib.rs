@@ -9,8 +9,13 @@ use std::{
     io::{self, Write},
     path::{Path, PathBuf},
     process::Command,
+    time::{Duration, Instant},
 };
 
+pub use core_lang::mono::graph_viz::VizOutput;
+use core_lang::syntax::{Prog, TypingContext};
+use core_lang::typing::check::Checked;
+use core_lang::typing::env::GlobalEnv;
 use core2axcut::program::shrink_prog;
 use fun::{
     self,
@@ -43,6 +48,14 @@ pub struct Driver {
     checked: HashMap<PathBuf, CheckedProgram>,
     /// Compiled to core, but not yet focused
     compiled: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Type-split in core
+    split: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Type-checked at the Core level
+    core_checked: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Monomorphized in core, but not yet uniquified or focused
+    monomorphized: HashMap<PathBuf, core_lang::syntax::Prog>,
+    /// Monomorphized and type-checked again at the Core level
+    mono_checked: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Uniquified in core, but not yet focused,
     uniquified: HashMap<PathBuf, core_lang::syntax::Prog>,
     /// Compiled to core and focused
@@ -51,6 +64,14 @@ pub struct Driver {
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
+    /// How long each stage took on its own, in the order the stages ran, see
+    /// [`Driver::timings_report`]
+    stage_times: Vec<(&'static str, Duration)>,
+    /// Whether the later stages start from the type-split program (see [`Driver::split`]) instead
+    /// of the compiled one. Set once via [`Driver::set_split`] before any of the cached methods
+    /// run, since it isn't part of any cache key, calling one of them again with a different
+    /// setting on the same `Driver` would silently return the stale result.
+    splitting: bool,
 }
 
 /// This enum encodes whether the representations are printed in textual mode or as LaTeX code.
@@ -61,7 +82,8 @@ pub enum PrintMode {
 }
 
 impl Driver {
-    /// This function creates a new driver.
+    /// This function creates a new driver. Type splitting is enabled by default (see
+    /// [`Driver::set_split`]).
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Driver {
@@ -69,11 +91,42 @@ impl Driver {
             parsed: HashMap::new(),
             checked: HashMap::new(),
             compiled: HashMap::new(),
+            split: HashMap::new(),
+            core_checked: HashMap::new(),
+            monomorphized: HashMap::new(),
+            mono_checked: HashMap::new(),
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
             linearized: HashMap::new(),
+            stage_times: Vec::new(),
+            splitting: true,
         }
+    }
+
+    /// Sets whether the stages after `compiled` start from the type-split program. Call this
+    /// before any of them (`monomorphized`, `uniquified`, `focused`, `shrunk`, `linearized`, or any
+    /// of their `print_*`/`compile_*` callers), once one of them has run and cached its result for
+    /// a given path, this setting no longer has any effect on that path. It does not affect
+    /// [`Driver::split`] itself, which always splits.
+    pub fn set_split(&mut self, split: bool) {
+        self.splitting = split;
+    }
+
+    /// This function notes how long a stage took on its own, without the stages it builds on.
+    fn record_stage(&mut self, stage: &'static str, duration: Duration) {
+        self.stage_times.push((stage, duration));
+    }
+
+    /// This function reports how long each stage took on its own, one stage per line, in the order
+    /// the stages ran: the name of the stage and its duration in microseconds, separated by spaces.
+    /// Only the stages that actually ran are listed, and a stage that ran for several files (on a
+    /// driver used for more than one) is listed once per file.
+    pub fn timings_report(&self) -> String {
+        self.stage_times
+            .iter()
+            .map(|(stage, duration)| format!("{:<14}{}μs\n", stage, duration.as_micros()))
+            .collect()
     }
 
     /// This function returns the unparsed source code for the given file.
@@ -83,8 +136,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
+        let start = Instant::now();
         let content =
             fs::read_to_string(path.clone()).expect("Should have been able to read the file");
+        self.record_stage("read", start.elapsed());
         self.sources.insert(path.clone(), content.clone());
         Ok(content)
     }
@@ -97,7 +152,9 @@ impl Driver {
         }
 
         let content = self.source(path)?;
+        let start = Instant::now();
         let parsed = parse_module(&content).map_err(DriverError::ParseError)?;
+        self.record_stage("parse", start.elapsed());
         self.parsed.insert(path.clone(), parsed.clone());
         Ok(parsed)
     }
@@ -110,7 +167,9 @@ impl Driver {
         }
 
         let parsed = self.parsed(path)?;
+        let start = Instant::now();
         let checked = parsed.check().map_err(DriverError::TypeError)?;
+        self.record_stage("typecheck", start.elapsed());
         self.checked.insert(path.clone(), checked.clone());
         Ok(checked)
     }
@@ -123,7 +182,10 @@ impl Driver {
         }
 
         let checked = self.checked(path)?;
+        let start = Instant::now();
         let compiled = compile_prog(checked);
+        self.record_stage("compile", start.elapsed());
+
         self.compiled.insert(path.clone(), compiled.clone());
         Ok(compiled)
     }
@@ -163,16 +225,136 @@ impl Driver {
         Ok(())
     }
 
+    /// This function returns the [Core](core_lang) code after type splitting, whether or not
+    /// [`Driver::set_split`] disabled splitting for the pipeline. Type splitting is a pass of its
+    /// own, it needs neither polymorphism nor any particular recursion to have an effect.
+    pub fn split(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.split.get(path) {
+            return Ok(res.clone());
+        }
+
+        let compiled = self.compiled(path)?;
+        let start = Instant::now();
+        let split = core_lang::splitting::split_program(&compiled);
+        self.record_stage("split", start.elapsed());
+
+        self.split.insert(path.clone(), split.clone());
+        Ok(split)
+    }
+
+    /// This function prints the type-split code to a file in the target directory.
+    pub fn print_split(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let split = self.split(path)?;
+
+        Paths::create_split_dir();
+
+        let mut filename = PathBuf::from(path.file_name().unwrap());
+        match mode {
+            PrintMode::Textual => {
+                filename.set_extension("txt");
+            }
+            PrintMode::Latex => {
+                filename.set_extension("tex");
+            }
+        }
+
+        let filename = Paths::split_dir().join(filename);
+        let mut file = File::create(filename).expect("Could not create file");
+        match mode {
+            PrintMode::Textual => {
+                split
+                    .print_io(&PrintCfg::default(), &mut file)
+                    .expect("Could not write to file");
+            }
+            PrintMode::Latex => {
+                file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+                split
+                    .print_latex(&LATEX_PRINT_CFG, &mut file)
+                    .expect("Could not write to file");
+                file.write_all(LATEX_END.as_bytes()).unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    /// This function returns the typechecked core code of the given file.
+    pub fn core_checked(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.core_checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let input = if self.splitting {
+            self.split(path)?
+        } else {
+            self.compiled(path)?
+        };
+        let start = Instant::now();
+        check_core(&input, true)?;
+        self.record_stage("core_check", start.elapsed());
+
+        self.core_checked.insert(path.clone(), input.clone());
+        Ok(input)
+    }
+
+    /// This function returns the monomorphized version of the [Core](core_lang) code. It starts
+    /// from the type-checked, possibly type-split program (see [`Driver::core_checked`]). The
+    /// result is not checked yet, the later stages start from [`Driver::mono_checked`].
+    ///
+    /// `viz` and `debug` only affect the *first* call for a given `path`: like every other stage,
+    /// the result is cached by path alone, so a later call reusing the cache does not repeat a
+    /// `--debug` report or a constraint-graph rendering requested by an earlier call.
+    pub fn monomorphized(
+        &mut self,
+        path: &PathBuf,
+        viz: VizOutput,
+        debug: bool,
+    ) -> Result<Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.monomorphized.get(path) {
+            return Ok(res.clone());
+        }
+
+        let input = self.core_checked(path)?;
+        let start = Instant::now();
+        let mono_prog = core_lang::mono::monomorphize_program(input, debug, viz)
+            .map_err(DriverError::MonoError)?;
+        self.record_stage("monomorphize", start.elapsed());
+
+        self.monomorphized.insert(path.clone(), mono_prog.clone());
+        Ok(mono_prog)
+    }
+
+    /// This function returns the monomorphized [Core](core_lang) code after checking it with the
+    /// Core type checker once more.
+    pub fn mono_checked(&mut self, path: &PathBuf) -> Result<Prog, DriverError> {
+        // Check for cache hit.
+        if let Some(res) = self.mono_checked.get(path) {
+            return Ok(res.clone());
+        }
+
+        let input = self.monomorphized(path, VizOutput::Disabled, false)?;
+        let start = Instant::now();
+        check_core(&input, false)?;
+        self.record_stage("mono_check", start.elapsed());
+
+        self.mono_checked.insert(path.clone(), input.clone());
+        Ok(input)
+    }
+
     /// This function returns the uniquified version of the [Core](core_lang) code.
     pub fn uniquified(&mut self, path: &PathBuf) -> Result<core_lang::syntax::Prog, DriverError> {
         if let Some(res) = self.uniquified.get(path) {
             return Ok(res.clone());
         }
 
-        let mut compiled = self.compiled(path)?;
-        compiled.uniquify();
-        self.uniquified.insert(path.clone(), compiled.clone());
-        Ok(compiled)
+        let mut monomorphized = self.mono_checked(path)?;
+        let start = Instant::now();
+        monomorphized.uniquify();
+        self.record_stage("uniquify", start.elapsed());
+        self.uniquified.insert(path.clone(), monomorphized.clone());
+        Ok(monomorphized)
     }
 
     pub fn print_uniquified(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
@@ -217,8 +399,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let compiled = self.compiled(path)?;
-        let focused = compiled.focus();
+        let monomorphized = self.mono_checked(path)?;
+        let start = Instant::now();
+        let focused = monomorphized.focus();
+        self.record_stage("focus", start.elapsed());
         self.focused.insert(path.clone(), focused.clone());
         Ok(focused)
     }
@@ -266,7 +450,9 @@ impl Driver {
         }
 
         let focused = self.focused(path)?;
+        let start = Instant::now();
         let shrunk = shrink_prog(focused);
+        self.record_stage("shrink", start.elapsed());
         self.shrunk.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
@@ -314,7 +500,9 @@ impl Driver {
         }
 
         let mut shrunk = self.shrunk(path)?;
+        let start = Instant::now();
         shrunk.linearize();
+        self.record_stage("linearize", start.elapsed());
         self.linearized.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
@@ -425,6 +613,18 @@ impl Driver {
     pub fn clean() {
         remove_dir_all(TARGET_PATH).expect("Could not delete target directory");
     }
+}
+
+/// This function checks a whole [Core](core_lang) program with the Core type checker, starting
+/// without any type parameters or bindings in scope. If `allow_type_vars` is `false`, as after
+/// monomorphization, every type variable in the program is reported as an error.
+fn check_core(prog: &Prog, allow_type_vars: bool) -> Result<(), DriverError> {
+    let env = GlobalEnv {
+        forbid_type_vars: !allow_type_vars,
+        ..GlobalEnv::new(&prog.data_types, &prog.codata_types, &prog.defs)
+    };
+    prog.check(&[], &TypingContext::default(), &env)?;
+    Ok(())
 }
 
 /// This function appends a string to a path.

@@ -27,8 +27,17 @@ impl CodeStatement for Invoke {
         let table_temporary = Backend::variable_temporary(Snd, &context, self.var.id);
         let type_declaration = self.ty.lookup_type_declaration(types);
         let number_of_clauses = type_declaration.xtors.len();
-        // the case < 1 cannot happen
-        if number_of_clauses <= 1 {
+        // A type without xtors has no values, so there is nothing to invoke a method on and this
+        // statement can never be reached (see the analogous case in `Switch`). Trapping keeps the
+        // jump below from targeting whatever the uninitialized table temporary happens to hold.
+        if number_of_clauses == 0 {
+            instructions.push(Backend::comment(
+                "#no clauses, so this invocation is unreachable".to_string(),
+            ));
+            Backend::unreachable(instructions);
+            return;
+        }
+        if number_of_clauses == 1 {
             instructions.push(Backend::comment(
                 "#there is only one clause, so we can jump there directly".to_string(),
             ));

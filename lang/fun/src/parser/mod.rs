@@ -109,10 +109,72 @@ mod parser_tests {
             ],
         };
         let result = parser.parse(
-            "data List[A] { Nil, Cons(x:A,xs:List[A]) }
-            codata Stream[A] { head : A , tail : Stream[A] }
+            "data List[A+] { Nil, Cons(x:A,xs:List[A]) }
+            codata Stream[A+] { head : A , tail : Stream[A] }
             def mult(l:List[i64]):i64 { l.case[i64] {Nil => 1, Cons(x, xs) => x*mult(xs)} }",
         );
         assert_eq!(result, Ok(expected))
+    }
+
+    #[test]
+    fn parse_mixed_polarity_type_params() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("data Box[A+, B-] { Pack(x: A, y: B) }");
+        assert!(result.is_ok(), "expected Ok, got {result:?}");
+    }
+
+    #[test]
+    fn parse_decl_type_param_without_sigil() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse(
+            "data List[A] { Nil, Cons(x: A, xs: List[A]) }
+            codata Stream[A, B-] { head : A, tail : Stream[A, B] }",
+        );
+        assert!(
+            result.is_ok(),
+            "the type parameters of a data/codata declaration may omit the polarity, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn parse_xtor_type_param_without_sigil_fails() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("data Box[A] { Pack[B](x: A, y: B) }");
+        assert!(
+            result.is_err(),
+            "a constructor type parameter without an explicit polarity sigil must not parse"
+        );
+    }
+
+    #[test]
+    fn parse_def_type_param_without_sigil_fails() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("def id[A](x: A): A { x }");
+        assert!(
+            result.is_err(),
+            "a definition type parameter without an explicit polarity sigil must not parse"
+        );
+    }
+
+    #[test]
+    fn parse_type_param_with_invalid_sigil_fails() {
+        let parser = fun::ProgParser::new();
+        let result = parser.parse("data Box[A*] { Pack(x: A) }");
+        assert!(
+            result.is_err(),
+            "`*` is not a valid polarity sigil and must not parse"
+        );
+    }
+
+    #[test]
+    fn print_parse_roundtrip_mixed_polarity() {
+        use printer::Print;
+
+        let src = "data Box[A+, B-] { Pack(x: A, y: B) }";
+        let prog_parser = fun::ProgParser::new();
+        let parsed = prog_parser.parse(src).unwrap();
+        let printed = parsed.print_to_string(Default::default());
+        let reparsed = prog_parser.parse(&printed).unwrap();
+        assert_eq!(parsed, reparsed);
     }
 }

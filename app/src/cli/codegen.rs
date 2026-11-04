@@ -17,10 +17,18 @@ pub struct Args {
     /// Write intermediate representations to disk
     #[arg(long)]
     print_ir: bool,
+    /// Skip type splitting, which is otherwise applied to every program (see `scc split`).
+    #[arg(long = "no-split")]
+    no_split: bool,
+    /// Print how long each compilation stage took to stderr, one stage per line: its name
+    /// and its duration in microseconds.
+    #[arg(long)]
+    timings: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
+    drv.set_split(!cmd.no_split);
     let linearized = drv.linearized(&cmd.filepath);
     let _linearized = match linearized {
         Ok(linearized) => linearized,
@@ -28,6 +36,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     };
     if cmd.print_ir {
         drv.print_compiled(&cmd.filepath, PrintMode::Textual)?;
+        if !cmd.no_split {
+            drv.print_split(&cmd.filepath, PrintMode::Textual)?;
+        }
         drv.print_focused(&cmd.filepath, PrintMode::Textual)?;
         drv.print_shrunk(&cmd.filepath, PrintMode::Textual)?;
         drv.print_linearized(&cmd.filepath, PrintMode::Textual)?;
@@ -43,6 +54,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
         Backend::X86_64 => {
             drv.compile_x86_64(&cmd.filepath, cmd.heap_size)?;
         }
+    }
+    if cmd.timings {
+        eprint!("{}", drv.timings_report());
     }
     Ok(())
 }

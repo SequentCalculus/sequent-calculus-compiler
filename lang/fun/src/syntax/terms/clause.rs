@@ -31,6 +31,9 @@ pub struct Clause {
     pub pol: Polarity,
     /// The name of the xtor
     pub xtor: Name,
+    /// The names to which the xtor's own (existential or universal) type parameters are bound,
+    /// e.g. `B` in `Cons[B](x, xs)`. Empty if the xtor has no own type parameters.
+    pub type_params: TypeContext,
     /// The names (without types) to which the arguments of the xtor are bound
     pub context_names: NameContext,
     /// The bindings (with types) to which the arguments of the xtor are bound
@@ -51,7 +54,8 @@ impl Print for Clause {
             Polarity::Data => alloc.ctor(&self.xtor),
             Polarity::Codata => alloc.dtor(&self.xtor),
         };
-        xtor.append(self.context_names.print(cfg, alloc))
+        xtor.append(self.type_params.print(cfg, alloc))
+            .append(self.context_names.print(cfg, alloc))
             .append(alloc.space())
             .append(FAT_ARROW)
             .align()

@@ -12,6 +12,7 @@ pub mod op;
 pub mod print;
 pub mod substitute;
 pub mod switch;
+pub mod unreachable;
 
 pub use call::Call;
 pub use clause::{Clause, print_clauses};
@@ -25,6 +26,7 @@ pub use op::{BinOp, Op};
 pub use print::PrintI64;
 pub use substitute::Substitute;
 pub use switch::Switch;
+pub use unreachable::Unreachable;
 
 use printer::Print;
 
@@ -62,6 +64,8 @@ pub enum Statement {
     IfC(IfC),
     /// Exiting the program
     Exit(Exit),
+    /// Unreachable statement
+    Unreachable(Unreachable),
 }
 
 impl FreeVars for Statement {
@@ -78,6 +82,7 @@ impl FreeVars for Statement {
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
             Statement::Exit(exit) => exit.free_vars(vars).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -96,6 +101,7 @@ impl TypedFreeVars for Statement {
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::IfC(ifc) => ifc.typed_free_vars(vars),
             Statement::Exit(exit) => exit.typed_free_vars(vars),
+            Statement::Unreachable(_unreachable) => {}
         }
     }
 }
@@ -114,6 +120,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -142,6 +149,7 @@ impl Linearizing for Statement {
             Statement::PrintI64(print) => print.linearize(context, max_id),
             Statement::IfC(ifc) => ifc.linearize(context, max_id).into(),
             Statement::Exit(ref _exit) => self,
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -164,6 +172,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
+            Statement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }

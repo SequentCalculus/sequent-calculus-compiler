@@ -13,5 +13,6 @@ pub mod op;
 pub mod print;
 pub mod substitute;
 pub mod switch;
+pub mod unreachable;
 
 pub use code_statement::CodeStatement;

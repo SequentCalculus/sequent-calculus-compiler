@@ -9,6 +9,7 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::*;
 
+use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a copattern match of a codata type. It consists of a list of clauses, and
@@ -101,30 +102,64 @@ impl Check for New {
                     dtor: dtor.clone(),
                 });
             };
-            match symbol_table.dtors.get(&dtor_name) {
+
+            let (own_type_params, dtor_args, dtor_ret_ty) = match symbol_table.dtors.get(&dtor_name)
+            {
                 None => {
                     return Err(Error::Undefined {
                         span: Some(self.span),
                         name: dtor_name.clone(),
                     });
                 }
-                Some((dtor_args, dtor_ret_ty)) => {
-                    clause.context_names.no_dups(&dtor_name)?;
-                    let context_clause = clause.context_names.add_types(dtor_args)?;
+                Some((own_type_params, dtor_args, dtor_ret_ty)) => (
+                    own_type_params.clone(),
+                    dtor_args.clone(),
+                    dtor_ret_ty.clone(),
+                ),
+            };
 
-                    let mut new_context = context.clone();
-                    new_context
-                        .bindings
-                        .append(&mut context_clause.bindings.clone());
+            clause.context_names.no_dups(&dtor_name)?;
 
-                    clause.context = context_clause;
-                    clause.body =
-                        clause
-                            .body
-                            .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
-                    new_clauses.push(clause);
-                }
+            // The destructor's own type parameters are universally bound by this clause,
+            // e.g. `B` in `head[B]`. The user-chosen name is used directly as a rigid, opaque
+            // type variable, valid only within this clause's body; the body must typecheck for
+            // an arbitrary such `B`.
+            if clause.type_params.bindings.len() != own_type_params.bindings.len() {
+                return Err(Error::WrongNumberOfTypeArguments {
+                    span: Some(clause.span),
+                    expected: own_type_params.bindings.len(),
+                    got: clause.type_params.bindings.len(),
+                });
             }
+            let rigid_args = symbol_table.push_abstract_vars(
+                &clause.span,
+                &clause.type_params,
+                &own_type_params,
+            )?;
+
+            let mappings: HashMap<Name, Ty> = own_type_params
+                .names()
+                .into_iter()
+                .zip(rigid_args)
+                .collect();
+            let dtor_args = dtor_args.subst_ty(&mappings);
+            let dtor_ret_ty = dtor_ret_ty.subst_ty(&mappings);
+
+            let context_clause = clause.context_names.add_types(&dtor_args)?;
+
+            let mut new_context = context.clone();
+            new_context
+                .bindings
+                .append(&mut context_clause.bindings.clone());
+
+            clause.context = context_clause;
+            clause.body = clause
+                .body
+                .check(symbol_table, &new_context, &dtor_ret_ty.clone())?;
+
+            symbol_table.pop_abstract_vars(&clause.type_params);
+
+            new_clauses.push(clause);
         }
 
         if !self.clauses.is_empty() {
@@ -156,6 +191,7 @@ mod test {
     use printer::Print;
 
     use crate::parser::fun;
+    use crate::syntax::context::ContextBinding;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
@@ -171,6 +207,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -179,6 +216,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
@@ -199,6 +237,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "fst".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(1).into(),
@@ -207,6 +246,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "snd".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Lit::mk(2).into(),
@@ -235,6 +275,7 @@ mod test {
                 span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
+                type_params: TypeContext::default(),
                 context_names: ctx_names.clone(),
                 context: TypingContext::default(),
                 body: XVar::mk("x").into(),
@@ -253,6 +294,7 @@ mod test {
                 span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
+                type_params: TypeContext::default(),
                 context_names: ctx_names,
                 context: ctx,
                 body: XVar {
@@ -280,6 +322,7 @@ mod test {
                 span: dummy_span(),
                 pol: Polarity::Codata,
                 xtor: "apply".to_owned(),
+                type_params: TypeContext::default(),
                 context_names: NameContext::default(),
                 context: TypingContext::default(),
                 body: Lit::mk(1).into(),
@@ -310,6 +353,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "head".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(2)),
@@ -318,6 +362,7 @@ mod test {
                     span: dummy_span(),
                     pol: Polarity::Codata,
                     xtor: "tail".to_owned(),
+                    type_params: TypeContext::default(),
                     context_names: NameContext::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
@@ -356,5 +401,119 @@ mod test {
             parser.parse("new { head => 2, tail => 4 }"),
             Ok(example_stream().into())
         );
+    }
+
+    /// Builds a symbol table containing an already-instantiated codata type
+    /// `Const { run[B](x: B) : i64 }`, i.e. a codata type without its own type parameters whose
+    /// single destructor has its own universal type parameter `B`.
+    fn symbol_table_const_instance() -> SymbolTable {
+        let mut symbol_table = SymbolTable::default();
+
+        symbol_table.types.insert(
+            "Const".to_owned(),
+            (
+                Polarity::Codata,
+                TypeArgs::default(),
+                vec!["run".to_owned()],
+            ),
+        );
+
+        symbol_table.dtors.insert(
+            "run".to_owned(),
+            (
+                TypeParams::mk(&[("B", Polarity::Data)]),
+                TypingContext {
+                    span: None,
+                    bindings: vec![ContextBinding {
+                        var: "x".to_owned(),
+                        chi: Prd,
+                        ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }],
+                },
+                Ty::mk_i64(),
+            ),
+        );
+
+        symbol_table
+    }
+
+    #[test]
+    fn check_universal_dtor_in_new() {
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+
+        let mut symbol_table = symbol_table_const_instance();
+        let result = New {
+            span: dummy_span(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "run".to_owned(),
+                // "B" is bound by the clause itself, as in `run[B](x) => ...`
+                type_params: TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                context_names: ctx_names.clone(),
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
+            ty: None,
+        }
+        .check(
+            &mut symbol_table,
+            &TypingContext::default(),
+            &Ty::mk_decl("Const", TypeArgs::default()),
+        )
+        .unwrap();
+
+        let mut expected_clause_ctx = TypingContext::default();
+        expected_clause_ctx.add_var("x", Ty::mk_decl("B", TypeArgs::default()));
+
+        let expected = New {
+            span: dummy_span(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "run".to_owned(),
+                type_params: TypeContext {
+                    span: None,
+                    bindings: vec!["B".to_owned()],
+                },
+                context_names: ctx_names,
+                context: expected_clause_ctx,
+                body: Lit::mk(1).into(),
+            }],
+            ty: Some(Ty::mk_decl("Const", TypeArgs::default())),
+        };
+        assert_eq!(result, expected)
+    }
+
+    #[test]
+    fn check_universal_dtor_wrong_arity_in_new() {
+        // "run(x) => 1" is missing the required binder for the destructor's own type parameter `B`.
+        let mut ctx_names = NameContext::default();
+        ctx_names.bindings.push("x".to_string());
+
+        let mut symbol_table = symbol_table_const_instance();
+        let result = New {
+            span: dummy_span(),
+            clauses: vec![Clause {
+                span: dummy_span(),
+                pol: Polarity::Codata,
+                xtor: "run".to_owned(),
+                type_params: TypeContext::default(),
+                context_names: ctx_names,
+                context: TypingContext::default(),
+                body: Lit::mk(1).into(),
+            }],
+            ty: None,
+        }
+        .check(
+            &mut symbol_table,
+            &TypingContext::default(),
+            &Ty::mk_decl("Const", TypeArgs::default()),
+        );
+        assert!(result.is_err())
     }
 }
