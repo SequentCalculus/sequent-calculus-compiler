@@ -2,26 +2,25 @@ use std::collections::{HashMap, HashSet};
 
 use axcut::{syntax::{ID, Identifier, statements::Call}, traits::{free_vars::FreeVars, substitution::Subst}};
 
-use crate::inline::{program::Mark, statements::InlineResult};
+use crate::inline::{Inline, InlineResult, Mark, Occurrences};
 
-use super::Inline;
-
-// TODO: Also inline if definition is leaf statement
-impl Inline for Call {
-    fn count_occurences(&self, defs: &HashMap<String, axcut::syntax::Def>, occurrences: &mut HashMap<String, Mark>) {
+impl Occurrences for Call {
+    fn label_occurrences(&self, defs: &HashMap<String, axcut::syntax::Def>, occurrences: &mut HashMap<String, Mark>) {
         let callee_name = &self.label.name;
         match occurrences.get_mut(callee_name) {
             //not yet visited
             None => {
                 let def = defs.get(callee_name).unwrap();
                 occurrences.insert(callee_name.clone(), Mark::Once);
-                def.body.count_occurences(defs, occurrences);
+                def.body.label_occurrences(defs, occurrences);
             }
             // already visited
             Some(mark) => *mark = Mark::Retain,
         }
     }
+}
 
+impl Inline for Call {
     fn inline(self, retain: &mut Vec<axcut::syntax::Def>, to_visit: &mut HashMap<String, axcut::syntax::Def>, occurrences: &HashMap<String, Mark>) -> InlineResult {
         let callee_name = &self.label.name;
         match occurrences[callee_name] {
@@ -34,17 +33,17 @@ impl Inline for Call {
                 substituted.inline(retain, to_visit, occurrences)
             }
             Mark::Retain => {
-                match to_visit.remove(callee_name) {
+                let def_to_visit = to_visit.remove(callee_name);
+                let mut free_vars = HashSet::new();
+                let annotated_call = self.free_vars(&mut free_vars);
+                match def_to_visit {
                     None => {
-                        let mut free_vars = HashSet::new();
-                        let annotated = self.free_vars(&mut free_vars);
-                        InlineResult { result: annotated.into(), free_vars: free_vars }
+                        InlineResult { result: annotated_call.into(), free_vars }
                     },
                     Some(mut def) => {
-                        let InlineResult { result, free_vars } = def.body.inline(retain, to_visit, occurrences);
-                        def.body = result;
+                        def.body = def.body.inline(retain, to_visit, occurrences).result;
                         retain.push(def);
-                        InlineResult { result: self.into(), free_vars }
+                        InlineResult { result: annotated_call.into(), free_vars }
                     }
                 }
             }

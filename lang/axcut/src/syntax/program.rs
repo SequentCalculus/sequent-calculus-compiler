@@ -1,6 +1,7 @@
 //! This module defines programs in AxCut.
 
 use printer::{DocAllocator, Print};
+
 use super::{Def, ID, TypeDeclaration};
 
 /// This struct defines programs in AxCut. They consist of a list top-level functions and a list of

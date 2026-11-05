@@ -322,8 +322,8 @@ impl Driver {
 
     pub fn print_inlined(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
         let inlined = self.inlined(path)?;
-        Paths::create_ir_dir(INLINED_PATH);
-        let target = Path::new(TARGET_PATH).join(INLINED_PATH);
+        let target_dir = Paths::create_ir_dir(INLINED_PATH);
+        let target = target_dir.join(path.file_name().unwrap());
         print_ir(&inlined, target, mode)
     }
 

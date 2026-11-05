@@ -1,13 +1,10 @@
 use axcut::syntax::{Def, Prog};
 use std::collections::HashMap;
 
-use super::statements::Inline;
+use crate::inline::{Inline, Mark, Occurrences};
 
-pub enum Mark {
-    Once,
-    Retain,
-}
-
+/// Inlines all definitions with 0 or 1 textual occurrences
+/// Inlines (/removes) all bindings that are not used
 pub fn inline(prog: &mut Prog) {
     let mut occurrences: HashMap<String, Mark> = HashMap::new();
 
@@ -20,9 +17,13 @@ pub fn inline(prog: &mut Prog) {
     def_map.extend(def_iter.map(|def| (def.name.name.clone(), def)));
 
     let entry = def_map.get(&entry_name).unwrap();
-    entry.body.count_occurences(&def_map, &mut occurrences);
+    entry.body.label_occurrences(&def_map, &mut occurrences);
 
     let mut entry = def_map.remove(&entry_name).unwrap();
-    entry.body = entry.body.inline(&mut prog.defs, &mut def_map, &occurrences).result;
+    let mut retain = Vec::new();
+    entry.body = entry.body.inline(&mut retain, &mut def_map, &occurrences).result;
+
+    // restore the invariant that main is at position 0
     prog.defs.push(entry);
+    prog.defs.extend(retain);
 }

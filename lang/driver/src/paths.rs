@@ -128,9 +128,10 @@ impl Paths {
         create_dir_all(Paths::shrunk_dir()).expect("Could not create path");
     }
 
-    pub fn create_ir_dir(irpath: &str) {
+    pub fn create_ir_dir(irpath: &str) -> PathBuf {
         let path = Path::new(TARGET_PATH).join(irpath);
-        create_dir_all(path).expect("Could not create path");
+        create_dir_all(path.clone()).expect("Could not create path");
+        path
     }
 
     /// Return the directory for files after linearization.

@@ -25,10 +25,10 @@ fun2core      = { workspace = true }
 core_lang     = { workspace = true }
 core2axcut    = { workspace = true }
 printer       = { workspace = true }
+optimizations = { workspace = true }
 
 # External dependencies
 thiserror = { workspace = true }
 miette    = { workspace = true, features = ["fancy"] }
 opener    = { workspace = true }
 askama    = { workspace = true }
-optimizations = { version = "0.1.0", path = "../optimizations" }
