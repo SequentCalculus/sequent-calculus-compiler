@@ -19,10 +19,10 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use paths::{Paths, TARGET_PATH, INLINED_PATH};
+use optimizations::inline::program::inline;
+use paths::{INLINED_PATH, Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
-use optimizations::inline::program::inline;
 
 pub mod backends;
 pub mod latex;
@@ -311,7 +311,7 @@ impl Driver {
 
     pub fn inlined(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         if let Some(res) = self.inlined.get(path) {
-            return Ok(res.clone())
+            return Ok(res.clone());
         }
 
         let mut shrunk = self.shrunk(path)?;
@@ -455,7 +455,11 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     p_osstr.into()
 }
 
-pub fn print_ir(ir: &axcut::syntax::Prog, mut target: PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+pub fn print_ir(
+    ir: &axcut::syntax::Prog,
+    mut target: PathBuf,
+    mode: PrintMode,
+) -> Result<(), DriverError> {
     match mode {
         PrintMode::Textual => {
             target.set_extension("txt");
@@ -468,14 +472,12 @@ pub fn print_ir(ir: &axcut::syntax::Prog, mut target: PathBuf, mode: PrintMode) 
     let mut file = File::create(target).expect("Could not create file");
     match mode {
         PrintMode::Textual => {
-            ir
-                .print_io(&PrintCfg::default(), &mut file)
+            ir.print_io(&PrintCfg::default(), &mut file)
                 .expect("Could not write to file");
         }
         PrintMode::Latex => {
             file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
-            ir
-                .print_latex(&LATEX_PRINT_CFG, &mut file)
+            ir.print_latex(&LATEX_PRINT_CFG, &mut file)
                 .expect("Could not write to file");
             file.write_all(LATEX_END.as_bytes()).unwrap();
         }

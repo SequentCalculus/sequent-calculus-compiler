@@ -11,14 +11,23 @@ pub enum Mark {
 }
 
 pub trait Occurrences {
-    fn label_occurrences(&self, defs: &HashMap<Identifier, Def>, occurrences: &mut HashMap<Identifier, Mark>);
+    fn label_occurrences(
+        &self,
+        defs: &HashMap<Identifier, Def>,
+        occurrences: &mut HashMap<Identifier, Mark>,
+    );
 }
 
 pub struct InlineResult {
     pub result: Statement,
-    pub free_vars: HashSet<ID>
+    pub free_vars: HashSet<ID>,
 }
 
 pub trait Inline {
-    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<Identifier, Def>, occurrences: &HashMap<Identifier, Mark>) -> InlineResult;
+    fn inline(
+        self,
+        retain: &mut Vec<Def>,
+        to_visit: &mut HashMap<Identifier, Def>,
+        occurrences: &HashMap<Identifier, Mark>,
+    ) -> InlineResult;
 }

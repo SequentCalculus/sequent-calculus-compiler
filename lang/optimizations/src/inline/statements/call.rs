@@ -1,11 +1,18 @@
 use std::collections::{HashMap, HashSet};
 
-use axcut::{syntax::{ID, Identifier, statements::Call}, traits::{free_vars::FreeVars, substitution::Subst}};
+use axcut::{
+    syntax::{ID, Identifier, statements::Call},
+    traits::{free_vars::FreeVars, substitution::Subst},
+};
 
 use crate::inline::{Inline, InlineResult, Mark, Occurrences};
 
 impl Occurrences for Call {
-    fn label_occurrences(&self, defs: &HashMap<Identifier, axcut::syntax::Def>, occurrences: &mut HashMap<Identifier, Mark>) {
+    fn label_occurrences(
+        &self,
+        defs: &HashMap<Identifier, axcut::syntax::Def>,
+        occurrences: &mut HashMap<Identifier, Mark>,
+    ) {
         let callee = &self.label;
         match occurrences.get_mut(callee) {
             //not yet visited
@@ -21,7 +28,12 @@ impl Occurrences for Call {
 }
 
 impl Inline for Call {
-    fn inline(self, retain: &mut Vec<axcut::syntax::Def>, to_visit: &mut HashMap<Identifier, axcut::syntax::Def>, occurrences: &HashMap<Identifier, Mark>) -> InlineResult {
+    fn inline(
+        self,
+        retain: &mut Vec<axcut::syntax::Def>,
+        to_visit: &mut HashMap<Identifier, axcut::syntax::Def>,
+        occurrences: &HashMap<Identifier, Mark>,
+    ) -> InlineResult {
         let callee = &self.label;
         match occurrences[callee] {
             Mark::Once => {
@@ -37,13 +49,17 @@ impl Inline for Call {
                 let mut free_vars = HashSet::new();
                 let annotated_call = self.free_vars(&mut free_vars);
                 match def_to_visit {
-                    None => {
-                        InlineResult { result: annotated_call.into(), free_vars }
+                    None => InlineResult {
+                        result: annotated_call.into(),
+                        free_vars,
                     },
                     Some(mut def) => {
                         def.body = def.body.inline(retain, to_visit, occurrences).result;
                         retain.push(def);
-                        InlineResult { result: annotated_call.into(), free_vars }
+                        InlineResult {
+                            result: annotated_call.into(),
+                            free_vars,
+                        }
                     }
                 }
             }

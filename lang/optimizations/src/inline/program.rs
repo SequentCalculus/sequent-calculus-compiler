@@ -20,7 +20,10 @@ pub fn inline(prog: &mut Prog) {
 
     let mut entry = def_map.remove(&entry_ident).unwrap();
     let mut retain = Vec::new();
-    entry.body = entry.body.inline(&mut retain, &mut def_map, &occurrences).result;
+    entry.body = entry
+        .body
+        .inline(&mut retain, &mut def_map, &occurrences)
+        .result;
 
     // restore the invariant that main is at position 0
     prog.defs.push(entry);

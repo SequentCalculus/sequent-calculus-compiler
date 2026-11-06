@@ -1,8 +1,8 @@
 //! This module contains the command for inlining the definitions of a file.
 
+use super::print_stdout;
 use driver::{Driver, PrintMode};
 use std::path::PathBuf;
-use super::print_stdout;
 
 #[derive(clap::Args)]
 pub struct Args {

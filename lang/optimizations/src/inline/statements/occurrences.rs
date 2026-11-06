@@ -5,7 +5,11 @@ use axcut::syntax::{Def, Identifier, Statement};
 use crate::inline::{Mark, Occurrences};
 
 impl Occurrences for Statement {
-    fn label_occurrences(&self, defs: &HashMap<Identifier, Def>, occurrences: &mut HashMap<Identifier, Mark>) {
+    fn label_occurrences(
+        &self,
+        defs: &HashMap<Identifier, Def>,
+        occurrences: &mut HashMap<Identifier, Mark>,
+    ) {
         match self {
             Statement::Call(call) => call.label_occurrences(defs, occurrences),
             Statement::Substitute(subst) => subst.next.label_occurrences(defs, occurrences),
