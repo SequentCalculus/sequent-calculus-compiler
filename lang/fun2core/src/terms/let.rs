@@ -51,7 +51,11 @@ impl Compile for fun::syntax::terms::Let {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, ctor, cut, id, lit, mu, mutilde, prod, ty, var};
-    use fun::{parse_term, test_common::symbol_table_list, typing::check::Check};
+    use fun::{
+        parse_term,
+        test_common::symbol_table_list,
+        typing::{CheckingState, check::Check},
+    };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
@@ -91,11 +95,15 @@ mod compile_tests {
     #[test]
     fn compile_let2() {
         let term = parse_term!("let x : List[i64] = Cons(x,Nil); x");
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
         let term_typed = term
             .check(
-                &mut symbol_table_list(),
+                &mut state,
                 &ctx,
                 &fun::syntax::types::Ty::mk_decl(
                     "List",

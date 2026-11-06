@@ -46,36 +46,36 @@ main_:
     mov rsi, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
-    mov rbx, [rbx + 0]
+    mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab12
     ; ####initialize refcount of just acquired block
-    mov qword [rsi + 0], 0
+    mov qword [rsi + 8], 0
     jmp lab13
 
 lab12:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
-    mov rbp, [rbp + 0]
+    mov rbp, [rbp + 8]
     cmp rbp, 0
     je lab10
     ; ####mark linear free list empty
-    mov qword [rbx + 0], 0
+    mov qword [rbx + 8], 0
     ; ####erase children of next block
     ; #####check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab3
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab1
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab2
 
 lab1:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab2:
@@ -86,15 +86,15 @@ lab3:
     cmp rcx, 0
     je lab6
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab4
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab5
 
 lab4:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab5:
@@ -105,15 +105,15 @@ lab6:
     cmp rcx, 0
     je lab9
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab7
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab8
 
 lab7:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab8:
@@ -140,36 +140,36 @@ lab13:
     mov rax, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
-    mov rbx, [rbx + 0]
+    mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab25
     ; ####initialize refcount of just acquired block
-    mov qword [rax + 0], 0
+    mov qword [rax + 8], 0
     jmp lab26
 
 lab25:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
-    mov rbp, [rbp + 0]
+    mov rbp, [rbp + 8]
     cmp rbp, 0
     je lab23
     ; ####mark linear free list empty
-    mov qword [rbx + 0], 0
+    mov qword [rbx + 8], 0
     ; ####erase children of next block
     ; #####check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab16
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab14
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab15
 
 lab14:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab15:
@@ -180,15 +180,15 @@ lab16:
     cmp rcx, 0
     je lab19
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab17
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab18
 
 lab17:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab18:
@@ -199,15 +199,15 @@ lab19:
     cmp rcx, 0
     je lab22
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab20
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab21
 
 lab20:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab21:
@@ -233,10 +233,10 @@ Quad_27:
 Quad_27_Q:
     ; #load from memory
     ; ##check refcount
-    cmp qword [rax + 0], 0
+    cmp qword [rax + 8], 0
     je lab28
     ; ##either decrement refcount and share children...
-    add qword [rax + 0], -1
+    add qword [rax + 8], -1
     ; ###load link to next block
     mov rsi, [rax + 48]
     ; ###load values
@@ -249,15 +249,15 @@ Quad_27_Q:
 
 lab28:
     ; ##... or release blocks onto linear free list when loading
-    ; ###release block
-    mov [rax + 0], rbx
-    mov rbx, rax
     ; ###load link to next block
     mov rsi, [rax + 48]
+    ; ###release block
+    mov [rax + 8], rbx
+    mov rbx, rax
     ; ###load values
     mov rdx, [rax + 40]
     ; ###release block
-    mov [rsi + 0], rbx
+    mov [rsi + 8], rbx
     mov rbx, rsi
     ; ###load values
     mov r11, [rsi + 56]

@@ -73,17 +73,23 @@ mod compile_tests {
     use core_lang::syntax as core_syntax;
     use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
     use fun::{
-        parse_term, syntax::context::TypingContext, test_common::symbol_table_lpair,
-        typing::check::Check,
+        parse_term,
+        syntax::context::TypingContext,
+        test_common::symbol_table_lpair,
+        typing::{CheckingState, check::Check},
     };
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_lpair() {
         let term = parse_term!("new { fst => 1, snd => 2 }");
+        let mut state = CheckingState {
+            symbol_table: symbol_table_lpair(),
+            ..Default::default()
+        };
         let term_typed = term
             .check(
-                &mut symbol_table_lpair(),
+                &mut state,
                 &TypingContext::default(),
                 &fun::syntax::types::Ty::mk_decl(
                     "LPair",

@@ -22,28 +22,33 @@ pub struct CheckedProgram {
     pub codata_types: Vec<Codata>,
     /// Checked top-level functions
     pub defs: Vec<Def>,
+    /// Flag whether the program contains nonlinear continuations (through label/goto)
+    pub nonlinear_continuations: bool,
 }
 
 impl Program {
     /// This function typechecks all declarations in a module, creating a checked module with
     /// monomorphic type instances.
     pub fn check(self) -> Result<CheckedProgram, Error> {
-        let symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(symbol_table)
+        let state = CheckingState {
+            symbol_table: build_symbol_table(&self)?,
+            nonlinear_continuations: false,
+        };
+        self.check_with_state(state)
     }
 
     /// This function typechecks a module, creating a checked module with monomorphic type
     /// instances, with given symbol table.
-    fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
+    fn check_with_state(self, mut state: CheckingState) -> Result<CheckedProgram, Error> {
         let mut defs = Vec::new();
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
-                    data.check(&symbol_table)?;
+                    data.check(&state)?;
                 }
                 Declaration::Codata(codata) => {
-                    codata.check(&symbol_table)?;
+                    codata.check(&state)?;
                 }
                 Declaration::Def(def) => {
                     defs.push(def);
@@ -53,20 +58,21 @@ impl Program {
 
         let defs = defs
             .into_iter()
-            .map(|def| def.check(&mut symbol_table))
+            .map(|def| def.check(&mut state))
             .collect::<Result<_, Error>>()?;
 
         // collect all instances of type templates from the symbol table
         let mut data_types = Vec::new();
         let mut codata_types = Vec::new();
-        for (name, (pol, type_args, xtors)) in symbol_table.types {
+        for (name, (pol, type_args, xtors)) in state.symbol_table.types {
             match pol {
                 Polarity::Data => {
                     let ctors = xtors
                         .into_iter()
                         .map(|base_name| {
                             let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let args = symbol_table
+                            let args = state
+                                .symbol_table
                                 .ctors
                                 .get(&full_name)
                                 .unwrap_or_else(|| {
@@ -94,7 +100,8 @@ impl Program {
                         .into_iter()
                         .map(|base_name| {
                             let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let (args, cont_ty) = symbol_table
+                            let (args, cont_ty) = state
+                                .symbol_table
                                 .dtors
                                 .get(&full_name)
                                 .unwrap_or_else(|| {
@@ -125,6 +132,7 @@ impl Program {
             data_types,
             codata_types,
             defs,
+            nonlinear_continuations: state.nonlinear_continuations,
         })
     }
 

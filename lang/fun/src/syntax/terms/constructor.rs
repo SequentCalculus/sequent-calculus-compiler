@@ -57,7 +57,7 @@ impl From<Constructor> for Term {
 impl Check for Constructor {
     fn check(
         mut self,
-        symbol_table: &mut SymbolTable,
+        state: &mut CheckingState,
         context: &TypingContext,
         expected: &Ty,
     ) -> Result<Self, Error> {
@@ -74,14 +74,13 @@ impl Check for Constructor {
         // the name of the constructor in the symbol table for the instantiated data type, the
         // instance must exists already
         let name = self.id.clone() + &type_args.print_to_string(None);
-        match symbol_table.ctors.get(&name) {
+        match state.symbol_table.ctors.get(&name) {
             Some(types) => {
-                let (ty, _) = symbol_table.lookup_ty_for_ctor(&self.span, &name)?;
+                let (ty, _) = state.symbol_table.lookup_ty_for_ctor(&self.span, &name)?;
 
-                self.args =
-                    check_args(&self.span, symbol_table, context, self.args, &types.clone())?;
+                self.args = check_args(&self.span, state, context, self.args, &types.clone())?;
 
-                check_equality(&self.span, symbol_table, expected, &ty)?;
+                check_equality(&self.span, state, expected, &ty)?;
 
                 self.ty = Some(expected.clone());
                 Ok(self)
@@ -112,6 +111,10 @@ mod test {
 
     #[test]
     fn check_nil() {
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let result = Constructor {
             span: dummy_span(),
             id: "Nil".to_owned(),
@@ -119,7 +122,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table_list(),
+            &mut state,
             &TypingContext::default(),
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         )
@@ -135,6 +138,10 @@ mod test {
 
     #[test]
     fn check_cons() {
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
         let result = Constructor {
@@ -154,7 +161,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table_list(),
+            &mut state,
             &ctx,
             &Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
         )
@@ -186,6 +193,10 @@ mod test {
 
     #[test]
     fn check_ctor_fail() {
+        let mut state = CheckingState {
+            symbol_table: symbol_table_list(),
+            ..Default::default()
+        };
         let result = Constructor {
             span: dummy_span(),
             id: "Cons".to_owned(),
@@ -209,7 +220,7 @@ mod test {
             ty: None,
         }
         .check(
-            &mut symbol_table_list(),
+            &mut state,
             &TypingContext {
                 span: None,
                 bindings: vec![],
