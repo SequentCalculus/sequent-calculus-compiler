@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use axcut::syntax::{Def, ID, Statement};
+use axcut::syntax::{Def, ID, Identifier, Statement};
 
 pub mod program;
 pub mod statements;
@@ -11,7 +11,7 @@ pub enum Mark {
 }
 
 pub trait Occurrences {
-    fn label_occurrences(&self, defs: &HashMap<String, Def>, occurrences: &mut HashMap<String, Mark>);
+    fn label_occurrences(&self, defs: &HashMap<Identifier, Def>, occurrences: &mut HashMap<Identifier, Mark>);
 }
 
 pub struct InlineResult {
@@ -20,5 +20,5 @@ pub struct InlineResult {
 }
 
 pub trait Inline {
-    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<String, Def>, occurrences: &HashMap<String, Mark>) -> InlineResult;
+    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<Identifier, Def>, occurrences: &HashMap<Identifier, Mark>) -> InlineResult;
 }

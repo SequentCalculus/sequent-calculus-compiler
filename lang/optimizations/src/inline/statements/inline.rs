@@ -1,11 +1,11 @@
 use std::{collections::{HashMap, HashSet}, rc::Rc};
 
-use axcut::{syntax::{Def, Statement}, traits::free_vars::FreeVars};
+use axcut::{syntax::{Def, Identifier, Statement}, traits::free_vars::FreeVars};
 
 use crate::inline::{Inline, InlineResult, Mark};
 
 impl Inline for Statement {
-    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<String, Def>, occurrences: &HashMap<String, Mark>) -> InlineResult {
+    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<Identifier, Def>, occurrences: &HashMap<Identifier, Mark>) -> InlineResult {
         match self {
             Statement::Substitute(_) => {
                 panic!("Inlining should be done before linearization")
@@ -113,7 +113,7 @@ impl Inline for Statement {
 }
 
 impl Inline for Rc<Statement> {
-    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<String, Def>, occurrences: &HashMap<String, Mark>) -> InlineResult {
+    fn inline(self, retain: &mut Vec<Def>, to_visit: &mut HashMap<Identifier, Def>, occurrences: &HashMap<Identifier, Mark>) -> InlineResult {
         Rc::unwrap_or_clone(self).inline(retain, to_visit, occurrences)
     }
 }
