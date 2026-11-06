@@ -26,11 +26,11 @@ asm_main:
 
 main_:
     ; lit a_1 <- 9;
-    mov rdx, 9
-    ; create f_2: Fun = (a_1)\{ ... \};
+    mov rax, 9
+    ; create ω f_2: Fun = (a_1)\{ ... \};
     ; #allocate memory
     ; ##store values
-    mov [rbx + 56], rdx
+    mov [rbx + 56], rax
     mov qword [rbx + 48], 0
     ; ##mark unused fields with null
     mov qword [rbx + 16], 0
@@ -39,36 +39,36 @@ main_:
     mov rax, rbx
     ; ##get next free block into heap register
     ; ###(1) check linear free list for next block
-    mov rbx, [rbx + 0]
+    mov rbx, [rbx + 8]
     cmp rbx, 0
     je lab12
     ; ####initialize refcount of just acquired block
-    mov qword [rax + 0], 0
+    mov qword [rax + 8], 0
     jmp lab13
 
 lab12:
     ; ###(2) check non-linear lazy free list for next block
     mov rbx, rbp
-    mov rbp, [rbp + 0]
+    mov rbp, [rbp + 8]
     cmp rbp, 0
     je lab10
     ; ####mark linear free list empty
-    mov qword [rbx + 0], 0
+    mov qword [rbx + 8], 0
     ; ####erase children of next block
     ; #####check child 1 for erasure
     mov rcx, [rbx + 16]
     cmp rcx, 0
     je lab3
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab1
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab2
 
 lab1:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab2:
@@ -79,15 +79,15 @@ lab3:
     cmp rcx, 0
     je lab6
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab4
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab5
 
 lab4:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab5:
@@ -98,15 +98,15 @@ lab6:
     cmp rcx, 0
     je lab9
     ; ######check refcount
-    cmp qword [rcx + 0], 0
+    cmp qword [rcx + 8], 0
     je lab7
     ; ######either decrement refcount ...
-    add qword [rcx + 0], -1
+    add qword [rcx + 8], -1
     jmp lab8
 
 lab7:
     ; ######... or add block to lazy free list
-    mov [rcx + 0], rbp
+    mov [rcx + 8], rbp
     mov rbp, rcx
 
 lab8:
@@ -124,40 +124,42 @@ lab11:
 lab13:
     ; #load tag
     lea rdx, [rel Fun_14]
-    ; create k_6: Cont = ()\{ ... \};
+    ; create ω k_6: Cont = ()\{ ... \};
     ; #mark no allocation
     mov rsi, 0
     ; #load tag
     lea rdi, [rel Cont_15]
     ; lit y_9 <- 1;
-    mov r9, 1
+    mov r8, 1
     ; substitute (y_9 := y_9)(k_6 := k_6)(f_2 := f_2);
     ; #move variables
-    mov r8, rax
-    mov rcx, r9
-    mov r9, rdx
-    mov rdx, rcx
-    ; invoke f_2 apply
+    mov rcx, r8
+    mov r8, rdx
+    mov rdx, rsi
+    mov rsi, rdi
+    mov rdi, rax
+    mov rax, rcx
+    ; invoke ω f_2 apply
     ; #there is only one clause, so we can jump there directly
-    jmp r9
+    jmp r8
 
 Cont_15:
 
 Cont_15_Ret:
     ; println_i64 r_7;
     ; #save caller-save registers
-    mov r12, rdx
+    mov r12, rax
     sub rsp, 8
     ; #move argument into place
-    mov rdi, rdx
+    mov rdi, rax
     call println_i64
     ; #restore caller-save registers
-    mov rdx, r12
+    mov rax, r12
     add rsp, 8
     ; lit ret_8 <- 0;
-    mov rdi, 0
+    mov rdx, 0
     ; exit ret_8
-    mov rax, rdi
+    mov rax, rdx
     jmp cleanup
 
 Fun_14:
@@ -165,32 +167,32 @@ Fun_14:
 Fun_14_apply:
     ; #load from memory
     ; ##check refcount
-    cmp qword [r8 + 0], 0
+    cmp qword [rdi + 8], 0
     je lab16
     ; ##either decrement refcount and share children...
-    add qword [r8 + 0], -1
+    add qword [rdi + 8], -1
     ; ###load values
-    mov r9, [r8 + 56]
+    mov rdi, [rdi + 56]
     jmp lab17
 
 lab16:
     ; ##... or release blocks onto linear free list when loading
     ; ###release block
-    mov [r8 + 0], rbx
-    mov rbx, r8
+    mov [rdi + 8], rbx
+    mov rbx, rdi
     ; ###load values
-    mov r9, [r8 + 56]
+    mov rdi, [rdi + 56]
 
 lab17:
     ; b_5 <- a_1 + x_3;
-    mov r11, r9
-    add r11, rdx
+    mov r8, rdi
+    add r8, rax
     ; substitute (b_5 := b_5)(k_4 := k_4);
     ; #move variables
-    mov rdx, r11
-    ; invoke k_4 Ret
+    mov rax, r8
+    ; invoke ω k_4 Ret
     ; #there is only one clause, so we can jump there directly
-    jmp rdi
+    jmp rsi
 
 cleanup:
     ; free space for register spills

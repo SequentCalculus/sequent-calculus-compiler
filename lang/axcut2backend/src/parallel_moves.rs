@@ -165,7 +165,7 @@ pub trait ParallelMoves<Code, Temporary> {
 /// This function generates the instructions for performing parallel moves for a spanning tree,
 /// depth-first. If there is a back edge, the temporary which is to be moved to the root temporary
 /// is stored in a scratch spot at the beginning and will be restored in the end in [`root_moves`].
-/// - `temporary` is the temporary of th current node
+/// - `temporary` is the temporary of the current node
 /// - `tree` is the the spanning tree.
 /// - `contains_spill_move` indicates whether one of the performed moves is between two spill
 ///   positions in memory. Some platforms (e.g., x86_64) need this information.

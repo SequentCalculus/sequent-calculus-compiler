@@ -5,9 +5,14 @@ use printer::tokens::{LEFT_ARROW, LIT, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::Substitute;
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Prog, Quantity, Statement, Ty, TypingContext,
+};
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -68,6 +73,7 @@ impl TypedFreeVars for Literal {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         });
     }
@@ -98,6 +104,7 @@ impl Linearizing for Literal {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Ext,
+            quantity: Quantity::One,
             ty: Ty::I64,
         };
         new_context.bindings.push(new_binding);
@@ -122,5 +129,26 @@ impl Linearizing for Literal {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for Literal {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let mut next_context = context.to_vec();
+        next_context.push(self.var.id);
+        self.next
+            .collect_sf_constraints(program, &next_context, constraints);
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Literal {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.next = self.next.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

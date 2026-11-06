@@ -12,6 +12,7 @@ pub mod op;
 pub mod print;
 pub mod substitute;
 pub mod switch;
+pub mod unreachable;
 
 pub use call::Call;
 pub use clause::{Clause, print_clauses};
@@ -25,14 +26,17 @@ pub use op::{BinOp, Op};
 pub use print::PrintI64;
 pub use substitute::Substitute;
 pub use switch::Switch;
+pub use unreachable::Unreachable;
 
 use printer::Print;
 
 use super::{ContextBinding, ID, Identifier, TypingContext};
-use crate::traits::free_vars::FreeVars;
+use crate::syntax::Prog;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{SteadfastConstraints, SubstituteSteadfastAnnotations};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
+use crate::traits::{free_vars::FreeVars, steadfast::CollectSteadfastConstraints};
 
 use std::collections::{BTreeSet, HashSet};
 
@@ -62,6 +66,8 @@ pub enum Statement {
     IfC(IfC),
     /// Exiting the program
     Exit(Exit),
+    /// Unreachable statement
+    Unreachable(Unreachable),
 }
 
 impl FreeVars for Statement {
@@ -78,6 +84,7 @@ impl FreeVars for Statement {
             Statement::PrintI64(print) => print.free_vars(vars).into(),
             Statement::IfC(ifc) => ifc.free_vars(vars).into(),
             Statement::Exit(exit) => exit.free_vars(vars).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -96,6 +103,7 @@ impl TypedFreeVars for Statement {
             Statement::PrintI64(print) => print.typed_free_vars(vars),
             Statement::IfC(ifc) => ifc.typed_free_vars(vars),
             Statement::Exit(exit) => exit.typed_free_vars(vars),
+            Statement::Unreachable(_unreachable) => {}
         }
     }
 }
@@ -114,6 +122,7 @@ impl Subst for Statement {
             Statement::PrintI64(print) => print.subst_sim(subst).into(),
             Statement::IfC(ifc) => ifc.subst_sim(subst).into(),
             Statement::Exit(exit) => exit.subst_sim(subst).into(),
+            Statement::Unreachable(ref _unreachable) => self,
         }
     }
 }
@@ -142,6 +151,68 @@ impl Linearizing for Statement {
             Statement::PrintI64(print) => print.linearize(context, max_id),
             Statement::IfC(ifc) => ifc.linearize(context, max_id).into(),
             Statement::Exit(ref _exit) => self,
+            Statement::Unreachable(ref _unreachable) => self,
+        }
+    }
+}
+
+impl CollectSteadfastConstraints for Statement {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        match self {
+            Statement::Substitute(substitute) => {
+                substitute.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Call(call) => call.collect_sf_constraints(program, context, constraints),
+            Statement::Let(r#let) => r#let.collect_sf_constraints(program, context, constraints),
+            Statement::Switch(switch) => {
+                switch.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Create(create) => {
+                create.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Invoke(invoke) => {
+                invoke.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Literal(literal) => {
+                literal.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::Op(op) => op.collect_sf_constraints(program, context, constraints),
+            Statement::PrintI64(print_i64) => {
+                print_i64.collect_sf_constraints(program, context, constraints)
+            }
+            Statement::IfC(ifc) => ifc.collect_sf_constraints(program, context, constraints),
+            Statement::Exit(_) => (),
+            Statement::Unreachable(_) => (),
+        }
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Statement {
+    fn subst_sf_annotations(self, quantity_constraints: &HashSet<ID>) -> Self {
+        match self {
+            Statement::Substitute(substitute) => {
+                substitute.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::Call(call) => call.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Let(r#let) => r#let.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Switch(switch) => switch.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Create(create) => create.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Invoke(invoke) => invoke.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Literal(literal) => {
+                literal.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::Op(op) => op.subst_sf_annotations(quantity_constraints).into(),
+            Statement::PrintI64(print_i64) => {
+                print_i64.subst_sf_annotations(quantity_constraints).into()
+            }
+            Statement::IfC(ifc) => ifc.subst_sf_annotations(quantity_constraints).into(),
+            Statement::Exit(_) => self,
+            Statement::Unreachable(_) => self,
         }
     }
 }
@@ -164,6 +235,7 @@ impl Print for Statement {
             Statement::PrintI64(print) => print.print(cfg, alloc),
             Statement::IfC(ifc) => ifc.print(cfg, alloc),
             Statement::Exit(exit) => exit.print(cfg, alloc),
+            Statement::Unreachable(unreachable) => unreachable.print(cfg, alloc),
         }
     }
 }

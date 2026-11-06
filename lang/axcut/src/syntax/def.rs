@@ -3,8 +3,11 @@
 use super::{ID, Identifier, Statement, TypingContext};
 use printer::{DocAllocator, Print, theme::ThemeExt, tokens::DEF, util::BracesExt};
 
-use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
+use crate::{syntax::Prog, traits::free_vars::FreeVars};
 
 use std::collections::HashSet;
 
@@ -25,6 +28,26 @@ impl Def {
         self.body = self.body.free_vars(&mut HashSet::new());
         // the variables in the context of the body are the parameters of the top-level function
         self.body = self.body.linearize(self.context.clone(), max_id);
+        self
+    }
+}
+
+impl CollectSteadfastConstraints for Def {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        _context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        self.body
+            .collect_sf_constraints(program, &self.context.ids(), constraints);
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Def {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        self.context = self.context.subst_sf_annotations(quantity_constraints);
+        self.body = self.body.subst_sf_annotations(quantity_constraints);
         self
     }
 }

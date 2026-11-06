@@ -51,6 +51,10 @@ pub struct Args {
     /// Open the generated pdf with the system viewer
     #[clap(long)]
     open: bool,
+    /// Print how long each compilation stage took to stderr, one stage per line: its name
+    /// and its duration in microseconds.
+    #[arg(long)]
+    timings: bool,
 }
 
 pub fn exec(cmd: Args) -> miette::Result<()> {
@@ -82,6 +86,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
 
     if cmd.open {
         drv.open_pdf(&cmd.filepath)?;
+    }
+    if cmd.timings {
+        eprint!("{}", drv.timings_report());
     }
 
     Ok(())

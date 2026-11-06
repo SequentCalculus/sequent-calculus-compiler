@@ -4,8 +4,12 @@
 use printer::{DocAllocator, Print};
 
 use crate::{
-    code::Instructions, config::Config, memory::Memory, parallel_moves::ParallelMoves,
-    statements::CodeStatement, utils::Utils,
+    code::Instructions,
+    config::Config,
+    memory::Memory,
+    parallel_moves::ParallelMoves,
+    statements::CodeStatement,
+    utils::{Utils, asm_safe_name},
 };
 use axcut::syntax::{Identifier, Prog};
 
@@ -55,7 +59,7 @@ where
     let mut flattened_instructions =
         Vec::with_capacity(instructions.len() + instructions.iter().map(Vec::len).sum::<usize>());
     for (mut instruction_block, name) in instructions.into_iter().zip(names) {
-        flattened_instructions.push(Backend::label(name.print_to_string(None) + "_"));
+        flattened_instructions.push(Backend::label(asm_safe_name(&name) + "_"));
         flattened_instructions.append(&mut instruction_block);
     }
     flattened_instructions

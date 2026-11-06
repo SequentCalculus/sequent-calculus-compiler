@@ -2,8 +2,21 @@
 
 use printer::*;
 
+use crate::bail;
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
+use crate::typing::errors::TypeError;
 
 use std::collections::BTreeSet;
 
@@ -132,6 +145,80 @@ impl<C: Chi> SubstVar for XVar<C> {
     }
 }
 
+impl<C: Chi> ConstraintCollector for XVar<C> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        self.ty.collect_constraints(env)
+    }
+}
+
+impl<C: Chi> Specialize for XVar<C> {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        XVar {
+            prdcns: self.prdcns.clone(),
+            var: self.var.clone(),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl<C: Chi> Checked for XVar<C> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        self.ty.check(type_params, context, env)?;
+        let Some(binding) = context.lookup(&self.var) else {
+            bail!(TypeError::UndeclaredVariable(self.var.name.clone()));
+        };
+
+        // check the type of the (co)var against the type of the (co)var in the context
+        if binding.ty != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: binding.ty.print_to_string(None),
+                got: self.ty.print_to_string(None),
+                msg: None
+            })
+        }
+
+        Ok(())
+    }
+}
+
+impl<C: Chi> LabelAndUnify for XVar<C> {
+    fn label_and_unify(
+        &self,
+        _state: &mut SplitState,
+        _sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        // Reuse the label already assigned at the binding site (looked up by name in `scope`)
+        // rather than minting a fresh one, so that every use of a variable shares its binder's
+        // label. A missing entry means an unbound variable slipped past type checking.
+        let ty = scope
+            .lookup(&self.var)
+            .unwrap_or_else(|| panic!("unbound variable during labeling: {}", self.var.name))
+            .ty
+            .clone();
+        XVar {
+            prdcns: self.prdcns.clone(),
+            var: self.var.clone(),
+            ty,
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for XVar<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        XVar {
+            prdcns: self.prdcns.clone(),
+            var: self.var.clone(),
+            ty: self.ty.rewrite(table),
+        }
+    }
+}
+
 #[cfg(test)]
 mod var_tests {
     use super::Subst;
@@ -171,5 +258,51 @@ mod var_tests {
         let result = covar!(id!("c")).subst_sim(&subst.0, &subst.1);
         let expected = covar!(id!("c")).into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{id, ty, var};
+
+    fn fresh_state() -> SplitState {
+        SplitState::default()
+    }
+
+    #[test]
+    fn label_and_unify_reuses_the_label_bound_in_scope() {
+        let mut state = fresh_state();
+        let labeled_box = state.label_ty(&ty!(id!("Box")));
+
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("x"),
+            chi: Chirality::Prd,
+            ty: labeled_box.clone(),
+        });
+
+        let result: XVar<Prd> = var!(id!("x"), ty!(id!("Box"))).label_and_unify(
+            &mut state,
+            &DeclSignatures::new(),
+            &scope,
+        );
+
+        // the occurrence must carry exactly the label already assigned at the binding site, not a
+        // freshly minted one
+        assert_eq!(result.ty, labeled_box);
+    }
+
+    #[test]
+    #[should_panic(expected = "unbound variable during labeling")]
+    fn label_and_unify_panics_on_unbound_variable() {
+        let mut state = fresh_state();
+        let _ = var!(id!("x")).label_and_unify(
+            &mut state,
+            &DeclSignatures::new(),
+            &TypingContext::default(),
+        );
     }
 }

@@ -5,7 +5,7 @@ use printer::{Print, tokens::EXIT};
 use super::CodeStatement;
 use crate::{
     code::Instructions,
-    config::{Config, TemporaryNumber::Snd},
+    config::{Config, TemporaryNumber::Fst},
     utils::Utils,
 };
 use axcut::syntax::{TypeDeclaration, TypingContext, statements::Exit};
@@ -26,7 +26,7 @@ impl CodeStatement for Exit {
 
         Backend::mov(
             Backend::return1(),
-            Backend::variable_temporary(Snd, &context, self.var.id),
+            Backend::variable_temporary(Fst, &context, self.var.id),
             instructions,
         );
         Backend::jump_label("cleanup".to_string(), instructions);

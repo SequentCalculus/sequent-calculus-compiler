@@ -4,8 +4,11 @@ use printer::theme::ThemeExt;
 use printer::tokens::{COMMA, SEMI, SUBSTITUTE};
 use printer::{DocAllocator, Print};
 
-use crate::syntax::{ContextBinding, ID, Identifier, Statement};
+use crate::syntax::{ContextBinding, ID, Identifier, Prog, Statement};
 use crate::traits::free_vars::FreeVars;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -32,6 +35,7 @@ impl Print for Substitute {
             self.rearrange.iter().map(|(new, old)| {
                 new.var
                     .print(cfg, alloc)
+                    .append(new.quantity.print(cfg, alloc))
                     .append(" := ")
                     .append(old.print(cfg, alloc))
                     .parens()
@@ -95,6 +99,54 @@ impl Subst for Substitute {
             .map(|(new, old)| (new.subst_sim(subst), old.subst_sim(subst)))
             .collect();
         self.next = self.next.subst_sim(subst);
+        self
+    }
+}
+
+impl CollectSteadfastConstraints for Substitute {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let next_context: Vec<ID> = self
+            .rearrange
+            .iter()
+            .map(|(new, _old)| new.var.id)
+            .collect();
+        self.next
+            .collect_sf_constraints(program, &next_context, constraints);
+
+        for (new, old) in &self.rearrange {
+            if new.var.id != old.id {
+                constraints.vars_flow_together(new.var.id, old.id);
+            }
+        }
+
+        for var in context {
+            let occurences = self
+                .rearrange
+                .iter()
+                .map(|(_new, old)| old.id)
+                .filter(|id| *id == *var)
+                .count();
+
+            if occurences != 1 {
+                constraints.quantity_constraints.insert(*var);
+            }
+        }
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Substitute {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        let new_rearrange = Vec::with_capacity(self.rearrange.len());
+        for (mut new, old) in std::mem::replace(&mut self.rearrange, new_rearrange) {
+            new = new.subst_sf_annotations(quantity_constraints);
+            self.rearrange.push((new, old));
+        }
+        self.next = self.next.subst_sf_annotations(quantity_constraints);
         self
     }
 }

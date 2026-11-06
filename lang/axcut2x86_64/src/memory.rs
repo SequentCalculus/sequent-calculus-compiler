@@ -8,7 +8,10 @@
 //! be treated uniformly. The reference count of the head of the linked list stands for the
 //! reference count of the whole object and is the only one that is changed during the lifetime of
 //! the object. The reference count of all other blocks is always zero (except temporarily during
-//! loading), as the only reference to them is link from the  previous block.
+//! loading), as the only reference to them is link from the previous block.
+//!
+//! For allocations marked as steadfast, we do not store a reference count, and we pack the memory
+//! blocks more tightly, omitting unnecessary slots for external types.
 //!
 //! The number of fields and what fields serve what purpose can be configured in [`super::config`],
 //! via [`super::config::FIELDS_PER_BLOCK`], [`super::config::REFERENCE_COUNT_OFFSET`],
@@ -34,15 +37,19 @@
 use super::Backend;
 use super::code::{Code, compare_immediate};
 use super::config::{
-    FIELDS_PER_BLOCK, FREE, HEAP, Immediate, NEXT_ELEMENT_OFFSET, REFERENCE_COUNT_OFFSET, Register,
-    SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, field_offset, stack_offset,
+    FIELDS_PER_BLOCK, FREE, HEADER_FIELDS, HEAP, Immediate, NEXT_ELEMENT_OFFSET,
+    REFERENCE_COUNT_OFFSET, Register, SPILL_TEMP, STACK, TEMP, TEMPORARY_TEMP, Temporary, address,
+    field_offset, stack_offset,
 };
 
 use TemporaryNumber::{Fst, Snd};
-use axcut::syntax::{Chirality, ContextBinding, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, Quantity, TypingContext};
 use axcut2backend::{
-    code::Instructions, config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory,
-    utils::Utils,
+    code::Instructions,
+    config::TemporaryNumber,
+    fresh_labels::fresh_label,
+    memory::Memory,
+    utils::{Utils, used_temporaries},
 };
 
 /// This function generates code for skipping instructions if the contents of a register is zero.
@@ -105,9 +112,10 @@ fn if_zero_then_else(
 ///    which means that the memory block is part of the big chunk of so far unused memory. In this
 ///    case we fall back to bump allocation from this big chunk.
 /// - `new_block` is the temporary into which we acquire the new block.
+/// - `quantity` indicates whether the acquired block is used steadfastly.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
 #[allow(clippy::vec_init_then_push)]
-fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
+fn acquire_block(new_block: Temporary, quantity: Quantity, instructions: &mut Vec<Code>) {
     fn erase_fields(to_erase: Register, instructions: &mut Vec<Code>) {
         for offset in 0..FIELDS_PER_BLOCK {
             instructions.push(Code::COMMENT(format!(
@@ -180,23 +188,25 @@ fn acquire_block(new_block: Temporary, instructions: &mut Vec<Code>) {
 
     // the else branch is executed for possibility 1); since the first slot of the acquired block
     // contained a pointer to another element, we now have to store a zero for the reference count
-    // there
-    let mut else_branch = Vec::with_capacity(3);
-    else_branch.push(Code::COMMENT(
-        "####initialize refcount of just acquired block".to_string(),
-    ));
-    match new_block {
-        Temporary::Register(new_block_register) => {
-            else_branch.push(Code::MOVIM(
-                new_block_register,
-                REFERENCE_COUNT_OFFSET,
-                0.into(),
-            ));
-        }
-        Temporary::Spill(_new_block_position) => {
-            // this instruction would be needed without the above optimization for the fast path
-            //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
-            else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET, 0.into()));
+    // there. This is omitted when acquiring a steadfastly used memory block.
+    let mut else_branch = Vec::new();
+    if quantity == Quantity::Omega {
+        else_branch.push(Code::COMMENT(
+            "####initialize refcount of just acquired block".to_string(),
+        ));
+        match new_block {
+            Temporary::Register(new_block_register) => {
+                else_branch.push(Code::MOVIM(
+                    new_block_register,
+                    REFERENCE_COUNT_OFFSET,
+                    0.into(),
+                ));
+            }
+            Temporary::Spill(_new_block_position) => {
+                // this instruction would be needed without the above optimization for the fast path
+                //else_branch.push(Code::MOVL(TEMP, STACK, stack_offset(new_block_position)));
+                else_branch.push(Code::MOVIM(TEMP, REFERENCE_COUNT_OFFSET, 0.into()));
+            }
         }
     }
 
@@ -238,27 +248,23 @@ fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Ve
 /// This function generates code for storing a value into the first or second slot of some
 /// non-header field of a memory block. The value is in the first or second temporary after the
 /// given context.
-/// - `number` determines whether the first or the second slot is written.
-/// - `context` is the given context.
+/// - `temporary` is the temporary to be written.
 /// - `memory_block` is the register pointing to the block.
-/// - `offset` is the offset of the field within the memory block.
+/// - `offset` is the offset of the slot within the memory block.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn store_field(
-    number: TemporaryNumber,
-    context: &TypingContext,
+fn store_slot(
+    temporary: Temporary,
     memory_block: Register,
-    offset: usize,
+    offset: Immediate,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend::fresh_temporary(number, context) {
-        Temporary::Register(register) => instructions.push(Code::MOVS(
-            register,
-            memory_block,
-            field_offset(number, offset),
-        )),
+    match temporary {
+        Temporary::Register(register) => {
+            instructions.push(Code::MOVS(register, memory_block, offset))
+        }
         Temporary::Spill(position) => {
             instructions.push(Code::MOVL(TEMP, STACK, stack_offset(position)));
-            instructions.push(Code::MOVS(TEMP, memory_block, field_offset(number, offset)));
+            instructions.push(Code::MOVS(TEMP, memory_block, offset));
         }
     }
 }
@@ -266,35 +272,29 @@ fn store_field(
 /// This function generates code for loading a value from the first or second slot of some
 /// non-header field of a memory block. The value is loaded into the first or second temporary
 /// after the given context.
-/// - `number` determines whether the first or the second slot is written.
-/// - `context` is the given context.
+/// - `temporary` is the temporary to be loaded.
 /// - `memory_block` is the register pointing to the block.
-/// - `offset` is the offset of the field within the memory block.
+/// - `offset` is the offset of the slot within the memory block.
 /// - `instructions` is the list of instructions to which the new instructions are appended.
-fn load_field(
-    number: TemporaryNumber,
-    context: &TypingContext,
+fn load_slot(
+    temporary: Temporary,
     memory_block: Register,
-    offset: usize,
+    offset: Immediate,
     instructions: &mut Vec<Code>,
 ) {
-    match Backend::fresh_temporary(number, context) {
+    match temporary {
         Temporary::Register(register) => {
-            instructions.push(Code::MOVL(
-                register,
-                memory_block,
-                field_offset(number, offset),
-            ));
+            instructions.push(Code::MOVL(register, memory_block, offset));
         }
         Temporary::Spill(position) => {
-            instructions.push(Code::MOVL(TEMP, memory_block, field_offset(number, offset)));
+            instructions.push(Code::MOVL(TEMP, memory_block, offset));
             instructions.push(Code::MOVS(TEMP, STACK, stack_offset(position)));
         }
     }
 }
 
 /// This function generates code for storing a value into some non-header field of a memory block.
-/// The value is in the first and second temporary after the remaining context.
+/// The value is in the first and potentially second temporary after the remaining context.
 /// - `to_store` is the variable the value is bound to.
 /// - `remaining_context` is the remaining context after the store.
 /// - `memory_block` is the register pointing to the block.
@@ -307,13 +307,31 @@ fn store_value(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    store_field(Snd, remaining_context, memory_block, offset, instructions);
-    // values of external types like integers occupy only the second temporary, so we zero the
-    // first slot to indicate that there is no pointer to another memory block in this field
+    // values of external types like integers occupy only the first temporary...
+    store_slot(
+        Backend::fresh_temporary(
+            if to_store.chi == Chirality::Ext {
+                Fst
+            } else {
+                Snd
+            },
+            remaining_context,
+        ),
+        memory_block,
+        field_offset(Snd, offset),
+        instructions,
+    );
+    // ... so we zero the first slot to indicate that there is no pointer to another memory block in
+    // this field
     if to_store.chi == Chirality::Ext {
         store_zero(memory_block, offset, instructions);
     } else {
-        store_field(Fst, remaining_context, memory_block, offset, instructions);
+        store_slot(
+            Backend::fresh_temporary(Fst, remaining_context),
+            memory_block,
+            field_offset(Fst, offset),
+            instructions,
+        );
     }
 }
 
@@ -328,7 +346,7 @@ enum LoadMode {
 }
 
 /// This function generates code for loading a value from some non-header field of a memory block.
-/// The value is loaded into the first and second temporary after the existing context.
+/// The value is loaded into the first and potentially second temporary after the existing context.
 /// - `to_store` is the variable the value is bound to.
 /// - `existing_context` is the existing context before the load.
 /// - `memory_block` is the register pointing to the block.
@@ -344,18 +362,35 @@ fn load_value(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    load_field(Snd, existing_context, memory_block, offset, instructions);
-    // values of external types like integers occupy only the second temporary, so we do not have to
-    // load the first slot
+    load_slot(
+        Backend::fresh_temporary(
+            if to_load.chi == Chirality::Ext {
+                Fst
+            } else {
+                Snd
+            },
+            existing_context,
+        ),
+        memory_block,
+        field_offset(Snd, offset),
+        instructions,
+    );
+    // values of external types like integers occupy only the first temporary, so we do not have to
+    // load the other slot
     if to_load.chi != Chirality::Ext {
-        load_field(Fst, existing_context, memory_block, offset, instructions);
-        let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
-            Temporary::Register(register) => register,
-            // if the field was loaded to a spill position by `load_field`, its contents are is
-            // still in `TEMP` at this point
-            Temporary::Spill(_) => TEMP,
-        };
+        load_slot(
+            Backend::fresh_temporary(Fst, existing_context),
+            memory_block,
+            field_offset(Fst, offset),
+            instructions,
+        );
         if load_mode == LoadMode::Share {
+            let register_to_share = match Backend::fresh_temporary(Fst, existing_context) {
+                Temporary::Register(register) => register,
+                // if the field was loaded to a spill position by `load_field`, its contents are is
+                // still in `TEMP` at this point
+                Temporary::Spill(_) => TEMP,
+            };
             // the part of the value loaded into the first temporary might point to memory
             Backend::share_block(Temporary::Register(register_to_share), instructions);
         }
@@ -404,6 +439,40 @@ fn store_values(
     store_zeros(free_fields, memory_block, instructions);
 }
 
+/// This function generates code for storing the right-most temporaries of a context into the
+/// non-header slots of a memory block.
+/// - `to_store` is the number of temporaries to be stored.
+/// - `remaining_temporaries` is the number of remaining temporaries after the stores.
+/// - `memory_block` is the register pointing to the block.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn store_slots(
+    mut to_store: usize,
+    remaining_temporaries: usize,
+    memory_block: Register,
+    block_position: BlockPosition,
+    instructions: &mut Vec<Code>,
+) {
+    let mut offset = if block_position == BlockPosition::Last {
+        field_offset(Snd, FIELDS_PER_BLOCK - 1)
+    } else {
+        field_offset(Fst, FIELDS_PER_BLOCK - 1)
+    };
+    instructions.push(Code::COMMENT("##store values".to_string()));
+    // we store the temporaries right to left
+    while to_store > 0 {
+        store_slot(
+            Backend::temporary_from_position(remaining_temporaries + to_store - 1),
+            memory_block,
+            offset,
+            instructions,
+        );
+        to_store -= 1;
+        offset.val -= 8;
+    }
+}
+
 /// This function generates code for loading several values from some non-header fields of a memory
 /// block into temporaries to the right of an existing context. The number of temporaries clobbered
 /// to the right of the existing context is two times the number of values loaded.
@@ -446,6 +515,40 @@ fn load_values(
         );
 
         free_fields -= 1;
+    }
+}
+
+/// This function generates code for loading the non-header slots of a memory block into the
+/// right-most temporaries of a context.
+/// - `to_load` is the number of temporaries to be loaded.
+/// - `existing_temporaries` is the number of existing temporaries before the loads.
+/// - `memory_block` is the register pointing to the block.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn load_slots(
+    mut to_load: usize,
+    existing_temporaries: usize,
+    memory_block: Register,
+    block_position: BlockPosition,
+    instructions: &mut Vec<Code>,
+) {
+    let mut offset = if block_position == BlockPosition::Last {
+        field_offset(Snd, FIELDS_PER_BLOCK - 1)
+    } else {
+        field_offset(Fst, FIELDS_PER_BLOCK - 1)
+    };
+    instructions.push(Code::COMMENT("###load values".to_string()));
+    // we load the temporaries right to left
+    while to_load > 0 {
+        load_slot(
+            Backend::temporary_from_position(existing_temporaries + to_load - 1),
+            memory_block,
+            offset,
+            instructions,
+        );
+        to_load -= 1;
+        offset.val -= 8;
     }
 }
 
@@ -495,11 +598,10 @@ fn store_fields(
         // if we do not currently store the last block, we have to store a link to the next block
         if block_position == BlockPosition::Other {
             instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-            store_field(
-                Fst,
-                &remaining_plus_to_store,
+            store_slot(
+                Backend::fresh_temporary(Fst, &remaining_plus_to_store),
                 HEAP,
-                FIELDS_PER_BLOCK - 1,
+                field_offset(Fst, FIELDS_PER_BLOCK - 1),
                 instructions,
             );
         }
@@ -526,6 +628,7 @@ fn store_fields(
         if block_position == BlockPosition::Last {
             instructions.push(Code::COMMENT("#allocate memory".to_string()));
         }
+
         store_values(
             to_store_next.into(),
             &remaining_plus_rest,
@@ -541,6 +644,7 @@ fn store_fields(
         // free temporary after the remaining context
         acquire_block(
             Backend::fresh_temporary(Fst, &remaining_plus_rest),
+            Quantity::Omega,
             instructions,
         );
 
@@ -548,6 +652,203 @@ fn store_fields(
             to_store,
             remaining_context,
             BlockPosition::Other,
+            instructions,
+        );
+    }
+}
+
+/// This function generates code for storing the temporaries of the right-most values of a context
+/// into memory for a steadfast allocation. If more than one memory block is needed, several blocks
+/// are linked together. The link to the next block is stored into the last slot of each block. The
+/// pointer to the new memory into which the values are stored will be put into the first temporary
+/// after the remaining context.
+/// - `temporaries_to_store` is the number of temporaries to store.
+/// - `remaining_temporaries` is the number remaining temporaries after the stores.
+/// - `block_position` determines whether the block into which we store the next variables is the
+///   last one in the linked list. This should be [`BlockPosition::Last`] in non-recursive calls of
+///   this function, since we store the right-most values into the last block first.
+/// - `register_freed` tracks whether a register for memory blocks in a spill position has been
+///   freed. This should be [`false`] in non-recursive calls of this function, since the register
+///   is freed by need in a recursive call.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn store_fields_sf(
+    mut temporaries_to_store: usize,
+    remaining_temporaries: usize,
+    block_position: BlockPosition,
+    register_freed: &mut bool,
+    instructions: &mut Vec<Code>,
+) {
+    if temporaries_to_store == 0 {
+        // if no memory is needed at all, we put a zero in the first temporary of the variable to
+        // indicate this
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#mark no allocation".to_string()));
+            Backend::load_immediate(
+                Backend::temporary_from_position(remaining_temporaries),
+                0.into(),
+                instructions,
+            );
+        }
+
+        if *register_freed {
+            // we are done with storing, so we restore the evacuated register if we did not do so
+            // before
+            instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+            instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+        }
+    } else {
+        // if we do not currently store the last block, we have to store a link to the next block
+        if block_position == BlockPosition::Other {
+            let offset = field_offset(Snd, FIELDS_PER_BLOCK - 1);
+            // if we had to evacuate a register for a block, the link is still in there at this
+            // point
+            if *register_freed {
+                instructions.push(Code::COMMENT(
+                    "##store link to previous block (still in evacuated register)".to_string(),
+                ));
+                instructions.push(Code::MOVS(TEMPORARY_TEMP, HEAP, offset))
+            } else {
+                instructions.push(Code::COMMENT("##store link to previous block".to_string()));
+                store_slot(
+                    Backend::temporary_from_position(remaining_temporaries + temporaries_to_store),
+                    HEAP,
+                    offset,
+                    instructions,
+                );
+            }
+        }
+
+        // we store the last variables first; if we need yet more memory, we have to link further
+        // blocks; we can store at most `2 * (FIELDS_PER_BLOCK + HEADER_FIELDS)` variables in the
+        // last memory block, or `2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - 1` in all other blocks,
+        // since in the latter case the last slot is used for the link
+        let mut to_store_next = if temporaries_to_store
+            <= 2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - block_position as usize
+        {
+            temporaries_to_store
+        } else {
+            2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - block_position as usize
+        };
+        temporaries_to_store -= to_store_next;
+
+        // the context to the left after these stores is the context remaining after all stores plus
+        // the context of the stores still pending
+        let remaining_plus_rest = remaining_temporaries + temporaries_to_store;
+
+        // if the header slots of the block are needed, they must be treated specially: the second
+        // slot of the first field of the newly acquired block contains information needed by
+        // `acquire_block`, so we have to call the latter before performing the store to that slot;
+        // but this puts the pointer to the memory block into the first temporary that must be
+        // stored, so we have to perform that store before calling `acquire_block`; if there is
+        // only one temporary to be stored, we thus store it into the first slot instead of the
+        // second
+        let header_slots = (to_store_next + block_position as usize)
+            .saturating_sub(2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - 2);
+        to_store_next -= header_slots;
+
+        if block_position == BlockPosition::Last {
+            instructions.push(Code::COMMENT("#allocate memory".to_string()));
+        }
+        store_slots(
+            to_store_next,
+            remaining_plus_rest + header_slots,
+            HEAP,
+            block_position,
+            instructions,
+        );
+
+        if header_slots > 0 {
+            instructions.push(Code::COMMENT(
+                "##store first slot of first field".to_string(),
+            ));
+            store_slot(
+                Backend::temporary_from_position(remaining_plus_rest),
+                HEAP,
+                address(0),
+                instructions,
+            );
+        }
+
+        instructions.push(Code::COMMENT(
+            "##acquire free block from heap register".to_string(),
+        ));
+        // this puts the pointer to the memory block for the variables just stored into the first
+        // free temporary after the remaining context, and `HEAP` does not point to that memory
+        // block anymore; the store of the second slot must hence use the temporary and not
+        // `HEAP`
+        acquire_block(
+            Backend::temporary_from_position(remaining_plus_rest),
+            Quantity::One,
+            instructions,
+        );
+
+        if header_slots == 2 {
+            instructions.push(Code::COMMENT(
+                "##store second slot of first field".to_string(),
+            ));
+            match Backend::temporary_from_position(remaining_plus_rest) {
+                Temporary::Register(register) => {
+                    if *register_freed {
+                        // this and the following blocks don't need the evacuated register, so we
+                        // restore it (it's fine to do this only now, as the evacuated register will
+                        // never be stored into a block after one that stored spills)
+                        instructions
+                            .push(Code::COMMENT("###restore evacuated register".to_string()));
+                        instructions.push(Code::MOVL(
+                            TEMPORARY_TEMP,
+                            STACK,
+                            stack_offset(SPILL_TEMP),
+                        ));
+                        *register_freed = false;
+                    }
+                    store_slot(
+                        Backend::temporary_from_position(remaining_plus_rest + 1),
+                        register,
+                        address(1),
+                        instructions,
+                    );
+                }
+                Temporary::Spill(memory_block_position) => {
+                    // as the temporary we have to use for the store is a spill, we evacuate an
+                    // additional scratch register, because the temporary to store will also be a
+                    // spill and hence need `TEMP`; we only evacuate once when storing the last
+                    // block (if the last block has no spill, none of the others will) and restore
+                    // when there is nothing left to store or when the next block doesn't the
+                    // scratch register for storing (we cannot wait until the end of all stores,
+                    // because in the extreme case we may need to store the evacuated register
+                    // itself)
+                    if block_position == BlockPosition::Last {
+                        instructions.push(Code::COMMENT(
+                            "###evacuate additional scratch register for memory block".to_string(),
+                        ));
+                        instructions.push(Code::MOVS(
+                            TEMPORARY_TEMP,
+                            STACK,
+                            stack_offset(SPILL_TEMP),
+                        ));
+                        *register_freed = true;
+                    }
+                    instructions.push(Code::MOVL(
+                        TEMPORARY_TEMP,
+                        STACK,
+                        stack_offset(memory_block_position),
+                    ));
+
+                    store_slot(
+                        Backend::temporary_from_position(remaining_plus_rest + 1),
+                        TEMPORARY_TEMP,
+                        address(1),
+                        instructions,
+                    );
+                }
+            }
+        }
+
+        store_fields_sf(
+            temporaries_to_store,
+            remaining_temporaries,
+            BlockPosition::Other,
+            register_freed,
             instructions,
         );
     }
@@ -577,10 +878,47 @@ fn load_fields(
     register_freed: &mut bool,
     instructions: &mut Vec<Code>,
 ) {
+    fn performs_loads(
+        existing_plus_to_load: &TypingContext,
+        existing_plus_rest: &TypingContext,
+        to_load_next: TypingContext,
+        memory_block_register: Register,
+        block_position: BlockPosition,
+        load_mode: LoadMode,
+        instructions: &mut Vec<Code>,
+    ) {
+        // if we do not currently load the last block, we have to load the link to the next block;
+        // we have to load the link first, since loading the values will clobber the temporary
+        // containing the pointer to the memory block
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("###load link to next block".to_string()));
+            load_slot(
+                Backend::fresh_temporary(Fst, existing_plus_to_load),
+                memory_block_register,
+                field_offset(Fst, FIELDS_PER_BLOCK - 1),
+                instructions,
+            );
+        }
+
+        if load_mode == LoadMode::Release {
+            instructions.push(Code::COMMENT("###release block".to_string()));
+            release_block(memory_block_register, instructions);
+        }
+
+        load_values(
+            to_load_next,
+            existing_plus_rest,
+            memory_block_register,
+            FIELDS_PER_BLOCK - block_position as usize,
+            load_mode,
+            instructions,
+        );
+    }
+
     if !to_load.bindings.is_empty() {
-        // the context after the all loads is the existing context before all loads...
+        // the context after all loads is the existing context before all loads...
         let mut existing_plus_to_load = existing_context.clone();
-        // ... plus the context of the all loads
+        // ... plus the context of all loads
         existing_plus_to_load
             .bindings
             .append(&mut to_load.bindings.clone());
@@ -618,37 +956,16 @@ fn load_fields(
         // temporary after the context, either because it was already there before the first call
         // of this function, or because the above recursive call loaded it there
         let memory_block = Backend::fresh_temporary(Fst, &existing_plus_rest);
-
         match memory_block {
-            Temporary::Register(memory_block_register) => {
-                if load_mode == LoadMode::Release {
-                    instructions.push(Code::COMMENT("###release block".to_string()));
-                    release_block(memory_block_register, instructions);
-                }
-
-                // if we do not currently load the last block, we have to load the link to the next block;
-                // we have to load the link first, since loading the values will clobber the temporary
-                // containing the pointer to the memory block
-                if block_position == BlockPosition::Other {
-                    instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                    load_field(
-                        Fst,
-                        &existing_plus_to_load,
-                        memory_block_register,
-                        FIELDS_PER_BLOCK - 1,
-                        instructions,
-                    );
-                }
-
-                load_values(
-                    to_load_next.into(),
-                    &existing_plus_rest,
-                    memory_block_register,
-                    FIELDS_PER_BLOCK - block_position as usize,
-                    load_mode,
-                    instructions,
-                );
-            }
+            Temporary::Register(memory_block_register) => performs_loads(
+                &existing_plus_to_load,
+                &existing_plus_rest,
+                to_load_next.into(),
+                memory_block_register,
+                block_position,
+                load_mode,
+                instructions,
+            ),
             Temporary::Spill(memory_block_position) => {
                 // the first time a memory block is in a spill position, we free a register for it
                 // and only restore the register after the last loads (at the end of the first call
@@ -661,37 +978,201 @@ fn load_fields(
                     instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
                     *register_freed = true;
                 }
-
                 instructions.push(Code::MOVL(
                     TEMPORARY_TEMP,
                     STACK,
                     stack_offset(memory_block_position),
                 ));
-                if load_mode == LoadMode::Release {
-                    instructions.push(Code::COMMENT("###release block".to_string()));
-                    release_block(TEMPORARY_TEMP, instructions);
-                }
 
-                // if we do not currently load the last block, we have to load the link to the next block;
-                // we have to load the link first, since loading the values will clobber the temporary
-                // containing the pointer to the memory block
-                if block_position == BlockPosition::Other {
-                    instructions.push(Code::COMMENT("###load link to next block".to_string()));
-                    load_field(
-                        Fst,
-                        &existing_plus_to_load,
-                        TEMPORARY_TEMP,
-                        FIELDS_PER_BLOCK - 1,
-                        instructions,
-                    );
-                }
-
-                load_values(
-                    to_load_next.into(),
+                performs_loads(
+                    &existing_plus_to_load,
                     &existing_plus_rest,
+                    to_load_next.into(),
                     TEMPORARY_TEMP,
-                    FIELDS_PER_BLOCK - block_position as usize,
+                    block_position,
                     load_mode,
+                    instructions,
+                );
+
+                // after the last loads, we can restore the evacuated register
+                if block_position == BlockPosition::Last {
+                    instructions.push(Code::COMMENT("###restore evacuated register".to_string()));
+                    instructions.push(Code::MOVL(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                }
+            }
+        }
+    }
+}
+
+/// This function generates code for loading several slots from memory into temporaries to the
+/// right of an existing context for a steadfast allocation. The pointer to the memory from which
+/// the slots are to be loaded is expected to be in the first temporary after the existing context.
+/// The memory is expected to be linked together in a (possibly singleton) list, with the links
+/// stored in the last slot within the blocks.
+/// - `temporaries_to_load` is the number of temporaries to load.
+/// - `existing_temporaries` is the number of existing temporaries before the loads.
+/// - `block_position` determines whether the block which we consider next for loading variables is
+///   the last one in the linked list. This should be [`BlockPosition::Last`] in non-recursive calls
+///   of this function, since we consider the blocks last-to-first.
+/// - `register_freed` tracks whether a register for memory blocks in a spill position has been
+///   freed. This should be [`false`] in non-recursive calls of this function, since the register
+///   is freed by need in a recursive call.
+/// - `instructions` is the list of instructions to which the new instructions are appended.
+fn load_fields_sf(
+    mut temporaries_to_load: usize,
+    existing_temporaries: usize,
+    block_position: BlockPosition,
+    register_freed: &mut bool,
+    instructions: &mut Vec<Code>,
+) {
+    fn performs_loads(
+        existing_plus_to_load: usize,
+        existing_plus_rest: usize,
+        to_load_next: &mut usize,
+        memory_block_register: Register,
+        block_position: BlockPosition,
+        instructions: &mut Vec<Code>,
+    ) {
+        // if we do not currently load the last block, we have to load the link to the next block;
+        // we have to load the link first, since loading the values will clobber the temporary
+        // containing the pointer to the memory block
+        if block_position == BlockPosition::Other {
+            instructions.push(Code::COMMENT("###load link to next block".to_string()));
+            load_slot(
+                Backend::temporary_from_position(existing_plus_to_load),
+                memory_block_register,
+                field_offset(Snd, FIELDS_PER_BLOCK - 1),
+                instructions,
+            );
+        }
+
+        // if the header slots of the block are used, they must be treated specially: the
+        // second slot of the first field of the block to be released is overwritten by
+        // `release_block`, so we have perform the load of that slot before calling the
+        // latter, unless there is only one temporary to be loaded, in which case there is
+        // nothing in the second slot; the register pointing to the block is in the first
+        // temporary, so we have to load that slot only after releasing
+        let header_slots = (*to_load_next + block_position as usize)
+            .saturating_sub(2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - 2);
+        *to_load_next -= header_slots;
+
+        if header_slots > 0 {
+            load_slots(
+                *to_load_next,
+                existing_plus_rest + header_slots,
+                memory_block_register,
+                block_position,
+                instructions,
+            );
+        }
+
+        if header_slots == 2 {
+            instructions.push(Code::COMMENT(
+                "##load second slot of first field".to_string(),
+            ));
+            load_slot(
+                Backend::temporary_from_position(existing_plus_rest + 1),
+                memory_block_register,
+                address(1),
+                instructions,
+            );
+        }
+
+        instructions.push(Code::COMMENT("###release block".to_string()));
+        release_block(memory_block_register, instructions);
+
+        if header_slots == 0 {
+            load_slots(
+                *to_load_next,
+                existing_plus_rest + header_slots,
+                memory_block_register,
+                block_position,
+                instructions,
+            );
+        }
+
+        if header_slots > 0 {
+            instructions.push(Code::COMMENT(
+                "##load first slot of first field".to_string(),
+            ));
+            load_slot(
+                Backend::temporary_from_position(existing_plus_rest),
+                memory_block_register,
+                address(0),
+                instructions,
+            );
+        }
+    }
+
+    if !(temporaries_to_load == 0) {
+        // the context after all loads is the existing context before all loads plus the context of
+        // all loads
+        let existing_plus_to_load = existing_temporaries + temporaries_to_load;
+
+        // there can be at most `2 * (FIELDS_PER_BLOCK + HEADER_FIELDS)` slots in the last memory
+        // block, or `2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - 1` in all other blocks, since in the
+        // latter case the last slot is used for the link
+        let mut to_load_next = if temporaries_to_load
+            <= 2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - block_position as usize
+        {
+            temporaries_to_load
+        } else {
+            2 * (FIELDS_PER_BLOCK + HEADER_FIELDS) - block_position as usize
+        };
+        // we load the values in the current block only after the previous ones
+        temporaries_to_load -= to_load_next;
+
+        // the context to the left before these loads is the existing context before all loads plus
+        // the context for the loads done before
+        let existing_plus_rest = existing_temporaries + temporaries_to_load;
+
+        // we load the previous fields first; this puts the link to the block for the next loads
+        // into the first temporary after the context
+        load_fields_sf(
+            temporaries_to_load,
+            existing_temporaries,
+            BlockPosition::Other,
+            register_freed,
+            instructions,
+        );
+
+        // the pointer to the memory block from which to load the values now is in the first
+        // temporary after the context, either because it was already there before the first call
+        // of this function, or because the above recursive call loaded it there
+        let memory_block = Backend::temporary_from_position(existing_plus_rest);
+        match memory_block {
+            Temporary::Register(memory_block_register) => performs_loads(
+                existing_plus_to_load,
+                existing_plus_rest,
+                &mut to_load_next,
+                memory_block_register,
+                block_position,
+                instructions,
+            ),
+            Temporary::Spill(memory_block_position) => {
+                // the first time a memory block is in a spill position, we free a register for it
+                // and only restore the register after the last loads (at the end of the first call
+                // of this function), since all memory blocks after this one will also be in a
+                // spill position
+                if !*register_freed {
+                    instructions.push(Code::COMMENT(
+                        "###evacuate additional scratch register for memory block".to_string(),
+                    ));
+                    instructions.push(Code::MOVS(TEMPORARY_TEMP, STACK, stack_offset(SPILL_TEMP)));
+                    *register_freed = true;
+                }
+                instructions.push(Code::MOVL(
+                    TEMPORARY_TEMP,
+                    STACK,
+                    stack_offset(memory_block_position),
+                ));
+
+                performs_loads(
+                    existing_plus_to_load,
+                    existing_plus_rest,
+                    &mut to_load_next,
+                    TEMPORARY_TEMP,
+                    block_position,
                     instructions,
                 );
 
@@ -773,19 +1254,34 @@ impl Memory<Code, Temporary> for Backend {
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
-        store_fields(
-            to_store,
-            remaining_context,
-            BlockPosition::Last,
-            instructions,
-        );
+        // tracks whether a register for memory blocks in a spill position has been freed
+        let mut register_freed = false;
+
+        if quantity == Quantity::One {
+            store_fields_sf(
+                used_temporaries(&to_store.bindings, None),
+                used_temporaries(&remaining_context.bindings, None),
+                BlockPosition::Last,
+                &mut register_freed,
+                instructions,
+            );
+        } else {
+            store_fields(
+                to_store,
+                remaining_context,
+                BlockPosition::Last,
+                instructions,
+            );
+        }
     }
 
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
+        quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
         #[allow(clippy::vec_init_then_push)]
@@ -848,19 +1344,38 @@ impl Memory<Code, Temporary> for Backend {
         }
 
         if !to_load.bindings.is_empty() {
-            let memory_block = Backend::fresh_temporary(Fst, existing_context);
+            if quantity == Quantity::One {
+                // tracks whether a register for memory blocks in a spill position has been freed
+                let mut register_freed = false;
 
-            instructions.push(Code::COMMENT("#load from memory".to_string()));
-            match memory_block {
-                Temporary::Register(memory_block_register) => load_register(
-                    memory_block_register,
-                    to_load,
-                    existing_context,
+                instructions.push(Code::COMMENT(
+                    "##release blocks onto linear free list when loading".to_string(),
+                ));
+                load_fields_sf(
+                    used_temporaries(&to_load.bindings, None),
+                    used_temporaries(&existing_context.bindings, None),
+                    BlockPosition::Last,
+                    &mut register_freed,
                     instructions,
-                ),
-                Temporary::Spill(memory_block_position) => {
-                    instructions.push(Code::MOVL(TEMP, STACK, stack_offset(memory_block_position)));
-                    load_register(TEMP, to_load, existing_context, instructions);
+                );
+            } else {
+                let memory_block = Backend::fresh_temporary(Fst, existing_context);
+                instructions.push(Code::COMMENT("#load from memory".to_string()));
+                match memory_block {
+                    Temporary::Register(memory_block_register) => load_register(
+                        memory_block_register,
+                        to_load,
+                        existing_context,
+                        instructions,
+                    ),
+                    Temporary::Spill(memory_block_position) => {
+                        instructions.push(Code::MOVL(
+                            TEMP,
+                            STACK,
+                            stack_offset(memory_block_position),
+                        ));
+                        load_register(TEMP, to_load, existing_context, instructions);
+                    }
                 }
             }
         }

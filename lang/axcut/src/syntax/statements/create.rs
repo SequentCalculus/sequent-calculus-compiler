@@ -5,10 +5,16 @@ use printer::tokens::{COLON, COMMA, CREATE, EQ, SEMI};
 use printer::{DocAllocator, Print};
 
 use super::{Clause, Substitute, print_clauses};
-use crate::syntax::{Chirality, ContextBinding, ID, Identifier, Statement, Ty, TypingContext};
+use crate::syntax::context::Quantity;
+use crate::syntax::{
+    Chirality, ContextBinding, ID, Identifier, Prog, Statement, Ty, TypingContext,
+};
 
 use crate::traits::free_vars::FreeVars;
 use crate::traits::linearize::Linearizing;
+use crate::traits::steadfast::{
+    CollectSteadfastConstraints, SteadfastConstraints, SubstituteSteadfastAnnotations,
+};
 use crate::traits::substitution::Subst;
 use crate::traits::typed_free_vars::TypedFreeVars;
 
@@ -16,14 +22,15 @@ use std::collections::{BTreeSet, HashSet};
 use std::rc::Rc;
 
 /// This struct defines the creation of a closure in AxCut. It consists of a variable to which to
-/// bind the closure, its type, a list of clauses (one for each xtor in the type declaration), and
-/// the remaining statement. Moreover, the closure environment can be annotated as is done by the
-/// linearization procedure. Additionally, the free variables of the clauses and of the remaining
-/// statement can be annotated.
+/// bind the closure, its type, whether it's known to be used linearly, a list of clauses (one for
+/// each xtor in the type declaration), and the remaining statement. Moreover, the closure
+/// environment can be annotated as is done by the linearization procedure. Additionally, the
+/// free variables of the clauses and of the remaining statement can be annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Create {
     pub var: Identifier,
     pub ty: Ty,
+    pub quantity: Quantity,
     /// Closure environment
     pub context: Option<TypingContext>,
     pub clauses: Vec<Clause>,
@@ -55,6 +62,7 @@ impl Print for Create {
 
         alloc
             .keyword(CREATE)
+            .append(self.quantity.print(cfg, alloc))
             .append(alloc.space())
             .append(self.var.print(cfg, alloc))
             .append(COLON)
@@ -100,6 +108,7 @@ impl TypedFreeVars for Create {
         vars.remove(&ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         });
     }
@@ -169,6 +178,7 @@ impl Linearizing for Create {
         let new_binding = ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::One,
             ty: self.ty.clone(),
         };
 
@@ -222,5 +232,63 @@ impl Linearizing for Create {
             }
             .into()
         }
+    }
+}
+
+impl CollectSteadfastConstraints for Create {
+    fn collect_sf_constraints(
+        &self,
+        program: &Prog,
+        context: &[ID],
+        constraints: &mut SteadfastConstraints,
+    ) {
+        let Ty::Decl(type_name) = &self.ty else {
+            unreachable!("invoke must be called with (co)data");
+        };
+
+        let env_len = self
+            .context
+            .as_ref()
+            .expect("closure environment is annotated in linearize pass")
+            .bindings
+            .len();
+
+        let (context_without_env, env) = context.split_at(context.len() - env_len);
+
+        for clause in &self.clauses {
+            if matches!(*clause.body, Statement::Unreachable(_)) {
+                continue;
+            }
+
+            let xtor = program
+                .find_xtor(type_name, &clause.xtor)
+                .expect("clauses must have a valid xtor");
+            constraints.contexts_flow_together(&clause.context.ids(), &xtor.args.ids());
+
+            let mut clause_context = clause.context.ids().clone();
+            clause_context.extend_from_slice(env);
+            clause
+                .body
+                .collect_sf_constraints(program, &clause_context, constraints);
+        }
+
+        let mut next_context = context_without_env.to_vec();
+        next_context.push(self.var.id);
+        self.next
+            .collect_sf_constraints(program, &next_context, constraints);
+
+        constraints.context_flows_into_var(self.var.id, env);
+    }
+}
+
+impl SubstituteSteadfastAnnotations for Create {
+    fn subst_sf_annotations(mut self, quantity_constraints: &HashSet<ID>) -> Self {
+        if quantity_constraints.contains(&self.var.id) {
+            self.quantity = Quantity::Omega;
+        }
+        self.context = self.context.subst_sf_annotations(quantity_constraints);
+        self.clauses = self.clauses.subst_sf_annotations(quantity_constraints);
+        self.next = self.next.subst_sf_annotations(quantity_constraints);
+        self
     }
 }

@@ -4,7 +4,7 @@ use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
-use crate::utils::{code_methods, code_table};
+use crate::utils::{asm_safe_ty_name, code_methods, code_table};
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber::Snd},
@@ -13,7 +13,7 @@ use crate::{
     utils::Utils,
 };
 use axcut::syntax::{
-    Chirality, ContextBinding, TypeDeclaration, TypingContext, statements::Create,
+    Chirality, ContextBinding, Quantity, TypeDeclaration, TypingContext, statements::Create,
 };
 
 use std::hash::Hash;
@@ -32,7 +32,8 @@ impl CodeStatement for Create {
             + Utils<Temporary>,
     {
         let comment = format!(
-            "{CREATE} {}: {} = ({})\\{{ ... \\}};",
+            "{CREATE}{} {}: {} = ({})\\{{ ... \\}};",
+            self.quantity.print_to_string(None),
             self.var.print_to_string(None),
             self.ty.print_to_string(None),
             self.context
@@ -51,21 +52,19 @@ impl CodeStatement for Create {
                     .bindings
                     .len(),
         );
-        Backend::store(closure_environment.clone().into(), &context, instructions);
-
-        let fresh_label = format!(
-            "{}_{}",
-            self.ty
-                .print_to_string(None)
-                .replace('[', "_")
-                .replace(", ", "_")
-                .replace(']', ""),
-            fresh_label()
+        Backend::store(
+            closure_environment.clone().into(),
+            &context,
+            self.quantity,
+            instructions,
         );
+
+        let fresh_label = format!("{}_{}", asm_safe_ty_name(&self.ty), fresh_label());
 
         context.bindings.push(ContextBinding {
             var: self.var.clone(),
             chi: Chirality::Cns,
+            quantity: Quantity::One,
             ty: self.ty,
         });
 
@@ -87,6 +86,7 @@ impl CodeStatement for Create {
             self.clauses,
             &fresh_label,
             types,
+            self.quantity,
             instructions,
         );
     }

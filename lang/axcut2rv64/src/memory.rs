@@ -39,7 +39,7 @@ use super::config::{
 };
 
 use TemporaryNumber::{Fst, Snd};
-use axcut::syntax::{Chirality, ContextBinding, TypingContext};
+use axcut::syntax::{Chirality, ContextBinding, Quantity, TypingContext};
 use axcut2backend::{
     config::TemporaryNumber, fresh_labels::fresh_label, memory::Memory, utils::Utils,
 };
@@ -195,45 +195,51 @@ fn store_zeros(free_fields: usize, memory_block: Register, instructions: &mut Ve
 /// This function generates code for storing a value into the first or second slot of some
 /// non-header field of a memory block. The value is in the first or second temporary after the
 /// given context.
-/// - `number` determines whether the first or the second slot is written.
+/// - `temporary_number` determines whether the first or the second temporary of a variable is
+///   written.
+/// - `slot_number` determines whether the first or the second slot is written.
 /// - `context` is the given context.
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
-fn store_field(
-    number: TemporaryNumber,
+fn store_slot(
+    temporary_number: TemporaryNumber,
+    slot_number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
 ) -> Code {
     Code::SW(
-        Backend::fresh_temporary(number, context),
+        Backend::fresh_temporary(temporary_number, context),
         memory_block,
-        field_offset(number, offset),
+        field_offset(slot_number, offset),
     )
 }
 
 /// This function generates code for loading a value from the first or second slot of some
 /// non-header field of a memory block. The value is loaded into the first or second temporary
 /// after the given context.
-/// - `number` determines whether the first or the second slot is written.
+/// - `temporary_number` determines whether the first or the second temporary of a variable is
+///   written.
+/// - `slot_number` determines whether the first or the second slot is written.
 /// - `context` is the given context.
 /// - `memory_block` is the register pointing to the block.
 /// - `offset` is the offset of the field within the memory block.
-fn load_field(
-    number: TemporaryNumber,
+fn load_slot(
+    temporary_number: TemporaryNumber,
+    slot_number: TemporaryNumber,
     context: &TypingContext,
     memory_block: Register,
     offset: usize,
 ) -> Code {
     Code::LW(
-        Backend::fresh_temporary(number, context),
+        Backend::fresh_temporary(temporary_number, context),
         memory_block,
-        field_offset(number, offset),
+        field_offset(slot_number, offset),
     )
 }
 
 /// This function generates code for storing a value into some non-header field of a memory block.
-/// The value is in the first and second temporary after the remaining context.
+/// The value is in the first and potentially second temporary after the remaining context.
 /// - `to_store` is the variable the value is bound to.
 /// - `remaining_context` is the remaining context after the store.
 /// - `memory_block` is the register pointing to the block.
@@ -246,13 +252,30 @@ fn store_value(
     offset: usize,
     instructions: &mut Vec<Code>,
 ) {
-    instructions.push(store_field(Snd, remaining_context, memory_block, offset));
-    // values of external types like integers occupy only the second temporary, so we zero the
-    // first slot to indicate that there is no pointer to another memory block in this field
+    // values of external types like integers occupy only the first temporary...
+    instructions.push(store_slot(
+        if to_store.chi == Chirality::Ext {
+            Fst
+        } else {
+            Snd
+        },
+        Snd,
+        remaining_context,
+        memory_block,
+        offset,
+    ));
+    // ... so we zero the first slot to indicate that there is no pointer to another memory block in
+    // this field
     if to_store.chi == Chirality::Ext {
         store_zero(memory_block, offset, instructions);
     } else {
-        instructions.push(store_field(Fst, remaining_context, memory_block, offset));
+        instructions.push(store_slot(
+            Fst,
+            Fst,
+            remaining_context,
+            memory_block,
+            offset,
+        ));
     }
 }
 
@@ -267,7 +290,7 @@ enum LoadMode {
 }
 
 /// This function generates code for loading a value from some non-header field of a memory block.
-/// The value is loaded into the first and second temporary after the existing context.
+/// The value is loaded into the first and potentially second temporary after the existing context.
 /// - `to_store` is the variable the value is bound to.
 /// - `existing_context` is the existing context before the load.
 /// - `memory_block` is the register pointing to the block.
@@ -283,11 +306,21 @@ fn load_value(
     load_mode: LoadMode,
     instructions: &mut Vec<Code>,
 ) {
-    instructions.push(load_field(Snd, existing_context, memory_block, offset));
-    // values of external types like integers occupy only the second temporary, so we do not have to
-    // load the first slot
+    instructions.push(load_slot(
+        if to_load.chi == Chirality::Ext {
+            Fst
+        } else {
+            Snd
+        },
+        Snd,
+        existing_context,
+        memory_block,
+        offset,
+    ));
+    // values of external types like integers occupy only the first temporary, so we do not have to
+    // load the other slot
     if to_load.chi != Chirality::Ext {
-        instructions.push(load_field(Fst, existing_context, memory_block, offset));
+        instructions.push(load_slot(Fst, Fst, existing_context, memory_block, offset));
         if load_mode == LoadMode::Share {
             // the part of the value loaded into the first temporary might point to memory
             Backend::share_block(
@@ -430,7 +463,8 @@ fn store_fields(
         // if we do not currently store the last block, we have to store a link to the next block
         if block_position == BlockPosition::Other {
             instructions.push(Code::COMMENT("##store link to previous block".to_string()));
-            instructions.push(store_field(
+            instructions.push(store_slot(
+                Fst,
                 Fst,
                 &remaining_plus_to_store,
                 HEAP,
@@ -559,7 +593,8 @@ fn load_fields(
         // containing the pointer to the memory block
         if block_position == BlockPosition::Other {
             instructions.push(Code::COMMENT("###load link to next block".to_string()));
-            instructions.push(load_field(
+            instructions.push(load_slot(
+                Fst,
                 Fst,
                 &existing_plus_to_load,
                 memory_block,
@@ -618,6 +653,8 @@ impl Memory<Code, Register> for Backend {
     fn store(
         to_store: TypingContext,
         remaining_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
         store_fields(
@@ -631,6 +668,8 @@ impl Memory<Code, Register> for Backend {
     fn load(
         to_load: TypingContext,
         existing_context: &TypingContext,
+        // TODO: The optimization for linear data is not implemented for this backend yet.
+        _quantity: Quantity,
         instructions: &mut Vec<Code>,
     ) {
         if !to_load.bindings.is_empty() {

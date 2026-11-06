@@ -140,19 +140,21 @@ pub const fn address(n: isize) -> Immediate {
     }
 }
 
-/// The number of usable fields per memory block. One additional field is used as a header,
-/// containing, for example, the reference count or the link to the next element in a free list.
+/// The number of non-header fields per memory block. One additional field is used as a header,
+/// containing, for example, the reference count or the link to the next element in a free list, or
+/// further values in the steadfast case.
 pub const FIELDS_PER_BLOCK: usize = 3;
+pub const HEADER_FIELDS: usize = 1;
 
 /// The address offset within a memory block of the reference count.
-pub const REFERENCE_COUNT_OFFSET: Immediate = address(0);
+pub const REFERENCE_COUNT_OFFSET: Immediate = address(1);
 
 /// The address offset within a memory block of the link to the next element in a free list.
-pub const NEXT_ELEMENT_OFFSET: Immediate = address(0);
+pub const NEXT_ELEMENT_OFFSET: Immediate = address(1);
 
 /// This function calculates the address offset within a memory block of either the first or the
-/// second slot of a given field. The very first field of a memory block serves as a header and is
-/// hence always added to the offset.
+/// second slot of a given non-header field. The very first field of a memory block serves as a
+/// header and is hence added to the offset.
 /// - `number` determines whether the first or the second slot of a field is needed.
 /// - `field` is the logical offset of the field in the memory block. It must be between `0` and
 ///   [`FIELDS_PER_BLOCK`].
