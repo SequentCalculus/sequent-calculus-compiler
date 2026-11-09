@@ -11,8 +11,7 @@ impl Inline for Create {
         to_visit: &mut HashMap<Identifier, Def>,
         occurrences: &HashMap<Identifier, Mark>,
     ) -> InlineResult {
-        let InlineResult { result, free_vars } =
-            self.next.inline(retain, to_visit, occurrences);
+        let InlineResult { result, free_vars } = self.next.inline(retain, to_visit, occurrences);
         if !free_vars.contains(&self.var.id) {
             InlineResult { result, free_vars }
         } else {

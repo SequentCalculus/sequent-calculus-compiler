@@ -6,8 +6,12 @@ use crate::inline::{Inline, Mark, Occurrences};
 /// Inlines all definitions with 0 or 1 textual occurrences
 /// Inlines (/removes) all bindings that are not used
 pub fn inline(prog: &mut Prog) {
-    let original_order: HashMap<Identifier, usize> =
-        prog.defs.iter().enumerate().map(|(i, d)| (d.name.clone(), i)).collect();
+    let original_order: HashMap<Identifier, usize> = prog
+        .defs
+        .iter()
+        .enumerate()
+        .map(|(i, d)| (d.name.clone(), i))
+        .collect();
     let defs = std::mem::take(&mut prog.defs);
     let mut def_map: HashMap<Identifier, Def> = HashMap::with_capacity(defs.len());
     let mut def_iter = defs.into_iter();

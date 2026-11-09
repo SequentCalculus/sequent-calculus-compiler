@@ -1,20 +1,27 @@
-use std::{collections::{HashMap, HashSet}, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
-use axcut::{syntax::{Def, Identifier, Statement}, traits::free_vars::FreeVars};
+use axcut::{
+    syntax::{Def, Identifier, Statement},
+    traits::free_vars::FreeVars,
+};
 
 use crate::inline::{Inline, InlineResult, Mark, Occurrences};
-
 
 mod call;
 mod create;
 mod ifc;
-mod literal;
 mod r#let;
+mod literal;
 mod op;
 mod print;
 mod switch;
 
-fn subst_panic<T>() -> T { panic!("Inlining should be done before linearization") }
+fn subst_panic<T>() -> T {
+    panic!("Inlining should be done before linearization")
+}
 
 impl Occurrences for Statement {
     fn label_occurrences(
@@ -61,7 +68,7 @@ impl Inline for Statement {
             Statement::Call(call) => call.inline(retain, to_visit, occurrences),
             Statement::Switch(switch) => switch.inline(retain, to_visit, occurrences),
             Statement::Create(create) => create.inline(retain, to_visit, occurrences),
-            Statement::IfC(ifc) => ifc.inline(retain, to_visit, occurrences), 
+            Statement::IfC(ifc) => ifc.inline(retain, to_visit, occurrences),
             Statement::Let(l) => l.inline(retain, to_visit, occurrences),
             Statement::Literal(lit) => lit.inline(retain, to_visit, occurrences),
             Statement::Op(op) => op.inline(retain, to_visit, occurrences),
@@ -96,4 +103,3 @@ impl Inline for Rc<Statement> {
         Rc::unwrap_or_clone(self).inline(retain, to_visit, occurrences)
     }
 }
-

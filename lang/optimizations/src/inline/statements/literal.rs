@@ -10,8 +10,7 @@ impl Inline for Literal {
         retain: &mut Vec<Def>,
         to_visit: &mut HashMap<Identifier, Def>,
         occurrences: &HashMap<Identifier, Mark>,
-    ) -> InlineResult
-    {
+    ) -> InlineResult {
         let InlineResult {
             result,
             mut free_vars,
