@@ -28,6 +28,7 @@ jobs:
   ubuntu-tests:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +43,7 @@ jobs:
   macos-tests:
     name: Tests
     runs-on: macos-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:

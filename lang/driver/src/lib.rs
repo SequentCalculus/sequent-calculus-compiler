@@ -19,7 +19,8 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use paths::{Paths, TARGET_PATH};
+use optimizations::inline::program::inline;
+use paths::{INLINED_PATH, Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 
@@ -49,6 +50,7 @@ pub struct Driver {
     focused: HashMap<PathBuf, core_lang::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
+    inlined: HashMap<PathBuf, axcut::syntax::Prog>,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
@@ -72,6 +74,7 @@ impl Driver {
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
+            inlined: HashMap::new(),
             linearized: HashMap::new(),
         }
     }
@@ -306,6 +309,24 @@ impl Driver {
         Ok(())
     }
 
+    pub fn inlined(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        if let Some(res) = self.inlined.get(path) {
+            return Ok(res.clone());
+        }
+
+        let mut shrunk = self.shrunk(path)?;
+        inline(&mut shrunk);
+        self.inlined.insert(path.clone(), shrunk.clone());
+        Ok(shrunk)
+    }
+
+    pub fn print_inlined(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let inlined = self.inlined(path)?;
+        let target_dir = Paths::create_ir_dir(INLINED_PATH);
+        let target = target_dir.join(path.file_name().unwrap());
+        print_ir(&inlined, target, mode)
+    }
+
     /// This function returns the linearized [AxCut](axcut) version of the file.
     pub fn linearized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
         // Check for cache hit.
@@ -313,10 +334,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let mut shrunk = self.shrunk(path)?;
-        shrunk.linearize();
-        self.linearized.insert(path.clone(), shrunk.clone());
-        Ok(shrunk)
+        let mut inlined = self.inlined(path)?;
+        inlined.linearize();
+        self.linearized.insert(path.clone(), inlined.clone());
+        Ok(inlined)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.
@@ -432,6 +453,36 @@ fn append_to_path(p: &Path, s: &str) -> PathBuf {
     let mut p_osstr = p.as_os_str().to_owned();
     p_osstr.push(s);
     p_osstr.into()
+}
+
+pub fn print_ir(
+    ir: &axcut::syntax::Prog,
+    mut target: PathBuf,
+    mode: PrintMode,
+) -> Result<(), DriverError> {
+    match mode {
+        PrintMode::Textual => {
+            target.set_extension("txt");
+        }
+        PrintMode::Latex => {
+            target.set_extension("tex");
+        }
+    }
+
+    let mut file = File::create(target).expect("Could not create file");
+    match mode {
+        PrintMode::Textual => {
+            ir.print_io(&PrintCfg::default(), &mut file)
+                .expect("Could not write to file");
+        }
+        PrintMode::Latex => {
+            file.write_all(latex_start(FONTSIZE).as_bytes()).unwrap();
+            ir.print_latex(&LATEX_PRINT_CFG, &mut file)
+                .expect("Could not write to file");
+            file.write_all(LATEX_END.as_bytes()).unwrap();
+        }
+    }
+    Ok(())
 }
 
 /// This constant contains the template of the C driver.
