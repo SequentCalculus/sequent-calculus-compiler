@@ -6,6 +6,8 @@ use crate::inline::{Inline, Mark, Occurrences};
 /// Inlines all definitions with 0 or 1 textual occurrences
 /// Inlines (/removes) all bindings that are not used
 pub fn inline(prog: &mut Prog) {
+    let original_order: HashMap<Identifier, usize> =
+        prog.defs.iter().enumerate().map(|(i, d)| (d.name.clone(), i)).collect();
     let defs = std::mem::take(&mut prog.defs);
     let mut def_map: HashMap<Identifier, Def> = HashMap::with_capacity(defs.len());
     let mut def_iter = defs.into_iter();
@@ -16,16 +18,16 @@ pub fn inline(prog: &mut Prog) {
 
     let entry = def_map.get(&entry_ident).unwrap();
     let mut occurrences: HashMap<Identifier, Mark> = HashMap::new();
+    occurrences.insert(entry_ident.clone(), Mark::Retain);
     entry.body.label_occurrences(&def_map, &mut occurrences);
 
     let mut entry = def_map.remove(&entry_ident).unwrap();
-    let mut retain = Vec::new();
     entry.body = entry
         .body
-        .inline(&mut retain, &mut def_map, &occurrences)
+        .inline(&mut prog.defs, &mut def_map, &occurrences)
         .result;
-
-    // restore the invariant that main is at position 0
     prog.defs.push(entry);
-    prog.defs.extend(retain);
+
+    // restore the order of definitions
+    prog.defs.sort_unstable_by_key(|d| original_order[&d.name]);
 }
