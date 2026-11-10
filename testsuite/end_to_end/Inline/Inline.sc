@@ -47,6 +47,34 @@ def callMain(): i64 {
     main()
 }
 
+def unusedArg(x: i64): i64 {
+    40
+}
+
+def even(z: i64): Bool {
+    if z <= 0 {
+        True
+    } else {
+        odd(z - 1)
+    }
+}
+
+def odd(z: i64): Bool {
+    if z <= 0 {
+        False
+    } else {
+        even(z - 1)
+    }
+}
+
+def fac(z: i64): i64 {
+    if z <= 1 {
+        1
+    } else {
+        z * fac(z - 1)
+    }
+}
+
 def main(): i64 {
     if 2 == 1 {
         callMain()

@@ -19,8 +19,8 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use optimizations::inline::program::inline;
-use paths::{INLINED_PATH, Paths, TARGET_PATH};
+use optimizations::optimize;
+use paths::{Paths, TARGET_PATH, OPTIMIZED_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 
@@ -50,7 +50,8 @@ pub struct Driver {
     focused: HashMap<PathBuf, core_lang::syntax::program::FsProg>,
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
-    inlined: HashMap<PathBuf, axcut::syntax::Prog>,
+    optimized: HashMap<PathBuf, axcut::syntax::Prog>,
+    max_opt_passes: u64,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
@@ -74,9 +75,17 @@ impl Driver {
             uniquified: HashMap::new(),
             focused: HashMap::new(),
             shrunk: HashMap::new(),
-            inlined: HashMap::new(),
+            optimized: HashMap::new(),
             linearized: HashMap::new(),
+            max_opt_passes: optimizations::DEFAULT_NUM_PASSES,
         }
+    }
+
+    /// Create a new driver with a given maximum number of optimization passes
+    pub fn new_with_num_passes(num_passes: u64) -> Self {
+        let mut slf = Self::new();
+        slf.max_opt_passes = num_passes;
+        slf
     }
 
     /// This function returns the unparsed source code for the given file.
@@ -309,22 +318,22 @@ impl Driver {
         Ok(())
     }
 
-    pub fn inlined(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
-        if let Some(res) = self.inlined.get(path) {
+    pub fn optimized(&mut self, path: &PathBuf) -> Result<axcut::syntax::Prog, DriverError> {
+        if let Some(res) = self.optimized.get(path) {
             return Ok(res.clone());
         }
 
         let mut shrunk = self.shrunk(path)?;
-        inline(&mut shrunk);
-        self.inlined.insert(path.clone(), shrunk.clone());
+        optimize(&mut shrunk, self.max_opt_passes);
+        self.optimized.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }
 
-    pub fn print_inlined(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
-        let inlined = self.inlined(path)?;
-        let target_dir = Paths::create_ir_dir(INLINED_PATH);
+    pub fn print_optimized(&mut self, path: &PathBuf, mode: PrintMode) -> Result<(), DriverError> {
+        let optimized = self.optimized(path)?;
+        let target_dir = Paths::create_ir_dir(OPTIMIZED_PATH);
         let target = target_dir.join(path.file_name().unwrap());
-        print_ir(&inlined, target, mode)
+        print_ir(&optimized, target, mode)
     }
 
     /// This function returns the linearized [AxCut](axcut) version of the file.
@@ -334,10 +343,10 @@ impl Driver {
             return Ok(res.clone());
         }
 
-        let mut inlined = self.inlined(path)?;
-        inlined.linearize();
-        self.linearized.insert(path.clone(), inlined.clone());
-        Ok(inlined)
+        let mut optimized = self.optimized(path)?;
+        optimized.linearize();
+        self.linearized.insert(path.clone(), optimized.clone());
+        Ok(optimized)
     }
 
     /// This function prints the linearized [AxCut](axcut) code to a file in the target directory.

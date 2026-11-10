@@ -26,7 +26,7 @@ pub const UNIQUIFIED_PATH: &str = "uniquified";
 /// Path for non-linearized axcut files
 pub const SHRUNK_PATH: &str = "shrunk";
 
-pub const INLINED_PATH: &str = "inlined";
+pub const OPTIMIZED_PATH: &str = "optimized";
 
 /// Path for linearized axcut files
 pub const LINEARIZED_PATH: &str = "linearized";

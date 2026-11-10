@@ -1,0 +1,2 @@
+test_args = []
+expected = "1"
