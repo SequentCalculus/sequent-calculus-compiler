@@ -1,9 +1,9 @@
 use crate::eliminate::{Eliminate, EliminateState, statements::clause::eliminate_clause_with};
-use axcut::{syntax::statements::{Call, Statement}, traits::substitution::Subst};
+use axcut::{syntax::{Def, statements::{Call, Statement}}, traits::substitution::Subst};
 
 impl Eliminate for Call {
     type Target = Statement;
-    fn eliminate(self, state: &mut EliminateState) -> Self::Target {
+    fn eliminate(self, state: &mut EliminateState, lifted: &mut Vec<Def>) -> Self::Target {
         let Some(info) = state.remove_global_switch(&self.label) else {
             return self.into();
         };
@@ -27,7 +27,7 @@ impl Eliminate for Call {
                 // We can do this substitution now, as identifiers are globally unique 
                 let substituted = matching_clause.clone().subst_sim(&subst);
 
-                eliminate_clause_with(substituted, &xtor_context, state)
+                eliminate_clause_with(substituted, &xtor_context, state, lifted)
             }
         }
     }

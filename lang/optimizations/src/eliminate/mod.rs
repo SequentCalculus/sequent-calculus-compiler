@@ -15,6 +15,18 @@ use std::{
     rc::Rc,
 };
 
+pub trait Eliminate {
+    type Target;
+    fn eliminate(self, state: &mut EliminateState, lifted: &mut Vec<Def>) -> Self::Target;
+}
+
+impl<T: Eliminate + Clone> Eliminate for Rc<T> {
+    type Target = Rc<T::Target>;
+    fn eliminate(self, state: &mut EliminateState, lifted: &mut Vec<Def>) -> Self::Target {
+        Rc::new(Rc::unwrap_or_clone(self).eliminate(state, lifted))
+    }
+}
+
 type Xtor = Identifier;
 
 pub struct GlobalSwitch {
@@ -24,7 +36,6 @@ pub struct GlobalSwitch {
 }
 
 pub struct EliminateState<'a> {
-    defs: Vec<Def>,
     global_switches: HashMap<Identifier, GlobalSwitch>,
     pub let_bindings: HashMap<Identifier, (Xtor, TypingContext)>,
     pub create_bindings: HashMap<Identifier, Vec<Clause>>,
@@ -32,10 +43,6 @@ pub struct EliminateState<'a> {
 }
 
 impl<'a> EliminateState<'a> {
-    pub fn remove_defs(self) -> Vec<Def> {
-        self.defs
-    }
-
     pub fn readd_global_switch(&mut self, id: Identifier, info: GlobalSwitch) {
         self.global_switches.insert(id, info);
     }
@@ -44,8 +51,7 @@ impl<'a> EliminateState<'a> {
         self.global_switches.remove(id)
     } 
 
-    pub fn lift_global_switches(&mut self) {
-        let mut defs = std::mem::take(&mut self.defs);
+    pub fn lift_global_switches(&mut self, defs: &mut Vec<Def>) {
         let mut lifted_clauses = Vec::new();
         for def in defs.iter_mut() {
             if let Switch(switch) = &mut def.body {
@@ -54,7 +60,6 @@ impl<'a> EliminateState<'a> {
             }
         }
         defs.extend(lifted_clauses);
-        self.defs = defs;
     }
 
 
@@ -111,17 +116,5 @@ impl<'a> EliminateState<'a> {
                 clause
             }
         }
-    }
-}
-
-pub trait Eliminate {
-    type Target;
-    fn eliminate(self, context: &mut EliminateState) -> Self::Target;
-}
-
-impl<T: Eliminate + Clone> Eliminate for Rc<T> {
-    type Target = Rc<T::Target>;
-    fn eliminate(self, context: &mut EliminateState) -> Self::Target {
-        Rc::new(Rc::unwrap_or_clone(self).eliminate(context))
     }
 }
