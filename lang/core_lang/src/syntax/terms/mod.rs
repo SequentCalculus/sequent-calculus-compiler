@@ -302,6 +302,7 @@ impl<C: Chi> TypedFreeVars for FsTerm<C> {
     }
 }
 
+/// Allows the explicit chirality enum to implement the shared chirality trait.
 impl Chi for Chirality {
     fn is_prd(&self) -> bool {
         matches!(self, Chirality::Prd)

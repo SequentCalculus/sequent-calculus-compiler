@@ -1,24 +1,37 @@
+//! Nested Core patterns and their type annotations.
+//!
+//! Producer and consumer patterns share a generic representation.
+//! Pattern vectors may contain both chiralities.
+//! Annotation access and binder collection do not perform type checking.
+
 use crate::syntax::{Chi, Chirality, Cns, ContextBinding, Prd, Ty, TypingContext, XVar, Xtor};
 
+/// A nested pattern whose outer chirality is determined by `C`.
+///
+/// Constructor and destructor arguments may contain patterns of either
+/// chirality. Their admissibility is checked against the declared signature.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pattern<C: Chi> {
-    // A binder with given chirality determines whether variable or covariable
+    /// A variable or covariable binder, depending on `C`.
     XVar(XVar<C>),
-    // A wildcard with given chirality and type
+    /// Accepts a subject at the annotated position without introducing a binder.
     Wildcard { chi: C, ty: Ty },
-    // Either a con- or destructor with a pattern vector as argument
+    /// A constructor or destructor pattern using nested patterns as arguments.
     Xtor(Xtor<C, PatternVec>),
 }
 
+/// A producer or consumer pattern stored in a common representation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AnyPattern {
     Producer(Pattern<Prd>),
     Consumer(Pattern<Cns>),
 }
 
+/// An ordered vector of patterns with potentially different chiralities.
 pub type PatternVec = Vec<AnyPattern>;
 
 impl<C: Chi> Pattern<C> {
+    /// Returns the outer chirality marker without inspecting subpatterns.
     pub fn chirality(&self) -> &C {
         match self {
             Pattern::XVar(var) => &var.prdcns,
@@ -27,6 +40,7 @@ impl<C: Chi> Pattern<C> {
         }
     }
 
+    /// Returns the stored type annotation without validating it.
     pub fn ty(&self) -> &Ty {
         match self {
             Pattern::XVar(var) => &var.ty,
@@ -35,10 +49,15 @@ impl<C: Chi> Pattern<C> {
         }
     }
 
+    /// Returns whether the pattern is a binder or wildcard.
     pub fn is_irrefutable(&self) -> bool {
         matches!(self, Pattern::XVar(_) | Pattern::Wildcard { .. })
     }
 
+    /// Appends all annotated binders in left-to-right traversal order.
+    ///
+    /// Does not validate annotations, reject duplicate binders, or generate
+    /// fresh identifiers.
     pub fn collect_binders(&self, output: &mut Vec<ContextBinding>) {
         match self {
             Pattern::XVar(var) => output.push(ContextBinding {
@@ -61,6 +80,7 @@ impl<C: Chi> Pattern<C> {
 }
 
 impl AnyPattern {
+    /// Delegates binder collection to the contained pattern.
     pub fn collect_binders(&self, output: &mut Vec<ContextBinding>) {
         match self {
             AnyPattern::Producer(prd) => prd.collect_binders(output),
@@ -70,19 +90,27 @@ impl AnyPattern {
 }
 
 impl<C: Chi> crate::traits::Typed for Pattern<C> {
+    /// Exposes the stored annotation through Core's common typing interface.
     fn get_type(&self) -> Ty {
         self.ty().clone()
     }
 }
 
+/// The expected chirality and type of one subject position.
+///
+/// Contains no subject identifier or pattern binder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SubjectType {
     pub chi: Chirality,
     pub ty: Ty,
 }
 
+/// The ordered subject-typing vector Omega.
 pub type SubjectTyping = Vec<SubjectType>;
 
+/// Converts a signature context into a subject-typing vector.
+///
+/// Preserves field order, chiralities, and types while discarding names.
 pub fn subject_typing(context: &TypingContext) -> SubjectTyping {
     let mut res = Vec::new();
 
