@@ -9,7 +9,7 @@ pub fn eliminate(program: &mut Prog) {
         global_switches: HashMap::new(),
         let_bindings: HashMap::new(),
         create_bindings: HashMap::new(),
-        max_id: &mut program.max_id
+        max_id: program.max_id
     };
 
     state.lift_global_switches(&mut defs);
@@ -29,5 +29,6 @@ pub fn eliminate(program: &mut Prog) {
         number_of_rewritten_defs = number_of_defs;
     }
 
+    program.max_id = state.max_id;
     program.defs = defs;
 }

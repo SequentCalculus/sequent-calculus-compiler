@@ -35,14 +35,14 @@ pub struct GlobalSwitch {
     pub clauses: Vec<Clause>
 }
 
-pub struct EliminateState<'a> {
+pub struct EliminateState {
     global_switches: HashMap<Identifier, GlobalSwitch>,
     pub let_bindings: HashMap<Identifier, (Xtor, TypingContext)>,
     pub create_bindings: HashMap<Identifier, Vec<Clause>>,
-    max_id: &'a mut usize //TODO: no ref, copy and then update at the end of elim
+    max_id: usize
 }
 
-impl<'a> EliminateState<'a> {
+impl EliminateState {
     pub fn readd_global_switch(&mut self, id: Identifier, info: GlobalSwitch) {
         self.global_switches.insert(id, info);
     }
@@ -68,48 +68,54 @@ impl<'a> EliminateState<'a> {
         switch.clauses = self.lift_clauses(std::mem::take(&mut switch.clauses), &mut lifted, true);
         let param_ids: Vec<usize> = context.bindings.iter().map(|b| b.var.id).collect();
         let scrutinee_pos = param_ids.iter().position(|id| *id == switch.var.id).unwrap();
-        let info = GlobalSwitch { scrutinee_pos, param_ids, clauses: switch.clauses.clone() }; //TODO avoid clone?
+        let info = GlobalSwitch { scrutinee_pos, param_ids, clauses: switch.clauses.clone() };
         self.global_switches.insert(name.clone(), info);
         lifted
     }
 
-    //TODO: remove global param?
     pub fn lift_clauses(&mut self, clauses: Vec<Clause>, lifted: &mut Vec<Def>, global: bool) -> Vec<Clause> {
         clauses.into_iter().map(|clause| self.lift_clause(clause, lifted, global)).collect()
     }
  
     fn lift_clause(&mut self, mut clause: Clause, lifted: &mut Vec<Def>, global: bool) -> Clause {
-        match clause.body.as_ref() {
-            Call(_) | Exit(_) | Invoke(_) => clause,
+        let body = Rc::unwrap_or_clone(clause.body);
+        match body {
+            Call(_) | Exit(_) | Invoke(_) => {
+                clause.body = Rc::new(body);
+                clause
+            },
             body => {
-                let fresh = fresh_identifier(self.max_id, "clause");
+                let lifted_ident = fresh_identifier(&mut self.max_id, "lifted_clause");
                 let mut required_context = BTreeSet::new();
                 body.typed_free_vars(&mut required_context);
-                let old_param_ids: Vec<usize> = required_context.iter().map(|p| p.var.id).collect();
+                let old_ids: Vec<usize> = required_context.iter().map(|bind| bind.var.id).collect();
                 let uniquified_params: Vec<ContextBinding> =
-                    required_context.iter().map(
-                        |p| { let mut uniq = p.clone(); uniq.var = fresh_identifier(self.max_id, &uniq.var.name); uniq }
+                    required_context.iter().map(|bind| {
+                        let mut uniq = bind.clone();
+                        uniq.var = fresh_identifier(&mut self.max_id, &uniq.var.name);
+                        uniq 
+                    }).collect();
+                let subst: Vec<(usize, Identifier)> =
+                    old_ids.into_iter().zip(&uniquified_params).map(
+                        |(id, uniq)| (id, uniq.var.clone())
                     ).collect();
-                let renamings: Vec<(usize, Identifier)> =
-                    old_param_ids.iter().zip(&uniquified_params).map(
-                        |(id, uniq)| (*id, uniq.var.clone())
-                    ).collect(); 
-                let subst_body = body.clone().subst_sim(&renamings); //TODO
-                let context = uniquified_params.into();
+                let mut subst_body = body.subst_sim(&subst);
+                let lifted_context = uniquified_params.into();
 
-                if global && let Switch(mut switch) = subst_body.clone() { //TODO
-                    let lifted_clauses = self.lift_global_switch(&mut switch, &fresh, &context);
+                if global && let Switch(switch) = &mut subst_body {
+                    let lifted_clauses = self.lift_global_switch(switch, &lifted_ident, &lifted_context);
                     lifted.extend(lifted_clauses);
                 }
+
                 let def = Def {
-                    name: fresh.clone(),
-                    context,
+                    name: lifted_ident.clone(),
+                    context: lifted_context,
                     body: subst_body
                 };
                 lifted.push(def);
 
                 let call = Call(CallStmt { 
-                    label: fresh,
+                    label: lifted_ident,
                     args: TypingContext { bindings: required_context.into_iter().collect() }
                 });
                 clause.body = call.into();

@@ -1,7 +1,6 @@
 use crate::eliminate::{Eliminate, EliminateState};
 use axcut::syntax::{Def, statements::{Create, Statement}};
 
-// TODO: lift only when used?
 impl Eliminate for Create {
     type Target = Statement;
     fn eliminate(mut self, state: &mut EliminateState, lifted: &mut Vec<Def>) -> Self::Target {

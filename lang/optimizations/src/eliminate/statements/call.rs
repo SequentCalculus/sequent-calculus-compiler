@@ -18,8 +18,6 @@ impl Eliminate for Call {
             }
             Some((xtor, xtor_context)) => {
                 let matching_clause = info.clauses.iter().find(|c| c.xtor == xtor).unwrap();
-                // Readd the let binding for potential later use
-                state.let_bindings.insert(scrutinee_ident, (xtor, xtor_context.clone())); // TODO
 
                 let param_ids = info.param_ids.iter().map(|p| *p);
                 let arg_vars = self.args.iter_vars_cloned();
@@ -27,7 +25,10 @@ impl Eliminate for Call {
                 // We can do this substitution now, as identifiers are globally unique 
                 let substituted = matching_clause.clone().subst_sim(&subst);
 
-                eliminate_clause_with(substituted, &xtor_context, state, lifted)
+                let eliminated = eliminate_clause_with(substituted, &xtor_context, state, lifted);
+                // Readd the let binding for potential later use
+                state.let_bindings.insert(scrutinee_ident, (xtor, xtor_context.clone()));
+                eliminated
             }
         }
     }
