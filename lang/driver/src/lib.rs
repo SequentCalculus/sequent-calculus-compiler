@@ -19,7 +19,7 @@ use fun::{
 };
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
-use optimizations::optimize;
+use optimizations::{OptMode, optimize};
 use paths::{Paths, TARGET_PATH, OPTIMIZED_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
@@ -51,7 +51,7 @@ pub struct Driver {
     /// Compiled to non-linearized axcut
     shrunk: HashMap<PathBuf, axcut::syntax::Prog>,
     optimized: HashMap<PathBuf, axcut::syntax::Prog>,
-    max_opt_passes: u64,
+    opt_mode: OptMode,
     /// Compiled to linearized axcut
     linearized: HashMap<PathBuf, axcut::syntax::Prog>,
 }
@@ -77,14 +77,14 @@ impl Driver {
             shrunk: HashMap::new(),
             optimized: HashMap::new(),
             linearized: HashMap::new(),
-            max_opt_passes: optimizations::DEFAULT_NUM_PASSES,
+            opt_mode: OptMode::Normal(optimizations::DEFAULT_NUM_PASSES),
         }
     }
 
-    /// Create a new driver with a given maximum number of optimization passes
-    pub fn new_with_num_passes(num_passes: u64) -> Self {
+    /// Create a new driver with a given optimization mode
+    pub fn new_with_opt_mode(mode: OptMode) -> Self {
         let mut slf = Self::new();
-        slf.max_opt_passes = num_passes;
+        slf.opt_mode = mode;
         slf
     }
 
@@ -324,7 +324,7 @@ impl Driver {
         }
 
         let mut shrunk = self.shrunk(path)?;
-        optimize(&mut shrunk, self.max_opt_passes);
+        optimize(&mut shrunk, &self.opt_mode);
         self.optimized.insert(path.clone(), shrunk.clone());
         Ok(shrunk)
     }

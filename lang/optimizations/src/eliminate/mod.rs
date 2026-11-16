@@ -17,18 +17,18 @@ use std::{
 
 type Xtor = Identifier;
 
-pub struct SwitchInfo {
+pub struct GlobalSwitch {
     pub scrutinee_pos: usize,
     pub param_ids: Vec<ID>,
     pub clauses: Vec<Clause>
 }
 
 pub struct EliminateState<'a> {
-    defs: Vec<Def>, 
-    global_switches: HashMap<Identifier, Vec<Clause>>, 
+    defs: Vec<Def>,
+    global_switches: HashMap<Identifier, GlobalSwitch>,
     pub let_bindings: HashMap<Identifier, (Xtor, TypingContext)>,
     pub create_bindings: HashMap<Identifier, Vec<Clause>>,
-    max_id: &'a mut usize
+    max_id: &'a mut usize //TODO: no ref, copy and then update at the end of elim
 }
 
 impl<'a> EliminateState<'a> {
@@ -36,13 +36,12 @@ impl<'a> EliminateState<'a> {
         self.defs
     }
 
-    pub fn readd_global_switch(&mut self, id: Identifier, info: SwitchInfo) {
-        self.global_switches.insert(id, unimplemented!());
+    pub fn readd_global_switch(&mut self, id: Identifier, info: GlobalSwitch) {
+        self.global_switches.insert(id, info);
     }
 
-    pub fn remove_global_switch(&self, id: &Identifier) -> Option<SwitchInfo> {
-        self.global_switches.get(id);
-        unimplemented!()
+    pub fn remove_global_switch(&mut self, id: &Identifier) -> Option<GlobalSwitch> {
+        self.global_switches.remove(id)
     } 
 
     pub fn lift_global_switches(&mut self) {
@@ -50,7 +49,7 @@ impl<'a> EliminateState<'a> {
         let mut lifted_clauses = Vec::new();
         for def in defs.iter_mut() {
             if let Switch(switch) = &mut def.body {
-                let lifted = self.lift_global_switch(switch, &def.name);
+                let lifted = self.lift_global_switch(switch, &def.name, &def.context);
                 lifted_clauses.extend(lifted);
             }
         }
@@ -59,18 +58,22 @@ impl<'a> EliminateState<'a> {
     }
 
 
-    fn lift_global_switch(&mut self, switch: &mut SwitchStmt, name: &Identifier) -> Vec<Def> {
+    fn lift_global_switch(&mut self, switch: &mut SwitchStmt, name: &Identifier, context: &TypingContext) -> Vec<Def> {
         let mut lifted = Vec::new();
-        switch.clauses = self.lift_clauses(std::mem::take(&mut switch.clauses), &mut lifted);
-        self.global_switches.insert(name.clone(), switch.clauses.clone()); // TODO
+        switch.clauses = self.lift_clauses(std::mem::take(&mut switch.clauses), &mut lifted, true);
+        let param_ids: Vec<usize> = context.bindings.iter().map(|b| b.var.id).collect();
+        let scrutinee_pos = param_ids.iter().position(|id| *id == switch.var.id).unwrap();
+        let info = GlobalSwitch { scrutinee_pos, param_ids, clauses: switch.clauses.clone() }; //TODO avoid clone?
+        self.global_switches.insert(name.clone(), info);
         lifted
     }
 
-    pub fn lift_clauses(&mut self, clauses: Vec<Clause>, lifted: &mut Vec<Def>) -> Vec<Clause> {
-        clauses.into_iter().map(|clause| self.lift_clause(clause, lifted)).collect()
+    //TODO: remove global param?
+    pub fn lift_clauses(&mut self, clauses: Vec<Clause>, lifted: &mut Vec<Def>, global: bool) -> Vec<Clause> {
+        clauses.into_iter().map(|clause| self.lift_clause(clause, lifted, global)).collect()
     }
  
-    fn lift_clause(&mut self, mut clause: Clause, lifted: &mut Vec<Def>) -> Clause {
+    fn lift_clause(&mut self, mut clause: Clause, lifted: &mut Vec<Def>, global: bool) -> Clause {
         match clause.body.as_ref() {
             Call(_) | Exit(_) | Invoke(_) => clause,
             body => {
@@ -87,14 +90,15 @@ impl<'a> EliminateState<'a> {
                         |(id, uniq)| (*id, uniq.var.clone())
                     ).collect(); 
                 let subst_body = body.clone().subst_sim(&renamings); //TODO
+                let context = uniquified_params.into();
 
-                if let Switch(mut switch) = subst_body.clone() { //TODO
-                    let lifted_clauses = self.lift_global_switch(&mut switch, &fresh);
+                if global && let Switch(mut switch) = subst_body.clone() { //TODO
+                    let lifted_clauses = self.lift_global_switch(&mut switch, &fresh, &context);
                     lifted.extend(lifted_clauses);
                 }
                 let def = Def {
                     name: fresh.clone(),
-                    context: uniquified_params.into(),
+                    context,
                     body: subst_body
                 };
                 lifted.push(def);

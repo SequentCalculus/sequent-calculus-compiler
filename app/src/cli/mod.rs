@@ -48,7 +48,6 @@ pub fn exec() -> miette::Result<()> {
         Linearize(args) => linearize::exec(args, !cli.no_color),
         Optimize(args) => optimize::exec(args, !cli.no_color),
         Shrink(args) => shrink::exec(args, !cli.no_color),
-        Inline(args) => inline::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
     }

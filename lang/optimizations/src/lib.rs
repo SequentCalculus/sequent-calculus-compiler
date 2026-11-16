@@ -9,12 +9,24 @@ pub mod eliminate;
 
 pub const DEFAULT_NUM_PASSES: u64 = 10;
 
-pub fn optimize(prog: &mut Prog, passes: u64) {
-    // Inline first to not do cut elimination for clearly unused defs
-    // Inline last to not have unnecessarily lifted clauses left 
-    for _run in 0..passes {
-        inline(prog);
-        eliminate(prog);
+pub enum OptMode {
+    Normal(u64),
+    OnlyInline,
+    OnlyEliminate
+}
+
+pub fn optimize(prog: &mut Prog, mode: &OptMode) {
+    match mode {
+        OptMode::Normal(passes) => {
+            // Inline first to not do cut elimination for clearly unused defs
+            // Inline last to not have unnecessarily lifted clauses left
+            for _run in 0..*passes {
+                inline(prog);
+                eliminate(prog);
+            }
+            inline(prog);
+        }
+        OptMode::OnlyEliminate => eliminate(prog),
+        OptMode::OnlyInline => inline(prog)
     }
-    inline(prog);
 }

@@ -6,7 +6,7 @@ impl Eliminate for Create {
     type Target = Statement;
     fn eliminate(mut self, state: &mut EliminateState) -> Self::Target {
         let mut lifted = Vec::with_capacity(self.clauses.len());
-        self.clauses = state.lift_clauses(self.clauses, &mut lifted);
+        self.clauses = state.lift_clauses(self.clauses, &mut lifted, false);
         state.defs.extend(lifted);
 
         state.create_bindings.insert(self.var.clone(), self.clauses);
