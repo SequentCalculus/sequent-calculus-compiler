@@ -20,7 +20,7 @@ use fun::{
 use fun2core::program::compile_prog;
 use latex::{Arch, LATEX_END, LATEX_PRINT_CFG, latex_all_template, latex_start};
 use optimizations::{OptMode, optimize};
-use paths::{Paths, TARGET_PATH, OPTIMIZED_PATH};
+use paths::{OPTIMIZED_PATH, Paths, TARGET_PATH};
 use printer::{Print, PrintCfg};
 use result::DriverError;
 

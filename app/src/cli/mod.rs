@@ -10,8 +10,8 @@ mod compile;
 mod fmt;
 mod focus;
 mod gen_completions;
-mod optimize;
 mod linearize;
+mod optimize;
 mod shrink;
 mod texify;
 #[cfg(debug_assertions)]

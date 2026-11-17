@@ -1,5 +1,8 @@
 use crate::eliminate::{Eliminate, EliminateState, statements::clause::eliminate_clause_with};
-use axcut::syntax::{Def, statements::{Invoke, Statement}};
+use axcut::syntax::{
+    Def,
+    statements::{Invoke, Statement},
+};
 
 impl Eliminate for Invoke {
     type Target = Statement;
@@ -9,6 +12,6 @@ impl Eliminate for Invoke {
         };
 
         let matching_clause = clauses.iter().find(|c| c.xtor == self.tag).unwrap();
-        eliminate_clause_with(matching_clause.clone(), &self.args, state, lifted)
+        eliminate_clause_with(matching_clause.clone(), self.args.clone(), state, lifted)
     }
 }

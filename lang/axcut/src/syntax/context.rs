@@ -90,6 +90,10 @@ impl TypingContext {
         self.bindings.iter().map(|binding| binding.var.id).collect()
     }
 
+    pub fn iter_ids(&self) -> impl Iterator<Item = ID> {
+        self.bindings.iter().map(|b| b.var.id)
+    }
+
     /// This function returns an iterator over the variables in a typing context, consuming the
     /// context.
     pub fn into_iter_vars(self) -> impl Iterator<Item = Identifier> {

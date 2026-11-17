@@ -14,14 +14,14 @@ pub struct Args {
     #[clap(long, group = "mode")]
     inline_only: bool,
     #[clap(long, group = "mode")]
-    eliminate_only: bool
+    eliminate_only: bool,
 }
 
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
     let mode = if cmd.inline_only {
-        OptMode::OnlyInline
+        OptMode::InlineOnly
     } else if cmd.eliminate_only {
-        OptMode::OnlyEliminate
+        OptMode::EliminateOnly
     } else {
         OptMode::Normal(cmd.opt_passes)
     };

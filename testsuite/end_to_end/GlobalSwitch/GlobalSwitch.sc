@@ -16,9 +16,9 @@ def global_switch(l: i64, x: X, r: i64): i64 {
 }
 
 def main(): i64 {
-    let construct: X = B(F(H(39)));
-    let prevent_inlining: i64 = global_switch(0, construct, 0);
-    let res: i64 = global_switch(1, construct, 2);
-    println_i64(res);
+    let construct: X = B(F(H(15)));
+    let left: i64 = global_switch(4, construct, 2);
+    let right: i64 = global_switch(4, construct, 2);
+    println_i64(left + right);
     0
 }

@@ -4,15 +4,15 @@ use axcut::syntax::Prog;
 
 use crate::{eliminate::program::eliminate, inline::program::inline};
 
-pub mod inline;
-pub mod eliminate;
+mod eliminate;
+mod inline;
 
 pub const DEFAULT_NUM_PASSES: u64 = 10;
 
 pub enum OptMode {
     Normal(u64),
-    OnlyInline,
-    OnlyEliminate
+    InlineOnly,
+    EliminateOnly,
 }
 
 pub fn optimize(prog: &mut Prog, mode: &OptMode) {
@@ -26,7 +26,7 @@ pub fn optimize(prog: &mut Prog, mode: &OptMode) {
             }
             inline(prog);
         }
-        OptMode::OnlyEliminate => eliminate(prog),
-        OptMode::OnlyInline => inline(prog)
+        OptMode::EliminateOnly => eliminate(prog),
+        OptMode::InlineOnly => inline(prog),
     }
 }
