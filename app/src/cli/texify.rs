@@ -65,9 +65,9 @@ pub fn exec(cmd: Args) -> miette::Result<()> {
     let mut drv = Driver::new();
     drv.print_compiled(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_focused(&cmd.filepath, driver::PrintMode::Latex)?;
-    drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_shrunk(&cmd.filepath, driver::PrintMode::Latex)?;
-    drv.print_inlined(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_optimized(&cmd.filepath, driver::PrintMode::Latex)?;
+    drv.print_linearized(&cmd.filepath, driver::PrintMode::Latex)?;
     drv.print_parsed_tex(&cmd.filepath, &cfg, &format!("{}", cmd.fontsize))?;
     match cmd.backend {
         Backend::Aarch64 => {

@@ -10,8 +10,8 @@ mod compile;
 mod fmt;
 mod focus;
 mod gen_completions;
-mod inline;
 mod linearize;
+mod optimize;
 mod shrink;
 mod texify;
 #[cfg(debug_assertions)]
@@ -46,8 +46,8 @@ pub fn exec() -> miette::Result<()> {
         Focus(args) => focus::exec(args, !cli.no_color),
         Fmt(args) => fmt::exec(args, !cli.no_color),
         Linearize(args) => linearize::exec(args, !cli.no_color),
+        Optimize(args) => optimize::exec(args, !cli.no_color),
         Shrink(args) => shrink::exec(args, !cli.no_color),
-        Inline(args) => inline::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
     }
@@ -85,8 +85,8 @@ enum Command {
     Linearize(linearize::Args),
     /// Shrink the definitions of a file to AxCut
     Shrink(shrink::Args),
-    /// Run an inline pass on an AxCut program
-    Inline(inline::Args),
+    /// Optimize an AxCut program
+    Optimize(optimize::Args),
     /// Print program representations as LaTeX code
     Texify(texify::Args),
     /// Generate completion scripts for various shells

@@ -90,10 +90,20 @@ impl TypingContext {
         self.bindings.iter().map(|binding| binding.var.id).collect()
     }
 
+    pub fn iter_ids(&self) -> impl Iterator<Item = ID> {
+        self.bindings.iter().map(|b| b.var.id)
+    }
+
     /// This function returns an iterator over the variables in a typing context, consuming the
     /// context.
     pub fn into_iter_vars(self) -> impl Iterator<Item = Identifier> {
         self.bindings.into_iter().map(|binding| binding.var)
+    }
+
+    /// This function returns an iterator over the variables in a typing context, cloning the
+    /// variables.
+    pub fn iter_vars_cloned(&self) -> impl Iterator<Item = Identifier> {
+        self.bindings.iter().map(|binding| binding.var.clone())
     }
 
     /// This function picks fresh names for variables that are duplicated in a context.
