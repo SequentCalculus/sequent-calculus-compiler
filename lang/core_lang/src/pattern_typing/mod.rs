@@ -7,7 +7,9 @@
 //! Does not check clause bodies or match exhaustiveness.
 
 use crate::syntax::{
-    AnyPattern, Chi, Chirality, CodataDeclaration, ContextBinding, CtorSig, DataDeclaration, DtorSig, Identifier, NestedClause, NestedXCase, Pattern, SubjectType, Ty, TypingContext, Xtor, subject_typing,
+    AnyPattern, Chi, Chirality, CodataDeclaration, ContextBinding, CtorSig, DataDeclaration,
+    DtorSig, Identifier, NestedClause, NestedXCase, Pattern, SubjectType, Ty, TypingContext, Xtor,
+    subject_typing,
 };
 
 /// Errors encountered while checking pattern annotations and structure.
@@ -30,13 +32,13 @@ pub enum PatternError {
     },
     /// The pattern vector and subject-type vector have different lengths.
     WrongNumberOfPatterns { expected: usize, found: usize },
-    /// The same binder indentifier occurs more than once in a pattern vector.
+    /// The same binder identifier occurs more than once in a pattern vector.
     DuplicateBinder { name: Identifier },
-    ///
+    /// A binder identifier is already present during context extension.
     BinderAlreadyInContext { name: Identifier },
-    ///
+    /// A case annotation does not refer to a declared data type.
     ExpectedDataType { found: Ty },
-    ///
+    /// A new annotation does not refer to a declared codata type.
     ExpectedCodataType { found: Ty },
 }
 
@@ -94,12 +96,9 @@ pub struct PatternSignature<'a> {
 impl<'a> PatternSignature<'a> {
     /// Finds a data declaration by its type name.
     fn find_data_type(&self, name: &Identifier) -> Option<&DataDeclaration> {
-        for declaration in self.data_types {
-            if &declaration.name == name {
-                return Some(declaration);
-            }
-        }
-        None
+        self.data_types
+            .iter()
+            .find(|declaration| &declaration.name == name)
     }
 
     /// Finds a constructor only within the specified data declaration.
@@ -110,22 +109,17 @@ impl<'a> PatternSignature<'a> {
     ) -> Option<&CtorSig> {
         let declaration = self.find_data_type(type_name)?;
 
-        for xtor in &declaration.xtors {
-            if &xtor.name == constructor_name {
-                return Some(xtor);
-            }
-        }
-        None
+        declaration
+            .xtors
+            .iter()
+            .find(|xtor| &xtor.name == constructor_name)
     }
 
     /// Finds a codata declaration by its type name.
     fn find_codata_type(&self, name: &Identifier) -> Option<&CodataDeclaration> {
-        for declaration in self.codata_types {
-            if &declaration.name == name {
-                return Some(declaration);
-            }
-        }
-        None
+        self.codata_types
+            .iter()
+            .find(|declaration| &declaration.name == name)
     }
 
     /// Finds a destructor only within the specified codata declaration.
@@ -136,94 +130,109 @@ impl<'a> PatternSignature<'a> {
     ) -> Option<&DtorSig> {
         let declaration = self.find_codata_type(type_name)?;
 
-        for xtor in &declaration.xtors {
-            if &xtor.name == destructor_name {
-                return Some(xtor);
-            }
-        }
-        None
+        declaration
+            .xtors
+            .iter()
+            .find(|xtor| &xtor.name == destructor_name)
     }
 
+    /// Resolves an xtor's declared argument context.
     ///
-    pub(crate) fn xtor_context<C: Chi, A>(&self, xtor: &Xtor<C, A>,) -> Result<&TypingContext, PatternError> {
-        let chi;
-        if xtor.prdcns.is_prd() {
-            chi = Chirality::Prd
+    /// Producer xtors are constructors of data types - consumer xtors are
+    /// destructors of codata types. The generic argument representation allows
+    /// this lookup to be shared by term checking and pattern checking.
+    pub(crate) fn xtor_context<C: Chi, A>(
+        &self,
+        xtor: &Xtor<C, A>,
+    ) -> Result<&TypingContext, PatternError> {
+        let chi = if xtor.prdcns.is_prd() {
+            Chirality::Prd
         } else {
-            chi = Chirality::Cns
-        }
+            Chirality::Cns
+        };
 
         let type_name = match &xtor.ty {
-            Ty::I64 => return Err(PatternError::XtorRequiresDeclaredType { found: xtor.ty.clone() }),
+            Ty::I64 => {
+                return Err(PatternError::XtorRequiresDeclaredType {
+                    found: xtor.ty.clone(),
+                });
+            }
             Ty::Decl(d) => d,
         };
 
         match chi {
-            Chirality::Prd => { 
-                match self.find_constructor(type_name, &xtor.name) {
-                    Some(s) => Ok(&s.args),
-                    None => return Err(PatternError::XtorSignatureNotFound { 
-                        ty: xtor.ty.clone(), 
-                        chi: chi.clone(), 
-                        name: xtor.name.clone(),
-                    }),
-                }
+            Chirality::Prd => match self.find_constructor(type_name, &xtor.name) {
+                Some(s) => Ok(&s.args),
+                None => Err(PatternError::XtorSignatureNotFound {
+                    ty: xtor.ty.clone(),
+                    chi: chi.clone(),
+                    name: xtor.name.clone(),
+                }),
             },
-            Chirality::Cns => { 
-                match self.find_destructor(type_name, &xtor.name) {
-                    Some(s) => Ok(&s.args),
-                    None => return Err(PatternError::XtorSignatureNotFound { 
-                        ty: xtor.ty.clone(), 
-                        chi: chi.clone(), 
-                        name: xtor.name.clone(),
-                    }),
-                }
+            Chirality::Cns => match self.find_destructor(type_name, &xtor.name) {
+                Some(s) => Ok(&s.args),
+                None => Err(PatternError::XtorSignatureNotFound {
+                    ty: xtor.ty.clone(),
+                    chi: chi.clone(),
+                    name: xtor.name.clone(),
+                }),
             },
         }
     }
 
-    pub(crate) fn expected_xtor_names<C: Chi>(&self, match_ty: &Ty, match_chi: &C,) -> Result<Vec<Identifier>, PatternError> {
-        let chi;
-        if match_chi.is_prd() {
-            chi = Chirality::Prd
+    /// Returns the required flat branch names in declaration order.
+    ///
+    /// A producer XCase represents new and requires codata destructors.
+    /// A consumer XCase represents case and requires data constructors.
+    pub(crate) fn expected_xtor_names<C: Chi>(
+        &self,
+        match_ty: &Ty,
+        match_chi: &C,
+    ) -> Result<Vec<Identifier>, PatternError> {
+        let chi = if match_chi.is_prd() {
+            Chirality::Prd
         } else {
-            chi = Chirality::Cns
-        }
+            Chirality::Cns
+        };
 
         match chi {
-            Chirality::Prd => {
-                match match_ty {
-                    Ty::I64 => return Err(PatternError::ExpectedCodataType { found: match_ty.clone() }),
-                    Ty::Decl(name) => match self.find_codata_type(name) {
-                        Some(s) => {
-                            let mut names = vec![];
+            Chirality::Prd => match match_ty {
+                Ty::I64 => Err(PatternError::ExpectedCodataType {
+                    found: match_ty.clone(),
+                }),
+                Ty::Decl(name) => match self.find_codata_type(name) {
+                    Some(s) => {
+                        let mut names = vec![];
 
-                            for xtor in &s.xtors {
-                                names.push(xtor.name.clone());
-                            }
+                        for xtor in &s.xtors {
+                            names.push(xtor.name.clone());
+                        }
 
-                            Ok(names)
-                        },
-                        None => return Err(PatternError::ExpectedCodataType { found: match_ty.clone() }),
+                        Ok(names)
                     }
-                }
+                    None => Err(PatternError::ExpectedCodataType {
+                        found: match_ty.clone(),
+                    }),
+                },
             },
-            Chirality::Cns => {
-                match match_ty {
-                    Ty::I64 => return Err(PatternError::ExpectedDataType { found: match_ty.clone() }),
-                    Ty::Decl(name) => match self.find_data_type(name) {
-                        Some(s) => {
-                            let mut names = vec![];
+            Chirality::Cns => match match_ty {
+                Ty::I64 => Err(PatternError::ExpectedDataType {
+                    found: match_ty.clone(),
+                }),
+                Ty::Decl(name) => match self.find_data_type(name) {
+                    Some(s) => {
+                        let mut names = vec![];
 
-                            for xtor in &s.xtors {
-                                names.push(xtor.name.clone());
-                            }
+                        for xtor in &s.xtors {
+                            names.push(xtor.name.clone());
+                        }
 
-                            Ok(names)
-                        },
-                        None => return Err(PatternError::ExpectedDataType { found: match_ty.clone() }),
+                        Ok(names)
                     }
-                }
+                    None => Err(PatternError::ExpectedDataType {
+                        found: match_ty.clone(),
+                    }),
+                },
             },
         }
     }
@@ -305,6 +314,9 @@ pub fn check_patterns(
     Ok(context)
 }
 
+/// Derives the expected subject type for an outer clause pattern.
+///
+/// The pattern has the opposite chirality to the XCase term and the same type.
 fn clause_subject_type<C: Chi>(xcase: &NestedXCase<C>) -> SubjectType {
     let clause_chi = if xcase.prdcns.is_prd() {
         Chirality::Cns
@@ -315,10 +327,11 @@ fn clause_subject_type<C: Chi>(xcase: &NestedXCase<C>) -> SubjectType {
 
     SubjectType {
         chi: clause_chi,
-        ty: ty,
+        ty,
     }
 }
 
+/// Checks one clause pattern and returns its introduced binder context Delta.
 fn check_clause_pattern(
     clause: &NestedClause,
     expected: &SubjectType,
@@ -330,6 +343,10 @@ fn check_clause_pattern(
     }
 }
 
+/// Extends Gamma with the supplied binders in order.
+///
+/// Rejects identifiers already present in Gamma or among earlier added
+/// binders. Assumes Gamma is already valid and performs no type lookup.
 pub(crate) fn extend_context(
     outer: &TypingContext,
     binders: &TypingContext,
@@ -350,6 +367,7 @@ pub(crate) fn extend_context(
     Ok(res_context)
 }
 
+/// Requires a declared data type for case and a declared codata type for new.
 fn check_xcase_type<C: Chi>(
     xcase: &NestedXCase<C>,
     signature: &PatternSignature<'_>,
@@ -358,37 +376,35 @@ fn check_xcase_type<C: Chi>(
         match &xcase.ty {
             Ty::Decl(name) => match signature.find_codata_type(name) {
                 Some(_) => Ok(()),
-                None => {
-                    return Err(PatternError::ExpectedCodataType {
-                        found: xcase.ty.clone(),
-                    });
-                }
-            },
-            Ty::I64 => {
-                return Err(PatternError::ExpectedCodataType {
+                None => Err(PatternError::ExpectedCodataType {
                     found: xcase.ty.clone(),
-                });
-            }
+                }),
+            },
+            Ty::I64 => Err(PatternError::ExpectedCodataType {
+                found: xcase.ty.clone(),
+            }),
         }
     } else {
         match &xcase.ty {
             Ty::Decl(name) => match signature.find_data_type(name) {
                 Some(_) => Ok(()),
-                None => {
-                    return Err(PatternError::ExpectedDataType {
-                        found: xcase.ty.clone(),
-                    });
-                }
-            },
-            Ty::I64 => {
-                return Err(PatternError::ExpectedDataType {
+                None => Err(PatternError::ExpectedDataType {
                     found: xcase.ty.clone(),
-                });
-            }
+                }),
+            },
+            Ty::I64 => Err(PatternError::ExpectedDataType {
+                found: xcase.ty.clone(),
+            }),
         }
     }
 }
 
+/// Checks clause patterns and prepares their individual body contexts.
+///
+/// For each clause, derives Delta from its pattern and returns Gamma
+/// extended by Delta. Results preserve clause order.
+///
+/// Statement bodies and exhaustiveness are checked separately.
 pub(crate) fn prepare_clause_contexts<C: Chi>(
     xcase: &NestedXCase<C>,
     outer: &TypingContext,
@@ -399,6 +415,8 @@ pub(crate) fn prepare_clause_contexts<C: Chi>(
     let mut res = vec![];
 
     for clause in &xcase.clauses {
+        // Each clause starts from the same outer Gamma - clause binders do not
+        // extend the contexts of other clauses.
         let delta = check_clause_pattern(clause, &expected_subject_type, signature)?;
         let clause_context = extend_context(outer, &delta)?;
 
@@ -408,6 +426,7 @@ pub(crate) fn prepare_clause_contexts<C: Chi>(
     Ok(res)
 }
 
+/// Tests variable and covariable lookup against typing contexts.
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;

@@ -93,14 +93,9 @@ impl TypingContext {
         vars
     }
 
-    ///
-    pub fn lookup_binding(&self, name: &Identifier,) -> Option<&ContextBinding> {
-        for binding in &self.bindings {
-            if &binding.var == name {
-                return Some(binding);
-            }
-        }
-        None
+    /// Finds a binding by its identifier.
+    pub fn lookup_binding(&self, name: &Identifier) -> Option<&ContextBinding> {
+        self.bindings.iter().find(|binding| &binding.var == name)
     }
 }
 

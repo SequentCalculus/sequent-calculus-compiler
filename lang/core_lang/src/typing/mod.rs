@@ -1,48 +1,82 @@
-use crate::{syntax::{
-    Prog, XCase, NestedXCase, AnyPattern, Arguments, Chi, Chirality, Clause, Cns, ContextBinding, Def, Identifier, NestedClause, Pattern, PatternVec, Prd, Statement, SubjectType, Term, Ty, TypingContext, XVar, Xtor, subject_typing,
-}, traits::Typed};
+//! Type checking for annotated, unfocused Core with flat matches.
+//!
+//! Provides a validation pass intended for the output of pattern compilation,
+//! before focusing. Terms and statements are checked against declarations
+//! and the current typing context.
+//!
+//! Assumes well-formed data and codata declarations and binders renamed
+//! to avoid shadowing collisions.
+
 use crate::pattern_typing::{
-    PatternSignature, PatternError, extend_context, prepare_clause_contexts,
+    PatternError, PatternSignature, extend_context, prepare_clause_contexts,
 };
 use crate::syntax::arguments::Argument;
+use crate::{
+    syntax::{
+        AnyPattern, Arguments, Chi, Chirality, Clause, Cns, ContextBinding, Def, Identifier,
+        NestedClause, NestedXCase, Pattern, PatternVec, Prd, Prog, Statement, SubjectType, Term,
+        Ty, TypingContext, XCase, XVar, Xtor, subject_typing,
+    },
+    traits::Typed,
+};
 
-
+/// A borrowed view of the declarations available during Core type checking.
+///
+/// Contains all top-level definitions, including definitions that occur
+/// later in the program and definitions used recursively.
 pub struct TypingSignature<'a> {
+    /// Data and codata declarations used to resolve types and xtor signatures.
     pub patterns: PatternSignature<'a>,
-    pub defs: &'a [Def]
+    /// Top-level definitions used to check call arguments.
+    pub defs: &'a [Def],
 }
 
 impl<'a> TypingSignature<'a> {
+    /// Finds a top-level definition by its identifier.
     fn find_def(&self, name: &Identifier) -> Option<&Def> {
-        for def in self.defs {
-            if &def.name == name {
-                return Some(def);
-            }
-        }
-
-        None
+        self.defs.iter().find(|def| &def.name == name)
     }
 }
 
+/// Errors encountered while checking annotated Core programs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TypingError {
+    /// A variable or covariable is absent from the current typing context.
     UnboundBinder { name: Identifier },
-    WrongChirality { expected: Chirality, found: Chirality },
+    /// The actual chirality differs from the expected chirality.
+    WrongChirality {
+        expected: Chirality,
+        found: Chirality,
+    },
+    /// The actual type annotation differs from the expected type.
     WrongType { expected: Ty, found: Ty },
+    /// An argument list has a different length than its declared context.
     WrongNumberOfArguments { expected: usize, found: usize },
+    /// A call refers to an unknown top-level definition.
     DefinitionNotFound { name: Identifier },
+    /// Pattern checking or context extension failed.
     Pattern(PatternError),
-    WrongFlatBranches { expected: Vec<Identifier>, found: Vec<Identifier> },
+    /// Flat branch names differ from the declarations in number or order.
+    WrongFlatBranches {
+        expected: Vec<Identifier>,
+        found: Vec<Identifier>,
+    },
+    /// A type name refers to neither a data nor a codata declaration.
     TypeNotFound { name: Identifier },
+    /// More than one top-level definition has the same identifier.
     DuplicateDefinition { name: Identifier },
 }
 
+/// Wraps pattern errors so they can propagate through Core checking with '?'.
 impl From<PatternError> for TypingError {
     fn from(error: PatternError) -> Self {
         TypingError::Pattern(error)
     }
 }
 
+/// Returns the syntactic chirality of a term.
+///
+/// Literals and arithmetic operations are always producers.
 fn term_chirality<C: Chi>(term: &Term<C>) -> Chirality {
     let marker = match term {
         Term::XVar(xvar) => &xvar.prdcns,
@@ -60,7 +94,10 @@ fn term_chirality<C: Chi>(term: &Term<C>) -> Chirality {
     }
 }
 
-fn check_type_exists(ty: &Ty, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Accepts I64 and names declared as data or codata types.
+///
+/// Checks name resolution without validating the declaration contents.
+fn check_type_exists(ty: &Ty, signature: &TypingSignature<'_>) -> Result<(), TypingError> {
     match ty {
         Ty::I64 => Ok(()),
         Ty::Decl(name) => {
@@ -75,23 +112,29 @@ fn check_type_exists(ty: &Ty, signature: &TypingSignature<'_>,) -> Result<(), Ty
                 }
             }
             Err(TypingError::TypeNotFound { name: name.clone() })
-        },
+        }
     }
 }
 
-fn check_term_annotation<C: Chi>(term: &Term<C>, expected: &SubjectType,) -> Result<(), TypingError> {
+/// Checks a term's outer chirality and type against one expected position.
+///
+/// The term's internal structure is checked separately by 'check_term'.
+fn check_term_annotation<C: Chi>(
+    term: &Term<C>,
+    expected: &SubjectType,
+) -> Result<(), TypingError> {
     let term_chi = term_chirality(term);
     if term_chi != expected.chi {
-        return Err(TypingError::WrongChirality { 
-            expected: expected.chi.clone(), 
+        return Err(TypingError::WrongChirality {
+            expected: expected.chi.clone(),
             found: term_chi.clone(),
-        })
+        });
     }
 
     let term_ty = term.get_type();
     if term_ty != expected.ty {
-        return Err(TypingError::WrongType { 
-            expected: expected.ty.clone(), 
+        return Err(TypingError::WrongType {
+            expected: expected.ty.clone(),
             found: term_ty.clone(),
         });
     }
@@ -99,54 +142,69 @@ fn check_term_annotation<C: Chi>(term: &Term<C>, expected: &SubjectType,) -> Res
     Ok(())
 }
 
-fn check_xvar<C: Chi>(xvar: &XVar<C>, context: &TypingContext,) -> Result<(), TypingError> {
+/// Checks a variable or covariable occurrence against its context binding.
+///
+/// The identifier must be bound with matching chirality and type.
+fn check_xvar<C: Chi>(xvar: &XVar<C>, context: &TypingContext) -> Result<(), TypingError> {
     let binding = match context.lookup_binding(&xvar.var) {
         Some(binding) => binding,
-        None => return Err(TypingError::UnboundBinder { name: xvar.var.clone() }),
+        None => {
+            return Err(TypingError::UnboundBinder {
+                name: xvar.var.clone(),
+            });
+        }
     };
 
-    let var_chi;
-    if xvar.prdcns.is_prd() {
-        var_chi = Chirality::Prd;
+    let var_chi = if xvar.prdcns.is_prd() {
+        Chirality::Prd
     } else {
-        var_chi = Chirality::Cns;
+        Chirality::Cns
     };
 
     if var_chi != binding.chi {
-        return Err(TypingError::WrongChirality { 
-            expected: binding.chi.clone(), 
-            
+        return Err(TypingError::WrongChirality {
+            expected: binding.chi.clone(),
+
             found: var_chi.clone(),
         });
     }
 
     if xvar.ty != binding.ty {
-        return Err(TypingError::WrongType { 
-            expected: binding.ty.clone(), 
-            found: xvar.ty.clone(), 
+        return Err(TypingError::WrongType {
+            expected: binding.ty.clone(),
+            found: xvar.ty.clone(),
         });
     }
 
     Ok(())
 }
 
-fn check_arguments(args: &Arguments, expected: &[SubjectType], context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks an ordered argument list against the subject-typing vector Omega.
+///
+/// Requires equal lengths and recursively checks each argument against
+/// the expected chirality and type at the corresponding position.
+fn check_arguments(
+    args: &Arguments,
+    expected: &[SubjectType],
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
     if args.entries.len() != expected.len() {
-        return Err(TypingError::WrongNumberOfArguments { 
-            expected: expected.len(), 
+        return Err(TypingError::WrongNumberOfArguments {
+            expected: expected.len(),
             found: args.entries.len(),
         });
     }
-    
+
     for (arg, subject_type) in args.entries.iter().zip(expected.iter()) {
         let chi = match arg {
             Argument::Producer(_) => Chirality::Prd,
             Argument::Consumer(_) => Chirality::Cns,
         };
         if chi != subject_type.chi {
-            return Err(TypingError::WrongChirality { 
-                expected: subject_type.chi.clone(), 
-                found: chi.clone() 
+            return Err(TypingError::WrongChirality {
+                expected: subject_type.chi.clone(),
+                found: chi.clone(),
             });
         }
         match arg {
@@ -158,6 +216,10 @@ fn check_arguments(args: &Arguments, expected: &[SubjectType], context: &TypingC
     Ok(())
 }
 
+/// Represents a flat clause context as an ordered vector of binder patterns.
+///
+/// Preserves identifiers, chiralities, and types so the existing pattern
+/// checker can validate the context against an xtor declaration.
 fn context_patterns(context: &TypingContext) -> PatternVec {
     let mut res = vec![];
 
@@ -181,37 +243,44 @@ fn context_patterns(context: &TypingContext) -> PatternVec {
     res
 }
 
-fn flat_clause_to_nested<C: Chi>(clause: &Clause<C>, match_ty: &Ty,) -> NestedClause {
+/// Represents a flat clause using the nested pattern syntax for type checking.
+///
+/// The clause's xtor becomes the outer pattern and its context becomes
+/// the argument pattern vector. The statement body is shared unchanged.
+fn flat_clause_to_nested<C: Chi>(clause: &Clause<C>, match_ty: &Ty) -> NestedClause {
     let pattern_vec = context_patterns(&clause.context);
-    let outer_pattern_chi;
-    if clause.prdcns.is_prd() {
-        outer_pattern_chi = Chirality::Cns
+    // A case consumer inspects producer patterns - a new producer handles consumer patterns.
+    let outer_pattern_chi = if clause.prdcns.is_prd() {
+        Chirality::Cns
     } else {
-        outer_pattern_chi = Chirality::Prd
-    }
+        Chirality::Prd
+    };
 
     let xtor_pattern = match outer_pattern_chi {
-        Chirality::Prd => AnyPattern::Producer(Pattern::Xtor(Xtor { 
-            prdcns: Prd, 
-            name: clause.xtor.clone(), 
-            args: pattern_vec, 
+        Chirality::Prd => AnyPattern::Producer(Pattern::Xtor(Xtor {
+            prdcns: Prd,
+            name: clause.xtor.clone(),
+            args: pattern_vec,
             ty: match_ty.clone(),
         })),
-        Chirality::Cns => AnyPattern::Consumer(Pattern::Xtor(Xtor { 
-            prdcns: Cns, 
-            name: clause.xtor.clone(), 
-            args: pattern_vec, 
+        Chirality::Cns => AnyPattern::Consumer(Pattern::Xtor(Xtor {
+            prdcns: Cns,
+            name: clause.xtor.clone(),
+            args: pattern_vec,
             ty: match_ty.clone(),
         })),
     };
 
-    NestedClause { 
-        pattern: xtor_pattern, 
+    NestedClause {
+        pattern: xtor_pattern,
         body: clause.body.clone(),
     }
-} 
+}
 
-fn flat_xcase_to_nested<C: Chi>(xcase: &XCase<C>,) -> NestedXCase<C> {
+/// Adapts a flat match or comatch to the shared pattern-checking representation.
+///
+/// Preserves the term's chirality, type, clause order, and bodies.
+fn flat_xcase_to_nested<C: Chi>(xcase: &XCase<C>) -> NestedXCase<C> {
     let mut clause_vec = vec![];
 
     for clause in &xcase.clauses {
@@ -226,7 +295,16 @@ fn flat_xcase_to_nested<C: Chi>(xcase: &XCase<C>,) -> NestedXCase<C> {
     }
 }
 
-fn check_xcase_patterns_and_bodies<C: Chi>(xcase: &NestedXCase<C>, context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks clause patterns and their statement bodies.
+///
+/// Each body is checked under the outer context extended by the binders
+/// introduced by its own pattern.
+fn check_xcase_patterns_and_bodies<C: Chi>(
+    xcase: &NestedXCase<C>,
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
+    // Each clause receives its own Gamma extended by its pattern context Delta.
     let clause_contexts = prepare_clause_contexts(xcase, context, &signature.patterns)?;
 
     for (clause, clause_context) in xcase.clauses.iter().zip(clause_contexts.iter()) {
@@ -236,43 +314,68 @@ fn check_xcase_patterns_and_bodies<C: Chi>(xcase: &NestedXCase<C>, context: &Typ
     Ok(())
 }
 
-fn check_flat_branch_names<C: Chi>(xcase: &XCase<C>, expected: &[Identifier],) -> Result<(), TypingError> {
+/// Requires exactly the declared xtor names in declaration order.
+///
+/// Flat Core uses this fixed order for positional branch dispatch.
+fn check_flat_branch_names<C: Chi>(
+    xcase: &XCase<C>,
+    expected: &[Identifier],
+) -> Result<(), TypingError> {
     let mut names = vec![];
     for clause in &xcase.clauses {
         names.push(clause.xtor.clone());
     }
-    
+
     if names.as_slice() != expected {
-        return Err(TypingError::WrongFlatBranches { 
-            expected: expected.to_vec(), 
+        return Err(TypingError::WrongFlatBranches {
+            expected: expected.to_vec(),
             found: names,
         });
     }
-    
+
     Ok(())
 }
 
-fn check_flat_xcase<C: Chi>(xcase: &XCase<C>, context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
-    let expected_names = signature.patterns.expected_xtor_names(&xcase.ty, &xcase.prdcns)?;
+/// Checks the branch layout, field contexts, and bodies of a flat XCase.
+///
+/// Reuses nested pattern checking by representing each flat field binding
+/// as a binder pattern.
+fn check_flat_xcase<C: Chi>(
+    xcase: &XCase<C>,
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
+    let expected_names = signature
+        .patterns
+        .expected_xtor_names(&xcase.ty, &xcase.prdcns)?;
     check_flat_branch_names(xcase, &expected_names)?;
 
     let nested_xcase = flat_xcase_to_nested(xcase);
     check_xcase_patterns_and_bodies(&nested_xcase, context, signature)
 }
 
-fn check_term<C: Chi>(term: &Term<C>, expected: &SubjectType, context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks a term against an expected chirality and type.
+///
+/// Validates the outer annotation and recursively checks the term's
+/// structure under the current typing context.
+fn check_term<C: Chi>(
+    term: &Term<C>,
+    expected: &SubjectType,
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
     check_type_exists(&expected.ty, signature)?;
     check_term_annotation(term, expected)?;
 
     match term {
         Term::XVar(xvar) => check_xvar(xvar, context),
         Term::Mu(mu) => {
-            let binder_chi;
-            if mu.prdcns.is_prd() {
-                binder_chi = Chirality::Cns
+            // A producer mu binds a consumer - a consumer mu-tilde binds a producer.
+            let binder_chi = if mu.prdcns.is_prd() {
+                Chirality::Cns
             } else {
-                binder_chi = Chirality::Prd
-            }
+                Chirality::Prd
+            };
 
             let typing_context = TypingContext {
                 bindings: vec![ContextBinding {
@@ -285,13 +388,16 @@ fn check_term<C: Chi>(term: &Term<C>, expected: &SubjectType, context: &TypingCo
             let extended_context = extend_context(context, &typing_context)?;
 
             check_statement(mu.statement.as_ref(), &extended_context, signature)
-        },
+        }
         Term::Xtor(xtor) => {
+            // Obtain argument expectations from the declaration rather than
+            // trusting the annotations of the supplied arguments.
             let xtor_context = signature.patterns.xtor_context(xtor)?;
             let omega = subject_typing(xtor_context);
             check_arguments(&xtor.args, &omega, context, signature)
-        },
+        }
         Term::XCase(xcase) => check_flat_xcase(xcase, context, signature),
+        // Literal types are fixed to I64 - the outer annotation check is sufficient.
         Term::Literal(_) => Ok(()),
         Term::Op(op) => {
             let op_expected = SubjectType {
@@ -301,12 +407,18 @@ fn check_term<C: Chi>(term: &Term<C>, expected: &SubjectType, context: &TypingCo
             check_term(op.fst.as_ref(), &op_expected, context, signature)?;
             check_term(op.snd.as_ref(), &op_expected, context, signature)?;
             Ok(())
-            
-        },
+        }
     }
 }
 
-fn check_statement(statement: &Statement, context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks a command under the current typing context.
+///
+/// Statements are checked for well-typedness without an expected result type.
+fn check_statement(
+    statement: &Statement,
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
     match statement {
         Statement::Cut(cut) => {
             let expected_prd = SubjectType {
@@ -317,24 +429,24 @@ fn check_statement(statement: &Statement, context: &TypingContext, signature: &T
                 chi: Chirality::Cns,
                 ty: cut.ty.clone(),
             };
+            // Both sides of a cut must have the cut's type and opposite chiralities.
             check_term(cut.producer.as_ref(), &expected_prd, context, signature)?;
             check_term(cut.consumer.as_ref(), &expected_cns, context, signature)?;
             Ok(())
-        },
+        }
         Statement::IfC(ifc) => {
             let expected_ifc = SubjectType {
                 chi: Chirality::Prd,
                 ty: Ty::I64,
             };
             check_term(ifc.fst.as_ref(), &expected_ifc, context, signature)?;
-            match &ifc.snd {
-                Some(s) => check_term(s.as_ref(), &expected_ifc, context, signature)?,
-                None => {},
-            };
+            if let Some(s) = &ifc.snd {
+                check_term(s.as_ref(), &expected_ifc, context, signature)?;
+            }
             check_statement(ifc.thenc.as_ref(), context, signature)?;
             check_statement(ifc.elsec.as_ref(), context, signature)?;
             Ok(())
-        },
+        }
         Statement::PrintI64(print) => {
             let expected_print = SubjectType {
                 chi: Chirality::Prd,
@@ -342,28 +454,38 @@ fn check_statement(statement: &Statement, context: &TypingContext, signature: &T
             };
             check_term(print.arg.as_ref(), &expected_print, context, signature)?;
             check_statement(print.next.as_ref(), context, signature)
-        },
+        }
         Statement::Call(call) => {
+            // Check arguments against the callee's parameter context.
+            // Its body is checked separately by 'check_program', allowing recursion.
             let omega = match signature.find_def(&call.name) {
                 Some(def) => subject_typing(&def.context),
-                None => return Err(TypingError::DefinitionNotFound { 
-                    name: call.name.clone()
-                })
+                None => {
+                    return Err(TypingError::DefinitionNotFound {
+                        name: call.name.clone(),
+                    });
+                }
             };
             check_arguments(&call.args, &omega, context, signature)
-
-        },
+        }
         Statement::Exit(exit) => {
             let expected_exit = SubjectType {
                 chi: Chirality::Prd,
                 ty: Ty::I64,
             };
             check_term(exit.arg.as_ref(), &expected_exit, context, signature)
-        },
+        }
     }
 }
 
-fn check_context(context: &TypingContext, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks that context identifiers are distinct and all binding types exist.
+///
+/// Also validates bindings that are never used in a statement.
+fn check_context(
+    context: &TypingContext,
+    signature: &TypingSignature<'_>,
+) -> Result<(), TypingError> {
+    // Extending an empty context detects duplicates within this context.
     extend_context(&TypingContext::default(), context)?;
     for binding in &context.bindings {
         check_type_exists(&binding.ty, signature)?;
@@ -372,15 +494,25 @@ fn check_context(context: &TypingContext, signature: &TypingSignature<'_>,) -> R
     Ok(())
 }
 
-fn check_def(def: &Def, signature: &TypingSignature<'_>,) -> Result<(), TypingError> {
+/// Checks a definition's parameter context and its body under that context.
+fn check_def(def: &Def, signature: &TypingSignature<'_>) -> Result<(), TypingError> {
     check_context(&def.context, signature)?;
     check_statement(&def.body, &def.context, signature)
 }
 
+/// Checks all definitions of an annotated Core program.
+///
+/// Rejects duplicate definition identifiers and checks every parameter
+/// context and body, including definitions that are never called.
+///
+/// Assumes well-formed data and codata declarations and binders renamed
+/// to avoid shadowing collisions. Call after uniquification and before focusing.
 pub fn check_program(program: &Prog) -> Result<(), TypingError> {
+    // Make all definitions available before checking bodies, so forward
+    // references and recursive calls can be resolved.
     let signature = TypingSignature {
-        patterns: PatternSignature { 
-            data_types: &program.data_types, 
+        patterns: PatternSignature {
+            data_types: &program.data_types,
             codata_types: &program.codata_types,
         },
         defs: &program.defs,
@@ -389,7 +521,9 @@ pub fn check_program(program: &Prog) -> Result<(), TypingError> {
     let mut names = vec![];
     for def in &program.defs {
         if names.contains(&def.name) {
-            return Err(TypingError::DuplicateDefinition { name: def.name.clone() });
+            return Err(TypingError::DuplicateDefinition {
+                name: def.name.clone(),
+            });
         }
         names.push(def.name.clone());
         check_def(def, &signature)?;
@@ -453,10 +587,7 @@ mod tests {
 
         let res = check_xvar(&variable, &context);
 
-        assert_eq!(
-            res,
-            Err(TypingError::UnboundBinder { name: y_name })
-        );
+        assert_eq!(res, Err(TypingError::UnboundBinder { name: y_name }));
     }
 
     #[test]
@@ -499,15 +630,14 @@ mod tests {
             })
         );
     }
-
 }
 
+/// Tests program validation, definition lookup and context validity.
 #[cfg(test)]
 mod program_tests {
     use super::*;
     use crate::syntax::{
-        Call, Codata, CodataDeclaration, Cut, Data, DataDeclaration,
-        Exit, Literal, Mu,
+        Call, Codata, CodataDeclaration, Cut, Data, DataDeclaration, Exit, Literal, Mu,
     };
     use std::rc::Rc;
 
@@ -592,10 +722,9 @@ mod program_tests {
     #[test]
     fn unused_parameter_with_unknown_type_is_rejected() {
         let mut def = definition("main", exit_zero());
-        def.context.bindings.push(producer_binding(
-            "unused",
-            Ty::Decl(name("Ghost")),
-        ));
+        def.context
+            .bindings
+            .push(producer_binding("unused", Ty::Decl(name("Ghost"))));
 
         let prog = program(vec![def]);
 
@@ -619,11 +748,9 @@ mod program_tests {
 
         assert_eq!(
             check_program(&prog),
-            Err(TypingError::Pattern(
-                PatternError::BinderAlreadyInContext {
-                    name: name("x"),
-                }
-            ))
+            Err(TypingError::Pattern(PatternError::BinderAlreadyInContext {
+                name: name("x"),
+            }))
         );
     }
 
@@ -636,9 +763,7 @@ mod program_tests {
 
         assert_eq!(
             check_program(&prog),
-            Err(TypingError::DuplicateDefinition {
-                name: name("main"),
-            })
+            Err(TypingError::DuplicateDefinition { name: name("main") })
         );
     }
 
@@ -678,20 +803,14 @@ mod program_tests {
 
     #[test]
     fn recursive_call_is_accepted_without_checking_body_again() {
-        let prog = program(vec![definition(
-            "main",
-            call_without_arguments("main"),
-        )]);
+        let prog = program(vec![definition("main", call_without_arguments("main"))]);
 
         assert_eq!(check_program(&prog), Ok(()));
     }
 
     #[test]
     fn call_to_unknown_definition_is_rejected() {
-        let prog = program(vec![definition(
-            "main",
-            call_without_arguments("missing"),
-        )]);
+        let prog = program(vec![definition("main", call_without_arguments("missing"))]);
 
         assert_eq!(
             check_program(&prog),
@@ -704,9 +823,7 @@ mod program_tests {
     #[test]
     fn call_with_missing_argument_is_rejected() {
         let mut target = definition("target", exit_zero());
-        target.context.bindings.push(
-            producer_binding("x", Ty::I64),
-        );
+        target.context.bindings.push(producer_binding("x", Ty::I64));
 
         let prog = program(vec![
             definition("main", call_without_arguments("target")),
@@ -753,14 +870,15 @@ mod program_tests {
     }
 }
 
+/// Tests recursive checking of terms, statements and flat matches.
 #[cfg(test)]
 mod structural_tests {
     use super::*;
-    use crate::syntax::{
-        BinOp, Codata, CodataDeclaration, CtorSig, Cut, Data,
-        DataDeclaration, DtorSig, Exit, IfC, IfSort, Literal, Mu, Op,
-    };
     use crate::syntax::statements::print::PrintI64;
+    use crate::syntax::{
+        BinOp, Codata, CodataDeclaration, CtorSig, Cut, Data, DataDeclaration, DtorSig, Exit, IfC,
+        IfSort, Literal, Mu, Op,
+    };
     use std::rc::Rc;
 
     fn id(text: &str) -> Identifier {
@@ -847,11 +965,7 @@ mod structural_tests {
                     DtorSig {
                         xtor: Codata,
                         name: id("tail"),
-                        args: binding(
-                            "result",
-                            Chirality::Cns,
-                            declared("Stream"),
-                        ),
+                        args: binding("result", Chirality::Cns, declared("Stream")),
                     },
                 ],
             }],
@@ -869,11 +983,7 @@ mod structural_tests {
         }
     }
 
-    fn check_test_term<C: Chi>(
-        term: Term<C>,
-        chi: Chirality,
-        ty: Ty,
-    ) -> Result<(), TypingError> {
+    fn check_test_term<C: Chi>(term: Term<C>, chi: Chirality, ty: Ty) -> Result<(), TypingError> {
         let prog = environment();
 
         check_term(
@@ -887,11 +997,7 @@ mod structural_tests {
     fn check_test_statement(statement: Statement) -> Result<(), TypingError> {
         let prog = environment();
 
-        check_statement(
-            &statement,
-            &TypingContext::default(),
-            &signature_for(&prog),
-        )
+        check_statement(&statement, &TypingContext::default(), &signature_for(&prog))
     }
 
     fn value(args: Vec<Argument>) -> Term<Prd> {
@@ -938,11 +1044,7 @@ mod structural_tests {
                 Clause {
                     prdcns: Prd,
                     xtor: id("tail"),
-                    context: binding(
-                        "beta",
-                        Chirality::Cns,
-                        declared("Stream"),
-                    ),
+                    context: binding("beta", Chirality::Cns, declared("Stream")),
                     body: Rc::new(exit(integer())),
                 },
             ],
@@ -958,10 +1060,7 @@ mod structural_tests {
             ty: Ty::I64,
         });
 
-        assert_eq!(
-            check_test_term(term, Chirality::Prd, Ty::I64),
-            Ok(())
-        );
+        assert_eq!(check_test_term(term, Chirality::Prd, Ty::I64), Ok(()));
     }
 
     #[test]
@@ -973,10 +1072,7 @@ mod structural_tests {
             ty: Ty::I64,
         });
 
-        assert_eq!(
-            check_test_term(term, Chirality::Cns, Ty::I64),
-            Ok(())
-        );
+        assert_eq!(check_test_term(term, Chirality::Cns, Ty::I64), Ok(()));
     }
 
     #[test]
@@ -1032,9 +1128,7 @@ mod structural_tests {
 
     #[test]
     fn constructor_argument_with_wrong_chirality_is_rejected() {
-        let term = value(vec![
-            Argument::Consumer(covariable("alpha")),
-        ]);
+        let term = value(vec![Argument::Consumer(covariable("alpha"))]);
 
         assert_eq!(
             check_test_term(term, Chirality::Prd, declared("Choice")),
@@ -1067,9 +1161,7 @@ mod structural_tests {
 
     #[test]
     fn constructor_argument_term_is_checked_recursively() {
-        let term = value(vec![
-            Argument::Producer(variable("missing")),
-        ]);
+        let term = value(vec![Argument::Producer(variable("missing"))]);
 
         assert_eq!(
             check_test_term(term, Chirality::Prd, declared("Choice")),
@@ -1082,11 +1174,7 @@ mod structural_tests {
     #[test]
     fn flat_case_body_can_use_its_pattern_binder() {
         assert_eq!(
-            check_test_term(
-                Term::XCase(flat_case()),
-                Chirality::Cns,
-                declared("Choice"),
-            ),
+            check_test_term(Term::XCase(flat_case()), Chirality::Cns, declared("Choice"),),
             Ok(())
         );
     }
@@ -1112,11 +1200,7 @@ mod structural_tests {
                 .collect();
 
             assert_eq!(
-                check_test_term(
-                    Term::XCase(case),
-                    Chirality::Cns,
-                    declared("Choice"),
-                ),
+                check_test_term(Term::XCase(case), Chirality::Cns, declared("Choice"),),
                 Err(TypingError::WrongFlatBranches {
                     expected: vec![id("Stop"), id("Value")],
                     found,
@@ -1131,11 +1215,7 @@ mod structural_tests {
         case.clauses[1].context.bindings[0].ty = declared("Choice");
 
         assert_eq!(
-            check_test_term(
-                Term::XCase(case),
-                Chirality::Cns,
-                declared("Choice"),
-            ),
+            check_test_term(Term::XCase(case), Chirality::Cns, declared("Choice"),),
             Err(TypingError::Pattern(PatternError::WrongType {
                 expected: Ty::I64,
                 found: declared("Choice"),
@@ -1149,11 +1229,7 @@ mod structural_tests {
         case.clauses[1].body = Rc::new(exit(variable("missing")));
 
         assert_eq!(
-            check_test_term(
-                Term::XCase(case),
-                Chirality::Cns,
-                declared("Choice"),
-            ),
+            check_test_term(Term::XCase(case), Chirality::Cns, declared("Choice"),),
             Err(TypingError::UnboundBinder {
                 name: id("missing"),
             })
@@ -1163,11 +1239,7 @@ mod structural_tests {
     #[test]
     fn flat_new_body_can_use_its_consumer_binder() {
         assert_eq!(
-            check_test_term(
-                Term::XCase(flat_new()),
-                Chirality::Prd,
-                declared("Stream"),
-            ),
+            check_test_term(Term::XCase(flat_new()), Chirality::Prd, declared("Stream"),),
             Ok(())
         );
     }
@@ -1178,17 +1250,11 @@ mod structural_tests {
         new.clauses[0].context.bindings[0].chi = Chirality::Prd;
 
         assert_eq!(
-            check_test_term(
-                Term::XCase(new),
-                Chirality::Prd,
-                declared("Stream"),
-            ),
-            Err(TypingError::Pattern(
-                PatternError::WrongChirality {
-                    expected: Chirality::Cns,
-                    found: Chirality::Prd,
-                }
-            ))
+            check_test_term(Term::XCase(new), Chirality::Prd, declared("Stream"),),
+            Err(TypingError::Pattern(PatternError::WrongChirality {
+                expected: Chirality::Cns,
+                found: Chirality::Prd,
+            }))
         );
     }
 
@@ -1198,11 +1264,7 @@ mod structural_tests {
         new.clauses.swap(0, 1);
 
         assert_eq!(
-            check_test_term(
-                Term::XCase(new),
-                Chirality::Prd,
-                declared("Stream"),
-            ),
+            check_test_term(Term::XCase(new), Chirality::Prd, declared("Stream"),),
             Err(TypingError::WrongFlatBranches {
                 expected: vec![id("head"), id("tail")],
                 found: vec![id("tail"), id("head")],
@@ -1213,16 +1275,10 @@ mod structural_tests {
     #[test]
     fn flat_new_checks_its_branch_body() {
         let mut new = flat_new();
-        new.clauses[0].body = Rc::new(
-            cut(integer(), covariable("missing")),
-        );
+        new.clauses[0].body = Rc::new(cut(integer(), covariable("missing")));
 
         assert_eq!(
-            check_test_term(
-                Term::XCase(new),
-                Chirality::Prd,
-                declared("Stream"),
-            ),
+            check_test_term(Term::XCase(new), Chirality::Prd, declared("Stream"),),
             Err(TypingError::UnboundBinder {
                 name: id("missing"),
             })
