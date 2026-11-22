@@ -10,6 +10,7 @@ use std::collections::BTreeSet;
 pub mod clause;
 pub mod literal;
 pub mod mu;
+pub mod nested_xcase;
 pub mod op;
 pub mod xcase;
 pub mod xtor;
@@ -18,6 +19,7 @@ pub mod xvar;
 pub use clause::{Clause, print_clauses};
 pub use literal::Literal;
 pub use mu::Mu;
+pub use nested_xcase::{NestedClause, NestedXCase};
 pub use op::{BinOp, FsOp, Op};
 pub use xcase::XCase;
 pub use xtor::{FsXtor, Xtor};
@@ -75,6 +77,8 @@ pub enum Term<C: Chi> {
     Xtor(Xtor<C>),
     /// Pattern match or Copattern match
     XCase(XCase<C, Statement>),
+    // TODO Nested Pattern match or Nested Copattern match
+    // NestedXCase(NestedXCase<C>),
 }
 
 impl<C: Chi> Typed for Term<C> {
@@ -295,5 +299,12 @@ impl<C: Chi> TypedFreeVars for FsTerm<C> {
             FsTerm::Xtor(xtor) => xtor.typed_free_vars(vars),
             FsTerm::XCase(xcase) => xcase.typed_free_vars(vars),
         }
+    }
+}
+
+/// Allows the explicit chirality enum to implement the shared chirality trait.
+impl Chi for Chirality {
+    fn is_prd(&self) -> bool {
+        matches!(self, Chirality::Prd)
     }
 }

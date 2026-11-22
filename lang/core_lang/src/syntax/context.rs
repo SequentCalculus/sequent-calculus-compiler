@@ -92,6 +92,11 @@ impl TypingContext {
         }
         vars
     }
+
+    /// Finds a binding by its identifier.
+    pub fn lookup_binding(&self, name: &Identifier) -> Option<&ContextBinding> {
+        self.bindings.iter().find(|binding| &binding.var == name)
+    }
 }
 
 impl From<Vec<ContextBinding>> for TypingContext {

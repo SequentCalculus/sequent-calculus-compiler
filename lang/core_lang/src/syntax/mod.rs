@@ -7,6 +7,7 @@ pub mod context;
 pub mod declaration;
 pub mod def;
 pub mod names;
+pub mod patterns;
 pub mod program;
 pub mod statements;
 pub mod terms;
@@ -20,11 +21,13 @@ pub use context::{Chirality, ContextBinding, TypingContext};
 pub use declaration::{Codata, CodataDeclaration, CtorSig, Data, DataDeclaration, DtorSig};
 pub use def::{Def, FsDef};
 pub use names::{ID, Identifier, fresh_covar, fresh_identifier, fresh_var};
+pub use patterns::{AnyPattern, Pattern, PatternVec, SubjectType, SubjectTyping, subject_typing};
 pub use program::{FsProg, Prog};
 pub use statements::{
     Call, Cut, Exit, FsCall, FsCut, FsExit, FsIfC, FsStatement, IfC, IfSort, Statement,
 };
 pub use terms::{
-    BinOp, Chi, Clause, Cns, FsOp, FsTerm, FsXtor, Literal, Mu, Op, Prd, Term, XCase, XVar, Xtor,
+    BinOp, Chi, Clause, Cns, FsOp, FsTerm, FsXtor, Literal, Mu, NestedClause, NestedXCase, Op, Prd,
+    Term, XCase, XVar, Xtor,
 };
 pub use types::Ty;
