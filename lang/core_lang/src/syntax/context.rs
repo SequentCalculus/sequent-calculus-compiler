@@ -92,6 +92,16 @@ impl TypingContext {
         }
         vars
     }
+
+    ///
+    pub fn lookup_binding(&self, name: &Identifier,) -> Option<&ContextBinding> {
+        for binding in &self.bindings {
+            if &binding.var == name {
+                return Some(binding);
+            }
+        }
+        None
+    }
 }
 
 impl From<Vec<ContextBinding>> for TypingContext {

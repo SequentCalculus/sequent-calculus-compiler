@@ -7,8 +7,7 @@
 //! Does not check clause bodies or match exhaustiveness.
 
 use crate::syntax::{
-    AnyPattern, Chi, Chirality, CodataDeclaration, ContextBinding, CtorSig, DataDeclaration,
-    DtorSig, Identifier, Pattern, SubjectType, Ty, TypingContext, subject_typing,
+    AnyPattern, Chi, Chirality, CodataDeclaration, ContextBinding, CtorSig, DataDeclaration, DtorSig, Identifier, NestedClause, NestedXCase, Pattern, SubjectType, Ty, TypingContext, Xtor, subject_typing,
 };
 
 /// Errors encountered while checking pattern annotations and structure.
@@ -33,6 +32,12 @@ pub enum PatternError {
     WrongNumberOfPatterns { expected: usize, found: usize },
     /// The same binder indentifier occurs more than once in a pattern vector.
     DuplicateBinder { name: Identifier },
+    ///
+    BinderAlreadyInContext { name: Identifier },
+    ///
+    ExpectedDataType { found: Ty },
+    ///
+    ExpectedCodataType { found: Ty },
 }
 
 /// Checks that the found chirality equals the expected chirality.
@@ -138,6 +143,90 @@ impl<'a> PatternSignature<'a> {
         }
         None
     }
+
+    ///
+    pub(crate) fn xtor_context<C: Chi, A>(&self, xtor: &Xtor<C, A>,) -> Result<&TypingContext, PatternError> {
+        let chi;
+        if xtor.prdcns.is_prd() {
+            chi = Chirality::Prd
+        } else {
+            chi = Chirality::Cns
+        }
+
+        let type_name = match &xtor.ty {
+            Ty::I64 => return Err(PatternError::XtorRequiresDeclaredType { found: xtor.ty.clone() }),
+            Ty::Decl(d) => d,
+        };
+
+        match chi {
+            Chirality::Prd => { 
+                match self.find_constructor(type_name, &xtor.name) {
+                    Some(s) => Ok(&s.args),
+                    None => return Err(PatternError::XtorSignatureNotFound { 
+                        ty: xtor.ty.clone(), 
+                        chi: chi.clone(), 
+                        name: xtor.name.clone(),
+                    }),
+                }
+            },
+            Chirality::Cns => { 
+                match self.find_destructor(type_name, &xtor.name) {
+                    Some(s) => Ok(&s.args),
+                    None => return Err(PatternError::XtorSignatureNotFound { 
+                        ty: xtor.ty.clone(), 
+                        chi: chi.clone(), 
+                        name: xtor.name.clone(),
+                    }),
+                }
+            },
+        }
+    }
+
+    pub(crate) fn expected_xtor_names<C: Chi>(&self, match_ty: &Ty, match_chi: &C,) -> Result<Vec<Identifier>, PatternError> {
+        let chi;
+        if match_chi.is_prd() {
+            chi = Chirality::Prd
+        } else {
+            chi = Chirality::Cns
+        }
+
+        match chi {
+            Chirality::Prd => {
+                match match_ty {
+                    Ty::I64 => return Err(PatternError::ExpectedCodataType { found: match_ty.clone() }),
+                    Ty::Decl(name) => match self.find_codata_type(name) {
+                        Some(s) => {
+                            let mut names = vec![];
+
+                            for xtor in &s.xtors {
+                                names.push(xtor.name.clone());
+                            }
+
+                            Ok(names)
+                        },
+                        None => return Err(PatternError::ExpectedCodataType { found: match_ty.clone() }),
+                    }
+                }
+            },
+            Chirality::Cns => {
+                match match_ty {
+                    Ty::I64 => return Err(PatternError::ExpectedDataType { found: match_ty.clone() }),
+                    Ty::Decl(name) => match self.find_data_type(name) {
+                        Some(s) => {
+                            let mut names = vec![];
+
+                            for xtor in &s.xtors {
+                                names.push(xtor.name.clone());
+                            }
+
+                            Ok(names)
+                        },
+                        None => return Err(PatternError::ExpectedDataType { found: match_ty.clone() }),
+                    }
+                }
+            },
+        }
+    }
 }
 
 /// Checks one annotated pattern against an expected subject position.
@@ -163,45 +252,7 @@ fn check_pattern<C: Chi>(
         Pattern::Wildcard { .. } => Ok(TypingContext::default()),
         Pattern::Xtor(xtor) => {
             // Xtor patterns require a declared data or codata type.
-            let type_name = match &expected.ty {
-                Ty::Decl(name) => name,
-                Ty::I64 => {
-                    return Err(PatternError::XtorRequiresDeclaredType {
-                        found: expected.ty.clone(),
-                    });
-                }
-            };
-
-            let expected_context: &TypingContext = match &expected.chi {
-                Chirality::Prd => {
-                    let ctor_sig = signature.find_constructor(type_name, &xtor.name);
-
-                    match ctor_sig {
-                        Some(ctor) => &ctor.args,
-                        None => {
-                            return Err(PatternError::XtorSignatureNotFound {
-                                ty: expected.ty.clone(),
-                                chi: expected.chi.clone(),
-                                name: xtor.name.clone(),
-                            });
-                        }
-                    }
-                }
-                Chirality::Cns => {
-                    let dtor_sig = signature.find_destructor(type_name, &xtor.name);
-
-                    match dtor_sig {
-                        Some(dtor) => &dtor.args,
-                        None => {
-                            return Err(PatternError::XtorSignatureNotFound {
-                                ty: expected.ty.clone(),
-                                chi: expected.chi.clone(),
-                                name: xtor.name.clone(),
-                            });
-                        }
-                    }
-                }
-            };
+            let expected_context: &TypingContext = signature.xtor_context(xtor)?;
 
             // Derive argument expectations from the declaration, not from subpatterns.
             let omega = subject_typing(expected_context);
@@ -254,11 +305,117 @@ pub fn check_patterns(
     Ok(context)
 }
 
+fn clause_subject_type<C: Chi>(xcase: &NestedXCase<C>) -> SubjectType {
+    let clause_chi = if xcase.prdcns.is_prd() {
+        Chirality::Cns
+    } else {
+        Chirality::Prd
+    };
+    let ty = xcase.ty.clone();
+
+    SubjectType {
+        chi: clause_chi,
+        ty: ty,
+    }
+}
+
+fn check_clause_pattern(
+    clause: &NestedClause,
+    expected: &SubjectType,
+    signature: &PatternSignature<'_>,
+) -> Result<TypingContext, PatternError> {
+    match &clause.pattern {
+        AnyPattern::Producer(p) => check_pattern(p, expected, signature),
+        AnyPattern::Consumer(c) => check_pattern(c, expected, signature),
+    }
+}
+
+pub(crate) fn extend_context(
+    outer: &TypingContext,
+    binders: &TypingContext,
+) -> Result<TypingContext, PatternError> {
+    let mut res_context = outer.clone();
+
+    for binder in &binders.bindings {
+        for existing_binder in &res_context.bindings {
+            if binder.var == existing_binder.var {
+                return Err(PatternError::BinderAlreadyInContext {
+                    name: binder.var.clone(),
+                });
+            }
+        }
+        res_context.bindings.push(binder.clone());
+    }
+
+    Ok(res_context)
+}
+
+fn check_xcase_type<C: Chi>(
+    xcase: &NestedXCase<C>,
+    signature: &PatternSignature<'_>,
+) -> Result<(), PatternError> {
+    if xcase.prdcns.is_prd() {
+        match &xcase.ty {
+            Ty::Decl(name) => match signature.find_codata_type(name) {
+                Some(_) => Ok(()),
+                None => {
+                    return Err(PatternError::ExpectedCodataType {
+                        found: xcase.ty.clone(),
+                    });
+                }
+            },
+            Ty::I64 => {
+                return Err(PatternError::ExpectedCodataType {
+                    found: xcase.ty.clone(),
+                });
+            }
+        }
+    } else {
+        match &xcase.ty {
+            Ty::Decl(name) => match signature.find_data_type(name) {
+                Some(_) => Ok(()),
+                None => {
+                    return Err(PatternError::ExpectedDataType {
+                        found: xcase.ty.clone(),
+                    });
+                }
+            },
+            Ty::I64 => {
+                return Err(PatternError::ExpectedDataType {
+                    found: xcase.ty.clone(),
+                });
+            }
+        }
+    }
+}
+
+pub(crate) fn prepare_clause_contexts<C: Chi>(
+    xcase: &NestedXCase<C>,
+    outer: &TypingContext,
+    signature: &PatternSignature<'_>,
+) -> Result<Vec<TypingContext>, PatternError> {
+    check_xcase_type(xcase, signature)?;
+    let expected_subject_type = clause_subject_type(xcase);
+    let mut res = vec![];
+
+    for clause in &xcase.clauses {
+        let delta = check_clause_pattern(clause, &expected_subject_type, signature)?;
+        let clause_context = extend_context(outer, &delta)?;
+
+        res.push(clause_context);
+    }
+
+    Ok(res)
+}
+
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
     use std::vec;
 
-    use crate::syntax::{Cns, Codata, Data, Identifier, Prd, XVar, Xtor};
+    use crate::syntax::{
+        Cns, Codata, Data, Exit, Identifier, Literal, Prd, Statement, Term, XVar, Xtor,
+    };
 
     use super::*;
 
@@ -1318,5 +1475,259 @@ mod tests {
                 found: Chirality::Cns,
             })
         )
+    }
+
+    fn context_test_clause(pattern: AnyPattern) -> NestedClause {
+        NestedClause {
+            pattern,
+            body: Rc::new(Statement::Exit(Exit {
+                arg: Rc::new(Term::Literal(Literal { lit: 0 })),
+                ty: Ty::I64,
+            })),
+        }
+    }
+
+    fn stream_declaration_for_context_tests() -> CodataDeclaration {
+        CodataDeclaration {
+            dat: Codata,
+            name: Identifier::new("Stream".to_string()),
+            xtors: vec![DtorSig {
+                xtor: Codata,
+                name: Identifier::new("head".to_string()),
+                args: TypingContext {
+                    bindings: vec![ContextBinding {
+                        var: Identifier::new("result".to_string()),
+                        chi: Chirality::Cns,
+                        ty: Ty::Decl(Identifier::new("Nat".to_string())),
+                    }],
+                },
+            }],
+        }
+    }
+
+    #[test]
+    fn case_clause_contexts_are_independent() {
+        let nat = Ty::Decl(Identifier::new("Nat".to_string()));
+        let x_name = Identifier::new("x".to_string());
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &[],
+        };
+        let outer_binding = ContextBinding {
+            var: Identifier::new("k".to_string()),
+            chi: Chirality::Cns,
+            ty: Ty::I64,
+        };
+        let outer = TypingContext {
+            bindings: vec![outer_binding.clone()],
+        };
+        let clause = context_test_clause(AnyPattern::Producer(Pattern::XVar(XVar {
+            prdcns: Prd,
+            var: x_name.clone(),
+            ty: nat.clone(),
+        })));
+        let xcase = NestedXCase {
+            prdcns: Cns,
+            clauses: vec![clause.clone(), clause],
+            ty: nat.clone(),
+        };
+        let expected_context = TypingContext {
+            bindings: vec![
+                outer_binding,
+                ContextBinding {
+                    var: x_name,
+                    chi: Chirality::Prd,
+                    ty: nat,
+                },
+            ],
+        };
+
+        let res = prepare_clause_contexts(&xcase, &outer, &signature);
+
+        assert_eq!(res, Ok(vec![expected_context.clone(), expected_context]));
+    }
+
+    #[test]
+    fn new_clause_context_contains_consumer_binder() {
+        let nat = Ty::Decl(Identifier::new("Nat".to_string()));
+        let stream = Ty::Decl(Identifier::new("Stream".to_string()));
+        let alpha_name = Identifier::new("alpha".to_string());
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let codata_types = [stream_declaration_for_context_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &codata_types,
+        };
+        let outer_binding = ContextBinding {
+            var: Identifier::new("n".to_string()),
+            chi: Chirality::Prd,
+            ty: Ty::I64,
+        };
+        let outer = TypingContext {
+            bindings: vec![outer_binding.clone()],
+        };
+        let pattern = Pattern::Xtor(Xtor {
+            prdcns: Cns,
+            name: Identifier::new("head".to_string()),
+            args: vec![AnyPattern::Consumer(Pattern::XVar(XVar {
+                prdcns: Cns,
+                var: alpha_name.clone(),
+                ty: nat.clone(),
+            }))],
+            ty: stream.clone(),
+        });
+        let xcase = NestedXCase {
+            prdcns: Prd,
+            clauses: vec![context_test_clause(AnyPattern::Consumer(pattern))],
+            ty: stream,
+        };
+
+        let res = prepare_clause_contexts(&xcase, &outer, &signature);
+
+        assert_eq!(
+            res,
+            Ok(vec![TypingContext {
+                bindings: vec![
+                    outer_binding,
+                    ContextBinding {
+                        var: alpha_name,
+                        chi: Chirality::Cns,
+                        ty: nat,
+                    },
+                ],
+            }])
+        );
+    }
+
+    #[test]
+    fn case_rejects_non_data_types() {
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let codata_types = [stream_declaration_for_context_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &codata_types,
+        };
+        let outer = TypingContext::default();
+
+        for ty in [
+            Ty::I64,
+            Ty::Decl(Identifier::new("Stream".to_string())),
+            Ty::Decl(Identifier::new("Missing".to_string())),
+        ] {
+            let xcase = NestedXCase {
+                prdcns: Cns,
+                clauses: vec![context_test_clause(AnyPattern::Producer(
+                    Pattern::Wildcard {
+                        chi: Prd,
+                        ty: ty.clone(),
+                    },
+                ))],
+                ty: ty.clone(),
+            };
+
+            let res = prepare_clause_contexts(&xcase, &outer, &signature);
+
+            assert_eq!(res, Err(PatternError::ExpectedDataType { found: ty }));
+        }
+    }
+
+    #[test]
+    fn new_rejects_non_codata_types() {
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let codata_types = [stream_declaration_for_context_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &codata_types,
+        };
+        let outer = TypingContext::default();
+
+        for ty in [
+            Ty::I64,
+            Ty::Decl(Identifier::new("Nat".to_string())),
+            Ty::Decl(Identifier::new("Missing".to_string())),
+        ] {
+            let xcase = NestedXCase {
+                prdcns: Prd,
+                clauses: vec![context_test_clause(AnyPattern::Consumer(
+                    Pattern::Wildcard {
+                        chi: Cns,
+                        ty: ty.clone(),
+                    },
+                ))],
+                ty: ty.clone(),
+            };
+
+            let res = prepare_clause_contexts(&xcase, &outer, &signature);
+
+            assert_eq!(res, Err(PatternError::ExpectedCodataType { found: ty }));
+        }
+    }
+
+    #[test]
+    fn case_rejects_consumer_clause_pattern() {
+        let nat = Ty::Decl(Identifier::new("Nat".to_string()));
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &[],
+        };
+        let xcase = NestedXCase {
+            prdcns: Cns,
+            clauses: vec![context_test_clause(AnyPattern::Consumer(Pattern::XVar(
+                XVar {
+                    prdcns: Cns,
+                    var: Identifier::new("alpha".to_string()),
+                    ty: nat.clone(),
+                },
+            )))],
+            ty: nat,
+        };
+
+        let res = prepare_clause_contexts(&xcase, &TypingContext::default(), &signature);
+
+        assert_eq!(
+            res,
+            Err(PatternError::WrongChirality {
+                expected: Chirality::Prd,
+                found: Chirality::Cns,
+            })
+        );
+    }
+
+    #[test]
+    fn clause_binder_must_be_fresh_in_outer_context() {
+        let nat = Ty::Decl(Identifier::new("Nat".to_string()));
+        let x_name = Identifier::new("x".to_string());
+        let data_types = [nat_declaration_for_pattern_tests()];
+        let signature = PatternSignature {
+            data_types: &data_types,
+            codata_types: &[],
+        };
+        let outer = TypingContext {
+            bindings: vec![ContextBinding {
+                var: x_name.clone(),
+                chi: Chirality::Prd,
+                ty: Ty::I64,
+            }],
+        };
+        let xcase = NestedXCase {
+            prdcns: Cns,
+            clauses: vec![context_test_clause(AnyPattern::Producer(Pattern::XVar(
+                XVar {
+                    prdcns: Prd,
+                    var: x_name.clone(),
+                    ty: nat.clone(),
+                },
+            )))],
+            ty: nat,
+        };
+
+        let res = prepare_clause_contexts(&xcase, &outer, &signature);
+
+        assert_eq!(
+            res,
+            Err(PatternError::BinderAlreadyInContext { name: x_name })
+        );
     }
 }
