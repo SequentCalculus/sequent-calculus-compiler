@@ -10,7 +10,8 @@ def get(e: Either): Num {
 }
 
 def main(): i64 {
-  let f: Fun = new { apply(x) => if x == 0 { 0 } else { x + 1 }};
+  let zero: i64 = 0;
+  let f: Fun = new { apply(x) => if x == zero { zero } else { x + 1 }};
   let y: i64 = f.apply(3);
   if y == 5 {
     let z: i64 = f.apply(4);

@@ -23,7 +23,7 @@ impl Eliminate for Call {
         let param_ids = info.param_ids.clone().into_iter();
         let arg_vars = self.args.iter_vars_cloned();
         let subst = param_ids.zip(arg_vars).collect::<Vec<_>>();
-        // Doing this substitution now causes no involuntary captures, as identifiers are globally unique
+        // Doing this substitution now causes no accidental captures, as identifiers are globally unique
         let substituted = matching_clause.clone().subst_sim(&subst);
         eliminate_clause_with(substituted, xtor_context.clone(), state, lifted)
     }

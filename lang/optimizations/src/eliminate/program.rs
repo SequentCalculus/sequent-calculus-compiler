@@ -14,21 +14,12 @@ pub fn eliminate(program: &mut Prog) {
 
     state.lift_global_switches(&mut defs);
 
-    // After doing cut elimination in the original `Def`s, we repeatedly
-    // do this for all the lifted `Clause`s located at the end of the `Def` vector, if any
-    let mut number_of_rewritten_defs = 0;
-    while number_of_rewritten_defs < defs.len() {
-        let number_of_defs = defs.len();
-        for def_position in number_of_rewritten_defs..number_of_defs {
-            state.let_bindings = HashMap::new();
-            state.create_bindings = HashMap::new();
-            let mut lifted = Vec::new();
-            replace_with_or_abort(&mut defs[def_position].body, |body| {
-                body.eliminate(&mut state, &mut lifted)
-            });
-            defs.extend(lifted);
-        }
-        number_of_rewritten_defs = number_of_defs;
+
+    let mut lifted = Vec::new();
+    for def in defs.iter_mut() {
+        state.let_bindings = HashMap::new();
+        state.create_bindings = HashMap::new();
+        replace_with_or_abort(&mut def.body, |body| body.eliminate(&mut state, &mut lifted));
     }
 
     program.max_id = state.max_id;
