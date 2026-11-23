@@ -4,6 +4,7 @@ use axcut::syntax::{Def, ID, Identifier, Statement};
 
 pub mod program;
 mod statements;
+mod budget;
 
 enum Mark {
     Once,
