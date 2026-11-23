@@ -14,13 +14,15 @@ pub fn eliminate(program: &mut Prog) {
 
     state.lift_global_switches(&mut defs);
 
-
     let mut lifted = Vec::new();
     for def in defs.iter_mut() {
         state.let_bindings = HashMap::new();
         state.create_bindings = HashMap::new();
-        replace_with_or_abort(&mut def.body, |body| body.eliminate(&mut state, &mut lifted));
+        replace_with_or_abort(&mut def.body, |body| {
+            body.eliminate(&mut state, &mut lifted)
+        });
     }
+    defs.extend(lifted);
 
     program.max_id = state.max_id;
     program.defs = defs;
