@@ -11,3 +11,4 @@ categories.workspace = true
 
 [dependencies]
 axcut.workspace = true
+replace_with = "0.1.8"

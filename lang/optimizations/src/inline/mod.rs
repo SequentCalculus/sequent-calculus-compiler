@@ -3,14 +3,14 @@ use std::collections::{HashMap, HashSet};
 use axcut::syntax::{Def, ID, Identifier, Statement};
 
 pub mod program;
-pub mod statements;
+mod statements;
 
-pub enum Mark {
+enum Mark {
     Once,
     Retain,
 }
 
-pub trait Occurrences {
+trait Occurrences {
     fn label_occurrences(
         &self,
         defs: &HashMap<Identifier, Def>,
@@ -18,12 +18,12 @@ pub trait Occurrences {
     );
 }
 
-pub struct InlineResult {
-    pub result: Statement,
-    pub free_vars: HashSet<ID>,
+struct InlineResult {
+    result: Statement,
+    free_vars: HashSet<ID>,
 }
 
-pub trait Inline {
+trait Inline {
     fn inline(
         self,
         retain: &mut Vec<Def>,
