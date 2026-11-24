@@ -20,13 +20,12 @@ pub enum OptMode {
 pub fn optimize(prog: &mut Prog, mode: &OptMode) {
     match mode {
         OptMode::Normal(passes) => {
-            // Inline first to not do cut elimination for clearly unused defs
-            // Inline last to not have unnecessarily lifted clauses left
+            // TODO: what is a good order of these passes?
             for _run in 0..*passes {
+                dead_code(prog);
                 inline(prog);
                 eliminate(prog);
             }
-            inline(prog);
         }
         OptMode::EliminateOnly => eliminate(prog),
         OptMode::InlineOnly => inline(prog),

@@ -30,14 +30,14 @@ struct GlobalSwitch {
     clauses: Vec<Clause>,
 }
 
-struct EliminateState {
+struct EliminateState<'a> {
     global_switches: HashMap<Identifier, GlobalSwitch>,
     let_bindings: HashMap<Identifier, (Xtor, TypingContext)>,
     create_bindings: HashMap<Identifier, Vec<Clause>>,
-    max_id: usize,
+    max_id: &'a mut usize,
 }
 
-impl EliminateState {
+impl<'a> EliminateState<'a> {
     fn lift_global_switches(&mut self, defs: &mut Vec<Def>) {
         let mut lifted_clauses = Vec::new();
         for def in defs.iter_mut() {
@@ -92,7 +92,7 @@ impl EliminateState {
                 clause
             }
             body => {
-                let lifted_ident = fresh_identifier(&mut self.max_id, "lifted_clause");
+                let lifted_ident = fresh_identifier(self.max_id, "lifted_clause");
                 let mut required_context = BTreeSet::new();
                 body.typed_free_vars(&mut required_context);
                 let old_ids: Vec<usize> = required_context.iter().map(|bind| bind.var.id).collect();
@@ -100,7 +100,7 @@ impl EliminateState {
                     .iter()
                     .map(|bind| {
                         let mut uniq = bind.clone();
-                        uniq.var = fresh_identifier(&mut self.max_id, &uniq.var.name);
+                        uniq.var = fresh_identifier(self.max_id, &uniq.var.name);
                         uniq
                     })
                     .collect();

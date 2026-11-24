@@ -15,6 +15,8 @@ pub struct Args {
     inline_only: bool,
     #[clap(long, group = "mode")]
     eliminate_only: bool,
+    #[clap(long, group = "mode")]
+    dead_code_only: bool,
 }
 
 pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
@@ -22,6 +24,8 @@ pub fn exec(cmd: Args, colored: bool) -> miette::Result<()> {
         OptMode::InlineOnly
     } else if cmd.eliminate_only {
         OptMode::EliminateOnly
+    } else if cmd.dead_code_only {
+        OptMode::DeadCodeOnly
     } else {
         OptMode::Normal(cmd.opt_passes)
     };

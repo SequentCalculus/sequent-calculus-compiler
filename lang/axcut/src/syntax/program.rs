@@ -24,6 +24,19 @@ impl Prog {
             self.defs.push(def);
         }
     }
+
+    pub fn use_defs<F>(&mut self, f: F)
+    where F: FnOnce(Vec<Def>) -> Vec<Def> {
+        let defs = std::mem::take(&mut self.defs);
+        self.defs = f(defs);
+    }
+
+    pub fn use_defs_and_max_id<F>(&mut self, f: F)
+    where F: FnOnce(Vec<Def>, ID) -> (Vec<Def>, ID) {
+        let defs = std::mem::take(&mut self.defs);
+        let max_id = self.max_id;
+        (self.defs, self.max_id) = f(defs, max_id);
+    }
 }
 
 impl Print for Prog {

@@ -1,11 +1,12 @@
 use axcut::{syntax::{Def, ID, Identifier, Prog, Statement}, traits::substitution::Subst};
-use std::{cell::Cell, collections::{HashMap, VecDeque}, rc::Rc};
+use std::{collections::{HashMap, VecDeque}, rc::Rc};
 
-use crate::inline::{Inline, Mark, Occurrences};
+use super::{Budget, DefInfo, Length};
 
 // TODO: check if make_mut clones here
-// TODO: cycles :(
-fn inline_bfs(def_map: &mut HashMap<Identifier, DefInfo>, mut queue: VecDeque<(&mut Statement, Rc<Cell<i32>>)>) {
+// TODO: one statement def call cycles :(
+// TODO: uniquify body when inlining, as unique idents are an invariant
+fn inline_bfs(def_map: &mut HashMap<Identifier, DefInfo>, mut queue: VecDeque<(&mut Statement, Budget)>) {
     while let Some((stmt, budget)) = queue.pop_front() {
         match stmt {
             Statement::Call(call) => {
@@ -19,50 +20,50 @@ fn inline_bfs(def_map: &mut HashMap<Identifier, DefInfo>, mut queue: VecDeque<(&
                 }
             },
             Statement::Create(create) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 for clause in create.clauses.iter_mut() {
                     let body: &mut Statement = Rc::make_mut(&mut clause.body);
-                    queue.push_back((body, Rc::clone(&budget)));
+                    queue.push_back((body, budget.clone()));
                 }
                 let next: &mut Statement = Rc::make_mut(&mut create.next);
                 queue.push_back((next, budget));
             },
             Statement::Switch(switch) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 for clause in switch.clauses.iter_mut() {
                     let body: &mut Statement = Rc::make_mut(&mut clause.body);
-                    queue.push_back((body, Rc::clone(&budget)));
+                    queue.push_back((body, budget.clone()));
                 }
             }
             Statement::IfC(ifc) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let thn: &mut Statement = Rc::make_mut(&mut ifc.thenc);
                 let els: &mut Statement = Rc::make_mut(&mut ifc.elsec);
-                queue.push_back((thn, Rc::clone(&budget)));
-                queue.push_back((els, Rc::clone(&budget)));
+                queue.push_back((thn, budget.clone()));
+                queue.push_back((els, budget.clone()));
             }
             Statement::Substitute(subst) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let next: &mut Statement = Rc::make_mut(&mut subst.next);
                 queue.push_back((next, budget));
             }
             Statement::Let(l) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let next: &mut Statement = Rc::make_mut(&mut l.next);
                 queue.push_back((next, budget));
             }
             Statement::Literal(lit) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let next: &mut Statement = Rc::make_mut(&mut lit.next);
                 queue.push_back((next, budget));
             }
             Statement::Op(op) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let next: &mut Statement = Rc::make_mut(&mut op.next);
                 queue.push_back((next, budget));
             }
             Statement::PrintI64(print) => {
-                budget.replace(budget.get() - 1);
+                budget.decr();
                 let next: &mut Statement = Rc::make_mut(&mut print.next);
                 queue.push_back((next, budget));
             }
@@ -71,61 +72,26 @@ fn inline_bfs(def_map: &mut HashMap<Identifier, DefInfo>, mut queue: VecDeque<(&
     }
 }
 
-struct DefInfo {
-    def: Def,
-    len: i32
-}
-
-trait Length {
-    fn len(&self) -> i32;
-}
-
-impl Length for Statement {
-    fn len(&self) -> i32 {
-        match self {
-            Statement::Substitute(subst) => 1 + subst.next.len(),
-            Statement::Create(create) => {
-                let clause_len: i32 = create.clauses.iter().map(|c| c.body.len()).sum();
-                1 + clause_len + create.next.len()
-            }
-            Statement::Switch(switch) => {
-                let clause_len: i32 = switch.clauses.iter().map(|c| c.body.len()).sum(); 
-                1 + clause_len
-            }
-            Statement::IfC(ifc) => 1 + ifc.thenc.len() + ifc.elsec.len(),
-            Statement::Let(l) => 1 + l.next.len(),
-            Statement::Literal(lit) => 1 + lit.next.len(),
-            Statement::Op(op) => 1 + op.next.len(),
-            Statement::PrintI64(print) => 1 + print.next.len(),
-            Statement::Call(_) | Statement::Exit(_) | Statement::Invoke(_) => 1
-        }
-    }
-}
-
-/// Inlines all definitions with 0 or 1 textual occurrences
-/// Inlines (/removes) all bindings that are not used
+/// Inlines into definitions up to a certain size limit
 pub fn inline(prog: &mut Prog) {
-    let original_order: HashMap<Identifier, usize> = prog
-        .defs
-        .iter()
-        .enumerate()
-        .map(|(i, d)| (d.name.clone(), i))
-        .collect();
+    prog.use_defs(|defs| {
+        let original_order: HashMap<Identifier, usize> =
+            defs.iter().enumerate()
+            .map(|(i, d)| (d.name.clone(), i))
+            .collect();
 
-    let defs = std::mem::take(&mut prog.defs);
-    let mut def_map: HashMap<Identifier, DefInfo> = HashMap::with_capacity(defs.len());
-    def_map.extend(defs.into_iter().map(|def| {
-        let len = def.body.len();
-        (def.name.clone(), DefInfo { def, len })
-    }));
+        let mut def_map: HashMap<Identifier, DefInfo> = HashMap::with_capacity(defs.len());
+        def_map.extend(defs.into_iter().map(|def| {
+            let len = def.body.len();
+            (def.name.clone(), DefInfo { def, len })
+        }));
 
-    let mut defs_for_queue: Vec<Def> = def_map.values().map(|di| &di.def).cloned().collect();
-    let default_budget = 1000;
-    let queue: VecDeque<(&mut Statement, Rc<Cell<i32>>)> =
-        defs_for_queue.iter_mut().map(|d| (&mut d.body, Rc::new(Cell::new(default_budget)))).collect();
+        let mut defs_for_queue: Vec<Def> = def_map.values().map(|di| &di.def).cloned().collect();
+        let queue: VecDeque<(&mut Statement, Budget)> =
+            defs_for_queue.iter_mut().map(|d| (&mut d.body, Budget::new(1000))).collect();
 
-    inline_bfs(&mut def_map, queue);
-
-    prog.defs.extend(defs_for_queue);
-    prog.defs.sort_unstable_by_key(|d| original_order[&d.name]);
+        inline_bfs(&mut def_map, queue);
+        defs_for_queue.sort_unstable_by_key(|d| original_order[&d.name]);
+        defs_for_queue
+    });
 }
