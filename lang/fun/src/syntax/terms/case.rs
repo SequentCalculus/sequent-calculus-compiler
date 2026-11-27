@@ -11,7 +11,6 @@ use crate::typing::inference::{TypeInference, TypeInferenceState};
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::iter::zip;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a pattern match of a data type. It consists of the scrutinee on which to
@@ -84,120 +83,58 @@ impl TypeInference for Case {
         context: &TypingContext,
         expected_ty: Ty,
     ) -> Result<(), Error> {
-        if let Some(first_clause) = self.clauses.first() {
-            self.ty = Some(expected_ty.clone());
+        let Some(first_clause) = self.clauses.first() else {
+            return Err(Error::EmptyMatch { span: self.span });
+        };
+        self.ty = Some(expected_ty.clone());
 
-            // the data type matched on is the one declaring the constructor of the first clause
-            let (data_name, type_params, declared_xtors) = state
+        // the data type matched on is the one declaring the constructor of the first clause
+        let (data_name, type_params, declared_xtors) = state
+            .symbol_table
+            .data_type_of_ctor(&first_clause.xtor, self.span)?;
+
+        // the type parameters of the data type are instantiated with the annotated type arguments
+        // or with fresh type variables
+        let instantiation =
+            type_params.instantiate(&self.type_args.args, self.span, &mut state.fresh_names)?;
+
+        for clause in &mut self.clauses {
+            // checking that that type of the clause is the same for all clauses
+            let (clause_type, _, _) = state
                 .symbol_table
-                .data_type_of_ctor(&first_clause.xtor, self.span)?;
+                .data_type_of_ctor(&clause.xtor, self.span)?;
+            if clause_type != data_name {
+                return Err(Error::Mismatch {
+                    span: self.span,
+                    expected: data_name,
+                    got: clause_type,
+                });
+            }
 
-            // the type parameters of the data type are instantiated with the annotated type
-            // arguments or with fresh type variables
-            let instantiation =
-                type_params.instantiate(&self.type_args.args, self.span, &mut state.fresh_names)?;
-
-            let mut seen_xtors = Vec::new();
-
-            for clause in &mut self.clauses {
-                seen_xtors.push(&clause.xtor);
-
-                // checking that that type of the clause is the same for all clauses
-                let (clause_type, _, _) = state
-                    .symbol_table
-                    .data_type_of_ctor(&clause.xtor, self.span)?;
-                if clause_type != data_name {
-                    return Err(Error::Mismatch {
-                        span: self.span,
-                        expected: data_name,
-                        got: clause_type,
-                    });
-                }
-
-                let mut clause_context = match state.symbol_table.ctor_templates.get(&clause.xtor) {
-                    Some(arg_types) => arg_types.clone().subst_ty(&instantiation),
-                    None => {
-                        return Err(Error::Undefined {
-                            span: Some(self.span),
-                            name: clause.xtor.clone(),
-                        });
-                    }
-                };
-
-                if clause.context_names.bindings.len() != clause_context.bindings.len() {
-                    return Err(Error::WrongNumberOfBinders {
+            let ctor_params = match state.symbol_table.ctor_templates.get(&clause.xtor) {
+                Some(params) => params.clone().subst_ty(&instantiation),
+                None => {
+                    return Err(Error::Undefined {
                         span: Some(self.span),
-                        expected: clause_context.bindings.len(),
-                        provided: clause.context_names.bindings.len(),
+                        name: clause.xtor.clone(),
                     });
                 }
+            };
 
-                // renaming the arguments to fit with the name bindings from the clause
-                for (new_name, arg_binding) in zip(
-                    clause.context_names.bindings.iter(),
-                    clause_context.bindings.iter_mut(),
-                ) {
-                    arg_binding.var = new_name.clone();
-                }
-
-                // The correct typing context of the clause is added, to be used later in the compiler pipeline
-                clause.context = clause_context.clone();
-
-                // The outer context is expanded with the bindings from the clause
-                let mut full_clause_context = context.clone();
-                for arg_binding in clause_context.bindings {
-                    // if the name of a binding is already in the Context it is shadowed by the new variable
-                    if let Some(index) = full_clause_context
-                        .bindings
-                        .iter()
-                        .position(|bind| bind.var == *arg_binding.var)
-                    {
-                        full_clause_context.bindings[index] = arg_binding;
-                    } else {
-                        full_clause_context.bindings.push(arg_binding);
-                    }
-                }
-
-                // every clause must have the same out type, the expected type of the whole case block
-                clause.body.collect_constraints(
-                    state,
-                    &full_clause_context,
-                    expected_ty.clone(),
-                )?;
-            }
-
-            // check that all clauses were also used
-            for clause_name in declared_xtors.iter() {
-                if !seen_xtors.contains(&clause_name) {
-                    return Err(Error::MissingCtorInCase {
-                        span: self.span,
-                        ctor: clause_name.clone(),
-                    });
-                }
-            }
-
-            // later stages in the pipeline expect the clauses in the same order as in the Data definition
-            self.clauses.sort_by_key(|c| {
-                declared_xtors
-                    .iter()
-                    .position(|name| &c.xtor == name)
-                    .unwrap_or(usize::MAX)
-            });
-
-            let scrutinee_type = Ty::mk_instance(&data_name, &type_params, &instantiation, None);
-
-            self.scrutinee
-                .collect_constraints(state, context, scrutinee_type)?;
-
-            Ok(())
-        } else {
-            // the clauses are empty, aborting the type inference
-            Err(Error::Mismatch {
-                span: self.span,
-                expected: "At least one Clause in Case Block".to_string(),
-                got: "No clause".to_string(),
-            })
+            // every clause must have the same out type, the expected type of the whole case block
+            clause.collect_constraints(&ctor_params, context, state, expected_ty.clone())?;
         }
+
+        check_and_order_clauses(
+            &mut self.clauses,
+            Polarity::Data,
+            &declared_xtors,
+            self.span,
+        )?;
+
+        let scrutinee_type = Ty::mk_instance(&data_name, &type_params, &instantiation, None);
+        self.scrutinee
+            .collect_constraints(state, context, scrutinee_type)
     }
 
     fn insert_inferred_types(
@@ -214,14 +151,7 @@ impl TypeInference for Case {
             .insert_inferred_types(type_vars, symbol_table, world)?;
 
         for clause in &mut self.clauses {
-            clause
-                .body
-                .insert_inferred_types(type_vars, symbol_table, world)?;
-            for ctx_binding in &mut clause.context.bindings {
-                ctx_binding
-                    .ty
-                    .insert_inferred(&clause.context.span, type_vars, symbol_table)?;
-            }
+            clause.insert_inferred_types(type_vars, symbol_table, world)?;
         }
 
         Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)

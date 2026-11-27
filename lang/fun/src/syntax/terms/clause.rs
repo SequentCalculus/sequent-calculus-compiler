@@ -8,6 +8,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::{
+    Error, SymbolTable,
+    inference::{TypeInference, TypeInferenceState, TypeVarMapping, World},
+};
 
 use std::collections::HashSet;
 
@@ -92,6 +96,104 @@ pub fn print_clauses<'a>(
                 .braces_anno()
         }
     }
+}
+
+impl Clause {
+    /// This function collects the constraints for a clause of a match or comatch. The arguments of
+    /// the xtor are bound to the names of the clause, and the body must have the expected type in
+    /// the outer context extended by these bindings.
+    /// - `xtor_params` are the parameters of the xtor, with the type parameters of its type
+    ///   template already instantiated.
+    /// - `context` is the typing context of the match or comatch.
+    /// - `state` is the inference state.
+    /// - `expected_ty` is the type the body must have.
+    pub fn collect_constraints(
+        &mut self,
+        xtor_params: &TypingContext,
+        context: &TypingContext,
+        state: &mut TypeInferenceState,
+        expected_ty: Ty,
+    ) -> Result<(), Error> {
+        self.context_names.no_dups(&self.xtor)?;
+        self.context = self.context_names.add_types(xtor_params)?;
+
+        // the bindings of the clause are appended to the outer context; since variables are looked
+        // up from right to left, they shadow outer bindings with the same name
+        let mut body_context = context.clone();
+        body_context
+            .bindings
+            .extend(self.context.bindings.iter().cloned());
+
+        self.body
+            .collect_constraints(state, &body_context, expected_ty)
+    }
+
+    /// This function inserts the inferred types into the body and the bindings of a clause, see
+    /// [`TypeInference::insert_inferred_types`].
+    pub fn insert_inferred_types(
+        &mut self,
+        type_vars: &TypeVarMapping,
+        symbol_table: &mut SymbolTable,
+        world: &World,
+    ) -> Result<(), Error> {
+        self.body
+            .insert_inferred_types(type_vars, symbol_table, world)?;
+        for binding in &mut self.context.bindings {
+            binding
+                .ty
+                .insert_inferred(&self.context.span, type_vars, symbol_table)?;
+        }
+        Ok(())
+    }
+}
+
+/// This function checks that the clauses of a match or comatch cover every xtor of the matched
+/// type exactly once, and sorts them in the order of the declaration of the type, which the later
+/// stages of the compiler rely on.
+/// - `clauses` are the clauses, all of the given polarity.
+/// - `polarity` is [`Polarity::Data`] for a match and [`Polarity::Codata`] for a comatch.
+/// - `declared_xtors` are the xtors of the type in the order of their declaration.
+/// - `span` is the source location of the match or comatch.
+pub fn check_and_order_clauses(
+    clauses: &mut Vec<Clause>,
+    polarity: Polarity,
+    declared_xtors: &[Name],
+    span: SourceSpan,
+) -> Result<(), Error> {
+    let mut remaining = std::mem::take(clauses);
+
+    for xtor in declared_xtors {
+        match remaining.iter().position(|clause| &clause.xtor == xtor) {
+            Some(position) => clauses.push(remaining.remove(position)),
+            None => {
+                return Err(match polarity {
+                    Polarity::Data => Error::MissingCtorInCase {
+                        span,
+                        ctor: xtor.clone(),
+                    },
+                    Polarity::Codata => Error::MissingDtorInNew {
+                        span,
+                        dtor: xtor.clone(),
+                    },
+                });
+            }
+        }
+    }
+
+    // every clause left over is a second clause for an xtor
+    if !remaining.is_empty() {
+        let xtors = remaining
+            .iter()
+            .map(|clause| clause.xtor.clone())
+            .collect::<Vec<_>>()
+            .print_to_string(None);
+        return Err(match polarity {
+            Polarity::Data => Error::UnexpectedCtorsInCase { span, ctors: xtors },
+            Polarity::Codata => Error::UnexpectedDtorsInNew { span, dtors: xtors },
+        });
+    }
+
+    Ok(())
 }
 
 impl UsedBinders for Clause {

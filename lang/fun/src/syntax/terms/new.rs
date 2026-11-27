@@ -14,7 +14,6 @@ use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 use std::collections::HashSet;
-use std::iter::zip;
 
 /// This struct defines a copattern match of a codata type. It consists of a list of clauses, and
 /// after typechecking also of the inferred type.
@@ -64,120 +63,64 @@ impl TypeInference for New {
         context: &TypingContext,
         expected_ty: Ty,
     ) -> Result<(), Error> {
-        if let Some(first_clause) = self.clauses.first() {
-            self.ty = Some(expected_ty.clone());
+        let Some(first_clause) = self.clauses.first() else {
+            return Err(Error::EmptyMatch { span: self.span });
+        };
+        self.ty = Some(expected_ty.clone());
 
-            // the codata type implemented is the one declaring the destructor of the first clause
-            let (codata_name, type_params, declared_xtors) = state
+        // the codata type implemented is the one declaring the destructor of the first clause
+        let (codata_name, type_params, declared_xtors) = state
+            .symbol_table
+            .codata_type_of_dtor(&first_clause.xtor, self.span)?;
+
+        // the type parameters of the codata type are instantiated with fresh type variables once,
+        // so they stay consistent across all clauses of this new-block
+        let instantiation = type_params.instantiate(&[], self.span, &mut state.fresh_names)?;
+
+        for clause in &mut self.clauses {
+            // checking that that type of the clause is the same for all clauses
+            let (clause_type, _, _) = state
                 .symbol_table
-                .codata_type_of_dtor(&first_clause.xtor, self.span)?;
-
-            // the type parameters of the codata type are instantiated with fresh type variables
-            // once, so they stay consistent across all clauses of this new-block
-            let instantiation = type_params.instantiate(&[], self.span, &mut state.fresh_names)?;
-
-            // Since the Codata Type has to be the same for all clauses, the type is instanciated once
-            // all following clauses are checked against this type.
-
-            let mut seen_xtors = Vec::new();
-
-            // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
-            for clause in &mut self.clauses {
-                let (clause_type, _, _) = state
-                    .symbol_table
-                    .codata_type_of_dtor(&clause.xtor, self.span)?;
-                if clause_type != codata_name {
-                    return Err(Error::Mismatch {
-                        span: self.span,
-                        expected: format!("a clause of Type {codata_name}"),
-                        got: format!("a clause of Type {clause_type}"),
-                    });
-                }
-
-                seen_xtors.push(&clause.xtor);
-
-                // the new arg types and out type are replaced
-                let (mut clause_context, out_type) =
-                    match state.symbol_table.dtor_templates.get(&clause.xtor) {
-                        Some((arg_types, out_type)) => {
-                            let new_arg_types = arg_types.clone().subst_ty(&instantiation);
-                            let new_out_type = out_type.clone().subst_ty(&instantiation);
-
-                            (new_arg_types, new_out_type)
-                        }
-                        None => {
-                            return Err(Error::Undefined {
-                                span: Some(self.span),
-                                name: clause.xtor.clone(),
-                            });
-                        }
-                    };
-
-                // renaming the arguments to fit with the name bindings from the clause
-                for (new_name, arg_binding) in zip(
-                    clause.context_names.bindings.iter(),
-                    clause_context.bindings.iter_mut(),
-                ) {
-                    arg_binding.var = new_name.clone();
-                }
-
-                clause.context = clause_context.clone();
-
-                // The outer context is expanded with the bindings from the clause
-                let mut full_clause_context = context.clone();
-                for arg_binding in clause_context.bindings {
-                    // if the name of a binding is already in the Context it is shadowed by the new variable
-                    if let Some(index) = full_clause_context
-                        .bindings
-                        .iter()
-                        .position(|bind| bind.var == *arg_binding.var)
-                    {
-                        full_clause_context.bindings[index] = arg_binding;
-                    } else {
-                        full_clause_context.bindings.push(arg_binding);
-                    }
-                }
-
-                //the argument types are now compared to the expected type of the body of the clause
-                clause
-                    .body
-                    .collect_constraints(state, &full_clause_context, out_type)?;
+                .codata_type_of_dtor(&clause.xtor, self.span)?;
+            if clause_type != codata_name {
+                return Err(Error::Mismatch {
+                    span: self.span,
+                    expected: format!("a clause of Type {codata_name}"),
+                    got: format!("a clause of Type {clause_type}"),
+                });
             }
 
-            // check that all clauses were also used
-            for clause_name in declared_xtors.iter() {
-                if !seen_xtors.contains(&clause_name) {
-                    return Err(Error::MissingDtorInNew {
-                        span: self.span,
-                        dtor: clause_name.clone(),
+            let (dtor_params, out_type) = match state.symbol_table.dtor_templates.get(&clause.xtor)
+            {
+                Some((params, out_type)) => (
+                    params.clone().subst_ty(&instantiation),
+                    out_type.clone().subst_ty(&instantiation),
+                ),
+                None => {
+                    return Err(Error::Undefined {
+                        span: Some(self.span),
+                        name: clause.xtor.clone(),
                     });
                 }
-            }
+            };
 
-            // later stages in the pipeline expect the clauses in the same order as in the Data definition
-            self.clauses.sort_by_key(|c| {
-                declared_xtors
-                    .iter()
-                    .position(|name| &c.xtor == name)
-                    .unwrap_or(usize::MAX)
-            });
-
-            // creating the expected type for the new-block
-            let resulting_codata_type =
-                Ty::mk_instance(&codata_name, &type_params, &instantiation, Some(self.span));
-
-            state.constraints.push(VariationalConstraint::equal(
-                expected_ty,
-                resulting_codata_type,
-            ));
-        } else {
-            // the clauses are empty, aborting the type inference
-            return Err(Error::Mismatch {
-                span: self.span,
-                expected: "At least one Clause in New Block".to_string(),
-                got: "No clause".to_string(),
-            });
+            // the body of a clause must have the return type of its destructor
+            clause.collect_constraints(&dtor_params, context, state, out_type)?;
         }
+
+        check_and_order_clauses(
+            &mut self.clauses,
+            Polarity::Codata,
+            &declared_xtors,
+            self.span,
+        )?;
+
+        // creating the expected type for the new-block
+        let codata_type =
+            Ty::mk_instance(&codata_name, &type_params, &instantiation, Some(self.span));
+        state
+            .constraints
+            .push(VariationalConstraint::equal(expected_ty, codata_type));
         Ok(())
     }
 
@@ -188,14 +131,7 @@ impl TypeInference for New {
         world: &World,
     ) -> Result<(), Error> {
         for clause in &mut self.clauses {
-            clause
-                .body
-                .insert_inferred_types(type_vars, symbol_table, world)?;
-            for ctx_binding in &mut clause.context.bindings {
-                ctx_binding
-                    .ty
-                    .insert_inferred(&clause.context.span, type_vars, symbol_table)?;
-            }
+            clause.insert_inferred_types(type_vars, symbol_table, world)?;
         }
 
         Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
