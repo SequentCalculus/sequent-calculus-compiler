@@ -177,14 +177,45 @@ impl SymbolTable {
         Ok(())
     }
 
-    pub fn find_xdata_type_name(&self, xtor_name: &Name) -> Option<Name> {
-        for (type_name, (_, _, names)) in &self.type_templates {
-            if names.contains(xtor_name) {
-                return Some(type_name.clone());
-            }
-        }
+    /// This function looks up the data type template a constructor belongs to. It returns the name
+    /// of the template, its type parameters and the names of all its constructors.
+    pub fn data_type_of_ctor(
+        &self,
+        ctor: &Name,
+        span: SourceSpan,
+    ) -> Result<(Name, TypeContext, Vec<Name>), Error> {
+        self.type_template_of_xtor(ctor, Polarity::Data, span)
+    }
 
-        None
+    /// This function looks up the codata type template a destructor belongs to. It returns the
+    /// name of the template, its type parameters and the names of all its destructors.
+    pub fn codata_type_of_dtor(
+        &self,
+        dtor: &Name,
+        span: SourceSpan,
+    ) -> Result<(Name, TypeContext, Vec<Name>), Error> {
+        self.type_template_of_xtor(dtor, Polarity::Codata, span)
+    }
+
+    /// This function looks up the type template with the given polarity that declares the given
+    /// xtor. An xtor of a template with the other polarity counts as undefined, i.e., a destructor
+    /// is no constructor and vice versa.
+    fn type_template_of_xtor(
+        &self,
+        xtor: &Name,
+        polarity: Polarity,
+        span: SourceSpan,
+    ) -> Result<(Name, TypeContext, Vec<Name>), Error> {
+        self.type_templates
+            .iter()
+            .find(|(_, (pol, _, xtors))| *pol == polarity && xtors.contains(xtor))
+            .map(|(name, (_, type_params, xtors))| {
+                (name.clone(), type_params.clone(), xtors.clone())
+            })
+            .ok_or_else(|| Error::Undefined {
+                span: Some(span),
+                name: xtor.clone(),
+            })
     }
 
     /// This function combines two symbol tables into one.

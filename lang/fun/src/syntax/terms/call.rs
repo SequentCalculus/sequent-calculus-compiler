@@ -213,16 +213,7 @@ impl TypeInference for Call {
             self.name = symbol_table::overload_name(&self.name, index);
         }
 
-        match &mut self.ret_ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.ret_ty, self.span, type_vars, symbol_table)
     }
 }
 

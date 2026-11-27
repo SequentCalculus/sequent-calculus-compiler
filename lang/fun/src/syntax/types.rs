@@ -7,6 +7,7 @@ use printer::*;
 
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
+use crate::typing::inference::TypeVarMapping;
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -133,6 +134,55 @@ impl Ty {
             span: None,
             name: name.to_string(),
             type_args,
+        }
+    }
+
+    /// This function creates the instance of a type template for an instantiation of its type
+    /// parameters (see [`TypeContext::instantiate`]).
+    pub fn mk_instance(
+        name: &str,
+        type_params: &TypeContext,
+        instantiation: &TypeVarMapping,
+        span: Option<SourceSpan>,
+    ) -> Self {
+        Ty::Decl {
+            span,
+            name: name.to_string(),
+            type_args: TypeArgs {
+                span,
+                args: type_params
+                    .bindings
+                    .iter()
+                    .map(|param| instantiation[param].clone())
+                    .collect(),
+            },
+        }
+    }
+
+    /// This function inserts the inferred types for the type variables in this type and checks
+    /// the result, which creates the monomorphic instances of the types it contains.
+    pub fn insert_inferred(
+        &mut self,
+        span: &Option<SourceSpan>,
+        type_vars: &TypeVarMapping,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<(), Error> {
+        self.mut_subst_ty(type_vars);
+        self.check(span, symbol_table)
+    }
+
+    /// This function inserts the inferred types into the type annotation of a term (see
+    /// [`Ty::insert_inferred`]). Collecting constraints sets the annotation of every term, so the
+    /// annotation must be present.
+    pub fn insert_inferred_annotation(
+        annotation: &mut Option<Ty>,
+        span: SourceSpan,
+        type_vars: &TypeVarMapping,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<(), Error> {
+        match annotation {
+            Some(ty) => ty.insert_inferred(&Some(span), type_vars, symbol_table),
+            None => panic!("The type of the term at {span:?} is not set after type inference"),
         }
     }
 

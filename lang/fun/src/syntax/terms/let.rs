@@ -129,27 +129,8 @@ impl TypeInference for Let {
         self.in_term
             .insert_inferred_types(type_vars, symbol_table, world)?;
 
-        match &mut self.var_ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)?;
-            }
-            None => panic!(
-                "The Type of the bound term of the Let Term {:?} is not set after type inference",
-                self
-            ),
-        };
-
-        match &mut self.ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.var_ty, self.span, type_vars, symbol_table)?;
+        Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
     }
 }
 

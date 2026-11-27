@@ -12,7 +12,6 @@ use crate::typing::inference::VariationalConstraint;
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines a constructor term of a data type. It consists of a name for the
@@ -68,49 +67,13 @@ impl TypeInference for Constructor {
     ) -> Result<(), Error> {
         self.ty = Some(expected_ty.clone());
 
-        let data_type_name = match state.symbol_table.find_xdata_type_name(&self.id) {
-            Some(type_name) => type_name,
-            None => {
-                return Err(Error::Undefined {
-                    span: Some(self.span),
-                    name: self.id.clone(),
-                });
-            }
-        };
+        let (data_name, type_params, _) =
+            state.symbol_table.data_type_of_ctor(&self.id, self.span)?;
 
-        let (polarity, type_params, _) = state
-            .symbol_table
-            .type_templates
-            .get(&data_type_name)
-            .unwrap();
-
-        if polarity == &Polarity::Codata {
-            return Err(Error::ExpectedDataForNew {
-                span: self.span,
-                data: data_type_name,
-            });
-        }
-
-        // this instance of the Data Type is instanciated, whith replacing the general type vars
-        // with instance type variables eg. (A -> a1)
-
-        let mut instantiation: HashMap<Name, Ty> = HashMap::new();
-        for type_var in &type_params.bindings {
-            instantiation.insert(type_var.clone(), state.fresh_names.fresh_ty_var());
-        }
-
-        let expected_type = Ty::Decl {
-            span: Some(self.span),
-            name: data_type_name,
-            type_args: TypeArgs {
-                span: Some(self.span),
-                args: type_params
-                    .bindings
-                    .iter()
-                    .map(|name| instantiation.get(name).unwrap().clone())
-                    .collect(),
-            },
-        };
+        // every use of a constructor instantiates the type parameters of its data type with fresh
+        // type variables
+        let instantiation = type_params.instantiate(&[], self.span, &mut state.fresh_names)?;
+        let data_type = Ty::mk_instance(&data_name, &type_params, &instantiation, Some(self.span));
 
         let instanciated_template = match state.symbol_table.ctor_templates.get(&self.id) {
             Some(ctor_template) => ctor_template.clone().subst_ty(&instantiation),
@@ -122,20 +85,12 @@ impl TypeInference for Constructor {
             }
         };
 
-        if instanciated_template.bindings.len() != self.args.entries.len() {
-            return Err(Error::WrongNumberOfArguments {
-                span: self.span,
-                expected: instanciated_template.bindings.len(),
-                got: self.args.entries.len(),
-            });
-        }
-
         self.args
             .collect_constraints(&instanciated_template, context, state, self.span)?;
 
         state
             .constraints
-            .push(VariationalConstraint::equal(expected_ty, expected_type));
+            .push(VariationalConstraint::equal(expected_ty, data_type));
 
         Ok(())
     }
@@ -149,16 +104,7 @@ impl TypeInference for Constructor {
         self.args
             .insert_inferred_types(type_vars, symbol_table, world)?;
 
-        match &mut self.ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
     }
 }
 

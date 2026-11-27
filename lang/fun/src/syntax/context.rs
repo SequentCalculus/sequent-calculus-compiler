@@ -8,6 +8,7 @@ use printer::*;
 use crate::parser::util::ToMiette;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::inference::{FreshNames, TypeVarMapping};
 use crate::typing::*;
 
 use std::collections::{HashMap, HashSet};
@@ -327,6 +328,39 @@ impl TypeContext {
     /// checks if a name is bound in this [`TypeContext`]
     pub fn contains_binding(&self, name: &Name) -> bool {
         self.bindings.contains(name)
+    }
+
+    /// This function instantiates the type parameters of a type template for one use of the
+    /// template. Explicitly given type arguments are used as they are. Without type arguments,
+    /// every type parameter is replaced by a fresh type variable.
+    pub fn instantiate(
+        &self,
+        type_args: &[Ty],
+        span: SourceSpan,
+        fresh_names: &mut FreshNames,
+    ) -> Result<TypeVarMapping, Error> {
+        if type_args.len() == self.bindings.len() {
+            // if the right amount of type arguments is given they are used
+            Ok(self
+                .bindings
+                .iter()
+                .cloned()
+                .zip(type_args.iter().cloned())
+                .collect())
+        } else if type_args.is_empty() {
+            // if no type arguments are given, they are all replaced by fresh type variables
+            Ok(self
+                .bindings
+                .iter()
+                .map(|param| (param.clone(), fresh_names.fresh_ty_var()))
+                .collect())
+        } else {
+            Err(Error::WrongNumberOfTypeArguments {
+                span: Some(span),
+                expected: self.bindings.len(),
+                got: type_args.len(),
+            })
+        }
     }
 
     /// This function constructs a type context with empty source location from a list of strings.

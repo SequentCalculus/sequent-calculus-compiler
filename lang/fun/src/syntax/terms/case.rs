@@ -11,7 +11,6 @@ use crate::typing::inference::{TypeInference, TypeInferenceState};
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::iter::zip;
 use std::{collections::HashSet, rc::Rc};
 
@@ -88,55 +87,15 @@ impl TypeInference for Case {
         if let Some(first_clause) = self.clauses.first() {
             self.ty = Some(expected_ty.clone());
 
-            let data_type_name = match state.symbol_table.find_xdata_type_name(&first_clause.xtor) {
-                Some(type_name) => type_name,
-                None => {
-                    return Err(Error::Undefined {
-                        span: Some(self.span),
-                        name: first_clause.xtor.clone(),
-                    });
-                }
-            };
-
-            let (polarity, type_params, declared_xtors) = state
+            // the data type matched on is the one declaring the constructor of the first clause
+            let (data_name, type_params, declared_xtors) = state
                 .symbol_table
-                .type_templates
-                .get(&data_type_name)
-                .unwrap()
-                .clone();
+                .data_type_of_ctor(&first_clause.xtor, self.span)?;
 
-            if polarity == Polarity::Codata {
-                return Err(Error::ExpectedTermGotCovariable { span: self.span });
-            }
-
-            // this instance of the Data Type is instanciated by replacing the general type vars
-            // with instance type variables eg. (A -> a1)
-
-            let mut instantiation: HashMap<Name, Ty> = HashMap::new();
-
-            if self.type_args.args.len() == type_params.bindings.len() {
-                // if the right amount of type arguments is given they are used
-
-                for (type_var_name, given_ty) in
-                    type_params.bindings.iter().zip(self.type_args.args.iter())
-                {
-                    instantiation.insert(type_var_name.clone(), given_ty.clone());
-                }
-            } else if self.type_args.args.is_empty() {
-                // if no type Arguments are given, they are all replaced by variables,
-
-                for type_var_name in type_params.bindings.iter() {
-                    instantiation.insert(type_var_name.clone(), state.fresh_names.fresh_ty_var());
-                }
-            } else {
-                // if the wrong amount of type arguments are given, an error is returned
-
-                return Err(Error::WrongNumberOfTypeArguments {
-                    span: Some(self.span),
-                    expected: type_params.bindings.len(),
-                    got: self.type_args.args.len(),
-                });
-            }
+            // the type parameters of the data type are instantiated with the annotated type
+            // arguments or with fresh type variables
+            let instantiation =
+                type_params.instantiate(&self.type_args.args, self.span, &mut state.fresh_names)?;
 
             let mut seen_xtors = Vec::new();
 
@@ -144,22 +103,15 @@ impl TypeInference for Case {
                 seen_xtors.push(&clause.xtor);
 
                 // checking that that type of the clause is the same for all clauses
-                match state.symbol_table.find_xdata_type_name(&clause.xtor) {
-                    Some(type_name) => {
-                        if type_name != data_type_name {
-                            return Err(Error::Mismatch {
-                                span: self.span,
-                                expected: data_type_name,
-                                got: type_name,
-                            });
-                        }
-                    }
-                    None => {
-                        return Err(Error::Undefined {
-                            span: Some(self.span),
-                            name: clause.xtor.clone(),
-                        });
-                    }
+                let (clause_type, _, _) = state
+                    .symbol_table
+                    .data_type_of_ctor(&clause.xtor, self.span)?;
+                if clause_type != data_name {
+                    return Err(Error::Mismatch {
+                        span: self.span,
+                        expected: data_name,
+                        got: clause_type,
+                    });
                 }
 
                 let mut clause_context = match state.symbol_table.ctor_templates.get(&clause.xtor) {
@@ -232,16 +184,7 @@ impl TypeInference for Case {
                     .unwrap_or(usize::MAX)
             });
 
-            let scrutinee_type_args = TypeArgs::mk(
-                type_params
-                    .bindings
-                    .iter()
-                    .map(|binding| instantiation.get(binding).unwrap())
-                    .cloned()
-                    .collect(),
-            );
-
-            let scrutinee_type = Ty::mk_decl(&data_type_name, scrutinee_type_args);
+            let scrutinee_type = Ty::mk_instance(&data_name, &type_params, &instantiation, None);
 
             self.scrutinee
                 .collect_constraints(state, context, scrutinee_type)?;
@@ -264,8 +207,7 @@ impl TypeInference for Case {
         world: &World,
     ) -> Result<(), Error> {
         for ty in &mut self.type_args.args {
-            ty.mut_subst_ty(type_vars);
-            ty.check(&Some(self.span), symbol_table)?;
+            ty.insert_inferred(&Some(self.span), type_vars, symbol_table)?;
         }
 
         self.scrutinee
@@ -276,21 +218,13 @@ impl TypeInference for Case {
                 .body
                 .insert_inferred_types(type_vars, symbol_table, world)?;
             for ctx_binding in &mut clause.context.bindings {
-                ctx_binding.ty.mut_subst_ty(type_vars);
-                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
+                ctx_binding
+                    .ty
+                    .insert_inferred(&clause.context.span, type_vars, symbol_table)?;
             }
         }
 
-        match &mut self.ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
     }
 }
 

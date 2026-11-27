@@ -13,7 +13,6 @@ use crate::typing::inference::VariationalConstraint;
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines an invocation of a destructor of codata type. It consists of the scrutinee
@@ -94,57 +93,21 @@ impl TypeInference for Destructor {
     ) -> Result<(), Error> {
         self.ty = Some(expected_ty.clone());
 
-        let codata_type_name = match state.symbol_table.find_xdata_type_name(&self.id) {
-            Some(type_name) => type_name,
-            None => {
-                return Err(Error::Undefined {
-                    span: Some(self.span),
-                    name: self.id.clone(),
-                });
-            }
-        };
-
-        let (polarity, type_params, _) = state
+        let (codata_name, type_params, _) = state
             .symbol_table
-            .type_templates
-            .get(&codata_type_name)
-            .unwrap();
+            .codata_type_of_dtor(&self.id, self.span)?;
 
-        if polarity == &Polarity::Data {
-            return Err(Error::ExpectedCovariableGotTerm { span: self.span });
-        }
-
-        // instanciating new type variables
-
-        let mut instantiation: HashMap<Name, Ty> = HashMap::new();
-
-        if type_params.bindings.len() == self.type_args.args.len() {
-            // if the right amount of type arguments is given they are used
-
-            for (type_var_name, given_ty) in
-                type_params.bindings.iter().zip(self.type_args.args.iter())
-            {
-                instantiation.insert(type_var_name.clone(), given_ty.clone());
-            }
-        } else if self.type_args.args.is_empty() {
-            // if no type Arguments are given, they are all replaced by variables,
-
-            for type_var in &type_params.bindings {
-                instantiation.insert(type_var.clone(), state.fresh_names.fresh_ty_var());
-            }
-        } else {
-            // if the wrong amount of type arguments are given, an error is returned
-
-            return Err(Error::WrongNumberOfTypeArguments {
-                span: Some(self.span),
-                expected: type_params.bindings.len(),
-                got: self.type_args.args.len(),
-            });
-        }
+        // the type parameters of the codata type are instantiated with the annotated type
+        // arguments or with fresh type variables
+        let instantiation =
+            type_params.instantiate(&self.type_args.args, self.span, &mut state.fresh_names)?;
 
         // collecting the expected signature of the dtor
-        let (mut arg_types, mut out_type) = match state.symbol_table.dtor_templates.get(&self.id) {
-            Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
+        let (arg_types, out_type) = match state.symbol_table.dtor_templates.get(&self.id) {
+            Some((in_tys, out_ty)) => (
+                in_tys.clone().subst_ty(&instantiation),
+                out_ty.clone().subst_ty(&instantiation),
+            ),
             None => {
                 return Err(Error::Undefined {
                     span: Some(self.span),
@@ -153,31 +116,7 @@ impl TypeInference for Destructor {
             }
         };
 
-        // replacing the general type vars for instaciated ones
-
-        let new_arg_types = arg_types
-            .bindings
-            .iter()
-            .map(|arg_ty| arg_ty.clone().subst_ty(&instantiation))
-            .collect();
-        arg_types.bindings = new_arg_types;
-
-        out_type = out_type.subst_ty(&instantiation);
-
-        // putting together the instantiated and expected type for the scrutinee and creating the constraints for it
-        let scrutinee_type_args: Vec<Ty> = type_params
-            .bindings
-            .iter()
-            .map(|binding| instantiation.get(binding).unwrap())
-            .cloned()
-            .collect();
-        let scrutinee_type = Ty::mk_decl(
-            &codata_type_name,
-            TypeArgs {
-                span: None,
-                args: scrutinee_type_args,
-            },
-        );
+        let scrutinee_type = Ty::mk_instance(&codata_name, &type_params, &instantiation, None);
 
         self.scrutinee
             .collect_constraints(state, context, scrutinee_type)?;
@@ -202,23 +141,13 @@ impl TypeInference for Destructor {
             .insert_inferred_types(type_vars, symbol_table, world)?;
 
         for ty in &mut self.type_args.args {
-            ty.mut_subst_ty(type_vars);
-            ty.check(&Some(self.span), symbol_table)?;
+            ty.insert_inferred(&Some(self.span), type_vars, symbol_table)?;
         }
 
         self.args
             .insert_inferred_types(type_vars, symbol_table, world)?;
 
-        match &mut self.ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
     }
 }
 

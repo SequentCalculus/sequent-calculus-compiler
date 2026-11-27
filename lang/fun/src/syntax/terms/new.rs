@@ -13,7 +13,6 @@ use crate::typing::inference::VariationalConstraint;
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::zip;
 
@@ -68,35 +67,14 @@ impl TypeInference for New {
         if let Some(first_clause) = self.clauses.first() {
             self.ty = Some(expected_ty.clone());
 
-            let codata_name = match state.symbol_table.find_xdata_type_name(&first_clause.xtor) {
-                Some(type_name) => type_name,
-                None => {
-                    return Err(Error::Undefined {
-                        span: Some(self.span),
-                        name: first_clause.xtor.clone(),
-                    });
-                }
-            };
-
-            let (polarity, type_params, declared_xtors) = state
+            // the codata type implemented is the one declaring the destructor of the first clause
+            let (codata_name, type_params, declared_xtors) = state
                 .symbol_table
-                .type_templates
-                .get(&codata_name)
-                .unwrap()
-                .clone();
+                .codata_type_of_dtor(&first_clause.xtor, self.span)?;
 
-            if polarity == Polarity::Data {
-                return Err(Error::ExpectedCovariableGotTerm { span: self.span });
-            }
-
-            // this instance of the Codata Type is instanciated by replacing the general type vars
-            // with instance type variables eg. (A -> a1)
-
-            // the mapping is created now, to ensure that the new type varibales in this new-Block stay consistent
-            let mut instantiation: HashMap<Name, Ty> = HashMap::new();
-            for type_var in &type_params.bindings {
-                instantiation.insert(type_var.clone(), state.fresh_names.fresh_ty_var());
-            }
+            // the type parameters of the codata type are instantiated with fresh type variables
+            // once, so they stay consistent across all clauses of this new-block
+            let instantiation = type_params.instantiate(&[], self.span, &mut state.fresh_names)?;
 
             // Since the Codata Type has to be the same for all clauses, the type is instanciated once
             // all following clauses are checked against this type.
@@ -105,23 +83,16 @@ impl TypeInference for New {
 
             // in every clause the General Type variables (A, B) are replaced by fresh type variables that are only for the current new-Block
             for clause in &mut self.clauses {
-                match state.symbol_table.find_xdata_type_name(&clause.xtor) {
-                    Some(type_name) => {
-                        if type_name != codata_name {
-                            return Err(Error::Mismatch {
-                                span: self.span,
-                                expected: format!("a clause of Type {codata_name}"),
-                                got: format!("a clause of Type {type_name}"),
-                            });
-                        }
-                    }
-                    None => {
-                        return Err(Error::Undefined {
-                            span: Some(self.span),
-                            name: clause.xtor.clone(),
-                        });
-                    }
-                };
+                let (clause_type, _, _) = state
+                    .symbol_table
+                    .codata_type_of_dtor(&clause.xtor, self.span)?;
+                if clause_type != codata_name {
+                    return Err(Error::Mismatch {
+                        span: self.span,
+                        expected: format!("a clause of Type {codata_name}"),
+                        got: format!("a clause of Type {clause_type}"),
+                    });
+                }
 
                 seen_xtors.push(&clause.xtor);
 
@@ -192,19 +163,8 @@ impl TypeInference for New {
             });
 
             // creating the expected type for the new-block
-            let mut general_arg_types = Vec::new();
-            for ty_var_name in &type_params.bindings {
-                general_arg_types.push(instantiation.get(ty_var_name).unwrap().clone());
-            }
-
-            let resulting_codata_type = Ty::Decl {
-                span: Some(self.span),
-                name: codata_name,
-                type_args: TypeArgs {
-                    span: Some(self.span),
-                    args: general_arg_types,
-                },
-            };
+            let resulting_codata_type =
+                Ty::mk_instance(&codata_name, &type_params, &instantiation, Some(self.span));
 
             state.constraints.push(VariationalConstraint::equal(
                 expected_ty,
@@ -232,21 +192,13 @@ impl TypeInference for New {
                 .body
                 .insert_inferred_types(type_vars, symbol_table, world)?;
             for ctx_binding in &mut clause.context.bindings {
-                ctx_binding.ty.mut_subst_ty(type_vars);
-                ctx_binding.ty.check(&clause.context.span, symbol_table)?;
+                ctx_binding
+                    .ty
+                    .insert_inferred(&clause.context.span, type_vars, symbol_table)?;
             }
         }
 
-        match &mut self.ty {
-            Some(ty) => {
-                ty.mut_subst_ty(type_vars);
-                ty.check(&Some(self.span), symbol_table)
-            }
-            None => panic!(
-                "The Type of the term {:?} is not set after type inference",
-                self
-            ),
-        }
+        Ty::insert_inferred_annotation(&mut self.ty, self.span, type_vars, symbol_table)
     }
 }
 
@@ -437,7 +389,8 @@ mod test {
     }
 
     #[test]
-    /// this test checks whether a data Clause in a New-Block is detected as an error
+    /// this test checks whether a data Clause in a New-Block is detected as an error. A
+    /// constructor is no destructor, so it is undefined as a clause of a New-Block.
     fn inference_data_clause() {
         let mut symbol_table = symbol_table_lpair();
         symbol_table.combine(symbol_table_list());
@@ -474,7 +427,7 @@ mod test {
 
         let result =
             term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"));
-        assert!(result.is_err_and(|f| matches!(f, Error::Mismatch { .. })))
+        assert!(result.is_err_and(|f| matches!(f, Error::Undefined { .. })))
     }
 
     #[test]
