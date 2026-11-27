@@ -160,7 +160,8 @@ impl Ty {
     }
 
     /// This function inserts the inferred types for the type variables in this type and checks
-    /// the result, which creates the monomorphic instances of the types it contains.
+    /// the result, which creates the monomorphic instances of the types it contains. If a type
+    /// variable without an inferred type remains, the type cannot be inferred.
     pub fn insert_inferred(
         &mut self,
         span: &Option<SourceSpan>,
@@ -168,6 +169,9 @@ impl Ty {
         symbol_table: &mut SymbolTable,
     ) -> Result<(), Error> {
         self.mut_subst_ty(type_vars);
+        if !self.type_var_names().is_empty() {
+            return Err(Error::CannotInferType { span: *span });
+        }
         self.check(span, symbol_table)
     }
 

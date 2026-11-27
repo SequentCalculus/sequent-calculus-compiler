@@ -125,10 +125,10 @@ fn exclude_conflicts(
         }
     }
 
+    // without conflicts, every world is allowed
     clauses
         .iter()
-        .skip(1)
-        .fold(clauses[0].clone(), |acc, next| acc.and(next))
+        .fold(var_set.mk_true(), |acc, next| acc.and(next))
 }
 
 fn decode_world(valuation: BddValuation, encoding: &ChoiceEncoding) -> World {

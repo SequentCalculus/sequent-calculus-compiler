@@ -120,25 +120,29 @@ pub fn unify_variational(
                 lhs: Ty::TypeVar { name, .. },
                 rhs: ty,
                 condition,
-            } => {
-                // the first ty is a variable, so it can be added to the solutions
-                add_solution(
-                    &mut constraints,
-                    &mut solutions,
-                    Solution::new(name.to_string(), ty, condition),
-                );
             }
-            VariationalConstraint::Equal {
+            | VariationalConstraint::Equal {
                 lhs: ty,
                 rhs: Ty::TypeVar { name, .. },
                 condition,
             } => {
-                // the second ty is a variable, but not the first, so it is added "in reverse"
-                add_solution(
-                    &mut constraints,
-                    &mut solutions,
-                    Solution::new(name.to_string(), ty, condition),
-                );
+                // one side is a type variable, so the other side is a solution for it, unless it
+                // contains the variable itself (occurs check)
+                if ty.type_var_names().contains(&name) {
+                    conflicts.push(ChoiceConflict {
+                        condition,
+                        error: Error::InfiniteType {
+                            span: ty.span(),
+                            ty: ty.print_to_string(None),
+                        },
+                    });
+                } else {
+                    add_solution(
+                        &mut constraints,
+                        &mut solutions,
+                        Solution::new(name.to_string(), ty, condition),
+                    );
+                }
             }
             VariationalConstraint::Equal {
                 lhs:
@@ -479,5 +483,26 @@ mod test {
 
         assert!(condition.is_empty());
         assert_eq!(expected_error, error);
+    }
+
+    #[test]
+    fn unification_occurs_check() {
+        let list_of_x = Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("x")]));
+        let constraints = vec![VariationalConstraint::equal(
+            Ty::mk_ty_var("x"),
+            list_of_x.clone(),
+        )];
+
+        let (solutions, conflicts) = unify_variational(constraints);
+
+        assert!(solutions.is_empty());
+        assert_eq!(conflicts.len(), 1);
+        assert_eq!(
+            conflicts[0].error,
+            Error::InfiniteType {
+                span: None,
+                ty: list_of_x.print_to_string(None),
+            }
+        );
     }
 }

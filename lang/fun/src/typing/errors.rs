@@ -291,13 +291,13 @@ pub enum Error {
         rhs: Name,
     },
     /// Too few type constraints to infer a type
-    #[error("Cannot infer the type: too few constraints")]
+    #[error("Cannot infer the type of this term: too few constraints. A type annotation may help.")]
     #[diagnostic(code("T-025"))]
     CannotInferType {
         /// source location of the term whose type cannot be inferred
         #[label]
         #[derivative(PartialEq = "ignore")]
-        span: SourceSpan,
+        span: Option<SourceSpan>,
     },
     /// The overload resolution failed, because several worlds are possible
     #[error(
@@ -324,5 +324,18 @@ pub enum Error {
         span: Option<SourceSpan>,
         /// The name of the definition
         name: String,
+    },
+    /// A type would have to contain itself
+    #[error(
+        "Cannot infer the type: it would be infinite, since it must equal {ty}, which contains it."
+    )]
+    #[diagnostic(code("T-029"))]
+    InfiniteType {
+        /// source location of the type
+        #[label]
+        #[derivative(PartialEq = "ignore")]
+        span: Option<SourceSpan>,
+        /// the type containing itself
+        ty: String,
     },
 }
