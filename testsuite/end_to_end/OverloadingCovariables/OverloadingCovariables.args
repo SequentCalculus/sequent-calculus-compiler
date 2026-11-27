@@ -1,0 +1,2 @@
+test_args = []
+expected = "6\n10\n101\n7"

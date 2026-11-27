@@ -94,6 +94,40 @@ impl TypeInference for XVar {
     }
 }
 
+impl XVar {
+    /// This function collects the constraints for a covariable passed as argument to a consumer
+    /// parameter. It looks up the covariable in the context, marks this (co)variable as a
+    /// covariable and returns the type of the covariable.
+    /// - `context` is the typing context of the argument.
+    /// - `state` is the inference state.
+    pub fn collect_covariable_constraints(
+        &mut self,
+        context: &TypingContext,
+        state: &mut TypeInferenceState,
+    ) -> Result<Ty, Error> {
+        if self.chi == Some(Prd) {
+            return Err(Error::ExpectedCovariableGotTerm { span: self.span });
+        }
+
+        let found_ty = context.lookup_covar(&self.var, &self.span)?;
+        self.chi = Some(Cns);
+
+        if let Some(ty) = &self.ty {
+            state
+                .constraints
+                .push(VariationalConstraint::equal(ty.clone(), found_ty.clone()));
+        } else {
+            let new_type_var = state.fresh_names.fresh_ty_var();
+            self.ty = Some(new_type_var.clone());
+            state
+                .constraints
+                .push(VariationalConstraint::equal(new_type_var, found_ty.clone()));
+        }
+
+        Ok(found_ty)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::syntax::*;

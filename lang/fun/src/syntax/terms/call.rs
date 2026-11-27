@@ -61,139 +61,20 @@ impl TypeInference for Call {
         context: &TypingContext,
         expected_ty: Ty,
     ) -> Result<(), Error> {
-        match state.symbol_table.defs.get(&self.name).cloned() {
-            Some(signatures) if signatures.is_empty() => {
-                panic!("encountered a function definition with no signature(s)")
-            }
-            Some(signatures) if signatures.len() == 1 => {
-                // there is only one signature -> the function has no overloading, no need to add a variation variable
-                let (types, ret_ty) = signatures[0].clone();
-                self.ret_ty = Some(expected_ty.clone());
-
-                state
-                    .constraints
-                    .push(VariationalConstraint::equal(expected_ty, ret_ty));
-
-                self.args
-                    .collect_constraints(&types, context, state, self.span)?;
-
-                Ok(())
-            }
-            Some(signatures) => {
-                // there are more than one signatures for a function -> it is overloaded
-
-                self.ret_ty = Some(expected_ty.clone());
-
-                // setting the choice id to resolve the overload later
-                let choice = state.new_choice(signatures.len());
-
-                self.choice_id = Some(choice);
-
-                // creating type variables for each argument.
-                // They are later used to link them and the choice to the parameter type of the overloaded function
-                let mut arg_type_vars = Vec::with_capacity(self.args.entries.len());
-
-                for _ in 0..self.args.entries.len() {
-                    let new_type_var = state.fresh_names.fresh_ty_var();
-                    arg_type_vars.push(new_type_var.clone());
-                }
-
-                // the constraints are created for every choice, and marked with the choice made
-                for (alternative, (types, ret_ty)) in signatures.iter().enumerate() {
-                    // marking impossible overloads because of the arity mismatch
-                    if self.args.entries.len() != types.bindings.len() {
-                        state.constraints.push(VariationalConstraint::impossible_if(
-                            choice,
-                            alternative,
-                            Error::WrongNumberOfArguments {
-                                span: self.span,
-                                expected: types.bindings.len(),
-                                got: self.args.entries.len(),
-                            },
-                        ));
-                        continue;
-                    }
-
-                    // each parameter binding is now linked to the type variable of the argument together
-                    // with the choice made by selecting this overload of the function
-                    for ((arg, expected_type), arg_ty) in self
-                        .args
-                        .entries
-                        .iter_mut()
-                        .zip(types.bindings.iter())
-                        .zip(arg_type_vars.clone())
-                    {
-                        // special case for covariables
-                        if expected_type.chi == Cns {
-                            match arg {
-                                Term::XVar(variable) => {
-                                    debug_assert!(
-                                        variable.chi.is_some(),
-                                        "The variable {} has no Chirality selected",
-                                        variable.var
-                                    );
-                                    if variable.chi == Some(Prd) {
-                                        state.constraints.push(
-                                            VariationalConstraint::impossible_if(
-                                                choice,
-                                                alternative,
-                                                Error::ExpectedCovariableGotTerm {
-                                                    span: self.span,
-                                                },
-                                            ),
-                                        );
-                                    } else {
-                                        let found_ty =
-                                            context.lookup_covar(&variable.var, &variable.span)?;
-
-                                        state.constraints.push(VariationalConstraint::equal_if(
-                                            expected_type.ty.clone(),
-                                            found_ty.clone(),
-                                            choice,
-                                            alternative,
-                                        ));
-                                    }
-                                }
-                                _ => {
-                                    state.constraints.push(VariationalConstraint::impossible_if(
-                                        choice,
-                                        alternative,
-                                        Error::ExpectedCovariableGotTerm { span: self.span },
-                                    ));
-                                }
-                            }
-                        } else {
-                            // if the function does not expect a covar, simply link the paramter and argument type
-                            // together with the choice of the function
-                            state.constraints.push(VariationalConstraint::equal_if(
-                                arg_ty.clone(),
-                                expected_type.ty.clone(),
-                                choice,
-                                alternative,
-                            ));
-                        }
-                    }
-
-                    // the return type is linked to the choice
-                    state.constraints.push(VariationalConstraint::equal_if(
-                        expected_ty.clone(),
-                        ret_ty.clone(),
-                        choice,
-                        alternative,
-                    ));
-                }
-
-                // finally the constraints of the actual arguments are gather linked to their type variables
-                for (arg, arg_ty) in self.args.entries.iter_mut().zip(arg_type_vars) {
-                    arg.collect_constraints(state, context, arg_ty)?;
-                }
-
-                Ok(())
-            }
-            None => Err(Error::Undefined {
+        let Some(signatures) = state.symbol_table.defs.get(&self.name).cloned() else {
+            return Err(Error::Undefined {
                 span: Some(self.span),
                 name: self.name.clone(),
-            }),
+            });
+        };
+        self.ret_ty = Some(expected_ty.clone());
+
+        match signatures.as_slice() {
+            [] => panic!("encountered a function definition with no signature(s)"),
+            [(params, ret_ty)] => {
+                self.collect_call_constraints(params, ret_ty, state, context, expected_ty)
+            }
+            _ => self.collect_overloaded_call_constraints(&signatures, state, context, expected_ty),
         }
     }
 
@@ -214,6 +95,137 @@ impl TypeInference for Call {
         }
 
         Ty::insert_inferred_annotation(&mut self.ret_ty, self.span, type_vars, symbol_table)
+    }
+}
+
+impl Call {
+    /// This function collects the constraints for the call of a function that is not overloaded.
+    /// - `params` are the parameters of the function.
+    /// - `ret_ty` is the return type of the function.
+    /// - `state` is the inference state.
+    /// - `context` is the typing context of the call.
+    /// - `expected_ty` is the type the call must have.
+    fn collect_call_constraints(
+        &mut self,
+        params: &TypingContext,
+        ret_ty: &Ty,
+        state: &mut TypeInferenceState,
+        context: &TypingContext,
+        expected_ty: Ty,
+    ) -> Result<(), Error> {
+        state
+            .constraints
+            .push(VariationalConstraint::equal(expected_ty, ret_ty.clone()));
+
+        self.args
+            .collect_constraints(params, context, state, self.span)
+    }
+
+    /// This function collects the constraints for the call of an overloaded function. The call
+    /// introduces a choice between the overloads, and the constraints linking the arguments and
+    /// the return type to the signature of an overload hold only if this overload is selected.
+    /// - `signatures` are the parameters and return types of all overloads.
+    /// - `state` is the inference state.
+    /// - `context` is the typing context of the call.
+    /// - `expected_ty` is the type the call must have.
+    fn collect_overloaded_call_constraints(
+        &mut self,
+        signatures: &[(TypingContext, Ty)],
+        state: &mut TypeInferenceState,
+        context: &TypingContext,
+        expected_ty: Ty,
+    ) -> Result<(), Error> {
+        // setting the choice id to resolve the overload later
+        let choice = state.new_choice(signatures.len());
+        self.choice_id = Some(choice);
+
+        // Whether an argument is a covariable does not depend on the overload, but only on how it
+        // is bound in the context. A covariable argument has the type of the covariable. For a
+        // producer argument, a fresh type variable stands for its type, so that the argument is
+        // collected only once and only the link to the parameter types depends on the choice.
+        let mut arg_types = Vec::with_capacity(self.args.entries.len());
+        for arg in &mut self.args.entries {
+            match arg {
+                Term::XVar(variable) if is_covariable(variable, context) => arg_types.push((
+                    Cns,
+                    variable.collect_covariable_constraints(context, state)?,
+                )),
+                _ => arg_types.push((Prd, state.fresh_names.fresh_ty_var())),
+            }
+        }
+
+        // the constraints are created for every alternative, and marked with the alternative made
+        for (alternative, (params, ret_ty)) in signatures.iter().enumerate() {
+            // marking impossible overloads because of the arity mismatch
+            if arg_types.len() != params.bindings.len() {
+                state.constraints.push(VariationalConstraint::impossible_if(
+                    choice,
+                    alternative,
+                    Error::WrongNumberOfArguments {
+                        span: self.span,
+                        expected: params.bindings.len(),
+                        got: arg_types.len(),
+                    },
+                ));
+                continue;
+            }
+
+            // each parameter is linked to its argument under the alternative selecting this
+            // overload, an argument of the wrong chirality rules out this overload
+            for ((arg_chi, arg_ty), param) in arg_types.iter().zip(params.bindings.iter()) {
+                let constraint = match (arg_chi, &param.chi) {
+                    (Prd, Prd) => VariationalConstraint::equal_if(
+                        arg_ty.clone(),
+                        param.ty.clone(),
+                        choice,
+                        alternative,
+                    ),
+                    (Cns, Cns) => VariationalConstraint::equal_if(
+                        param.ty.clone(),
+                        arg_ty.clone(),
+                        choice,
+                        alternative,
+                    ),
+                    (Cns, Prd) => VariationalConstraint::impossible_if(
+                        choice,
+                        alternative,
+                        Error::ExpectedTermGotCovariable { span: self.span },
+                    ),
+                    (Prd, Cns) => VariationalConstraint::impossible_if(
+                        choice,
+                        alternative,
+                        Error::ExpectedCovariableGotTerm { span: self.span },
+                    ),
+                };
+                state.constraints.push(constraint);
+            }
+
+            // the return type is linked to the alternative
+            state.constraints.push(VariationalConstraint::equal_if(
+                expected_ty.clone(),
+                ret_ty.clone(),
+                choice,
+                alternative,
+            ));
+        }
+
+        // finally the producer arguments are collected against their type variables
+        for (arg, (arg_chi, arg_ty)) in self.args.entries.iter_mut().zip(arg_types) {
+            if arg_chi == Prd {
+                arg.collect_constraints(state, context, arg_ty)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+/// This function decides whether a (co)variable passed as argument is a covariable, i.e., whether
+/// it is bound as a covariable in the context.
+fn is_covariable(variable: &XVar, context: &TypingContext) -> bool {
+    match &variable.chi {
+        Some(chi) => *chi == Cns,
+        None => context.lookup_covar(&variable.var, &variable.span).is_ok(),
     }
 }
 

@@ -67,27 +67,7 @@ impl Arguments {
             if param.chi == Chirality::Cns {
                 match arg {
                     Term::XVar(variable) => {
-                        if variable.chi == Some(Chirality::Prd) {
-                            return Err(Error::ExpectedCovariableGotTerm {
-                                span: variable.span,
-                            });
-                        }
-
-                        let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
-                        variable.chi = Some(Chirality::Cns);
-
-                        if let Some(ty) = &variable.ty {
-                            state
-                                .constraints
-                                .push(VariationalConstraint::equal(ty.clone(), found_ty.clone()));
-                        } else {
-                            let new_type_var = state.fresh_names.fresh_ty_var();
-                            variable.ty = Some(new_type_var.clone());
-                            state
-                                .constraints
-                                .push(VariationalConstraint::equal(new_type_var, found_ty.clone()));
-                        }
-
+                        let found_ty = variable.collect_covariable_constraints(context, state)?;
                         state
                             .constraints
                             .push(VariationalConstraint::equal(param.ty.clone(), found_ty));
