@@ -6,14 +6,12 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Constraint;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::Inference;
-use crate::typing::inference::args_constraint_equations;
-use crate::typing::inference::args_insert_inferred_type;
+use crate::typing::inference::{
+    ChoiceId, TypeInference, TypeInferenceState, TypeVarMapping, VariationalConstraint, World,
+    collect_arg_constraints, insert_arg_types,
+};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 /// This struct defines the call of a top-level function in Fun. It consists of the name of the
@@ -34,7 +32,7 @@ pub struct Call {
     /// The (inferred) return type
     pub ret_ty: Option<Ty>,
     /// The potential choice identifier to resolve overloading
-    pub choice_id: Option<u32>,
+    pub choice_id: Option<ChoiceId>,
 }
 
 impl OptTyped for Call {
@@ -57,78 +55,62 @@ impl From<Call> for Term {
     }
 }
 
-impl Inference for Call {
-    fn gather_constraints(
+impl TypeInference for Call {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        match constraint_bank
-            .symbol_table
-            .variational_defs
-            .get(&self.name)
-        {
+        match state.symbol_table.defs.get(&self.name).cloned() {
             Some(signatures) if signatures.is_empty() => {
                 panic!("encountered a function definition with no signature(s)")
             }
             Some(signatures) if signatures.len() == 1 => {
                 // there is only one signature -> the function has no overloading, no need to add a variation variable
                 let (types, ret_ty) = signatures[0].clone();
-                self.ret_ty = Some(ty_var.clone());
+                self.ret_ty = Some(expected_ty.clone());
 
-                constraint_bank
+                state
                     .constraints
-                    .push(Constraint::mk_only_ty(ty_var, ret_ty));
+                    .push(VariationalConstraint::equal(expected_ty, ret_ty));
 
-                args_constraint_equations(
-                    &mut self.args,
-                    &types,
-                    context,
-                    constraint_bank,
-                    self.span,
-                )?;
+                collect_arg_constraints(&mut self.args, &types, context, state, self.span)?;
 
                 Ok(())
             }
             Some(signatures) => {
                 // there are more than one signatures for a function -> it is overloaded
 
-                self.ret_ty = Some(ty_var.clone());
+                self.ret_ty = Some(expected_ty.clone());
 
                 // setting the choice id to resolve the overload later
-                let new_choice_id = ConstraintBank::get_new_choice_id(
-                    &mut constraint_bank.var_name_generator,
-                    &mut constraint_bank.possible_choices,
-                    signatures.len(),
-                );
+                let choice = state.new_choice(signatures.len());
 
-                self.choice_id = Some(new_choice_id);
+                self.choice_id = Some(choice);
 
                 // creating type variables for each argument.
                 // They are later used to link them and the choice to the parameter type of the overloaded function
                 let mut arg_type_vars = Vec::with_capacity(self.args.entries.len());
 
                 for _ in 0..self.args.entries.len() {
-                    let new_type_var = constraint_bank.var_name_generator.get_new_ty_var();
+                    let new_type_var = state.fresh_names.fresh_ty_var();
                     arg_type_vars.push(new_type_var.clone());
                 }
 
                 // the constraints are created for every choice, and marked with the choice made
-                for (signature_idx, (types, ret_ty)) in signatures.clone().iter().enumerate() {
+                for (alternative, (types, ret_ty)) in signatures.iter().enumerate() {
                     // marking impossible overloads because of the arity mismatch
                     if self.args.entries.len() != types.bindings.len() {
-                        constraint_bank
-                            .constraints
-                            .push(Constraint::mk_impossible_world(
-                                new_choice_id,
-                                signature_idx,
-                                Error::WrongNumberOfArguments {
-                                    span: self.span,
-                                    expected: types.bindings.len(),
-                                    got: self.args.entries.len(),
-                                },
-                            ));
+                        state.constraints.push(VariationalConstraint::impossible_if(
+                            choice,
+                            alternative,
+                            Error::WrongNumberOfArguments {
+                                span: self.span,
+                                expected: types.bindings.len(),
+                                got: self.args.entries.len(),
+                            },
+                        ));
                         continue;
                     }
 
@@ -151,10 +133,10 @@ impl Inference for Call {
                                         variable.var
                                     );
                                     if variable.chi == Some(Prd) {
-                                        constraint_bank.constraints.push(
-                                            Constraint::mk_impossible_world(
-                                                new_choice_id,
-                                                signature_idx,
+                                        state.constraints.push(
+                                            VariationalConstraint::impossible_if(
+                                                choice,
+                                                alternative,
                                                 Error::ExpectedCovariableGotTerm {
                                                     span: self.span,
                                                 },
@@ -164,54 +146,46 @@ impl Inference for Call {
                                         let found_ty =
                                             context.lookup_covar(&variable.var, &variable.span)?;
 
-                                        constraint_bank.constraints.push(
-                                            Constraint::mk_single_choice(
-                                                expected_type.ty.clone(),
-                                                found_ty.clone(),
-                                                new_choice_id,
-                                                signature_idx,
-                                            ),
-                                        );
+                                        state.constraints.push(VariationalConstraint::equal_if(
+                                            expected_type.ty.clone(),
+                                            found_ty.clone(),
+                                            choice,
+                                            alternative,
+                                        ));
                                     }
                                 }
                                 _ => {
-                                    constraint_bank.constraints.push(
-                                        Constraint::mk_impossible_world(
-                                            new_choice_id,
-                                            signature_idx,
-                                            Error::ExpectedCovariableGotTerm { span: self.span },
-                                        ),
-                                    );
+                                    state.constraints.push(VariationalConstraint::impossible_if(
+                                        choice,
+                                        alternative,
+                                        Error::ExpectedCovariableGotTerm { span: self.span },
+                                    ));
                                 }
                             }
                         } else {
                             // if the function does not expect a covar, simply link the paramter and argument type
                             // together with the choice of the function
-                            constraint_bank
-                                .constraints
-                                .push(Constraint::mk_single_choice(
-                                    arg_ty.clone(),
-                                    expected_type.ty.clone(),
-                                    new_choice_id,
-                                    signature_idx,
-                                ));
+                            state.constraints.push(VariationalConstraint::equal_if(
+                                arg_ty.clone(),
+                                expected_type.ty.clone(),
+                                choice,
+                                alternative,
+                            ));
                         }
                     }
 
                     // the return type is linked to the choice
-                    constraint_bank
-                        .constraints
-                        .push(Constraint::mk_single_choice(
-                            ty_var.clone(),
-                            ret_ty.clone(),
-                            new_choice_id,
-                            signature_idx,
-                        ));
+                    state.constraints.push(VariationalConstraint::equal_if(
+                        expected_ty.clone(),
+                        ret_ty.clone(),
+                        choice,
+                        alternative,
+                    ));
                 }
 
                 // finally the constraints of the actual arguments are gather linked to their type variables
                 for (arg, arg_ty) in self.args.entries.iter_mut().zip(arg_type_vars) {
-                    arg.gather_constraints(constraint_bank, context, arg_ty)?;
+                    arg.collect_constraints(state, context, arg_ty)?;
                 }
 
                 Ok(())
@@ -223,25 +197,25 @@ impl Inference for Call {
         }
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
-        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
+        insert_arg_types(&mut self.args, type_vars, symbol_table, world)?;
         if let Some(choice) = &self.choice_id {
-            let index = choices.get(choice).expect(
-                "Although the function call had a choice_id, the choice id was not in the choices",
+            let index = world.get(choice).expect(
+                "Although the function call had a choice_id, the choice id was not in the world",
             );
             // insert the individual name of the function, if it is overloaded
-            self.name = symbol_table::build_unique_def_name(&self.name, index);
+            self.name = symbol_table::overload_name(&self.name, index);
         }
 
         match &mut self.ret_ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -264,9 +238,9 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::Constraint;
-    use crate::typing::inference::ConstraintBank;
-    use crate::typing::inference::Inference;
+    use crate::typing::inference::TypeInference;
+    use crate::typing::inference::TypeInferenceState;
+    use crate::typing::inference::VariationalConstraint;
     use crate::typing::*;
 
     #[test]
@@ -274,7 +248,7 @@ mod test {
         let mut symbol_table = SymbolTable::default();
         let mut typing_ctx = TypingContext::default();
         typing_ctx.add_var("x", Ty::mk_i64());
-        symbol_table.variational_defs.insert(
+        symbol_table.defs.insert(
             "simple".to_owned(),
             vec![(typing_ctx, Ty::mk_ty_var("out_type"))],
         );
@@ -289,29 +263,25 @@ mod test {
             choice_id: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_ty_var("out_type")),
+            VariationalConstraint::equal(Ty::mk_i64(), Ty::mk_i64()),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ret_ty, Some(Ty::mk_ty_var("x")))
@@ -329,18 +299,15 @@ mod test {
             choice_id: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        let result = term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        );
+        let result =
+            term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"));
 
         assert!(
             result.is_err_and(|e| matches!(e, Error::Undefined { name, .. } if name == "simple"))

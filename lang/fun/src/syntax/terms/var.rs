@@ -1,14 +1,13 @@
 //! This module defines variables and covariables in Fun.
 
-use std::collections::HashMap;
-
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
 use crate::traits::OptTyped;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 /// This struct defines variables and covariables. It consists of the name of the (co)variable, and
@@ -61,12 +60,12 @@ impl From<XVar> for Term {
     }
 }
 
-impl Inference for XVar {
-    fn gather_constraints(
+impl TypeInference for XVar {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
         // Free covariables must only occur in special positions (`goto` and `arguments`)
         // and are thus rejected in all other positions by the `check` function for `XVar`.
@@ -76,25 +75,25 @@ impl Inference for XVar {
 
         let found_ty = context.lookup_var(&self.var, &self.span)?;
 
-        self.ty = Some(ty_var.clone());
+        self.ty = Some(expected_ty.clone());
         self.chi = Some(Prd);
 
-        constraint_bank
+        state
             .constraints
-            .push(Constraint::mk_only_ty(ty_var, found_ty));
+            .push(VariationalConstraint::equal(expected_ty, found_ty));
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        _choices: &HashMap<u32, usize>,
+        _world: &World,
     ) -> Result<(), Error> {
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -107,34 +106,37 @@ impl Inference for XVar {
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+    use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
 
     #[test]
     fn inference_var() {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_i64());
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
         let mut term = XVar::mk("x");
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
         assert_eq!(
             result,
-            vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())]
+            vec![VariationalConstraint::equal(
+                Ty::mk_ty_var("x"),
+                Ty::mk_i64()
+            )]
         )
     }
 }

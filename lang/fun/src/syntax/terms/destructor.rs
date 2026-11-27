@@ -7,10 +7,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Constraint;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::args_insert_inferred_type;
-use crate::typing::inference::{Inference, args_constraint_equations};
+use crate::typing::inference::TypeInferenceState;
+use crate::typing::inference::VariationalConstraint;
+use crate::typing::inference::insert_arg_types;
+use crate::typing::inference::{TypeInference, collect_arg_constraints};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -85,16 +86,16 @@ impl From<Destructor> for Term {
     }
 }
 
-impl Inference for Destructor {
-    fn gather_constraints(
+impl TypeInference for Destructor {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        self.ty = Some(ty_var.clone());
+        self.ty = Some(expected_ty.clone());
 
-        let codata_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&self.id) {
+        let codata_type_name = match state.symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
                 return Err(Error::Undefined {
@@ -104,77 +105,71 @@ impl Inference for Destructor {
             }
         };
 
-        let (chirality, general_type_vars, _) = constraint_bank
+        let (polarity, type_params, _) = state
             .symbol_table
             .type_templates
             .get(&codata_type_name)
             .unwrap();
 
-        if chirality == &Polarity::Data {
+        if polarity == &Polarity::Data {
             return Err(Error::ExpectedCovariableGotTerm { span: self.span });
         }
 
         // instanciating new type variables
 
-        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+        let mut instantiation: HashMap<Name, Ty> = HashMap::new();
 
-        if general_type_vars.bindings.len() == self.type_args.args.len() {
+        if type_params.bindings.len() == self.type_args.args.len() {
             // if the right amount of type arguments is given they are used
 
-            for (type_var_name, given_ty) in general_type_vars
-                .bindings
-                .iter()
-                .zip(self.type_args.args.iter())
+            for (type_var_name, given_ty) in
+                type_params.bindings.iter().zip(self.type_args.args.iter())
             {
-                type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
+                instantiation.insert(type_var_name.clone(), given_ty.clone());
             }
         } else if self.type_args.args.is_empty() {
             // if no type Arguments are given, they are all replaced by variables,
 
-            for type_var in &general_type_vars.bindings {
-                type_var_mapping.insert(
-                    type_var.clone(),
-                    constraint_bank.var_name_generator.get_new_ty_var(),
-                );
+            for type_var in &type_params.bindings {
+                instantiation.insert(type_var.clone(), state.fresh_names.fresh_ty_var());
             }
         } else {
             // if the wrong amount of type arguments are given, an error is returned
 
             return Err(Error::WrongNumberOfTypeArguments {
                 span: Some(self.span),
-                expected: general_type_vars.bindings.len(),
+                expected: type_params.bindings.len(),
                 got: self.type_args.args.len(),
             });
         }
 
         // collecting the expected signature of the dtor
-        let (mut arg_types, mut out_type) =
-            match constraint_bank.symbol_table.dtor_templates.get(&self.id) {
-                Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
-                None => {
-                    return Err(Error::Undefined {
-                        span: Some(self.span),
-                        name: self.id.clone(),
-                    });
-                }
-            };
+        let (mut arg_types, mut out_type) = match state.symbol_table.dtor_templates.get(&self.id) {
+            Some((in_tys, out_tys)) => (in_tys.clone(), out_tys.clone()),
+            None => {
+                return Err(Error::Undefined {
+                    span: Some(self.span),
+                    name: self.id.clone(),
+                });
+            }
+        };
 
         // replacing the general type vars for instaciated ones
 
         let new_arg_types = arg_types
             .bindings
             .iter()
-            .map(|arg_ty| arg_ty.clone().subst_ty(&type_var_mapping))
+            .map(|arg_ty| arg_ty.clone().subst_ty(&instantiation))
             .collect();
         arg_types.bindings = new_arg_types;
 
-        out_type = out_type.subst_ty(&type_var_mapping);
+        out_type = out_type.subst_ty(&instantiation);
 
         // putting together the instantiated and expected type for the scrutinee and creating the constraints for it
-        let scrutinee_type_args: Vec<Ty> = general_type_vars
+        let scrutinee_type_args: Vec<Ty> = type_params
             .bindings
             .iter()
-            .map(|binding| type_var_mapping.get(binding).unwrap())
+            .map(|binding| instantiation.get(binding).unwrap())
             .cloned()
             .collect();
         let scrutinee_type = Ty::mk_decl(
@@ -186,43 +181,37 @@ impl Inference for Destructor {
         );
 
         self.scrutinee
-            .gather_constraints(constraint_bank, context, scrutinee_type)?;
+            .collect_constraints(state, context, scrutinee_type)?;
 
-        args_constraint_equations(
-            &mut self.args,
-            &arg_types,
-            context,
-            constraint_bank,
-            self.span,
-        )?;
+        collect_arg_constraints(&mut self.args, &arg_types, context, state, self.span)?;
 
-        constraint_bank
+        state
             .constraints
-            .push(Constraint::mk_only_ty(ty_var, out_type));
+            .push(VariationalConstraint::equal(expected_ty, out_type));
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.scrutinee
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         for ty in &mut self.type_args.args {
-            ty.mut_subst_ty(mappings);
+            ty.mut_subst_ty(type_vars);
             ty.check(&Some(self.span), symbol_table)?;
         }
 
-        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
+        insert_arg_types(&mut self.args, type_vars, symbol_table, world)?;
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -247,9 +236,9 @@ mod destructor_tests {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
-    use crate::typing::inference::Constraint;
-    use crate::typing::inference::ConstraintBank;
-    use crate::typing::inference::Inference;
+    use crate::typing::inference::TypeInference;
+    use crate::typing::inference::TypeInferenceState;
+    use crate::typing::inference::VariationalConstraint;
 
     use std::rc::Rc;
     use std::vec;
@@ -271,14 +260,14 @@ mod destructor_tests {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table_lpair(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let scrutinee_type = Ty::mk_decl(
@@ -287,17 +276,17 @@ mod destructor_tests {
         );
 
         let expected = vec![
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 scrutinee_type.clone(),
                 Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
             ),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
@@ -320,30 +309,30 @@ mod destructor_tests {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table_lpair(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let scrutinee_type = Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]));
 
         let expected = vec![
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 scrutinee_type.clone(),
                 Ty::mk_decl("LPair", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
             ),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
@@ -367,19 +356,19 @@ mod destructor_tests {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table_fun_template(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let expected = vec![
             // scrutinee,
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 Ty::mk_decl(
                     "Fun",
                     TypeArgs::mk(vec![Ty::mk_ty_var("0"), Ty::mk_ty_var("1")]),
@@ -387,18 +376,18 @@ mod destructor_tests {
                 Ty::mk_decl("Fun", TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()])),
             ),
             // argument 1
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("0"), Ty::mk_i64()),
             // argument 2,
-            Constraint::mk_only_ty(Ty::mk_ty_var("2"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("1"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("2"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("1"), Ty::mk_i64()),
             //final type constraint
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_ty_var("1")),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected)
     }
@@ -408,11 +397,11 @@ mod destructor_tests {
         let mut ctx = TypingContext::default();
         ctx.add_var("x", Ty::mk_decl("Stream", TypeArgs::mk(vec![Ty::mk_i64()])));
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
         let result = Destructor {
@@ -423,7 +412,7 @@ mod destructor_tests {
             scrutinee: Rc::new(XVar::mk("x").into()),
             ty: None,
         }
-        .gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"));
+        .collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"));
 
         assert!(result.is_err())
     }

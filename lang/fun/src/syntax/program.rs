@@ -4,7 +4,8 @@ use printer::*;
 use std::collections::{HashMap, HashSet};
 
 use crate::syntax::*;
-use crate::typing::inference::{ConstraintBank, constraint_unification};
+use crate::typing::inference::{TypeInferenceState, TypeVarMapping, World, unify_variational};
+use crate::typing::world_resolution::select_world;
 use crate::typing::*;
 
 /// This struct defines a module consisting of a list of [`Declaration`]s.
@@ -26,14 +27,15 @@ pub struct CheckedProgram {
 }
 
 impl Program {
-    /// the main function for type inference. It consumes the (unchecked)[`Program`] and returns a [`CheckedProgram`] with
-    /// the all types inferred and overloading resolved.
-    pub fn inference_types(self) -> Result<CheckedProgram, Error> {
-        let mut constraint_bank = ConstraintBank {
+    /// This function typechecks a program by type inference. It consumes the unchecked
+    /// [`Program`] and returns a [`CheckedProgram`] with all types inferred and overloading
+    /// resolved.
+    pub fn check(self) -> Result<CheckedProgram, Error> {
+        let mut state = TypeInferenceState {
             symbol_table: build_symbol_table(&self)?,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
         let mut defs = Vec::new();
@@ -42,23 +44,23 @@ impl Program {
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
-                    data.check(&constraint_bank.symbol_table)?;
+                    data.check(&state.symbol_table)?;
                 }
                 Declaration::Codata(codata) => {
-                    codata.check(&constraint_bank.symbol_table)?;
+                    codata.check(&state.symbol_table)?;
                 }
                 Declaration::Def(mut def) => {
-                    def.gather_constraints(&mut constraint_bank)?;
+                    def.collect_constraints(&mut state)?;
 
                     // the names of overloaded functions are replaced with a unique name.
-                    if constraint_bank.symbol_table.variational_defs[&def.name].len() > 1 {
+                    if state.symbol_table.defs[&def.name].len() > 1 {
                         // the name consists of the index of the definition, so they are counted in the overloaded defs counter
                         if let Some(counter) = overloaded_defs_counter.get_mut(&def.name) {
-                            def.name = symbol_table::build_unique_def_name(&def.name, counter);
+                            def.name = symbol_table::overload_name(&def.name, counter);
                             *counter += 1;
                         } else {
                             overloaded_defs_counter.insert(def.name.clone(), 1);
-                            def.name = symbol_table::build_unique_def_name(&def.name, &0);
+                            def.name = symbol_table::overload_name(&def.name, &0);
                         }
                     }
                     defs.push(def);
@@ -66,41 +68,39 @@ impl Program {
             }
         }
 
-        // recovering the properties from the ConstraintBank
-        let ConstraintBank {
+        // recovering the properties from the TypeInferenceState
+        let TypeInferenceState {
             mut symbol_table,
             constraints,
-            possible_choices,
+            choices,
             ..
-        } = constraint_bank;
+        } = state;
 
-        let (solutions, conflicts) = constraint_unification(constraints);
+        let (solutions, conflicts) = unify_variational(constraints);
 
         // if there are no choices, world resolving is skipped
-        let selected_world = if !possible_choices.is_empty() {
-            crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?
+        let world = if !choices.is_empty() {
+            select_world(&choices, conflicts)?
         } else if !conflicts.is_empty() {
             // there is only one world, but there are also conflicts. So there is no solution
             // todo!("Better Error")
             return Err(conflicts[0].error.clone());
         } else {
-            Vec::new()
+            World::new()
         };
-
-        let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
 
         // now all solutions that are part of the selected world are filtered.
         let mut selected_solutions = solutions;
-        for (choice_id, signature_id) in selected_world {
-            selected_solutions.retain(|s| match s.choices.get(&choice_id) {
-                Some(id) => signature_id == *id,
+        for (choice, alternative) in &world {
+            selected_solutions.retain(|s| match s.condition.get(choice) {
+                Some(selected) => alternative == selected,
 
                 // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
                 None => true,
             });
         }
 
-        let mut type_mapping: HashMap<String, Ty> = HashMap::new();
+        let mut type_vars = TypeVarMapping::new();
 
         /*
         There could be several solutions for one type var.
@@ -110,21 +110,21 @@ impl Program {
         but they are non conflicting, since this would be found by the unification.
         */
         for solution in selected_solutions {
-            if let Some(subst_ty) = type_mapping.get_mut(&solution.var_name) {
-                if solution.ty.collect_var_names().len() < subst_ty.collect_var_names().len() {
+            if let Some(subst_ty) = type_vars.get_mut(&solution.var) {
+                if solution.ty.type_var_names().len() < subst_ty.type_var_names().len() {
                     *subst_ty = solution.ty;
                 }
             } else {
-                type_mapping.insert(solution.var_name, solution.ty);
+                type_vars.insert(solution.var, solution.ty);
             }
         }
 
         // the type mapping is applied on it self, to get the complete transitive hull
-        let reference_mapping = type_mapping.clone();
+        let reference_mapping = type_vars.clone();
 
-        for ty in type_mapping.values_mut() {
+        for ty in type_vars.values_mut() {
             loop {
-                let var_names = ty.collect_var_names();
+                let var_names = ty.type_var_names();
 
                 if var_names.is_empty() {
                     break;
@@ -132,7 +132,7 @@ impl Program {
 
                 if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
                     let missing_names: Vec<String> = ty
-                        .collect_var_names()
+                        .type_var_names()
                         .into_iter()
                         .filter(|k| !reference_mapping.contains_key(k))
                         .collect();
@@ -147,7 +147,7 @@ impl Program {
         }
 
         for def in &mut defs {
-            def.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)?;
+            def.insert_inferred_types(&type_vars, &mut symbol_table, &world)?;
         }
 
         // collect all instances of type templates from the symbol table

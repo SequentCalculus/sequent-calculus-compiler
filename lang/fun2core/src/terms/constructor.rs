@@ -70,7 +70,7 @@ mod compile_tests {
     use core_macros::{ctor, id, lit, ty};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        syntax::{context::TypingContext, test_util::infer_term},
         test_common::symbol_table_list,
     };
     use std::collections::{HashSet, VecDeque};
@@ -78,7 +78,7 @@ mod compile_tests {
     #[test]
     fn compile_cons() {
         let mut term = parse_term!("Cons(1,Nil)");
-        inferr_term(
+        infer_term(
             &mut term,
             &mut symbol_table_list(),
             &TypingContext::default(),

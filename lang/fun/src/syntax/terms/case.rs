@@ -7,7 +7,8 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -77,20 +78,17 @@ impl From<Case> for Term {
     }
 }
 
-impl Inference for Case {
-    fn gather_constraints(
+impl TypeInference for Case {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
         if let Some(first_clause) = self.clauses.first() {
-            self.ty = Some(ty_var.clone());
+            self.ty = Some(expected_ty.clone());
 
-            let data_type_name = match constraint_bank
-                .symbol_table
-                .find_xdata_type_name(&first_clause.xtor)
-            {
+            let data_type_name = match state.symbol_table.find_xdata_type_name(&first_clause.xtor) {
                 Some(type_name) => type_name,
                 None => {
                     return Err(Error::Undefined {
@@ -100,61 +98,53 @@ impl Inference for Case {
                 }
             };
 
-            let (chirality, general_type_vars, needed_clauses) = constraint_bank
+            let (polarity, type_params, declared_xtors) = state
                 .symbol_table
                 .type_templates
                 .get(&data_type_name)
                 .unwrap()
                 .clone();
 
-            if chirality == Polarity::Codata {
+            if polarity == Polarity::Codata {
                 return Err(Error::ExpectedTermGotCovariable { span: self.span });
             }
 
             // this instance of the Data Type is instanciated by replacing the general type vars
             // with instance type variables eg. (A -> a1)
 
-            let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
+            let mut instantiation: HashMap<Name, Ty> = HashMap::new();
 
-            if self.type_args.args.len() == general_type_vars.bindings.len() {
+            if self.type_args.args.len() == type_params.bindings.len() {
                 // if the right amount of type arguments is given they are used
 
-                for (type_var_name, given_ty) in general_type_vars
-                    .bindings
-                    .iter()
-                    .zip(self.type_args.args.iter())
+                for (type_var_name, given_ty) in
+                    type_params.bindings.iter().zip(self.type_args.args.iter())
                 {
-                    type_var_mapping.insert(type_var_name.clone(), given_ty.clone());
+                    instantiation.insert(type_var_name.clone(), given_ty.clone());
                 }
             } else if self.type_args.args.is_empty() {
                 // if no type Arguments are given, they are all replaced by variables,
 
-                for type_var_name in general_type_vars.bindings.iter() {
-                    type_var_mapping.insert(
-                        type_var_name.clone(),
-                        constraint_bank.var_name_generator.get_new_ty_var(),
-                    );
+                for type_var_name in type_params.bindings.iter() {
+                    instantiation.insert(type_var_name.clone(), state.fresh_names.fresh_ty_var());
                 }
             } else {
                 // if the wrong amount of type arguments are given, an error is returned
 
                 return Err(Error::WrongNumberOfTypeArguments {
                     span: Some(self.span),
-                    expected: general_type_vars.bindings.len(),
+                    expected: type_params.bindings.len(),
                     got: self.type_args.args.len(),
                 });
             }
 
-            let mut used_clauses = Vec::new();
+            let mut seen_xtors = Vec::new();
 
             for clause in &mut self.clauses {
-                used_clauses.push(&clause.xtor);
+                seen_xtors.push(&clause.xtor);
 
                 // checking that that type of the clause is the same for all clauses
-                match constraint_bank
-                    .symbol_table
-                    .find_xdata_type_name(&clause.xtor)
-                {
+                match state.symbol_table.find_xdata_type_name(&clause.xtor) {
                     Some(type_name) => {
                         if type_name != data_type_name {
                             return Err(Error::Mismatch {
@@ -172,12 +162,8 @@ impl Inference for Case {
                     }
                 }
 
-                let mut instantiated_arg_types = match constraint_bank
-                    .symbol_table
-                    .ctor_templates
-                    .get(&clause.xtor)
-                {
-                    Some(arg_types) => arg_types.clone().subst_ty(&type_var_mapping),
+                let mut clause_context = match state.symbol_table.ctor_templates.get(&clause.xtor) {
+                    Some(arg_types) => arg_types.clone().subst_ty(&instantiation),
                     None => {
                         return Err(Error::Undefined {
                             span: Some(self.span),
@@ -186,10 +172,10 @@ impl Inference for Case {
                     }
                 };
 
-                if clause.context_names.bindings.len() != instantiated_arg_types.bindings.len() {
+                if clause.context_names.bindings.len() != clause_context.bindings.len() {
                     return Err(Error::WrongNumberOfBinders {
                         span: Some(self.span),
-                        expected: instantiated_arg_types.bindings.len(),
+                        expected: clause_context.bindings.len(),
                         provided: clause.context_names.bindings.len(),
                     });
                 }
@@ -197,17 +183,17 @@ impl Inference for Case {
                 // renaming the arguments to fit with the name bindings from the clause
                 for (new_name, arg_binding) in zip(
                     clause.context_names.bindings.iter(),
-                    instantiated_arg_types.bindings.iter_mut(),
+                    clause_context.bindings.iter_mut(),
                 ) {
                     arg_binding.var = new_name.clone();
                 }
 
                 // The correct typing context of the clause is added, to be used later in the compiler pipeline
-                clause.context = instantiated_arg_types.clone();
+                clause.context = clause_context.clone();
 
                 // The outer context is expanded with the bindings from the clause
                 let mut full_clause_context = context.clone();
-                for arg_binding in instantiated_arg_types.bindings {
+                for arg_binding in clause_context.bindings {
                     // if the name of a binding is already in the Context it is shadowed by the new variable
                     if let Some(index) = full_clause_context
                         .bindings
@@ -221,16 +207,16 @@ impl Inference for Case {
                 }
 
                 // every clause must have the same out type, the expected type of the whole case block
-                clause.body.gather_constraints(
-                    constraint_bank,
+                clause.body.collect_constraints(
+                    state,
                     &full_clause_context,
-                    ty_var.clone(),
+                    expected_ty.clone(),
                 )?;
             }
 
             // check that all clauses were also used
-            for clause_name in needed_clauses.iter() {
-                if !used_clauses.contains(&clause_name) {
+            for clause_name in declared_xtors.iter() {
+                if !seen_xtors.contains(&clause_name) {
                     return Err(Error::MissingCtorInCase {
                         span: self.span,
                         ctor: clause_name.clone(),
@@ -240,25 +226,25 @@ impl Inference for Case {
 
             // later stages in the pipeline expect the clauses in the same order as in the Data definition
             self.clauses.sort_by_key(|c| {
-                needed_clauses
+                declared_xtors
                     .iter()
                     .position(|name| &c.xtor == name)
                     .unwrap_or(usize::MAX)
             });
 
-            let scutinee_type_args = TypeArgs::mk(
-                general_type_vars
+            let scrutinee_type_args = TypeArgs::mk(
+                type_params
                     .bindings
                     .iter()
-                    .map(|binding| type_var_mapping.get(binding).unwrap())
+                    .map(|binding| instantiation.get(binding).unwrap())
                     .cloned()
                     .collect(),
             );
 
-            let scrutinee_type = Ty::mk_decl(&data_type_name, scutinee_type_args);
+            let scrutinee_type = Ty::mk_decl(&data_type_name, scrutinee_type_args);
 
             self.scrutinee
-                .gather_constraints(constraint_bank, context, scrutinee_type)?;
+                .collect_constraints(state, context, scrutinee_type)?;
 
             Ok(())
         } else {
@@ -271,34 +257,34 @@ impl Inference for Case {
         }
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         for ty in &mut self.type_args.args {
-            ty.mut_subst_ty(mappings);
+            ty.mut_subst_ty(type_vars);
             ty.check(&Some(self.span), symbol_table)?;
         }
 
         self.scrutinee
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         for clause in &mut self.clauses {
             clause
                 .body
-                .insert_inferred_type(mappings, symbol_table, choices)?;
+                .insert_inferred_types(type_vars, symbol_table, world)?;
             for ctx_binding in &mut clause.context.bindings {
-                ctx_binding.ty.mut_subst_ty(mappings);
+                ctx_binding.ty.mut_subst_ty(type_vars);
                 ctx_binding.ty.check(&clause.context.span, symbol_table)?;
             }
         }
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -323,9 +309,9 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
-    use crate::typing::inference::Constraint;
-    use crate::typing::inference::ConstraintBank;
-    use crate::typing::inference::Inference;
+    use crate::typing::inference::TypeInference;
+    use crate::typing::inference::TypeInferenceState;
+    use crate::typing::inference::VariationalConstraint;
     use crate::typing::*;
 
     use std::rc::Rc;
@@ -364,32 +350,32 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let expected = vec![
             // Nil
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
             // Cons
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_ty_var("0")),
             // scrutinee
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
             ),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
@@ -429,32 +415,32 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let expected = vec![
             // Nil
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
             // Cons
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
             // scrutinee,
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
             ),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
@@ -483,14 +469,14 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        let result = term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"));
+        let result = term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"));
         assert!(
             result.is_err_and(
                 |e| matches!(e, Error::MissingCtorInCase { ctor, .. } if ctor == "Nil")
@@ -505,11 +491,11 @@ mod test {
         ctx_names.bindings.push("y".to_string());
         let symbol_table = symbol_table_list_template();
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table,
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
         let result = Case {
@@ -526,11 +512,7 @@ mod test {
             type_args: TypeArgs::mk(vec![Ty::mk_i64(), Ty::mk_i64()]),
             ty: None,
         }
-        .gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        );
+        .collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"));
 
         assert!(result.is_err())
     }

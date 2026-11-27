@@ -54,14 +54,14 @@ mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_lang::syntax::terms::Prd;
     use core_macros::{bind, clause, cns, cocase, covar, cut, dtor, id, lit, mu, ty};
-    use fun::{parse_term, syntax::inferr_helper::inferr_term, test_common::symbol_table_lpair};
+    use fun::{parse_term, syntax::test_util::infer_term, test_common::symbol_table_lpair};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_fst() {
         let mut term = parse_term!("new { fst => 1, snd => 2}.fst[i64, i64]");
 
-        inferr_term(
+        infer_term(
             &mut term,
             &mut symbol_table_lpair(),
             &fun::syntax::context::TypingContext::default(),
@@ -108,7 +108,7 @@ mod compile_tests {
     #[test]
     fn compile_snd() {
         let mut term = parse_term!("new { fst => 1, snd => 2}.snd[i64, i64]");
-        inferr_term(
+        infer_term(
             &mut term,
             &mut symbol_table_lpair(),
             &fun::syntax::context::TypingContext::default(),

@@ -73,7 +73,7 @@ mod compile_tests {
     use core_macros::{bind, case, clause, covar, ctor, cut, id, lit, mu, ty, var};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        syntax::{context::TypingContext, test_util::infer_term},
         test_common::symbol_table_list,
     };
 
@@ -83,7 +83,7 @@ mod compile_tests {
     fn compile_list() {
         let mut term = parse_term!("(Cons(1,Nil)).case[i64] { Nil => 0, Cons(x,xs) => x }");
 
-        inferr_term(
+        infer_term(
             &mut term,
             &mut symbol_table_list(),
             &TypingContext::default(),

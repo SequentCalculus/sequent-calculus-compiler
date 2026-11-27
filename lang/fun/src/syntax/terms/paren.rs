@@ -6,11 +6,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::Inference;
+use crate::typing::inference::TypeInference;
+use crate::typing::inference::TypeInferenceState;
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines a term in parentheses.
@@ -59,25 +59,24 @@ impl From<Paren> for Term {
     }
 }
 
-impl Inference for Paren {
-    fn gather_constraints(
+impl TypeInference for Paren {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        self.inner
-            .gather_constraints(constraint_bank, context, ty_var)
+        self.inner.collect_constraints(state, context, expected_ty)
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.inner
-            .insert_inferred_type(mappings, symbol_table, choices)
+            .insert_inferred_types(type_vars, symbol_table, world)
     }
 }
 

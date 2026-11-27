@@ -1,14 +1,13 @@
 //! This module contains the definition of top-level functions.
 
-use std::collections::HashMap;
-
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::tokens::{COLON, DEF};
 use printer::*;
 
 use crate::syntax::*;
-use crate::typing::inference::{ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 /// This struct defines top-level function definitions. A top-level function consists of a name
@@ -38,27 +37,24 @@ pub struct Def {
 }
 
 impl Def {
-    pub fn gather_constraints(
-        &mut self,
-        constraint_bank: &mut ConstraintBank,
-    ) -> Result<(), Error> {
+    pub fn collect_constraints(&mut self, state: &mut TypeInferenceState) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
         self.ret_ty
-            .check(&Some(self.span), &mut constraint_bank.symbol_table)?;
-        self.context.check(&mut constraint_bank.symbol_table)?;
+            .check(&Some(self.span), &mut state.symbol_table)?;
+        self.context.check(&mut state.symbol_table)?;
 
         self.body
-            .gather_constraints(constraint_bank, &self.context, self.ret_ty.clone())
+            .collect_constraints(state, &self.context, self.ret_ty.clone())
     }
 
-    pub fn insert_inferred_type(
+    pub fn insert_inferred_types(
         &mut self,
-        mappings: &std::collections::HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.body
-            .insert_inferred_type(mappings, symbol_table, choices)
+            .insert_inferred_types(type_vars, symbol_table, world)
     }
 }
 

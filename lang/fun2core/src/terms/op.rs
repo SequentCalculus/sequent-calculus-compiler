@@ -66,7 +66,7 @@ impl Compile for fun::syntax::terms::Op {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{id, lit, prod, sub, ty, var};
-    use fun::{parse_term, syntax::inferr_helper::inferr_term};
+    use fun::{parse_term, syntax::test_util::infer_term};
 
     use std::collections::{HashSet, VecDeque};
 
@@ -93,7 +93,7 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
 
-        inferr_term(&mut term, &mut Default::default(), &ctx).unwrap();
+        infer_term(&mut term, &mut Default::default(), &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),

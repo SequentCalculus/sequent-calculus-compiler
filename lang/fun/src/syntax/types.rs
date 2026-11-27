@@ -214,11 +214,11 @@ impl Ty {
     }
 
     /// This function collects all type variable names in a type
-    pub fn collect_var_names(&self) -> Vec<Name> {
+    pub fn type_var_names(&self) -> Vec<Name> {
         match self {
             Ty::I64 { .. } => vec![],
             Ty::Decl { type_args, .. } => type_args.args.iter().fold(Vec::new(), |mut list, ty| {
-                list.append(&mut ty.collect_var_names());
+                list.append(&mut ty.type_var_names());
                 list
             }),
             Ty::TypeVar { name, .. } => vec![name.to_string()],
@@ -226,7 +226,7 @@ impl Ty {
     }
 
     /// converting a type declaration to a type variable if it is part of a TypeContext
-    pub fn identifiy_type_vars(&mut self, type_params: &TypeContext) {
+    pub fn template_params_to_type_vars(&mut self, type_params: &TypeContext) {
         match self {
             Ty::I64 { .. } => {}
             Ty::Decl {
@@ -242,7 +242,7 @@ impl Ty {
                     }
                 } else {
                     for type_arg in &mut type_args.args {
-                        type_arg.identifiy_type_vars(type_params);
+                        type_arg.template_params_to_type_vars(type_params);
                     }
                 }
             }
@@ -250,7 +250,7 @@ impl Ty {
         }
     }
 
-    pub fn get_span(&self) -> Option<SourceSpan> {
+    pub fn span(&self) -> Option<SourceSpan> {
         match self {
             Ty::I64 { span } => *span,
             Ty::Decl { span, .. } => *span,
@@ -509,7 +509,7 @@ mod type_tests {
     fn collect_var_names_test_simple() {
         let test_ty = Ty::mk_ty_var("x");
 
-        let result = test_ty.collect_var_names();
+        let result = test_ty.type_var_names();
 
         let expected = vec!["x".to_string()];
 
@@ -527,7 +527,7 @@ mod type_tests {
             ]),
         );
 
-        let result = test_ty.collect_var_names();
+        let result = test_ty.type_var_names();
 
         let expected = vec!["x".to_string(), "y".to_string()];
 

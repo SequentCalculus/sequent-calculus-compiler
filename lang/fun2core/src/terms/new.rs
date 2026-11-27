@@ -74,7 +74,7 @@ mod compile_tests {
     use core_macros::{bind, clause, cns, cocase, codata, covar, cut, id, lit, ty};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, inferr_helper::inferr_term},
+        syntax::{context::TypingContext, test_util::infer_term},
         test_common::symbol_table_lpair,
     };
     use std::collections::{HashSet, VecDeque};
@@ -82,7 +82,7 @@ mod compile_tests {
     #[test]
     fn compile_lpair() {
         let mut term = parse_term!("new { fst => 1, snd => 2 }");
-        inferr_term(
+        infer_term(
             &mut term,
             &mut symbol_table_lpair(),
             &TypingContext::default(),

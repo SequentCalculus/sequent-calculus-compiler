@@ -6,11 +6,12 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::Constraint;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::Inference;
-use crate::typing::inference::args_constraint_equations;
-use crate::typing::inference::args_insert_inferred_type;
+use crate::typing::inference::TypeInference;
+use crate::typing::inference::TypeInferenceState;
+use crate::typing::inference::VariationalConstraint;
+use crate::typing::inference::collect_arg_constraints;
+use crate::typing::inference::insert_arg_types;
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 use std::collections::HashMap;
@@ -60,16 +61,16 @@ impl From<Constructor> for Term {
     }
 }
 
-impl Inference for Constructor {
-    fn gather_constraints(
+impl TypeInference for Constructor {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        self.ty = Some(ty_var.clone());
+        self.ty = Some(expected_ty.clone());
 
-        let data_type_name = match constraint_bank.symbol_table.find_xdata_type_name(&self.id) {
+        let data_type_name = match state.symbol_table.find_xdata_type_name(&self.id) {
             Some(type_name) => type_name,
             None => {
                 return Err(Error::Undefined {
@@ -79,13 +80,13 @@ impl Inference for Constructor {
             }
         };
 
-        let (chirality, general_type_vars, _) = constraint_bank
+        let (polarity, type_params, _) = state
             .symbol_table
             .type_templates
             .get(&data_type_name)
             .unwrap();
 
-        if chirality == &Polarity::Codata {
+        if polarity == &Polarity::Codata {
             return Err(Error::ExpectedDataForNew {
                 span: self.span,
                 data: data_type_name,
@@ -95,12 +96,9 @@ impl Inference for Constructor {
         // this instance of the Data Type is instanciated, whith replacing the general type vars
         // with instance type variables eg. (A -> a1)
 
-        let mut type_var_mapping: HashMap<Name, Ty> = HashMap::new();
-        for type_var in &general_type_vars.bindings {
-            type_var_mapping.insert(
-                type_var.clone(),
-                constraint_bank.var_name_generator.get_new_ty_var(),
-            );
+        let mut instantiation: HashMap<Name, Ty> = HashMap::new();
+        for type_var in &type_params.bindings {
+            instantiation.insert(type_var.clone(), state.fresh_names.fresh_ty_var());
         }
 
         let expected_type = Ty::Decl {
@@ -108,17 +106,16 @@ impl Inference for Constructor {
             name: data_type_name,
             type_args: TypeArgs {
                 span: Some(self.span),
-                args: general_type_vars
+                args: type_params
                     .bindings
                     .iter()
-                    .map(|name| type_var_mapping.get(name).unwrap().clone())
+                    .map(|name| instantiation.get(name).unwrap().clone())
                     .collect(),
             },
         };
 
-        let instanciated_template = match constraint_bank.symbol_table.ctor_templates.get(&self.id)
-        {
-            Some(ctor_template) => ctor_template.clone().subst_ty(&type_var_mapping),
+        let instanciated_template = match state.symbol_table.ctor_templates.get(&self.id) {
+            Some(ctor_template) => ctor_template.clone().subst_ty(&instantiation),
             None => {
                 return Err(Error::Undefined {
                     span: Some(self.span),
@@ -135,33 +132,33 @@ impl Inference for Constructor {
             });
         }
 
-        args_constraint_equations(
+        collect_arg_constraints(
             &mut self.args,
             &instanciated_template,
             context,
-            constraint_bank,
+            state,
             self.span,
         )?;
 
-        constraint_bank
+        state
             .constraints
-            .push(Constraint::mk_only_ty(ty_var, expected_type));
+            .push(VariationalConstraint::equal(expected_ty, expected_type));
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
-        args_insert_inferred_type(&mut self.args, mappings, symbol_table, choices)?;
+        insert_arg_types(&mut self.args, type_vars, symbol_table, world)?;
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -185,9 +182,9 @@ mod test {
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
     use crate::test_common::*;
-    use crate::typing::inference::Constraint;
-    use crate::typing::inference::ConstraintBank;
-    use crate::typing::inference::Inference;
+    use crate::typing::inference::TypeInference;
+    use crate::typing::inference::TypeInferenceState;
+    use crate::typing::inference::VariationalConstraint;
 
     #[test]
     fn inference_nil() {
@@ -198,29 +195,25 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table_list(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
 
-        let expected = vec![Constraint::mk_only_ty(
+        let expected = vec![VariationalConstraint::equal(
             Ty::mk_ty_var("x"),
             Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
         )];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));
@@ -247,34 +240,34 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table_list(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(&mut constraint_bank, &ctx, Ty::mk_ty_var("x"))
+        term.collect_constraints(&mut state, &ctx, Ty::mk_ty_var("x"))
             .unwrap();
 
         let expected = vec![
             // cons
-            Constraint::mk_only_ty(Ty::mk_ty_var("0"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("0"), Ty::mk_i64()),
             // nil
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("1")])),
             ),
-            Constraint::mk_only_ty(
+            VariationalConstraint::equal(
                 Ty::mk_ty_var("x"),
                 Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_ty_var("0")])),
             ),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));

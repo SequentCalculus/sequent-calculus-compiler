@@ -75,14 +75,14 @@ impl Compile for fun::syntax::terms::Label {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, cut, id, lit, mu, ty};
-    use fun::{parse_term, syntax::inferr_helper::inferr_term};
+    use fun::{parse_term, syntax::test_util::infer_term};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_label1() {
         let mut term = parse_term!("label a { 1 }");
 
-        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
+        infer_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),
@@ -101,7 +101,7 @@ mod compile_tests {
     fn compile_label2() {
         let mut term = parse_term!("label a { goto a (1) }");
 
-        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
+        infer_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["a".to_string()]),

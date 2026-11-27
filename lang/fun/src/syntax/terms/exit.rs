@@ -7,11 +7,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::Inference;
+use crate::typing::inference::TypeInference;
+use crate::typing::inference::TypeInferenceState;
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the exit statement in Fun. It consists of a term for the exit code, and
@@ -49,32 +49,31 @@ impl From<Exit> for Term {
     }
 }
 
-impl Inference for Exit {
-    fn gather_constraints(
+impl TypeInference for Exit {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        self.ty = Some(ty_var);
+        self.ty = Some(expected_ty);
 
-        self.arg
-            .gather_constraints(constraint_bank, context, Ty::mk_i64())
+        self.arg.collect_constraints(state, context, Ty::mk_i64())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.arg
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",

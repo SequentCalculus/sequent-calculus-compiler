@@ -8,11 +8,11 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::ConstraintBank;
-use crate::typing::inference::Inference;
+use crate::typing::inference::TypeInference;
+use crate::typing::inference::TypeInferenceState;
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This struct defines the control operator capturing the current continuation/program context. It
@@ -66,37 +66,37 @@ impl From<Label> for Term {
     }
 }
 
-impl Inference for Label {
-    fn gather_constraints(
+impl TypeInference for Label {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
         let mut new_context = context.clone();
-        new_context.add_covar(&self.label, ty_var.clone());
+        new_context.add_covar(&self.label, expected_ty.clone());
 
-        self.ty = Some(ty_var.clone());
+        self.ty = Some(expected_ty.clone());
 
         self.term
-            .gather_constraints(constraint_bank, &new_context, ty_var)?;
+            .collect_constraints(state, &new_context, expected_ty)?;
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.term
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -120,7 +120,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+    use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
 
     use std::rc::Rc;
 
@@ -133,26 +133,25 @@ mod test {
             term: Rc::new(Lit::mk(1).into()),
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let expected = vec![VariationalConstraint::equal(
             Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+            Ty::mk_i64(),
+        )];
 
-        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
-
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));

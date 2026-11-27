@@ -39,12 +39,16 @@ use printer::Print;
 use crate::{
     syntax::names::Var,
     traits::{OptTyped, used_binders::UsedBinders},
-    typing::{errors::Error, inference::Inference, symbol_table::SymbolTable},
+    typing::{
+        errors::Error,
+        inference::{TypeInference, TypeVarMapping, World},
+        symbol_table::SymbolTable,
+    },
 };
 
 use super::{context::TypingContext, types::Ty};
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 /// This enum defines the terms of Fun. It contains one variant for each construct which simply
 /// wraps the struct defining the corresponding construct.
@@ -130,66 +134,64 @@ impl Print for Term {
     }
 }
 
-impl Inference for Term {
-    fn gather_constraints(
+impl TypeInference for Term {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut crate::typing::inference::ConstraintBank,
+        state: &mut crate::typing::inference::TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
         match self {
-            Term::XVar(xvar) => xvar.gather_constraints(constraint_bank, context, ty_var),
-            Term::Lit(lit) => lit.gather_constraints(constraint_bank, context, ty_var),
-            Term::Op(op) => op.gather_constraints(constraint_bank, context, ty_var),
-            Term::IfC(if_c) => if_c.gather_constraints(constraint_bank, context, ty_var),
-            Term::PrintI64(print_i64) => {
-                print_i64.gather_constraints(constraint_bank, context, ty_var)
-            }
-            Term::Let(let_block) => let_block.gather_constraints(constraint_bank, context, ty_var),
-            Term::Call(call) => call.gather_constraints(constraint_bank, context, ty_var),
+            Term::XVar(xvar) => xvar.collect_constraints(state, context, expected_ty),
+            Term::Lit(lit) => lit.collect_constraints(state, context, expected_ty),
+            Term::Op(op) => op.collect_constraints(state, context, expected_ty),
+            Term::IfC(if_c) => if_c.collect_constraints(state, context, expected_ty),
+            Term::PrintI64(print_i64) => print_i64.collect_constraints(state, context, expected_ty),
+            Term::Let(let_block) => let_block.collect_constraints(state, context, expected_ty),
+            Term::Call(call) => call.collect_constraints(state, context, expected_ty),
             Term::Constructor(constructor) => {
-                constructor.gather_constraints(constraint_bank, context, ty_var)
+                constructor.collect_constraints(state, context, expected_ty)
             }
             Term::Destructor(destructor) => {
-                destructor.gather_constraints(constraint_bank, context, ty_var)
+                destructor.collect_constraints(state, context, expected_ty)
             }
-            Term::Case(case) => case.gather_constraints(constraint_bank, context, ty_var),
-            Term::New(new_block) => new_block.gather_constraints(constraint_bank, context, ty_var),
-            Term::Label(label) => label.gather_constraints(constraint_bank, context, ty_var),
-            Term::Goto(goto) => goto.gather_constraints(constraint_bank, context, ty_var),
-            Term::Exit(exit) => exit.gather_constraints(constraint_bank, context, ty_var),
-            Term::Paren(paren) => paren.gather_constraints(constraint_bank, context, ty_var),
+            Term::Case(case) => case.collect_constraints(state, context, expected_ty),
+            Term::New(new_block) => new_block.collect_constraints(state, context, expected_ty),
+            Term::Label(label) => label.collect_constraints(state, context, expected_ty),
+            Term::Goto(goto) => goto.collect_constraints(state, context, expected_ty),
+            Term::Exit(exit) => exit.collect_constraints(state, context, expected_ty),
+            Term::Paren(paren) => paren.collect_constraints(state, context, expected_ty),
         }
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &std::collections::HashMap<super::Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         match self {
-            Term::XVar(xvar) => xvar.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Lit(lit) => lit.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Op(op) => op.insert_inferred_type(mappings, symbol_table, choices),
-            Term::IfC(if_c) => if_c.insert_inferred_type(mappings, symbol_table, choices),
+            Term::XVar(xvar) => xvar.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Lit(lit) => lit.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Op(op) => op.insert_inferred_types(type_vars, symbol_table, world),
+            Term::IfC(if_c) => if_c.insert_inferred_types(type_vars, symbol_table, world),
             Term::PrintI64(print_i64) => {
-                print_i64.insert_inferred_type(mappings, symbol_table, choices)
+                print_i64.insert_inferred_types(type_vars, symbol_table, world)
             }
-            Term::Let(let_block) => let_block.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Call(call) => call.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Let(let_block) => let_block.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Call(call) => call.insert_inferred_types(type_vars, symbol_table, world),
             Term::Constructor(constructor) => {
-                constructor.insert_inferred_type(mappings, symbol_table, choices)
+                constructor.insert_inferred_types(type_vars, symbol_table, world)
             }
             Term::Destructor(destructor) => {
-                destructor.insert_inferred_type(mappings, symbol_table, choices)
+                destructor.insert_inferred_types(type_vars, symbol_table, world)
             }
-            Term::Case(case) => case.insert_inferred_type(mappings, symbol_table, choices),
-            Term::New(new_block) => new_block.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Label(label) => label.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Goto(goto) => goto.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Exit(exit) => exit.insert_inferred_type(mappings, symbol_table, choices),
-            Term::Paren(paren) => paren.insert_inferred_type(mappings, symbol_table, choices),
+            Term::Case(case) => case.insert_inferred_types(type_vars, symbol_table, world),
+            Term::New(new_block) => new_block.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Label(label) => label.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Goto(goto) => goto.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Exit(exit) => exit.insert_inferred_types(type_vars, symbol_table, world),
+            Term::Paren(paren) => paren.insert_inferred_types(type_vars, symbol_table, world),
         }
     }
 }
@@ -216,87 +218,85 @@ impl UsedBinders for Term {
 }
 
 #[cfg(feature = "test-common")]
-pub mod inferr_helper {
-    use std::collections::HashMap;
-
+pub mod test_util {
     use crate::{
-        syntax::{Term, Ty, TypingContext},
+        syntax::{Term, TypingContext},
         typing::{
             Error,
-            inference::{ConstraintBank, Inference, constraint_unification},
+            inference::{
+                TypeInference, TypeInferenceState, TypeVarMapping, World, unify_variational,
+            },
             symbol_table::SymbolTable,
         },
     };
 
-    pub fn inferr_term(
+    /// This function infers the types of a single term in the given context, like
+    /// [`Program::check`](crate::syntax::program::Program::check) does for a whole program.
+    pub fn infer_term(
         term: &mut Term,
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
     ) -> Result<(), Error> {
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: symbol_table.clone(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        let ty_var = constraint_bank.var_name_generator.get_new_ty_var();
+        let expected_ty = state.fresh_names.fresh_ty_var();
 
-        term.gather_constraints(&mut constraint_bank, context, ty_var)?;
+        term.collect_constraints(&mut state, context, expected_ty)?;
 
-        let ConstraintBank {
+        let TypeInferenceState {
             mut symbol_table,
             constraints,
-            possible_choices,
+            choices,
             ..
-        } = constraint_bank;
+        } = state;
 
-        let (solutions, conflicts) = constraint_unification(constraints);
+        let (solutions, conflicts) = unify_variational(constraints);
 
         // generating a type and choice mapping, either with overload resolution or without
         // overload resolution is only done, if there are any overloads to resolve
-        let (mut type_mapping, choices_map): (HashMap<String, Ty>, HashMap<u32, usize>) =
-            if possible_choices.len() > 0 {
-                let selected_world =
-                    crate::typing::world_resolution::resolve_worlds(&possible_choices, conflicts)?;
+        let (mut type_vars, world): (TypeVarMapping, World) = if choices.len() > 0 {
+            let world = crate::typing::world_resolution::select_world(&choices, conflicts)?;
 
-                let choices_map: HashMap<u32, usize> = selected_world.iter().cloned().collect();
+            // now all solutions that are part of the selected world are filtered.
+            let mut selected_solutions = solutions;
+            for (choice, alternative) in &world {
+                selected_solutions.retain(|s| match s.condition.get(choice) {
+                    Some(selected) => alternative == selected,
 
-                // now all solutions that are part of the selected world are filtered.
-                let mut selected_solutions = solutions;
-                for (choice_id, signature_id) in selected_world {
-                    selected_solutions.retain(|s| match s.choices.get(&choice_id) {
-                        Some(id) => signature_id == *id,
+                    // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
+                    None => true,
+                });
+            }
 
-                        // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                        None => true,
-                    });
-                }
-
-                // the solutions are converted to a HashMap and then they are inserted in the program
-                (
-                    selected_solutions
-                        .into_iter()
-                        .map(crate::typing::inference::Solution::get_only_solution)
-                        .collect(),
-                    choices_map,
-                )
-            } else {
-                (
-                    solutions
-                        .into_iter()
-                        .map(crate::typing::inference::Solution::get_only_solution)
-                        .collect(),
-                    Default::default(),
-                )
-            };
+            // the solutions are converted to a HashMap and then they are inserted in the program
+            (
+                selected_solutions
+                    .into_iter()
+                    .map(crate::typing::inference::Solution::into_pair)
+                    .collect(),
+                world,
+            )
+        } else {
+            (
+                solutions
+                    .into_iter()
+                    .map(crate::typing::inference::Solution::into_pair)
+                    .collect(),
+                Default::default(),
+            )
+        };
 
         // the type mapping is applied on it self, to get the complete transitive hull
-        let reference_mapping = type_mapping.clone();
+        let reference_mapping = type_vars.clone();
 
-        for (_, ty) in type_mapping.iter_mut() {
+        for (_, ty) in type_vars.iter_mut() {
             loop {
-                let var_names = ty.collect_var_names();
+                let var_names = ty.type_var_names();
 
                 if var_names.is_empty() {
                     break;
@@ -304,7 +304,7 @@ pub mod inferr_helper {
 
                 if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
                     let missing_names: Vec<String> = ty
-                        .collect_var_names()
+                        .type_var_names()
                         .into_iter()
                         .filter(|k| !reference_mapping.contains_key(k))
                         .collect();
@@ -317,6 +317,6 @@ pub mod inferr_helper {
                 ty.mut_subst_ty(&reference_mapping);
             }
         }
-        term.insert_inferred_type(&type_mapping, &mut symbol_table, &choices_map)
+        term.insert_inferred_types(&type_vars, &mut symbol_table, &world)
     }
 }

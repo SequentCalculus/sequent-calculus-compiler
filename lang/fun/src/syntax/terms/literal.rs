@@ -1,14 +1,13 @@
 //! This module defines integer literals in Fun.
 
-use std::collections::HashMap;
-
 use derivative::Derivative;
 use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
 use crate::traits::OptTyped;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
 /// This struct defines integer literals in Fun.
@@ -52,25 +51,25 @@ impl From<Lit> for Term {
     }
 }
 
-impl Inference for Lit {
-    fn gather_constraints(
+impl TypeInference for Lit {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         _context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        constraint_bank
+        state
             .constraints
-            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+            .push(VariationalConstraint::equal(expected_ty, Ty::mk_i64()));
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        _mappings: &HashMap<Name, Ty>,
+        _type_vars: &TypeVarMapping,
         _symbol_table: &mut SymbolTable,
-        _choices: &HashMap<u32, usize>,
+        _world: &World,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -79,32 +78,31 @@ impl Inference for Lit {
 #[cfg(test)]
 mod test {
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+    use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
 
     #[test]
     fn inference_lit() {
         let mut term = Lit::mk(15);
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
+
+        let expected = vec![VariationalConstraint::equal(
             Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+            Ty::mk_i64(),
+        )];
 
-        let expected = vec![Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64())];
-
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
     }

@@ -7,10 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the comparison operation used.
@@ -125,48 +125,46 @@ impl From<IfC> for Term {
     }
 }
 
-impl Inference for IfC {
-    fn gather_constraints(
+impl TypeInference for IfC {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        self.ty = Some(ty_var.clone());
+        self.ty = Some(expected_ty.clone());
 
-        self.fst
-            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
-        self.snd
-            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.fst.collect_constraints(state, context, Ty::mk_i64())?;
+        self.snd.collect_constraints(state, context, Ty::mk_i64())?;
 
         self.thenc
-            .gather_constraints(constraint_bank, context, ty_var.clone())?;
+            .collect_constraints(state, context, expected_ty.clone())?;
         self.elsec
-            .gather_constraints(constraint_bank, context, ty_var)?;
+            .collect_constraints(state, context, expected_ty)?;
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.fst
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
         self.snd
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         self.thenc
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
         self.elsec
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         match &mut self.ty {
-            Some(ty_var) => {
-                ty_var.mut_subst_ty(mappings);
-                ty_var.check(&Some(self.span), symbol_table)
+            Some(ty) => {
+                ty.mut_subst_ty(type_vars);
+                ty.check(&Some(self.span), symbol_table)
             }
             None => panic!(
                 "The Type of the term {:?} is not set after type inference",
@@ -192,7 +190,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+    use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
 
     use std::rc::Rc;
 
@@ -208,31 +206,27 @@ mod test {
             ty: None,
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_i64(), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_i64(), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
         assert_eq!(term.ty, Some(Ty::mk_ty_var("x")));

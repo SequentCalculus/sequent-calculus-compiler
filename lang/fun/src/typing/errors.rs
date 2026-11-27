@@ -277,26 +277,24 @@ pub enum Error {
         /// The provided type arguments
         type_args: String,
     },
-    /// Conflicting Type for Type Inference
-    #[error(
-        "Cannot infere the type for constraint created by {expected_type_l} and {expected_type_r}"
-    )]
+    /// Two types that must be equal cannot be unified
+    #[error("Cannot unify the types {lhs} and {rhs}")]
     #[diagnostic(code("T-024"))]
-    ConflictingTypeConstraints {
-        // source location of type l
+    ConflictingTypes {
+        /// source location of one of the types
         #[label]
         #[derivative(PartialEq = "ignore")]
-        span_l: Option<SourceSpan>,
+        span: Option<SourceSpan>,
         /// left type
-        expected_type_l: Name,
+        lhs: Name,
         /// right type
-        expected_type_r: Name,
+        rhs: Name,
     },
-    /// Too few Type constraints to infere the type
-    #[error("Cannot infere the type: too few constraints")]
+    /// Too few type constraints to infer a type
+    #[error("Cannot infer the type: too few constraints")]
     #[diagnostic(code("T-025"))]
-    MissingTypeConstraints {
-        // source location of type l
+    CannotInferType {
+        /// source location of the term whose type cannot be inferred
         #[label]
         #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
@@ -310,30 +308,30 @@ pub enum Error {
         #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
-    /// The world resolution failed, with too many possible Worlds
+    /// The overload resolution failed, because several worlds are possible
     #[error(
-        "Type Inference failed because there more than one overloading resolution. Instead the are {number_worlds} possible overloading combinations"
+        "Type inference failed because the overloading is ambiguous. There are {number_worlds} possible overload resolutions."
     )]
     #[diagnostic(code("T-027"))]
-    MoreThanOneWorld {
-        /// number of found worlds
+    AmbiguousOverloadResolution {
+        /// number of possible worlds
         number_worlds: u32,
     },
-    /// The world resolution failed, with the wrong number of possible Worlds
-    #[error("Type Inference failed because there is no valid overloading resolution.")]
+    /// The overload resolution failed, because no world is possible
+    #[error("Type inference failed because there is no valid overload resolution.")]
     #[diagnostic(code("T-028"))]
-    NoPossibleoWorld {},
-    /// An overloaded function was defined with the same signture
+    NoOverloadResolution {},
+    /// An overloaded function was defined twice with the same signature
     #[error(
-        "The Function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures."
+        "The function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures."
     )]
     #[diagnostic(code("T-029"))]
-    SharedOverloadSignature {
-        // source location of the second def
+    DuplicateOverloadSignature {
+        /// source location of the second definition
         #[label]
         #[derivative(PartialEq = "ignore")]
         span: Option<SourceSpan>,
-        // The name of the definition
+        /// The name of the definition
         name: String,
     },
 }

@@ -27,11 +27,11 @@ use crate::parser::util::ToMiette;
 /// - user-declared type templates with type parameters
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SymbolTable {
-    /// Maps the uniquenames of top-level [definitions][Def] to their signatures, i.e., their parameter list
-    /// and return type.
-    pub defs: HashMap<Name, (TypingContext, Ty)>,
-    /// Maps names of top-level [definitions][Def] to the signatures of all functions, that share the same name
-    pub variational_defs: HashMap<Name, Vec<(TypingContext, Ty)>>,
+    /// Maps names of top-level [definitions][Def] to the signatures of all definitions with this
+    /// name, i.e., their parameter lists and return types. A name with more than one signature is
+    /// overloaded, and the index of a signature is the index of the overload (see
+    /// [`overload_name`]).
+    pub defs: HashMap<Name, Vec<(TypingContext, Ty)>>,
     /// Maps names of monomorphic [constructors][CtorSig] to their signatures, i.e., their argument
     /// list.
     pub ctors: HashMap<Name, TypingContext>,
@@ -207,8 +207,9 @@ pub fn build_symbol_table(module: &Program) -> Result<SymbolTable, Error> {
     Ok(symbol_table)
 }
 
-/// simple function to have a single function/naming scheme for the unique names of overloaded functions
-pub fn build_unique_def_name(name: &String, index: &usize) -> String {
+/// This function returns the unique name of an overload, i.e., the name of an overloaded
+/// definition followed by the index of its signature.
+pub fn overload_name(name: &String, index: &usize) -> String {
     format!("{}_{}", name, index)
 }
 
@@ -239,38 +240,21 @@ impl BuildSymbolTable for Declaration {
 
 impl BuildSymbolTable for Def {
     fn build(&self, symbol_table: &mut SymbolTable) -> Result<(), Error> {
-        // a definition can be overloaded, so they are stored in a vec.
+        // a definition can be overloaded, so all signatures of a name are stored in a vec
+        let signatures = symbol_table.defs.entry(self.name.clone()).or_default();
 
-        // looking up if a definition with the same name was already registered
-        if let Some(signature_list) = symbol_table.variational_defs.get_mut(&self.name) {
-            // checking if the signature is unique (per overlaoded name)
-            if signature_list
-                .iter()
-                .any(|(context, ret_ty)| self.context.eq(context) && self.ret_ty.eq(ret_ty))
-            {
-                return Err(Error::SharedOverloadSignature {
-                    span: Some(self.span),
-                    name: self.name.clone(),
-                });
-            } else {
-                // adding the new definition to the List of (variational) defs
-                signature_list.push((self.context.clone(), self.ret_ty.clone()));
-                let def_index = signature_list.len() - 1;
-                let def_name = build_unique_def_name(&self.name, &def_index);
-                symbol_table
-                    .defs
-                    .insert(def_name, (self.context.clone(), self.ret_ty.clone()));
-            }
-        } else {
-            symbol_table.variational_defs.insert(
-                self.name.clone(),
-                vec![(self.context.clone(), self.ret_ty.clone())],
-            );
-            let def_name = build_unique_def_name(&self.name, &0);
-            symbol_table
-                .defs
-                .insert(def_name, (self.context.clone(), self.ret_ty.clone()));
+        // the signatures of the overloads of a name must be distinct
+        if signatures
+            .iter()
+            .any(|(context, ret_ty)| self.context.eq(context) && self.ret_ty.eq(ret_ty))
+        {
+            return Err(Error::DuplicateOverloadSignature {
+                span: Some(self.span),
+                name: self.name.clone(),
+            });
         }
+
+        signatures.push((self.context.clone(), self.ret_ty.clone()));
         Ok(())
     }
 }
@@ -319,7 +303,7 @@ impl CtorSig {
 
         for argument in &mut new_args.bindings {
             // check every argument, and replace decl by type var if necessary
-            argument.ty.identifiy_type_vars(type_params);
+            argument.ty.template_params_to_type_vars(type_params);
         }
 
         symbol_table
@@ -374,12 +358,12 @@ impl DtorSig {
 
         for argument in &mut new_args.bindings {
             // check every argument, and replace decl by type var if necessary
-            argument.ty.identifiy_type_vars(type_params);
+            argument.ty.template_params_to_type_vars(type_params);
         }
 
         let mut new_cont_ty = self.cont_ty.clone();
 
-        new_cont_ty.identifiy_type_vars(type_params);
+        new_cont_ty.template_params_to_type_vars(type_params);
 
         symbol_table
             .dtor_templates
@@ -419,20 +403,6 @@ mod symbol_table_tests {
         let mut expected = symbol_table_list_template();
         expected.combine(symbol_table_stream_template());
         expected.defs.insert(
-            "mult_0".to_owned(),
-            (
-                TypingContext {
-                    span: None,
-                    bindings: vec![ContextBinding {
-                        var: "l".to_owned(),
-                        chi: Prd,
-                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-                    }],
-                },
-                Ty::mk_i64(),
-            ),
-        );
-        expected.variational_defs.insert(
             "mult".to_owned(),
             vec![(
                 TypingContext {
@@ -471,20 +441,6 @@ mod symbol_table_tests {
         def_mult().build(&mut symbol_table).unwrap();
         let mut expected = SymbolTable::default();
         expected.defs.insert(
-            "mult_0".to_owned(),
-            (
-                TypingContext {
-                    span: None,
-                    bindings: vec![ContextBinding {
-                        var: "l".to_owned(),
-                        chi: Prd,
-                        ty: Ty::mk_decl("List", TypeArgs::mk(vec![Ty::mk_i64()])),
-                    }],
-                },
-                Ty::mk_i64(),
-            ),
-        );
-        expected.variational_defs.insert(
             "mult".to_owned(),
             vec![(
                 TypingContext {

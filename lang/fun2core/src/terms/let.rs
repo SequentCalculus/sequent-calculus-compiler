@@ -51,14 +51,14 @@ impl Compile for fun::syntax::terms::Let {
 mod compile_tests {
     use crate::compile::{Compile, CompileState};
     use core_macros::{covar, ctor, cut, id, lit, mu, mutilde, prod, ty, var};
-    use fun::{parse_term, syntax::inferr_helper::inferr_term, test_common::symbol_table_list};
+    use fun::{parse_term, syntax::test_util::infer_term, test_common::symbol_table_list};
     use std::collections::{HashSet, VecDeque};
 
     #[test]
     fn compile_let1() {
         let mut term = parse_term!("let x : i64 = 1; x * x");
 
-        inferr_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
+        infer_term(&mut term, &mut Default::default(), &Default::default()).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
@@ -89,7 +89,7 @@ mod compile_tests {
         let mut ctx = fun::syntax::context::TypingContext::default();
         ctx.add_var("x", fun::syntax::types::Ty::mk_i64());
 
-        inferr_term(&mut term, &mut symbol_table_list(), &ctx).unwrap();
+        infer_term(&mut term, &mut symbol_table_list(), &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),

@@ -7,10 +7,10 @@ use printer::*;
 
 use crate::syntax::*;
 use crate::traits::*;
-use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
+use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
-use std::collections::HashMap;
 use std::{collections::HashSet, rc::Rc};
 
 /// This enum encodes the different kinds of arithmetic binary operators.
@@ -80,35 +80,33 @@ impl From<Op> for Term {
     }
 }
 
-impl Inference for Op {
-    fn gather_constraints(
+impl TypeInference for Op {
+    fn collect_constraints(
         &mut self,
-        constraint_bank: &mut ConstraintBank,
+        state: &mut TypeInferenceState,
         context: &TypingContext,
-        ty_var: Ty,
+        expected_ty: Ty,
     ) -> Result<(), Error> {
-        constraint_bank
+        state
             .constraints
-            .push(Constraint::mk_only_ty(ty_var, Ty::mk_i64()));
+            .push(VariationalConstraint::equal(expected_ty, Ty::mk_i64()));
 
-        self.fst
-            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
-        self.snd
-            .gather_constraints(constraint_bank, context, Ty::mk_i64())?;
+        self.fst.collect_constraints(state, context, Ty::mk_i64())?;
+        self.snd.collect_constraints(state, context, Ty::mk_i64())?;
 
         Ok(())
     }
 
-    fn insert_inferred_type(
+    fn insert_inferred_types(
         &mut self,
-        mappings: &HashMap<Name, Ty>,
+        type_vars: &TypeVarMapping,
         symbol_table: &mut SymbolTable,
-        choices: &HashMap<u32, usize>,
+        world: &World,
     ) -> Result<(), Error> {
         self.fst
-            .insert_inferred_type(mappings, symbol_table, choices)?;
+            .insert_inferred_types(type_vars, symbol_table, world)?;
         self.snd
-            .insert_inferred_type(mappings, symbol_table, choices)
+            .insert_inferred_types(type_vars, symbol_table, world)
     }
 }
 
@@ -126,7 +124,7 @@ mod test {
     use crate::parser::fun;
     use crate::syntax::util::dummy_span;
     use crate::syntax::*;
-    use crate::typing::inference::{Constraint, ConstraintBank, Inference};
+    use crate::typing::inference::{TypeInference, TypeInferenceState, VariationalConstraint};
 
     use std::rc::Rc;
 
@@ -139,30 +137,26 @@ mod test {
             snd: Rc::new(Lit::mk(3).into()),
         };
 
-        let mut constraint_bank = ConstraintBank {
+        let mut state = TypeInferenceState {
             symbol_table: Default::default(),
-            var_name_generator: Default::default(),
+            fresh_names: Default::default(),
             constraints: Default::default(),
-            possible_choices: Default::default(),
+            choices: Default::default(),
         };
 
-        term.gather_constraints(
-            &mut constraint_bank,
-            &TypingContext::default(),
-            Ty::mk_ty_var("x"),
-        )
-        .unwrap();
+        term.collect_constraints(&mut state, &TypingContext::default(), Ty::mk_ty_var("x"))
+            .unwrap();
 
         let expected = vec![
-            Constraint::mk_only_ty(Ty::mk_ty_var("x"), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
-            Constraint::mk_only_ty(Ty::mk_i64(), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_ty_var("x"), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_i64(), Ty::mk_i64()),
+            VariationalConstraint::equal(Ty::mk_i64(), Ty::mk_i64()),
         ];
 
-        let ConstraintBank {
+        let TypeInferenceState {
             constraints: result,
             ..
-        } = constraint_bank;
+        } = state;
 
         assert_eq!(result, expected);
     }

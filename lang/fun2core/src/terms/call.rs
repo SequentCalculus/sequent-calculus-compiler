@@ -42,7 +42,7 @@ mod compile_tests {
     use core_macros::{call, covar, id, lit, mu, ty};
     use fun::{
         parse_term,
-        syntax::{context::TypingContext, terms::inferr_helper::inferr_term},
+        syntax::{context::TypingContext, terms::test_util::infer_term},
         typing::symbol_table::SymbolTable,
     };
     use std::collections::{HashMap, HashSet, VecDeque};
@@ -55,12 +55,6 @@ mod compile_tests {
         let symbol_table = &mut {
             let mut funs = HashMap::new();
             funs.insert(
-                "fac_0".to_owned(),
-                (ctx.clone(), fun::syntax::types::Ty::mk_i64()),
-            );
-
-            let mut var_defs = HashMap::new();
-            var_defs.insert(
                 "fac".to_owned(),
                 vec![(ctx.clone(), fun::syntax::types::Ty::mk_i64())],
             );
@@ -68,7 +62,6 @@ mod compile_tests {
             SymbolTable {
                 ctors: HashMap::default(),
                 dtors: HashMap::default(),
-                variational_defs: var_defs,
                 defs: funs,
                 types: HashMap::default(),
                 ctor_templates: HashMap::default(),
@@ -77,7 +70,7 @@ mod compile_tests {
             }
         };
 
-        inferr_term(&mut term, symbol_table, &ctx).unwrap();
+        infer_term(&mut term, symbol_table, &ctx).unwrap();
 
         let mut state = CompileState {
             used_vars: HashSet::from(["x".to_string()]),
