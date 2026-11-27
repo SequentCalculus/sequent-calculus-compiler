@@ -74,8 +74,8 @@ impl Solution {
     }
 }
 
-/// integrates a new [`Solution`] into the [`Solutions`] and [`VariationalConstraint`]s
-/// by adding new constraints for solutions that have the same [`TypeVar`](Ty) as the new solution
+/// This function adds a solution and, for every other solution of the same type variable that can
+/// hold together with it, a constraint equating both types under the combined condition.
 fn add_solution(
     constraints: &mut Vec<VariationalConstraint>,
     solutions: &mut Solutions,
@@ -100,6 +100,11 @@ fn add_solution(
 pub fn unify_variational(
     mut constraints: Vec<VariationalConstraint>,
 ) -> (Vec<Solution>, Vec<ChoiceConflict>) {
+    // Unlike classic unification, solutions are never substituted into the remaining constraints,
+    // since a solution only holds under its condition. Instead, a type variable collects all its
+    // solutions, and two solutions that can hold together must have equal types, which
+    // `add_solution` adds as a new constraint. All constraints consist of subterms of the original
+    // types under finitely many conditions, and each is processed only once, so this terminates.
     let mut conflicts: Vec<ChoiceConflict> = Vec::new();
     let mut seen_constraints: Vec<VariationalConstraint> = Vec::new();
     let mut solutions: Solutions = Solutions::new();
@@ -206,7 +211,7 @@ pub fn unify_variational(
                 rhs,
                 condition,
             } => {
-                // two types, neither a type variable nor two declerations, which means a literal type and a declaration -> impossible to unify the equation
+                // two types, neither a type variable nor two declarations, which means a literal type and a declaration -> impossible to unify the equation
                 let best_span = if let Some(span) = lhs.span() {
                     Some(span)
                 } else {

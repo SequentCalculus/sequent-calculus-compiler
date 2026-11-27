@@ -50,8 +50,7 @@ pub enum Ty {
 impl Ty {
     /// This function checks the well-formedness of a type during typechecking. For a user-declared
     /// type it creates a monomorphic instance of the corresponding template if necessary. The type
-    /// must not be a type parameter.
-    // TODO: Create costum function for Type Inference, to report better errors etc.
+    /// must not be a type parameter or type variable.
     pub fn check(
         &self,
         span: &Option<SourceSpan>,
@@ -82,11 +81,9 @@ impl Ty {
                     },
                 }
             }
+            // `insert_inferred` reports remaining type variables before checking
             Ty::TypeVar { name, .. } => {
-                panic!(
-                    "The type variable {} was encounterd while checking a type.",
-                    name
-                );
+                panic!("The type variable {name} was encountered while checking a type.");
             }
         }
     }
@@ -207,7 +204,7 @@ impl Ty {
     pub fn subst_ty(self, mappings: &HashMap<Name, Ty>) -> Ty {
         match self {
             Ty::I64 { .. } => self,
-            // a type decleration could have a type variable in the type args
+            // a type declaration could have a type variable in the type args
             Ty::Decl {
                 span,
                 name,
@@ -272,7 +269,7 @@ impl Ty {
                 type_args,
             } => {
                 if type_params.contains_binding(name) {
-                    // this decleration is actually a Type Variable
+                    // this declaration is actually a type variable
                     *self = Ty::TypeVar {
                         name: name.to_string(),
                         span: *span,
@@ -287,6 +284,7 @@ impl Ty {
         }
     }
 
+    /// This function returns the source location of the type.
     pub fn span(&self) -> Option<SourceSpan> {
         match self {
             Ty::I64 { span } => *span,

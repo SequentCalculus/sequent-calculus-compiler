@@ -37,6 +37,7 @@ pub struct Def {
 }
 
 impl Def {
+    /// This function checks the signature and collects the constraints for the body.
     pub fn collect_constraints(&mut self, state: &mut TypeInferenceState) -> Result<(), Error> {
         self.context.no_dups(&self.name)?;
         self.ret_ty
@@ -47,6 +48,7 @@ impl Def {
             .collect_constraints(state, &self.context, self.ret_ty.clone())
     }
 
+    /// This function inserts the inferred types into the body.
     pub fn insert_inferred_types(
         &mut self,
         type_vars: &TypeVarMapping,

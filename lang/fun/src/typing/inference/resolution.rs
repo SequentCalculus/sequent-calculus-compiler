@@ -20,6 +20,7 @@ pub struct ChoiceEncoding {
 }
 
 impl ChoiceEncoding {
+    /// This function records the BDD variables of the alternatives of a choice.
     fn register_choice(&mut self, choice: ChoiceId, bit_vars: Vec<BddVariable>) {
         self.alternative_vars.insert(choice, bit_vars.clone());
         for (idx, variable) in bit_vars.iter().enumerate() {
@@ -27,11 +28,14 @@ impl ChoiceEncoding {
         }
     }
 
+    /// This function returns the BDD variables of the alternatives of a choice.
     pub fn alternative_vars_of(&self, choice: &ChoiceId) -> Option<&Vec<BddVariable>> {
         self.alternative_vars.get(choice)
     }
 }
 
+/// This function encodes the choices and returns the formula that selects exactly one
+/// alternative per choice, together with the encoding and the BDD variables.
 fn one_alternative_per_choice(choices: &[OverloadChoice]) -> (Bdd, ChoiceEncoding, BddVariableSet) {
     let mut builder = BddVariableSetBuilder::new();
     let mut encoding = ChoiceEncoding::default();
@@ -88,6 +92,8 @@ fn one_alternative_per_choice(choices: &[OverloadChoice]) -> (Bdd, ChoiceEncodin
     (combined_clause, encoding, var_set)
 }
 
+/// This function returns the formula that excludes every combination of alternatives of a
+/// conflict.
 fn exclude_conflicts(
     var_set: &BddVariableSet,
     encoding: &ChoiceEncoding,
@@ -131,6 +137,7 @@ fn exclude_conflicts(
         .fold(var_set.mk_true(), |acc, next| acc.and(next))
 }
 
+/// This function reads the selected alternatives off a satisfying valuation.
 fn decode_world(valuation: BddValuation, encoding: &ChoiceEncoding) -> World {
     valuation
         .to_values()
@@ -145,6 +152,8 @@ fn decode_world(valuation: BddValuation, encoding: &ChoiceEncoding) -> World {
         .collect()
 }
 
+/// This function selects the unique world, i.e., the one combination of alternatives without
+/// conflicts. No such world means no overload fits, several mean the overloading is ambiguous.
 pub fn select_world(
     choices: &[OverloadChoice],
     conflicts: Vec<ChoiceConflict>,

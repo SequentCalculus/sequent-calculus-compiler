@@ -315,6 +315,8 @@ impl BuildSymbolTable for Data {
 }
 
 impl CtorSig {
+    /// This function adds the constructor to the symbol table, with the type parameters of its
+    /// data type as type variables.
     fn build(
         &self,
         symbol_table: &mut SymbolTable,
@@ -328,7 +330,7 @@ impl CtorSig {
         }
         // type variables like type parameters need to be identified here
         // each argument type is checked, whether it is a type variable or not
-        // note that a type decleration could have a wrong name at this point, but that is not checked
+        // note that a type declaration could have a wrong name at this point, but that is not checked
 
         let mut new_args = self.args.clone();
 
@@ -369,6 +371,8 @@ impl BuildSymbolTable for Codata {
 }
 
 impl DtorSig {
+    /// This function adds the destructor to the symbol table, with the type parameters of its
+    /// codata type as type variables.
     fn build(
         &self,
         symbol_table: &mut SymbolTable,
@@ -383,7 +387,7 @@ impl DtorSig {
 
         // type variables like type parameters need to be identified here
         // each argument type is checked, whether it is a type variable or not
-        // note that a type decleration could have a wrong name at this point, but that is not checked
+        // note that a type declaration could have a wrong name at this point, but that is not checked
 
         let mut new_args = self.args.clone();
 

@@ -75,7 +75,7 @@ impl TypeInference for Constructor {
         let instantiation = type_params.instantiate(&[], self.span, &mut state.fresh_names)?;
         let data_type = Ty::mk_instance(&data_name, &type_params, &instantiation, Some(self.span));
 
-        let instanciated_template = match state.symbol_table.ctor_templates.get(&self.id) {
+        let ctor_params = match state.symbol_table.ctor_templates.get(&self.id) {
             Some(ctor_template) => ctor_template.clone().subst_ty(&instantiation),
             None => {
                 return Err(Error::Undefined {
@@ -86,7 +86,7 @@ impl TypeInference for Constructor {
         };
 
         self.args
-            .collect_constraints(&instanciated_template, context, state, self.span)?;
+            .collect_constraints(&ctor_params, context, state, self.span)?;
 
         state
             .constraints
