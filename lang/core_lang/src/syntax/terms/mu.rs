@@ -3,8 +3,19 @@
 use printer::tokens::DOT;
 use printer::*;
 
+use crate::mono::constraints::ConstraintCollector;
+use crate::mono::constraints::FlowConstraintSet;
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::Specialize;
+use crate::mono::specialize::SpecializeContext;
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::LocatedTypeError;
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -250,6 +261,95 @@ impl Bind for Mu<Cns> {
     }
 }
 
+impl<C: Chi> ConstraintCollector for Mu<C> {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        constraints.extend(self.statement.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl<C: Chi> Specialize for Mu<C> {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Mu {
+            prdcns: self.prdcns.clone(),
+            variable: self.variable.clone(),
+            statement: self.statement.specialize(context),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl<C: Chi> Checked for Mu<C> {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        self.ty.check(type_params, context, env)?;
+
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+
+        // extend the context with the new bindings introduced by the mu
+        let mut extended_context = context.clone();
+        extended_context.bindings.push(ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: self.ty.clone(),
+        });
+
+        self.statement.check(type_params, &extended_context, env)?;
+
+        Ok(())
+    }
+}
+
+impl<C: Chi> LabelAndUnify for Mu<C> {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        let ty = state.label_ty(&self.ty);
+
+        let chi = if self.prdcns.is_prd() {
+            Chirality::Cns
+        } else {
+            Chirality::Prd
+        };
+        let mut extended_scope = scope.clone();
+        extended_scope.bindings.push(ContextBinding {
+            var: self.variable.clone(),
+            chi,
+            ty: ty.clone(),
+        });
+
+        Mu {
+            prdcns: self.prdcns.clone(),
+            variable: self.variable.clone(),
+            statement: self.statement.label_and_unify(state, sigs, &extended_scope),
+            ty,
+        }
+    }
+}
+
+impl<C: Chi> Rewrite for Mu<C> {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Mu {
+            prdcns: self.prdcns.clone(),
+            variable: self.variable.clone(),
+            statement: self.statement.rewrite(table),
+            ty: self.ty.rewrite(table),
+        }
+    }
+}
+
 #[cfg(test)]
 mod mu_tests {
     use super::{Bind, Focusing, Subst};
@@ -300,5 +400,38 @@ mod mu_tests {
         );
         let expected = fs_cut!(example_var, fs_mutilde!(id!("x", 1), fs_exit!(id!("x", 1)))).into();
         assert_eq!(result, expected)
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{covar, cut, id, lit, mu, ty};
+
+    #[test]
+    fn label_and_unify_threads_the_labeled_type_to_the_bound_covariable() {
+        let example = mu!(
+            id!("a"),
+            cut!(lit!(1), covar!(id!("a"), ty!(id!("Box"))), ty!(id!("int"))),
+            ty!(id!("Box"))
+        );
+
+        let mut state = SplitState::default();
+        let result = example.label_and_unify(
+            &mut state,
+            &DeclSignatures::new(),
+            &TypingContext::default(),
+        );
+
+        let Statement::Cut(cut) = result.statement.as_ref() else {
+            panic!("expected a Cut");
+        };
+        let Term::XVar(xvar) = cut.consumer.as_ref() else {
+            panic!("expected an XVar");
+        };
+        assert_eq!(xvar.ty, result.ty);
+        assert!(matches!(result.ty, Ty::Decl { .. }));
     }
 }

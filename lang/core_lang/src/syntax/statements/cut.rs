@@ -3,8 +3,17 @@
 use printer::tokens::{LANGLE, PIPE, RANGLE};
 use printer::*;
 
-use crate::syntax::*;
+use crate::mono::constraints::{ConstraintCollector, FlowConstraintSet};
+use crate::mono::errors::MonoError;
+use crate::mono::specialize::{Specialize, SpecializeContext};
+use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+use crate::splitting::rewrite::Rewrite;
+use crate::splitting::split_table::SplitTable;
 use crate::traits::*;
+use crate::typing::check::Checked;
+use crate::typing::env::GlobalEnv;
+use crate::typing::errors::{LocatedTypeError, TypeError};
+use crate::{bail, syntax::*};
 
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -131,6 +140,7 @@ impl Focusing for Cut {
                         FsXtor {
                             prdcns: constructor.prdcns,
                             name: constructor.name,
+                            type_args: constructor.type_args,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -150,6 +160,7 @@ impl Focusing for Cut {
                         FsXtor {
                             prdcns: destructor.prdcns,
                             name: destructor.name,
+                            type_args: destructor.type_args,
                             args: bindings.into(),
                             ty: self.ty.clone(),
                         },
@@ -191,6 +202,92 @@ impl Focusing for Cut {
     }
 }
 
+impl ConstraintCollector for Cut {
+    fn collect_constraints(&self, env: &GlobalEnv) -> Result<FlowConstraintSet, MonoError> {
+        let mut constraints = self.ty.collect_constraints(env)?;
+        constraints.extend(self.producer.collect_constraints(env)?);
+        constraints.extend(self.consumer.collect_constraints(env)?);
+        Ok(constraints)
+    }
+}
+
+impl Specialize for Cut {
+    fn specialize(&self, context: &SpecializeContext) -> Self {
+        Cut {
+            producer: self.producer.specialize(context),
+            consumer: self.consumer.specialize(context),
+            ty: self.ty.specialize(context),
+        }
+    }
+}
+
+impl Checked for Cut {
+    fn check(
+        &self,
+        type_params: &[TypeParam],
+        context: &TypingContext,
+        env: &GlobalEnv,
+    ) -> Result<(), LocatedTypeError> {
+        // check well-formedness of the type
+        self.ty.check(type_params, context, env)?;
+
+        // check that the producer and consumer have the same type as the cut itself
+        if self.producer.get_type() != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: self.ty.print_to_string(None),
+                got: self.consumer.get_type().print_to_string(None),
+                msg: Some("Producer and consumer of a cut must have the same type".to_string()),
+            });
+        }
+
+        if self.consumer.get_type() != self.ty {
+            bail!(TypeError::TypeMismatch {
+                expected: self.ty.print_to_string(None),
+                got: self.producer.get_type().print_to_string(None),
+                msg: Some("Producer and consumer of a cut must have the same type".to_string()),
+            });
+        }
+
+        // check well-formedness of the producer and the consumer
+        self.producer.check(type_params, context, env)?;
+        self.consumer.check(type_params, context, env)?;
+
+        Ok(())
+    }
+}
+
+impl LabelAndUnify for Cut {
+    fn label_and_unify(
+        &self,
+        state: &mut SplitState,
+        sigs: &DeclSignatures,
+        scope: &TypingContext,
+    ) -> Self {
+        let producer = self.producer.label_and_unify(state, sigs, scope);
+        let consumer = self.consumer.label_and_unify(state, sigs, scope);
+        let ty = state.label_ty(&self.ty);
+
+        state.unify_ty(&ty, &producer.get_type());
+        state.unify_ty(&ty, &consumer.get_type());
+
+        Cut {
+            producer,
+            ty,
+            consumer,
+        }
+    }
+}
+
+impl Rewrite for Cut {
+    fn rewrite(&self, table: &SplitTable) -> Self {
+        Cut {
+            producer: self.producer.rewrite(table),
+            ty: self.ty.rewrite(table),
+            consumer: self.consumer.rewrite(table),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::syntax::*;
@@ -207,7 +304,8 @@ mod tests {
         let result = cut!(
             ctor!(
                 id!("Cons"),
-                [lit!(1), ctor!(id!("Nil"), [], ty!(id!("ListInt")))],
+                [],
+                [lit!(1), ctor!(id!("Nil"), [], [], ty!(id!("ListInt")))],
                 ty!(id!("ListInt"))
             ),
             covar!(id!("a", 1), ty!(id!("ListInt"))),
@@ -220,12 +318,13 @@ mod tests {
             fs_mutilde!(
                 id!("x", 2),
                 fs_cut!(
-                    fs_ctor!(id!("Nil"), [], ty!(id!("ListInt"))),
+                    fs_ctor!(id!("Nil"), [], [], ty!(id!("ListInt"))),
                     fs_mutilde!(
                         id!("x", 3),
                         fs_cut!(
                             fs_ctor!(
                                 id!("Cons"),
+                                [],
                                 [
                                     bind!(id!("x", 2), prd!()),
                                     bind!(id!("x", 3), prd!(), ty!(id!("ListInt")))
@@ -252,6 +351,7 @@ mod tests {
             var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             dtor!(
                 id!("apply"),
+                [],
                 [var!(id!("y")), covar!(id!("a"))],
                 ty!(id!("Fun[i64, i64]"))
             ),
@@ -263,6 +363,7 @@ mod tests {
             var!(id!("x"), ty!(id!("Fun[i64, i64]"))),
             fs_dtor!(
                 id!("apply"),
+                [],
                 [bind!(id!("y"), prd!()), bind!(id!("a"), cns!())],
                 ty!(id!("Fun[i64, i64]"))
             ),
@@ -277,5 +378,61 @@ mod tests {
         let result = cut!(var!(id!("x")), covar!(id!("a"))).focus(&mut Default::default());
         let expected = FsCut::new(var!(id!("x")), covar!(id!("a")), Ty::I64).into();
         assert_eq!(result, expected);
+    }
+}
+
+#[cfg(test)]
+mod label_and_unify_tests {
+    use crate::splitting::labeling::{DeclSignatures, LabelAndUnify, SplitState};
+    use crate::syntax::*;
+    extern crate self as core_lang;
+    use core_macros::{covar, cut, id, ty, var};
+
+    #[test]
+    fn label_and_unify_merges_producer_consumer_and_own_type() {
+        let mut state = SplitState::default();
+        // two independently labeled occurrences of `Box`, simulating that the producer and
+        // consumer were bound at two unrelated declaration positions
+        let box_x = state.label_ty(&ty!(id!("Box")));
+        let box_a = state.label_ty(&ty!(id!("Box")));
+        assert_ne!(box_x, box_a);
+
+        let mut scope = TypingContext::default();
+        scope.bindings.push(ContextBinding {
+            var: id!("x"),
+            chi: Chirality::Prd,
+            ty: box_x,
+        });
+        scope.bindings.push(ContextBinding {
+            var: id!("a"),
+            chi: Chirality::Cns,
+            ty: box_a,
+        });
+
+        let example = cut!(
+            var!(id!("x"), ty!(id!("Box"))),
+            covar!(id!("a"), ty!(id!("Box"))),
+            ty!(id!("Box"))
+        );
+
+        let result: Cut = example.label_and_unify(&mut state, &DeclSignatures::new(), &scope);
+
+        let Term::XVar(producer) = result.producer.as_ref() else {
+            panic!("expected an XVar producer");
+        };
+        let Term::XVar(consumer) = result.consumer.as_ref() else {
+            panic!("expected an XVar consumer");
+        };
+        let (
+            Ty::Decl { name: n_prod, .. },
+            Ty::Decl { name: n_cons, .. },
+            Ty::Decl { name: n_cut, .. },
+        ) = (&producer.ty, &consumer.ty, &result.ty)
+        else {
+            panic!("expected Ty::Decl everywhere");
+        };
+
+        assert_eq!(state.uf.find(n_prod), state.uf.find(n_cons));
+        assert_eq!(state.uf.find(n_prod), state.uf.find(n_cut));
     }
 }

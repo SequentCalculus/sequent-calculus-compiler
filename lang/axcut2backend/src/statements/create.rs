@@ -4,7 +4,7 @@ use printer::{Print, tokens::CREATE};
 
 use super::CodeStatement;
 use crate::fresh_labels::fresh_label;
-use crate::utils::{code_methods, code_table};
+use crate::utils::{asm_safe_ty_name, code_methods, code_table};
 use crate::{
     code::Instructions,
     config::{Config, TemporaryNumber::Snd},
@@ -53,15 +53,7 @@ impl CodeStatement for Create {
         );
         Backend::store(closure_environment.clone().into(), &context, instructions);
 
-        let fresh_label = format!(
-            "{}_{}",
-            self.ty
-                .print_to_string(None)
-                .replace('[', "_")
-                .replace(", ", "_")
-                .replace(']', ""),
-            fresh_label()
-        );
+        let fresh_label = format!("{}_{}", asm_safe_ty_name(&self.ty), fresh_label());
 
         context.bindings.push(ContextBinding {
             var: self.var.clone(),

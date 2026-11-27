@@ -26,24 +26,28 @@ pub struct CheckedProgram {
 
 impl Program {
     /// This function typechecks all declarations in a module, creating a checked module with
-    /// monomorphic type instances.
+    /// polymorphic type instances.
     pub fn check(self) -> Result<CheckedProgram, Error> {
         let symbol_table = build_symbol_table(&self)?;
-        self.check_with_table(symbol_table)
+        self.check_with_table_poly(symbol_table)
     }
 
-    /// This function typechecks a module, creating a checked module with monomorphic type
-    /// instances, with given symbol table.
-    fn check_with_table(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
+    fn check_with_table_poly(self, mut symbol_table: SymbolTable) -> Result<CheckedProgram, Error> {
         let mut defs = Vec::new();
+        let mut data_types = Vec::new();
+        let mut codata_types = Vec::new();
+
         // we check the well-formedness of type declarations first
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
                     data.check(&symbol_table)?;
+
+                    data_types.push(data);
                 }
                 Declaration::Codata(codata) => {
                     codata.check(&symbol_table)?;
+                    codata_types.push(codata);
                 }
                 Declaration::Def(def) => {
                     defs.push(def);
@@ -56,76 +60,57 @@ impl Program {
             .map(|def| def.check(&mut symbol_table))
             .collect::<Result<_, Error>>()?;
 
-        // collect all instances of type templates from the symbol table
-        let mut data_types = Vec::new();
-        let mut codata_types = Vec::new();
-        for (name, (pol, type_args, xtors)) in symbol_table.types {
-            match pol {
-                Polarity::Data => {
-                    let ctors = xtors
-                        .into_iter()
-                        .map(|base_name| {
-                            let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let args = symbol_table
-                                .ctors
-                                .get(&full_name)
-                                .unwrap_or_else(|| {
-                                    panic!("Couldn't find constructor {full_name} in symbol_table.")
-                                })
-                                .clone();
-                            CtorSig {
-                                span: None,
-                                // keep base name for xtor in all instances
-                                name: base_name,
-                                args,
-                            }
-                        })
-                        .collect();
-                    let declaration = Data {
-                        span: None,
-                        name,
-                        type_params: TypeContext::default(),
-                        ctors,
-                    };
-                    data_types.push(declaration);
+        // collect all uninstantiated type names from the symbol table, which are exactly those
+        // which are actually instantiated somewhere in the term-level program
+        let mut used_types: HashSet<Name> = symbol_table
+            .types
+            .keys()
+            .map(|name| {
+                name.split_once("[")
+                    .map_or(name.as_str(), |x| x.0)
+                    .to_string()
+            })
+            .collect();
+
+        // A used type's constructors/destructors may reference other types that are never
+        // explicitly instantiated on their own, e.g. an argument that is never used in any
+        // clause body. Close `used_types` under all types referenced this way, since dropping
+        // such a type would leave a dangling reference in the (still used) type that needs it.
+        loop {
+            let mut changed = false;
+            for data in &data_types {
+                if used_types.contains(&data.name) {
+                    for name in data.referenced_types() {
+                        changed |= used_types.insert(name);
+                    }
                 }
-                Polarity::Codata => {
-                    let dtors = xtors
-                        .into_iter()
-                        .map(|base_name| {
-                            let full_name = base_name.clone() + &type_args.print_to_string(None);
-                            let (args, cont_ty) = symbol_table
-                                .dtors
-                                .get(&full_name)
-                                .unwrap_or_else(|| {
-                                    panic!("Couldn't find destructor {full_name} in symbol_table.")
-                                })
-                                .clone();
-                            DtorSig {
-                                span: None,
-                                // keep base name for xtor in all instances
-                                name: base_name,
-                                args,
-                                cont_ty,
-                            }
-                        })
-                        .collect();
-                    let declaration = Codata {
-                        span: None,
-                        name,
-                        type_params: TypeContext::default(),
-                        dtors,
-                    };
-                    codata_types.push(declaration);
+            }
+            for codata in &codata_types {
+                if used_types.contains(&codata.name) {
+                    for name in codata.referenced_types() {
+                        changed |= used_types.insert(name);
+                    }
                 }
+            }
+            if !changed {
+                break;
             }
         }
 
-        Ok(CheckedProgram {
-            data_types,
-            codata_types,
+        // filter out all unused type templates
+        let checked = CheckedProgram {
+            data_types: data_types
+                .into_iter()
+                .filter(|data| used_types.contains(&data.name))
+                .collect(),
+            codata_types: codata_types
+                .into_iter()
+                .filter(|codata| used_types.contains(&codata.name))
+                .collect(),
             defs,
-        })
+        };
+
+        Ok(checked)
     }
 
     /// This function returns the names of all data type templates in a module.
@@ -182,13 +167,15 @@ mod program_tests {
     use crate::{
         parser::fun,
         syntax::{
-            context::TypingContext,
-            declarations::Def,
+            Chirality, CtorSig, DtorSig, Polarity, TypeArgs, TypeParams,
+            context::{ContextBinding, TypingContext},
+            declarations::{Codata, Data, Def},
             program::Program,
             terms::{Lit, Term},
             types::Ty,
             util::dummy_span,
         },
+        typing::Error,
     };
     use std::collections::HashSet;
 
@@ -202,9 +189,65 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "x".to_string(),
+                    type_params: TypeParams::default(),
                     context: TypingContext::default(),
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
+                }
+                .into(),
+            ],
+        }
+    }
+
+    fn existential_data() -> Program {
+        Program {
+            declarations: vec![
+                Data {
+                    span: Some(dummy_span()),
+                    name: "Ex".to_owned(),
+                    type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+                    ctors: vec![CtorSig {
+                        span: Some(dummy_span()),
+                        name: "Mk".to_owned(),
+                        type_params: TypeParams::mk(&[("B", Polarity::Data)]),
+                        args: TypingContext {
+                            span: Some(dummy_span()),
+                            bindings: vec![ContextBinding {
+                                var: "x".to_owned(),
+                                chi: Chirality::Prd,
+                                ty: Ty::mk_decl("B", TypeArgs::default()),
+                            }],
+                        },
+                    }]
+                    .into(),
+                }
+                .into(),
+            ],
+        }
+    }
+
+    fn existential_codata() -> Program {
+        Program {
+            declarations: vec![
+                Codata {
+                    span: Some(dummy_span()),
+                    name: "Ex".to_owned(),
+                    type_params: TypeParams::mk(&[("A", Polarity::Data)]),
+                    dtors: vec![DtorSig {
+                        span: Some(dummy_span()),
+                        name: "unmk".to_owned(),
+                        type_params: TypeParams::mk(&[("B", Polarity::Data)]),
+                        args: TypingContext {
+                            span: Some(dummy_span()),
+                            bindings: vec![ContextBinding {
+                                var: "x".to_owned(),
+                                chi: Chirality::Prd,
+                                ty: Ty::mk_decl("B", TypeArgs::default()),
+                            }],
+                        },
+                        cont_ty: Ty::mk_decl("B", TypeArgs::default()),
+                    }]
+                    .into(),
                 }
                 .into(),
             ],
@@ -255,6 +298,7 @@ mod program_tests {
                 Def {
                     span: dummy_span(),
                     name: "f".to_string(),
+                    type_params: TypeParams::default(),
                     context: ctx,
                     body: Term::Lit(Lit::mk(4)),
                     ret_ty: Ty::mk_i64(),
@@ -289,6 +333,7 @@ mod program_tests {
         let d1 = Def {
             span: dummy_span(),
             name: "f".to_string(),
+            type_params: TypeParams::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(2)),
             ret_ty: Ty::mk_i64(),
@@ -297,6 +342,7 @@ mod program_tests {
         let d2 = Def {
             span: dummy_span(),
             name: "g".to_string(),
+            type_params: TypeParams::default(),
             context: TypingContext::default(),
             body: Term::Lit(Lit::mk(4)),
             ret_ty: Ty::mk_i64(),
@@ -321,5 +367,67 @@ mod program_tests {
             parser.parse("def f(): i64 { 2 }\n def g(): i64 { 4 }"),
             Ok(example_two().into())
         )
+    }
+
+    #[test]
+    fn parse_existential_data() {
+        let parser = fun::ProgParser::new();
+        assert_eq!(
+            parser.parse("data Ex[A+] { Mk[B+](x: B) }"),
+            Ok(existential_data())
+        );
+    }
+
+    #[test]
+    fn parse_existential_codata() {
+        let parser = fun::ProgParser::new();
+
+        assert_eq!(
+            parser.parse("codata Ex[A+] { unmk[B+](x: B): B }"),
+            Ok(existential_codata())
+        );
+    }
+
+    #[test]
+    fn display_existential_data() {
+        assert_eq!(
+            existential_data().print_to_string(Default::default()),
+            "data Ex[A+] { Mk[B+](x: B) }".to_string()
+        )
+    }
+
+    #[test]
+    fn display_existential_codata() {
+        assert_eq!(
+            existential_codata().print_to_string(Default::default()),
+            "codata Ex[A+] { unmk[B+](x: B): B }".to_string()
+        )
+    }
+
+    #[test]
+    fn def_body_respects_declared_polarity_of_own_type_param() {
+        let parser = fun::ProgParser::new();
+        let result = parser
+            .parse("def wrap[B+](x: B): B { x }\ndef f[A-](x: A): A { wrap[A](x) }")
+            .unwrap()
+            .check();
+        assert!(
+            matches!(result, Err(Error::PolarityMismatch { .. })),
+            "expected a PolarityMismatch since f's own A- is used where wrap expects B+, got {result:?}"
+        );
+        // Sanity-check the Display impl (used for diagnostics) doesn't panic and mentions the
+        // mismatching polarities.
+        let message = result.unwrap_err().to_string();
+        assert!(message.contains("Polarity mismatch"));
+    }
+
+    #[test]
+    fn def_body_accepts_matching_declared_polarity_of_own_type_param() {
+        let parser = fun::ProgParser::new();
+        let result = parser
+            .parse("def wrap[B+](x: B): B { x }\ndef f[A+](x: A): A { wrap[A](x) }")
+            .unwrap()
+            .check();
+        assert!(result.is_ok(), "expected Ok, got {result:?}");
     }
 }

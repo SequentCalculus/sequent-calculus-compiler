@@ -51,7 +51,7 @@ impl Occurrences for Statement {
                 ifc.thenc.label_occurrences(defs, occurrences);
                 ifc.elsec.label_occurrences(defs, occurrences);
             }
-            Statement::Invoke(_) | Statement::Exit(_) => {}
+            Statement::Invoke(_) | Statement::Exit(_) | Statement::Unreachable(_) => {}
         }
     }
 }
@@ -89,6 +89,10 @@ impl Inline for Statement {
                     free_vars,
                 }
             }
+            Statement::Unreachable(unreachable) => InlineResult {
+                result: unreachable.into(),
+                free_vars: HashSet::new(),
+            },
         }
     }
 }

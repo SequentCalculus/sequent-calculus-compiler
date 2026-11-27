@@ -331,6 +331,13 @@ impl TypeContext {
             bindings: params.iter().map(ToString::to_string).collect(),
         }
     }
+
+    /// This function extends a type context with another type context.
+    pub fn extend(&self, other: TypeContext) -> TypeContext {
+        let mut extended = self.clone();
+        extended.bindings.extend(other.bindings);
+        extended
+    }
 }
 
 impl Print for TypeContext {
