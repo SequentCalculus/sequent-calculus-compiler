@@ -13,7 +13,10 @@ impl Compile for fun::syntax::terms::Call {
     /// This implementation of [Compile::compile_with_cont] proceeds as follows.
     /// ```text
     /// 〚f(t_1, ..., a_1, ...) 〛_{c} = f(〚t_1〛, ..., a_1, ..., c)
+    /// 〚main() 〛_{c} = main()
     /// ```
+    /// `main` is compiled without a continuation parameter, since it ends the program via `exit`
+    /// instead of returning, so a call of `main` drops the continuation `c`.
     ///
     /// # Panics
     ///
@@ -25,7 +28,10 @@ impl Compile for fun::syntax::terms::Call {
         type_params: Rc<HashMap<String, (Identifier, Option<ParamPolarity>)>>,
     ) -> core_lang::syntax::Statement {
         let mut args = compile_subst(self.args, state, type_params.clone());
-        args.entries.push(cont.into());
+        // `main` has no continuation parameter (see `compile_main`), it never returns to `cont`
+        if self.name != "main" {
+            args.entries.push(cont.into());
+        }
         core_lang::syntax::statements::Call {
             name: Identifier::new(self.name),
             type_args: core_lang::syntax::types::TypeArgs {

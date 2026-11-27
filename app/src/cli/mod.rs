@@ -10,6 +10,7 @@ mod compile;
 mod fmt;
 mod focus;
 mod gen_completions;
+mod inline;
 mod linearize;
 mod monomorphize;
 mod shrink;
@@ -49,6 +50,7 @@ pub fn exec() -> miette::Result<()> {
         Linearize(args) => linearize::exec(args, !cli.no_color),
         Shrink(args) => shrink::exec(args, !cli.no_color),
         Split(args) => split::exec(args, !cli.no_color),
+        Inline(args) => inline::exec(args, !cli.no_color),
         Texify(args) => texify::exec(args),
         GenerateCompletion(args) => gen_completions::exec(args),
         Monomorphize(args) => monomorphize::exec(args, !cli.no_color),
@@ -89,6 +91,8 @@ enum Command {
     Shrink(shrink::Args),
     /// Type-split the declarations of a file
     Split(split::Args),
+    /// Run an inline pass on an AxCut program
+    Inline(inline::Args),
     /// Print program representations as LaTeX code
     Texify(texify::Args),
     /// Generate completion scripts for various shells
