@@ -9,8 +9,6 @@ use crate::traits::*;
 use crate::typing::inference::TypeInference;
 use crate::typing::inference::TypeInferenceState;
 use crate::typing::inference::VariationalConstraint;
-use crate::typing::inference::collect_arg_constraints;
-use crate::typing::inference::insert_arg_types;
 use crate::typing::inference::{TypeVarMapping, World};
 use crate::typing::*;
 
@@ -132,13 +130,8 @@ impl TypeInference for Constructor {
             });
         }
 
-        collect_arg_constraints(
-            &mut self.args,
-            &instanciated_template,
-            context,
-            state,
-            self.span,
-        )?;
+        self.args
+            .collect_constraints(&instanciated_template, context, state, self.span)?;
 
         state
             .constraints
@@ -153,7 +146,8 @@ impl TypeInference for Constructor {
         symbol_table: &mut SymbolTable,
         world: &World,
     ) -> Result<(), Error> {
-        insert_arg_types(&mut self.args, type_vars, symbol_table, world)?;
+        self.args
+            .insert_inferred_types(type_vars, symbol_table, world)?;
 
         match &mut self.ty {
             Some(ty) => {

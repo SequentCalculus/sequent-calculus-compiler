@@ -8,7 +8,6 @@ use crate::syntax::*;
 use crate::traits::*;
 use crate::typing::inference::{
     ChoiceId, TypeInference, TypeInferenceState, TypeVarMapping, VariationalConstraint, World,
-    collect_arg_constraints, insert_arg_types,
 };
 use crate::typing::*;
 
@@ -75,7 +74,8 @@ impl TypeInference for Call {
                     .constraints
                     .push(VariationalConstraint::equal(expected_ty, ret_ty));
 
-                collect_arg_constraints(&mut self.args, &types, context, state, self.span)?;
+                self.args
+                    .collect_constraints(&types, context, state, self.span)?;
 
                 Ok(())
             }
@@ -203,7 +203,8 @@ impl TypeInference for Call {
         symbol_table: &mut SymbolTable,
         world: &World,
     ) -> Result<(), Error> {
-        insert_arg_types(&mut self.args, type_vars, symbol_table, world)?;
+        self.args
+            .insert_inferred_types(type_vars, symbol_table, world)?;
         if let Some(choice) = &self.choice_id {
             let index = world.get(choice).expect(
                 "Although the function call had a choice_id, the choice id was not in the world",

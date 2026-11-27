@@ -4,8 +4,7 @@ use printer::*;
 use std::collections::{HashMap, HashSet};
 
 use crate::syntax::*;
-use crate::typing::inference::{TypeInferenceState, TypeVarMapping, World, unify_variational};
-use crate::typing::world_resolution::select_world;
+use crate::typing::inference::{TypeInferenceState, solve_inference_constraints};
 use crate::typing::*;
 
 /// This struct defines a module consisting of a list of [`Declaration`]s.
@@ -31,16 +30,9 @@ impl Program {
     /// [`Program`] and returns a [`CheckedProgram`] with all types inferred and overloading
     /// resolved.
     pub fn check(self) -> Result<CheckedProgram, Error> {
-        let mut state = TypeInferenceState {
-            symbol_table: build_symbol_table(&self)?,
-            fresh_names: Default::default(),
-            constraints: Default::default(),
-            choices: Default::default(),
-        };
+        let mut state = TypeInferenceState::new(build_symbol_table(&self)?);
 
         let mut defs = Vec::new();
-        let mut overloaded_defs_counter = HashMap::new();
-
         for decl in self.declarations {
             match decl {
                 Declaration::Data(data) => {
@@ -51,22 +43,12 @@ impl Program {
                 }
                 Declaration::Def(mut def) => {
                     def.collect_constraints(&mut state)?;
-
-                    // the names of overloaded functions are replaced with a unique name.
-                    if state.symbol_table.defs[&def.name].len() > 1 {
-                        // the name consists of the index of the definition, so they are counted in the overloaded defs counter
-                        if let Some(counter) = overloaded_defs_counter.get_mut(&def.name) {
-                            def.name = symbol_table::overload_name(&def.name, counter);
-                            *counter += 1;
-                        } else {
-                            overloaded_defs_counter.insert(def.name.clone(), 1);
-                            def.name = symbol_table::overload_name(&def.name, &0);
-                        }
-                    }
                     defs.push(def);
                 }
             }
         }
+
+        rename_overloaded_defs(&mut defs, &state.symbol_table);
 
         // recovering the properties from the TypeInferenceState
         let TypeInferenceState {
@@ -76,75 +58,7 @@ impl Program {
             ..
         } = state;
 
-        let (solutions, conflicts) = unify_variational(constraints);
-
-        // if there are no choices, world resolving is skipped
-        let world = if !choices.is_empty() {
-            select_world(&choices, conflicts)?
-        } else if !conflicts.is_empty() {
-            // there is only one world, but there are also conflicts. So there is no solution
-            // todo!("Better Error")
-            return Err(conflicts[0].error.clone());
-        } else {
-            World::new()
-        };
-
-        // now all solutions that are part of the selected world are filtered.
-        let mut selected_solutions = solutions;
-        for (choice, alternative) in &world {
-            selected_solutions.retain(|s| match s.condition.get(choice) {
-                Some(selected) => alternative == selected,
-
-                // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                None => true,
-            });
-        }
-
-        let mut type_vars = TypeVarMapping::new();
-
-        /*
-        There could be several solutions for one type var.
-        The best solution is chosen
-        This "best" is the solution with the least type vars in the ty.
-        There could also be several solutions with different choice annotations
-        but they are non conflicting, since this would be found by the unification.
-        */
-        for solution in selected_solutions {
-            if let Some(subst_ty) = type_vars.get_mut(&solution.var) {
-                if solution.ty.type_var_names().len() < subst_ty.type_var_names().len() {
-                    *subst_ty = solution.ty;
-                }
-            } else {
-                type_vars.insert(solution.var, solution.ty);
-            }
-        }
-
-        // the type mapping is applied on it self, to get the complete transitive hull
-        let reference_mapping = type_vars.clone();
-
-        for ty in type_vars.values_mut() {
-            loop {
-                let var_names = ty.type_var_names();
-
-                if var_names.is_empty() {
-                    break;
-                }
-
-                if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
-                    let missing_names: Vec<String> = ty
-                        .type_var_names()
-                        .into_iter()
-                        .filter(|k| !reference_mapping.contains_key(k))
-                        .collect();
-                    panic!(
-                        "Missing type var names in the final type mapping: {:?}",
-                        missing_names
-                    );
-                }
-
-                ty.mut_subst_ty(&reference_mapping);
-            }
-        }
+        let (type_vars, world) = solve_inference_constraints(constraints, &choices)?;
 
         for def in &mut defs {
             def.insert_inferred_types(&type_vars, &mut symbol_table, &world)?;
@@ -245,6 +159,20 @@ impl Program {
             }
         }
         names
+    }
+}
+
+/// This function renames all overloaded definitions to the unique names of their overloads (see
+/// [`overload_name`](symbol_table::overload_name)). The index of an overload is the position of its
+/// signature in the symbol table, which records the signatures in the order of the declarations.
+fn rename_overloaded_defs(defs: &mut [Def], symbol_table: &SymbolTable) {
+    let mut next_index: HashMap<Name, usize> = HashMap::new();
+    for def in defs {
+        if symbol_table.defs[&def.name].len() > 1 {
+            let index = next_index.entry(def.name.clone()).or_insert(0);
+            def.name = symbol_table::overload_name(&def.name, index);
+            *index += 1;
+        }
     }
 }
 

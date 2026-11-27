@@ -8,7 +8,6 @@
 pub mod errors;
 pub mod inference;
 pub mod symbol_table;
-pub mod world_resolution;
 
 pub use errors::Error;
 pub use symbol_table::{SymbolTable, build_symbol_table};

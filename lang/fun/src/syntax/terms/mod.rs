@@ -223,9 +223,7 @@ pub mod test_util {
         syntax::{Term, TypingContext},
         typing::{
             Error,
-            inference::{
-                TypeInference, TypeInferenceState, TypeVarMapping, World, unify_variational,
-            },
+            inference::{TypeInference, TypeInferenceState, solve_inference_constraints},
             symbol_table::SymbolTable,
         },
     };
@@ -237,15 +235,9 @@ pub mod test_util {
         symbol_table: &mut SymbolTable,
         context: &TypingContext,
     ) -> Result<(), Error> {
-        let mut state = TypeInferenceState {
-            symbol_table: symbol_table.clone(),
-            fresh_names: Default::default(),
-            constraints: Default::default(),
-            choices: Default::default(),
-        };
+        let mut state = TypeInferenceState::new(symbol_table.clone());
 
         let expected_ty = state.fresh_names.fresh_ty_var();
-
         term.collect_constraints(&mut state, context, expected_ty)?;
 
         let TypeInferenceState {
@@ -255,68 +247,7 @@ pub mod test_util {
             ..
         } = state;
 
-        let (solutions, conflicts) = unify_variational(constraints);
-
-        // generating a type and choice mapping, either with overload resolution or without
-        // overload resolution is only done, if there are any overloads to resolve
-        let (mut type_vars, world): (TypeVarMapping, World) = if choices.len() > 0 {
-            let world = crate::typing::world_resolution::select_world(&choices, conflicts)?;
-
-            // now all solutions that are part of the selected world are filtered.
-            let mut selected_solutions = solutions;
-            for (choice, alternative) in &world {
-                selected_solutions.retain(|s| match s.condition.get(choice) {
-                    Some(selected) => alternative == selected,
-
-                    // if the solution doesn't have a choice for the wanted name, it is invariant to the choice. So it is part of the world
-                    None => true,
-                });
-            }
-
-            // the solutions are converted to a HashMap and then they are inserted in the program
-            (
-                selected_solutions
-                    .into_iter()
-                    .map(crate::typing::inference::Solution::into_pair)
-                    .collect(),
-                world,
-            )
-        } else {
-            (
-                solutions
-                    .into_iter()
-                    .map(crate::typing::inference::Solution::into_pair)
-                    .collect(),
-                Default::default(),
-            )
-        };
-
-        // the type mapping is applied on it self, to get the complete transitive hull
-        let reference_mapping = type_vars.clone();
-
-        for (_, ty) in type_vars.iter_mut() {
-            loop {
-                let var_names = ty.type_var_names();
-
-                if var_names.is_empty() {
-                    break;
-                }
-
-                if var_names.iter().any(|s| !reference_mapping.contains_key(s)) {
-                    let missing_names: Vec<String> = ty
-                        .type_var_names()
-                        .into_iter()
-                        .filter(|k| !reference_mapping.contains_key(k))
-                        .collect();
-                    panic!(
-                        "Missing type var names in the final type mapping: {:?}",
-                        missing_names
-                    );
-                }
-
-                ty.mut_subst_ty(&reference_mapping);
-            }
-        }
+        let (type_vars, world) = solve_inference_constraints(constraints, &choices)?;
         term.insert_inferred_types(&type_vars, &mut symbol_table, &world)
     }
 }

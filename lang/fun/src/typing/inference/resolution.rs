@@ -1,3 +1,6 @@
+//! This module resolves overloading by selecting a world, i.e., one alternative for each choice,
+//! that avoids all conflicts. The choices and conflicts are encoded as a binary decision diagram.
+
 use biodivine_lib_bdd::{Bdd, BddValuation, BddVariable, BddVariableSet, BddVariableSetBuilder};
 use std::collections::HashMap;
 
@@ -29,9 +32,7 @@ impl ChoiceEncoding {
     }
 }
 
-fn one_alternative_per_choice(
-    choices: &Vec<OverloadChoice>,
-) -> (Bdd, ChoiceEncoding, BddVariableSet) {
+fn one_alternative_per_choice(choices: &[OverloadChoice]) -> (Bdd, ChoiceEncoding, BddVariableSet) {
     let mut builder = BddVariableSetBuilder::new();
     let mut encoding = ChoiceEncoding::default();
 
@@ -145,7 +146,7 @@ fn decode_world(valuation: BddValuation, encoding: &ChoiceEncoding) -> World {
 }
 
 pub fn select_world(
-    choices: &Vec<OverloadChoice>,
+    choices: &[OverloadChoice],
     conflicts: Vec<ChoiceConflict>,
 ) -> Result<World, Error> {
     let (base_clauses, encoding, var_set) = one_alternative_per_choice(choices);
@@ -177,10 +178,10 @@ pub fn select_world(
 #[cfg(test)]
 mod test {
     use crate::typing::{
-        inference::{ChoiceConflict, Condition, OverloadChoice, World},
-        world_resolution::{
+        inference::resolution::{
             ChoiceEncoding, exclude_conflicts, one_alternative_per_choice, select_world,
         },
+        inference::{ChoiceConflict, Condition, OverloadChoice, World},
     };
     use biodivine_lib_bdd::BddVariableSet;
 

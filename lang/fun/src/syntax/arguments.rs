@@ -1,8 +1,13 @@
 //! This module defines arguments in Fun.
 
+use miette::SourceSpan;
 use printer::*;
 
 use crate::syntax::*;
+use crate::typing::{
+    Error, SymbolTable,
+    inference::{TypeInference, TypeInferenceState, TypeVarMapping, VariationalConstraint, World},
+};
 
 /// This struct defines arguments in Fun. They consist of a list of [`Term`]s.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -32,5 +37,83 @@ impl Print for Arguments {
 impl From<Vec<Term>> for Arguments {
     fn from(bindings: Vec<Term>) -> Arguments {
         Arguments { entries: bindings }
+    }
+}
+
+impl Arguments {
+    /// This function collects the constraints for the arguments of a call, constructor or
+    /// destructor. Producer arguments must have the type of their parameter, covariable arguments
+    /// are looked up in the context and must have the type of their consumer parameter.
+    /// - `params` are the parameters the arguments are passed to.
+    /// - `context` is the typing context of the arguments.
+    /// - `state` is the inference state.
+    /// - `span` is the source location used for arity errors.
+    pub fn collect_constraints(
+        &mut self,
+        params: &TypingContext,
+        context: &TypingContext,
+        state: &mut TypeInferenceState,
+        span: SourceSpan,
+    ) -> Result<(), Error> {
+        if self.entries.len() != params.bindings.len() {
+            return Err(Error::WrongNumberOfArguments {
+                span,
+                expected: params.bindings.len(),
+                got: self.entries.len(),
+            });
+        }
+
+        for (arg, param) in self.entries.iter_mut().zip(params.bindings.iter()) {
+            if param.chi == Chirality::Cns {
+                match arg {
+                    Term::XVar(variable) => {
+                        if variable.chi == Some(Chirality::Prd) {
+                            return Err(Error::ExpectedCovariableGotTerm {
+                                span: variable.span,
+                            });
+                        }
+
+                        let found_ty = context.lookup_covar(&variable.var, &variable.span)?;
+                        variable.chi = Some(Chirality::Cns);
+
+                        if let Some(ty) = &variable.ty {
+                            state
+                                .constraints
+                                .push(VariationalConstraint::equal(ty.clone(), found_ty.clone()));
+                        } else {
+                            let new_type_var = state.fresh_names.fresh_ty_var();
+                            variable.ty = Some(new_type_var.clone());
+                            state
+                                .constraints
+                                .push(VariationalConstraint::equal(new_type_var, found_ty.clone()));
+                        }
+
+                        state
+                            .constraints
+                            .push(VariationalConstraint::equal(param.ty.clone(), found_ty));
+                    }
+                    _ => return Err(Error::ExpectedCovariableGotTerm { span }),
+                }
+            } else {
+                arg.collect_constraints(state, context, param.ty.clone())?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// This function inserts the inferred types into all arguments, see
+    /// [`TypeInference::insert_inferred_types`].
+    pub fn insert_inferred_types(
+        &mut self,
+        type_vars: &TypeVarMapping,
+        symbol_table: &mut SymbolTable,
+        world: &World,
+    ) -> Result<(), Error> {
+        for term in &mut self.entries {
+            term.insert_inferred_types(type_vars, symbol_table, world)?;
+        }
+
+        Ok(())
     }
 }
