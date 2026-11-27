@@ -6,12 +6,13 @@ use crate::typing::{
     inference::{Alternative, ChoiceConflict, ChoiceId, OverloadChoice, World},
 };
 
-/// Since the choices are represented with several variables, the mapping between BDD Variables and Choice Variables is stored here.
-/// In the first iteration, the choices are one-hot encoded
+/// This struct stores how choices are encoded as BDD variables. The encoding is one-hot: each
+/// alternative of a choice has its own BDD variable, which is true iff the alternative is selected.
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct ChoiceEncoding {
-    /// Maps each choice variable to its bit variables (logarithmic encoding)
+    /// Maps each choice to the BDD variables of its alternatives, in the order of the alternatives
     alternative_vars: HashMap<ChoiceId, Vec<BddVariable>>,
+    /// Maps each BDD variable back to the choice and alternative it encodes
     var_to_alternative: HashMap<BddVariable, (ChoiceId, Alternative)>,
 }
 
@@ -156,24 +157,6 @@ pub fn select_world(
     let possible_worlds = formula.cardinality();
 
     if possible_worlds > 1.0 {
-        let mut worlds: Vec<World> = formula
-            .sat_valuations()
-            .map(|valuation| decode_world(valuation, &encoding))
-            .collect();
-
-        let first_world = worlds[0].clone();
-
-        for (choice, alternative) in first_world {
-            if worlds
-                .iter()
-                .all(|world| world.get(&choice) == Some(&alternative))
-            {
-                for world in worlds.iter_mut() {
-                    world.remove(&choice);
-                }
-            }
-        }
-
         return Err(Error::AmbiguousOverloadResolution {
             number_worlds: possible_worlds as u32,
         });

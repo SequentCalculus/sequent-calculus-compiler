@@ -288,7 +288,7 @@ mod test {
     }
 
     #[test]
-    fn inference_mssing_def() {
+    fn inference_missing_def() {
         let mut term = Call {
             span: dummy_span(),
             name: "simple".to_owned(),

@@ -306,15 +306,6 @@ impl VariationalConstraint {
             error,
         })
     }
-
-    pub fn add_choice(&mut self, choice: ChoiceId, alternative: Alternative) {
-        match self {
-            Self::Equal { condition, .. } => {
-                condition.insert(choice, alternative);
-            }
-            Self::Impossible(_) => {}
-        }
-    }
 }
 
 /// A solution for a type variable, i.e., the type it must be equal to under a condition.
@@ -335,8 +326,9 @@ impl Solution {
         Solution { var, ty, condition }
     }
 
-    // the function is used in the tests
-    fn _new_no_choice(var: Name, ty: Ty) -> Self {
+    /// This function creates a solution holding in every world.
+    #[cfg(test)]
+    fn unconditional(var: Name, ty: Ty) -> Self {
         Solution {
             var,
             ty,
@@ -583,9 +575,9 @@ mod test {
     fn solutions_test1() {
         let mut solutions = Solutions::new();
 
-        let solution_1 = Solution::_new_no_choice("a".to_string(), Ty::mk_i64());
-        let solution_2 = Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a"));
-        let solution_3 = Solution::_new_no_choice("c".to_string(), Ty::mk_i64());
+        let solution_1 = Solution::unconditional("a".to_string(), Ty::mk_i64());
+        let solution_2 = Solution::unconditional("b".to_string(), Ty::mk_ty_var("a"));
+        let solution_3 = Solution::unconditional("c".to_string(), Ty::mk_i64());
         let solution_4 = Solution::new(
             "c".to_string(),
             Ty::mk_ty_var("4"),
@@ -613,9 +605,9 @@ mod test {
 
         let all_solutions = solutions.into_vec();
         let expected_solutions = vec![
-            Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
-            Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("a")),
-            Solution::_new_no_choice("c".to_string(), Ty::mk_i64()),
+            Solution::unconditional("a".to_string(), Ty::mk_i64()),
+            Solution::unconditional("b".to_string(), Ty::mk_ty_var("a")),
+            Solution::unconditional("c".to_string(), Ty::mk_i64()),
             Solution::new(
                 "c".to_string(),
                 Ty::mk_ty_var("4"),
@@ -637,7 +629,7 @@ mod test {
 
         let (solutions, conflicts) = unify_variational(constraints);
 
-        let expected: Vec<Solution> = vec![Solution::_new_no_choice("x".to_string(), Ty::mk_i64())];
+        let expected: Vec<Solution> = vec![Solution::unconditional("x".to_string(), Ty::mk_i64())];
 
         assert_eq!(solutions, expected);
         assert!(conflicts.is_empty());
@@ -661,15 +653,15 @@ mod test {
         let (solutions, conflicts) = unify_variational(constraints);
 
         let expected = vec![
-            Solution::_new_no_choice("x".to_string(), Ty::mk_i64()),
-            Solution::_new_no_choice(
+            Solution::unconditional("x".to_string(), Ty::mk_i64()),
+            Solution::unconditional(
                 "y".to_string(),
                 Ty::mk_decl(
                     "Pair",
                     TypeArgs::mk(vec![Ty::mk_ty_var("x"), Ty::mk_ty_var("z")]),
                 ),
             ),
-            Solution::_new_no_choice("z".to_string(), Ty::mk_ty_var("meta_var 1")),
+            Solution::unconditional("z".to_string(), Ty::mk_ty_var("meta_var 1")),
         ];
 
         assert!(expected.iter().all(|s| solutions.contains(s)));
@@ -690,8 +682,8 @@ mod test {
         let (solutions, conflicts) = unify_variational(constraints);
 
         let expected = vec![
-            Solution::_new_no_choice("b".to_string(), Ty::mk_ty_var("x")),
-            Solution::_new_no_choice("a".to_string(), Ty::mk_i64()),
+            Solution::unconditional("b".to_string(), Ty::mk_ty_var("x")),
+            Solution::unconditional("a".to_string(), Ty::mk_i64()),
         ];
 
         assert!(expected.iter().all(|s| solutions.contains(s)));

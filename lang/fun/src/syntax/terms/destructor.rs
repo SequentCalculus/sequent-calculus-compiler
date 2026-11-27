@@ -244,7 +244,7 @@ mod destructor_tests {
     use std::vec;
 
     #[test]
-    fn inference_lpait_fst() {
+    fn inference_lpair_fst() {
         let mut ctx = TypingContext::default();
         ctx.add_var(
             "x",
@@ -293,7 +293,7 @@ mod destructor_tests {
     }
 
     #[test]
-    fn inference_lpait_fst_with_type_annotation() {
+    fn inference_lpair_fst_with_type_annotation() {
         let mut ctx = TypingContext::default();
         ctx.add_var(
             "x",

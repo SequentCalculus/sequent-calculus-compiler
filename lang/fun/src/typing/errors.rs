@@ -299,33 +299,24 @@ pub enum Error {
         #[derivative(PartialEq = "ignore")]
         span: SourceSpan,
     },
-    /// The Type Checker expects Type annotations everywhere
-    #[error("Missing type annotation. The Type Checker needs all type annotations")]
-    #[diagnostic(code("T-026"))]
-    MissingTypeAnnotation {
-        // source location of the missing annotation
-        #[label]
-        #[derivative(PartialEq = "ignore")]
-        span: SourceSpan,
-    },
     /// The overload resolution failed, because several worlds are possible
     #[error(
         "Type inference failed because the overloading is ambiguous. There are {number_worlds} possible overload resolutions."
     )]
-    #[diagnostic(code("T-027"))]
+    #[diagnostic(code("T-026"))]
     AmbiguousOverloadResolution {
         /// number of possible worlds
         number_worlds: u32,
     },
     /// The overload resolution failed, because no world is possible
     #[error("Type inference failed because there is no valid overload resolution.")]
-    #[diagnostic(code("T-028"))]
+    #[diagnostic(code("T-027"))]
     NoOverloadResolution {},
     /// An overloaded function was defined twice with the same signature
     #[error(
         "The function {name} was defined multiple times with the same signature. Overloaded functions need distinct signatures."
     )]
-    #[diagnostic(code("T-029"))]
+    #[diagnostic(code("T-028"))]
     DuplicateOverloadSignature {
         /// source location of the second definition
         #[label]
